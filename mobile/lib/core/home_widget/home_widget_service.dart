@@ -7,10 +7,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/notes/data/repository/notes_repository.dart';
 import '../logging/app_logger.dart';
-import '../providers/active_user_id_provider.dart';
-import '../router/app_router.dart';
+import '../session/active_user_id_provider.dart';
+import '../../app/router/app_router.dart';
 import '../router/app_routes.dart';
-import 'home_widget_payload.dart';
+import '../../features/home_widget/data/home_widget_payload.dart';
 
 part 'home_widget_service.g.dart';
 

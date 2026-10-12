@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import '../router/app_routes.dart';
+import '../../../core/router/app_routes.dart';
 
 /// The one plugin instance the app uses.
 final FlutterLocalNotificationsPlugin notificationsPlugin =

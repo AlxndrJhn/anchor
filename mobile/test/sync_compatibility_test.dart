@@ -1,5 +1,5 @@
 import 'package:anchor/core/network/anchor_protocol.dart';
-import 'package:anchor/features/settings/data/server_info_provider.dart';
+import 'package:anchor/features/server/data/server_info_provider.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:flutter_test/flutter_test.dart';
 

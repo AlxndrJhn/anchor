@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../widgets/app_snackbar.dart';
 import '../widgets/confirm_dialog.dart';
-import 'reminder_permissions.dart';
+import '../../features/reminders/data/reminder_permissions.dart';
 
 /// What prompted the ask.
 enum ReminderPermissionTrigger {

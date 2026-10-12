@@ -6,7 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/network/dio_provider.dart';
-import '../../notes/data/local/reminder_slots.dart';
+import '../../reminders/data/reminder_slots.dart';
 import '../../notes/data/repository/note_attachments_repository.dart';
 import '../../notes/data/repository/note_revisions_store.dart';
 import '../../notes/domain/note.dart' as domain;

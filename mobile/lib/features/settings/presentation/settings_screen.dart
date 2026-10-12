@@ -17,9 +17,9 @@ import '../../../core/widgets/large_title_app_bar.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/network/server_config_provider.dart';
 import '../../auth/presentation/auth_controller.dart';
-import '../data/server_info_provider.dart';
+import '../../server/data/server_info_provider.dart';
 import 'controllers/editor_preferences_controller.dart';
-import 'controllers/theme_preferences_controller.dart';
+import 'theme_preferences_controller.dart';
 import '../../sync/data/sync_compatibility.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {

@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/server_config_provider.dart';
-import '../../../core/providers/active_user_id_provider.dart';
-import '../../../core/providers/session_expired_provider.dart';
+import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/session/session_expired_provider.dart';
 import '../data/repository/auth_repository.dart';
 import '../domain/user.dart';
 

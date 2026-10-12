@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/anchor_protocol.dart';
-import '../../settings/data/server_info_provider.dart';
+import '../../server/data/server_info_provider.dart';
 
 part 'sync_compatibility.g.dart';
 

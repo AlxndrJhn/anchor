@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../../core/app_initializer.dart' as app_init;
-import '../../../../core/theme/tokens/app_dimensions.dart';
-import 'editor_preferences_controller.dart';
+import '../../../core/app_initializer.dart' as app_init;
+import '../../../core/theme/tokens/app_dimensions.dart';
+import 'controllers/editor_preferences_controller.dart';
 
 part 'theme_preferences_controller.g.dart';
 

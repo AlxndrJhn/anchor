@@ -1,4 +1,4 @@
-import 'package:anchor/core/widgets/editor/checklist_lines.dart';
+import 'package:anchor/features/notes/presentation/editor/checklist_lines.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';

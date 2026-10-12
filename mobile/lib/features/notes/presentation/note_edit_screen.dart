@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:anchor/core/logging/app_logger.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
-import 'package:anchor/core/providers/active_user_id_provider.dart';
+import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/core/router/app_routes.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';

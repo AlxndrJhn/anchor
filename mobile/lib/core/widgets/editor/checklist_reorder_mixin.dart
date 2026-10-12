@@ -4,7 +4,7 @@ import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-import 'checklist_lines.dart';
+import '../../../features/notes/presentation/editor/checklist_lines.dart';
 
 /// Keeps checklists sorted: unchecked items on top, checked items at the
 /// bottom of their group. Toggles are detected on the document change stream

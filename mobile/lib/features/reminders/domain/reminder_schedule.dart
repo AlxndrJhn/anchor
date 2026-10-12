@@ -4,7 +4,7 @@
 /// device's current zone every time.
 library;
 
-import 'note.dart';
+import '../../notes/domain/note.dart';
 
 /// Formats a local [DateTime] as the stored wall clock, to the minute.
 String toWallClock(DateTime local) {

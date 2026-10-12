@@ -5,13 +5,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../features/settings/data/server_info_provider.dart';
+import '../../features/server/data/server_info_provider.dart';
 import '../../features/sync/data/sync_compatibility.dart';
 import '../../features/sync/data/sync_events.dart';
 import '../../features/sync/data/sync_service.dart';
 import '../logging/app_logger.dart';
-import '../providers/active_user_id_provider.dart';
-import '../providers/session_expired_provider.dart';
+import '../session/active_user_id_provider.dart';
+import '../session/session_expired_provider.dart';
 import 'server_config_provider.dart';
 import 'anchor_protocol.dart';
 import 'sync_requester.dart';

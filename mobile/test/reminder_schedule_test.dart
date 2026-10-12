@@ -1,5 +1,5 @@
 import 'package:anchor/features/notes/domain/note.dart';
-import 'package:anchor/features/notes/domain/reminder_schedule.dart';
+import 'package:anchor/features/reminders/domain/reminder_schedule.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The rules that decide when a reminder actually rings.

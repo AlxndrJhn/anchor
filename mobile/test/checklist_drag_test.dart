@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:anchor/core/widgets/editor/checklist_lines.dart';
+import 'package:anchor/features/notes/presentation/editor/checklist_lines.dart';
 import 'package:anchor/core/widgets/rich_text_editor.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';

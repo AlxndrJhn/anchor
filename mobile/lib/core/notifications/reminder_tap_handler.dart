@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/auth_controller.dart';
-import '../providers/active_user_id_provider.dart';
-import '../router/app_router.dart';
-import 'notification_launch.dart';
+import '../session/active_user_id_provider.dart';
+import '../../app/router/app_router.dart';
+import '../../features/reminders/presentation/notification_launch.dart';
 
 part 'reminder_tap_handler.g.dart';
 

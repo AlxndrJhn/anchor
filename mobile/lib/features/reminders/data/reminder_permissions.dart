@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../features/settings/presentation/controllers/editor_preferences_controller.dart';
+import '../../settings/presentation/controllers/editor_preferences_controller.dart';
 import 'notification_gateway.dart';
 
 part 'reminder_permissions.g.dart';

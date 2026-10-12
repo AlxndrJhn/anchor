@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:anchor/core/app_initializer.dart';
-import 'package:anchor/core/notifications/notification_gateway.dart';
-import 'package:anchor/core/notifications/reminder_scheduler.dart';
-import 'package:anchor/core/providers/active_user_id_provider.dart';
+import 'package:anchor/features/reminders/data/notification_gateway.dart';
+import 'package:anchor/features/reminders/data/reminder_scheduler.dart';
+import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';

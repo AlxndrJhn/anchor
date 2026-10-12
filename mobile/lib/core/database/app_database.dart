@@ -10,7 +10,7 @@ import '../../features/notes/data/local/note_history_state_table.dart';
 import '../../features/notes/data/local/note_revisions_table.dart';
 import '../../features/sync/data/local/sync_tables.dart';
 import '../../features/tags/data/local/tags_table.dart';
-import '../providers/active_user_id_provider.dart';
+import '../session/active_user_id_provider.dart';
 
 part 'app_database.g.dart';
 

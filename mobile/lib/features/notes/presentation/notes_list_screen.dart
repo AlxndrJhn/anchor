@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/notifications/reminder_permission_prompt.dart';
-import 'package:anchor/core/notifications/reminder_permissions.dart';
+import 'package:anchor/features/reminders/data/reminder_permissions.dart';
 import 'package:anchor/core/widgets/quill_preview.dart';
 import 'package:anchor/core/widgets/app_drawer.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';

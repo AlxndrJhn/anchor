@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import '../../features/notes/domain/note.dart';
-import '../router/app_routes.dart';
-import '../widgets/quill_preview.dart';
+import '../../notes/domain/note.dart';
+import '../../../core/router/app_routes.dart';
+import '../../../core/widgets/quill_preview.dart';
 
 /// SharedPreferences key the Android widget reads its data from.
 /// Must match `WIDGET_NOTES_KEY` in `NotesWidgetService.kt`.

@@ -12,13 +12,13 @@ import '../../features/notes/presentation/note_history_screen.dart';
 import '../../features/notes/presentation/note_revision_screen.dart';
 import '../../features/notes/presentation/trash_screen.dart';
 import '../../features/notes/presentation/archive_screen.dart';
-import '../app_initializer.dart';
-import '../presentation/server_config_screen.dart';
+import '../../core/app_initializer.dart';
+import '../../core/presentation/server_config_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/log_viewer_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
-import '../network/server_config_provider.dart';
-import 'app_routes.dart';
+import '../../core/network/server_config_provider.dart';
+import '../../core/router/app_routes.dart';
 
 part 'app_router.g.dart';
 

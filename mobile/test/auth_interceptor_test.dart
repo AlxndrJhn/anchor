@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:anchor/core/network/auth_interceptor.dart';
-import 'package:anchor/core/providers/session_expired_provider.dart';
+import 'package:anchor/core/session/session_expired_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

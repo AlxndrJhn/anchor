@@ -8,9 +8,9 @@ import 'package:home_widget/home_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../features/settings/data/repository/preferences_repository.dart';
-import 'home_widget/home_widget_payload.dart';
+import '../features/home_widget/data/home_widget_payload.dart';
 import 'logging/app_logger.dart';
-import 'notifications/notification_launch.dart';
+import '../features/reminders/presentation/notification_launch.dart';
 import 'router/app_routes.dart';
 import 'theme/tokens/app_dimensions.dart';
 

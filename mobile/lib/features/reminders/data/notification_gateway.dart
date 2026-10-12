@@ -6,8 +6,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../logging/app_logger.dart';
-import 'notification_launch.dart';
+import '../../../core/logging/app_logger.dart';
+import '../presentation/notification_launch.dart';
 
 part 'notification_gateway.g.dart';
 

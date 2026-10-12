@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/providers/active_user_id_provider.dart';
+import '../../../core/session/active_user_id_provider.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../core/widgets/app_snackbar.dart';

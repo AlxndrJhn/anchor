@@ -5,13 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../features/auth/presentation/auth_controller.dart';
-import '../../features/notes/data/repository/notes_repository.dart';
-import '../../features/notes/domain/note.dart' as domain;
-import '../../features/notes/domain/reminder_schedule.dart';
-import '../logging/app_logger.dart';
-import '../providers/active_user_id_provider.dart';
-import '../widgets/quill_preview.dart';
+import '../../auth/presentation/auth_controller.dart';
+import '../../notes/data/repository/notes_repository.dart';
+import '../../notes/domain/note.dart' as domain;
+import '../domain/reminder_schedule.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/widgets/quill_preview.dart';
 import 'notification_gateway.dart';
 
 part 'reminder_scheduler.g.dart';

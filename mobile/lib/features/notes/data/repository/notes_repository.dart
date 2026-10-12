@@ -11,7 +11,7 @@ import '../../../tags/data/repository/tags_repository.dart';
 import '../../domain/note.dart' as domain;
 import '../../domain/note_attachment.dart' as domain;
 import '../../domain/note_revision.dart';
-import '../local/reminder_slots.dart';
+import '../../../reminders/data/reminder_slots.dart';
 import 'note_attachments_repository.dart';
 import 'note_revisions_store.dart';
 

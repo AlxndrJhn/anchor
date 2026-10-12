@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../../../core/database/app_database.dart';
+import '../../../core/database/app_database.dart';
 
 /// The OS notification id a note keeps for the life of its reminder.
 Future<int> ensureReminderSlot(AppDatabase db, String noteId) async {
