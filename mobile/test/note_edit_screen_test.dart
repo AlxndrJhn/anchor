@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:anchor/core/network/connectivity_provider.dart';
+import 'package:anchor/legacy/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/core/widgets/rich_text_editor.dart';

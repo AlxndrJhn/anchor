@@ -3,22 +3,20 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 
 import 'app_logger.dart';
+import 'log_tags.dart';
 import 'redaction.dart';
 
-const _startTsKey = 'app_logger_start_ts';
-const _reqIdKey = 'app_logger_req_id';
-const _tag = 'Dio';
+const _startTimeKey = 'app_logger_start_ts';
+const _requestIdKey = 'app_logger_req_id';
 
-/// Headers that carry no debug signal
 const _boilerplateHeaders = <String>{'content-type', 'accept', 'authorization'};
 
-/// Paths excluded from logging: routine polls and the long-lived event stream.
 /// Matched against [Uri.path] (no query string).
 const _skipPaths = <String>{'/api/health', '/api/sync/events'};
 
 final _random = Random();
 
-String _genReqId() {
+String _newRequestId() {
   return _random.nextInt(0xFFFFFF).toRadixString(16).padLeft(6, '0');
 }
 
@@ -31,9 +29,8 @@ Map<String, dynamic> _nonDefaultHeaders(Map<String, dynamic> headers) {
   return out;
 }
 
-/// Dio interceptor that pipes request/response/error events into [AppLogger].
-class AppLoggingInterceptor extends Interceptor {
-  AppLoggingInterceptor();
+class LoggingInterceptor extends Interceptor {
+  LoggingInterceptor();
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -42,27 +39,27 @@ class AppLoggingInterceptor extends Interceptor {
       return;
     }
 
-    final reqId = _genReqId();
-    options.extra[_reqIdKey] = reqId;
-    options.extra[_startTsKey] = DateTime.now().millisecondsSinceEpoch;
+    final requestId = _newRequestId();
+    options.extra[_requestIdKey] = requestId;
+    options.extra[_startTimeKey] = DateTime.now().millisecondsSinceEpoch;
 
     final body = options.data != null ? redactBody(options.data) : null;
     final headers = redactHeaders(_nonDefaultHeaders(options.headers));
-    final q = redactQuery(options.uri);
-    final query = q.isNotEmpty ? '?$q' : '';
+    final redactedQuery = redactQuery(options.uri);
+    final query = redactedQuery.isNotEmpty ? '?$redactedQuery' : '';
     final sizeSuffix = body != null ? ' (${body.length}B)' : '';
 
-    final buf = StringBuffer()
+    final message = StringBuffer()
       ..write(
-        '→[$reqId] ${options.method} ${options.uri.path}$query$sizeSuffix',
+        '→[$requestId] ${options.method} ${options.uri.path}$query$sizeSuffix',
       );
     if (headers.isNotEmpty) {
-      buf.write('\nheaders: $headers');
+      message.write('\nheaders: $headers');
     }
     if (body != null) {
-      buf.write('\nbody: $body');
+      message.write('\nbody: $body');
     }
-    AppLogger.instance.info(_tag, buf.toString());
+    AppLogger.instance.info(LogTags.dio, message.toString());
     handler.next(options);
   }
 
@@ -72,21 +69,21 @@ class AppLoggingInterceptor extends Interceptor {
       handler.next(response);
       return;
     }
-    final reqId = _reqId(response.requestOptions);
+    final requestId = _requestIdOf(response.requestOptions);
     final duration = _duration(response.requestOptions);
     final body = response.data != null ? redactBody(response.data) : null;
     final sizeSuffix = body != null ? ', ${body.length}B' : '';
 
-    final buf = StringBuffer()
+    final message = StringBuffer()
       ..write(
-        '←[$reqId] ${response.requestOptions.method} '
+        '←[$requestId] ${response.requestOptions.method} '
         '${response.requestOptions.uri.path} '
         '${response.statusCode} (${duration}ms$sizeSuffix)',
       );
     if (body != null) {
-      buf.write('\nbody: $body');
+      message.write('\nbody: $body');
     }
-    AppLogger.instance.info(_tag, buf.toString());
+    AppLogger.instance.info(LogTags.dio, message.toString());
     handler.next(response);
   }
 
@@ -96,33 +93,33 @@ class AppLoggingInterceptor extends Interceptor {
       handler.next(err);
       return;
     }
-    final reqId = _reqId(err.requestOptions);
+    final requestId = _requestIdOf(err.requestOptions);
     final duration = _duration(err.requestOptions);
     final status = err.response?.statusCode;
     final body = err.response?.data != null
         ? redactBody(err.response!.data)
         : null;
 
-    final buf = StringBuffer()
+    final message = StringBuffer()
       ..write(
-        '✗[$reqId] ${err.requestOptions.method} '
+        '✗[$requestId] ${err.requestOptions.method} '
         '${err.requestOptions.uri.path} '
         '${status ?? err.type.name} (${duration}ms): ${err.message ?? ''}',
       );
     if (body != null) {
-      buf.write('\nresponse: $body');
+      message.write('\nresponse: $body');
     }
-    AppLogger.instance.error(_tag, buf.toString(), error: err.error);
+    AppLogger.instance.error(LogTags.dio, message.toString(), error: err.error);
     handler.next(err);
   }
 
-  String _reqId(RequestOptions options) {
-    final v = options.extra[_reqIdKey];
-    return v is String ? v : '------';
+  String _requestIdOf(RequestOptions options) {
+    final value = options.extra[_requestIdKey];
+    return value is String ? value : '------';
   }
 
   int _duration(RequestOptions options) {
-    final start = options.extra[_startTsKey];
+    final start = options.extra[_startTimeKey];
     if (start is int) {
       return DateTime.now().millisecondsSinceEpoch - start;
     }

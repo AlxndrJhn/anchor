@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
-import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_list_page.dart';
 import 'notes_controller.dart';
 

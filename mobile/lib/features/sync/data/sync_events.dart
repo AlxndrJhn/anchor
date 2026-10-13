@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/logging/app_logger.dart';
-import '../../../core/network/dio_provider.dart';
+import '../../../legacy/core/network/dio_provider.dart';
 import '../../../core/network/anchor_protocol.dart';
 import '../../../core/network/sync_requester.dart';
 import 'sync_api.dart';

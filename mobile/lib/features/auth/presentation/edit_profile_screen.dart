@@ -5,14 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/settings_card.dart';
 import '../../../core/widgets/large_title_app_bar.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/features/auth/data/repository/auth_repository.dart';
 import 'package:anchor/features/auth/domain/user.dart';
-import '../../../core/theme/context_extensions.dart';
+import '../../../legacy/core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_radius.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {

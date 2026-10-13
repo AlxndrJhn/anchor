@@ -1,6 +1,6 @@
 import 'package:anchor/features/reminders/data/notification_gateway.dart';
 import 'package:anchor/core/notifications/reminder_permission_prompt.dart';
-import 'package:anchor/core/theme/app_theme.dart';
+import 'package:anchor/legacy/core/theme/app_theme.dart';
 import 'package:anchor/features/settings/data/repository/preferences_repository.dart';
 import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
 import 'package:flutter/material.dart';

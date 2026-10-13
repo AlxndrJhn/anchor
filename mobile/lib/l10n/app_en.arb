@@ -1,0 +1,205 @@
+{
+  "@@locale": "en",
+  "commonBack": "Back",
+  "@commonBack": {
+    "description": "Screen reader label of the back arrow in the top bar and the editor toolbar."
+  },
+  "commonCancel": "Cancel",
+  "@commonCancel": {
+    "description": "Button that closes a dialog, sheet, search or selection without making changes."
+  },
+  "commonClose": "Close",
+  "@commonClose": {
+    "description": "Spoken label of the picture viewer’s close button and of the area outside a dialog, and the button that closes the share sheet when nothing in a share can be saved."
+  },
+  "commonDone": "Done",
+  "@commonDone": {
+    "description": "Small button at the top of a sheet that closes it."
+  },
+  "commonMenu": "Menu",
+  "@commonMenu": {
+    "description": "Screen reader name of a pop-up menu and of the side menu with the lists and tags."
+  },
+  "commonCloseMenu": "Close menu",
+  "@commonCloseMenu": {
+    "description": "Screen reader label for the area outside an open menu, which closes it."
+  },
+  "commonShowPassword": "Show password",
+  "@commonShowPassword": {
+    "description": "Screen reader label of the eye button that shows a hidden password."
+  },
+  "commonHidePassword": "Hide password",
+  "@commonHidePassword": {
+    "description": "Screen reader label of the eye button that hides a shown password."
+  },
+  "commonSelectedNotes": "Selected notes",
+  "@commonSelectedNotes": {
+    "description": "Screen reader name of the bar shown while notes are selected."
+  },
+  "commonPlay": "Play",
+  "@commonPlay": {
+    "description": "Screen reader label of a play button for an audio file without a name."
+  },
+  "commonPause": "Pause",
+  "@commonPause": {
+    "description": "Screen reader label of a pause button for an audio file without a name."
+  },
+  "commonPlayItem": "Play {name}",
+  "@commonPlayItem": {
+    "description": "Screen reader label of a play button for an audio or video file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "voice-memo.m4a"
+      }
+    }
+  },
+  "commonPauseItem": "Pause {name}",
+  "@commonPauseItem": {
+    "description": "Screen reader label of a pause button for an audio or video file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "voice-memo.m4a"
+      }
+    }
+  },
+  "commonSwitchOn": "{label}, on",
+  "@commonSwitchOn": {
+    "description": "Screen reader text for a settings switch that is on.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Allow self-signed certificates"
+      }
+    }
+  },
+  "commonSwitchOff": "{label}, off",
+  "@commonSwitchOff": {
+    "description": "Screen reader text for a settings switch that is off.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Allow self-signed certificates"
+      }
+    }
+  },
+  "formOffline": "You’re offline. Connect to the internet to continue.",
+  "@formOffline": {
+    "description": "Notice at the top of a form that needs the server."
+  },
+  "linkInvalid": "Invalid link",
+  "@linkInvalid": {
+    "description": "Message when a tapped link isn’t a valid web address."
+  },
+  "linkCantOpen": "Couldn’t open link",
+  "@linkCantOpen": {
+    "description": "Message when no app on the phone can open a tapped link."
+  },
+  "densityDefault": "Default",
+  "@densityDefault": {
+    "description": "Display density with regular spacing."
+  },
+  "densityCompact": "Compact",
+  "@densityCompact": {
+    "description": "Display density with tighter spacing that fits more notes."
+  },
+  "noteFontSans": "Sans",
+  "@noteFontSans": {
+    "description": "Note font choice: a sans-serif font."
+  },
+  "noteFontSerif": "Serif",
+  "@noteFontSerif": {
+    "description": "Note font choice: a serif font."
+  },
+  "noteFontMono": "Mono",
+  "@noteFontMono": {
+    "description": "Note font choice: a monospaced font."
+  },
+  "textSizeSmall": "Small",
+  "@textSizeSmall": {
+    "description": "Note text size."
+  },
+  "textSizeDefault": "Default",
+  "@textSizeDefault": {
+    "description": "Note text size."
+  },
+  "textSizeLarge": "Large",
+  "@textSizeLarge": {
+    "description": "Note text size."
+  },
+  "errorOffline": "No internet connection.",
+  "@errorOffline": {
+    "description": "Error when a request fails because the phone has no internet."
+  },
+  "errorTimeout": "The server took too long to respond.",
+  "@errorTimeout": {
+    "description": "Error when the server doesn’t answer in time."
+  },
+  "errorCertificate": "The server’s certificate isn’t trusted.",
+  "@errorCertificate": {
+    "description": "Error when the server’s security certificate can’t be verified."
+  },
+  "errorCancelled": "The request was canceled.",
+  "@errorCancelled": {
+    "description": "Error when a request to the server stopped before it finished."
+  },
+  "errorSignInAgain": "Sign in again to continue.",
+  "@errorSignInAgain": {
+    "description": "Error when the person’s sign-in has expired and the server refuses the request."
+  },
+  "errorForbidden": "You don’t have permission to do that.",
+  "@errorForbidden": {
+    "description": "Error when the server refuses an action this account isn’t allowed to do."
+  },
+  "errorNotFound": "The item couldn’t be found.",
+  "@errorNotFound": {
+    "description": "Error when the server can’t find what the app asked for."
+  },
+  "errorIncompatible": "This app and your server aren’t compatible. Update them to continue.",
+  "@errorIncompatible": {
+    "description": "Error when the app and server versions can’t work together."
+  },
+  "errorCheckInput": "Check the information you entered.",
+  "@errorCheckInput": {
+    "description": "Error at the top of a form when the server rejects what was entered."
+  },
+  "errorGeneric": "Something went wrong. Try again.",
+  "@errorGeneric": {
+    "description": "Error for any unexpected failure."
+  },
+  "errorServer": "The server ran into a problem. Try again later.",
+  "@errorServer": {
+    "description": "Error when the server fails while handling a request."
+  },
+  "passwordHelp": "{count, plural, =1{At least 1 character.} other{At least {count} characters.}}",
+  "@passwordHelp": {
+    "description": "Shown under a new password field.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "settingsSignOutMessage": "{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}",
+  "@settingsSignOutMessage": {
+    "description": "{count} is the number of changes not yet sent to the server.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "logsCopied": "{count, plural, =1{1 log copied} other{{count} logs copied}}",
+  "@logsCopied": {
+    "description": "Toast after the selected logs were copied.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  }
+}

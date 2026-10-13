@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../theme/context_extensions.dart';
+import '../../legacy/core/theme/context_extensions.dart';
 import '../theme/tokens/app_durations.dart';
 import '../theme/tokens/app_icon_sizes.dart';
 import '../theme/tokens/app_opacity.dart';

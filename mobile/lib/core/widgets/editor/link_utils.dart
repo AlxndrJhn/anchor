@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../app_snackbar.dart';
+import '../../../legacy/core/widgets/app_snackbar.dart';
 
 const _schemes = [
   'http://',

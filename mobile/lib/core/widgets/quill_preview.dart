@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../theme/context_extensions.dart';
+import '../../legacy/core/theme/context_extensions.dart';
 import '../theme/tokens/app_icon_sizes.dart';
 
 /// A single line in the preview with optional list/checklist state.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-import '../../theme/app_typography.dart';
+import '../../../legacy/core/theme/app_typography.dart';
 
 /// Creates custom styles for the Quill editor matching the app theme
 DefaultStyles getEditorStyles(BuildContext context) {

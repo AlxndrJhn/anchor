@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:anchor/core/theme/app_theme.dart';
+import 'package:anchor/legacy/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/app_bar_scrim.dart';
 import 'package:anchor/core/widgets/app_page_bar.dart';
 import 'package:anchor/core/widgets/app_page_scaffold.dart';

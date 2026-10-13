@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:anchor/core/theme/context_extensions.dart';
-import 'package:anchor/core/widgets/app_empty_state.dart';
+import 'package:anchor/legacy/core/theme/context_extensions.dart';
+import 'package:anchor/legacy/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/app_page_scaffold.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/features/notes/domain/note.dart';

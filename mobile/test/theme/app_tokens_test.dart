@@ -1,117 +1,152 @@
+import 'package:anchor/core/theme/anchor_density.dart';
 import 'package:anchor/core/theme/context_extensions.dart';
-import 'package:anchor/core/theme/tokens/app_color_tokens.dart';
-import 'package:anchor/core/theme/tokens/app_dimensions.dart';
+import 'package:anchor/core/theme/display_density.dart';
+import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('AppColorTokens', () {
-    test('of() picks the variant matching the brightness', () {
-      expect(AppColorTokens.of(Brightness.light), AppColorTokens.light);
-      expect(AppColorTokens.of(Brightness.dark), AppColorTokens.dark);
+  group('AnchorColors', () {
+    test('light and dark differ on the page colors', () {
+      const light = AnchorColors.light;
+      const dark = AnchorColors.dark;
+      expect(light.appPage, isNot(dark.appPage));
+      expect(light.appSurface, isNot(dark.appSurface));
+      expect(light.appText, isNot(dark.appText));
+      expect(light.appMuted, isNot(dark.appMuted));
+      expect(light.appBorder, isNot(dark.appBorder));
     });
 
-    test('light and dark differ on every color', () {
-      final l = AppColorTokens.light;
-      final d = AppColorTokens.dark;
-      expect(l.subtleBorder, isNot(d.subtleBorder));
-      expect(l.cardFill, isNot(d.cardFill));
-      expect(l.inputFill, isNot(d.inputFill));
-      expect(l.success, isNot(d.success));
-      expect(l.warning, isNot(d.warning));
-      expect(l.shimmerBase, isNot(d.shimmerBase));
-      expect(l.pageGradient.colors, isNot(d.pageGradient.colors));
+    test('every background has note colors in both themes', () {
+      for (final background in [
+        ...AnchorBackgrounds.colors,
+        ...AnchorBackgrounds.patterns,
+      ]) {
+        expect(AnchorColors.light.notes, contains(background.palette));
+        expect(AnchorColors.dark.notes, contains(background.palette));
+      }
     });
 
-    test('the sheet gradient runs opposite to the page gradient', () {
-      expect(
-        AppColorTokens.dark.sheetGradient.colors,
-        AppColorTokens.dark.pageGradient.colors.reversed.toList(),
-      );
+    test('every highlight name has a color in both themes', () {
+      for (final name in AnchorTokens.highlightNames) {
+        expect(AnchorColors.light.highlights, contains(name));
+        expect(AnchorColors.dark.highlights, contains(name));
+      }
     });
 
     test('lerp returns the endpoints at t=0 and t=1', () {
-      final l = AppColorTokens.light;
-      final d = AppColorTokens.dark;
-      expect(l.lerp(d, 0).cardFill, l.cardFill);
-      expect(l.lerp(d, 1).cardFill, d.cardFill);
-      expect(l.lerp(d, 0).success, l.success);
-      expect(l.lerp(d, 1).warning, d.warning);
+      const light = AnchorColors.light;
+      const dark = AnchorColors.dark;
+      expect(light.lerp(dark, 0).appSurface, light.appSurface);
+      expect(light.lerp(dark, 1).appSurface, dark.appSurface);
+      expect(
+        light.lerp(dark, 0).notes['yellow']!.bg,
+        light.notes['yellow']!.bg,
+      );
+      expect(light.lerp(dark, 1).notes['yellow']!.bg, dark.notes['yellow']!.bg);
     });
 
     test('copyWith replaces only what it is given', () {
-      final tokens = AppColorTokens.light.copyWith(success: Colors.pink);
-      expect(tokens.success, Colors.pink);
-      expect(tokens.warning, AppColorTokens.light.warning);
-      expect(tokens.cardFill, AppColorTokens.light.cardFill);
+      final colors = AnchorColors.light.copyWith(statusDanger: Colors.pink);
+      expect(colors.statusDanger, Colors.pink);
+      expect(colors.appText, AnchorColors.light.appText);
+      expect(colors.notes, AnchorColors.light.notes);
     });
   });
 
-  group('AppDimensions', () {
+  group('AnchorBackgrounds', () {
+    test('of() finds a stored background by its id', () {
+      expect(AnchorBackgrounds.of('color_yellow').name, 'Yellow');
+      expect(AnchorBackgrounds.of('pattern_grid').pattern, 'grid');
+    });
+
+    test('of() falls back to the default for an unknown or empty id', () {
+      expect(AnchorBackgrounds.of(null), AnchorBackgrounds.colors.first);
+      expect(AnchorBackgrounds.of('nope'), AnchorBackgrounds.colors.first);
+      expect(AnchorBackgrounds.colors.first.palette, 'none');
+    });
+  });
+
+  group('AnchorDensity', () {
     test('of() maps each density to its own values', () {
-      expect(AppDimensions.of(DisplayDensity.compact), AppDimensions.compact);
-      expect(AppDimensions.of(DisplayDensity.standard), AppDimensions.standard);
+      expect(AnchorDensity.of(DisplayDensity.compact), AnchorDensity.compact);
+      expect(AnchorDensity.of(DisplayDensity.standard), AnchorDensity.standard);
     });
 
-    test('the spacing scale grows with density', () {
-      for (final read in <double Function(AppDimensions)>[
-        (d) => d.xxs,
-        (d) => d.xs,
-        (d) => d.sm,
-        (d) => d.md,
-        (d) => d.lg,
-        (d) => d.xl,
-        (d) => d.xxl,
-        (d) => d.screenGutter,
-        (d) => d.pagePadding,
-        (d) => d.sectionGap,
-        (d) => d.searchBarHeight,
-        (d) => d.appBarExpandedHeight,
-        (d) => d.largeAppBarHeight,
-      ]) {
-        expect(
-          read(AppDimensions.compact),
-          lessThan(read(AppDimensions.standard)),
-        );
-      }
+    test('isCompact is true only for the Compact density', () {
+      expect(AnchorDensity.compact.isCompact, isTrue);
+      expect(AnchorDensity.standard.isCompact, isFalse);
     });
 
-    test('the spacing scale is monotonic within a density', () {
-      for (final dims in [AppDimensions.compact, AppDimensions.standard]) {
-        final scale = [
-          dims.xxs,
-          dims.xs,
-          dims.sm,
-          dims.md,
-          dims.lg,
-          dims.xl,
-          dims.xxl,
-        ];
-        for (var i = 1; i < scale.length; i++) {
-          expect(scale[i], greaterThan(scale[i - 1]));
-        }
-      }
-    });
-
-    test('screenInsets follows screenGutter', () {
+    test('Default keeps the scale and every 52', () {
+      const standard = AnchorDensity.standard;
       expect(
-        AppDimensions.standard.screenInsets,
-        EdgeInsets.all(AppDimensions.standard.screenGutter),
+        [
+          standard.space8,
+          standard.space12,
+          standard.space16,
+          standard.space24,
+          standard.space32,
+          standard.space48,
+        ],
+        [8, 12, 16, 24, 32, 48],
+      );
+      expect(standard.control, AnchorTokens.sizeControlLarge);
+      expect(standard.bar, AnchorTokens.sizeControlLarge);
+      expect(standard.noteLineHeight, AnchorTokens.typeBody.height);
+      expect(
+        [
+          standard.previewMasonry,
+          standard.previewGrid,
+          standard.previewList,
+          standard.previewPictures,
+        ],
+        [6, 4, 2, 4],
       );
     });
 
-    test('lerp returns the endpoints at t=0 and t=1', () {
-      final c = AppDimensions.compact;
-      final s = AppDimensions.standard;
-      expect(c.lerp(s, 0).md, c.md);
-      expect(c.lerp(s, 1).md, s.md);
-      expect(c.lerp(s, 0.5).md, (c.md + s.md) / 2);
+    test('Compact moves vertical space one step down and 52 to 44', () {
+      const compact = AnchorDensity.compact;
+      expect(
+        [
+          compact.space8,
+          compact.space12,
+          compact.space16,
+          compact.space24,
+          compact.space32,
+          compact.space48,
+        ],
+        [4, 8, 12, 16, 24, 32],
+      );
+      expect(compact.control, AnchorTokens.sizeControlMedium);
+      expect(compact.bar, AnchorTokens.sizeControlMedium);
+      expect(compact.noteLineHeight, 1.55);
+      expect(
+        [
+          compact.previewMasonry,
+          compact.previewGrid,
+          compact.previewList,
+          compact.previewPictures,
+        ],
+        [4, 3, 1, 2],
+      );
+    });
+
+    test('lerp snaps at halfway', () {
+      const compact = AnchorDensity.compact;
+      const standard = AnchorDensity.standard;
+      expect(compact.lerp(standard, 0), same(compact));
+      expect(compact.lerp(standard, 0.49), same(compact));
+      expect(compact.lerp(standard, 0.5), same(standard));
+      expect(compact.lerp(standard, 1), same(standard));
+      expect(compact.lerp(null, 0.7), same(compact));
     });
 
     test('copyWith replaces only what it is given', () {
-      final dims = AppDimensions.standard.copyWith(md: 99);
-      expect(dims.md, 99);
-      expect(dims.lg, AppDimensions.standard.lg);
+      final density = AnchorDensity.standard.copyWith(space16: 4);
+      expect(density.space16, 4);
+      expect(density.space12, AnchorDensity.standard.space12);
+      expect(density.density, DisplayDensity.standard);
     });
   });
 
@@ -119,63 +154,69 @@ void main() {
     testWidgets('fall back to defaults under a bare MaterialApp', (
       tester,
     ) async {
-      late AppDimensions dims;
-      late AppColorTokens tokens;
+      late AnchorDensity density;
+      late AnchorColors colors;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
             builder: (context) {
-              dims = context.dims;
-              tokens = context.colorTokens;
+              density = context.density;
+              colors = context.anchor;
               return const SizedBox.shrink();
             },
           ),
         ),
       );
 
-      expect(dims, AppDimensions.standard);
-      expect(tokens, AppColorTokens.light);
+      expect(density, AnchorDensity.standard);
+      expect(colors, AnchorColors.light);
     });
 
-    testWidgets('fall back to the dark tokens under a dark bare theme', (
+    testWidgets('fall back to the dark colors under a dark bare theme', (
       tester,
     ) async {
-      late AppColorTokens tokens;
+      late AnchorColors colors;
 
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(),
           home: Builder(
             builder: (context) {
-              tokens = context.colorTokens;
+              colors = context.anchor;
               return const SizedBox.shrink();
             },
           ),
         ),
       );
 
-      expect(tokens, AppColorTokens.dark);
+      expect(colors, AnchorColors.dark);
     });
 
     testWidgets('read the registered extensions when they are present', (
       tester,
     ) async {
-      late AppDimensions dims;
+      late AnchorDensity density;
+      late AnchorColors colors;
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(extensions: const [AppDimensions.compact]),
+          // Dark colors on a light theme show the extension wins.
+          theme: ThemeData(
+            extensions: const [AnchorDensity.compact, AnchorColors.dark],
+          ),
           home: Builder(
             builder: (context) {
-              dims = context.dims;
+              density = context.density;
+              colors = context.anchor;
               return const SizedBox.shrink();
             },
           ),
         ),
       );
 
-      expect(dims, AppDimensions.compact);
+      expect(density, AnchorDensity.compact);
+      expect(colors, AnchorColors.dark);
     });
   });
 }

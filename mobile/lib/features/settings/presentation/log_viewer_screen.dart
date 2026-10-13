@@ -11,10 +11,10 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/logging/app_logger.dart';
-import '../../../core/widgets/app_snackbar.dart';
+import '../../../legacy/core/widgets/app_snackbar.dart';
 import '../../../core/widgets/confirm_dialog.dart';
-import '../../../core/theme/context_extensions.dart';
-import '../../../core/theme/app_typography.dart';
+import '../../../legacy/core/theme/context_extensions.dart';
+import '../../../legacy/core/theme/app_typography.dart';
 import '../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../core/theme/tokens/app_radius.dart';
 

@@ -1,4 +1,4 @@
-import 'package:anchor/core/theme/app_theme.dart';
+import 'package:anchor/legacy/core/theme/app_theme.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_options_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

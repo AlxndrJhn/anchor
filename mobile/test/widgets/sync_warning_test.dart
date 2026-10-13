@@ -1,5 +1,5 @@
 import 'package:anchor/core/session/session_expired_provider.dart';
-import 'package:anchor/core/theme/app_theme.dart';
+import 'package:anchor/legacy/core/theme/app_theme.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
 import 'package:flutter/material.dart';

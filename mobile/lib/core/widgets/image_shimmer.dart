@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../theme/context_extensions.dart';
+import '../../legacy/core/theme/context_extensions.dart';
 
 /// Shimmer placeholder for image loading states.
 /// Adapts to theme for cards/grids, or use [dark] for lightbox/overlays.

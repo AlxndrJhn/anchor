@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:anchor/core/network/connectivity_provider.dart';
+import 'package:anchor/legacy/core/network/connectivity_provider.dart';
 import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/features/notes/data/repository/note_history_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';

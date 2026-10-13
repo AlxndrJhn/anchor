@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:anchor/core/theme/app_theme.dart';
+import 'package:anchor/legacy/core/theme/app_theme.dart';
 import 'package:anchor/features/notes/domain/note_diff.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_diff_view.dart';
 import 'package:flutter/material.dart';

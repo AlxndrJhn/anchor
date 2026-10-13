@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/network/dio_provider.dart';
+import '../../../../legacy/core/network/dio_provider.dart';
 import '../../domain/note_revision.dart';
 import 'note_revisions_store.dart';
 

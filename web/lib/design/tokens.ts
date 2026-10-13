@@ -348,7 +348,8 @@ export const DURATION = {
   "spin": 1000,
   "shimmer": 1400,
   "flash": 1400,
-  "sway": 2400
+  "sway": 2400,
+  "longPress": 420
 } as const;
 
 export const EASE = {
@@ -380,7 +381,11 @@ export const TAILWIND_THEME = {
     "heading",
     "page",
     "page-phone",
-    "display"
+    "display",
+    "large-title",
+    "nav-title",
+    "sheet-title",
+    "row"
   ],
   "spacing": [
     "gutter",
@@ -388,8 +393,16 @@ export const TAILWIND_THEME = {
     "target-min",
     "target-desktop",
     "target-phone",
+    "target-touch",
+    "control-small",
+    "control-medium",
+    "control-large",
+    "icon-small",
+    "icon-medium",
+    "icon-large",
     "field",
     "field-large",
+    "field-phone",
     "chip",
     "chip-card",
     "checkbox",
@@ -401,7 +414,10 @@ export const TAILWIND_THEME = {
     "list-indent-card",
     "sidebar",
     "sidebar-folded",
-    "sidebar-drawer"
+    "sidebar-drawer",
+    "button-phone",
+    "dock",
+    "row"
   ],
   "radius": [
     "xs",

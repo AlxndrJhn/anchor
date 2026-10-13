@@ -8,12 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../network/dio_provider.dart';
+import '../../legacy/core/network/dio_provider.dart';
 import '../network/server_config_provider.dart';
-import '../theme/context_extensions.dart';
+import '../../legacy/core/theme/context_extensions.dart';
 import '../theme/tokens/app_icon_sizes.dart';
 import '../theme/tokens/app_radius.dart';
-import '../widgets/app_snackbar.dart';
+import '../../legacy/core/widgets/app_snackbar.dart';
 import '../widgets/anchor_icon.dart';
 import '../widgets/confirm_dialog.dart';
 

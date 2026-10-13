@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import 'package:anchor/core/theme/context_extensions.dart';
+import 'package:anchor/legacy/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
 
 /// Search field at the top of the notes list.

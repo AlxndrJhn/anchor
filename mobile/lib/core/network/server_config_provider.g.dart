@@ -20,7 +20,7 @@ final class ServerConfigProvider
         argument: null,
         retry: null,
         name: r'serverConfigProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class ServerConfigProvider
   ServerConfig create() => ServerConfig();
 }
 
-String _$serverConfigHash() => r'ff2eda883c4b963cb2a5d107d18b86d199688cc9';
+String _$serverConfigHash() => r'3105fddd460f89532136f1e6bc5bb65cb752e6df';
 
 abstract class _$ServerConfig extends $AsyncNotifier<String?> {
   FutureOr<String?> build();
@@ -53,27 +53,19 @@ abstract class _$ServerConfig extends $AsyncNotifier<String?> {
   }
 }
 
-/// Synchronous provider that returns the current server URL or null.
-/// Use this when you need immediate access without async.
-
 @ProviderFor(serverUrl)
 final serverUrlProvider = ServerUrlProvider._();
-
-/// Synchronous provider that returns the current server URL or null.
-/// Use this when you need immediate access without async.
 
 final class ServerUrlProvider
     extends $FunctionalProvider<String?, String?, String?>
     with $Provider<String?> {
-  /// Synchronous provider that returns the current server URL or null.
-  /// Use this when you need immediate access without async.
   ServerUrlProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'serverUrlProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -100,4 +92,49 @@ final class ServerUrlProvider
   }
 }
 
-String _$serverUrlHash() => r'63a240a49181caae9967d39f599039c1fb394626';
+String _$serverUrlHash() => r'd4257305921fa0bbecbe8621dc4adc024d756f1c';
+
+@ProviderFor(AllowSelfSignedCert)
+final allowSelfSignedCertProvider = AllowSelfSignedCertProvider._();
+
+final class AllowSelfSignedCertProvider
+    extends $AsyncNotifierProvider<AllowSelfSignedCert, bool> {
+  AllowSelfSignedCertProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allowSelfSignedCertProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allowSelfSignedCertHash();
+
+  @$internal
+  @override
+  AllowSelfSignedCert create() => AllowSelfSignedCert();
+}
+
+String _$allowSelfSignedCertHash() =>
+    r'e4e50e0b0f52511fec19be9a829aa94249abce7d';
+
+abstract class _$AllowSelfSignedCert extends $AsyncNotifier<bool> {
+  FutureOr<bool> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<bool>, bool>,
+              AsyncValue<bool>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

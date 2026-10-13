@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../../core/network/dio_provider.dart';
+import '../../../../legacy/core/network/dio_provider.dart';
 import '../../domain/oidc_config.dart';
 
 part 'auth_service.g.dart';

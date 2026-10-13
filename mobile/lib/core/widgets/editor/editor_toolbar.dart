@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../features/notes/presentation/editor/checklist_lines.dart';
 import 'link_utils.dart';
-import '../../theme/context_extensions.dart';
+import '../../../legacy/core/theme/context_extensions.dart';
 import '../../theme/tokens/app_durations.dart';
 import '../../theme/tokens/app_icon_sizes.dart';
 import '../../theme/tokens/app_radius.dart';

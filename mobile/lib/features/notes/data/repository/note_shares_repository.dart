@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/database/app_database.dart';
-import '../../../../core/network/dio_provider.dart';
+import '../../../../legacy/core/network/dio_provider.dart';
 import '../../domain/note_share.dart';
 import '../../domain/note_share_permission.dart';
 

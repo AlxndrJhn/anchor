@@ -1,5 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../core/network/dio_provider.dart';
+import '../../../legacy/core/network/dio_provider.dart';
 
 part 'server_info_provider.g.dart';
 

@@ -1,21 +1,23 @@
+import 'package:anchor/core/theme/anchor_density.dart';
 import 'package:anchor/core/theme/app_theme.dart';
-import 'package:anchor/core/theme/tokens/app_color_tokens.dart';
-import 'package:anchor/core/theme/tokens/app_dimensions.dart';
+import 'package:anchor/core/theme/display_density.dart';
+import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('AppTheme', () {
-    for (final (name, build) in [
-      ('light', AppTheme.light),
-      ('dark', AppTheme.dark),
+    for (final (name, build, colors) in [
+      ('light', AppTheme.light, AnchorColors.light),
+      ('dark', AppTheme.dark, AnchorColors.dark),
     ]) {
       group(name, () {
-        testWidgets('registers both theme extensions', (tester) async {
+        testWidgets('carries the matching colors and density', (tester) async {
           final theme = build();
-          expect(theme.extension<AppDimensions>(), isNotNull);
-          expect(theme.extension<AppColorTokens>(), isNotNull);
+          expect(theme.extension<AnchorColors>(), colors);
+          expect(theme.extension<AnchorDensity>(), AnchorDensity.standard);
         });
 
         testWidgets('color scheme brightness matches the theme', (
@@ -29,64 +31,49 @@ void main() {
           tester,
         ) async {
           final theme = build();
+          expect(theme.scaffoldBackgroundColor, colors.appPage);
           expect(theme.scaffoldBackgroundColor, theme.colorScheme.surface);
         });
 
-        testWidgets('the seed tonal ramp is left intact', (tester) async {
-          final theme = build();
-          final cs = theme.colorScheme;
+        testWidgets('the surface ramp stays distinct from the page', (
+          tester,
+        ) async {
+          final colorScheme = build().colorScheme;
           final ramp = {
-            cs.surfaceContainerLowest,
-            cs.surfaceContainerLow,
-            cs.surfaceContainer,
-            cs.surfaceContainerHigh,
-            cs.surfaceContainerHighest,
+            colorScheme.surfaceContainerLowest,
+            colorScheme.surfaceContainerLow,
+            colorScheme.surfaceContainer,
+            colorScheme.surfaceContainerHigh,
+            colorScheme.surfaceContainerHighest,
           };
           expect(ramp.length, 5);
-          expect(ramp, isNot(contains(cs.surface)));
-          expect(cs.surfaceContainerHighest, isNot(theme.cardTheme.color));
-          expect(cs.surfaceContainerHighest, isNot(cs.surface));
+          expect(ramp, isNot(contains(colorScheme.surface)));
         });
 
-        testWidgets('cards sit on an opaque surface, not the page color', (
-          tester,
-        ) async {
+        testWidgets('text and icons use the text color', (tester) async {
           final theme = build();
-          expect(theme.cardTheme.color, isNotNull);
-          expect(theme.cardTheme.color, isNot(theme.colorScheme.surface));
-          expect(theme.snackBarTheme.backgroundColor, theme.cardTheme.color);
+          expect(theme.colorScheme.onSurface, colors.appText);
+          expect(theme.iconTheme.color, colors.appText);
         });
 
-        testWidgets('carries component defaults so call sites stay thin', (
+        testWidgets('text fields are bare inside the box each one draws', (
           tester,
         ) async {
-          final theme = build();
-          expect(theme.filledButtonTheme.style, isNotNull);
-          expect(theme.outlinedButtonTheme.style, isNotNull);
-          expect(theme.textButtonTheme.style, isNotNull);
-          expect(theme.dividerTheme.color, isNotNull);
-          expect(theme.dialogTheme.shape, isNotNull);
-          expect(theme.bottomSheetTheme.shape, isNotNull);
-          expect(theme.snackBarTheme.shape, isNotNull);
-          expect(theme.inputDecorationTheme.fillColor, isNotNull);
+          final fields = build().inputDecorationTheme;
+          expect(fields.isCollapsed, isTrue);
+          expect(fields.border, InputBorder.none);
+          expect(fields.filled, isFalse);
         });
 
-        testWidgets('divider color comes from the color tokens', (
-          tester,
-        ) async {
-          final theme = build();
+        testWidgets('field hints use the muted color', (tester) async {
           expect(
-            theme.dividerTheme.color,
-            theme.extension<AppColorTokens>()!.subtleBorder,
+            build().inputDecorationTheme.hintStyle?.color,
+            colors.appMuted,
           );
         });
 
-        testWidgets('input fill comes from the color tokens', (tester) async {
-          final theme = build();
-          expect(
-            theme.inputDecorationTheme.fillColor,
-            theme.extension<AppColorTokens>()!.inputFill,
-          );
+        testWidgets('nothing ripples on tap', (tester) async {
+          expect(build().splashFactory, NoSplash.splashFactory);
         });
       });
     }
@@ -115,11 +102,15 @@ void main() {
       );
     });
 
-    testWidgets('density selects the matching dimensions', (tester) async {
+    testWidgets('density selects the matching extension', (tester) async {
       for (final density in DisplayDensity.values) {
         expect(
-          AppTheme.light(density).extension<AppDimensions>(),
-          AppDimensions.of(density),
+          AppTheme.light(density).extension<AnchorDensity>(),
+          AnchorDensity.of(density),
+        );
+        expect(
+          AppTheme.dark(density).extension<AnchorDensity>()!.isCompact,
+          density == DisplayDensity.compact,
         );
       }
     });

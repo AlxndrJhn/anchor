@@ -2,7 +2,7 @@
   "$description": "Anchor design tokens that stay the same in light and dark. Format: W3C Design Tokens Format Module 2025.10. The resolver (anchor.resolver.json) adds light.tokens.json or dark.tokens.json on top.",
   "$extensions": {
     "app.anchor": {
-      "updated": "2026-09-29",
+      "updated": "2026-10-09",
       "catalog": {
         "about": "What the apps store and in which order. Notes save a background id, never a color; tags save their palette color.",
         "backgrounds": {
@@ -297,11 +297,11 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.1098,
-            0.1176,
-            0.149
+            0.0667,
+            0.0706,
+            0.0784
           ],
-          "hex": "#1c1e26"
+          "hex": "#111214"
         },
         "$description": "Dark page"
       },
@@ -309,11 +309,11 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.149,
-            0.1647,
-            0.2118
+            0.1098,
+            0.1137,
+            0.1294
           ],
-          "hex": "#262a36"
+          "hex": "#1c1d21"
         },
         "$description": "Dark surface"
       },
@@ -357,7 +357,7 @@
     "accent": {
       "fill": {
         "$value": "{color.brand.orange}",
-        "$description": "Large fills and tints only: text selection, the drop area, the logo"
+        "$description": "Large fills and tints only: text selection and the drop area"
       }
     },
     "control": {
@@ -1067,10 +1067,10 @@
     },
     "4xl": {
       "$value": {
-        "value": 26,
+        "value": 28,
         "unit": "px"
       },
-      "$description": "Sheets on phones"
+      "$description": "Phone: sheets, dialogs and the drawer"
     },
     "note": {
       "$value": {
@@ -1150,6 +1150,56 @@
           "unit": "px"
         },
         "$description": "Icon buttons on phones"
+      },
+      "touch": {
+        "$value": {
+          "value": 44,
+          "unit": "px"
+        },
+        "$description": "Phone: the smallest thing a finger can tap; Android pads it to 48 with the hit area, not the drawing"
+      }
+    },
+    "control": {
+      "small": {
+        "$value": {
+          "value": 32,
+          "unit": "px"
+        },
+        "$description": "Phone: small buttons and pills, like Done in a sheet; the touch area stays 44"
+      },
+      "medium": {
+        "$value": "{size.target.touch}",
+        "$description": "Phone: icon buttons, segmented controls, menu items, the toolbar, search in a sheet"
+      },
+      "large": {
+        "$value": {
+          "value": 52,
+          "unit": "px"
+        },
+        "$description": "Phone: buttons, fields, one-line rows, the dock"
+      }
+    },
+    "icon": {
+      "small": {
+        "$value": {
+          "value": 16,
+          "unit": "px"
+        },
+        "$description": "Phone: in small text and small controls: meta lines, chips, help, counts"
+      },
+      "medium": {
+        "$value": {
+          "value": 20,
+          "unit": "px"
+        },
+        "$description": "Phone: in rows, fields, menus, buttons, banners"
+      },
+      "large": {
+        "$value": {
+          "value": 24,
+          "unit": "px"
+        },
+        "$description": "Phone: in bars, the toolbar, the dock and the selection bar"
       }
     },
     "field": {
@@ -1166,6 +1216,10 @@
           "unit": "px"
         },
         "$description": "Text fields and buttons on sign in"
+      },
+      "phone": {
+        "$value": "{size.control.large}",
+        "$description": "Phone: text fields"
       }
     },
     "chip": {
@@ -1265,6 +1319,129 @@
           "unit": "px"
         },
         "$description": "The drawer on phones"
+      }
+    },
+    "button": {
+      "$type": "dimension",
+      "phone": {
+        "$value": "{size.control.large}",
+        "$description": "Phone: buttons in sheets, forms and docks"
+      }
+    },
+    "dock": {
+      "$value": "{size.control.large}",
+      "$description": "Phone: the floating search field and the round buttons beside it"
+    },
+    "row": {
+      "$value": "{size.control.large}",
+      "$description": "Phone: the least height of a row in a grouped list; a row with a second line grows, 12 above and below"
+    }
+  },
+  "density": {
+    "$type": "dimension",
+    "$description": "Phone: Settings > Density. Compact moves vertical space one step down the spacing scale and every 52 to 44, shows shorter previews on cards and sets note lines a little closer. The 16 edge and other space across the screen, text sizes, icons, corners and touch areas stay the same.",
+    "default": {
+      "space": {
+        "8": {
+          "$value": "{space.8}"
+        },
+        "12": {
+          "$value": "{space.12}"
+        },
+        "16": {
+          "$value": "{space.16}"
+        },
+        "24": {
+          "$value": "{space.24}"
+        },
+        "32": {
+          "$value": "{space.32}"
+        },
+        "48": {
+          "$value": "{space.48}"
+        },
+        "$description": "Vertical space: before a section, inside boxes, between fields, rows and cards"
+      },
+      "control": {
+        "$value": "{size.control.large}",
+        "$description": "Buttons, fields, one-line rows, the dock, New note and snackbars"
+      },
+      "bar": {
+        "$value": "{size.control.large}",
+        "$description": "The top bar under the status bar"
+      },
+      "noteLineHeight": {
+        "$type": "number",
+        "$value": 1.7,
+        "$description": "Line height of note text in the editor and versions"
+      },
+      "preview": {
+        "$type": "number",
+        "$description": "Most blocks a card shows, and most pictures",
+        "masonry": {
+          "$value": 6
+        },
+        "grid": {
+          "$value": 4
+        },
+        "list": {
+          "$value": 2
+        },
+        "pictures": {
+          "$value": 4
+        }
+      }
+    },
+    "compact": {
+      "space": {
+        "8": {
+          "$value": "{space.4}"
+        },
+        "12": {
+          "$value": "{space.8}"
+        },
+        "16": {
+          "$value": "{space.12}"
+        },
+        "24": {
+          "$value": "{space.16}"
+        },
+        "32": {
+          "$value": "{space.24}"
+        },
+        "48": {
+          "$value": "{space.32}"
+        },
+        "$description": "One step down: 8 to 4, 12 to 8, 16 to 12, 24 to 16, 32 to 24, 48 to 32"
+      },
+      "control": {
+        "$value": "{size.control.medium}",
+        "$description": "What is 52 at Default is 44, still a full touch area"
+      },
+      "bar": {
+        "$value": "{size.control.medium}",
+        "$description": "The top bar under the status bar, as tall as its buttons"
+      },
+      "noteLineHeight": {
+        "$type": "number",
+        "$value": 1.55,
+        "$description": "Line height of note text in the editor and versions"
+      },
+      "preview": {
+        "$type": "number",
+        "$description": "Most blocks a card shows, and most pictures (one row)",
+        "masonry": {
+          "$value": 4
+        },
+        "grid": {
+          "$value": 3
+        },
+        "list": {
+          "$value": 1
+        },
+        "pictures": {
+          "$value": 2
+        }
       }
     }
   },
@@ -1716,6 +1893,70 @@
         "lineHeight": 1.15
       },
       "$description": "Sign in and big numbers"
+    },
+    "largeTitle": {
+      "$value": {
+        "fontFamily": "{font.family.serif}",
+        "fontSize": {
+          "value": 28,
+          "unit": "px"
+        },
+        "fontWeight": "{font.weight.bold}",
+        "letterSpacing": {
+          "value": -0.28,
+          "unit": "px"
+        },
+        "lineHeight": 1.15
+      },
+      "$description": "Phone: a page title at the top of a list, before it collapses into the bar. Lining figures."
+    },
+    "navTitle": {
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": {
+          "value": 17,
+          "unit": "px"
+        },
+        "fontWeight": "{font.weight.semibold}",
+        "letterSpacing": {
+          "value": -0.17,
+          "unit": "px"
+        },
+        "lineHeight": 1.3
+      },
+      "$description": "Phone: the title in the bar once the large title has scrolled away"
+    },
+    "sheetTitle": {
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": {
+          "value": 20,
+          "unit": "px"
+        },
+        "fontWeight": "{font.weight.bold}",
+        "letterSpacing": {
+          "value": -0.3,
+          "unit": "px"
+        },
+        "lineHeight": 1.25
+      },
+      "$description": "Phone: the title of a sheet"
+    },
+    "row": {
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontSize": {
+          "value": 16,
+          "unit": "px"
+        },
+        "fontWeight": "{font.weight.regular}",
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        },
+        "lineHeight": 1.35
+      },
+      "$description": "Phone: rows, buttons, fields and search"
     }
   },
   "heading": {
@@ -1916,6 +2157,13 @@
           "unit": "ms"
         },
         "$description": "One slow sway: the floating cards on sign in, the waiting picture"
+      },
+      "longPress": {
+        "$value": {
+          "value": 420,
+          "unit": "ms"
+        },
+        "$description": "Phone: how long a finger rests before a long press starts selecting"
       }
     },
     "ease": {
@@ -1964,6 +2212,65 @@
           1
         ],
         "$description": "Things that sway and settle: the floating cards, the waiting picture"
+      }
+    },
+    "spring": {
+      "$description": "Phone springs, as Flutter’s SpringDescription.withDurationAndBounce: duration is how long it takes to look settled, bounce 0 never overshoots.",
+      "smooth": {
+        "duration": {
+          "$type": "duration",
+          "$value": {
+            "value": 500,
+            "unit": "ms"
+          }
+        },
+        "bounce": {
+          "$type": "number",
+          "$value": 0
+        },
+        "$description": "Pages, sheets, the drawer, a card growing into its note. Nothing that moves this far bounces."
+      },
+      "snappy": {
+        "duration": {
+          "$type": "duration",
+          "$value": {
+            "value": 320,
+            "unit": "ms"
+          }
+        },
+        "bounce": {
+          "$type": "number",
+          "$value": 0.12
+        },
+        "$description": "Presses, switches, the dock, a card settling after a swipe"
+      },
+      "pop": {
+        "duration": {
+          "$type": "duration",
+          "$value": {
+            "value": 420,
+            "unit": "ms"
+          }
+        },
+        "bounce": {
+          "$type": "number",
+          "$value": 0.35
+        },
+        "$description": "Small things only: a check mark, a new chip, the selection checks"
+      },
+      "keyboard": {
+        "duration": {
+          "$type": "duration",
+          "$value": {
+            "value": 380,
+            "unit": "ms"
+          }
+        },
+        "bounce": {
+          "$type": "number",
+          "$value": 0
+        },
+        "$description": "The keyboard and whatever rides on it"
       }
     }
   },

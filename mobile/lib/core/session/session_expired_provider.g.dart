@@ -8,18 +8,12 @@ part of 'session_expired_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// True once the server refuses this device's sign-in, until the user signs
-/// in again.
 
 @ProviderFor(SessionExpired)
 final sessionExpiredProvider = SessionExpiredProvider._();
 
-/// True once the server refuses this device's sign-in, until the user signs
-/// in again.
 final class SessionExpiredProvider
     extends $NotifierProvider<SessionExpired, bool> {
-  /// True once the server refuses this device's sign-in, until the user signs
-  /// in again.
   SessionExpiredProvider._()
     : super(
         from: null,
@@ -48,9 +42,6 @@ final class SessionExpiredProvider
 }
 
 String _$sessionExpiredHash() => r'4a02224219e9ba4b009f929812cc6fd59ab015d9';
-
-/// True once the server refuses this device's sign-in, until the user signs
-/// in again.
 
 abstract class _$SessionExpired extends $Notifier<bool> {
   bool build();

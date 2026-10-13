@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/settings_card.dart';
 import '../../../core/widgets/large_title_app_bar.dart';
 import 'auth_controller.dart';
-import '../../../core/theme/context_extensions.dart';
+import '../../../legacy/core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_radius.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {

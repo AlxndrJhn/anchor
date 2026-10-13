@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:anchor/core/logging/app_logger.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 /// Runs around every test file in this package (flutter_test convention).
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
-  // Keep test output quiet: only warn/error reach the console. The in-memory
-  // log buffer still records everything for tests that assert on it.
+  // Only the console is quieted; the log buffer still records everything.
   AppLogger.instance.consoleLevel = LogLevel.warn;
+  await initializeDateFormatting();
   await testMain();
 }

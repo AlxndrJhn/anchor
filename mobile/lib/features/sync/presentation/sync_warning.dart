@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/session/session_expired_provider.dart';
-import '../../../core/theme/context_extensions.dart';
+import '../../../legacy/core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../core/theme/tokens/app_radius.dart';
 import '../../../core/widgets/confirm_dialog.dart';

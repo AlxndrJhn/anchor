@@ -9,7 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/logging/app_logger.dart';
-import '../../../../core/network/dio_provider.dart';
+import '../../../../legacy/core/network/dio_provider.dart';
 import '../../../../core/network/sync_requester.dart';
 import '../../domain/note_attachment.dart' as domain;
 

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../../core/network/dio_provider.dart';
+import '../../../../legacy/core/network/dio_provider.dart';
 import '../../domain/user_search_result.dart';
 
 part 'users_repository.g.dart';

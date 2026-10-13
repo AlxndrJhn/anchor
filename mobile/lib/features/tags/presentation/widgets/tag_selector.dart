@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../domain/tag.dart';
 import '../tags_controller.dart';
 import 'tag_chip.dart';
-import '../../../../core/theme/context_extensions.dart';
+import '../../../../legacy/core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_durations.dart';
 import '../../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../../core/theme/tokens/app_opacity.dart';

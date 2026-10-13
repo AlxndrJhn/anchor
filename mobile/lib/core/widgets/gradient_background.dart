@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/context_extensions.dart';
+import '../../legacy/core/theme/context_extensions.dart';
 import '../theme/tokens/app_opacity.dart';
 
 /// Which full-screen wash a page sits on.

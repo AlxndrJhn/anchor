@@ -5,7 +5,7 @@ import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/core/widgets/quill_preview.dart'
     show extractPlainTextFromQuillContent;
-import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import '../notes_controller.dart';
 import 'package:anchor/core/widgets/app_bottom_sheet.dart';

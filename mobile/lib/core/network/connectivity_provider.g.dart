@@ -28,7 +28,7 @@ final class ConnectivityStreamProvider
         argument: null,
         retry: null,
         name: r'connectivityStreamProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -49,58 +49,7 @@ final class ConnectivityStreamProvider
 }
 
 String _$connectivityStreamHash() =>
-    r'dbd2c4ce5970f1f97dad2730821bb5ca0b99c327';
-
-@ProviderFor(SyncManager)
-final syncManagerProvider = SyncManagerProvider._();
-
-final class SyncManagerProvider extends $NotifierProvider<SyncManager, bool> {
-  SyncManagerProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'syncManagerProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$syncManagerHash();
-
-  @$internal
-  @override
-  SyncManager create() => SyncManager();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(bool value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<bool>(value),
-    );
-  }
-}
-
-String _$syncManagerHash() => r'16ae8ba90dd84c9cd09a37c76b5eb77aa2ae9341';
-
-abstract class _$SyncManager extends $Notifier<bool> {
-  bool build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<bool, bool>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<bool, bool>,
-              bool,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
+    r'9f60aae6c128e0af3ad3f37236c4f05ce64c4a99';
 
 @ProviderFor(isOnline)
 final isOnlineProvider = IsOnlineProvider._();

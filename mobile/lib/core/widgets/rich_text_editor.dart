@@ -6,10 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../theme/context_extensions.dart';
+import '../../legacy/core/theme/context_extensions.dart';
 import '../theme/tokens/app_durations.dart';
 import '../theme/tokens/app_icon_sizes.dart';
-import 'app_snackbar.dart';
+import '../../legacy/core/widgets/app_snackbar.dart';
 import 'editor/checklist_drag_mixin.dart';
 import 'editor/checklist_reorder_mixin.dart';
 import 'editor/editor_styles.dart';
