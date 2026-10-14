@@ -5,7 +5,7 @@ import '../../../../legacy/core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../../core/theme/tokens/app_radius.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
-import '../../domain/tag.dart';
+import '../../../../legacy/features/tags/domain/tag.dart';
 
 enum TagSheetAction { rename, delete }
 

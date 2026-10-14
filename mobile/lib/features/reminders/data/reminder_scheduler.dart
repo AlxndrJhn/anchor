@@ -7,10 +7,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../auth/presentation/auth_controller.dart';
 import '../../notes/data/repository/notes_repository.dart';
-import '../../notes/domain/note.dart' as domain;
-import '../domain/reminder_schedule.dart';
+import '../../../legacy/features/notes/domain/note.dart' as domain;
+import '../../../legacy/features/reminders/domain/reminder_schedule.dart';
 import '../../../core/logging/app_logger.dart';
-import '../../../core/session/active_user_id_provider.dart';
+import '../../../legacy/core/session/active_user_id_provider.dart';
 import '../../../core/widgets/quill_preview.dart';
 import 'notification_gateway.dart';
 

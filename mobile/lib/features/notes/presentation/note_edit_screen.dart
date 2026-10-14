@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:anchor/core/logging/app_logger.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
-import 'package:anchor/core/session/active_user_id_provider.dart';
+import 'package:anchor/legacy/core/session/active_user_id_provider.dart';
 import 'package:anchor/core/router/app_routes.dart';
 import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/core/widgets/rich_text_editor.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_attachments_gallery.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_audio_recorder_sheet.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_background.dart';

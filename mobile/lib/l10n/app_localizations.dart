@@ -333,6 +333,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 log copied} other{{count} logs copied}}'**
   String logsCopied(int count);
+
+  /// Name of an audio recording made in the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note'**
+  String get voiceNote;
 }
 
 class _AppLocalizationsDelegate

@@ -6,7 +6,7 @@ import 'package:anchor/legacy/core/theme/context_extensions.dart';
 import 'package:anchor/legacy/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/app_page_scaffold.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
 

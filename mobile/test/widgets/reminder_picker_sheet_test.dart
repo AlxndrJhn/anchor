@@ -1,6 +1,6 @@
 import 'package:anchor/legacy/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/app_bottom_sheet.dart';
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/widgets/reminder_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

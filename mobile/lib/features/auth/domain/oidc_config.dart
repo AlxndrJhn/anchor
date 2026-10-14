@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'oidc_config.freezed.dart';
 part 'oidc_config.g.dart';
 
-/// OIDC configuration
 @freezed
 abstract class OidcConfig with _$OidcConfig {
   const factory OidcConfig({

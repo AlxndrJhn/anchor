@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 
 enum ViewType { grid, list }
 

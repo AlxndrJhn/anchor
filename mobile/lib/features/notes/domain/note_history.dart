@@ -1,51 +1,26 @@
-import 'package:intl/intl.dart';
-
+import 'note.dart';
+import 'note_dates.dart';
 import 'note_revision.dart';
+import 'version_diff.dart';
 
-/// Revisions from one calendar day, newest first.
+/// Stands in for a revision id to read the note as it is now.
+const String currentVersionId = 'current';
+
+typedef RestoredVersion = ({
+  String previousTitle,
+  String? previousContent,
+  NoteRevision revision,
+});
+
+/// How many lines a version added, removed and changed.
+typedef LineCounts = ({int added, int removed, int changed});
+
 class HistoryDay {
-  const HistoryDay({required this.label, required this.revisions});
+  const HistoryDay({required this.date, required this.revisions});
 
-  final String label;
+  final DateTime date;
   final List<NoteRevision> revisions;
 }
-
-/// Time of day a version was kept, e.g. "4:05 PM".
-String revisionTime(NoteRevision revision) =>
-    DateFormat('h:mm a').format(revision.createdAtLocal);
-
-/// Day and time of a version, e.g. "Yesterday at 4:05 PM".
-String revisionDayTime(NoteRevision revision, {DateTime? now}) =>
-    dayTimeLabel(revision.createdAtLocal, now: now);
-
-String dayTimeLabel(DateTime date, {DateTime? now}) {
-  final local = date.toLocal();
-  final day = dayLabel(local, now ?? DateTime.now());
-  return '$day at ${DateFormat('h:mm a').format(local)}';
-}
-
-String dayLabel(DateTime date, DateTime now) {
-  if (_isSameDay(date, now)) return 'Today';
-  if (_isSameDay(date, now.subtract(const Duration(days: 1)))) {
-    return 'Yesterday';
-  }
-  return DateFormat('MMMM d, yyyy').format(date);
-}
-
-bool _isSameDay(DateTime a, DateTime b) =>
-    a.year == b.year && a.month == b.month && a.day == b.day;
-
-String revisionLabel(RevisionCause cause) => switch (cause) {
-  RevisionCause.edit => 'Earlier version',
-  RevisionCause.conflict => 'Not saved',
-  RevisionCause.restore => 'Before a restore',
-};
-
-String? revisionHint(RevisionCause cause) => switch (cause) {
-  RevisionCause.edit => null,
-  RevisionCause.conflict => 'Not saved. The note had already changed.',
-  RevisionCause.restore => 'What the note said before a restore.',
-};
 
 bool historyHasMultipleAuthors(List<NoteRevision> revisions) =>
     revisions
@@ -54,20 +29,8 @@ bool historyHasMultipleAuthors(List<NoteRevision> revisions) =>
         .length >
     1;
 
-String revisionAuthorName(NoteRevision revision, String? currentUserId) {
-  final author = revision.author;
-  if (author == null) return 'Someone';
-  return author.id == currentUserId ? 'You' : author.name;
-}
-
-String revisionAuthorInitial(NoteRevisionAuthor? author) {
-  final name = author?.name.trim() ?? '';
-  return name.isEmpty ? '?' : name[0].toUpperCase();
-}
-
-/// The version a revision is read against: the next newer one that reached
-/// the note, or null for the note as it is now. Conflicts never reached it,
-/// so they are skipped as targets and always read against the note.
+/// The next newer version that reached the note, or null for the note as it
+/// is now. Conflict copies are never targets and always read against the note.
 NoteRevision? comparisonTarget(
   List<NoteRevision> revisions,
   String revisionId,
@@ -83,23 +46,74 @@ NoteRevision? comparisonTarget(
   return null;
 }
 
-List<HistoryDay> groupRevisionsByDay(
-  List<NoteRevision> revisions, {
-  DateTime? now,
-}) {
-  final today = now ?? DateTime.now();
+List<HistoryDay> groupRevisionsByDay(List<NoteRevision> revisions) {
   final days = <HistoryDay>[];
   DateTime? currentDate;
 
   for (final revision in revisions) {
     final date = revision.createdAtLocal;
-    if (currentDate != null && _isSameDay(currentDate, date)) {
+    if (currentDate != null && isSameDay(currentDate, date)) {
       days.last.revisions.add(revision);
       continue;
     }
     currentDate = date;
-    days.add(HistoryDay(label: dayLabel(date, today), revisions: [revision]));
+    days.add(HistoryDay(date: date, revisions: [revision]));
   }
 
   return days;
+}
+
+class VersionChange {
+  const VersionChange({
+    required this.diff,
+    required this.target,
+    required this.nextTitle,
+  });
+
+  final VersionDiff diff;
+
+  /// Null for the note as it is now.
+  final NoteRevision? target;
+
+  /// Null when the note isn't here.
+  final String? nextTitle;
+
+  bool isTitleChangedFrom(String title) =>
+      nextTitle != null && storedTitleOf(nextTitle!) != storedTitleOf(title);
+
+  /// A new title counts as one more changed line.
+  LineCounts lineCountsFrom(String title) => (
+    added: diff.added,
+    removed: diff.removed,
+    changed: diff.changed + (isTitleChangedFrom(title) ? 1 : 0),
+  );
+}
+
+class VersionChanges {
+  final Map<(String, String?, String?), VersionDiff> _diffs = {};
+
+  VersionChange of(
+    List<NoteRevision> revisions,
+    NoteRevision revision,
+    Note? note,
+  ) {
+    final target = comparisonTarget(revisions, revision.id);
+    final after = target?.content ?? note?.content;
+    final diff = _diffs.putIfAbsent((
+      revision.id,
+      target?.id,
+      after,
+    ), () => diffVersions(revision.content, after));
+    return VersionChange(
+      diff: diff,
+      target: target,
+      nextTitle: target?.title ?? note?.title,
+    );
+  }
+
+  VersionDiff current(Note? note) => _diffs.putIfAbsent((
+    currentVersionId,
+    null,
+    note?.content,
+  ), () => diffVersions(note?.content, note?.content));
 }

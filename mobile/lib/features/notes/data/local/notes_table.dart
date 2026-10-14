@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+@DataClassName('NoteRow')
 class Notes extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
@@ -13,9 +14,9 @@ class Notes extends Table {
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   // The server version this note was written against; null until it exists there.
   IntColumn get version => integer().nullable()();
-  // Counts up on every local edit, so an upload can tell if it was overtaken.
+  // Must go up on every local edit.
   IntColumn get localRev => integer().withDefault(const Constant(0))();
-  // A pin belongs to the person, not the note, so it syncs on its own.
+  // Pins are per user and sync on their own.
   BoolColumn get isPinSynced => boolean().withDefault(const Constant(true))();
 
   // The note as the server last confirmed it; null until confirmed.
@@ -34,7 +35,6 @@ class Notes extends Table {
   // Local only, never synced: the OS notification id this note occupies.
   IntColumn get reminderSlot => integer().nullable()();
 
-  // Sharing fields
   TextColumn get permission => text().withDefault(const Constant('owner'))();
   TextColumn get shareIds => text().nullable()(); // JSON array of user IDs
   TextColumn get sharedById => text().nullable()();

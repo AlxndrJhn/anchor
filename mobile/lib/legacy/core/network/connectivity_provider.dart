@@ -10,7 +10,7 @@ import '../../../features/sync/data/sync_compatibility.dart';
 import '../../../features/sync/data/sync_events.dart';
 import '../../../features/sync/data/sync_service.dart';
 import '../../../core/logging/app_logger.dart';
-import '../../../core/session/active_user_id_provider.dart';
+import '../session/active_user_id_provider.dart';
 import '../../../core/session/session_expired_provider.dart';
 import '../../../core/network/server_config_provider.dart';
 import '../../../core/network/anchor_protocol.dart';

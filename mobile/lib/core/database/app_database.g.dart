@@ -3,7 +3,7 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
+class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -359,7 +359,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
   static const String $name = 'notes';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Note> instance, {
+    Insertable<NoteRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -572,9 +572,9 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Note map(Map<String, dynamic> data, {String? tablePrefix}) {
+  NoteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Note(
+    return NoteRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -692,7 +692,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
   }
 }
 
-class Note extends DataClass implements Insertable<Note> {
+class NoteRow extends DataClass implements Insertable<NoteRow> {
   final String id;
   final String title;
   final String? content;
@@ -720,7 +720,7 @@ class Note extends DataClass implements Insertable<Note> {
   final String? sharedByName;
   final String? sharedByEmail;
   final String? sharedByProfileImage;
-  const Note({
+  const NoteRow({
     required this.id,
     required this.title,
     this.content,
@@ -882,12 +882,12 @@ class Note extends DataClass implements Insertable<Note> {
     );
   }
 
-  factory Note.fromJson(
+  factory NoteRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Note(
+    return NoteRow(
       id: serializer.fromJson<String>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String?>(json['content']),
@@ -955,7 +955,7 @@ class Note extends DataClass implements Insertable<Note> {
     };
   }
 
-  Note copyWith({
+  NoteRow copyWith({
     String? id,
     String? title,
     Value<String?> content = const Value.absent(),
@@ -983,7 +983,7 @@ class Note extends DataClass implements Insertable<Note> {
     Value<String?> sharedByName = const Value.absent(),
     Value<String?> sharedByEmail = const Value.absent(),
     Value<String?> sharedByProfileImage = const Value.absent(),
-  }) => Note(
+  }) => NoteRow(
     id: id ?? this.id,
     title: title ?? this.title,
     content: content.present ? content.value : this.content,
@@ -1024,8 +1024,8 @@ class Note extends DataClass implements Insertable<Note> {
         ? sharedByProfileImage.value
         : this.sharedByProfileImage,
   );
-  Note copyWithCompanion(NotesCompanion data) {
-    return Note(
+  NoteRow copyWithCompanion(NotesCompanion data) {
+    return NoteRow(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
@@ -1092,7 +1092,7 @@ class Note extends DataClass implements Insertable<Note> {
 
   @override
   String toString() {
-    return (StringBuffer('Note(')
+    return (StringBuffer('NoteRow(')
           ..write('id: $id, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
@@ -1157,7 +1157,7 @@ class Note extends DataClass implements Insertable<Note> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Note &&
+      (other is NoteRow &&
           other.id == this.id &&
           other.title == this.title &&
           other.content == this.content &&
@@ -1187,7 +1187,7 @@ class Note extends DataClass implements Insertable<Note> {
           other.sharedByProfileImage == this.sharedByProfileImage);
 }
 
-class NotesCompanion extends UpdateCompanion<Note> {
+class NotesCompanion extends UpdateCompanion<NoteRow> {
   final Value<String> id;
   final Value<String> title;
   final Value<String?> content;
@@ -1277,7 +1277,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title);
-  static Insertable<Note> custom({
+  static Insertable<NoteRow> custom({
     Expression<String>? id,
     Expression<String>? title,
     Expression<String>? content,
@@ -1530,7 +1530,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
   }
 }
 
-class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
+class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1644,7 +1644,7 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
   static const String $name = 'tags';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Tag> instance, {
+    Insertable<TagRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1704,9 +1704,9 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Tag map(Map<String, dynamic> data, {String? tablePrefix}) {
+  TagRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Tag(
+    return TagRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -1748,7 +1748,7 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
   }
 }
 
-class Tag extends DataClass implements Insertable<Tag> {
+class TagRow extends DataClass implements Insertable<TagRow> {
   final String id;
   final String name;
   final String? color;
@@ -1757,7 +1757,7 @@ class Tag extends DataClass implements Insertable<Tag> {
   final bool isDeleted;
   final int? version;
   final int localRev;
-  const Tag({
+  const TagRow({
     required this.id,
     required this.name,
     this.color,
@@ -1806,12 +1806,12 @@ class Tag extends DataClass implements Insertable<Tag> {
     );
   }
 
-  factory Tag.fromJson(
+  factory TagRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Tag(
+    return TagRow(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       color: serializer.fromJson<String?>(json['color']),
@@ -1837,7 +1837,7 @@ class Tag extends DataClass implements Insertable<Tag> {
     };
   }
 
-  Tag copyWith({
+  TagRow copyWith({
     String? id,
     String? name,
     Value<String?> color = const Value.absent(),
@@ -1846,7 +1846,7 @@ class Tag extends DataClass implements Insertable<Tag> {
     bool? isDeleted,
     Value<int?> version = const Value.absent(),
     int? localRev,
-  }) => Tag(
+  }) => TagRow(
     id: id ?? this.id,
     name: name ?? this.name,
     color: color.present ? color.value : this.color,
@@ -1856,8 +1856,8 @@ class Tag extends DataClass implements Insertable<Tag> {
     version: version.present ? version.value : this.version,
     localRev: localRev ?? this.localRev,
   );
-  Tag copyWithCompanion(TagsCompanion data) {
-    return Tag(
+  TagRow copyWithCompanion(TagsCompanion data) {
+    return TagRow(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       color: data.color.present ? data.color.value : this.color,
@@ -1871,7 +1871,7 @@ class Tag extends DataClass implements Insertable<Tag> {
 
   @override
   String toString() {
-    return (StringBuffer('Tag(')
+    return (StringBuffer('TagRow(')
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('color: $color, ')
@@ -1898,7 +1898,7 @@ class Tag extends DataClass implements Insertable<Tag> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Tag &&
+      (other is TagRow &&
           other.id == this.id &&
           other.name == this.name &&
           other.color == this.color &&
@@ -1909,7 +1909,7 @@ class Tag extends DataClass implements Insertable<Tag> {
           other.localRev == this.localRev);
 }
 
-class TagsCompanion extends UpdateCompanion<Tag> {
+class TagsCompanion extends UpdateCompanion<TagRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String?> color;
@@ -1942,7 +1942,7 @@ class TagsCompanion extends UpdateCompanion<Tag> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
-  static Insertable<Tag> custom({
+  static Insertable<TagRow> custom({
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? color,
@@ -2248,7 +2248,7 @@ class NoteTagsCompanion extends UpdateCompanion<NoteTag> {
 }
 
 class $NoteAttachmentsTable extends NoteAttachments
-    with TableInfo<$NoteAttachmentsTable, NoteAttachment> {
+    with TableInfo<$NoteAttachmentsTable, AttachmentRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -2404,7 +2404,7 @@ class $NoteAttachmentsTable extends NoteAttachments
   static const String $name = 'note_attachments';
   @override
   VerificationContext validateIntegrity(
-    Insertable<NoteAttachment> instance, {
+    Insertable<AttachmentRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -2505,9 +2505,9 @@ class $NoteAttachmentsTable extends NoteAttachments
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  NoteAttachment map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AttachmentRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return NoteAttachment(
+    return AttachmentRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -2565,7 +2565,7 @@ class $NoteAttachmentsTable extends NoteAttachments
   }
 }
 
-class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
+class AttachmentRow extends DataClass implements Insertable<AttachmentRow> {
   final String id;
   final String noteId;
   final String type;
@@ -2578,7 +2578,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
   final String? serverAttachmentId;
   final String? uploadedByUserId;
   final DateTime createdAt;
-  const NoteAttachment({
+  const AttachmentRow({
     required this.id,
     required this.noteId,
     required this.type,
@@ -2639,12 +2639,12 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     );
   }
 
-  factory NoteAttachment.fromJson(
+  factory AttachmentRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return NoteAttachment(
+    return AttachmentRow(
       id: serializer.fromJson<String>(json['id']),
       noteId: serializer.fromJson<String>(json['noteId']),
       type: serializer.fromJson<String>(json['type']),
@@ -2680,7 +2680,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     };
   }
 
-  NoteAttachment copyWith({
+  AttachmentRow copyWith({
     String? id,
     String? noteId,
     String? type,
@@ -2693,7 +2693,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     Value<String?> serverAttachmentId = const Value.absent(),
     Value<String?> uploadedByUserId = const Value.absent(),
     DateTime? createdAt,
-  }) => NoteAttachment(
+  }) => AttachmentRow(
     id: id ?? this.id,
     noteId: noteId ?? this.noteId,
     type: type ?? this.type,
@@ -2711,8 +2711,8 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
         : this.uploadedByUserId,
     createdAt: createdAt ?? this.createdAt,
   );
-  NoteAttachment copyWithCompanion(NoteAttachmentsCompanion data) {
-    return NoteAttachment(
+  AttachmentRow copyWithCompanion(NoteAttachmentsCompanion data) {
+    return AttachmentRow(
       id: data.id.present ? data.id.value : this.id,
       noteId: data.noteId.present ? data.noteId.value : this.noteId,
       type: data.type.present ? data.type.value : this.type,
@@ -2738,7 +2738,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
 
   @override
   String toString() {
-    return (StringBuffer('NoteAttachment(')
+    return (StringBuffer('AttachmentRow(')
           ..write('id: $id, ')
           ..write('noteId: $noteId, ')
           ..write('type: $type, ')
@@ -2773,7 +2773,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is NoteAttachment &&
+      (other is AttachmentRow &&
           other.id == this.id &&
           other.noteId == this.noteId &&
           other.type == this.type &&
@@ -2788,7 +2788,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
           other.createdAt == this.createdAt);
 }
 
-class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
+class NoteAttachmentsCompanion extends UpdateCompanion<AttachmentRow> {
   final Value<String> id;
   final Value<String> noteId;
   final Value<String> type;
@@ -2837,7 +2837,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
        originalFilename = Value(originalFilename),
        mimeType = Value(mimeType),
        fileSize = Value(fileSize);
-  static Insertable<NoteAttachment> custom({
+  static Insertable<AttachmentRow> custom({
     Expression<String>? id,
     Expression<String>? noteId,
     Expression<String>? type,
@@ -4895,14 +4895,14 @@ class $$NotesTableTableManager
         RootTableManager<
           _$AppDatabase,
           $NotesTable,
-          Note,
+          NoteRow,
           $$NotesTableFilterComposer,
           $$NotesTableOrderingComposer,
           $$NotesTableAnnotationComposer,
           $$NotesTableCreateCompanionBuilder,
           $$NotesTableUpdateCompanionBuilder,
-          (Note, BaseReferences<_$AppDatabase, $NotesTable, Note>),
-          Note,
+          (NoteRow, BaseReferences<_$AppDatabase, $NotesTable, NoteRow>),
+          NoteRow,
           PrefetchHooks Function()
         > {
   $$NotesTableTableManager(_$AppDatabase db, $NotesTable table)
@@ -5048,14 +5048,14 @@ typedef $$NotesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $NotesTable,
-      Note,
+      NoteRow,
       $$NotesTableFilterComposer,
       $$NotesTableOrderingComposer,
       $$NotesTableAnnotationComposer,
       $$NotesTableCreateCompanionBuilder,
       $$NotesTableUpdateCompanionBuilder,
-      (Note, BaseReferences<_$AppDatabase, $NotesTable, Note>),
-      Note,
+      (NoteRow, BaseReferences<_$AppDatabase, $NotesTable, NoteRow>),
+      NoteRow,
       PrefetchHooks Function()
     >;
 typedef $$TagsTableCreateCompanionBuilder =
@@ -5220,14 +5220,14 @@ class $$TagsTableTableManager
         RootTableManager<
           _$AppDatabase,
           $TagsTable,
-          Tag,
+          TagRow,
           $$TagsTableFilterComposer,
           $$TagsTableOrderingComposer,
           $$TagsTableAnnotationComposer,
           $$TagsTableCreateCompanionBuilder,
           $$TagsTableUpdateCompanionBuilder,
-          (Tag, BaseReferences<_$AppDatabase, $TagsTable, Tag>),
-          Tag,
+          (TagRow, BaseReferences<_$AppDatabase, $TagsTable, TagRow>),
+          TagRow,
           PrefetchHooks Function()
         > {
   $$TagsTableTableManager(_$AppDatabase db, $TagsTable table)
@@ -5297,14 +5297,14 @@ typedef $$TagsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $TagsTable,
-      Tag,
+      TagRow,
       $$TagsTableFilterComposer,
       $$TagsTableOrderingComposer,
       $$TagsTableAnnotationComposer,
       $$TagsTableCreateCompanionBuilder,
       $$TagsTableUpdateCompanionBuilder,
-      (Tag, BaseReferences<_$AppDatabase, $TagsTable, Tag>),
-      Tag,
+      (TagRow, BaseReferences<_$AppDatabase, $TagsTable, TagRow>),
+      TagRow,
       PrefetchHooks Function()
     >;
 typedef $$NoteTagsTableCreateCompanionBuilder =
@@ -5673,21 +5673,17 @@ class $$NoteAttachmentsTableTableManager
         RootTableManager<
           _$AppDatabase,
           $NoteAttachmentsTable,
-          NoteAttachment,
+          AttachmentRow,
           $$NoteAttachmentsTableFilterComposer,
           $$NoteAttachmentsTableOrderingComposer,
           $$NoteAttachmentsTableAnnotationComposer,
           $$NoteAttachmentsTableCreateCompanionBuilder,
           $$NoteAttachmentsTableUpdateCompanionBuilder,
           (
-            NoteAttachment,
-            BaseReferences<
-              _$AppDatabase,
-              $NoteAttachmentsTable,
-              NoteAttachment
-            >,
+            AttachmentRow,
+            BaseReferences<_$AppDatabase, $NoteAttachmentsTable, AttachmentRow>,
           ),
-          NoteAttachment,
+          AttachmentRow,
           PrefetchHooks Function()
         > {
   $$NoteAttachmentsTableTableManager(
@@ -5775,17 +5771,17 @@ typedef $$NoteAttachmentsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $NoteAttachmentsTable,
-      NoteAttachment,
+      AttachmentRow,
       $$NoteAttachmentsTableFilterComposer,
       $$NoteAttachmentsTableOrderingComposer,
       $$NoteAttachmentsTableAnnotationComposer,
       $$NoteAttachmentsTableCreateCompanionBuilder,
       $$NoteAttachmentsTableUpdateCompanionBuilder,
       (
-        NoteAttachment,
-        BaseReferences<_$AppDatabase, $NoteAttachmentsTable, NoteAttachment>,
+        AttachmentRow,
+        BaseReferences<_$AppDatabase, $NoteAttachmentsTable, AttachmentRow>,
       ),
-      NoteAttachment,
+      AttachmentRow,
       PrefetchHooks Function()
     >;
 typedef $$NoteRevisionsTableCreateCompanionBuilder =

@@ -10,6 +10,9 @@ abstract class User with _$User {
     required String email,
     required String name,
     String? profileImage,
+
+    /// False for an account made through a sign-in provider.
+    @Default(true) bool hasPassword,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);

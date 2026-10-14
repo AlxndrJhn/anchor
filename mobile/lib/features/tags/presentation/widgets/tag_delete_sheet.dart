@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../legacy/core/theme/context_extensions.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
-import '../../domain/tag.dart';
+import '../../../../legacy/features/tags/domain/tag.dart';
 import '../tags_controller.dart';
 
 /// Confirmation sheet that deletes the tag and removes it from all notes.

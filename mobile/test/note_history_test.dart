@@ -1,5 +1,5 @@
-import 'package:anchor/features/notes/domain/note_history.dart';
-import 'package:anchor/features/notes/domain/note_revision.dart';
+import 'package:anchor/legacy/features/notes/domain/note_history.dart';
+import 'package:anchor/legacy/features/notes/domain/note_revision.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 NoteRevision revisionOf({

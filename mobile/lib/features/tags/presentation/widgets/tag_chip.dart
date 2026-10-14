@@ -4,7 +4,7 @@ import '../../../../legacy/core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_durations.dart';
 import '../../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../../core/theme/tokens/app_radius.dart';
-import '../../domain/tag.dart';
+import '../../../../legacy/features/tags/domain/tag.dart';
 
 class TagChip extends StatelessWidget {
   /// Vertical padding of a chip, shared by anything in the same strip.

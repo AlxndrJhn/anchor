@@ -3,15 +3,15 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/database/app_database.dart';
+import '../../../legacy/core/database/app_database.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../legacy/core/network/dio_provider.dart';
 import '../../../legacy/features/reminders/data/reminder_slots.dart';
 import '../../notes/data/repository/note_attachments_repository.dart';
 import '../../notes/data/repository/note_revisions_store.dart';
-import '../../notes/domain/note.dart' as domain;
+import '../../../legacy/features/notes/domain/note.dart' as domain;
 import '../../notes/domain/note_attachment.dart' as domain;
-import '../../notes/domain/note_revision.dart';
+import '../../../legacy/features/notes/domain/note_revision.dart';
 import 'sync_api.dart';
 
 part 'sync_service.g.dart';

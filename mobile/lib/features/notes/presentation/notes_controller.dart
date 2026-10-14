@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:anchor/core/network/sync_requester.dart';
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 import '../data/repository/notes_repository.dart';
 import '../../tags/presentation/tags_controller.dart';
 

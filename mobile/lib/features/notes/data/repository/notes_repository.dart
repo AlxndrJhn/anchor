@@ -4,13 +4,13 @@ import 'dart:convert';
 import 'package:drift/drift.dart' as drift;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/database/app_database.dart';
+import '../../../../legacy/core/database/app_database.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/sync_requester.dart';
 import '../../../tags/data/repository/tags_repository.dart';
-import '../../domain/note.dart' as domain;
+import '../../../../legacy/features/notes/domain/note.dart' as domain;
 import '../../domain/note_attachment.dart' as domain;
-import '../../domain/note_revision.dart';
+import '../../../../legacy/features/notes/domain/note_revision.dart';
 import '../../../../legacy/features/reminders/data/reminder_slots.dart';
 import 'note_attachments_repository.dart';
 import 'note_revisions_store.dart';

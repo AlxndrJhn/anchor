@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../../notes/domain/note.dart' as domain;
+import '../../../legacy/features/notes/domain/note.dart' as domain;
 import '../../notes/domain/note_attachment.dart' as domain;
 
 const int maxChangesPerRequest = 200;

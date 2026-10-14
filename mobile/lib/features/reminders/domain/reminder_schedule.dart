@@ -1,21 +1,17 @@
-/// Turns a stored reminder into the instant it should next fire.
-///
 /// A reminder is a local wall clock with no zone, resolved against the
 /// device's current zone every time.
 library;
 
 import '../../notes/domain/note.dart';
 
-/// Formats a local [DateTime] as the stored wall clock, to the minute.
 String toWallClock(DateTime local) {
-  String two(int value) => value.toString().padLeft(2, '0');
-  return '${local.year.toString().padLeft(4, '0')}-${two(local.month)}-'
-      '${two(local.day)}T${two(local.hour)}:${two(local.minute)}';
+  String twoDigits(int value) => value.toString().padLeft(2, '0');
+  return '${local.year.toString().padLeft(4, '0')}-${twoDigits(local.month)}-'
+      '${twoDigits(local.day)}T${twoDigits(local.hour)}:${twoDigits(local.minute)}';
 }
 
 final _wallClock = RegExp(r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$');
 
-/// Reads a stored wall clock as a local [DateTime], or null if it is malformed.
 DateTime? parseWallClock(String? value) {
   if (value == null) return null;
   final match = _wallClock.firstMatch(value);
@@ -28,8 +24,7 @@ DateTime? parseWallClock(String? value) {
   return parsed;
 }
 
-/// The next time [reminder] should fire, at or after [from], in local time,
-/// or null when it does not repeat and its time has passed.
+/// At or after [from]; null when a one-time reminder has passed.
 DateTime? nextOccurrence(NoteReminder reminder, {required DateTime from}) {
   final anchor = parseWallClock(reminder.remindAt);
   if (anchor == null) return null;
@@ -45,8 +40,8 @@ DateTime? nextOccurrence(NoteReminder reminder, {required DateTime from}) {
   };
 }
 
-/// Steps whole days forward, rebuilding from calendar parts so the wall-clock
-/// time survives a daylight-saving change.
+/// Rebuilds from calendar parts to keep the wall-clock time across daylight
+/// saving.
 DateTime _advanceDays(DateTime anchor, DateTime from, int step) {
   var next = anchor;
   while (next.isBefore(from)) {
@@ -56,7 +51,6 @@ DateTime _advanceDays(DateTime anchor, DateTime from, int step) {
   return next;
 }
 
-/// Steps whole months (or years) forward, clamped to the end of short months.
 DateTime _advanceMonths(DateTime anchor, DateTime from, int step) {
   var months = anchor.year * 12 + (anchor.month - 1);
   var next = anchor;

@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/database/app_database.dart';
+import '../../../../legacy/core/database/app_database.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../legacy/core/network/dio_provider.dart';
 import '../../../../core/network/sync_requester.dart';

@@ -201,5 +201,9 @@
         "example": "3"
       }
     }
+  },
+  "voiceNote": "Voice note",
+  "@voiceNote": {
+    "description": "Name of an audio recording made in the app."
   }
 }

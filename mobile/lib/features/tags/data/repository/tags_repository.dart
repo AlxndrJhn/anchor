@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:drift/drift.dart' as drift;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/database/app_database.dart';
+import '../../../../legacy/core/database/app_database.dart';
 import '../../../../core/network/sync_requester.dart';
-import '../../domain/tag.dart' as domain;
+import '../../../../legacy/features/tags/domain/tag.dart' as domain;
 
 part 'tags_repository.g.dart';
 

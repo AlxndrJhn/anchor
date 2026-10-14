@@ -1,6 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 
-/// Permission levels for note sharing
 @JsonEnum(valueField: 'name')
 enum NoteSharePermission {
   viewer('viewer'),

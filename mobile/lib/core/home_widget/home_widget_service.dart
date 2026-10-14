@@ -7,7 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/notes/data/repository/notes_repository.dart';
 import '../logging/app_logger.dart';
-import '../session/active_user_id_provider.dart';
+import '../../legacy/core/session/active_user_id_provider.dart';
 import '../../app/router/app_router.dart';
 import '../router/app_routes.dart';
 import '../../features/home_widget/data/home_widget_payload.dart';

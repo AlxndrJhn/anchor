@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../legacy/core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_radius.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
-import '../../domain/tag.dart';
+import '../../../../legacy/features/tags/domain/tag.dart';
 import '../tags_controller.dart';
 
 /// Create/rename sheet for tags. Pass [tag] to rename; omit it to create.

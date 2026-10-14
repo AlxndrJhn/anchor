@@ -11,8 +11,8 @@ import '../../../../core/theme/tokens/app_radius.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/settings_card.dart';
 import '../../../../core/widgets/settings_row.dart';
-import '../../domain/note.dart';
-import '../../../reminders/domain/reminder_schedule.dart';
+import '../../../../legacy/features/notes/domain/note.dart';
+import '../../../../legacy/features/reminders/domain/reminder_schedule.dart';
 
 /// Picks when a note rings and how often.
 class ReminderPickerSheet extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:anchor/features/tags/domain/tag.dart';
+import 'package:anchor/legacy/features/tags/domain/tag.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_chip.dart';
 
 const _longTag = Tag(

@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$NoteAttachment {
 
- String get id; String get noteId; AttachmentType get type; String get originalFilename; String get mimeType; int get fileSize; int get position; String? get uploadedByUserId;@JsonKey(includeFromJson: false, includeToJson: false) String? get localPath;@JsonKey(includeFromJson: false, includeToJson: false) bool get isPendingUpload; String? get createdAt;
+ String get id; String get noteId; AttachmentType get type; String get originalFilename; String get mimeType; int get fileSize; int get position; String? get uploadedByUserId;@JsonKey(includeFromJson: false, includeToJson: false) String? get localPath;@JsonKey(includeFromJson: false, includeToJson: false) bool get isPendingUpload;@JsonKey(includeFromJson: false, includeToJson: false) bool get isUploadFailed; String? get createdAt;
 /// Create a copy of NoteAttachment
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $NoteAttachmentCopyWith<NoteAttachment> get copyWith => _$NoteAttachmentCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoteAttachment&&(identical(other.id, id) || other.id == id)&&(identical(other.noteId, noteId) || other.noteId == noteId)&&(identical(other.type, type) || other.type == type)&&(identical(other.originalFilename, originalFilename) || other.originalFilename == originalFilename)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.position, position) || other.position == position)&&(identical(other.uploadedByUserId, uploadedByUserId) || other.uploadedByUserId == uploadedByUserId)&&(identical(other.localPath, localPath) || other.localPath == localPath)&&(identical(other.isPendingUpload, isPendingUpload) || other.isPendingUpload == isPendingUpload)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoteAttachment&&(identical(other.id, id) || other.id == id)&&(identical(other.noteId, noteId) || other.noteId == noteId)&&(identical(other.type, type) || other.type == type)&&(identical(other.originalFilename, originalFilename) || other.originalFilename == originalFilename)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.position, position) || other.position == position)&&(identical(other.uploadedByUserId, uploadedByUserId) || other.uploadedByUserId == uploadedByUserId)&&(identical(other.localPath, localPath) || other.localPath == localPath)&&(identical(other.isPendingUpload, isPendingUpload) || other.isPendingUpload == isPendingUpload)&&(identical(other.isUploadFailed, isUploadFailed) || other.isUploadFailed == isUploadFailed)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,noteId,type,originalFilename,mimeType,fileSize,position,uploadedByUserId,localPath,isPendingUpload,createdAt);
+int get hashCode => Object.hash(runtimeType,id,noteId,type,originalFilename,mimeType,fileSize,position,uploadedByUserId,localPath,isPendingUpload,isUploadFailed,createdAt);
 
 @override
 String toString() {
-  return 'NoteAttachment(id: $id, noteId: $noteId, type: $type, originalFilename: $originalFilename, mimeType: $mimeType, fileSize: $fileSize, position: $position, uploadedByUserId: $uploadedByUserId, localPath: $localPath, isPendingUpload: $isPendingUpload, createdAt: $createdAt)';
+  return 'NoteAttachment(id: $id, noteId: $noteId, type: $type, originalFilename: $originalFilename, mimeType: $mimeType, fileSize: $fileSize, position: $position, uploadedByUserId: $uploadedByUserId, localPath: $localPath, isPendingUpload: $isPendingUpload, isUploadFailed: $isUploadFailed, createdAt: $createdAt)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $NoteAttachmentCopyWith<$Res>  {
   factory $NoteAttachmentCopyWith(NoteAttachment value, $Res Function(NoteAttachment) _then) = _$NoteAttachmentCopyWithImpl;
 @useResult
 $Res call({
- String id, String noteId, AttachmentType type, String originalFilename, String mimeType, int fileSize, int position, String? uploadedByUserId,@JsonKey(includeFromJson: false, includeToJson: false) String? localPath,@JsonKey(includeFromJson: false, includeToJson: false) bool isPendingUpload, String? createdAt
+ String id, String noteId, AttachmentType type, String originalFilename, String mimeType, int fileSize, int position, String? uploadedByUserId,@JsonKey(includeFromJson: false, includeToJson: false) String? localPath,@JsonKey(includeFromJson: false, includeToJson: false) bool isPendingUpload,@JsonKey(includeFromJson: false, includeToJson: false) bool isUploadFailed, String? createdAt
 });
 
 
@@ -66,7 +66,7 @@ class _$NoteAttachmentCopyWithImpl<$Res>
 
 /// Create a copy of NoteAttachment
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? noteId = null,Object? type = null,Object? originalFilename = null,Object? mimeType = null,Object? fileSize = null,Object? position = null,Object? uploadedByUserId = freezed,Object? localPath = freezed,Object? isPendingUpload = null,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? noteId = null,Object? type = null,Object? originalFilename = null,Object? mimeType = null,Object? fileSize = null,Object? position = null,Object? uploadedByUserId = freezed,Object? localPath = freezed,Object? isPendingUpload = null,Object? isUploadFailed = null,Object? createdAt = freezed,}) {
   return _then(NoteAttachment(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,noteId: null == noteId ? _self.noteId : noteId // ignore: cast_nullable_to_non_nullable
@@ -78,6 +78,7 @@ as int,position: null == position ? _self.position : position // ignore: cast_nu
 as int,uploadedByUserId: freezed == uploadedByUserId ? _self.uploadedByUserId : uploadedByUserId // ignore: cast_nullable_to_non_nullable
 as String?,localPath: freezed == localPath ? _self.localPath : localPath // ignore: cast_nullable_to_non_nullable
 as String?,isPendingUpload: null == isPendingUpload ? _self.isPendingUpload : isPendingUpload // ignore: cast_nullable_to_non_nullable
+as bool,isUploadFailed: null == isUploadFailed ? _self.isUploadFailed : isUploadFailed // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -164,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String noteId,  AttachmentType type,  String originalFilename,  String mimeType,  int fileSize,  int position,  String? uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false)  String? localPath, @JsonKey(includeFromJson: false, includeToJson: false)  bool isPendingUpload,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String noteId,  AttachmentType type,  String originalFilename,  String mimeType,  int fileSize,  int position,  String? uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false)  String? localPath, @JsonKey(includeFromJson: false, includeToJson: false)  bool isPendingUpload, @JsonKey(includeFromJson: false, includeToJson: false)  bool isUploadFailed,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NoteAttachment() when $default != null:
-return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mimeType,_that.fileSize,_that.position,_that.uploadedByUserId,_that.localPath,_that.isPendingUpload,_that.createdAt);case _:
+return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mimeType,_that.fileSize,_that.position,_that.uploadedByUserId,_that.localPath,_that.isPendingUpload,_that.isUploadFailed,_that.createdAt);case _:
   return orElse();
 
 }
@@ -185,10 +186,10 @@ return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mi
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String noteId,  AttachmentType type,  String originalFilename,  String mimeType,  int fileSize,  int position,  String? uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false)  String? localPath, @JsonKey(includeFromJson: false, includeToJson: false)  bool isPendingUpload,  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String noteId,  AttachmentType type,  String originalFilename,  String mimeType,  int fileSize,  int position,  String? uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false)  String? localPath, @JsonKey(includeFromJson: false, includeToJson: false)  bool isPendingUpload, @JsonKey(includeFromJson: false, includeToJson: false)  bool isUploadFailed,  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _NoteAttachment():
-return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mimeType,_that.fileSize,_that.position,_that.uploadedByUserId,_that.localPath,_that.isPendingUpload,_that.createdAt);case _:
+return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mimeType,_that.fileSize,_that.position,_that.uploadedByUserId,_that.localPath,_that.isPendingUpload,_that.isUploadFailed,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -205,10 +206,10 @@ return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mi
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String noteId,  AttachmentType type,  String originalFilename,  String mimeType,  int fileSize,  int position,  String? uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false)  String? localPath, @JsonKey(includeFromJson: false, includeToJson: false)  bool isPendingUpload,  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String noteId,  AttachmentType type,  String originalFilename,  String mimeType,  int fileSize,  int position,  String? uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false)  String? localPath, @JsonKey(includeFromJson: false, includeToJson: false)  bool isPendingUpload, @JsonKey(includeFromJson: false, includeToJson: false)  bool isUploadFailed,  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _NoteAttachment() when $default != null:
-return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mimeType,_that.fileSize,_that.position,_that.uploadedByUserId,_that.localPath,_that.isPendingUpload,_that.createdAt);case _:
+return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mimeType,_that.fileSize,_that.position,_that.uploadedByUserId,_that.localPath,_that.isPendingUpload,_that.isUploadFailed,_that.createdAt);case _:
   return null;
 
 }
@@ -220,7 +221,7 @@ return $default(_that.id,_that.noteId,_that.type,_that.originalFilename,_that.mi
 @JsonSerializable()
 
 class _NoteAttachment extends NoteAttachment {
-  const _NoteAttachment({required this.id, required this.noteId, required this.type, required this.originalFilename, required this.mimeType, required this.fileSize, this.position = 0, this.uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false) this.localPath, @JsonKey(includeFromJson: false, includeToJson: false) this.isPendingUpload = false, this.createdAt}): super._();
+  const _NoteAttachment({required this.id, required this.noteId, required this.type, required this.originalFilename, required this.mimeType, required this.fileSize, this.position = 0, this.uploadedByUserId, @JsonKey(includeFromJson: false, includeToJson: false) this.localPath, @JsonKey(includeFromJson: false, includeToJson: false) this.isPendingUpload = false, @JsonKey(includeFromJson: false, includeToJson: false) this.isUploadFailed = false, this.createdAt}): super._();
   factory _NoteAttachment.fromJson(Map<String, dynamic> json) => _$NoteAttachmentFromJson(json);
 
 @override final  String id;
@@ -233,6 +234,7 @@ class _NoteAttachment extends NoteAttachment {
 @override final  String? uploadedByUserId;
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  String? localPath;
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isPendingUpload;
+@override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isUploadFailed;
 @override final  String? createdAt;
 
 /// Create a copy of NoteAttachment
@@ -248,16 +250,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoteAttachment&&(identical(other.id, id) || other.id == id)&&(identical(other.noteId, noteId) || other.noteId == noteId)&&(identical(other.type, type) || other.type == type)&&(identical(other.originalFilename, originalFilename) || other.originalFilename == originalFilename)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.position, position) || other.position == position)&&(identical(other.uploadedByUserId, uploadedByUserId) || other.uploadedByUserId == uploadedByUserId)&&(identical(other.localPath, localPath) || other.localPath == localPath)&&(identical(other.isPendingUpload, isPendingUpload) || other.isPendingUpload == isPendingUpload)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoteAttachment&&(identical(other.id, id) || other.id == id)&&(identical(other.noteId, noteId) || other.noteId == noteId)&&(identical(other.type, type) || other.type == type)&&(identical(other.originalFilename, originalFilename) || other.originalFilename == originalFilename)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.position, position) || other.position == position)&&(identical(other.uploadedByUserId, uploadedByUserId) || other.uploadedByUserId == uploadedByUserId)&&(identical(other.localPath, localPath) || other.localPath == localPath)&&(identical(other.isPendingUpload, isPendingUpload) || other.isPendingUpload == isPendingUpload)&&(identical(other.isUploadFailed, isUploadFailed) || other.isUploadFailed == isUploadFailed)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,noteId,type,originalFilename,mimeType,fileSize,position,uploadedByUserId,localPath,isPendingUpload,createdAt);
+int get hashCode => Object.hash(runtimeType,id,noteId,type,originalFilename,mimeType,fileSize,position,uploadedByUserId,localPath,isPendingUpload,isUploadFailed,createdAt);
 
 @override
 String toString() {
-  return 'NoteAttachment(id: $id, noteId: $noteId, type: $type, originalFilename: $originalFilename, mimeType: $mimeType, fileSize: $fileSize, position: $position, uploadedByUserId: $uploadedByUserId, localPath: $localPath, isPendingUpload: $isPendingUpload, createdAt: $createdAt)';
+  return 'NoteAttachment(id: $id, noteId: $noteId, type: $type, originalFilename: $originalFilename, mimeType: $mimeType, fileSize: $fileSize, position: $position, uploadedByUserId: $uploadedByUserId, localPath: $localPath, isPendingUpload: $isPendingUpload, isUploadFailed: $isUploadFailed, createdAt: $createdAt)';
 }
 
 
@@ -268,7 +270,7 @@ abstract mixin class _$NoteAttachmentCopyWith<$Res> implements $NoteAttachmentCo
   factory _$NoteAttachmentCopyWith(_NoteAttachment value, $Res Function(_NoteAttachment) _then) = __$NoteAttachmentCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String noteId, AttachmentType type, String originalFilename, String mimeType, int fileSize, int position, String? uploadedByUserId,@JsonKey(includeFromJson: false, includeToJson: false) String? localPath,@JsonKey(includeFromJson: false, includeToJson: false) bool isPendingUpload, String? createdAt
+ String id, String noteId, AttachmentType type, String originalFilename, String mimeType, int fileSize, int position, String? uploadedByUserId,@JsonKey(includeFromJson: false, includeToJson: false) String? localPath,@JsonKey(includeFromJson: false, includeToJson: false) bool isPendingUpload,@JsonKey(includeFromJson: false, includeToJson: false) bool isUploadFailed, String? createdAt
 });
 
 
@@ -285,7 +287,7 @@ class __$NoteAttachmentCopyWithImpl<$Res>
 
 /// Create a copy of NoteAttachment
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? noteId = null,Object? type = null,Object? originalFilename = null,Object? mimeType = null,Object? fileSize = null,Object? position = null,Object? uploadedByUserId = freezed,Object? localPath = freezed,Object? isPendingUpload = null,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? noteId = null,Object? type = null,Object? originalFilename = null,Object? mimeType = null,Object? fileSize = null,Object? position = null,Object? uploadedByUserId = freezed,Object? localPath = freezed,Object? isPendingUpload = null,Object? isUploadFailed = null,Object? createdAt = freezed,}) {
   return _then(_NoteAttachment(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,noteId: null == noteId ? _self.noteId : noteId // ignore: cast_nullable_to_non_nullable
@@ -297,6 +299,7 @@ as int,position: null == position ? _self.position : position // ignore: cast_nu
 as int,uploadedByUserId: freezed == uploadedByUserId ? _self.uploadedByUserId : uploadedByUserId // ignore: cast_nullable_to_non_nullable
 as String?,localPath: freezed == localPath ? _self.localPath : localPath // ignore: cast_nullable_to_non_nullable
 as String?,isPendingUpload: null == isPendingUpload ? _self.isPendingUpload : isPendingUpload // ignore: cast_nullable_to_non_nullable
+as bool,isUploadFailed: null == isUploadFailed ? _self.isUploadFailed : isUploadFailed // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

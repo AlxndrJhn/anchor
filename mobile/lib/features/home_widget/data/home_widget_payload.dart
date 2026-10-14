@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../../notes/domain/note.dart';
+import '../../../legacy/features/notes/domain/note.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/widgets/quill_preview.dart';
 

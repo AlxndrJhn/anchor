@@ -5,7 +5,7 @@ import '../../../../legacy/core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../../core/theme/tokens/app_radius.dart';
 import '../../../../core/widgets/quill_preview.dart';
-import '../../domain/note.dart';
+import '../../../../legacy/features/notes/domain/note.dart';
 import '../../domain/note_diff.dart';
 
 /// The note's title in a version, with the title that replaced it when it

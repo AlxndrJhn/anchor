@@ -41,7 +41,7 @@ final class ActiveUserIdProvider
   }
 }
 
-String _$activeUserIdHash() => r'e05ea1c6b0d5eee9c43b3d5a7a0c6b6f24d5b3b9';
+String _$activeUserIdHash() => r'470bedac248ff06a19e7e5bc24081cdcd9cd9c30';
 
 abstract class _$ActiveUserId extends $Notifier<String?> {
   String? build();

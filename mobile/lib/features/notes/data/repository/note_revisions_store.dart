@@ -2,10 +2,10 @@ import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/database/app_database.dart';
+import '../../../../legacy/core/database/app_database.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../domain/note_revision.dart';
+import '../../../../legacy/features/notes/domain/note_revision.dart';
 
 part 'note_revisions_store.g.dart';
 

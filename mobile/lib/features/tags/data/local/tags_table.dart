@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+@DataClassName('TagRow')
 class Tags extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
@@ -9,14 +10,13 @@ class Tags extends Table {
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
   // The server version this tag was written against; null until it exists there.
   IntColumn get version => integer().nullable()();
-  // Counts up on every local edit, so an upload can tell if it was overtaken.
+  // Must go up on every local edit.
   IntColumn get localRev => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-// Junction table for note-tag relationship
 class NoteTags extends Table {
   TextColumn get noteId => text()();
   TextColumn get tagId => text()();

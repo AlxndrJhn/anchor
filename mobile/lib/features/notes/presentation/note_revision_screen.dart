@@ -6,17 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/session/active_user_id_provider.dart';
+import '../../../legacy/core/session/active_user_id_provider.dart';
 import '../../../legacy/core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../legacy/core/widgets/app_snackbar.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../data/repository/note_revisions_store.dart';
 import '../data/repository/notes_repository.dart';
-import '../domain/note.dart';
+import '../../../legacy/features/notes/domain/note.dart';
 import '../domain/note_diff.dart';
-import '../domain/note_history.dart';
-import '../domain/note_revision.dart';
+import '../../../legacy/features/notes/domain/note_history.dart';
+import '../../../legacy/features/notes/domain/note_revision.dart';
 import 'widgets/note_diff_view.dart';
 import 'package:anchor/core/widgets/app_page_scaffold.dart';
 

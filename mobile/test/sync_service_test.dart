@@ -1,4 +1,4 @@
-import 'package:anchor/core/database/app_database.dart';
+import 'package:anchor/legacy/core/database/app_database.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';

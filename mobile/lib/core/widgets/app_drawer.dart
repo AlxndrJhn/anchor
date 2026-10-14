@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../features/auth/presentation/auth_controller.dart';
-import '../../features/tags/domain/tag.dart';
+import '../../legacy/features/tags/domain/tag.dart';
 import '../../features/tags/presentation/tags_controller.dart';
 import '../../features/tags/presentation/widgets/tag_delete_sheet.dart';
 import '../../features/tags/presentation/widgets/tag_edit_sheet.dart';

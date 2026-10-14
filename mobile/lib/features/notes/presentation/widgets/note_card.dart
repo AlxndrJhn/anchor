@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/legacy/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';

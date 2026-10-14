@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:anchor/features/home_widget/data/home_widget_payload.dart';
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Note _note({

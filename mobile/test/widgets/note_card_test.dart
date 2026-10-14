@@ -1,6 +1,6 @@
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/legacy/core/theme/app_theme.dart';
-import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:flutter/material.dart';

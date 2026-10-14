@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../legacy/core/network/dio_provider.dart';
-import '../../domain/note_revision.dart';
+import '../../../../legacy/features/notes/domain/note_revision.dart';
 import 'note_revisions_store.dart';
 
 part 'note_history_repository.g.dart';

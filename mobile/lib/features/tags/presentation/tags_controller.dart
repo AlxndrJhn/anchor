@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/network/sync_requester.dart';
 import '../data/repository/tags_repository.dart';
-import '../domain/tag.dart';
+import '../../../legacy/features/tags/domain/tag.dart';
 
 part 'tags_controller.g.dart';
 

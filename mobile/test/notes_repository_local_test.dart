@@ -1,10 +1,10 @@
-import 'package:anchor/core/database/app_database.dart';
+import 'package:anchor/legacy/core/database/app_database.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
-import 'package:anchor/features/notes/domain/note.dart' as domain;
-import 'package:anchor/features/notes/domain/note_revision.dart';
+import 'package:anchor/legacy/features/notes/domain/note.dart' as domain;
+import 'package:anchor/legacy/features/notes/domain/note_revision.dart';
 import 'package:anchor/features/tags/data/repository/tags_repository.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
