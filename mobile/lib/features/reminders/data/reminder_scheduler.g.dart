@@ -8,24 +8,12 @@ part of 'reminder_scheduler.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Keeps the OS's pending notifications in step with the reminders in Drift.
-///
-/// Diffs what the device should hold against what it does hold, cancelling
-/// the difference rather than rescheduling everything.
 
 @ProviderFor(ReminderScheduler)
 final reminderSchedulerProvider = ReminderSchedulerProvider._();
 
-/// Keeps the OS's pending notifications in step with the reminders in Drift.
-///
-/// Diffs what the device should hold against what it does hold, cancelling
-/// the difference rather than rescheduling everything.
 final class ReminderSchedulerProvider
     extends $NotifierProvider<ReminderScheduler, void> {
-  /// Keeps the OS's pending notifications in step with the reminders in Drift.
-  ///
-  /// Diffs what the device should hold against what it does hold, cancelling
-  /// the difference rather than rescheduling everything.
   ReminderSchedulerProvider._()
     : super(
         from: null,
@@ -53,12 +41,7 @@ final class ReminderSchedulerProvider
   }
 }
 
-String _$reminderSchedulerHash() => r'c4b8f1a31776380f38b33d899062fc7ffac3b291';
-
-/// Keeps the OS's pending notifications in step with the reminders in Drift.
-///
-/// Diffs what the device should hold against what it does hold, cancelling
-/// the difference rather than rescheduling everything.
+String _$reminderSchedulerHash() => r'5bb5d9d49a71a94650209aa4f0bf167649b689be';
 
 abstract class _$ReminderScheduler extends $Notifier<void> {
   void build();

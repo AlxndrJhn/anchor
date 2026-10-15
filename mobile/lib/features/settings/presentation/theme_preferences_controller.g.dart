@@ -42,7 +42,7 @@ final class ThemeModeControllerProvider
 }
 
 String _$themeModeControllerHash() =>
-    r'937eac58f63ac7c9b8dcbfdd2db88da343030169';
+    r'3505b469be03c314188ac81a151edbfec1df9c67';
 
 abstract class _$ThemeModeController extends $Notifier<ThemeMode> {
   ThemeMode build();
@@ -95,7 +95,7 @@ final class DisplayDensityControllerProvider
 }
 
 String _$displayDensityControllerHash() =>
-    r'5b7a4c8af955c16fd57c13c62c49f8bfbb6f1fed';
+    r'16354c2d0330ce24a02fbf1262abe11bb9f1cd62';
 
 abstract class _$DisplayDensityController extends $Notifier<DisplayDensity> {
   DisplayDensity build();

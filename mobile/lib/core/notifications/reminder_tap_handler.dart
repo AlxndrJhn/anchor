@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../features/auth/presentation/auth_controller.dart';
+import '../../legacy/features/auth/presentation/auth_controller.dart';
 import '../../legacy/core/session/active_user_id_provider.dart';
 import '../../app/router/app_router.dart';
 import '../../features/reminders/presentation/notification_launch.dart';

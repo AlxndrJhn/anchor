@@ -1,23 +1,23 @@
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_tags.dart';
+import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../presentation/notification_launch.dart';
 
 part 'notification_gateway.g.dart';
-
-const _tag = 'Notifications';
 
 @Riverpod(keepAlive: true)
 NotificationGateway notificationGateway(Ref ref) =>
     LocalNotificationGateway(notificationsPlugin);
 
-/// One scheduled reminder, as the OS should hold it.
 class ScheduledNotification {
   const ScheduledNotification({
     required this.id,
@@ -34,28 +34,19 @@ class ScheduledNotification {
 
   /// Local wall-clock time, resolved against the device's zone at schedule time.
   final DateTime at;
-
-  /// Null when the reminder does not repeat.
   final DateTimeComponents? repeat;
   final String payload;
 }
 
-/// The seam between the reminder scheduler and the plugin.
 abstract class NotificationGateway {
   Future<void> initialize();
   Future<List<int>> pendingIds();
   Future<void> schedule(ScheduledNotification notification);
   Future<void> cancel(int id);
   Future<void> cancelAll();
-
-  /// Whether the OS currently lets us post notifications.
   Future<bool> hasPermission();
-
-  /// Asks for that grant; the system dialog only appears the first time.
   Future<bool> requestPermission();
-
-  /// Whether this platform gates exact timing at all.
-  bool get gatesExactAlarms;
+  bool get requiresExactAlarmPermission;
 
   /// Android 14+ keeps exact alarms behind a separate grant.
   Future<bool> canScheduleExact();
@@ -96,7 +87,7 @@ class LocalNotificationGateway implements NotificationGateway {
   @override
   Future<void> schedule(ScheduledNotification notification) async {
     final at = tz.TZDateTime.from(notification.at, tz.local);
-    // Inexact unless the user has opted in and the grant is still in place.
+    final l10n = deviceL10n();
     final mode = await canScheduleExact()
         ? AndroidScheduleMode.exactAllowWhileIdle
         : AndroidScheduleMode.inexactAllowWhileIdle;
@@ -106,15 +97,16 @@ class LocalNotificationGateway implements NotificationGateway {
       title: notification.title,
       body: notification.body,
       scheduledDate: at,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
-          'Reminders',
-          channelDescription: 'Reminders you set on your notes',
+          l10n.reminderChannelName,
+          channelDescription: l10n.reminderChannelDescription,
           importance: Importance.high,
           priority: Priority.high,
-          // Android masks the icon to alpha, so this is a flat vector.
+          // Must be a flat vector: Android masks the icon to alpha.
           icon: 'ic_stat_reminder',
+          color: AnchorTokens.colorBrandOrange,
         ),
         iOS: DarwinNotificationDetails(),
       ),
@@ -138,7 +130,7 @@ class LocalNotificationGateway implements NotificationGateway {
       return android ?? ios ?? true;
     } catch (error, stack) {
       AppLogger.instance.error(
-        _tag,
+        LogTags.notifications,
         'Notification permission check failed',
         error: error,
         stackTrace: stack,
@@ -159,7 +151,7 @@ class LocalNotificationGateway implements NotificationGateway {
       return android ?? ios ?? true;
     } catch (error, stack) {
       AppLogger.instance.error(
-        _tag,
+        LogTags.notifications,
         'Notification permission request failed',
         error: error,
         stackTrace: stack,
@@ -169,7 +161,7 @@ class LocalNotificationGateway implements NotificationGateway {
   }
 
   @override
-  bool get gatesExactAlarms => Platform.isAndroid;
+  bool get requiresExactAlarmPermission => Platform.isAndroid;
 
   @override
   Future<bool> canScheduleExact() async {
@@ -182,12 +174,11 @@ class LocalNotificationGateway implements NotificationGateway {
 
   @override
   Future<void> requestExactPermission() async {
-    // Returns when the settings screen opens, not when the user decides.
     try {
       await _android?.requestExactAlarmsPermission();
     } catch (error, stack) {
       AppLogger.instance.error(
-        _tag,
+        LogTags.notifications,
         'Exact alarm request failed',
         error: error,
         stackTrace: stack,
@@ -198,9 +189,8 @@ class LocalNotificationGateway implements NotificationGateway {
 
 bool _timeZonesReady = false;
 
-/// Loads the timezone database and points `tz.local` at the device's zone.
-///
-/// Re-run on every resume, in case the device has moved zone.
+/// Loads the timezone database once; sets `tz.local` to the device's zone on
+/// every call.
 Future<void> initializeTimeZonesOnce() async {
   if (!_timeZonesReady) {
     tzdata.initializeTimeZones();
@@ -215,6 +205,9 @@ Future<void> syncLocalTimeZone() async {
     tz.setLocalLocation(tz.getLocation(info.identifier));
   } catch (error) {
     // An unknown IANA name throws; UTC is the fallback.
-    AppLogger.instance.warn(_tag, 'Falling back to UTC: $error');
+    AppLogger.instance.warn(
+      LogTags.notifications,
+      'Falling back to UTC: $error',
+    );
   }
 }

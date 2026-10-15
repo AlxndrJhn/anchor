@@ -1,8 +1,8 @@
 import 'package:anchor/core/router/app_routes.dart';
 import 'package:anchor/features/auth/presentation/providers/oidc_config_provider.dart';
 import 'package:anchor/features/auth/presentation/providers/registration_mode_provider.dart';
-import 'package:anchor/features/server/data/server_info_provider.dart';
-import 'package:anchor/features/sync/data/sync_compatibility.dart';
+import 'package:anchor/legacy/features/server/data/server_info_provider.dart';
+import 'package:anchor/legacy/features/sync/data/sync_compatibility.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

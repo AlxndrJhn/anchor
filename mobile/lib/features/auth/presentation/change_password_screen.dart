@@ -5,7 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/settings_card.dart';
 import '../../../core/widgets/large_title_app_bar.dart';
-import 'auth_controller.dart';
+import '../../../legacy/features/auth/presentation/auth_controller.dart';
 import '../../../legacy/core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_radius.dart';
 

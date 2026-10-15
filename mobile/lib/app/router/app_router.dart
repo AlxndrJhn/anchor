@@ -16,7 +16,7 @@ import '../../core/app_initializer.dart';
 import '../../core/presentation/server_config_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/log_viewer_screen.dart';
-import '../../features/auth/presentation/auth_controller.dart';
+import '../../legacy/features/auth/presentation/auth_controller.dart';
 import '../../core/network/server_config_provider.dart';
 import '../../core/router/app_routes.dart';
 

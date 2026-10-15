@@ -182,6 +182,10 @@
       }
     }
   },
+  "authSignIn": "Sign in",
+  "@authSignIn": {
+    "description": "Button that signs in, a link to the sign-in page, and that page’s spoken name."
+  },
   "settingsSignOutMessage": "{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}",
   "@settingsSignOutMessage": {
     "description": "{count} is the number of changes not yet sent to the server.",
@@ -199,6 +203,84 @@
       "count": {
         "type": "int",
         "example": "3"
+      }
+    }
+  },
+  "commonLater": "Later",
+  "@commonLater": {
+    "description": "Button that closes the sign in again dialog without signing in."
+  },
+  "commonOk": "OK",
+  "@commonOk": {
+    "description": "Button that closes a warning dialog."
+  },
+  "reminderTitle": "Reminder",
+  "@reminderTitle": {
+    "description": "Title of the reminder sheet, and of a reminder notification when the note has no title."
+  },
+  "reminderChannelName": "Reminders",
+  "@reminderChannelName": {
+    "description": "Name of the app’s notification category in Android’s settings."
+  },
+  "reminderChannelDescription": "Reminders you set on your notes",
+  "@reminderChannelDescription": {
+    "description": "Description of the app’s notification category in Android’s settings."
+  },
+  "syncSignedOutLead": "Signed out.",
+  "@syncSignedOutLead": {
+    "description": "Bold lead of a warning above the notes list after the sign-in expired."
+  },
+  "syncSignedOutText": "Sign in again to sync your notes.",
+  "@syncSignedOutText": {
+    "description": "Follows the bold “Signed out.” in a warning at the top of the notes list."
+  },
+  "syncSignInAgainTitle": "Sign in again",
+  "@syncSignInAgainTitle": {
+    "description": "Title of the dialog that asks the person to sign in again after the sign-in expired."
+  },
+  "syncSignInAgainMessage": "Your notes stay on this phone and sync once you sign in.",
+  "@syncSignInAgainMessage": {
+    "description": "Message of the dialog that asks the person to sign in again."
+  },
+  "syncServerOutdatedLead": "Update your server.",
+  "@syncServerOutdatedLead": {
+    "description": "Bold lead of a warning when the server is too old, also used after “Sync is paused.” in Settings."
+  },
+  "syncServerOutdatedText": "It’s too old to sync with this app.",
+  "@syncServerOutdatedText": {
+    "description": "Follows the bold “Update your server.” in a warning; “It” is the server."
+  },
+  "syncServerOutdatedTitle": "Update your server",
+  "@syncServerOutdatedTitle": {
+    "description": "Title of the dialog explaining that the server is too old for this app."
+  },
+  "syncServerOutdatedMessage": "Your Anchor server is too old to sync with this app. Update the server to continue.",
+  "@syncServerOutdatedMessage": {
+    "description": "Message of the dialog explaining that the server is too old for this app."
+  },
+  "syncAppOutdatedLead": "Update Anchor.",
+  "@syncAppOutdatedLead": {
+    "description": "Bold lead of a warning when the app is too old, also used after “Sync is paused.” in Settings."
+  },
+  "syncAppOutdatedText": "This app is too old to sync with your server.",
+  "@syncAppOutdatedText": {
+    "description": "Follows the bold “Update Anchor.” in a warning at the top of the notes list."
+  },
+  "syncAppOutdatedTitle": "Update Anchor",
+  "@syncAppOutdatedTitle": {
+    "description": "Title of the dialog explaining that the app is too old for the server."
+  },
+  "syncAppOutdatedMessage": "This app is too old to sync with your Anchor server. Update the app to continue.",
+  "@syncAppOutdatedMessage": {
+    "description": "Message of the dialog explaining that the app is too old for the server."
+  },
+  "syncPausedMessage": "{reason} Your notes stay on this phone in the meantime.",
+  "@syncPausedMessage": {
+    "description": "{reason} says which side needs an update.",
+    "placeholders": {
+      "reason": {
+        "type": "String",
+        "example": "This app is too old to sync with your Anchor server. Update the app to continue."
       }
     }
   },

@@ -8,7 +8,7 @@ import 'package:anchor/core/widgets/app_page_scaffold.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
-import 'package:anchor/features/sync/presentation/sync_warning.dart';
+import 'package:anchor/legacy/features/sync/presentation/sync_warning.dart';
 
 /// A titled, back-navigable list of [NoteCard]s with per-row actions.
 class NoteListPage extends StatelessWidget {

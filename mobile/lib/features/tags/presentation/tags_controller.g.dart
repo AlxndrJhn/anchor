@@ -33,7 +33,7 @@ final class TagsControllerProvider
   TagsController create() => TagsController();
 }
 
-String _$tagsControllerHash() => r'2f621b92ed550bc3cd335daa57f42ad7eab6f802';
+String _$tagsControllerHash() => r'004299f79e93751882e2f1c38ec7b655b0398e88';
 
 abstract class _$TagsController extends $StreamNotifier<List<Tag>> {
   Stream<List<Tag>> build();
@@ -53,113 +53,56 @@ abstract class _$TagsController extends $StreamNotifier<List<Tag>> {
   }
 }
 
-@ProviderFor(noteTagsStream)
-final noteTagsStreamProvider = NoteTagsStreamFamily._();
+/// Counts archived notes too.
 
-final class NoteTagsStreamProvider
-    extends
-        $FunctionalProvider<AsyncValue<List<Tag>>, List<Tag>, Stream<List<Tag>>>
-    with $FutureModifier<List<Tag>>, $StreamProvider<List<Tag>> {
-  NoteTagsStreamProvider._({
-    required NoteTagsStreamFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'noteTagsStreamProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+@ProviderFor(tagNoteCounts)
+final tagNoteCountsProvider = TagNoteCountsProvider._();
 
-  @override
-  String debugGetCreateSourceHash() => _$noteTagsStreamHash();
+/// Counts archived notes too.
 
-  @override
-  String toString() {
-    return r'noteTagsStreamProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $StreamProviderElement<List<Tag>> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<Tag>> create(Ref ref) {
-    final argument = this.argument as String;
-    return noteTagsStream(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is NoteTagsStreamProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$noteTagsStreamHash() => r'56ba32fd63952655cd16a240b9f028b930cf816e';
-
-final class NoteTagsStreamFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<List<Tag>>, String> {
-  NoteTagsStreamFamily._()
-    : super(
-        retry: null,
-        name: r'noteTagsStreamProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  NoteTagsStreamProvider call(String noteId) =>
-      NoteTagsStreamProvider._(argument: noteId, from: this);
-
-  @override
-  String toString() => r'noteTagsStreamProvider';
-}
-
-@ProviderFor(availableTags)
-final availableTagsProvider = AvailableTagsProvider._();
-
-final class AvailableTagsProvider
+final class TagNoteCountsProvider
     extends
         $FunctionalProvider<
-          AsyncValue<List<Tag>>,
-          List<Tag>,
-          FutureOr<List<Tag>>
+          Map<String, int>,
+          Map<String, int>,
+          Map<String, int>
         >
-    with $FutureModifier<List<Tag>>, $FutureProvider<List<Tag>> {
-  AvailableTagsProvider._()
+    with $Provider<Map<String, int>> {
+  /// Counts archived notes too.
+  TagNoteCountsProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'availableTagsProvider',
+        name: r'tagNoteCountsProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$availableTagsHash();
+  String debugGetCreateSourceHash() => _$tagNoteCountsHash();
 
   @$internal
   @override
-  $FutureProviderElement<List<Tag>> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $ProviderElement<Map<String, int>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  FutureOr<List<Tag>> create(Ref ref) {
-    return availableTags(ref);
+  Map<String, int> create(Ref ref) {
+    return tagNoteCounts(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, int> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, int>>(value),
+    );
   }
 }
 
-String _$availableTagsHash() => r'42399dbbe1aa46c35fcaade2a1aa49d57a4ee7c2';
+String _$tagNoteCountsHash() => r'e0ac5bbd57ee2b64d3450dd15f0e85f7ab718e22';
 
 @ProviderFor(SelectedTagFilter)
 final selectedTagFilterProvider = SelectedTagFilterProvider._();
@@ -193,7 +136,7 @@ final class SelectedTagFilterProvider
   }
 }
 
-String _$selectedTagFilterHash() => r'8aa84dad7b0d5e65e1c68e6db09019023720010e';
+String _$selectedTagFilterHash() => r'7e560768b04e36343611fba6cfec57e773906b5d';
 
 abstract class _$SelectedTagFilter extends $Notifier<String?> {
   String? build();

@@ -3,9 +3,9 @@ import 'dart:convert';
 
 import 'package:anchor/legacy/core/network/connectivity_provider.dart';
 import 'package:anchor/legacy/core/session/active_user_id_provider.dart';
-import 'package:anchor/features/notes/data/repository/note_history_repository.dart';
-import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';
-import 'package:anchor/features/notes/data/repository/notes_repository.dart';
+import 'package:anchor/legacy/features/notes/data/repository/note_history_repository.dart';
+import 'package:anchor/legacy/features/notes/data/repository/note_revisions_store.dart';
+import 'package:anchor/legacy/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/legacy/features/notes/domain/note_revision.dart';
 import 'package:anchor/features/notes/presentation/note_history_screen.dart';

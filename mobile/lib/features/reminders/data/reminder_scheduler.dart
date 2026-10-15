@@ -5,26 +5,24 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../auth/presentation/auth_controller.dart';
-import '../../notes/data/repository/notes_repository.dart';
-import '../../../legacy/features/notes/domain/note.dart' as domain;
-import '../../../legacy/features/reminders/domain/reminder_schedule.dart';
 import '../../../core/logging/app_logger.dart';
-import '../../../legacy/core/session/active_user_id_provider.dart';
-import '../../../core/widgets/quill_preview.dart';
+import '../../../core/logging/log_tags.dart';
+import '../../../core/session/active_user_id_provider.dart';
+import '../../../l10n/l10n.dart';
+import '../../auth/presentation/auth_controller.dart';
+import '../../notes/domain/note.dart';
+import '../../notes/domain/note_blocks.dart';
+import '../../notes/presentation/notes_controller.dart';
+import '../domain/reminder_schedule.dart';
 import 'notification_gateway.dart';
 
 part 'reminder_scheduler.g.dart';
 
-const _tag = 'Reminders';
-
 /// iOS keeps only the soonest 64 pending notifications.
 const int maxScheduledReminders = 60;
 
-/// Settle window for the notes watch, which re-runs on every write.
 const Duration _settleWindow = Duration(milliseconds: 500);
 
-/// How long to wait before trying again after a pass that did not land.
 const List<Duration> _retryDelays = [
   Duration(seconds: 2),
   Duration(seconds: 10),
@@ -37,22 +35,16 @@ const List<Duration> _retryDelays = [
 Duration reminderRetryDelay(int attempt) =>
     _retryDelays[min(attempt, _retryDelays.length) - 1];
 
-/// Keeps the OS's pending notifications in step with the reminders in Drift.
-///
-/// Diffs what the device should hold against what it does hold, cancelling
-/// the difference rather than rescheduling everything.
 @Riverpod(keepAlive: true)
 class ReminderScheduler extends _$ReminderScheduler {
   Timer? _settle;
   Timer? _retry;
-
-  /// The set the last pass managed to apply, or null when none has run yet.
   List<DesiredReminder>? _lastApplied;
-  List<domain.Note> _latest = const [];
+  List<Note> _latest = const [];
   Future<void>? _cleared;
   AppLifecycleListener? _lifecycle;
 
-  /// The pass running now; passes never overlap.
+  /// Passes never overlap.
   Future<void>? _active;
   bool _rerunRequested = false;
   bool _forced = false;
@@ -69,16 +61,15 @@ class ReminderScheduler extends _$ReminderScheduler {
     _lastApplied = null;
     _latest = const [];
     if (userId == null) {
-      // Signed out: nothing should be left ringing or waiting to.
       _cleared = _cancelAll(gateway);
       return;
     }
 
-    final repo = ref.watch(notesRepositoryProvider);
-    final subscription = repo.watchNotes().listen(_onNotes);
+    ref.listen(allActiveNotesProvider, (_, notes) {
+      if (notes case AsyncData(:final value)) _onNotes(value);
+    }, fireImmediately: true);
 
     _lifecycle = AppLifecycleListener(
-      // The device may have crossed a time zone while we were away.
       onResume: () => unawaited(_onResume(gateway)),
     );
 
@@ -89,17 +80,16 @@ class ReminderScheduler extends _$ReminderScheduler {
       _retry = null;
       _lifecycle?.dispose();
       _lifecycle = null;
-      subscription.cancel();
     });
   }
 
-  /// Clears the OS without ever failing, since every later pass waits on it.
+  /// Must never throw: every later pass awaits it.
   Future<void> _cancelAll(NotificationGateway gateway) async {
     try {
       await gateway.cancelAll();
     } catch (error, stack) {
       AppLogger.instance.error(
-        _tag,
+        LogTags.reminders,
         'Clearing the notifications failed',
         error: error,
         stackTrace: stack,
@@ -112,7 +102,7 @@ class ReminderScheduler extends _$ReminderScheduler {
     await _reconcile(force: true);
   }
 
-  void _onNotes(List<domain.Note> notes) {
+  void _onNotes(List<Note> notes) {
     _latest = notes;
     _settle?.cancel();
     _settle = Timer(_settleWindow, () {
@@ -121,7 +111,6 @@ class ReminderScheduler extends _$ReminderScheduler {
     });
   }
 
-  /// Joins the pass already running, if there is one, and asks it to go again.
   Future<void> _reconcile({bool force = false}) {
     _forced = _forced || force;
 
@@ -156,17 +145,21 @@ class ReminderScheduler extends _$ReminderScheduler {
     try {
       await _cleared;
       await gateway.initialize();
-      final desired = desiredReminders(_latest, now: DateTime.now());
+      final desired = desiredReminders(
+        _latest,
+        now: DateTime.now(),
+        l10n: deviceL10n(),
+      );
 
       if (_sameAs(desired)) return;
 
       final pending = (await gateway.pendingIds()).toSet();
       final report = await applyReminders(gateway, desired, pending: pending);
 
-      // A pass with a failure in it is not remembered, so the next one runs.
+      // Only a pass with no failures is remembered.
       _lastApplied = report.failed == 0 ? desired : null;
       AppLogger.instance.info(
-        _tag,
+        LogTags.reminders,
         'reconciled scheduled=${desired.length} '
         'cancelled=${report.cancelled} failed=${report.failed}',
       );
@@ -174,7 +167,7 @@ class ReminderScheduler extends _$ReminderScheduler {
     } catch (error, stack) {
       _lastApplied = null;
       AppLogger.instance.error(
-        _tag,
+        LogTags.reminders,
         'Reconcile failed',
         error: error,
         stackTrace: stack,
@@ -183,7 +176,6 @@ class ReminderScheduler extends _$ReminderScheduler {
     }
   }
 
-  /// Arms another try after a pass that fell short, or stands down.
   void _armRetry(bool failed) {
     _retry?.cancel();
     _retry = null;
@@ -195,7 +187,10 @@ class ReminderScheduler extends _$ReminderScheduler {
 
     _failures++;
     final delay = reminderRetryDelay(_failures);
-    AppLogger.instance.warn(_tag, 'retrying in ${delay.inSeconds}s');
+    AppLogger.instance.warn(
+      LogTags.reminders,
+      'retrying in ${delay.inSeconds}s',
+    );
     _retry = Timer(delay, () {
       _retry = null;
       unawaited(_reconcile());
@@ -212,9 +207,6 @@ class ReminderScheduler extends _$ReminderScheduler {
   }
 }
 
-/// Cancels what the OS holds and we no longer want, then schedules the rest.
-///
-/// One call per reminder: a refusal costs only that one.
 Future<ReminderSyncReport> applyReminders(
   NotificationGateway gateway,
   List<DesiredReminder> desired, {
@@ -230,7 +222,7 @@ Future<ReminderSyncReport> applyReminders(
     } catch (error, stack) {
       failed++;
       AppLogger.instance.error(
-        _tag,
+        LogTags.reminders,
         'Cancelling notification $id failed',
         error: error,
         stackTrace: stack,
@@ -244,7 +236,7 @@ Future<ReminderSyncReport> applyReminders(
     } catch (error, stack) {
       failed++;
       AppLogger.instance.error(
-        _tag,
+        LogTags.reminders,
         'Scheduling the reminder on note ${item.noteId} failed',
         error: error,
         stackTrace: stack,
@@ -255,7 +247,6 @@ Future<ReminderSyncReport> applyReminders(
   return ReminderSyncReport(cancelled: orphans.length, failed: failed);
 }
 
-/// What one pass over the OS's notifications managed.
 class ReminderSyncReport {
   const ReminderSyncReport({required this.cancelled, required this.failed});
 
@@ -263,19 +254,24 @@ class ReminderSyncReport {
   final int failed;
 }
 
-/// The note's title, or else the first line of its text.
-String? reminderHeading(domain.Note note) {
+String? reminderHeading(Note note) {
   if (note.hasTitle) return note.title;
-  final firstLine = extractPlainTextFromQuillContent(
-    note.content,
-  ).split('\n').first;
+  final firstLine = snippetTextOf(note.content).split('\n').first;
   return firstLine.isEmpty ? null : firstLine;
 }
 
-/// What the OS should be holding, soonest first and capped.
+String reminderBody(Note note) {
+  final lines = snippetTextOf(
+    note.content,
+  ).split('\n').where((l) => l.trim().isNotEmpty).toList();
+  final rest = note.hasTitle ? lines : lines.skip(1).toList();
+  return rest.isEmpty ? '' : rest.first;
+}
+
 List<DesiredReminder> desiredReminders(
-  List<domain.Note> notes, {
+  List<Note> notes, {
   required DateTime now,
+  required AppLocalizations l10n,
 }) {
   final desired = <DesiredReminder>[];
   for (final note in notes) {
@@ -288,7 +284,10 @@ List<DesiredReminder> desiredReminders(
 
     final slot = note.reminderSlot;
     if (slot == null) {
-      AppLogger.instance.warn(_tag, 'No notification id for note ${note.id}');
+      AppLogger.instance.warn(
+        LogTags.reminders,
+        'No notification id for note ${note.id}',
+      );
       continue;
     }
 
@@ -297,8 +296,8 @@ List<DesiredReminder> desiredReminders(
       DesiredReminder(
         id: slot,
         at: at,
-        title: heading ?? 'Reminder',
-        body: heading == null ? '' : 'Reminder',
+        title: heading ?? l10n.reminderTitle,
+        body: heading == null ? '' : reminderBody(note),
         repeat: matchComponentsFor(reminder.recurrence),
         noteId: note.id,
       ),
@@ -309,14 +308,13 @@ List<DesiredReminder> desiredReminders(
   return desired.take(maxScheduledReminders).toList();
 }
 
-/// How a recurrence maps onto the OS's own repeat.
-DateTimeComponents? matchComponentsFor(domain.ReminderRecurrence recurrence) =>
+DateTimeComponents? matchComponentsFor(ReminderRecurrence recurrence) =>
     switch (recurrence) {
-      domain.ReminderRecurrence.none => null,
-      domain.ReminderRecurrence.daily => DateTimeComponents.time,
-      domain.ReminderRecurrence.weekly => DateTimeComponents.dayOfWeekAndTime,
-      domain.ReminderRecurrence.monthly => DateTimeComponents.dayOfMonthAndTime,
-      domain.ReminderRecurrence.yearly => DateTimeComponents.dateAndTime,
+      ReminderRecurrence.none => null,
+      ReminderRecurrence.daily => DateTimeComponents.time,
+      ReminderRecurrence.weekly => DateTimeComponents.dayOfWeekAndTime,
+      ReminderRecurrence.monthly => DateTimeComponents.dayOfMonthAndTime,
+      ReminderRecurrence.yearly => DateTimeComponents.dateAndTime,
     };
 
 @immutable
@@ -325,7 +323,7 @@ class DesiredReminder {
     required this.id,
     required this.at,
     required this.title,
-    this.body = 'Reminder',
+    this.body = '',
     required this.repeat,
     required this.noteId,
   });

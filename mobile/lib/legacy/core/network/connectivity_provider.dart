@@ -5,10 +5,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../features/server/data/server_info_provider.dart';
-import '../../../features/sync/data/sync_compatibility.dart';
-import '../../../features/sync/data/sync_events.dart';
-import '../../../features/sync/data/sync_service.dart';
+import '../../features/server/data/server_info_provider.dart';
+import '../../features/sync/data/sync_compatibility.dart';
+import '../../features/sync/data/sync_events.dart';
+import '../../features/sync/data/sync_service.dart';
 import '../../../core/logging/app_logger.dart';
 import '../session/active_user_id_provider.dart';
 import '../../../core/session/session_expired_provider.dart';

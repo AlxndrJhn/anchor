@@ -1,24 +1,23 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../legacy/core/network/dio_provider.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_tags.dart';
+import '../../../core/network/dio_provider.dart';
 
 part 'server_info_provider.g.dart';
 
 class ServerInfo {
-  final String version;
+  /// Null when the server doesn't say.
+  final String? version;
   final String app;
 
-  /// advertise them.
+  /// Empty for servers too old to advertise them.
   final List<int> protocols;
 
-  ServerInfo({
-    required this.version,
-    required this.app,
-    this.protocols = const [],
-  });
+  ServerInfo({this.version, required this.app, this.protocols = const []});
 
   factory ServerInfo.fromJson(Map<String, dynamic> json) {
     return ServerInfo(
-      version: json['version'] as String? ?? 'Unknown',
+      version: json['version'] as String?,
       app: json['app'] as String? ?? 'Unknown',
       protocols:
           (json['protocols'] as List?)?.whereType<int>().toList() ?? const [],
@@ -36,8 +35,12 @@ Future<ServerInfo?> serverInfo(Ref ref) async {
       return ServerInfo.fromJson(response.data);
     }
     return null;
-  } catch (e) {
-    // Return null if we can't fetch server info (e.g., offline)
+  } catch (error) {
+    AppLogger.instance.warn(
+      LogTags.settings,
+      'Reading the server info failed',
+      error: error,
+    );
     return null;
   }
 }

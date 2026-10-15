@@ -8,29 +8,17 @@ part of 'reminder_permissions.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Reads and asks for the grants a reminder needs.
-///
-/// The exact-alarm answer only arrives once the user is back from Android's
-/// settings screen, so the grants are re-read on every resume.
 
 @ProviderFor(ReminderPermissionsController)
 final reminderPermissionsControllerProvider =
     ReminderPermissionsControllerProvider._();
 
-/// Reads and asks for the grants a reminder needs.
-///
-/// The exact-alarm answer only arrives once the user is back from Android's
-/// settings screen, so the grants are re-read on every resume.
 final class ReminderPermissionsControllerProvider
     extends
         $AsyncNotifierProvider<
           ReminderPermissionsController,
           ReminderPermissions
         > {
-  /// Reads and asks for the grants a reminder needs.
-  ///
-  /// The exact-alarm answer only arrives once the user is back from Android's
-  /// settings screen, so the grants are re-read on every resume.
   ReminderPermissionsControllerProvider._()
     : super(
         from: null,
@@ -51,12 +39,7 @@ final class ReminderPermissionsControllerProvider
 }
 
 String _$reminderPermissionsControllerHash() =>
-    r'a505ef4dd4d847a135a8cb575b4ecd1f6026dcce';
-
-/// Reads and asks for the grants a reminder needs.
-///
-/// The exact-alarm answer only arrives once the user is back from Android's
-/// settings screen, so the grants are re-read on every resume.
+    r'1b4a07715a85b2a11e0afeae3dccf5fc2bfdb9e6';
 
 abstract class _$ReminderPermissionsController
     extends $AsyncNotifier<ReminderPermissions> {

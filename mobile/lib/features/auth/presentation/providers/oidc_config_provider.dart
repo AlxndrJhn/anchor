@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
-import 'package:anchor/features/auth/data/remote/auth_service.dart';
+import 'package:anchor/legacy/features/auth/data/remote/auth_service.dart';
 import 'package:anchor/features/auth/domain/oidc_config.dart';
 
 /// Fetches OIDC mobile config from the server when a server URL is set.

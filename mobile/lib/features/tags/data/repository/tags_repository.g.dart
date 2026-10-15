@@ -21,7 +21,7 @@ final class TagsRepositoryProvider
         argument: null,
         retry: null,
         name: r'tagsRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,4 +48,4 @@ final class TagsRepositoryProvider
   }
 }
 
-String _$tagsRepositoryHash() => r'280a53b280d28a3daaf6c507f67ef092a6273ea6';
+String _$tagsRepositoryHash() => r'f33a940231d877be682327dab19b73c88528db95';

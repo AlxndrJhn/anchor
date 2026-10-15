@@ -7,7 +7,7 @@ import 'package:anchor/core/router/app_routes.dart';
 import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/core/widgets/rich_text_editor.dart';
-import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
+import 'package:anchor/legacy/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/legacy/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_attachments_gallery.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_audio_recorder_sheet.dart';
@@ -25,7 +25,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
 
-import '../data/repository/notes_repository.dart';
+import '../../../legacy/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/core/notifications/reminder_permission_prompt.dart';
 import 'widgets/reminder_chip.dart';
 import 'widgets/reminder_picker_sheet.dart';

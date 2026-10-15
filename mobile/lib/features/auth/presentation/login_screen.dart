@@ -10,7 +10,7 @@ import 'package:anchor/core/theme/tokens/app_radius.dart';
 import 'package:anchor/legacy/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/auth/presentation/providers/oidc_config_provider.dart';
 import 'package:anchor/features/auth/presentation/providers/registration_mode_provider.dart';
-import 'auth_controller.dart';
+import '../../../legacy/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/core/theme/tokens/app_opacity.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {

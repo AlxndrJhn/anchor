@@ -26,7 +26,7 @@ final class NoteRevisionsStoreProvider
         argument: null,
         retry: null,
         name: r'noteRevisionsStoreProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -55,4 +55,4 @@ final class NoteRevisionsStoreProvider
 }
 
 String _$noteRevisionsStoreHash() =>
-    r'1fdbb95544de27fa3c3f2f9cb879766bc90e4697';
+    r'dd68c344fc42ee417c9d8d52a7c1e60dfa6706a7';

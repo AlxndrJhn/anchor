@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../legacy/features/tags/domain/tag.dart';
-import '../tags_controller.dart';
+import '../../../../legacy/features/tags/presentation/tags_controller.dart';
 import 'tag_chip.dart';
 import '../../../../legacy/core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_durations.dart';

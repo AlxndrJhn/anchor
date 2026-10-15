@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:anchor/features/tags/data/repository/tags_repository.dart';
+import 'package:anchor/legacy/features/tags/data/repository/tags_repository.dart';
 import 'package:anchor/legacy/features/tags/domain/tag.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_chip.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';

@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/logging/app_logger.dart';
-import '../data/repository/note_shares_repository.dart';
-import '../data/repository/users_repository.dart';
+import '../../../legacy/features/notes/data/repository/note_shares_repository.dart';
+import '../../../legacy/features/notes/data/repository/users_repository.dart';
 import '../domain/note_share.dart';
 import '../domain/note_share_permission.dart';
 import '../domain/user_search_result.dart';

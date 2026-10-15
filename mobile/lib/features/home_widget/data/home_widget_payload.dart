@@ -1,24 +1,22 @@
 import 'dart:convert';
 
-import '../../../legacy/features/notes/domain/note.dart';
-import '../../../core/router/app_routes.dart';
-import '../../../core/widgets/quill_preview.dart';
+import '../../../app/router/app_routes.dart';
+import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../notes/domain/note.dart';
+import '../../notes/domain/note_blocks.dart';
 
-/// SharedPreferences key the Android widget reads its data from.
 /// Must match `WIDGET_NOTES_KEY` in `NotesWidgetService.kt`.
 const homeWidgetNotesKey = 'widget_notes';
 
 const _widgetUriScheme = 'anchorwidget';
 
-/// Maps a widget launch URI to a router location, or null to ignore it.
-///
-/// Note URIs map to the top-level widget routes, where the editor is the only
-/// page on the stack: back leaves the app instead of revealing the notes list.
 String? homeWidgetRouteForUri(Uri? uri) {
   if (uri == null || uri.scheme != _widgetUriScheme) return null;
   if (uri.host == 'note' && uri.pathSegments.isNotEmpty) {
     final target = uri.pathSegments.first;
-    return target == 'new' ? AppRoutes.widgetNoteNew : '/widget/note/$target';
+    return target == 'new'
+        ? AppRoutes.widgetNewNote
+        : AppRoutes.widgetNote(target);
   }
   return AppRoutes.home;
 }
@@ -27,17 +25,22 @@ const homeWidgetMaxNotes = 20;
 
 const _maxSnippetChars = 160;
 
-/// Serializes notes into the JSON payload rendered by the home-screen widget.
-///
 /// Notes are expected in display order (pinned first, then most recent).
 /// Titles are passed through as stored; the native side hides blank ones.
 String buildHomeWidgetPayload(List<Note> notes, {required bool loggedIn}) {
   final items = notes.take(homeWidgetMaxNotes).map((note) {
+    final palette = AnchorBackgrounds.of(note.background).palette;
+    final light = AnchorColors.light.notes[palette]!;
+    final dark = AnchorColors.dark.notes[palette]!;
     return {
       'id': note.id,
       'title': storedTitleOf(note.title),
-      'snippet': _truncate(extractPlainTextFromQuillContent(note.content)),
+      'snippet': _truncate(snippetTextOf(note.content)),
       'pinned': note.isPinned,
+      'fill': light.bg.toARGB32(),
+      'edge': light.border.toARGB32(),
+      'fillDark': dark.bg.toARGB32(),
+      'edgeDark': dark.border.toARGB32(),
     };
   }).toList();
 

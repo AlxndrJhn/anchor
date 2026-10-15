@@ -12,7 +12,7 @@ import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
 import 'package:anchor/core/widgets/image_shimmer.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
-import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
+import 'package:anchor/legacy/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/widgets/audio_player_row.dart';
 

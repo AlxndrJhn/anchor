@@ -5,11 +5,11 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'core/app_initializer.dart';
 import 'core/home_widget/home_widget_service.dart';
 import 'legacy/core/network/connectivity_provider.dart';
-import 'features/reminders/data/reminder_scheduler.dart';
+import 'legacy/features/reminders/data/reminder_scheduler.dart';
 import 'core/notifications/reminder_tap_handler.dart';
 import 'app/router/app_router.dart';
 import 'legacy/core/theme/app_theme.dart';
-import 'features/settings/presentation/theme_preferences_controller.dart';
+import 'legacy/features/settings/presentation/theme_preferences_controller.dart';
 
 void main() async {
   await initializeApp();

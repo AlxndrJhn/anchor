@@ -1,50 +1,44 @@
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../settings/presentation/controllers/editor_preferences_controller.dart';
+import '../../../core/storage/preferences_repository.dart';
 import 'notification_gateway.dart';
 
 part 'reminder_permissions.g.dart';
 
-/// What this device is allowed to do with a reminder right now.
 @immutable
 class ReminderPermissions {
   const ReminderPermissions({
     required this.canNotify,
     required this.canBeExact,
-    required this.exactMatters,
+    required this.needsExactAlarmPermission,
   });
 
-  /// The OS will post what we schedule.
   final bool canNotify;
-
-  /// Reminders land on the minute rather than in the next batch.
   final bool canBeExact;
 
-  /// Only Android gates exact timing; elsewhere it is always on.
-  final bool exactMatters;
+  /// Only Android gates exact timing.
+  final bool needsExactAlarmPermission;
 
-  /// Whether a reminder set now would ring, and ring when it says it will.
-  bool get ringsOnTime => canNotify && (canBeExact || !exactMatters);
+  bool get canRingOnTime =>
+      canNotify && (canBeExact || !needsExactAlarmPermission);
 
   @override
   bool operator ==(Object other) =>
       other is ReminderPermissions &&
       other.canNotify == canNotify &&
       other.canBeExact == canBeExact &&
-      other.exactMatters == exactMatters;
+      other.needsExactAlarmPermission == needsExactAlarmPermission;
 
   @override
-  int get hashCode => Object.hash(canNotify, canBeExact, exactMatters);
+  int get hashCode =>
+      Object.hash(canNotify, canBeExact, needsExactAlarmPermission);
 }
 
-/// Reads and asks for the grants a reminder needs, re-reading on resume.
 @Riverpod(keepAlive: true)
 class ReminderPermissionsController extends _$ReminderPermissionsController {
   AppLifecycleListener? _lifecycle;
-
-  /// Whether the ask flow has already run this app run.
-  bool promptedThisRun = false;
+  bool wasPromptedThisRun = false;
 
   @override
   Future<ReminderPermissions> build() {
@@ -61,7 +55,7 @@ class ReminderPermissionsController extends _$ReminderPermissionsController {
     return ReminderPermissions(
       canNotify: await gateway.hasPermission(),
       canBeExact: await gateway.canScheduleExact(),
-      exactMatters: gateway.gatesExactAlarms,
+      needsExactAlarmPermission: gateway.requiresExactAlarmPermission,
     );
   }
 
@@ -71,8 +65,8 @@ class ReminderPermissionsController extends _$ReminderPermissionsController {
     return permissions;
   }
 
-  /// The system dialog only appears the first time; later calls return the
-  /// standing answer.
+  /// Once the system has been refused, later calls return the standing
+  /// answer (Android 13+ shows its dialog a second time first).
   Future<bool> requestNotifications() async {
     final granted = await ref
         .read(notificationGatewayProvider)
@@ -81,10 +75,15 @@ class ReminderPermissionsController extends _$ReminderPermissionsController {
     return granted;
   }
 
-  /// Opens Android's alarms screen, returning when it opens rather than when
-  /// the user decides.
+  /// Returns once Android's alarms screen opens, before the user decides.
   Future<void> openExactSettings() =>
       ref.read(notificationGatewayProvider).requestExactPermission();
+
+  Future<bool> hasAskedNotifications() =>
+      ref.read(preferencesRepositoryProvider).getNotificationsAsked();
+
+  Future<void> markNotificationsAsked() =>
+      ref.read(preferencesRepositoryProvider).setNotificationsAsked(true);
 
   Future<bool> hasOfferedExact() =>
       ref.read(preferencesRepositoryProvider).getExactAlarmsOffered();

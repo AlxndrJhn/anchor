@@ -1,13 +1,11 @@
-import 'package:anchor/legacy/core/database/app_database.dart';
+import 'package:anchor/core/database/app_database.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';
-import 'package:anchor/legacy/features/notes/domain/note_revision.dart';
+import 'package:anchor/features/notes/domain/note_revision.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The versions held on the device: what a page from the server replaces,
-/// what a push has yet to send, and what ageing drops.
 void main() {
   late AppDatabase db;
   late NoteRevisionsStore store;
@@ -16,7 +14,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    store = NoteRevisionsStore(db, () => author);
+    store = NoteRevisionsStore(db, () async => author);
   });
 
   tearDown(() => db.close());
@@ -328,7 +326,7 @@ void main() {
       nextCursor: 'page-2',
     );
 
-    // A note change arrives from the feed while page 2 is in flight.
+    // A note change arrives from the feed while page 2 is still loading.
     await store.markStale('n1');
     await store.savePage(
       'n1',

@@ -1,5 +1,5 @@
-import 'package:anchor/features/reminders/data/notification_gateway.dart';
-import 'package:anchor/features/reminders/data/reminder_permissions.dart';
+import 'package:anchor/legacy/features/reminders/data/notification_gateway.dart';
+import 'package:anchor/legacy/features/reminders/data/reminder_permissions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

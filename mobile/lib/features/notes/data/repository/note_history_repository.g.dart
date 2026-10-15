@@ -26,7 +26,7 @@ final class NoteHistoryRepositoryProvider
         argument: null,
         retry: null,
         name: r'noteHistoryRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -55,4 +55,4 @@ final class NoteHistoryRepositoryProvider
 }
 
 String _$noteHistoryRepositoryHash() =>
-    r'6904728ce5e4b727bc5279ac6e6ddfbfd029f2ad';
+    r'dfb52326cfc2446002e3257095119cc4931deecd';

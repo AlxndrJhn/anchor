@@ -322,6 +322,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{At least 1 character.} other{At least {count} characters.}}'**
   String passwordHelp(int count);
 
+  /// Button that signs in, a link to the sign-in page, and that page’s spoken name.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authSignIn;
+
   /// {count} is the number of changes not yet sent to the server.
   ///
   /// In en, this message translates to:
@@ -333,6 +339,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 log copied} other{{count} logs copied}}'**
   String logsCopied(int count);
+
+  /// Button that closes the sign in again dialog without signing in.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get commonLater;
+
+  /// Button that closes a warning dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get commonOk;
+
+  /// Title of the reminder sheet, and of a reminder notification when the note has no title.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get reminderTitle;
+
+  /// Name of the app’s notification category in Android’s settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get reminderChannelName;
+
+  /// Description of the app’s notification category in Android’s settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders you set on your notes'**
+  String get reminderChannelDescription;
+
+  /// Bold lead of a warning above the notes list after the sign-in expired.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out.'**
+  String get syncSignedOutLead;
+
+  /// Follows the bold “Signed out.” in a warning at the top of the notes list.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to sync your notes.'**
+  String get syncSignedOutText;
+
+  /// Title of the dialog that asks the person to sign in again after the sign-in expired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get syncSignInAgainTitle;
+
+  /// Message of the dialog that asks the person to sign in again.
+  ///
+  /// In en, this message translates to:
+  /// **'Your notes stay on this phone and sync once you sign in.'**
+  String get syncSignInAgainMessage;
+
+  /// Bold lead of a warning when the server is too old, also used after “Sync is paused.” in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your server.'**
+  String get syncServerOutdatedLead;
+
+  /// Follows the bold “Update your server.” in a warning; “It” is the server.
+  ///
+  /// In en, this message translates to:
+  /// **'It’s too old to sync with this app.'**
+  String get syncServerOutdatedText;
+
+  /// Title of the dialog explaining that the server is too old for this app.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your server'**
+  String get syncServerOutdatedTitle;
+
+  /// Message of the dialog explaining that the server is too old for this app.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Anchor server is too old to sync with this app. Update the server to continue.'**
+  String get syncServerOutdatedMessage;
+
+  /// Bold lead of a warning when the app is too old, also used after “Sync is paused.” in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Anchor.'**
+  String get syncAppOutdatedLead;
+
+  /// Follows the bold “Update Anchor.” in a warning at the top of the notes list.
+  ///
+  /// In en, this message translates to:
+  /// **'This app is too old to sync with your server.'**
+  String get syncAppOutdatedText;
+
+  /// Title of the dialog explaining that the app is too old for the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Anchor'**
+  String get syncAppOutdatedTitle;
+
+  /// Message of the dialog explaining that the app is too old for the server.
+  ///
+  /// In en, this message translates to:
+  /// **'This app is too old to sync with your Anchor server. Update the app to continue.'**
+  String get syncAppOutdatedMessage;
+
+  /// {reason} says which side needs an update.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason} Your notes stay on this phone in the meantime.'**
+  String syncPausedMessage(String reason);
 
   /// Name of an audio recording made in the app.
   ///

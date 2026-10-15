@@ -3,90 +3,90 @@ import 'dart:io';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../constants/auth_constants.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/logging/log_tags.dart';
+import '../../../../core/storage/secure_storage_provider.dart';
+import '../../../../core/storage/storage_keys.dart';
+import '../../domain/auth_failure.dart';
 import '../../domain/user.dart';
 import '../remote/auth_service.dart';
 
 part 'auth_repository.g.dart';
 
-@riverpod
+/// The scheme must match `appAuthRedirectScheme` in
+/// android/app/build.gradle.kts and the URL scheme in ios/Runner/Info.plist.
+const _oidcRedirectUri = 'anchor://oidc/callback';
+
+@Riverpod(keepAlive: true)
 AuthRepository authRepository(Ref ref) {
   final authService = ref.watch(authServiceProvider);
-  const storage = FlutterSecureStorage();
-  return AuthRepository(authService, storage);
+  return AuthRepository(authService, ref.watch(secureStorageProvider));
 }
 
+/// Failures are [AuthFailure]s.
 class AuthRepository {
   final AuthService _authService;
   final FlutterSecureStorage _storage;
 
   AuthRepository(this._authService, this._storage);
 
-  /// Save user data to secure storage
   Future<void> _saveUser(User user) async {
     final userJson = user.toJson();
-    await _storage.write(key: 'user_data', value: jsonEncode(userJson));
+    await _storage.write(
+      key: StorageKeys.userData,
+      value: jsonEncode(userJson),
+    );
   }
 
-  /// Load user data from secure storage
   Future<User?> _loadUser() async {
-    final userData = await _storage.read(key: 'user_data');
+    final userData = await _storage.read(key: StorageKeys.userData);
     if (userData != null) {
       try {
         final userJson = jsonDecode(userData) as Map<String, dynamic>;
         return User.fromJson(userJson);
       } catch (e) {
-        // If parsing fails, return null
         return null;
       }
     }
     return null;
   }
 
-  Future<User> login(String email, String password) async {
-    final data = await _authService.login(email, password);
-    final token = data['access_token'] as String;
-    final refreshToken = data['refresh_token'] as String;
-    final userJson = data['user'] as Map<String, dynamic>;
-    final user = User.fromJson(userJson);
-
-    await _storage.write(key: 'access_token', value: token);
-    await _storage.write(key: 'refresh_token', value: refreshToken);
+  Future<User> _saveSession(Map<String, dynamic> data) async {
+    final user = User.fromJson(data['user'] as Map<String, dynamic>);
+    await _storage.write(
+      key: StorageKeys.accessToken,
+      value: data['access_token'] as String,
+    );
+    await _storage.write(
+      key: StorageKeys.refreshToken,
+      value: data['refresh_token'] as String,
+    );
     await _saveUser(user);
     return user;
   }
 
-  Future<void> register(String email, String password, String name) async {
+  Future<User> login(String email, String password) async =>
+      _saveSession(await _authService.login(email, password));
+
+  /// Returns null when an admin has to approve the account first.
+  Future<User?> register(String email, String password, String name) async {
     final data = await _authService.register(email, password, name);
-
-    if (data.containsKey('access_token') && data['access_token'] != null) {
-      final token = data['access_token'] as String;
-      final refreshToken = data['refresh_token'] as String;
-      final userJson = data['user'] as Map<String, dynamic>;
-      final user = User.fromJson(userJson);
-
-      await _storage.write(key: 'access_token', value: token);
-      await _storage.write(key: 'refresh_token', value: refreshToken);
-      await _saveUser(user);
-    }
+    if (data['access_token'] == null) return null;
+    return _saveSession(data);
   }
 
   Future<void> logout() async {
-    final refreshToken = await _storage.read(key: 'refresh_token');
+    final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
     if (refreshToken != null) {
       await _authService.revokeRefreshToken(refreshToken);
     }
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'refresh_token');
-    await _storage.delete(key: 'user_data');
+    await _storage.delete(key: StorageKeys.accessToken);
+    await _storage.delete(key: StorageKeys.refreshToken);
+    await _storage.delete(key: StorageKeys.userData);
   }
 
   Future<String?> getToken() {
-    return _storage.read(key: 'access_token');
-  }
-
-  Future<String?> getRefreshToken() {
-    return _storage.read(key: 'refresh_token');
+    return _storage.read(key: StorageKeys.accessToken);
   }
 
   Future<User?> getCurrentUser() => _loadUser();
@@ -98,23 +98,33 @@ class AuthRepository {
     await _authService.changePassword(currentPassword, newPassword);
   }
 
+  /// Profile answers may leave out hasPassword; the stored value is kept then.
+  Future<User> _profileFrom(Map<String, dynamic> data) async {
+    final user = User.fromJson(data);
+    if (data.containsKey('hasPassword')) return user;
+    final stored = await _loadUser();
+    return stored == null
+        ? user
+        : user.copyWith(hasPassword: stored.hasPassword);
+  }
+
   Future<User> updateProfile({String? name}) async {
     final data = await _authService.updateProfile(name: name);
-    final user = User.fromJson(data);
+    final user = await _profileFrom(data);
     await _saveUser(user);
     return user;
   }
 
   Future<User> uploadProfileImage(File imageFile) async {
     final data = await _authService.uploadProfileImage(imageFile);
-    final user = User.fromJson(data);
+    final user = await _profileFrom(data);
     await _saveUser(user);
     return user;
   }
 
   Future<User> removeProfileImage() async {
     final data = await _authService.removeProfileImage();
-    final user = User.fromJson(data);
+    final user = await _profileFrom(data);
     await _saveUser(user);
     return user;
   }
@@ -126,58 +136,57 @@ class AuthRepository {
     return user;
   }
 
-  /// Sign in with OIDC. Returns null if user cancelled.
+  /// Returns null if the user cancelled.
   Future<User?> loginWithOidc() async {
     final config = await _authService.getOidcConfig();
+    final issuerUrl = config.issuerUrl;
+    final clientId = config.clientId;
     if (!config.enabled ||
-        config.issuerUrl == null ||
-        config.clientId == null ||
-        config.issuerUrl!.isEmpty ||
-        config.clientId!.isEmpty) {
-      throw Exception('OIDC is not enabled or not configured');
+        issuerUrl == null ||
+        issuerUrl.isEmpty ||
+        clientId == null ||
+        clientId.isEmpty) {
+      throw const ProviderNotSetUpFailure();
     }
 
-    final appAuth = FlutterAppAuth();
     final request = AuthorizationTokenRequest(
-      config.clientId!,
-      oidcRedirectUri,
-      issuer: config.issuerUrl,
+      clientId,
+      _oidcRedirectUri,
+      issuer: issuerUrl,
       scopes: ['openid', 'email', 'profile'],
     );
 
-    AuthorizationTokenResponse? result;
+    final AuthorizationTokenResponse result;
     try {
-      result = await appAuth.authorizeAndExchangeCode(request);
+      result = await FlutterAppAuth().authorizeAndExchangeCode(request);
     } on FlutterAppAuthUserCancelledException {
       return null;
-    } on FlutterAppAuthPlatformException catch (e) {
-      final d = e.platformErrorDetails;
-      final msg = (d.errorDescription ?? e.message ?? d.error ?? e.code)
-          .toString()
-          .trim();
-      throw Exception(msg.isEmpty ? 'Sign-in failed' : msg);
-    } catch (e) {
-      final s = e
-          .toString()
-          .replaceFirst(RegExp(r'^Exception:?\s*'), '')
-          .trim();
-      final line = s.split('\n').first.trim();
-      throw Exception(line.isNotEmpty ? line : 'Sign-in failed');
+    } on FlutterAppAuthPlatformException catch (error) {
+      AppLogger.instance.warn(
+        LogTags.auth,
+        'Provider sign-in failed',
+        error: error,
+      );
+      final details = error.platformErrorDetails;
+      final detail = details.errorDescription ?? error.message;
+      throw ProviderSignInFailure(
+        detail == null || detail.trim().isEmpty ? null : detail.trim(),
+      );
+    } catch (error) {
+      AppLogger.instance.warn(
+        LogTags.auth,
+        'Provider sign-in failed',
+        error: error,
+      );
+      throw const ProviderSignInFailure();
     }
     final idpAccessToken = result.accessToken;
     if (idpAccessToken == null || idpAccessToken.isEmpty) {
       return null;
     }
 
-    final data = await _authService.exchangeOidcMobileToken(idpAccessToken);
-    final token = data['access_token'] as String;
-    final refreshToken = data['refresh_token'] as String;
-    final userJson = data['user'] as Map<String, dynamic>;
-    final user = User.fromJson(userJson);
-
-    await _storage.write(key: 'access_token', value: token);
-    await _storage.write(key: 'refresh_token', value: refreshToken);
-    await _saveUser(user);
-    return user;
+    return _saveSession(
+      await _authService.exchangeOidcMobileToken(idpAccessToken),
+    );
   }
 }

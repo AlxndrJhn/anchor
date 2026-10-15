@@ -16,11 +16,11 @@ import '../../../core/widgets/settings_row.dart';
 import '../../../core/widgets/large_title_app_bar.dart';
 import '../../../core/router/app_routes.dart';
 import '../../../core/network/server_config_provider.dart';
-import '../../auth/presentation/auth_controller.dart';
-import '../../server/data/server_info_provider.dart';
+import '../../../legacy/features/auth/presentation/auth_controller.dart';
+import '../../../legacy/features/server/data/server_info_provider.dart';
 import 'controllers/editor_preferences_controller.dart';
-import 'theme_preferences_controller.dart';
-import '../../sync/data/sync_compatibility.dart';
+import '../../../legacy/features/settings/presentation/theme_preferences_controller.dart';
+import '../../../legacy/features/sync/data/sync_compatibility.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});

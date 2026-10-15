@@ -141,6 +141,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get authSignIn => 'Sign in';
+
+  @override
   String settingsSignOutMessage(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -163,6 +166,66 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 log copied',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get commonLater => 'Later';
+
+  @override
+  String get commonOk => 'OK';
+
+  @override
+  String get reminderTitle => 'Reminder';
+
+  @override
+  String get reminderChannelName => 'Reminders';
+
+  @override
+  String get reminderChannelDescription => 'Reminders you set on your notes';
+
+  @override
+  String get syncSignedOutLead => 'Signed out.';
+
+  @override
+  String get syncSignedOutText => 'Sign in again to sync your notes.';
+
+  @override
+  String get syncSignInAgainTitle => 'Sign in again';
+
+  @override
+  String get syncSignInAgainMessage =>
+      'Your notes stay on this phone and sync once you sign in.';
+
+  @override
+  String get syncServerOutdatedLead => 'Update your server.';
+
+  @override
+  String get syncServerOutdatedText => 'It’s too old to sync with this app.';
+
+  @override
+  String get syncServerOutdatedTitle => 'Update your server';
+
+  @override
+  String get syncServerOutdatedMessage =>
+      'Your Anchor server is too old to sync with this app. Update the server to continue.';
+
+  @override
+  String get syncAppOutdatedLead => 'Update Anchor.';
+
+  @override
+  String get syncAppOutdatedText =>
+      'This app is too old to sync with your server.';
+
+  @override
+  String get syncAppOutdatedTitle => 'Update Anchor';
+
+  @override
+  String get syncAppOutdatedMessage =>
+      'This app is too old to sync with your Anchor server. Update the app to continue.';
+
+  @override
+  String syncPausedMessage(String reason) {
+    return '$reason Your notes stay on this phone in the meantime.';
   }
 
   @override
