@@ -316,6 +316,18 @@ abstract class AppLocalizations {
   /// **'The server ran into a problem. Try again later.'**
   String get errorServer;
 
+  /// Button that saves a form or the choice made in a sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get commonSave;
+
+  /// Button that reverses the last change, in toasts and in the editor toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get commonUndo;
+
   /// Shown under a new password field.
   ///
   /// In en, this message translates to:
@@ -327,6 +339,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in'**
   String get authSignIn;
+
+  /// Button that copies a link or the selected logs. Short: fits a small bubble.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get commonCopy;
 
   /// {count} is the number of changes not yet sent to the server.
   ///
@@ -369,6 +387,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reminders you set on your notes'**
   String get reminderChannelDescription;
+
+  /// Screen reader name of a tag, note background or highlight color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get colorPink;
+
+  /// Screen reader name of a tag, note background or highlight color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get colorPurple;
+
+  /// Screen reader name of a tag, note background or highlight color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get colorBlue;
+
+  /// Screen reader name of a tag, note background or highlight color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get colorGreen;
+
+  /// Screen reader name of a tag, note background or highlight color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get colorYellow;
 
   /// Bold lead of a warning above the notes list after the sign-in expired.
   ///
@@ -448,11 +496,329 @@ abstract class AppLocalizations {
   /// **'{reason} Your notes stay on this phone in the meantime.'**
   String syncPausedMessage(String reason);
 
+  /// Adds a picture or an audio file to an empty note.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture or audio'**
+  String get starterAttachment;
+
+  /// Screen reader label of the button that adds a picture or audio file to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Add picture or audio'**
+  String get attachmentAddLabel;
+
+  /// Line style: plain text.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get lineText;
+
+  /// Line style for the biggest heading, in the slash menu and the line styles toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading 1'**
+  String get lineH1;
+
+  /// Line style for a medium heading, in the slash menu and the line styles toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading 2'**
+  String get lineH2;
+
+  /// Line style for the smallest heading, in the slash menu and the line styles toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading 3'**
+  String get lineH3;
+
+  /// Line style with checkboxes; also a starter button in an empty note.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get lineChecklist;
+
+  /// Line style for a list with dots, in the slash menu and the toolbars.
+  ///
+  /// In en, this message translates to:
+  /// **'Bullet list'**
+  String get lineBullet;
+
+  /// Line style for a list with numbers, in the slash menu and the line styles toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Numbered list'**
+  String get lineNumbered;
+
+  /// Noun: line style for quoted text, in the slash menu and toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get lineQuote;
+
+  /// Line style for computer code in a fixed-width font.
+  ///
+  /// In en, this message translates to:
+  /// **'Code block'**
+  String get lineCode;
+
+  /// Noun: slash menu item and spoken toolbar button that add a web link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get editorLink;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'todo to-do task checkbox list'**
+  String get slashWordsChecklist;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'h1 title'**
+  String get slashWordsH1;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'h2 subtitle subheading'**
+  String get slashWordsH2;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'h3 subheading'**
+  String get slashWordsH3;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'unordered ul dashes'**
+  String get slashWordsBullet;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'ordered ol'**
+  String get slashWordsNumbered;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'blockquote citation'**
+  String get slashWordsQuote;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'pre snippet'**
+  String get slashWordsCode;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'paragraph plain normal body'**
+  String get slashWordsText;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'url web address'**
+  String get slashWordsLink;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'image img photo file voice recording attachment'**
+  String get slashWordsAttachment;
+
+  /// Screen reader name of the editor toolbar while typing.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatting'**
+  String get barFormatting;
+
+  /// Screen reader name of the editor toolbar on a list line.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get barList;
+
+  /// Screen reader name of the editor toolbar while text is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected text'**
+  String get barSelected;
+
+  /// Screen reader name of the toolbar with text and line styles, and of its button.
+  ///
+  /// In en, this message translates to:
+  /// **'Text styles'**
+  String get barStyles;
+
+  /// Screen reader name of the editor toolbar with highlight colors.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight colors'**
+  String get barColors;
+
+  /// Screen reader name of the row of line style buttons in the editor toolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Line styles'**
+  String get barLineStyles;
+
+  /// Screen reader label of the toolbar button that moves a list item one level left.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdent'**
+  String get toolOutdent;
+
+  /// Screen reader label of the toolbar button that moves a list item one level right.
+  ///
+  /// In en, this message translates to:
+  /// **'Indent'**
+  String get toolIndent;
+
+  /// Screen reader label of the toolbar button that makes text bold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get toolBold;
+
+  /// Screen reader label of the toolbar button that makes text italic.
+  ///
+  /// In en, this message translates to:
+  /// **'Italic'**
+  String get toolItalic;
+
+  /// Screen reader label of the toolbar button that underlines text.
+  ///
+  /// In en, this message translates to:
+  /// **'Underline'**
+  String get toolUnderline;
+
+  /// Screen reader label of the toolbar button that crosses text out.
+  ///
+  /// In en, this message translates to:
+  /// **'Strikethrough'**
+  String get toolStrikethrough;
+
+  /// Screen reader label of the toolbar button that marks text with a color.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight'**
+  String get toolHighlight;
+
+  /// Screen reader label of the toolbar button that removes the color mark from text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove highlight'**
+  String get toolRemoveHighlight;
+
+  /// Screen reader label of the toolbar button that repeats an undone change.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get toolRedo;
+
+  /// Screen reader label of the toolbar button that closes the on-screen keyboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide keyboard'**
+  String get toolHideKeyboard;
+
+  /// Screen reader name of an empty checklist or list item.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty item'**
+  String get editorEmptyItem;
+
+  /// Toast after a link’s web address was copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get editorLinkCopied;
+
+  /// Folded checked items at the end of a checklist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 checked item} other{{count} checked items}}'**
+  String editorCheckedItems(int count);
+
+  /// Title of the sheet that adds a link to text, and its confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Add link'**
+  String get linkAdd;
+
+  /// Title of the sheet that changes an existing link.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit link'**
+  String get linkEdit;
+
+  /// Hint in the field for the words a link shows.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get linkTextHint;
+
+  /// Opens a link in the browser. Short: one of four buttons in a small bubble.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get commonOpen;
+
+  /// Changes a link. Short: one of four buttons in a small bubble over the link.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// Verb: removes a link from text, or a person from a shared note.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get commonRemove;
+
+  /// Hint in an empty line: typing a slash opens a menu of line styles.
+  ///
+  /// In en, this message translates to:
+  /// **'Type / for more'**
+  String get editorSlashHint;
+
+  /// Placeholder in an empty note.
+  ///
+  /// In en, this message translates to:
+  /// **'Start writing'**
+  String get editorPlaceholder;
+
   /// Name of an audio recording made in the app.
   ///
   /// In en, this message translates to:
   /// **'Voice note'**
   String get voiceNote;
+
+  /// Spoken hint on a checklist item that can be dragged.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get editorDragHint;
+
+  /// Spoken name of the slash menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get slashMenuLabel;
+
+  /// Shown in the slash menu when nothing matches.
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get slashNoResults;
 }
 
 class _AppLocalizationsDelegate

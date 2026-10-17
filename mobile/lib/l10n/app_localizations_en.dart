@@ -130,6 +130,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorServer => 'The server ran into a problem. Try again later.';
 
   @override
+  String get commonSave => 'Save';
+
+  @override
+  String get commonUndo => 'Undo';
+
+  @override
   String passwordHelp(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -142,6 +148,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authSignIn => 'Sign in';
+
+  @override
+  String get commonCopy => 'Copy';
 
   @override
   String settingsSignOutMessage(int count) {
@@ -182,6 +191,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderChannelDescription => 'Reminders you set on your notes';
+
+  @override
+  String get colorPink => 'Pink';
+
+  @override
+  String get colorPurple => 'Purple';
+
+  @override
+  String get colorBlue => 'Blue';
+
+  @override
+  String get colorGreen => 'Green';
+
+  @override
+  String get colorYellow => 'Yellow';
 
   @override
   String get syncSignedOutLead => 'Signed out.';
@@ -229,5 +253,173 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get starterAttachment => 'Picture or audio';
+
+  @override
+  String get attachmentAddLabel => 'Add picture or audio';
+
+  @override
+  String get lineText => 'Text';
+
+  @override
+  String get lineH1 => 'Heading 1';
+
+  @override
+  String get lineH2 => 'Heading 2';
+
+  @override
+  String get lineH3 => 'Heading 3';
+
+  @override
+  String get lineChecklist => 'Checklist';
+
+  @override
+  String get lineBullet => 'Bullet list';
+
+  @override
+  String get lineNumbered => 'Numbered list';
+
+  @override
+  String get lineQuote => 'Quote';
+
+  @override
+  String get lineCode => 'Code block';
+
+  @override
+  String get editorLink => 'Link';
+
+  @override
+  String get slashWordsChecklist => 'todo to-do task checkbox list';
+
+  @override
+  String get slashWordsH1 => 'h1 title';
+
+  @override
+  String get slashWordsH2 => 'h2 subtitle subheading';
+
+  @override
+  String get slashWordsH3 => 'h3 subheading';
+
+  @override
+  String get slashWordsBullet => 'unordered ul dashes';
+
+  @override
+  String get slashWordsNumbered => 'ordered ol';
+
+  @override
+  String get slashWordsQuote => 'blockquote citation';
+
+  @override
+  String get slashWordsCode => 'pre snippet';
+
+  @override
+  String get slashWordsText => 'paragraph plain normal body';
+
+  @override
+  String get slashWordsLink => 'url web address';
+
+  @override
+  String get slashWordsAttachment =>
+      'image img photo file voice recording attachment';
+
+  @override
+  String get barFormatting => 'Formatting';
+
+  @override
+  String get barList => 'List';
+
+  @override
+  String get barSelected => 'Selected text';
+
+  @override
+  String get barStyles => 'Text styles';
+
+  @override
+  String get barColors => 'Highlight colors';
+
+  @override
+  String get barLineStyles => 'Line styles';
+
+  @override
+  String get toolOutdent => 'Outdent';
+
+  @override
+  String get toolIndent => 'Indent';
+
+  @override
+  String get toolBold => 'Bold';
+
+  @override
+  String get toolItalic => 'Italic';
+
+  @override
+  String get toolUnderline => 'Underline';
+
+  @override
+  String get toolStrikethrough => 'Strikethrough';
+
+  @override
+  String get toolHighlight => 'Highlight';
+
+  @override
+  String get toolRemoveHighlight => 'Remove highlight';
+
+  @override
+  String get toolRedo => 'Redo';
+
+  @override
+  String get toolHideKeyboard => 'Hide keyboard';
+
+  @override
+  String get editorEmptyItem => 'Empty item';
+
+  @override
+  String get editorLinkCopied => 'Link copied';
+
+  @override
+  String editorCheckedItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count checked items',
+      one: '1 checked item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get linkAdd => 'Add link';
+
+  @override
+  String get linkEdit => 'Edit link';
+
+  @override
+  String get linkTextHint => 'Text';
+
+  @override
+  String get commonOpen => 'Open';
+
+  @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String get commonRemove => 'Remove';
+
+  @override
+  String get editorSlashHint => 'Type / for more';
+
+  @override
+  String get editorPlaceholder => 'Start writing';
+
+  @override
   String get voiceNote => 'Voice note';
+
+  @override
+  String get editorDragHint => 'Drag to reorder';
+
+  @override
+  String get slashMenuLabel => 'Insert';
+
+  @override
+  String get slashNoResults => 'No results';
 }

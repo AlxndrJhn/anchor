@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-import '../../../features/notes/presentation/editor/checklist_lines.dart';
+import '../../../legacy/features/notes/presentation/editor/checklist_lines.dart';
 
 /// Manual drag-to-reorder for checklist items: long-press on the checkbox
 /// slot lifts the line, dragging moves it within its checklist group, and

@@ -1,30 +1,24 @@
 import 'package:dart_quill_delta/dart_quill_delta.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-/// A line in the document: its offset range and newline (block) attributes.
-class ParsedLine {
-  final int startOffset;
+import '../../domain/note_blocks.dart';
+import 'document_lines.dart';
 
-  /// Length including the trailing newline.
-  final int length;
-  final Map<String, dynamic>? newlineAttributes;
-
-  ParsedLine({
-    required this.startOffset,
-    required this.length,
-    required this.newlineAttributes,
-  });
-
-  String? get listType => newlineAttributes?[Attribute.list.key] as String?;
-  bool get isChecklist => listType == 'checked' || listType == 'unchecked';
-  bool get isChecked => listType == 'checked';
-
-  /// Nesting level (0 = top level).
-  int get indent => (newlineAttributes?[Attribute.indent.key] as int?) ?? 0;
+/// First and last line of the checklist run holding line [index].
+(int, int) checklistGroupAround(List<ParsedLine> lines, int index) {
+  var start = index;
+  var end = index;
+  while (start > 0 && lines[start - 1].isChecklist) {
+    start--;
+  }
+  while (end < lines.length - 1 && lines[end + 1].isChecklist) {
+    end++;
+  }
+  return (start, end);
 }
 
-/// Last line of the block headed by [index]: the line plus the contiguous
-/// run of following lines (up to [rangeEnd]) with deeper indent.
+/// Last line of [index]'s block: it and the deeper-indented lines after it.
 int checklistBlockEnd(List<ParsedLine> lines, int index, int rangeEnd) {
   final base = lines[index].indent;
   var end = index;
@@ -34,10 +28,8 @@ int checklistBlockEnd(List<ParsedLine> lines, int index, int rangeEnd) {
   return end;
 }
 
-/// A valid insertion gap and the indent range the dropped block's head line
-/// may take there.
 class ChecklistGap {
-  /// Insertion point: the block drops before line [gap].
+  /// The block drops before line [gap].
   final int gap;
   final int minIndent;
   final int maxIndent;
@@ -58,12 +50,8 @@ class ChecklistGap {
   String toString() => 'ChecklistGap($gap, $minIndent..$maxIndent)';
 }
 
-/// Gaps where the block [blockStart..blockEnd] can drop, with the indent
-/// range its head line may take at each: at most one level below the line
-/// above the gap, deep enough that the line below the gap keeps a parent,
-/// and capped so the block's deepest child stays within [maxListIndent].
-/// Includes the block's own boundaries (a no-op unless the indent changes).
-/// In flat groups this is every gap in the group.
+/// Gaps where block [blockStart..blockEnd] can drop, including its own
+/// boundaries, with the indent range its head line may take at each.
 List<ChecklistGap> checklistDropGaps(
   List<ParsedLine> lines,
   int groupStart,
@@ -72,11 +60,13 @@ List<ChecklistGap> checklistDropGaps(
   int blockEnd,
 ) {
   final head = lines[blockStart].indent;
-  var relMax = 0;
+  var maxRelativeIndent = 0;
   for (var i = blockStart; i <= blockEnd; i++) {
-    if (lines[i].indent - head > relMax) relMax = lines[i].indent - head;
+    if (lines[i].indent - head > maxRelativeIndent) {
+      maxRelativeIndent = lines[i].indent - head;
+    }
   }
-  final relLast = lines[blockEnd].indent - head;
+  final lastRelativeIndent = lines[blockEnd].indent - head;
 
   final gaps = <ChecklistGap>[];
   for (var g = groupStart; g <= groupEnd + 1; g++) {
@@ -87,10 +77,10 @@ List<ChecklistGap> checklistDropGaps(
     final belowIndex = own ? blockEnd + 1 : g;
     final above = aboveIndex >= groupStart ? lines[aboveIndex].indent : null;
     final below = belowIndex <= groupEnd ? lines[belowIndex].indent : null;
-    var maxIndent = maxListIndent - relMax;
+    var maxIndent = maxListIndent - maxRelativeIndent;
     final aboveCap = above == null ? 0 : above + 1;
     if (aboveCap < maxIndent) maxIndent = aboveCap;
-    var minIndent = below == null ? 0 : below - 1 - relLast;
+    var minIndent = below == null ? 0 : below - 1 - lastRelativeIndent;
     if (minIndent < 0) minIndent = 0;
     if (minIndent > maxIndent) continue;
     gaps.add(ChecklistGap(g, minIndent, maxIndent));
@@ -98,47 +88,8 @@ List<ChecklistGap> checklistDropGaps(
   return gaps;
 }
 
-List<ParsedLine> parseDocumentLines(Document document) {
-  final lines = <ParsedLine>[];
-  var offset = 0;
-  var lineStart = 0;
-
-  for (final op in document.toDelta().toList()) {
-    final data = op.data;
-    if (data is! String) {
-      // Embeds occupy one position and never contain a newline.
-      offset += 1;
-      continue;
-    }
-
-    var searchFrom = 0;
-    while (true) {
-      final newlineIndex = data.indexOf('\n', searchFrom);
-      if (newlineIndex == -1) {
-        offset += data.length - searchFrom;
-        break;
-      }
-      offset += newlineIndex - searchFrom + 1;
-      lines.add(
-        ParsedLine(
-          startOffset: lineStart,
-          length: offset - lineStart,
-          newlineAttributes: op.attributes,
-        ),
-      );
-      lineStart = offset;
-      searchFrom = newlineIndex + 1;
-    }
-  }
-
-  return lines;
-}
-
-/// Delta that moves the line at [fromIndex] so it ends up at [toIndex].
-///
-/// Document.compose (and the history inverses of deltas) cannot delete the
-/// final newline or insert after it; end-of-document moves retain it and
-/// patch its attributes.
+/// Moves the line at [fromIndex] so it ends up at [toIndex].
+@visibleForTesting
 Delta buildLineMoveDelta(
   Document document,
   List<ParsedLine> lines,
@@ -172,8 +123,6 @@ Delta _buildLineMoveDelta(
   );
 }
 
-/// Retain-only delta that shifts the indent of lines [fromStart..fromEnd]
-/// by [indentDelta].
 Delta buildBlockReindentDelta(
   List<ParsedLine> lines,
   int fromStart,
@@ -185,8 +134,7 @@ Delta buildBlockReindentDelta(
   for (var i = fromStart; i <= fromEnd; i++) {
     final newlineOffset = lines[i].startOffset + lines[i].length - 1;
     if (newlineOffset > cursor) delta.retain(newlineOffset - cursor);
-    final indent = lines[i].indent + indentDelta;
-    delta.retain(1, {'indent': indent == 0 ? null : indent});
+    delta.retain(1, indentAttributes(lines[i].indent + indentDelta));
     cursor = newlineOffset + 1;
   }
   return delta;
@@ -201,13 +149,8 @@ Map<String, dynamic>? _withIndent(
   return next.isEmpty ? null : next;
 }
 
-/// Delta that moves the contiguous lines [fromStart..fromEnd] into [gap]
-/// (the position before line [gap], which must lie outside the span),
-/// shifting each moved line's indent by [indentDelta].
-///
-/// Document.compose (and the history inverses of deltas) cannot delete the
-/// final newline or insert after it; end-of-document moves retain it and
-/// patch its attributes.
+/// Moves lines [fromStart..fromEnd] to before line [gap], which must lie
+/// outside the span, shifting their indent by [indentDelta].
 Delta buildBlockMoveDelta(
   Document document,
   List<ParsedLine> lines,
@@ -227,7 +170,7 @@ Delta buildBlockMoveDelta(
     );
   }
 
-  // The re-indent is retain-only, so the line offsets stay valid for the move.
+  // The re-indent is retain-only: line offsets stay valid for the move.
   final reindent = buildBlockReindentDelta(
     lines,
     fromStart,
@@ -256,6 +199,7 @@ Delta buildBlockMoveDelta(
   return reindent.compose(move);
 }
 
+/// Document.compose can't delete the final newline or insert after it.
 Delta _buildSpanMoveDelta(
   Delta delta,
   int docLength,
@@ -265,29 +209,29 @@ Delta _buildSpanMoveDelta(
   int gap,
 ) {
   assert(gap < fromStart || gap > fromEnd + 1);
-  final srcStart = lines[fromStart].startOffset;
-  final srcEnd = lines[fromEnd].startOffset + lines[fromEnd].length;
-  final srcLength = srcEnd - srcStart;
+  final sourceStart = lines[fromStart].startOffset;
+  final sourceEnd = lines[fromEnd].startOffset + lines[fromEnd].length;
+  final sourceLength = sourceEnd - sourceStart;
 
   final move = Delta();
   if (gap > fromEnd + 1) {
     // Move down = pull the lines below the span up in front of it.
     final belowLast = lines[gap - 1];
-    final belowStart = srcEnd;
+    final belowStart = sourceEnd;
     final belowEnd = belowLast.startOffset + belowLast.length;
     if (belowEnd < docLength) {
-      move.retain(srcStart);
+      move.retain(sourceStart);
       delta.slice(belowStart, belowEnd).toList().forEach(move.push);
       move
-        ..retain(srcLength)
+        ..retain(sourceLength)
         ..delete(belowEnd - belowStart);
     } else {
       move
-        ..retain(srcStart)
-        ..delete(srcLength)
+        ..retain(sourceStart)
+        ..delete(sourceLength)
         ..retain(belowEnd - belowStart - 1)
         ..insert('\n', belowLast.newlineAttributes);
-      delta.slice(srcStart, srcEnd - 1).toList().forEach(move.push);
+      delta.slice(sourceStart, sourceEnd - 1).toList().forEach(move.push);
       move.retain(
         1,
         _attributeDiff(
@@ -298,21 +242,20 @@ Delta _buildSpanMoveDelta(
     }
   } else {
     final insertAt = lines[gap].startOffset;
-    if (srcEnd < docLength) {
+    if (sourceEnd < docLength) {
       move.retain(insertAt);
-      delta.slice(srcStart, srcEnd).toList().forEach(move.push);
+      delta.slice(sourceStart, sourceEnd).toList().forEach(move.push);
       move
-        ..retain(srcStart - insertAt)
-        ..delete(srcLength);
+        ..retain(sourceStart - insertAt)
+        ..delete(sourceLength);
     } else {
-      // The span ends the document.
       final lineAbove = lines[fromStart - 1];
       move.retain(insertAt);
-      delta.slice(srcStart, srcEnd - 1).toList().forEach(move.push);
+      delta.slice(sourceStart, sourceEnd - 1).toList().forEach(move.push);
       move
         ..insert('\n', lines[fromEnd].newlineAttributes)
-        ..retain(srcStart - insertAt - 1)
-        ..delete(srcLength)
+        ..retain(sourceStart - insertAt - 1)
+        ..delete(sourceLength)
         ..retain(
           1,
           _attributeDiff(
@@ -325,11 +268,8 @@ Delta _buildSpanMoveDelta(
   return move;
 }
 
-/// Order of the group's line indices after a toggle: at each nesting level a
-/// stable partition of sibling blocks (a line plus its indented children) —
-/// unchecked blocks first, checked blocks last, each keeping document order,
-/// with the toggled block at the end of its own section — applied recursively
-/// within each block. Null when the group is already in that order.
+/// Unchecked blocks before checked at each level, in document order, with
+/// the toggled block last in its section. Null when already in order.
 List<int>? checklistSortOrder(
   List<ParsedLine> lines,
   int groupStart,
@@ -378,9 +318,7 @@ void _orderSiblingBlocks(
   }
 }
 
-/// Delta that rewrites the group's lines into [order] (indices into
-/// [lines]), composed from single-line moves so the final newline is only
-/// ever retained. [order] must differ from the current order.
+/// [order] holds indices into [lines] and must differ from the current order.
 Delta buildGroupReorderDelta(
   Document document,
   List<ParsedLine> lines,
@@ -395,23 +333,23 @@ Delta buildGroupReorderDelta(
   Delta? total;
 
   for (var k = 0; k < order.length; k++) {
-    final p = current.indexOf(order[k], k);
-    if (p == k) continue;
+    final position = current.indexOf(order[k], k);
+    if (position == k) continue;
 
     final move = _buildLineMoveDelta(
       docDelta,
       docLength,
       model,
-      groupStart + p,
+      groupStart + position,
       groupStart + k,
     );
     docDelta = docDelta.compose(move);
     total = total == null ? move : total.compose(move);
 
     current
-      ..removeAt(p)
+      ..removeAt(position)
       ..insert(k, order[k]);
-    final moved = model.removeAt(groupStart + p);
+    final moved = model.removeAt(groupStart + position);
     model.insert(groupStart + k, moved);
     var offset = lines[groupStart].startOffset;
     for (var i = groupStart; i <= groupStart + order.length - 1; i++) {
@@ -427,55 +365,89 @@ Delta buildGroupReorderDelta(
   return total!;
 }
 
-const int maxListIndent = 3;
-
-/// Delta that indents ([increase]) or outdents the list lines intersecting
-/// the selection [start]..[end]. Indenting is clamped to [maxListIndent] and
-/// to one level deeper than the line above, which must be a list line
-/// itself. Null when nothing changes.
-Delta? buildListIndentDelta(
-  List<ParsedLine> lines,
-  int start,
-  int end, {
-  required bool increase,
-}) {
-  final selEnd = end > start ? end : start + 1;
-  final effective = <int>[];
+Delta? buildUncheckAllDelta(List<ParsedLine> lines) {
   final delta = Delta();
   var cursor = 0;
-
-  for (var i = 0; i < lines.length; i++) {
-    final line = lines[i];
+  for (final line in lines) {
+    if (!line.isChecked) continue;
     final newlineOffset = line.startOffset + line.length - 1;
-    final inRange = line.startOffset < selEnd && start <= newlineOffset;
-    var newIndent = line.indent;
-
-    if (inRange && line.listType != null) {
-      if (increase) {
-        final prevIsList = i > 0 && lines[i - 1].listType != null;
-        var cap = prevIsList ? effective[i - 1] + 1 : 0;
-        if (cap > maxListIndent) cap = maxListIndent;
-        final proposed = newIndent + 1;
-        if (proposed <= cap) newIndent = proposed;
-      } else if (newIndent > 0) {
-        newIndent -= 1;
-      }
-    }
-    effective.add(newIndent);
-
-    if (newIndent != line.indent) {
-      if (newlineOffset > cursor) {
-        delta.retain(newlineOffset - cursor);
-      }
-      delta.retain(1, {'indent': newIndent == 0 ? null : newIndent});
-      cursor = newlineOffset + 1;
-    }
+    if (newlineOffset > cursor) delta.retain(newlineOffset - cursor);
+    delta.retain(1, {Attribute.list.key: Attribute.unchecked.value});
+    cursor = newlineOffset + 1;
   }
-
   return cursor > 0 ? delta : null;
 }
 
-/// Attribute map that turns [from] into [to] when applied via retain.
+/// An open item under a deleted one moves up a level for each deleted item
+/// above it. A note of only checked items keeps one empty item.
+Delta? buildDeleteCheckedDelta(List<ParsedLine> lines) {
+  if (!lines.any((line) => line.isChecked)) return null;
+  final indents = _indentsWithoutChecked(lines);
+  var tail = lines.length;
+  while (tail > 0 && lines[tail - 1].isChecked) {
+    tail--;
+  }
+
+  final delta = Delta();
+  var cursor = 0;
+  void retainTo(int offset) {
+    if (offset > cursor) delta.retain(offset - cursor);
+    cursor = offset;
+  }
+
+  final endsChecked = tail < lines.length;
+  for (var i = 0; i < tail; i++) {
+    final line = lines[i];
+    if (line.isChecked) {
+      retainTo(line.startOffset);
+      delta.delete(line.length);
+      cursor += line.length;
+    } else if (indents[i] != line.indent && !(endsChecked && i == tail - 1)) {
+      retainTo(line.startOffset + line.length - 1);
+      delta.retain(1, indentAttributes(indents[i]));
+      cursor++;
+    }
+  }
+  if (!endsChecked) return delta;
+
+  // Document.compose can't delete the final newline.
+  final last = lines.last;
+  final finalNewline = last.startOffset + last.length - 1;
+  final kept = tail > 0 ? lines[tail - 1] : null;
+  final keptNewline = kept == null ? 0 : kept.startOffset + kept.length - 1;
+  retainTo(keptNewline);
+  delta
+    ..delete(finalNewline - keptNewline)
+    ..retain(
+      1,
+      _attributeDiff(
+        last.newlineAttributes,
+        kept == null
+            ? {Attribute.list.key: Attribute.unchecked.value}
+            : _withIndent(kept.newlineAttributes, indents[tail - 1]),
+      ),
+    );
+  return delta;
+}
+
+List<int> _indentsWithoutChecked(List<ParsedLine> lines) {
+  final indents = <int>[];
+  final above = <ParsedLine>[];
+  for (final line in lines) {
+    if (line.listType == null) {
+      above.clear();
+      indents.add(line.indent);
+      continue;
+    }
+    while (above.isNotEmpty && above.last.indent >= line.indent) {
+      above.removeLast();
+    }
+    indents.add(line.indent - above.where((item) => item.isChecked).length);
+    above.add(line);
+  }
+  return indents;
+}
+
 Map<String, dynamic>? _attributeDiff(
   Map<String, dynamic>? from,
   Map<String, dynamic>? to,

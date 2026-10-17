@@ -172,6 +172,14 @@
   "@errorServer": {
     "description": "Error when the server fails while handling a request."
   },
+  "commonSave": "Save",
+  "@commonSave": {
+    "description": "Button that saves a form or the choice made in a sheet."
+  },
+  "commonUndo": "Undo",
+  "@commonUndo": {
+    "description": "Button that reverses the last change, in toasts and in the editor toolbar."
+  },
   "passwordHelp": "{count, plural, =1{At least 1 character.} other{At least {count} characters.}}",
   "@passwordHelp": {
     "description": "Shown under a new password field.",
@@ -185,6 +193,10 @@
   "authSignIn": "Sign in",
   "@authSignIn": {
     "description": "Button that signs in, a link to the sign-in page, and that page’s spoken name."
+  },
+  "commonCopy": "Copy",
+  "@commonCopy": {
+    "description": "Button that copies a link or the selected logs. Short: fits a small bubble."
   },
   "settingsSignOutMessage": "{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}",
   "@settingsSignOutMessage": {
@@ -225,6 +237,26 @@
   "reminderChannelDescription": "Reminders you set on your notes",
   "@reminderChannelDescription": {
     "description": "Description of the app’s notification category in Android’s settings."
+  },
+  "colorPink": "Pink",
+  "@colorPink": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorPurple": "Purple",
+  "@colorPurple": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorBlue": "Blue",
+  "@colorBlue": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorGreen": "Green",
+  "@colorGreen": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorYellow": "Yellow",
+  "@colorYellow": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
   },
   "syncSignedOutLead": "Signed out.",
   "@syncSignedOutLead": {
@@ -284,8 +316,226 @@
       }
     }
   },
+  "starterAttachment": "Picture or audio",
+  "@starterAttachment": {
+    "description": "Adds a picture or an audio file to an empty note."
+  },
+  "attachmentAddLabel": "Add picture or audio",
+  "@attachmentAddLabel": {
+    "description": "Screen reader label of the button that adds a picture or audio file to a note."
+  },
+  "lineText": "Text",
+  "@lineText": {
+    "description": "Line style: plain text."
+  },
+  "lineH1": "Heading 1",
+  "@lineH1": {
+    "description": "Line style for the biggest heading, in the slash menu and the line styles toolbar."
+  },
+  "lineH2": "Heading 2",
+  "@lineH2": {
+    "description": "Line style for a medium heading, in the slash menu and the line styles toolbar."
+  },
+  "lineH3": "Heading 3",
+  "@lineH3": {
+    "description": "Line style for the smallest heading, in the slash menu and the line styles toolbar."
+  },
+  "lineChecklist": "Checklist",
+  "@lineChecklist": {
+    "description": "Line style with checkboxes; also a starter button in an empty note."
+  },
+  "lineBullet": "Bullet list",
+  "@lineBullet": {
+    "description": "Line style for a list with dots, in the slash menu and the toolbars."
+  },
+  "lineNumbered": "Numbered list",
+  "@lineNumbered": {
+    "description": "Line style for a list with numbers, in the slash menu and the line styles toolbar."
+  },
+  "lineQuote": "Quote",
+  "@lineQuote": {
+    "description": "Noun: line style for quoted text, in the slash menu and toolbar."
+  },
+  "lineCode": "Code block",
+  "@lineCode": {
+    "description": "Line style for computer code in a fixed-width font."
+  },
+  "editorLink": "Link",
+  "@editorLink": {
+    "description": "Noun: slash menu item and spoken toolbar button that add a web link."
+  },
+  "slashWordsChecklist": "todo to-do task checkbox list",
+  "@slashWordsChecklist": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsH1": "h1 title",
+  "@slashWordsH1": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsH2": "h2 subtitle subheading",
+  "@slashWordsH2": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsH3": "h3 subheading",
+  "@slashWordsH3": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsBullet": "unordered ul dashes",
+  "@slashWordsBullet": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsNumbered": "ordered ol",
+  "@slashWordsNumbered": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsQuote": "blockquote citation",
+  "@slashWordsQuote": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsCode": "pre snippet",
+  "@slashWordsCode": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsText": "paragraph plain normal body",
+  "@slashWordsText": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsLink": "url web address",
+  "@slashWordsLink": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsAttachment": "image img photo file voice recording attachment",
+  "@slashWordsAttachment": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "barFormatting": "Formatting",
+  "@barFormatting": {
+    "description": "Screen reader name of the editor toolbar while typing."
+  },
+  "barList": "List",
+  "@barList": {
+    "description": "Screen reader name of the editor toolbar on a list line."
+  },
+  "barSelected": "Selected text",
+  "@barSelected": {
+    "description": "Screen reader name of the editor toolbar while text is selected."
+  },
+  "barStyles": "Text styles",
+  "@barStyles": {
+    "description": "Screen reader name of the toolbar with text and line styles, and of its button."
+  },
+  "barColors": "Highlight colors",
+  "@barColors": {
+    "description": "Screen reader name of the editor toolbar with highlight colors."
+  },
+  "barLineStyles": "Line styles",
+  "@barLineStyles": {
+    "description": "Screen reader name of the row of line style buttons in the editor toolbar."
+  },
+  "toolOutdent": "Outdent",
+  "@toolOutdent": {
+    "description": "Screen reader label of the toolbar button that moves a list item one level left."
+  },
+  "toolIndent": "Indent",
+  "@toolIndent": {
+    "description": "Screen reader label of the toolbar button that moves a list item one level right."
+  },
+  "toolBold": "Bold",
+  "@toolBold": {
+    "description": "Screen reader label of the toolbar button that makes text bold."
+  },
+  "toolItalic": "Italic",
+  "@toolItalic": {
+    "description": "Screen reader label of the toolbar button that makes text italic."
+  },
+  "toolUnderline": "Underline",
+  "@toolUnderline": {
+    "description": "Screen reader label of the toolbar button that underlines text."
+  },
+  "toolStrikethrough": "Strikethrough",
+  "@toolStrikethrough": {
+    "description": "Screen reader label of the toolbar button that crosses text out."
+  },
+  "toolHighlight": "Highlight",
+  "@toolHighlight": {
+    "description": "Screen reader label of the toolbar button that marks text with a color."
+  },
+  "toolRemoveHighlight": "Remove highlight",
+  "@toolRemoveHighlight": {
+    "description": "Screen reader label of the toolbar button that removes the color mark from text."
+  },
+  "toolRedo": "Redo",
+  "@toolRedo": {
+    "description": "Screen reader label of the toolbar button that repeats an undone change."
+  },
+  "toolHideKeyboard": "Hide keyboard",
+  "@toolHideKeyboard": {
+    "description": "Screen reader label of the toolbar button that closes the on-screen keyboard."
+  },
+  "editorEmptyItem": "Empty item",
+  "@editorEmptyItem": {
+    "description": "Screen reader name of an empty checklist or list item."
+  },
+  "editorLinkCopied": "Link copied",
+  "@editorLinkCopied": {
+    "description": "Toast after a link’s web address was copied."
+  },
+  "editorCheckedItems": "{count, plural, =1{1 checked item} other{{count} checked items}}",
+  "@editorCheckedItems": {
+    "description": "Folded checked items at the end of a checklist.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "linkAdd": "Add link",
+  "@linkAdd": {
+    "description": "Title of the sheet that adds a link to text, and its confirm button."
+  },
+  "linkEdit": "Edit link",
+  "@linkEdit": {
+    "description": "Title of the sheet that changes an existing link."
+  },
+  "linkTextHint": "Text",
+  "@linkTextHint": {
+    "description": "Hint in the field for the words a link shows."
+  },
+  "commonOpen": "Open",
+  "@commonOpen": {
+    "description": "Opens a link in the browser. Short: one of four buttons in a small bubble."
+  },
+  "commonEdit": "Edit",
+  "@commonEdit": {
+    "description": "Changes a link. Short: one of four buttons in a small bubble over the link."
+  },
+  "commonRemove": "Remove",
+  "@commonRemove": {
+    "description": "Verb: removes a link from text, or a person from a shared note."
+  },
+  "editorSlashHint": "Type / for more",
+  "@editorSlashHint": {
+    "description": "Hint in an empty line: typing a slash opens a menu of line styles."
+  },
+  "editorPlaceholder": "Start writing",
+  "@editorPlaceholder": {
+    "description": "Placeholder in an empty note."
+  },
   "voiceNote": "Voice note",
   "@voiceNote": {
     "description": "Name of an audio recording made in the app."
+  },
+  "editorDragHint": "Drag to reorder",
+  "@editorDragHint": {
+    "description": "Spoken hint on a checklist item that can be dragged."
+  },
+  "slashMenuLabel": "Insert",
+  "@slashMenuLabel": {
+    "description": "Spoken name of the slash menu."
+  },
+  "slashNoResults": "No results",
+  "@slashNoResults": {
+    "description": "Shown in the slash menu when nothing matches."
   }
 }

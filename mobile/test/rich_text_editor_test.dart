@@ -1,10 +1,20 @@
 import 'dart:convert';
 
-import 'package:anchor/core/widgets/editor/editor_toolbar.dart';
-import 'package:anchor/core/widgets/rich_text_editor.dart';
+import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
+import 'package:anchor/features/notes/presentation/editor/editor_format.dart';
+import 'package:anchor/features/notes/presentation/editor/editor_link.dart';
+import 'package:anchor/features/notes/presentation/editor/editor_palette.dart';
+import 'package:anchor/features/notes/presentation/editor/line_kind.dart';
+import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart';
+import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+// Quill doesn't export its line's render object.
+// ignore: implementation_imports
+import 'package:flutter_quill/src/editor/widgets/text/text_line.dart'
+    show RenderEditableTextLine;
 import 'package:flutter_test/flutter_test.dart';
 
 const _shortNote = '{"ops":[{"insert":"hi\\n"}]}';
@@ -13,12 +23,56 @@ const _boldNote =
 const _linkNote =
     '{"ops":[{"insert":"site","attributes":{"link":"https://example.com"}},{"insert":" end\\n"}]}';
 
-Widget wrap(Widget child) {
+final _plain = AnchorColors.light.notes['none']!;
+
+final palette = EditorPalette(
+  muted: _plain.muted,
+  surface: _plain.surface,
+  border: _plain.border,
+  background: _plain.bg,
+  highlightFill: (name) => AnchorColors.light.highlights[name]!.fill,
+  highlightInk: (name) => AnchorColors.light.highlights[name]!.ink!,
+);
+
+Widget wrap(Widget Function(ScrollController scroll) builder) {
   return MaterialApp(
     localizationsDelegates: FlutterQuillLocalizations.localizationsDelegates,
-    home: Scaffold(body: child),
+    home: Scaffold(body: _Scroller(builder: builder)),
   );
 }
+
+class _Scroller extends StatefulWidget {
+  const _Scroller({required this.builder});
+
+  final Widget Function(ScrollController scroll) builder;
+
+  @override
+  State<_Scroller> createState() => _ScrollerState();
+}
+
+class _ScrollerState extends State<_Scroller> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    controller: _scroll,
+    child: widget.builder(_scroll),
+  );
+}
+
+bool showsCaret(WidgetTester tester) =>
+    tester.widget<QuillEditor>(find.byType(QuillEditor)).config.showCursor ??
+    false;
+
+Finder checkboxSlot(int index) => find
+    .byWidgetPredicate((w) => w is Semantics && w.properties.checked != null)
+    .at(index);
 
 void main() {
   Future<(RichTextEditorState, FocusNode)> pumpEditor(
@@ -27,17 +81,31 @@ void main() {
     bool canEdit = true,
     bool sortChecklistItems = true,
     VoidCallback? onChanged,
+    ValueChanged<bool>? onEditingChanged,
+    ValueChanged<EditorLink>? onLinkTap,
+    VoidCallback? onReadOnlyTap,
+    bool hasSlashHint = false,
+    ValueChanged<bool>? onBlankChanged,
+    ValueChanged<String>? onBackspaceAtStart,
   }) async {
     final focusNode = FocusNode();
     addTearDown(focusNode.dispose);
     await tester.pumpWidget(
       wrap(
-        RichTextEditor(
+        (scroll) => RichTextEditor(
           initialContent: content,
           focusNode: focusNode,
           canEdit: canEdit,
           sortChecklistItems: sortChecklistItems,
           onChanged: onChanged,
+          onEditingChanged: onEditingChanged,
+          onLinkTap: onLinkTap,
+          onReadOnlyTap: onReadOnlyTap,
+          hasSlashHint: hasSlashHint,
+          onBlankChanged: onBlankChanged,
+          onBackspaceAtStart: onBackspaceAtStart,
+          scrollController: scroll,
+          palette: palette,
         ),
       ),
     );
@@ -48,81 +116,62 @@ void main() {
     return (state, focusNode);
   }
 
-  // The tappable checkbox is the GestureDetector wrapping the (pointer-
-  // absorbed) glyph.
-  Finder checkboxSlot(int index) => find
-      .ancestor(
-        of: find.byType(QuillCheckboxPoint).at(index),
-        matching: find.byType(GestureDetector),
-      )
-      .first;
-
-  Future<void> tapBelowContent(WidgetTester tester) async {
-    final rect = tester.getRect(find.byType(RichTextEditor));
-    await tester.tapAt(Offset(rect.center.dx, rect.bottom - 40));
-    await tester.pump();
-  }
-
-  testWidgets('tapping below short content focuses and moves cursor to end', (
+  testWidgets('focusEnd focuses and moves the caret to the end', (
     tester,
   ) async {
     final (state, focusNode) = await pumpEditor(tester);
     expect(focusNode.hasFocus, isFalse);
 
-    await tapBelowContent(tester);
+    state.focusEnd();
+    await tester.pump();
 
     expect(focusNode.hasFocus, isTrue);
+    expect(showsCaret(tester), isTrue);
     expect(
       state.controller.selection,
       TextSelection.collapsed(offset: state.controller.document.length - 1),
     );
   });
 
-  testWidgets('tapping below content works when editor is already focused', (
-    tester,
-  ) async {
-    final (state, focusNode) = await pumpEditor(tester);
-    await tapBelowContent(tester);
-    expect(focusNode.hasFocus, isTrue);
-
-    state.controller.updateSelection(
-      const TextSelection.collapsed(offset: 0),
-      ChangeSource.local,
+  testWidgets('a read-only editor never counts as editing', (tester) async {
+    final editing = <bool>[];
+    final (_, focusNode) = await pumpEditor(
+      tester,
+      canEdit: false,
+      onEditingChanged: editing.add,
     );
+
+    focusNode.requestFocus();
     await tester.pump();
 
-    await tapBelowContent(tester);
+    expect(editing, isEmpty);
+    expect(showsCaret(tester), isFalse);
+  });
 
-    expect(focusNode.hasFocus, isTrue);
-    expect(
-      state.controller.selection,
-      TextSelection.collapsed(offset: state.controller.document.length - 1),
+  testWidgets('a tap on a read-only note is reported', (tester) async {
+    var taps = 0;
+    await pumpEditor(tester, canEdit: false, onReadOnlyTap: () => taps++);
+
+    await tester.tap(find.text('hi', findRichText: true));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(taps, 1);
+  });
+
+  testWidgets('onEditingChanged follows focus', (tester) async {
+    final editing = <bool>[];
+    final (state, focusNode) = await pumpEditor(
+      tester,
+      onEditingChanged: editing.add,
     );
-  });
 
-  testWidgets('background tap does nothing when read-only', (tester) async {
-    final (state, focusNode) = await pumpEditor(tester, canEdit: false);
-
-    await tapBelowContent(tester);
-
-    expect(focusNode.hasFocus, isFalse);
-    expect(state.isEditing, isFalse);
-  });
-
-  testWidgets('toolbar expands on focus and collapses on unfocus', (
-    tester,
-  ) async {
-    final (_, focusNode) = await pumpEditor(tester);
-    expect(find.byType(EditorToolbar), findsNothing);
-
-    await tapBelowContent(tester);
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(EditorToolbar), findsOneWidget);
-
+    state.focusEnd();
+    await tester.pump();
     focusNode.unfocus();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(EditorToolbar), findsNothing);
+
+    expect(editing, [true, false]);
+    expect(showsCaret(tester), isFalse);
   });
 
   testWidgets('onChanged fires on document changes, not selection changes', (
@@ -143,12 +192,10 @@ void main() {
     expect(changes, 1);
   });
 
-  testWidgets('typing rebuilds the chrome but not the editor subtree', (
-    tester,
-  ) async {
+  testWidgets('typing does not rebuild the editor subtree', (tester) async {
     final (state, _) = await pumpEditor(tester);
-    await tapBelowContent(tester);
-    await tester.pump(const Duration(milliseconds: 300));
+    state.focusEnd();
+    await tester.pump();
 
     final before = tester.widget(find.byType(QuillEditor));
     state.controller.replaceText(0, 0, 'x', null);
@@ -158,37 +205,159 @@ void main() {
     expect(identical(before, after), isTrue);
   });
 
-  testWidgets('toolbar reflects formatting at the cursor', (tester) async {
-    final (state, _) = await pumpEditor(tester, content: _boldNote);
-    await tapBelowContent(tester);
-    await tester.pump(const Duration(milliseconds: 300));
-
-    EditorToolbar toolbar() =>
-        tester.widget<EditorToolbar>(find.byType(EditorToolbar));
-    expect(toolbar().state.isBold, isFalse);
-
-    state.controller.updateSelection(
-      const TextSelection.collapsed(offset: 2),
-      ChangeSource.local,
-    );
-    await tester.pump();
-    expect(toolbar().state.isBold, isTrue);
-  });
-
-  testWidgets('link bubble follows the cursor in and out of a link', (
+  testWidgets('typing in one item leaves the other items\' boxes as they were', (
     tester,
   ) async {
-    final (state, _) = await pumpEditor(tester, content: _linkNote);
-    await tapBelowContent(tester);
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('https://example.com'), findsNothing);
+    const checklist =
+        '{"ops":[{"insert":"a"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"b"},{"insert":"\\n","attributes":{"list":"checked"}}]}';
+    final (state, _) = await pumpEditor(tester, content: checklist);
+    state.focusEnd();
+    await tester.pump();
+    final second = tester.widget(checkboxSlot(1));
+
+    state.controller.replaceText(1, 0, 'x', null);
+    await tester.pump();
+
+    expect(identical(tester.widget(checkboxSlot(1)), second), isTrue);
+    expect(tester.widget<Semantics>(checkboxSlot(0)).properties.label, 'ax');
+    expect(tester.widget<Semantics>(checkboxSlot(1)).properties.checked, true);
+  });
+
+  testWidgets('list lines keep their spacing while typing', (tester) async {
+    const checklist =
+        '{"ops":[{"insert":"a"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"b"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"c"},{"insert":"\\n","attributes":{"list":"checked"}}]}';
+    final (state, _) = await pumpEditor(tester, content: checklist);
+    state.focusEnd();
+    await tester.pump();
+    final boxes = [for (var i = 0; i < 3; i++) tester.getRect(checkboxSlot(i))];
+
+    state.controller.replaceText(1, 0, 'x', null);
+    await tester.pump();
+
+    expect([
+      for (var i = 0; i < 3; i++) tester.getRect(checkboxSlot(i)),
+    ], boxes);
+  });
+
+  testWidgets('typing above a list leaves its lines laid out', (tester) async {
+    const note =
+        '{"ops":[{"insert":"x\\n"},'
+        '{"insert":"a"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"b"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"c"},{"insert":"\\n","attributes":{"list":"checked"}}]}';
+    final (state, _) = await pumpEditor(tester, content: note);
+    state.focusEnd();
+    await tester.pump();
+    RenderEditableTextLine lineOf(String words) {
+      RenderObject? box = tester.renderObject(
+        find.text(words, findRichText: true),
+      );
+      while (box is! RenderEditableTextLine) {
+        box = box!.parent;
+      }
+      return box;
+    }
+
+    state.controller.replaceText(1, 0, 'y', null);
+    await tester.pump(null, EnginePhase.build);
+
+    expect(lineOf('a').debugNeedsLayout, isFalse);
+    expect(lineOf('b').debugNeedsLayout, isFalse);
+    await tester.pump();
+  });
+
+  testWidgets('list numbers follow a line that stops being numbered', (
+    tester,
+  ) async {
+    const numbered =
+        '{"ops":[{"insert":"a"},{"insert":"\\n","attributes":{"list":"ordered"}},'
+        '{"insert":"b"},{"insert":"\\n","attributes":{"list":"ordered"}},'
+        '{"insert":"c"},{"insert":"\\n","attributes":{"list":"ordered"}}]}';
+    final (state, _) = await pumpEditor(tester, content: numbered);
+    expect(find.text('3.'), findsOneWidget);
+
+    state.controller.formatText(1, 0, Attribute.clone(Attribute.ol, null));
+    await tester.pump();
+
+    expect(find.text('1.'), findsOneWidget);
+    expect(find.text('2.'), findsOneWidget);
+    expect(find.text('3.'), findsNothing);
+  });
+
+  testWidgets('a change repaints the highlights in its own frame', (
+    tester,
+  ) async {
+    const marked =
+        '{"ops":[{"insert":"Draft the "},'
+        '{"insert":"release notes","attributes":{"highlight":"green"}},'
+        '{"insert":"\\n"}]}';
+    final (state, _) = await pumpEditor(tester, content: marked);
+
+    state.controller.replaceText(0, 0, 'x', null);
+    await tester.pump();
+
+    expect(tester.binding.hasScheduledFrame, isFalse);
+  });
+
+  testWidgets('formatting at the caret reads from the controller', (
+    tester,
+  ) async {
+    final (state, _) = await pumpEditor(tester, content: _boldNote);
+    state.focusEnd();
+    await tester.pump();
+    expect(state.controller.isOn(Attribute.bold), isFalse);
 
     state.controller.updateSelection(
       const TextSelection.collapsed(offset: 2),
       ChangeSource.local,
     );
     await tester.pump();
-    expect(find.text('https://example.com'), findsOneWidget);
+    expect(state.controller.isOn(Attribute.bold), isTrue);
+  });
+
+  testWidgets('a tap on a link reports the whole link', (tester) async {
+    final links = <EditorLink>[];
+    await pumpEditor(tester, content: _linkNote, onLinkTap: links.add);
+
+    final text = tester.getTopLeft(find.text('site end', findRichText: true));
+    await tester.tapAt(text + const Offset(8, 10));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(links, hasLength(1));
+    expect(links.single.url, 'https://example.com');
+    expect(links.single.start, 0);
+    expect(links.single.length, 4);
+  });
+
+  testWidgets('a link in two formats is still one link', (tester) async {
+    const splitLink =
+        '{"ops":[{"insert":"si","attributes":{"link":"https://example.com","bold":true}},'
+        '{"insert":"te","attributes":{"link":"https://example.com"}},'
+        '{"insert":" end\\n"}]}';
+    final links = <EditorLink>[];
+    await pumpEditor(tester, content: splitLink, onLinkTap: links.add);
+
+    final text = tester.getTopLeft(find.text('site end', findRichText: true));
+    await tester.tapAt(text + const Offset(24, 10));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(links, hasLength(1));
+    expect(links.single.start, 0);
+    expect(links.single.length, 4);
+  });
+
+  testWidgets('a tap past a link reports nothing', (tester) async {
+    final links = <EditorLink>[];
+    await pumpEditor(tester, content: _linkNote, onLinkTap: links.add);
+
+    final text = tester.getRect(find.text('site end', findRichText: true));
+    await tester.tapAt(Offset(text.right - 4, text.top + 10));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(links, isEmpty);
   });
 
   testWidgets('checkbox tap toggles without focus, selection, or late '
@@ -202,20 +371,21 @@ void main() {
     final selectionBefore = state.controller.selection;
 
     await tester.tap(checkboxSlot(0));
-    // A controller notification after the tap's own microtasks is the device
-    // path that requests the keyboard; the keyboard branch itself is
-    // unreachable in tests.
+    // On a device, a late controller notification opens the keyboard.
     var lateNotifications = 0;
     state.controller.addListener(() => lateNotifications++);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(state.getPlainText(), 'b\nc\na');
+    expect(state.getPlainText(), 'a\nb\nc');
     expect(state.getContent(), contains('"list":"checked"'));
+    expect(lateNotifications, 0);
+
+    await tester.pump(AnchorTokens.motionDurationSinkDelay);
+    await tester.pump();
+    expect(state.getPlainText(), 'b\nc\na');
     expect(focusNode.hasFocus, isFalse);
     expect(state.controller.selection, selectionBefore);
-    expect(lateNotifications, 0);
-    // Guards must be released so the next tap can open the keyboard.
     expect(state.controller.skipRequestKeyboard, isFalse);
   });
 
@@ -232,27 +402,65 @@ void main() {
     );
     final selectionBefore = state.controller.selection;
 
-    // The glyph's own InkWell is only fontSize wide; a tap beside it in the
-    // leading slot must still toggle instead of reaching the editor.
+    // The box is narrower than its tap target.
     final glyph = tester.getRect(
-      find.descendant(
-        of: find.byType(QuillCheckboxPoint).at(2),
-        matching: find.byType(InkWell),
-      ),
+      find
+          .descendant(
+            of: checkboxSlot(2),
+            matching: find.byType(AnimatedContainer),
+          )
+          .first,
     );
-    await tester.tapAt(Offset(glyph.left - 4, glyph.center.dy));
+    await tester.tapAt(Offset(glyph.right + 4, glyph.center.dy));
     await tester.pump();
 
     expect(state.getContent(), contains('"list":"checked"'));
     expect(state.controller.selection, selectionBefore);
     expect(focusNode.hasFocus, isFalse);
 
-    // A tap on the line's text is not part of the slot: it must still move
-    // the cursor.
     await tester.tap(find.text('b', findRichText: true));
     await tester.pump();
     expect(state.controller.selection, isNot(selectionBefore));
     // Let the tap recognizer's double-tap window expire.
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('the box takes taps 44 wide over its whole line, and a tick '
+      'pops only the check mark', (tester) async {
+    const checklist =
+        '{"ops":[{"insert":"a"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"b"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
+    final (state, _) = await pumpEditor(
+      tester,
+      content: checklist,
+      sortChecklistItems: false,
+    );
+
+    final target = tester.getRect(checkboxSlot(1));
+    final first = tester.getRect(checkboxSlot(0));
+    expect(target.width, AnchorTokens.sizeControlMedium);
+    expect(target.top, moreOrLessEquals(first.bottom, epsilon: 0.1));
+
+    await tester.tapAt(Offset(target.right - 2, target.top + 1));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(state.getContent(), contains('"list":"checked"'));
+
+    final scales = find.descendant(
+      of: checkboxSlot(1),
+      matching: find.byType(Transform),
+    );
+    expect(scales, findsOneWidget);
+    expect(
+      find.descendant(of: scales, matching: find.byType(Icon)),
+      findsOneWidget,
+    );
+    expect(tester.widget<Transform>(scales).transform.entry(0, 0), lessThan(1));
+    await tester.pump(AnchorTokens.motionDurationTick);
+    expect(
+      tester.widget<Transform>(scales).transform.entry(0, 0),
+      moreOrLessEquals(1),
+    );
     await tester.pump(const Duration(seconds: 1));
   });
 
@@ -265,20 +473,20 @@ void main() {
         '{"insert":"c"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
     final (state, _) = await pumpEditor(tester, content: checklist);
 
-    List<bool> renderedChecks() => tester
-        .widgetList<QuillCheckboxPoint>(find.byType(QuillCheckboxPoint))
-        .map((w) => w.value)
-        .toList();
+    List<bool?> renderedChecks() => [
+      for (var i = 0; i < 3; i++)
+        tester.widget<Semantics>(checkboxSlot(i)).properties.checked,
+    ];
 
-    // The rendered checkboxes must reflect the toggle and the sort, not
-    // just the document.
     await tester.tap(checkboxSlot(0));
     await tester.pump();
+    expect(renderedChecks(), [true, false, false]);
+    await tester.pump(AnchorTokens.motionDurationSinkDelay);
     expect(renderedChecks(), [false, false, true]);
 
-    // A follow-up tap must hit the re-rendered tree, not a stale line.
     await tester.tap(checkboxSlot(2));
     await tester.pump();
+    await tester.pump(AnchorTokens.motionDurationSinkDelay);
     expect(renderedChecks(), [false, false, false]);
     expect(state.getPlainText(), 'b\nc\na');
     expect(state.getContent(), isNot(contains('"list":"checked"')));
@@ -299,8 +507,8 @@ void main() {
     await pumpEditor(tester, content: jsonEncode({'ops': ops}));
 
     final scrollController = tester
-        .widget<SingleChildScrollView>(find.byType(SingleChildScrollView).first)
-        .controller!;
+        .widget<RichTextEditor>(find.byType(RichTextEditor))
+        .scrollController;
     scrollController.jumpTo(200);
     await tester.pump();
 
@@ -317,8 +525,7 @@ void main() {
         '{"insert":"b"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
 
     // Quill's transparent tap recognizer delivers a checkbox tap to the
-    // editor a second time; unconsumed, the duplicate moves the cursor to
-    // the tapped line and opens the keyboard on a device.
+    // editor a second time.
     testWidgets('cannot drag the cursor to the tapped line', (tester) async {
       final (state, _) = await pumpEditor(
         tester,
@@ -365,7 +572,6 @@ void main() {
         isFalse,
       );
 
-      // A genuine tap on the line's text must still move the cursor.
       final selectionBefore = state.controller.selection;
       await tester.tap(find.text('b', findRichText: true));
       await tester.pump();
@@ -392,13 +598,15 @@ void main() {
       late StateSetter rebuild;
       await tester.pumpWidget(
         wrap(
-          StatefulBuilder(
+          (scroll) => StatefulBuilder(
             builder: (context, setState) {
               rebuild = setState;
               return RichTextEditor(
                 initialContent: current,
                 focusNode: focusNode,
                 onChanged: onChanged,
+                scrollController: scroll,
+                palette: palette,
               );
             },
           ),
@@ -459,12 +667,14 @@ void main() {
       );
 
       setContent(checklist);
+      // The new text is applied after the frame that brings it.
+      await tester.pump();
       await tester.pump();
       expect(changes, 0);
 
       await tester.tap(checkboxSlot(0));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(AnchorTokens.motionDurationSinkDelay);
 
       expect(state.getPlainText(), 'b\nc\na');
       expect(state.getContent(), contains('"list":"checked"'));
@@ -492,6 +702,957 @@ void main() {
         state.controller.selection.extentOffset,
         lessThan(state.controller.document.length),
       );
+    });
+  });
+
+  group('pasting an address', () {
+    Future<bool> paste(
+      WidgetTester tester,
+      RichTextEditorState state,
+      String text,
+    ) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async =>
+            call.method == 'Clipboard.getData' ? {'text': text} : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final onPaste =
+          // ignore: experimental_member_use
+          state.controller.config.clipboardConfig!.onClipboardPaste!;
+      final handled = await onPaste();
+      await tester.pump();
+      return handled;
+    }
+
+    testWidgets('at the caret inserts it as a link', (tester) async {
+      final (state, _) = await pumpEditor(tester);
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 2),
+        ChangeSource.local,
+      );
+
+      expect(await paste(tester, state, ' https://example.com '), isTrue);
+
+      expect(state.getPlainText(), 'hihttps://example.com');
+      expect(jsonDecode(state.getContent())['ops'], [
+        {'insert': 'hi'},
+        {
+          'insert': 'https://example.com',
+          'attributes': {'link': 'https://example.com'},
+        },
+        {'insert': '\n'},
+      ]);
+      expect(
+        state.controller.selection,
+        const TextSelection.collapsed(offset: 21),
+      );
+    });
+
+    testWidgets('over selected words links them', (tester) async {
+      final (state, _) = await pumpEditor(tester);
+      state.controller.updateSelection(
+        const TextSelection(baseOffset: 0, extentOffset: 2),
+        ChangeSource.local,
+      );
+
+      expect(await paste(tester, state, 'www.example.com'), isTrue);
+
+      expect(state.getPlainText(), 'hi');
+      expect(jsonDecode(state.getContent())['ops'], [
+        {
+          'insert': 'hi',
+          'attributes': {'link': 'https://www.example.com'},
+        },
+        {'insert': '\n'},
+      ]);
+      expect(
+        state.controller.selection,
+        const TextSelection.collapsed(offset: 2),
+      );
+    });
+
+    testWidgets('starting with www. keeps its words and links over https', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester);
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 2),
+        ChangeSource.local,
+      );
+
+      expect(await paste(tester, state, 'www.example.com/a'), isTrue);
+
+      expect(jsonDecode(state.getContent())['ops'], [
+        {'insert': 'hi'},
+        {
+          'insert': 'www.example.com/a',
+          'attributes': {'link': 'https://www.example.com/a'},
+        },
+        {'insert': '\n'},
+      ]);
+    });
+
+    testWidgets('leaves other text to the normal paste', (tester) async {
+      final (state, _) = await pumpEditor(tester);
+
+      for (final text in ['just words', 'example.com', 'see www.example.com']) {
+        expect(await paste(tester, state, text), isFalse, reason: text);
+      }
+
+      expect(state.getPlainText(), 'hi');
+    });
+
+    testWidgets('leaves code to the normal paste', (tester) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content:
+            '{"ops":[{"insert":"let a"},'
+            '{"insert":"\\n","attributes":{"code-block":true}}]}',
+      );
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 5),
+        ChangeSource.local,
+      );
+
+      expect(await paste(tester, state, 'https://example.com'), isFalse);
+    });
+  });
+
+  testWidgets('a plain-text note opens with its text as paragraphs', (
+    tester,
+  ) async {
+    final (state, _) = await pumpEditor(tester, content: 'milk\neggs');
+
+    expect(state.getPlainText(), 'milk\neggs');
+    expect(find.text('milk', findRichText: true), findsOneWidget);
+    expect(state.matchesContent('milk\neggs'), isTrue);
+  });
+
+  testWidgets('a delta stored as the bare list opens too', (tester) async {
+    final (state, _) = await pumpEditor(
+      tester,
+      content: '[{"insert":"hi there\\n"}]',
+    );
+
+    expect(state.getPlainText(), 'hi there');
+  });
+
+  group('commands for the writing tools', () {
+    testWidgets('setLink links the words in a range, or inserts at the '
+        'caret', (tester) async {
+      final (state, _) = await pumpEditor(tester);
+
+      state.setLink(
+        const TextRange(start: 0, end: 2),
+        'Our site',
+        'https://example.com',
+      );
+      await tester.pump();
+      expect(state.getPlainText(), 'Our site');
+
+      state.setLink(
+        const TextRange.collapsed(8),
+        ' more',
+        'https://example.org',
+      );
+      await tester.pump();
+
+      expect(jsonDecode(state.getContent())['ops'], [
+        {
+          'insert': 'Our site',
+          'attributes': {'link': 'https://example.com'},
+        },
+        {
+          'insert': ' more',
+          'attributes': {'link': 'https://example.org'},
+        },
+        {'insert': '\n'},
+      ]);
+      expect(state.selection, const TextSelection.collapsed(offset: 13));
+    });
+
+    testWidgets('removeLink keeps the words and drops the address', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester, content: _linkNote);
+
+      state.removeLink(
+        const EditorLink(
+          url: 'https://example.com',
+          start: 0,
+          length: 4,
+          rect: Rect.zero,
+        ),
+      );
+      await tester.pump();
+
+      expect(state.getPlainText(), 'site end');
+      expect(state.getContent(), isNot(contains('link')));
+    });
+
+    testWidgets('textIn reads a range, and nothing for a caret', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester, content: _linkNote);
+
+      expect(state.textIn(const TextRange(start: 5, end: 8)), 'end');
+      expect(state.textIn(const TextRange.collapsed(3)), '');
+    });
+
+    testWidgets('applyLineKind adds a line at the end when nothing is '
+        'being edited', (tester) async {
+      final (state, focusNode) = await pumpEditor(tester);
+
+      state.applyLineKind(LineKind.checklist);
+      await tester.pump();
+
+      expect(focusNode.hasFocus, isTrue);
+      expect(state.getPlainText(), 'hi');
+      expect(state.getContent(), contains('"list":"unchecked"'));
+      expect(state.controller.document.toPlainText(), 'hi\n\n');
+
+      state.applyLineKind(LineKind.bullet);
+      await tester.pump();
+      expect(state.controller.lineKind, LineKind.bullet);
+      expect(state.controller.document.toPlainText(), 'hi\n\n');
+    });
+
+    testWidgets('paintHighlight paints the selected words and keeps them '
+        'selected, and clearHighlight takes it off', (tester) async {
+      final (state, _) = await pumpEditor(tester);
+      const words = TextSelection(baseOffset: 0, extentOffset: 2);
+      state.controller.updateSelection(words, ChangeSource.local);
+      expect(state.hasSelection, isTrue);
+
+      state.paintHighlight('green');
+      expect(state.controller.highlight, 'green');
+      expect(state.selection, words);
+
+      state.paintHighlight('pink');
+      expect(state.controller.highlight, 'pink');
+
+      state.clearHighlight();
+      expect(state.controller.highlight, isNull);
+      expect(state.getContent(), isNot(contains('highlight')));
+    });
+
+    testWidgets('startLineAtTop adds a line of that kind above the text and '
+        'puts the caret on it', (tester) async {
+      final (state, focusNode) = await pumpEditor(tester);
+
+      state.startLineAtTop(LineKind.checklist);
+      await tester.pump();
+
+      expect(focusNode.hasFocus, isTrue);
+      expect(state.controller.document.toPlainText(), '\nhi\n');
+      expect(state.selection, const TextSelection.collapsed(offset: 0));
+      expect(state.controller.lineKind, LineKind.checklist);
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 1),
+        ChangeSource.local,
+      );
+      expect(state.controller.lineKind, LineKind.text);
+    });
+
+    testWidgets('startLineAtTop uses an empty first line of text', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\n"}]}',
+      );
+
+      state.startLineAtTop(LineKind.bullet);
+      await tester.pump();
+
+      expect(state.controller.document.toPlainText(), '\n');
+      expect(state.controller.lineKind, LineKind.bullet);
+    });
+
+    testWidgets('a new line at the top doesn\'t take the first line\'s style', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content:
+            '{"ops":[{"insert":"Plan"},'
+            '{"insert":"\\n","attributes":{"header":1}}]}',
+      );
+
+      state.startLineAtTop(LineKind.bullet);
+      await tester.pump();
+
+      expect(state.controller.document.toPlainText(), '\nPlan\n');
+      expect(state.controller.lineKind, LineKind.bullet);
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 2),
+        ChangeSource.local,
+      );
+      expect(state.controller.lineKind, LineKind.h1);
+    });
+
+    testWidgets('onSelectionChanged follows the caret, not typing that '
+        'keeps it', (tester) async {
+      final seen = <TextSelection>[];
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+      await tester.pumpWidget(
+        wrap(
+          (scroll) => RichTextEditor(
+            initialContent: _shortNote,
+            focusNode: focusNode,
+            scrollController: scroll,
+            palette: palette,
+            onSelectionChanged: seen.add,
+          ),
+        ),
+      );
+      final state = tester.state<RichTextEditorState>(
+        find.byType(RichTextEditor),
+      );
+
+      state.controller.formatText(0, 2, Attribute.bold);
+      expect(seen, isEmpty);
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 1),
+        ChangeSource.local,
+      );
+      expect(seen, [const TextSelection.collapsed(offset: 1)]);
+    });
+
+    void type(RichTextEditorState state, int offset, String text) {
+      for (var index = 0; index < text.length; index++) {
+        state.controller.replaceText(
+          offset + index,
+          0,
+          text[index],
+          TextSelection.collapsed(offset: offset + index + 1),
+        );
+      }
+    }
+
+    testWidgets('slashQuery follows a slash while writing, and clearSlash '
+        'takes it out', (tester) async {
+      final (state, focusNode) = await pumpEditor(tester);
+      state.focusEnd();
+      await tester.pump();
+
+      type(state, 2, '\n/todo');
+      expect(state.slashQuery.value, 'todo');
+
+      state.clearSlash();
+      expect(state.slashQuery.value, isNull);
+      expect(state.controller.document.toPlainText(), 'hi\n\n');
+
+      type(state, 3, '/x');
+      expect(state.slashQuery.value, 'x');
+      await tester.pump();
+      focusNode.unfocus();
+      await tester.pump();
+      expect(state.slashQuery.value, isNull);
+    });
+
+    testWidgets('slashQuery answers only a slash that was typed', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester);
+      state.focusEnd();
+      await tester.pump();
+
+      // Pasted.
+      state.controller.replaceText(
+        2,
+        0,
+        '\nx /todo',
+        const TextSelection.collapsed(offset: 10),
+      );
+      expect(state.slashQuery.value, isNull);
+
+      type(state, 10, ' /x');
+      expect(state.slashQuery.value, 'x');
+
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 0),
+        ChangeSource.local,
+      );
+      expect(state.slashQuery.value, isNull);
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 13),
+        ChangeSource.local,
+      );
+      expect(state.slashQuery.value, isNull);
+    });
+
+    testWidgets('slashQuery answers a slash typed on a list line or a '
+        'heading, but not in code', (tester) async {
+      const kinds = <String, (Map<String, Object>, bool)>{
+        'checklist': ({'list': 'unchecked'}, true),
+        'bullet': ({'list': 'bullet'}, true),
+        'numbered': ({'list': 'ordered'}, true),
+        'heading': ({'header': 1}, true),
+        'quote': ({'blockquote': true}, true),
+        'code': ({'code-block': true}, false),
+      };
+      for (final MapEntry(key: kind, value: (attributes, opens))
+          in kinds.entries) {
+        final (state, _) = await pumpEditor(
+          tester,
+          content: jsonEncode({
+            'ops': [
+              {'insert': 'eggs'},
+              {'insert': '\n', 'attributes': attributes},
+            ],
+          }),
+        );
+        state.focusEnd();
+        await tester.pump();
+
+        type(state, 4, ' /b');
+        expect(state.slashQuery.value, opens ? 'b' : isNull, reason: kind);
+      }
+    });
+
+    testWidgets('a space right after the slash closes it', (tester) async {
+      final (state, _) = await pumpEditor(tester);
+      state.focusEnd();
+      await tester.pump();
+
+      type(state, 2, ' /');
+      expect(state.slashQuery.value, '');
+
+      type(state, 4, ' ');
+      expect(state.slashQuery.value, isNull);
+    });
+
+    testWidgets('caretRect waits for a new line to be laid out', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester);
+      state.focusEnd();
+      await tester.pump();
+
+      state.controller.replaceText(
+        2,
+        0,
+        '\nmore',
+        const TextSelection.collapsed(offset: 7),
+      );
+      expect(state.caretRect(), isNull);
+
+      await tester.pump();
+      expect(state.caretRect(), isNotNull);
+    });
+  });
+
+  group('typing on the keyboard', () {
+    Future<void> type(WidgetTester tester, String text) async {
+      final editor = tester.state<RichTextEditorState>(
+        find.byType(RichTextEditor),
+      );
+      for (final character in text.split('')) {
+        final value = editor.controller.plainTextEditingValue;
+        final at = value.selection.start;
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: value.text.replaceRange(at, value.selection.end, character),
+            selection: TextSelection.collapsed(offset: at + 1),
+          ),
+        );
+        await tester.pump();
+      }
+    }
+
+    Future<RichTextEditorState> startTyping(
+      WidgetTester tester, {
+      String content = '{"ops":[{"insert":"\\n"}]}',
+    }) async {
+      final (state, focusNode) = await pumpEditor(tester, content: content);
+      focusNode.requestFocus();
+      await tester.pump();
+      return state;
+    }
+
+    List<Map<String, dynamic>> opsOf(RichTextEditorState state) => [
+      for (final op in state.controller.document.toDelta().toList())
+        op.toJson(),
+    ];
+
+    testWidgets('a starter and a space start a line of that kind', (
+      tester,
+    ) async {
+      final state = await startTyping(tester);
+
+      await type(tester, '- milk');
+
+      expect(state.controller.lineKind, LineKind.bullet);
+      expect(state.controller.document.toPlainText(), 'milk\n');
+
+      await type(tester, '\n[x] eggs');
+      expect(opsOf(state), [
+        {'insert': 'milk'},
+        {
+          'insert': '\n',
+          'attributes': {'list': 'bullet'},
+        },
+        {'insert': 'eggs'},
+        {
+          'insert': '\n',
+          'attributes': {'list': 'checked'},
+        },
+      ]);
+    });
+
+    testWidgets('Undo right after a starter gives back what was typed', (
+      tester,
+    ) async {
+      final state = await startTyping(tester);
+
+      await type(tester, '1. ');
+      expect(state.controller.lineKind, LineKind.numbered);
+
+      state.controller.undo();
+      await tester.pump();
+
+      expect(state.controller.document.toPlainText(), '1. \n');
+      expect(state.controller.lineKind, LineKind.text);
+    });
+
+    testWidgets('a starter in a code block stays text', (tester) async {
+      final state = await startTyping(
+        tester,
+        content: '{"ops":[{"insert":"\\n","attributes":{"code-block":true}}]}',
+      );
+
+      await type(tester, '# ');
+
+      expect(state.controller.document.toPlainText(), '# \n');
+      expect(state.controller.lineKind, LineKind.code);
+    });
+
+    testWidgets('an address links once a space follows it, without the '
+        'brackets and punctuation around it', (tester) async {
+      final state = await startTyping(tester);
+
+      await type(tester, 'see (www.example.com/a). ok');
+
+      expect(opsOf(state), [
+        {'insert': 'see ('},
+        {
+          'insert': 'www.example.com/a',
+          'attributes': {'link': 'https://www.example.com/a'},
+        },
+        {'insert': '). ok\n'},
+      ]);
+    });
+
+    testWidgets('an address with its scheme and an email link at a line '
+        'break', (tester) async {
+      final state = await startTyping(tester);
+
+      await type(tester, 'https://example.com\nhi@example.com\n');
+
+      expect(opsOf(state), [
+        {
+          'insert': 'https://example.com',
+          'attributes': {'link': 'https://example.com'},
+        },
+        {'insert': '\n'},
+        {
+          'insert': 'hi@example.com',
+          'attributes': {'link': 'mailto:hi@example.com'},
+        },
+        {'insert': '\n\n'},
+      ]);
+    });
+
+    testWidgets('nothing links letter by letter or on a bare name', (
+      tester,
+    ) async {
+      final state = await startTyping(tester);
+
+      await type(tester, 'https://example.com');
+      expect(state.getContent(), isNot(contains('link')));
+
+      await type(tester, ' and example.com ');
+      expect(opsOf(state), [
+        {
+          'insert': 'https://example.com',
+          'attributes': {'link': 'https://example.com'},
+        },
+        {'insert': ' and example.com \n'},
+      ]);
+    });
+
+    testWidgets('an address in bold keeps its bold', (tester) async {
+      final state = await startTyping(
+        tester,
+        content:
+            '{"ops":[{"insert":"www.example.com","attributes":{"bold":true}},'
+            '{"insert":"\\n"}]}',
+      );
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 15),
+        ChangeSource.local,
+      );
+      await tester.pump();
+
+      await type(tester, ' ');
+
+      expect(opsOf(state).first, {
+        'insert': 'www.example.com',
+        'attributes': {'bold': true, 'link': 'https://www.example.com'},
+      });
+    });
+
+    testWidgets('an address in code or already linked stays as it is', (
+      tester,
+    ) async {
+      final code = await startTyping(
+        tester,
+        content: '{"ops":[{"insert":"\\n","attributes":{"code-block":true}}]}',
+      );
+      await type(tester, 'www.example.com ');
+      expect(code.getContent(), isNot(contains('link')));
+
+      final linked = await startTyping(
+        tester,
+        content:
+            '{"ops":[{"insert":"www.example.com",'
+            '"attributes":{"link":"https://other.example"}},'
+            '{"insert":"\\n"}]}',
+      );
+      linked.controller.updateSelection(
+        const TextSelection.collapsed(offset: 15),
+        ChangeSource.local,
+      );
+      await tester.pump();
+      await type(tester, ' ');
+      expect(linked.getContent(), contains('https://other.example'));
+      expect(linked.getContent(), isNot(contains('https://www.')));
+    });
+
+    testWidgets('Undo right after a link takes off only the link', (
+      tester,
+    ) async {
+      final state = await startTyping(tester);
+
+      await type(tester, 'www.example.com ');
+      expect(state.getContent(), contains('link'));
+
+      state.controller.undo();
+      await tester.pump();
+
+      expect(state.controller.document.toPlainText(), 'www.example.com \n');
+      expect(state.getContent(), isNot(contains('link')));
+
+      await type(tester, 'x');
+      expect(state.getContent(), isNot(contains('link')));
+    });
+
+    testWidgets('links nothing that the app itself puts in', (tester) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"www.example.com\\n"}]}',
+      );
+
+      state.applyLineKind(LineKind.checklist);
+      await tester.pump();
+
+      expect(state.getContent(), isNot(contains('link')));
+    });
+  });
+
+  group('the first line', () {
+    testWidgets('addFirstLine puts words on an empty first line of text, '
+        'with the caret at its start', (tester) async {
+      final (state, focusNode) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\nmore\\n"}]}',
+      );
+
+      state.addFirstLine('plan');
+      await tester.pump();
+
+      expect(focusNode.hasFocus, isTrue);
+      expect(state.controller.document.toPlainText(), 'plan\nmore\n');
+      expect(state.selection, const TextSelection.collapsed(offset: 0));
+    });
+
+    testWidgets('addFirstLine adds a line of plain text above a heading or '
+        'a list', (tester) async {
+      for (final line in ['{"header":1}', '{"list":"bullet"}']) {
+        final (state, _) = await pumpEditor(
+          tester,
+          content:
+              '{"ops":[{"insert":"Plan"},'
+              '{"insert":"\\n","attributes":$line}]}',
+        );
+        state.controller.updateSelection(
+          const TextSelection.collapsed(offset: 4),
+          ChangeSource.local,
+        );
+
+        state.addFirstLine('later');
+        await tester.pump();
+
+        expect(state.controller.document.toPlainText(), 'later\nPlan\n');
+        expect(state.selection, const TextSelection.collapsed(offset: 0));
+        expect(state.controller.lineKind, LineKind.text, reason: line);
+        expect(
+          state.controller.document.toDelta().last.attributes,
+          jsonDecode(line),
+          reason: line,
+        );
+      }
+    });
+
+    testWidgets('addFirstLine with no words adds an empty line on top', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester);
+
+      state.addFirstLine('');
+      await tester.pump();
+
+      expect(state.controller.document.toPlainText(), '\nhi\n');
+      expect(state.selection, const TextSelection.collapsed(offset: 0));
+
+      state.controller.undo();
+      await tester.pump();
+      expect(state.controller.document.toPlainText(), 'hi\n');
+    });
+
+    testWidgets('startLineAtTop puts the caret on the new line wherever it '
+        'was', (tester) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"one\\ntwo\\n"}]}',
+      );
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 6),
+        ChangeSource.local,
+      );
+
+      state.startLineAtTop(LineKind.checklist);
+      await tester.pump();
+
+      expect(state.controller.document.toPlainText(), '\none\ntwo\n');
+      expect(state.selection, const TextSelection.collapsed(offset: 0));
+      expect(state.controller.lineKind, LineKind.checklist);
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 5),
+        ChangeSource.local,
+      );
+      expect(state.controller.lineKind, LineKind.text);
+    });
+
+    group('Backspace at its start', () {
+      Future<(RichTextEditorState, List<String>)> pressBackspace(
+        WidgetTester tester,
+        String content, {
+        int caret = 0,
+      }) async {
+        final joined = <String>[];
+        final (state, focusNode) = await pumpEditor(
+          tester,
+          content: content,
+          onBackspaceAtStart: joined.add,
+        );
+        focusNode.requestFocus();
+        await tester.pump();
+        state.controller.updateSelection(
+          TextSelection.collapsed(offset: caret),
+          ChangeSource.local,
+        );
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+        await tester.pump();
+        return (state, joined);
+      }
+
+      testWidgets('hands over a line of plain text and takes it out', (
+        tester,
+      ) async {
+        final (state, joined) = await pressBackspace(
+          tester,
+          '{"ops":[{"insert":"plan "},{"insert":"b","attributes":{"bold":true}},'
+          '{"insert":"\\nmore\\n"}]}',
+        );
+
+        expect(joined, ['plan b']);
+        expect(state.controller.document.toPlainText(), 'more\n');
+      });
+
+      testWidgets('keeps one empty line when that was the only one', (
+        tester,
+      ) async {
+        final (state, joined) = await pressBackspace(
+          tester,
+          '{"ops":[{"insert":"plan\\n"}]}',
+        );
+
+        expect(joined, ['plan']);
+        expect(state.controller.document.toPlainText(), '\n');
+      });
+
+      testWidgets('leaves a list or a heading, and the middle of a line, to '
+          'the usual Backspace', (tester) async {
+        for (final (content, caret) in [
+          (
+            '{"ops":[{"insert":"milk"},'
+                '{"insert":"\\n","attributes":{"list":"bullet"}}]}',
+            0,
+          ),
+          (
+            '{"ops":[{"insert":"Plan"},'
+                '{"insert":"\\n","attributes":{"header":1}}]}',
+            0,
+          ),
+          ('{"ops":[{"insert":"plan\\n"}]}', 2),
+        ]) {
+          final (state, joined) = await pressBackspace(
+            tester,
+            content,
+            caret: caret,
+          );
+
+          expect(joined, isEmpty, reason: content);
+          expect(
+            state.controller.document.toPlainText(),
+            isNot(startsWith('\n')),
+          );
+        }
+      });
+    });
+  });
+
+  group('words on an empty note', () {
+    String? placeholder(WidgetTester tester) =>
+        tester.widget<QuillEditor>(find.byType(QuillEditor)).config.placeholder;
+
+    Finder slashHint() => find.byWidgetPredicate(
+      (widget) => widget is CustomPaint && widget.painter is SlashHint,
+    );
+
+    testWidgets('"Start writing" shows only while the empty text waits', (
+      tester,
+    ) async {
+      final (state, focusNode) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\n"}]}',
+      );
+      expect(placeholder(tester), 'Start writing');
+
+      focusNode.requestFocus();
+      await tester.pump();
+      await tester.pump();
+      expect(placeholder(tester), isNull);
+
+      focusNode.unfocus();
+      await tester.pump();
+      await tester.pump();
+      expect(placeholder(tester), 'Start writing');
+
+      state.applyLineKind(LineKind.checklist);
+      await tester.pump();
+      focusNode.unfocus();
+      await tester.pump();
+      await tester.pump();
+      expect(placeholder(tester), isNull);
+    });
+
+    testWidgets('a note you can only view has no "Start writing"', (
+      tester,
+    ) async {
+      await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\n"}]}',
+        canEdit: false,
+      );
+
+      expect(placeholder(tester), isNull);
+    });
+
+    testWidgets('"Type / for more" shows on the empty line of plain text the '
+        'caret is on', (tester) async {
+      final (state, focusNode) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\n"}]}',
+        hasSlashHint: true,
+      );
+      final hint = tester.renderObject(slashHint());
+      expect(hint, paintsNothing);
+
+      focusNode.requestFocus();
+      await tester.pump();
+      expect(hint, paints..paragraph(offset: Offset.zero));
+
+      state.controller.replaceText(
+        0,
+        0,
+        'a',
+        const TextSelection.collapsed(offset: 1),
+      );
+      await tester.pump();
+      expect(hint, paintsNothing);
+
+      state.controller.replaceText(
+        1,
+        0,
+        '\n',
+        const TextSelection.collapsed(offset: 2),
+      );
+      await tester.pump();
+      expect(hint, paints..paragraph());
+
+      state.applyLineKind(LineKind.checklist);
+      await tester.pump();
+      expect(hint, paintsNothing);
+    });
+
+    testWidgets('only a note opened as new has "Type / for more"', (
+      tester,
+    ) async {
+      final (_, focusNode) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\n"}]}',
+      );
+      focusNode.requestFocus();
+      await tester.pump();
+
+      expect(slashHint(), findsNothing);
+    });
+
+    testWidgets('onBlankChanged follows whether the note holds anything', (
+      tester,
+    ) async {
+      final blank = <bool>[];
+      final (state, _) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\n"}]}',
+        onBlankChanged: blank.add,
+      );
+
+      state.controller.replaceText(0, 0, '  \n', null);
+      await tester.pump();
+      expect(blank, isEmpty);
+
+      state.controller.replaceText(0, 0, 'a', null);
+      await tester.pump();
+      state.controller.replaceText(0, 1, '', null);
+      await tester.pump();
+      expect(blank, [false, true]);
+
+      state.applyLineKind(LineKind.checklist);
+      await tester.pump();
+      expect(blank, [false, true, false]);
+      expect(state.isBlank, isFalse);
     });
   });
 
