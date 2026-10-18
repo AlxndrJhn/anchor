@@ -150,7 +150,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignIn => 'Sign in';
 
   @override
+  String get commonContinue => 'Continue';
+
+  @override
+  String get commonMore => 'More';
+
+  @override
   String get commonCopy => 'Copy';
+
+  @override
+  String get commonSelectAll => 'Select all';
+
+  @override
+  String get commonDeselectAll => 'Deselect all';
+
+  @override
+  String commonSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get settingsTitle => 'Settings';
 
   @override
   String settingsSignOutMessage(int count) {
@@ -167,6 +187,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsAppNameShort => 'Anchor';
+
+  @override
   String logsCopied(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -178,13 +201,177 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commonToday => 'Today';
+
+  @override
+  String get commonTomorrow => 'Tomorrow';
+
+  @override
+  String get commonNotNow => 'Not now';
+
+  @override
   String get commonLater => 'Later';
 
   @override
   String get commonOk => 'OK';
 
   @override
+  String get commonOpenSettings => 'Open settings';
+
+  @override
   String get reminderTitle => 'Reminder';
+
+  @override
+  String get reminderSheetSubtitle =>
+      'You’ll get a notification on this phone.';
+
+  @override
+  String reminderDayTime(String day, String time) {
+    return '$day, $time';
+  }
+
+  @override
+  String reminderWithRepeat(String when, String repeat) {
+    return '$when · $repeat';
+  }
+
+  @override
+  String reminderSpoken(String when) {
+    return 'Reminder: $when';
+  }
+
+  @override
+  String reminderSpokenLate(String when) {
+    return 'Overdue reminder: $when';
+  }
+
+  @override
+  String get reminderLaterToday => 'Later today';
+
+  @override
+  String get reminderNextWeek => 'Next week';
+
+  @override
+  String get reminderNone => 'No reminder';
+
+  @override
+  String get reminderPickTime => 'Pick a date and time';
+
+  @override
+  String get reminderTimePassed => 'This time has already passed';
+
+  @override
+  String reminderInMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'In $count minutes',
+      one: 'In 1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reminderInHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'In $count hours',
+      one: 'In 1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reminderInDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'In $count days',
+      one: 'In 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reminderRepeatsDaily => 'Repeats every day';
+
+  @override
+  String reminderRepeatsWeekly(String weekday) {
+    return 'Repeats every $weekday';
+  }
+
+  @override
+  String reminderRepeatsMonthly(int day) {
+    return 'Repeats monthly on day $day';
+  }
+
+  @override
+  String reminderRepeatsMonthlyEnd(int day) {
+    return 'Repeats monthly on day $day or the last day';
+  }
+
+  @override
+  String reminderRepeatsYearly(String date) {
+    return 'Repeats every year on $date';
+  }
+
+  @override
+  String get repeatOnce => 'Once';
+
+  @override
+  String get repeatDaily => 'Daily';
+
+  @override
+  String get repeatWeekly => 'Weekly';
+
+  @override
+  String get repeatMonthly => 'Monthly';
+
+  @override
+  String get repeatYearly => 'Yearly';
+
+  @override
+  String get reminderWhen => 'When';
+
+  @override
+  String get reminderPickDate => 'Pick a date';
+
+  @override
+  String get reminderDate => 'Date';
+
+  @override
+  String get reminderTime => 'Time';
+
+  @override
+  String get reminderRepeat => 'Repeat';
+
+  @override
+  String get reminderRemove => 'Remove';
+
+  @override
+  String get reminderNotifyTitle => 'Allow notifications?';
+
+  @override
+  String get reminderNotifyMessage =>
+      'Anchor needs permission to send notifications so your reminders can ring on this phone.';
+
+  @override
+  String get reminderExactTitle => 'Allow exact alarms?';
+
+  @override
+  String get reminderExactMessage =>
+      'Android may delay reminders to save battery. Allow exact alarms so they ring on time.';
+
+  @override
+  String get reminderNotificationsOff =>
+      'Notifications are off. Turn them on in your phone’s settings.';
+
+  @override
+  String get monthPrevious => 'Previous month';
+
+  @override
+  String get monthNext => 'Next month';
 
   @override
   String get reminderChannelName => 'Reminders';
@@ -193,16 +380,163 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderChannelDescription => 'Reminders you set on your notes';
 
   @override
+  String notesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes',
+      one: '1 note',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagsTitle => 'Tags';
+
+  @override
+  String get tagNotesTitle => 'Tag notes';
+
+  @override
+  String get tagSaveFailed => 'Couldn’t save the tag';
+
+  @override
+  String get tagUpdateFailed => 'Couldn’t update the tags';
+
+  @override
+  String tagNameTaken(String name) {
+    return 'A tag named “$name” already exists.';
+  }
+
+  @override
+  String tagCreateNamed(String name) {
+    return 'Create “$name”';
+  }
+
+  @override
+  String tagAdded(String tag) {
+    return '$tag, added';
+  }
+
+  @override
+  String tagNotAdded(String tag) {
+    return '$tag, not added';
+  }
+
+  @override
+  String tagAddedToSome(String tag) {
+    return '$tag, added to some notes';
+  }
+
+  @override
+  String get tagSearchOrCreate => 'Search or create a tag';
+
+  @override
+  String get tagsEmpty => 'No tags yet. Type a name to create one.';
+
+  @override
+  String tagSheetLabel(String name) {
+    return 'Tag $name';
+  }
+
+  @override
+  String get tagColor => 'Color';
+
+  @override
+  String get tagRename => 'Rename tag';
+
+  @override
+  String get tagDelete => 'Delete tag';
+
+  @override
+  String tagDeleteTitle(String name) {
+    return 'Delete tag “$name”?';
+  }
+
+  @override
+  String tagDeleteMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'The tag will be removed from $count notes. Your notes won’t be deleted.',
+      one: 'The tag will be removed from 1 note. Your notes won’t be deleted.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagDeleteUnused => 'This tag isn’t on any notes.';
+
+  @override
+  String tagDeleted(String name) {
+    return 'Tag “$name” deleted';
+  }
+
+  @override
+  String get tagNew => 'New tag';
+
+  @override
+  String get tagNamePreview => 'tag name';
+
+  @override
+  String get tagNameHint => 'Tag name';
+
+  @override
+  String get tagCreate => 'Create tag';
+
+  @override
+  String get tagRenameAction => 'Rename';
+
+  @override
+  String get colorRed => 'Red';
+
+  @override
   String get colorPink => 'Pink';
 
   @override
   String get colorPurple => 'Purple';
 
   @override
+  String get colorDeepPurple => 'Deep purple';
+
+  @override
+  String get colorIndigo => 'Indigo';
+
+  @override
   String get colorBlue => 'Blue';
 
   @override
+  String get colorLightBlue => 'Light blue';
+
+  @override
+  String get colorCyan => 'Cyan';
+
+  @override
+  String get colorTeal => 'Teal';
+
+  @override
   String get colorGreen => 'Green';
+
+  @override
+  String get colorLightGreen => 'Light green';
+
+  @override
+  String get colorLime => 'Lime';
+
+  @override
+  String get colorAmber => 'Amber';
+
+  @override
+  String get colorOrange => 'Orange';
+
+  @override
+  String get colorDeepOrange => 'Deep orange';
+
+  @override
+  String get colorBrown => 'Brown';
+
+  @override
+  String get colorBlueGrey => 'Blue gray';
 
   @override
   String get colorYellow => 'Yellow';
@@ -253,10 +587,641 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commonYesterday => 'Yesterday';
+
+  @override
+  String get notesSelectTitle => 'Select notes';
+
+  @override
+  String get noteUntitled => 'Untitled';
+
+  @override
+  String namesTwo(String first, String second) {
+    return '$first and $second';
+  }
+
+  @override
+  String namesMore(String first, String second, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$first, $second and $count more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareOnlyYou => 'Only you can see this note.';
+
+  @override
+  String shareSharedWith(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Shared with $count people.',
+      one: 'Shared with 1 person.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareSharedWithOffline(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Shared with $count people. Connect to see who has access.',
+      one: 'Shared with 1 person. Connect to see who has access.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareSharedWithCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Shared with $count people',
+      one: 'Shared with 1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareCanView => 'Can view';
+
+  @override
+  String get shareCanEdit => 'Can edit';
+
+  @override
+  String dayTodayAt(String time) {
+    return 'Today at $time';
+  }
+
+  @override
+  String dayYesterdayAt(String time) {
+    return 'Yesterday at $time';
+  }
+
+  @override
+  String dayOnAt(String date, String time) {
+    return '$date at $time';
+  }
+
+  @override
+  String get editedToday => 'Edited today';
+
+  @override
+  String get editedYesterday => 'Edited yesterday';
+
+  @override
+  String editedOn(String date) {
+    return 'Edited $date';
+  }
+
+  @override
+  String get editedJustNow => 'Edited just now';
+
+  @override
+  String editedMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Edited $count min ago',
+      one: 'Edited 1 min ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String editedTodayAt(String time) {
+    return 'Edited today at $time';
+  }
+
+  @override
+  String editedYesterdayAt(String time) {
+    return 'Edited yesterday at $time';
+  }
+
+  @override
+  String editedOnAt(String date, String time) {
+    return 'Edited $date at $time';
+  }
+
+  @override
+  String trashRule(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Notes here are deleted after $count days.',
+      one: 'Notes here are deleted after 1 day.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String trashEmpty(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Notes you delete stay here for $count days.',
+      one: 'Notes you delete stay here for 1 day.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String trashDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String trashDeletesOn(String date) {
+    return 'Will be deleted on $date.';
+  }
+
+  @override
+  String trashDeletesAfter(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Will be deleted after $count days.',
+      one: 'Will be deleted after 1 day.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String historyKept(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'A version is saved each time the note changes and kept for $count days.',
+      one: 'A version is saved each time the note changes and kept for 1 day.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String historyLimit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Edits older than $count days are removed.',
+      one: 'Edits older than 1 day are removed.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get historyEarlier => 'Earlier version';
+
+  @override
+  String get historyNotSaved => 'Not saved';
+
+  @override
+  String get historyBeforeRestore => 'Before a restore';
+
+  @override
+  String get historySomeone => 'Someone';
+
+  @override
+  String get historyYou => 'You';
+
+  @override
+  String get navNotes => 'Notes';
+
+  @override
+  String get navArchive => 'Archive';
+
+  @override
+  String get navTrash => 'Trash';
+
+  @override
+  String drawerAccount(String name) {
+    return '$name, Settings';
+  }
+
+  @override
+  String shareNowCanView(String person) {
+    return '$person can now view';
+  }
+
+  @override
+  String shareNowCanEdit(String person) {
+    return '$person can now edit';
+  }
+
+  @override
+  String revisionComparedTodayAt(String time) {
+    return 'Compared with today at $time';
+  }
+
+  @override
+  String revisionComparedYesterdayAt(String time) {
+    return 'Compared with yesterday at $time';
+  }
+
+  @override
+  String revisionComparedOnAt(String date, String time) {
+    return 'Compared with $date at $time';
+  }
+
+  @override
+  String get listArchiveLine => 'Hidden from Notes';
+
+  @override
+  String listTrashLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Deleted after $count days',
+      one: 'Deleted after 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get listOfflineSaved => 'Offline · changes are saved on this phone';
+
+  @override
+  String listOfflineChanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Offline · $count changes to sync',
+      one: 'Offline · 1 change to sync',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get listSyncFailed => 'Couldn’t sync';
+
+  @override
+  String listTitleMenu(String title) {
+    return '$title, open menu';
+  }
+
+  @override
+  String get searchNotes => 'Search notes';
+
+  @override
+  String get searchArchive => 'Search archive';
+
+  @override
+  String get searchTrash => 'Search trash';
+
+  @override
+  String get actionTag => 'Tag';
+
+  @override
+  String get actionPin => 'Pin';
+
+  @override
+  String get actionUnpin => 'Unpin';
+
+  @override
+  String get actionShare => 'Share';
+
+  @override
+  String get actionHistory => 'Version history';
+
+  @override
+  String get actionUncheckAll => 'Uncheck all';
+
+  @override
+  String get actionDeleteChecked => 'Delete checked items';
+
+  @override
+  String get actionArchive => 'Archive';
+
+  @override
+  String get actionUnarchive => 'Unarchive';
+
+  @override
+  String get actionDelete => 'Delete';
+
+  @override
+  String get actionRemove => 'Remove';
+
+  @override
+  String get actionRestore => 'Restore';
+
+  @override
+  String get actionDeletePermanently => 'Delete permanently';
+
+  @override
+  String notesPinned(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes pinned',
+      one: 'Note pinned',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesUnpinned(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes unpinned',
+      one: 'Note unpinned',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesArchived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes archived',
+      one: 'Note archived',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesUnarchived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes unarchived',
+      one: 'Note unarchived',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes restored',
+      one: 'Note restored',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesDeletedForever(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes permanently deleted',
+      one: 'Note permanently deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesMovedToTrash(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes moved to trash',
+      one: 'Note moved to trash',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesRemovedFromYours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes removed from your notes',
+      one: 'Note removed from your notes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesTrashedMixed(String moved, String removed) {
+    return '$moved $removed';
+  }
+
+  @override
+  String notesMovedToTrashPart(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes moved to trash.',
+      one: '1 note moved to trash.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesRemovedPart(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count removed from your notes.',
+      one: '1 removed from your notes.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notesRemoveSharedTitle => 'Remove this note from your notes?';
+
+  @override
+  String get notesRemoveSharedMessage =>
+      'To see it again, its owner has to share it with you again.';
+
+  @override
+  String notesDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count notes?',
+      one: 'Delete 1 note?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesDeleteSharedMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count notes shared with you will be removed from your notes. To see them again, their owners have to share them with you again.',
+      one:
+          'A note shared with you will be removed from your notes. To see it again, its owner has to share it with you again.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notesDeleteForeverOneTitle => 'Permanently delete this note?';
+
+  @override
+  String notesDeleteForeverTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Permanently delete $count notes?',
+      one: 'Permanently delete 1 note?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesDeleteForeverMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'This can’t be undone. People you shared them with will lose access too.',
+      one:
+          'This can’t be undone. People you shared it with will lose access too.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get trashEmptyAction => 'Empty trash';
+
+  @override
+  String get trashNothing => 'Nothing to delete';
+
+  @override
+  String get trashEmptyTitle => 'Empty trash?';
+
+  @override
+  String trashEmptyMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes will be permanently deleted. This can’t be undone.',
+      one: '1 note will be permanently deleted. This can’t be undone.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get trashEmptied => 'Trash emptied';
+
+  @override
+  String get listViewOptions => 'View options';
+
+  @override
+  String searchTag(String tag) {
+    return 'Search #$tag';
+  }
+
+  @override
+  String searchNoResults(String query) {
+    return 'No results for “$query”';
+  }
+
+  @override
+  String get searchNoResultsHelp =>
+      'Check the spelling or try different words.';
+
+  @override
+  String get archiveEmptyTitle => 'No archived notes';
+
+  @override
+  String get archiveEmptyHelp =>
+      'Archive notes you want to keep but don’t need to see every day.';
+
+  @override
+  String get trashEmptyStateTitle => 'Trash is empty';
+
+  @override
+  String tagEmptyTitle(String tag) {
+    return 'No notes tagged #$tag';
+  }
+
+  @override
+  String get tagEmptyHelp => 'New notes you create here get this tag.';
+
+  @override
+  String get notesLoading => 'Loading notes';
+
+  @override
+  String get notesEmptyTitle => 'No notes yet';
+
+  @override
+  String get notesEmptyHelp => 'Tap New note to write your first one.';
+
+  @override
+  String get notesLoadFailedTitle => 'Couldn’t load your notes';
+
+  @override
+  String get notesLoadFailedHelp => 'Check your connection, then try again.';
+
+  @override
+  String get notesLoadPausedHelp =>
+      'Your notes will appear here once they sync.';
+
+  @override
+  String get noteNew => 'New note';
+
+  @override
+  String get cardNotSynced => 'Not synced yet';
+
+  @override
+  String cardPictures(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pictures',
+      one: '1 picture',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareSharedBy(String name) {
+    return 'Shared by $name';
+  }
+
+  @override
+  String tagRemoveNamed(String tag) {
+    return 'Remove $tag';
+  }
+
+  @override
   String get starterAttachment => 'Picture or audio';
 
   @override
+  String get attachmentPictureDeleted => 'Picture deleted';
+
+  @override
+  String get attachmentVoiceDeleted => 'Voice note deleted';
+
+  @override
   String get attachmentAddLabel => 'Add picture or audio';
+
+  @override
+  String get pullOffline =>
+      'You’re offline. Your changes are saved on this phone.';
+
+  @override
+  String get pullSyncing => 'Syncing…';
+
+  @override
+  String get pullUpToDate => 'Up to date';
+
+  @override
+  String get pullFailed =>
+      'Couldn’t sync. Your changes are saved on this phone.';
+
+  @override
+  String get searchClear => 'Clear search';
 
   @override
   String get lineText => 'Text';
@@ -412,7 +1377,139 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editorPlaceholder => 'Start writing';
 
   @override
+  String get commonTryAgain => 'Try again';
+
+  @override
+  String get historyNoChanges => 'No changes';
+
+  @override
+  String diffAdded(int count) {
+    return '$count added';
+  }
+
+  @override
+  String diffRemoved(int count) {
+    return '$count removed';
+  }
+
+  @override
+  String diffChanged(int count) {
+    return '$count changed';
+  }
+
+  @override
+  String diffLinesAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines added',
+      one: '1 line added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String diffLinesRemoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines removed',
+      one: '1 line removed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String diffLinesChanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines changed',
+      one: '1 line changed',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get voiceNote => 'Voice note';
+
+  @override
+  String get groupPinned => 'Pinned';
+
+  @override
+  String get groupOthers => 'Others';
+
+  @override
+  String get groupArchived => 'Archived';
+
+  @override
+  String get viewLayout => 'Layout';
+
+  @override
+  String get viewMasonry => 'Masonry';
+
+  @override
+  String get viewGrid => 'Grid';
+
+  @override
+  String get viewList => 'List';
+
+  @override
+  String get viewSortBy => 'Sort by';
+
+  @override
+  String get viewDateEdited => 'Date edited';
+
+  @override
+  String get viewTitle => 'Title';
+
+  @override
+  String get viewAtoZ => 'A to Z';
+
+  @override
+  String get viewZtoA => 'Z to A';
+
+  @override
+  String get viewNewestFirst => 'Newest first';
+
+  @override
+  String get viewOldestFirst => 'Oldest first';
+
+  @override
+  String get attachmentPictureAdded => 'Picture added';
+
+  @override
+  String get attachmentVoiceAdded => 'Voice note added';
+
+  @override
+  String get attachmentPictureAddedOffline =>
+      'Picture added. It will upload when you’re back online.';
+
+  @override
+  String get attachmentVoiceAddedOffline =>
+      'Voice note added. It will upload when you’re back online.';
+
+  @override
+  String get attachmentPictureAddFailed => 'Couldn’t add the picture';
+
+  @override
+  String get attachmentVoiceAddFailed => 'Couldn’t add the voice note';
+
+  @override
+  String get attachmentAudioAdded => 'Audio file added';
+
+  @override
+  String get attachmentAudioAddedOffline =>
+      'Audio file added. It will upload when you’re back online.';
+
+  @override
+  String get attachmentAudioAddFailed => 'Couldn’t add the audio file';
+
+  @override
+  String get attachmentAudioDeleted => 'Audio file deleted';
+
+  @override
+  String get viewOrder => 'Order';
 
   @override
   String get editorDragHint => 'Drag to reorder';
@@ -422,4 +1519,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get slashNoResults => 'No results';
+
+  @override
+  String cardChecked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count done',
+      one: '1 done',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cardAllChecked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'All $count done',
+      one: 'All 1 done',
+    );
+    return '$_temp0';
+  }
 }

@@ -340,11 +340,47 @@ abstract class AppLocalizations {
   /// **'Sign in'**
   String get authSignIn;
 
+  /// Button that goes to the next step on the server page or in a permission dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get commonContinue;
+
+  /// Screen reader label of the three dots button that opens more actions.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get commonMore;
+
   /// Button that copies a link or the selected logs. Short: fits a small bubble.
   ///
   /// In en, this message translates to:
   /// **'Copy'**
   String get commonCopy;
+
+  /// Button that selects every item shown while selecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get commonSelectAll;
+
+  /// Button that clears the selection when every item is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect all'**
+  String get commonDeselectAll;
+
+  /// Page title while selecting items.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String commonSelectedCount(int count);
+
+  /// Title of the Settings page, also the name of the button that opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
 
   /// {count} is the number of changes not yet sent to the server.
   ///
@@ -352,11 +388,35 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}'**
   String settingsSignOutMessage(int count);
 
+  /// The app’s short name, at the top of the menu and the bottom of Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor'**
+  String get settingsAppNameShort;
+
   /// Toast after the selected logs were copied.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 log copied} other{{count} logs copied}}'**
   String logsCopied(int count);
+
+  /// The current day, as a date heading, on a note card or in a reminder time.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get commonToday;
+
+  /// The next day, in a reminder time or as a quick reminder choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get commonTomorrow;
+
+  /// Button that closes a permission dialog without asking for the permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get commonNotNow;
 
   /// Button that closes the sign in again dialog without signing in.
   ///
@@ -370,11 +430,233 @@ abstract class AppLocalizations {
   /// **'OK'**
   String get commonOk;
 
+  /// Opens the phone’s settings for the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get commonOpenSettings;
+
   /// Title of the reminder sheet, and of a reminder notification when the note has no title.
   ///
   /// In en, this message translates to:
   /// **'Reminder'**
   String get reminderTitle;
+
+  /// Under the title of the sheet that sets a reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'You’ll get a notification on this phone.'**
+  String get reminderSheetSubtitle;
+
+  /// A reminder’s day and time, such as “Today, 6:05 PM” or “Fri, Aug 21, 9:00 AM”.
+  ///
+  /// In en, this message translates to:
+  /// **'{day}, {time}'**
+  String reminderDayTime(String day, String time);
+
+  /// A repeating reminder, such as “Mon, Aug 24, 5:00 PM · Weekly”.
+  ///
+  /// In en, this message translates to:
+  /// **'{when} · {repeat}'**
+  String reminderWithRepeat(String when, String repeat);
+
+  /// Screen reader text of a reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder: {when}'**
+  String reminderSpoken(String when);
+
+  /// Screen reader text of a reminder whose time has passed.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue reminder: {when}'**
+  String reminderSpokenLate(String when);
+
+  /// Quick reminder choice for a time later on the same day.
+  ///
+  /// In en, this message translates to:
+  /// **'Later today'**
+  String get reminderLaterToday;
+
+  /// Quick reminder choice for a day in the coming week.
+  ///
+  /// In en, this message translates to:
+  /// **'Next week'**
+  String get reminderNextWeek;
+
+  /// Big summary line at the top of the reminder sheet before a time is picked.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminder'**
+  String get reminderNone;
+
+  /// Under the summary at the top of the reminder sheet before a time is picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date and time'**
+  String get reminderPickTime;
+
+  /// Summary at the top of the reminder sheet when the picked time is in the past.
+  ///
+  /// In en, this message translates to:
+  /// **'This time has already passed'**
+  String get reminderTimePassed;
+
+  /// How soon a reminder rings, under the summary in the reminder sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{In 1 minute} other{In {count} minutes}}'**
+  String reminderInMinutes(int count);
+
+  /// How soon a reminder rings, under the summary in the reminder sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{In 1 hour} other{In {count} hours}}'**
+  String reminderInHours(int count);
+
+  /// How soon a reminder rings, under the summary in the reminder sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{In 1 day} other{In {count} days}}'**
+  String reminderInDays(int count);
+
+  /// Under the summary in the reminder sheet for a reminder that rings every day.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats every day'**
+  String get reminderRepeatsDaily;
+
+  /// Under the summary in the reminder sheet for a reminder that rings weekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats every {weekday}'**
+  String reminderRepeatsWeekly(String weekday);
+
+  /// Under the summary in the reminder sheet for a reminder that rings monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats monthly on day {day}'**
+  String reminderRepeatsMonthly(int day);
+
+  /// For days 29 to 31: in shorter months it rings on the last day. Keep it short, it shows on one line.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats monthly on day {day} or the last day'**
+  String reminderRepeatsMonthlyEnd(int day);
+
+  /// Under the summary in the reminder sheet for a reminder that rings once a year.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats every year on {date}'**
+  String reminderRepeatsYearly(String date);
+
+  /// How often a reminder rings: one time only, without repeating.
+  ///
+  /// In en, this message translates to:
+  /// **'Once'**
+  String get repeatOnce;
+
+  /// How often a reminder rings. Short: one of four tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get repeatDaily;
+
+  /// How often a reminder rings. Short: one of four tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get repeatWeekly;
+
+  /// How often a reminder rings. Short: one of four tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get repeatMonthly;
+
+  /// How often a reminder rings. Short: one of four tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get repeatYearly;
+
+  /// Screen reader name of the list of reminder times.
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get reminderWhen;
+
+  /// Row in the reminder sheet that opens a calendar and clock to choose any time.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get reminderPickDate;
+
+  /// Button that opens the calendar in the reminder sheet before a day is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get reminderDate;
+
+  /// Button that opens the clock in the reminder sheet before a time is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get reminderTime;
+
+  /// Switch in the reminder sheet that makes the reminder ring again and again.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get reminderRepeat;
+
+  /// Button in the reminder sheet that deletes the note’s reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get reminderRemove;
+
+  /// Title of the dialog shown before the phone asks for notification permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications?'**
+  String get reminderNotifyTitle;
+
+  /// Message of the dialog shown before the phone asks for notification permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor needs permission to send notifications so your reminders can ring on this phone.'**
+  String get reminderNotifyMessage;
+
+  /// Android’s “Alarms & reminders” permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow exact alarms?'**
+  String get reminderExactTitle;
+
+  /// Message of the dialog that asks for Android’s Alarms & reminders permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Android may delay reminders to save battery. Allow exact alarms so they ring on time.'**
+  String get reminderExactMessage;
+
+  /// Toast when a reminder is set but notifications for the app are blocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off. Turn them on in your phone’s settings.'**
+  String get reminderNotificationsOff;
+
+  /// Screen reader label of the arrow that shows the previous month in a calendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get monthPrevious;
+
+  /// Screen reader label of the arrow that shows the next month in a calendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get monthNext;
 
   /// Name of the app’s notification category in Android’s settings.
   ///
@@ -388,6 +670,162 @@ abstract class AppLocalizations {
   /// **'Reminders you set on your notes'**
   String get reminderChannelDescription;
 
+  /// Number of notes, under the list title, in the tag sheet and the Empty trash menu.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 note} other{{count} notes}}'**
+  String notesCount(int count);
+
+  /// Title of the sheet that tags a note, and the tags heading in the side menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tagsTitle;
+
+  /// Title of the sheet that tags several selected notes at once.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag notes'**
+  String get tagNotesTitle;
+
+  /// Error when a new or renamed tag couldn’t be saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save the tag'**
+  String get tagSaveFailed;
+
+  /// Toast when adding or removing tags on notes failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t update the tags'**
+  String get tagUpdateFailed;
+
+  /// Error when creating or renaming a tag to a name that’s already used.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag named “{name}” already exists.'**
+  String tagNameTaken(String name);
+
+  /// Row in the tag sheet that makes a new tag from the typed text.
+  ///
+  /// In en, this message translates to:
+  /// **'Create “{name}”'**
+  String tagCreateNamed(String name);
+
+  /// Screen reader text of a tag that is on the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{tag}, added'**
+  String tagAdded(String tag);
+
+  /// Screen reader text of a tag that isn’t on the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{tag}, not added'**
+  String tagNotAdded(String tag);
+
+  /// Screen reader text of a tag on some of the selected notes.
+  ///
+  /// In en, this message translates to:
+  /// **'{tag}, added to some notes'**
+  String tagAddedToSome(String tag);
+
+  /// Hint inside the empty search field of the tag sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Search or create a tag'**
+  String get tagSearchOrCreate;
+
+  /// Shown in the tag sheet when the person has no tags yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet. Type a name to create one.'**
+  String get tagsEmpty;
+
+  /// Screen reader name of the sheet for one tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag {name}'**
+  String tagSheetLabel(String name);
+
+  /// Section label for the color choices of a tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get tagColor;
+
+  /// Row in a tag’s sheet that renames it, and title of the rename sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename tag'**
+  String get tagRename;
+
+  /// Row in a tag’s sheet and the confirm button of its dialog: deletes the tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag'**
+  String get tagDelete;
+
+  /// Title of the dialog that confirms deleting a tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag “{name}”?'**
+  String tagDeleteTitle(String name);
+
+  /// Message of the dialog that confirms deleting a tag that is on notes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The tag will be removed from 1 note. Your notes won’t be deleted.} other{The tag will be removed from {count} notes. Your notes won’t be deleted.}}'**
+  String tagDeleteMessage(int count);
+
+  /// Message of the dialog that confirms deleting a tag no note uses.
+  ///
+  /// In en, this message translates to:
+  /// **'This tag isn’t on any notes.'**
+  String get tagDeleteUnused;
+
+  /// Toast after a tag was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag “{name}” deleted'**
+  String tagDeleted(String name);
+
+  /// Title of the new tag sheet, and spoken name of the plus button that opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag'**
+  String get tagNew;
+
+  /// Placeholder in the tag preview while the name field is empty. Lowercase, like a tag.
+  ///
+  /// In en, this message translates to:
+  /// **'tag name'**
+  String get tagNamePreview;
+
+  /// Hint inside the empty tag name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get tagNameHint;
+
+  /// Button that saves a new tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Create tag'**
+  String get tagCreate;
+
+  /// Verb: button that saves a tag’s new name.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get tagRenameAction;
+
+  /// Screen reader name of a tag or note background color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get colorRed;
+
   /// Screen reader name of a tag, note background or highlight color swatch.
   ///
   /// In en, this message translates to:
@@ -400,17 +838,89 @@ abstract class AppLocalizations {
   /// **'Purple'**
   String get colorPurple;
 
+  /// Screen reader name of a tag color swatch, darker than purple.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep purple'**
+  String get colorDeepPurple;
+
+  /// Screen reader name of a dark blue tag or note background color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Indigo'**
+  String get colorIndigo;
+
   /// Screen reader name of a tag, note background or highlight color swatch.
   ///
   /// In en, this message translates to:
   /// **'Blue'**
   String get colorBlue;
 
+  /// Screen reader name of a tag color swatch, paler than blue.
+  ///
+  /// In en, this message translates to:
+  /// **'Light blue'**
+  String get colorLightBlue;
+
+  /// Screen reader name of a bright blue-green tag color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Cyan'**
+  String get colorCyan;
+
+  /// Screen reader name of a dark blue-green tag or note background color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Teal'**
+  String get colorTeal;
+
   /// Screen reader name of a tag, note background or highlight color swatch.
   ///
   /// In en, this message translates to:
   /// **'Green'**
   String get colorGreen;
+
+  /// Screen reader name of a tag color swatch, paler than green.
+  ///
+  /// In en, this message translates to:
+  /// **'Light green'**
+  String get colorLightGreen;
+
+  /// Screen reader name of a yellow-green tag color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lime'**
+  String get colorLime;
+
+  /// Screen reader name of a golden orange-yellow tag color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Amber'**
+  String get colorAmber;
+
+  /// Screen reader name of a tag or note background color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get colorOrange;
+
+  /// Screen reader name of a tag color swatch, redder than orange.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep orange'**
+  String get colorDeepOrange;
+
+  /// Screen reader name of a tag or note background color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Brown'**
+  String get colorBrown;
+
+  /// Screen reader name of a grayish blue tag color swatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue gray'**
+  String get colorBlueGrey;
 
   /// Screen reader name of a tag, note background or highlight color swatch.
   ///
@@ -496,17 +1006,707 @@ abstract class AppLocalizations {
   /// **'{reason} Your notes stay on this phone in the meantime.'**
   String syncPausedMessage(String reason);
 
+  /// The day before today, as a date heading or on a note card.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get commonYesterday;
+
+  /// Page title while selecting notes and none is selected yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Select notes'**
+  String get notesSelectTitle;
+
+  /// Shown for a note without a title.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled'**
+  String get noteUntitled;
+
+  /// Two people’s first names joined, as in “Shared with Ada and Ben”.
+  ///
+  /// In en, this message translates to:
+  /// **'{first} and {second}'**
+  String namesTwo(String first, String second);
+
+  /// Two names and how many other people.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{first}, {second} and {count} more}}'**
+  String namesMore(String first, String second, int count);
+
+  /// Small line in the share sheet when the note isn’t shared with anyone.
+  ///
+  /// In en, this message translates to:
+  /// **'Only you can see this note.'**
+  String get shareOnlyYou;
+
+  /// Small line in the share sheet giving how many people can see the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Shared with 1 person.} other{Shared with {count} people.}}'**
+  String shareSharedWith(int count);
+
+  /// Small line in the share sheet while offline, when the list of people can’t load.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Shared with 1 person. Connect to see who has access.} other{Shared with {count} people. Connect to see who has access.}}'**
+  String shareSharedWithOffline(int count);
+
+  /// A short line on a note, without a period.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Shared with 1 person} other{Shared with {count} people}}'**
+  String shareSharedWithCount(int count);
+
+  /// Access level: the person can read the note but not change it.
+  ///
+  /// In en, this message translates to:
+  /// **'Can view'**
+  String get shareCanView;
+
+  /// Access level: the person can read and change the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Can edit'**
+  String get shareCanEdit;
+
+  /// When a version of a note was saved, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Today at {time}'**
+  String dayTodayAt(String time);
+
+  /// When a version of a note was saved, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday at {time}'**
+  String dayYesterdayAt(String time);
+
+  /// When a version of a note was saved, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} at {time}'**
+  String dayOnAt(String date, String time);
+
+  /// When the note last changed, in the small line under its title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited today'**
+  String get editedToday;
+
+  /// When the note last changed, in the small line under its title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited yesterday'**
+  String get editedYesterday;
+
+  /// When the note last changed, in the small line under its title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited {date}'**
+  String editedOn(String date);
+
+  /// When the current version last changed, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited just now'**
+  String get editedJustNow;
+
+  /// When the current version last changed, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Edited 1 min ago} other{Edited {count} min ago}}'**
+  String editedMinutesAgo(int count);
+
+  /// When the current version last changed, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited today at {time}'**
+  String editedTodayAt(String time);
+
+  /// When the current version last changed, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited yesterday at {time}'**
+  String editedYesterdayAt(String time);
+
+  /// When the current version last changed, in version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited {date} at {time}'**
+  String editedOnAt(String date, String time);
+
+  /// Under the Trash title in the trash menu, which has the Empty trash option.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Notes here are deleted after 1 day.} other{Notes here are deleted after {count} days.}}'**
+  String trashRule(int count);
+
+  /// Empty-screen help when the trash has no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Notes you delete stay here for 1 day.} other{Notes you delete stay here for {count} days.}}'**
+  String trashEmpty(int count);
+
+  /// Small label on a note card in the trash: days until it’s permanently deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day left} other{{count} days left}}'**
+  String trashDaysLeft(int count);
+
+  /// Follows the bold “In trash.” at the bottom of a note opened from the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Will be deleted on {date}.'**
+  String trashDeletesOn(String date);
+
+  /// Follows the bold “In trash.” when the date the note was deleted isn’t known.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Will be deleted after 1 day.} other{Will be deleted after {count} days.}}'**
+  String trashDeletesAfter(int count);
+
+  /// Empty-screen help in version history when the note has no earlier versions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{A version is saved each time the note changes and kept for 1 day.} other{A version is saved each time the note changes and kept for {count} days.}}'**
+  String historyKept(int count);
+
+  /// Small note at the end of the version history list.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Edits older than 1 day are removed.} other{Edits older than {count} days are removed.}}'**
+  String historyLimit(int count);
+
+  /// Label of a version saved by an ordinary edit of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier version'**
+  String get historyEarlier;
+
+  /// A version that couldn’t be saved because the note had already changed elsewhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved'**
+  String get historyNotSaved;
+
+  /// A version saved just before an older version was restored.
+  ///
+  /// In en, this message translates to:
+  /// **'Before a restore'**
+  String get historyBeforeRestore;
+
+  /// The author of a version when it isn’t known.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone'**
+  String get historySomeone;
+
+  /// The author of a version when it’s the person using the app.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get historyYou;
+
+  /// Item in the side menu and title of the main list of notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get navNotes;
+
+  /// Noun: the side menu item and list title for archived notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get navArchive;
+
+  /// Noun: the side menu item and list title for deleted notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash'**
+  String get navTrash;
+
+  /// Screen reader label of the account row at the bottom of the menu.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, Settings'**
+  String drawerAccount(String name);
+
+  /// Message after changing someone’s access.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} can now view'**
+  String shareNowCanView(String person);
+
+  /// Message after changing someone’s access.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} can now edit'**
+  String shareNowCanEdit(String person);
+
+  /// Shown above a version’s changes: the later version they’re compared with.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with today at {time}'**
+  String revisionComparedTodayAt(String time);
+
+  /// Shown above a version’s changes: the later version they’re compared with.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with yesterday at {time}'**
+  String revisionComparedYesterdayAt(String time);
+
+  /// Shown above a version’s changes: the later version they’re compared with.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with {date} at {time}'**
+  String revisionComparedOnAt(String date, String time);
+
+  /// The line under the Archive title: archived notes don’t show in the Notes list.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from Notes'**
+  String get listArchiveLine;
+
+  /// The line under the Trash title: how long notes stay in the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Deleted after 1 day} other{Deleted after {count} days}}'**
+  String listTrashLine(int count);
+
+  /// The line under the list title while offline with nothing waiting to sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline · changes are saved on this phone'**
+  String get listOfflineSaved;
+
+  /// The line under the list title while offline, with changes that haven’t been sent yet.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Offline · 1 change to sync} other{Offline · {count} changes to sync}}'**
+  String listOfflineChanges(int count);
+
+  /// The line under the list title after the last sync failed, until one works.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t sync'**
+  String get listSyncFailed;
+
+  /// Screen reader label of the list title, which opens the menu.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}, open menu'**
+  String listTitleMenu(String title);
+
+  /// Hint inside the empty search field on the Notes list.
+  ///
+  /// In en, this message translates to:
+  /// **'Search notes'**
+  String get searchNotes;
+
+  /// Hint inside the empty search field on the Archive list.
+  ///
+  /// In en, this message translates to:
+  /// **'Search archive'**
+  String get searchArchive;
+
+  /// Hint inside the empty search field on the Trash list.
+  ///
+  /// In en, this message translates to:
+  /// **'Search trash'**
+  String get searchTrash;
+
+  /// Action that opens the tag picker for notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag'**
+  String get actionTag;
+
+  /// Verb, in the note menu and selection bar: keeps notes at the top of the list.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get actionPin;
+
+  /// Verb, in the note menu and selection bar: stops keeping notes at the top.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get actionUnpin;
+
+  /// Verb: opens sharing for a note or a picture; also the title of the share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get actionShare;
+
+  /// Menu item and button that open a note’s earlier versions; also that page’s title.
+  ///
+  /// In en, this message translates to:
+  /// **'Version history'**
+  String get actionHistory;
+
+  /// Item in a note's More menu that unchecks every checked item in the note's checklists. Shown for notes with a checklist, dimmed while no item is checked.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncheck all'**
+  String get actionUncheckAll;
+
+  /// Item in a note's More menu that deletes every checked item from the note's checklists, with Undo. Shown for notes with a checklist, dimmed while no item is checked.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete checked items'**
+  String get actionDeleteChecked;
+
+  /// Verb: moves notes to the archive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get actionArchive;
+
+  /// Verb, in menus and the selection bar: moves notes from the archive back to Notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive'**
+  String get actionUnarchive;
+
+  /// Verb: moves notes to the trash or deletes a picture. Short: fits the selection bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get actionDelete;
+
+  /// Removes a note shared with you from your notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get actionRemove;
+
+  /// Verb: brings notes back from the trash, or brings back an earlier version.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get actionRestore;
+
+  /// Button that permanently deletes notes in the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently'**
+  String get actionDeletePermanently;
+
+  /// Toast after notes were pinned to the top of the list, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note pinned} other{{count} notes pinned}}'**
+  String notesPinned(int count);
+
+  /// Toast after notes were unpinned, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note unpinned} other{{count} notes unpinned}}'**
+  String notesUnpinned(int count);
+
+  /// Toast after notes were moved to the archive, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note archived} other{{count} notes archived}}'**
+  String notesArchived(int count);
+
+  /// Toast after notes were moved out of the archive, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note unarchived} other{{count} notes unarchived}}'**
+  String notesUnarchived(int count);
+
+  /// Toast after notes were brought back from the trash, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note restored} other{{count} notes restored}}'**
+  String notesRestored(int count);
+
+  /// Toast after notes were permanently deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note permanently deleted} other{{count} notes permanently deleted}}'**
+  String notesDeletedForever(int count);
+
+  /// Toast after the person’s own notes were moved to the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note moved to trash} other{{count} notes moved to trash}}'**
+  String notesMovedToTrash(int count);
+
+  /// Notes shared with the person, taken off their list.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note removed from your notes} other{{count} notes removed from your notes}}'**
+  String notesRemovedFromYours(int count);
+
+  /// Two sentences: notes moved to trash, and shared notes removed.
+  ///
+  /// In en, this message translates to:
+  /// **'{moved} {removed}'**
+  String notesTrashedMixed(String moved, String removed);
+
+  /// First sentence of a toast that also mentions removed shared notes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 note moved to trash.} other{{count} notes moved to trash.}}'**
+  String notesMovedToTrashPart(int count);
+
+  /// About notes shared with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 removed from your notes.} other{{count} removed from your notes.}}'**
+  String notesRemovedPart(int count);
+
+  /// For a note someone else shared with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this note from your notes?'**
+  String get notesRemoveSharedTitle;
+
+  /// Message of the dialog that removes one note someone else shared with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'To see it again, its owner has to share it with you again.'**
+  String get notesRemoveSharedMessage;
+
+  /// Title of the dialog that confirms deleting notes, some of them shared with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete 1 note?} other{Delete {count} notes?}}'**
+  String notesDeleteTitle(int count);
+
+  /// Message of the dialog that confirms deleting notes that others shared with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{A note shared with you will be removed from your notes. To see it again, its owner has to share it with you again.} other{{count} notes shared with you will be removed from your notes. To see them again, their owners have to share them with you again.}}'**
+  String notesDeleteSharedMessage(int count);
+
+  /// Title of the dialog that confirms permanently deleting the open note.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete this note?'**
+  String get notesDeleteForeverOneTitle;
+
+  /// Title of the dialog that confirms permanently deleting the selected notes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Permanently delete 1 note?} other{Permanently delete {count} notes?}}'**
+  String notesDeleteForeverTitle(int count);
+
+  /// Message of the dialog that confirms permanently deleting notes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{This can’t be undone. People you shared it with will lose access too.} other{This can’t be undone. People you shared them with will lose access too.}}'**
+  String notesDeleteForeverMessage(int count);
+
+  /// Menu item and dialog button that permanently delete every note in the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty trash'**
+  String get trashEmptyAction;
+
+  /// Under the Empty trash menu item when the trash has no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to delete'**
+  String get trashNothing;
+
+  /// Title of the dialog that confirms emptying the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty trash?'**
+  String get trashEmptyTitle;
+
+  /// Message of the dialog that confirms emptying the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 note will be permanently deleted. This can’t be undone.} other{{count} notes will be permanently deleted. This can’t be undone.}}'**
+  String trashEmptyMessage(int count);
+
+  /// Toast after every note in the trash was permanently deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash emptied'**
+  String get trashEmptied;
+
+  /// Title of the sheet for layout and sort order, and the button that opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'View options'**
+  String get listViewOptions;
+
+  /// Hint inside the empty search field while the list shows only one tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Search #{tag}'**
+  String searchTag(String tag);
+
+  /// Empty-screen title when a search finds no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'No results for “{query}”'**
+  String searchNoResults(String query);
+
+  /// Empty-screen help when a search finds no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the spelling or try different words.'**
+  String get searchNoResultsHelp;
+
+  /// Empty-screen title when the archive has no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived notes'**
+  String get archiveEmptyTitle;
+
+  /// Empty-screen help in the archive, where “Archive” is a verb.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive notes you want to keep but don’t need to see every day.'**
+  String get archiveEmptyHelp;
+
+  /// Empty-screen title when the trash has no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Trash is empty'**
+  String get trashEmptyStateTitle;
+
+  /// Empty-screen title when no note has the tag the list is showing.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes tagged #{tag}'**
+  String tagEmptyTitle(String tag);
+
+  /// Empty-screen help when the list shows a tag that no note has yet.
+  ///
+  /// In en, this message translates to:
+  /// **'New notes you create here get this tag.'**
+  String get tagEmptyHelp;
+
+  /// Read by screen readers while gray card shapes stand in for notes still coming from the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading notes'**
+  String get notesLoading;
+
+  /// Empty-screen title when the person has no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes yet'**
+  String get notesEmptyTitle;
+
+  /// “New note” is the name of the button.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap New note to write your first one.'**
+  String get notesEmptyHelp;
+
+  /// Title in the middle of the notes list when the person's notes haven't come to this phone yet because it is offline, the server can't be reached or syncing is paused.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load your notes'**
+  String get notesLoadFailedTitle;
+
+  /// Under “Couldn’t load your notes”, above a Try again button.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection, then try again.'**
+  String get notesLoadFailedHelp;
+
+  /// Under “Couldn’t load your notes” while syncing is paused (signed out, or the app or the server needs an update). A warning above the list says what to do.
+  ///
+  /// In en, this message translates to:
+  /// **'Your notes will appear here once they sync.'**
+  String get notesLoadPausedHelp;
+
+  /// Button that starts a new note, on the empty list and the plus button.
+  ///
+  /// In en, this message translates to:
+  /// **'New note'**
+  String get noteNew;
+
+  /// Tooltip of the cloud icon on a note card with changes not yet sent. Screen readers also read it with the card.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get cardNotSynced;
+
+  /// Read out by screen readers with a note card: how many pictures the note has.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 picture} other{{count} pictures}}'**
+  String cardPictures(int count);
+
+  /// Under a note’s title, or spoken on a card: who shared the note with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared by {name}'**
+  String shareSharedBy(String name);
+
+  /// Screen reader label of the remove button on a tag chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {tag}'**
+  String tagRemoveNamed(String tag);
+
   /// Adds a picture or an audio file to an empty note.
   ///
   /// In en, this message translates to:
   /// **'Picture or audio'**
   String get starterAttachment;
 
+  /// Toast after a picture was removed from a note, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture deleted'**
+  String get attachmentPictureDeleted;
+
+  /// Toast after a voice note recorded in the app was removed from a note, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note deleted'**
+  String get attachmentVoiceDeleted;
+
   /// Screen reader label of the button that adds a picture or audio file to a note.
   ///
   /// In en, this message translates to:
   /// **'Add picture or audio'**
   String get attachmentAddLabel;
+
+  /// Shown when the person pulls down the list to sync while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re offline. Your changes are saved on this phone.'**
+  String get pullOffline;
+
+  /// Shown above the list while a pull-down sync runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get pullSyncing;
+
+  /// Shown above the list after a pull-down sync finished.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get pullUpToDate;
+
+  /// Shown above the list when a pull-down sync failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t sync. Your changes are saved on this phone.'**
+  String get pullFailed;
+
+  /// Screen reader label of the button that empties the search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get searchClear;
 
   /// Line style: plain text.
   ///
@@ -796,11 +1996,209 @@ abstract class AppLocalizations {
   /// **'Start writing'**
   String get editorPlaceholder;
 
+  /// Button that retries something that failed, such as a picture upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get commonTryAgain;
+
+  /// A version that changed no lines, under its time in version history and in its title bar.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes'**
+  String get historyNoChanges;
+
+  /// Lines added in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} added'**
+  String diffAdded(int count);
+
+  /// Lines removed in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} removed'**
+  String diffRemoved(int count);
+
+  /// Lines changed in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} changed'**
+  String diffChanged(int count);
+
+  /// What a version did, under its time in version history and in its title bar. When it did more, the other kinds follow in the short form, as in “2 lines added, 1 removed”.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line added} other{{count} lines added}}'**
+  String diffLinesAdded(int count);
+
+  /// What a version did, under its time in version history and in its title bar. When it did more, the other kinds follow in the short form, as in “2 lines removed, 1 removed”.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line removed} other{{count} lines removed}}'**
+  String diffLinesRemoved(int count);
+
+  /// What a version did, under its time in version history and in its title bar. When it did more, the other kinds follow in the short form, as in “2 lines changed, 1 removed”.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line changed} other{{count} lines changed}}'**
+  String diffLinesChanged(int count);
+
   /// Name of an audio recording made in the app.
   ///
   /// In en, this message translates to:
   /// **'Voice note'**
   String get voiceNote;
+
+  /// Heading of the pinned notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get groupPinned;
+
+  /// Heading of the notes that aren’t pinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Others'**
+  String get groupOthers;
+
+  /// Heading of the archived notes listed below the others in search results and on a tag's page, with their count. On a tag's page it can be tapped to show or hide them.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get groupArchived;
+
+  /// Section label in the view options sheet for how notes are arranged.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get viewLayout;
+
+  /// A layout where cards of different heights stack in columns.
+  ///
+  /// In en, this message translates to:
+  /// **'Masonry'**
+  String get viewMasonry;
+
+  /// Layout with cards of equal size in columns. Short: one of three tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get viewGrid;
+
+  /// Layout with one note per row. Short: one of three tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get viewList;
+
+  /// Section label in the view options sheet for what decides the note order.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get viewSortBy;
+
+  /// Sort option: orders notes by when they last changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Date edited'**
+  String get viewDateEdited;
+
+  /// Sort option: orders notes alphabetically by their title.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get viewTitle;
+
+  /// Sort direction for titles, alphabetical. Short: one of two tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'A to Z'**
+  String get viewAtoZ;
+
+  /// Sort direction for titles, reverse alphabetical. Short: one of two tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Z to A'**
+  String get viewZtoA;
+
+  /// Sort direction for dates, latest first. Short: one of two tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get viewNewestFirst;
+
+  /// Sort direction for dates, earliest first. Short: one of two tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get viewOldestFirst;
+
+  /// Toast after a picture was added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture added'**
+  String get attachmentPictureAdded;
+
+  /// Toast after a voice note recorded in the app was added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note added'**
+  String get attachmentVoiceAdded;
+
+  /// Toast after a picture was added to a note while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture added. It will upload when you’re back online.'**
+  String get attachmentPictureAddedOffline;
+
+  /// Toast after a voice note recorded in the app was added to a note while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note added. It will upload when you’re back online.'**
+  String get attachmentVoiceAddedOffline;
+
+  /// Toast when a picture couldn’t be added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t add the picture'**
+  String get attachmentPictureAddFailed;
+
+  /// Toast when a voice note recorded in the app couldn’t be added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t add the voice note'**
+  String get attachmentVoiceAddFailed;
+
+  /// Toast after an audio file from the phone was added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio file added'**
+  String get attachmentAudioAdded;
+
+  /// Toast after an audio file from the phone was added to a note while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio file added. It will upload when you’re back online.'**
+  String get attachmentAudioAddedOffline;
+
+  /// Toast when an audio file from the phone couldn’t be added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t add the audio file'**
+  String get attachmentAudioAddFailed;
+
+  /// Toast after an audio file was removed from a note, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio file deleted'**
+  String get attachmentAudioDeleted;
+
+  /// Section label in the view options sheet for the sort direction.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get viewOrder;
 
   /// Spoken hint on a checklist item that can be dragged.
   ///
@@ -819,6 +2217,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No results'**
   String get slashNoResults;
+
+  /// Line on a note card that stands in for the checked items of a checklist.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 done} other{{count} done}}'**
+  String cardChecked(int count);
+
+  /// Line on a note card when every item of a checklist is checked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{All 1 done} other{All {count} done}}'**
+  String cardAllChecked(int count);
 }
 
 class _AppLocalizationsDelegate

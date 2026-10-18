@@ -6,7 +6,7 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/change_password_screen.dart';
 import '../../features/auth/presentation/edit_profile_screen.dart';
 import '../../legacy/features/notes/domain/note.dart';
-import '../../features/notes/presentation/notes_list_screen.dart';
+import '../../legacy/features/notes/presentation/notes_list_screen.dart';
 import '../../features/notes/presentation/note_edit_screen.dart';
 import '../../features/notes/presentation/note_history_screen.dart';
 import '../../features/notes/presentation/note_revision_screen.dart';
