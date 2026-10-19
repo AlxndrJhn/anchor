@@ -1,5 +1,9 @@
 {
   "@@locale": "en",
+  "appName": "Anchor Notes",
+  "@appName": {
+    "description": "The app's name in Android's recent apps, the same as its launcher name."
+  },
   "commonBack": "Back",
   "@commonBack": {
     "description": "Screen reader label of the back arrow in the top bar and the editor toolbar."
@@ -176,9 +180,41 @@
   "@commonSave": {
     "description": "Button that saves a form or the choice made in a sheet."
   },
+  "commonSaving": "Saving…",
+  "@commonSaving": {
+    "description": "Text on the Save button while the profile is being saved."
+  },
   "commonUndo": "Undo",
   "@commonUndo": {
     "description": "Button that reverses the last change, in toasts and in the editor toolbar."
+  },
+  "fieldName": "Name",
+  "@fieldName": {
+    "description": "Label of the person’s name field when signing up or editing the profile."
+  },
+  "fieldNameHint": "Your name",
+  "@fieldNameHint": {
+    "description": "Hint inside the empty name field when creating an account."
+  },
+  "fieldEmail": "Email",
+  "@fieldEmail": {
+    "description": "Label of the email address field."
+  },
+  "fieldEmailHint": "you@example.com",
+  "@fieldEmailHint": {
+    "description": "An example email address shown in an empty email field."
+  },
+  "fieldPassword": "Password",
+  "@fieldPassword": {
+    "description": "Label of the password field on the sign-in and sign-up pages."
+  },
+  "fieldCurrentPassword": "Current password",
+  "@fieldCurrentPassword": {
+    "description": "Label of the field for the old password on the change password page."
+  },
+  "fieldNewPassword": "New password",
+  "@fieldNewPassword": {
+    "description": "Label of the field for the new password on the change password page."
   },
   "passwordHelp": "{count, plural, =1{At least 1 character.} other{At least {count} characters.}}",
   "@passwordHelp": {
@@ -190,13 +226,427 @@
       }
     }
   },
+  "authEnterName": "Enter your name.",
+  "@authEnterName": {
+    "description": "Error under the name field when it’s left empty."
+  },
+  "authEnterEmail": "Enter your email address.",
+  "@authEnterEmail": {
+    "description": "Error under the email field when it’s left empty."
+  },
+  "authEnterValidEmail": "Enter a valid email address.",
+  "@authEnterValidEmail": {
+    "description": "Error under the email field when the address isn’t valid."
+  },
+  "authEnterPassword": "Enter your password.",
+  "@authEnterPassword": {
+    "description": "Error under the password field on the sign-in page when it’s left empty."
+  },
+  "authEnterCurrentPassword": "Enter your current password.",
+  "@authEnterCurrentPassword": {
+    "description": "Error under the current password field when the server says it’s missing."
+  },
+  "authPasswordTooShort": "{count, plural, =1{Use at least 1 character.} other{Use at least {count} characters.}}",
+  "@authPasswordTooShort": {
+    "description": "Error under a new password that is too short.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "authIncorrectCredentials": "Incorrect email or password.",
+  "@authIncorrectCredentials": {
+    "description": "Error at the top of the sign-in form when the email or password is wrong."
+  },
+  "authPasswordless": "This account doesn’t use a password. Sign in with your provider instead.",
+  "@authPasswordless": {
+    "description": "The account was created through a sign-in provider such as an identity service."
+  },
+  "authPendingApproval": "Your account is waiting for admin approval.",
+  "@authPendingApproval": {
+    "description": "Error at the top of the sign-in form when an admin hasn’t approved the account yet."
+  },
+  "authPasswordSignInOff": "Email and password sign-in is turned off. Sign in with {provider}.",
+  "@authPasswordSignInOff": {
+    "description": "Error on the sign-in page when the server only allows signing in through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authPasswordSignUpOff": "Email and password sign-up is turned off. Sign up with {provider}.",
+  "@authPasswordSignUpOff": {
+    "description": "Error on the sign-up page when the server only allows new accounts through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authPasswordSignInOffHere": "Email and password sign-in is turned off on this server.",
+  "@authPasswordSignInOffHere": {
+    "description": "Error on the sign-in page when the server allows no email and password sign-in."
+  },
+  "authPasswordSignUpOffHere": "Email and password sign-up is turned off on this server.",
+  "@authPasswordSignUpOffHere": {
+    "description": "Error on the sign-up page when the server allows no email and password sign-up."
+  },
+  "authRegistrationClosed": "This server isn’t accepting new accounts.",
+  "@authRegistrationClosed": {
+    "description": "Error at the top of the sign-up form when the server takes no new accounts."
+  },
+  "authEmailTaken": "An account with this email already exists.",
+  "@authEmailTaken": {
+    "description": "Error under the email field when signing up with an email already in use."
+  },
+  "authWrongCurrentPassword": "Your current password is incorrect.",
+  "@authWrongCurrentPassword": {
+    "description": "Error under the current password field when it’s wrong."
+  },
+  "authSamePassword": "Your new password must be different from your current one.",
+  "@authSamePassword": {
+    "description": "Error under the new password field when it matches the old one."
+  },
+  "authUnreachable": "Couldn’t reach your server. Check your connection and try again.",
+  "@authUnreachable": {
+    "description": "Error at the top of an account form when the server can’t be reached."
+  },
+  "authProviderNotSetUp": "Signing in with a provider isn’t set up on this server.",
+  "@authProviderNotSetUp": {
+    "description": "Error on the sign-in page when the server has no sign-in provider set up."
+  },
+  "authProviderFailed": "Couldn’t sign in with your provider. Try again.",
+  "@authProviderFailed": {
+    "description": "Error on the sign-in page when signing in through a sign-in provider fails."
+  },
+  "authProviderFailedWith": "Couldn’t sign in with your provider: {detail}",
+  "@authProviderFailedWith": {
+    "description": "{detail} is the provider’s own error text, often in English.",
+    "placeholders": {
+      "detail": {
+        "type": "String",
+        "example": "access_denied"
+      }
+    }
+  },
   "authSignIn": "Sign in",
   "@authSignIn": {
     "description": "Button that signs in, a link to the sign-in page, and that page’s spoken name."
   },
+  "authSigningIn": "Signing in…",
+  "@authSigningIn": {
+    "description": "Text on the Sign in button while signing in."
+  },
+  "authContinueWith": "Continue with {provider}",
+  "@authContinueWith": {
+    "description": "Button that signs in through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authOpeningProvider": "Opening {provider}…",
+  "@authOpeningProvider": {
+    "description": "Text on the sign-in provider button while the provider’s page opens.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authWelcomeBack": "Welcome back",
+  "@authWelcomeBack": {
+    "description": "Title of the sign-in page."
+  },
+  "authSignInToAnchor": "Sign in to continue to Anchor.",
+  "@authSignInToAnchor": {
+    "description": "Under the sign-in page title when no server address is shown."
+  },
+  "authSignInTo": "Sign in to {server}",
+  "@authSignInTo": {
+    "description": "Under the sign-in title. {server} is the server’s address, shown as a link that opens the server page.",
+    "placeholders": {
+      "server": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "authOfflineSignIn": "You’re offline. Connect to the internet to sign in.",
+  "@authOfflineSignIn": {
+    "description": "Notice at the top of the sign-in form while the phone is offline."
+  },
+  "authNewToAnchor": "New to Anchor?",
+  "@authNewToAnchor": {
+    "description": "Followed by the link “Create an account”."
+  },
+  "authCreateAnAccount": "Create an account",
+  "@authCreateAnAccount": {
+    "description": "Link after “New to Anchor?” on the sign-in page that opens the sign-up page."
+  },
+  "authOr": "or",
+  "@authOr": {
+    "description": "Between the sign-in provider button and the email and password fields."
+  },
+  "authCreateAccount": "Create account",
+  "@authCreateAccount": {
+    "description": "Button that submits the sign-up form; also the sign-up page’s spoken name."
+  },
+  "authCreatingAccount": "Creating account…",
+  "@authCreatingAccount": {
+    "description": "Text on the Create account button while the account is being created."
+  },
+  "authCreateYourAccount": "Create your account",
+  "@authCreateYourAccount": {
+    "description": "Title of the sign-up page."
+  },
+  "authApprovalNeeded": "New accounts need admin approval before you can sign in.",
+  "@authApprovalNeeded": {
+    "description": "Under the sign-up page title when an admin must approve new accounts."
+  },
+  "authRegisterSubtitle": "Start capturing your thoughts.",
+  "@authRegisterSubtitle": {
+    "description": "Under the sign-up page title, a short welcoming line."
+  },
+  "authAlreadyHaveAccount": "Already have an account?",
+  "@authAlreadyHaveAccount": {
+    "description": "Followed by the link “Sign in”."
+  },
+  "authWelcomeName": "Welcome to Anchor, {name}",
+  "@authWelcomeName": {
+    "description": "Message after creating an account. {name} is the person’s first name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "authWaitingTitle": "Waiting for approval",
+  "@authWaitingTitle": {
+    "description": "Title of the page shown after signing up, until an admin approves the account."
+  },
+  "authWaitingMessage": "An admin needs to approve your account before you can sign in.",
+  "@authWaitingMessage": {
+    "description": "Under the title of the page that waits for an admin to approve the account."
+  },
+  "authBackToSignIn": "Back to sign in",
+  "@authBackToSignIn": {
+    "description": "Button on the waiting for approval page that returns to the sign-in page."
+  },
+  "passwordTitle": "Password",
+  "@passwordTitle": {
+    "description": "Title of the change password page."
+  },
+  "passwordChange": "Change password",
+  "@passwordChange": {
+    "description": "Button that saves the new password on the change password page."
+  },
+  "passwordChanging": "Changing…",
+  "@passwordChanging": {
+    "description": "Text on the Change password button while the new password is saved."
+  },
+  "passwordChanged": "Password changed",
+  "@passwordChanged": {
+    "description": "Toast after the password was changed."
+  },
+  "passwordOffline": "You’re offline. Connect to the internet to change your password.",
+  "@passwordOffline": {
+    "description": "Notice at the top of the change password page while the phone is offline."
+  },
+  "profileTitle": "Profile",
+  "@profileTitle": {
+    "description": "Title of the page where the person edits their name and photo."
+  },
+  "profileSaved": "Profile saved",
+  "@profileSaved": {
+    "description": "Toast after the profile changes were saved."
+  },
+  "profileOffline": "You’re offline. Connect to the internet to change your profile.",
+  "@profileOffline": {
+    "description": "Notice at the top of the profile page while the phone is offline."
+  },
+  "profilePhoto": "Profile photo",
+  "@profilePhoto": {
+    "description": "Title of the sheet with options for the person’s profile picture."
+  },
+  "profilePhotoVisible": "People you share notes with can see it.",
+  "@profilePhotoVisible": {
+    "description": "Under the profile photo sheet title: who sees the person’s picture."
+  },
+  "profileTakePhoto": "Take photo",
+  "@profileTakePhoto": {
+    "description": "Option that opens the camera to take a new profile picture."
+  },
+  "profileChoosePhoto": "Choose photo",
+  "@profileChoosePhoto": {
+    "description": "Option that picks a profile picture from the phone’s photos."
+  },
+  "profileRemovePhoto": "Remove photo",
+  "@profileRemovePhoto": {
+    "description": "Option that removes the current profile picture."
+  },
+  "profilePhotoUpdated": "Photo updated",
+  "@profilePhotoUpdated": {
+    "description": "Toast after a new profile picture was saved."
+  },
+  "profilePhotoUpdateFailed": "Couldn’t update your photo",
+  "@profilePhotoUpdateFailed": {
+    "description": "Toast when a new profile picture couldn’t be saved."
+  },
+  "profilePhotoRemoved": "Photo removed",
+  "@profilePhotoRemoved": {
+    "description": "Toast after the profile picture was removed, with an Undo button."
+  },
+  "profilePhotoRemoveFailed": "Couldn’t remove your photo",
+  "@profilePhotoRemoveFailed": {
+    "description": "Toast when the profile picture couldn’t be removed."
+  },
+  "profileEmailAdminOnly": "Only an admin can change your email.",
+  "@profileEmailAdminOnly": {
+    "description": "Help under the read-only email field on the profile page."
+  },
+  "profileChangePhoto": "Change profile photo",
+  "@profileChangePhoto": {
+    "description": "Screen reader label of the profile picture button."
+  },
   "commonContinue": "Continue",
   "@commonContinue": {
     "description": "Button that goes to the next step on the server page or in a permission dialog."
+  },
+  "commonExpandedItem": "{label}, expanded",
+  "@commonExpandedItem": {
+    "description": "Screen reader text for a section heading that is open.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Advanced"
+      }
+    }
+  },
+  "commonCollapsedItem": "{label}, collapsed",
+  "@commonCollapsedItem": {
+    "description": "Screen reader text for a section heading that is closed.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Advanced"
+      }
+    }
+  },
+  "serverTitle": "Server",
+  "@serverTitle": {
+    "description": "Name of the server page, read by screen readers."
+  },
+  "serverWelcome": "Welcome to Anchor",
+  "@serverWelcome": {
+    "description": "Title of the first page, where the person enters their server address."
+  },
+  "serverSubtitle": "Enter your server address to get started.",
+  "@serverSubtitle": {
+    "description": "Under the title of the first page, where the server address is entered."
+  },
+  "serverAddress": "Server address",
+  "@serverAddress": {
+    "description": "Label of the field for the web address of the person’s Anchor server."
+  },
+  "serverAddressHint": "notes.example.com",
+  "@serverAddressHint": {
+    "description": "An example server address shown in the empty field."
+  },
+  "serverConnecting": "Connecting…",
+  "@serverConnecting": {
+    "description": "Text on the Continue button while the app checks the server."
+  },
+  "serverAdvanced": "Advanced",
+  "@serverAdvanced": {
+    "description": "Heading of a section of extra connection settings that opens and closes."
+  },
+  "serverSelfSigned": "Allow self-signed certificates",
+  "@serverSelfSigned": {
+    "description": "Switch that lets the app trust a server certificate it can’t verify."
+  },
+  "serverSelfSignedWarning": "Use only with a server you manage. Anchor can’t verify its identity.",
+  "@serverSelfSignedWarning": {
+    "description": "Warning under the self-signed certificates switch while it’s on."
+  },
+  "serverSelfHosted": "Anchor requires a self-hosted server.",
+  "@serverSelfHosted": {
+    "description": "Note at the bottom of the server page: Anchor has no shared public server."
+  },
+  "serverEnterAddress": "Enter a server address.",
+  "@serverEnterAddress": {
+    "description": "Error under the server address field when it’s left empty."
+  },
+  "serverEnterValidAddress": "Enter a valid server address.",
+  "@serverEnterValidAddress": {
+    "description": "Error under the server address field when the address isn’t valid."
+  },
+  "serverConnectFailed": "Couldn’t connect to the server. Try again.",
+  "@serverConnectFailed": {
+    "description": "Error at the top of the server page when connecting fails for an unknown reason."
+  },
+  "serverNotAnchor": "{host} isn’t an Anchor server. Check the address.",
+  "@serverNotAnchor": {
+    "description": "Error when the address answers but isn’t an Anchor server.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "serverUntrusted": "Couldn’t verify the certificate for {host}. If it’s self-signed, turn on Allow self-signed certificates in Advanced.",
+  "@serverUntrusted": {
+    "description": "“Allow self-signed certificates” and “Advanced” are names of controls on the same page.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "serverUnreachableNoScheme": "Couldn’t reach {host}. Check the address, or add http:// if your server doesn’t use https.",
+  "@serverUnreachableNoScheme": {
+    "description": "Shown when the address was typed without http:// or https://. Keep http:// and https:// as they are.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "192.168.1.5:3000"
+      }
+    }
+  },
+  "serverUnreachable": "Couldn’t reach {host}. Check the address and your connection.",
+  "@serverUnreachable": {
+    "description": "Error when nothing answers at the server address.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "serverConnectAnyway": "Connect anyway",
+  "@serverConnectAnyway": {
+    "description": "Button in a dialog warning that the app and server versions don’t match."
+  },
+  "serverLinkLabel": "Server {host}. Change server",
+  "@serverLinkLabel": {
+    "description": "Screen reader label of the server address link on the sign-in page.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
   },
   "commonMore": "More",
   "@commonMore": {
@@ -206,6 +656,10 @@
   "@commonCopy": {
     "description": "Button that copies a link or the selected logs. Short: fits a small bubble."
   },
+  "commonSelect": "Select",
+  "@commonSelect": {
+    "description": "Menu item on the logs page that starts selecting logs."
+  },
   "commonSelectAll": "Select all",
   "@commonSelectAll": {
     "description": "Button that selects every item shown while selecting."
@@ -213,6 +667,10 @@
   "commonDeselectAll": "Deselect all",
   "@commonDeselectAll": {
     "description": "Button that clears the selection when every item is selected."
+  },
+  "commonStopSelecting": "Stop selecting",
+  "@commonStopSelecting": {
+    "description": "Screen reader label of the button that leaves selection mode."
   },
   "commonSelectedCount": "{count} selected",
   "@commonSelectedCount": {
@@ -228,6 +686,110 @@
   "@settingsTitle": {
     "description": "Title of the Settings page, also the name of the button that opens it."
   },
+  "settingsProfileCard": "{name}, {email}. Profile",
+  "@settingsProfileCard": {
+    "description": "Screen reader label of the card that opens the profile.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      },
+      "email": {
+        "type": "String",
+        "example": "ada@example.com"
+      }
+    }
+  },
+  "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Section label in Settings for theme and density."
+  },
+  "settingsDensity": "Density",
+  "@settingsDensity": {
+    "description": "Setting for how tightly the app spaces notes and other items."
+  },
+  "settingsDensityHelp": "Compact fits more notes on the screen.",
+  "@settingsDensityHelp": {
+    "description": "Under the Density setting; Compact is the name of one of its options."
+  },
+  "settingsTheme": "Theme",
+  "@settingsTheme": {
+    "description": "Screen reader name of the group of light, dark and automatic theme choices."
+  },
+  "themeLight": "Light",
+  "@themeLight": {
+    "description": "Theme choice with a light background. Short: one of three tiles in a row."
+  },
+  "themeDark": "Dark",
+  "@themeDark": {
+    "description": "Theme choice with a dark background. Short: one of three tiles in a row."
+  },
+  "themeAutomatic": "Automatic",
+  "@themeAutomatic": {
+    "description": "Theme that follows the phone’s light or dark setting."
+  },
+  "settingsEditor": "Editor",
+  "@settingsEditor": {
+    "description": "Section label in Settings for how notes look and behave while writing."
+  },
+  "settingsFont": "Font",
+  "@settingsFont": {
+    "description": "Setting that picks the typeface used in notes."
+  },
+  "settingsTextSize": "Text size",
+  "@settingsTextSize": {
+    "description": "Setting that picks how big the text in notes is."
+  },
+  "settingsMoveChecked": "Move checked items to the bottom",
+  "@settingsMoveChecked": {
+    "description": "Switch in Settings for checklists in notes."
+  },
+  "settingsMoveCheckedHelp": "Checked items move below the unchecked ones.",
+  "@settingsMoveCheckedHelp": {
+    "description": "Under the switch that moves checked checklist items to the bottom."
+  },
+  "settingsPreviewTitle": "Weekend in Lisbon",
+  "@settingsPreviewTitle": {
+    "description": "Title of a sample note that previews the font and text size."
+  },
+  "settingsPreviewText": "Pack light. The hills are steep, and the trams fill up by nine.",
+  "@settingsPreviewText": {
+    "description": "Text of a sample note that previews the font and text size."
+  },
+  "settingsAccount": "Account",
+  "@settingsAccount": {
+    "description": "Section label in Settings for password and sign out."
+  },
+  "settingsPassword": "Password",
+  "@settingsPassword": {
+    "description": "Row in Settings that opens the change password page, or shows who manages it."
+  },
+  "settingsPasswordManaged": "Your password is managed by {provider}.",
+  "@settingsPasswordManaged": {
+    "description": "Under the Password row when the account signs in through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "settingsPasswordManagedElsewhere": "Your password is managed by your sign-in provider.",
+  "@settingsPasswordManagedElsewhere": {
+    "description": "Under the Password row when the account uses a sign-in provider with no known name."
+  },
+  "settingsSignOut": "Sign out",
+  "@settingsSignOut": {
+    "description": "Row in Settings and the confirm button of its dialog: signs out of the account."
+  },
+  "settingsSigningOut": "Signing out…",
+  "@settingsSigningOut": {
+    "description": "The Sign out button of the sign-out dialog while signing out runs."
+  },
+  "settingsSignOutTitle": "Sign out?",
+  "@settingsSignOutTitle": {
+    "description": "Title of the dialog that confirms signing out."
+  },
   "settingsSignOutMessage": "{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}",
   "@settingsSignOutMessage": {
     "description": "{count} is the number of changes not yet sent to the server.",
@@ -238,9 +800,149 @@
       }
     }
   },
+  "settingsHelp": "Help",
+  "@settingsHelp": {
+    "description": "Section label in Settings for logs and supporting the developer."
+  },
+  "settingsLogs": "Logs",
+  "@settingsLogs": {
+    "description": "Row in Settings that opens the app’s technical activity records."
+  },
+  "settingsLogsHelp": "Activity details for troubleshooting",
+  "@settingsLogsHelp": {
+    "description": "Under the Logs row in Settings."
+  },
+  "settingsSupport": "Support Anchor",
+  "@settingsSupport": {
+    "description": "Row in Settings that opens a web page to donate to the developer."
+  },
+  "settingsSupportHelp": "Buy the developer a coffee",
+  "@settingsSupportHelp": {
+    "description": "Under the Support Anchor row: a small donation to the developer."
+  },
+  "settingsOffline": "Offline. Changes are saved on this phone.",
+  "@settingsOffline": {
+    "description": "Small line at the bottom of Settings while the phone is offline."
+  },
+  "settingsSyncPaused": "Sync is paused. {reason}",
+  "@settingsSyncPaused": {
+    "description": "{reason} is a short instruction, such as “Update your server.”",
+    "placeholders": {
+      "reason": {
+        "type": "String",
+        "example": "Update your server."
+      }
+    }
+  },
+  "settingsCantReach": "Can’t reach {host}",
+  "@settingsCantReach": {
+    "description": "Small line at the bottom of Settings when the server doesn’t answer.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "settingsConnectedTo": "Connected to {host}",
+  "@settingsConnectedTo": {
+    "description": "Small line at the bottom of Settings showing the server in use.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "settingsConnectedToVersion": "Connected to {host} · Server {version}",
+  "@settingsConnectedToVersion": {
+    "description": "Small line at the bottom of Settings showing the server and its version.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      },
+      "version": {
+        "type": "String",
+        "example": "0.17.2"
+      }
+    }
+  },
+  "settingsAppVersion": "Anchor {version}",
+  "@settingsAppVersion": {
+    "description": "The app’s name and version at the bottom of Settings.",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "0.17.2"
+      }
+    }
+  },
   "settingsAppNameShort": "Anchor",
   "@settingsAppNameShort": {
     "description": "The app’s short name, at the top of the menu and the bottom of Settings."
+  },
+  "settingsTagline": "Your thoughts, secured.",
+  "@settingsTagline": {
+    "description": "The app’s tagline under its version."
+  },
+  "logsTitle": "Logs",
+  "@logsTitle": {
+    "description": "Title of the logs page and of its menu of actions."
+  },
+  "logsMenuHelp": "Copy and Save include earlier sessions too.",
+  "@logsMenuHelp": {
+    "description": "Under the title of the logs menu; Copy and Save are names of its options."
+  },
+  "logsCopyAll": "Copy all",
+  "@logsCopyAll": {
+    "description": "Menu item that copies every log, including earlier sessions."
+  },
+  "logsSaveToFile": "Save to a file",
+  "@logsSaveToFile": {
+    "description": "Menu item that saves every log to a file on the phone."
+  },
+  "logsClear": "Clear logs",
+  "@logsClear": {
+    "description": "Menu item and dialog button that delete all logs."
+  },
+  "logsCopiedAll": "Logs copied, including earlier sessions",
+  "@logsCopiedAll": {
+    "description": "Toast after all logs were copied."
+  },
+  "logsCopiedNewest": "Newest logs copied. Save to a file to get them all.",
+  "@logsCopiedNewest": {
+    "description": "Toast after Copy all copied only the newest logs, because all of them are too long for the clipboard. \"Save to a file\" is the menu item next to Copy all."
+  },
+  "logsClearTitle": "Clear logs?",
+  "@logsClearTitle": {
+    "description": "Title of the dialog that confirms deleting all logs."
+  },
+  "logsClearMessage": "All logs on this phone will be deleted. This can’t be undone.",
+  "@logsClearMessage": {
+    "description": "Message of the dialog that confirms deleting all logs."
+  },
+  "logsCleared": "Logs cleared",
+  "@logsCleared": {
+    "description": "Toast after all logs were deleted."
+  },
+  "logsSaveDialog": "Save logs",
+  "@logsSaveDialog": {
+    "description": "Title of the system dialog for saving the logs file."
+  },
+  "logsSaved": "Saved {name}",
+  "@logsSaved": {
+    "description": "Toast after the logs were saved to a file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "anchor-logs-20261011-2200.log"
+      }
+    }
+  },
+  "logsSaveFailed": "Couldn’t save the logs",
+  "@logsSaveFailed": {
+    "description": "Toast when the logs file couldn’t be saved."
   },
   "logsCopied": "{count, plural, =1{1 log copied} other{{count} logs copied}}",
   "@logsCopied": {
@@ -251,6 +953,78 @@
         "example": "3"
       }
     }
+  },
+  "logsSelectTitle": "Select logs",
+  "@logsSelectTitle": {
+    "description": "Page title while selecting logs and none is selected yet."
+  },
+  "logsSearch": "Search logs",
+  "@logsSearch": {
+    "description": "Hint inside the empty search field on the logs page."
+  },
+  "logsSelected": "Selected logs",
+  "@logsSelected": {
+    "description": "Screen reader name of the bar shown while logs are selected."
+  },
+  "logsLevel": "Log level",
+  "@logsLevel": {
+    "description": "Screen reader name of the filter for log levels."
+  },
+  "logsAll": "All",
+  "@logsAll": {
+    "description": "Filter that shows logs of every level. Short: one of five tabs in a row."
+  },
+  "logsErrors": "Errors",
+  "@logsErrors": {
+    "description": "Filter that shows only error logs. Short: one of five tabs in a row."
+  },
+  "logsWarnings": "Warnings",
+  "@logsWarnings": {
+    "description": "Filter that shows only warning logs. Short: one of five tabs in a row."
+  },
+  "logsInfo": "Info",
+  "@logsInfo": {
+    "description": "Filter that shows only general information logs. Short: one of five tabs in a row."
+  },
+  "logsDebug": "Debug",
+  "@logsDebug": {
+    "description": "Filter that shows only detailed technical logs. Short: one of five tabs in a row."
+  },
+  "logsSessionNote": "Showing this session only. Copy and Save include earlier sessions too.",
+  "@logsSessionNote": {
+    "description": "Note under the log filters; Copy and Save are names of menu options."
+  },
+  "logsNoMatches": "No matching logs",
+  "@logsNoMatches": {
+    "description": "Empty-screen title on the logs page when the search or filter matches nothing."
+  },
+  "logsNoMatchesHelp": "Try another word or show all levels.",
+  "@logsNoMatchesHelp": {
+    "description": "Empty-screen help on the logs page when the search or filter matches nothing."
+  },
+  "logsEmpty": "No logs yet",
+  "@logsEmpty": {
+    "description": "Empty-screen title on the logs page when nothing has been recorded."
+  },
+  "logsEmptyHelp": "Activity from this session appears here.",
+  "@logsEmptyHelp": {
+    "description": "Empty-screen help on the logs page when nothing has been recorded."
+  },
+  "logLevelError": "Error",
+  "@logLevelError": {
+    "description": "Level tag on a single log line that records an error."
+  },
+  "logLevelWarning": "Warning",
+  "@logLevelWarning": {
+    "description": "Level tag on a single log line that records a warning."
+  },
+  "logLevelInfo": "Info",
+  "@logLevelInfo": {
+    "description": "Level tag on a single log line with general information."
+  },
+  "logLevelDebug": "Debug",
+  "@logLevelDebug": {
+    "description": "Level tag on a single log line with detailed technical information."
   },
   "commonToday": "Today",
   "@commonToday": {

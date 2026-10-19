@@ -94,6 +94,12 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
 
+  /// The app's name in Android's recent apps, the same as its launcher name.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor Notes'**
+  String get appName;
+
   /// Screen reader label of the back arrow in the top bar and the editor toolbar.
   ///
   /// In en, this message translates to:
@@ -322,11 +328,59 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get commonSave;
 
+  /// Text on the Save button while the profile is being saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get commonSaving;
+
   /// Button that reverses the last change, in toasts and in the editor toolbar.
   ///
   /// In en, this message translates to:
   /// **'Undo'**
   String get commonUndo;
+
+  /// Label of the person’s name field when signing up or editing the profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get fieldName;
+
+  /// Hint inside the empty name field when creating an account.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get fieldNameHint;
+
+  /// Label of the email address field.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get fieldEmail;
+
+  /// An example email address shown in an empty email field.
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com'**
+  String get fieldEmailHint;
+
+  /// Label of the password field on the sign-in and sign-up pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get fieldPassword;
+
+  /// Label of the field for the old password on the change password page.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get fieldCurrentPassword;
+
+  /// Label of the field for the new password on the change password page.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get fieldNewPassword;
 
   /// Shown under a new password field.
   ///
@@ -334,17 +388,503 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{At least 1 character.} other{At least {count} characters.}}'**
   String passwordHelp(int count);
 
+  /// Error under the name field when it’s left empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your name.'**
+  String get authEnterName;
+
+  /// Error under the email field when it’s left empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address.'**
+  String get authEnterEmail;
+
+  /// Error under the email field when the address isn’t valid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get authEnterValidEmail;
+
+  /// Error under the password field on the sign-in page when it’s left empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password.'**
+  String get authEnterPassword;
+
+  /// Error under the current password field when the server says it’s missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your current password.'**
+  String get authEnterCurrentPassword;
+
+  /// Error under a new password that is too short.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Use at least 1 character.} other{Use at least {count} characters.}}'**
+  String authPasswordTooShort(int count);
+
+  /// Error at the top of the sign-in form when the email or password is wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect email or password.'**
+  String get authIncorrectCredentials;
+
+  /// The account was created through a sign-in provider such as an identity service.
+  ///
+  /// In en, this message translates to:
+  /// **'This account doesn’t use a password. Sign in with your provider instead.'**
+  String get authPasswordless;
+
+  /// Error at the top of the sign-in form when an admin hasn’t approved the account yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is waiting for admin approval.'**
+  String get authPendingApproval;
+
+  /// Error on the sign-in page when the server only allows signing in through a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and password sign-in is turned off. Sign in with {provider}.'**
+  String authPasswordSignInOff(String provider);
+
+  /// Error on the sign-up page when the server only allows new accounts through a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and password sign-up is turned off. Sign up with {provider}.'**
+  String authPasswordSignUpOff(String provider);
+
+  /// Error on the sign-in page when the server allows no email and password sign-in.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and password sign-in is turned off on this server.'**
+  String get authPasswordSignInOffHere;
+
+  /// Error on the sign-up page when the server allows no email and password sign-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and password sign-up is turned off on this server.'**
+  String get authPasswordSignUpOffHere;
+
+  /// Error at the top of the sign-up form when the server takes no new accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'This server isn’t accepting new accounts.'**
+  String get authRegistrationClosed;
+
+  /// Error under the email field when signing up with an email already in use.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with this email already exists.'**
+  String get authEmailTaken;
+
+  /// Error under the current password field when it’s wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current password is incorrect.'**
+  String get authWrongCurrentPassword;
+
+  /// Error under the new password field when it matches the old one.
+  ///
+  /// In en, this message translates to:
+  /// **'Your new password must be different from your current one.'**
+  String get authSamePassword;
+
+  /// Error at the top of an account form when the server can’t be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t reach your server. Check your connection and try again.'**
+  String get authUnreachable;
+
+  /// Error on the sign-in page when the server has no sign-in provider set up.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in with a provider isn’t set up on this server.'**
+  String get authProviderNotSetUp;
+
+  /// Error on the sign-in page when signing in through a sign-in provider fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t sign in with your provider. Try again.'**
+  String get authProviderFailed;
+
+  /// {detail} is the provider’s own error text, often in English.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t sign in with your provider: {detail}'**
+  String authProviderFailedWith(String detail);
+
   /// Button that signs in, a link to the sign-in page, and that page’s spoken name.
   ///
   /// In en, this message translates to:
   /// **'Sign in'**
   String get authSignIn;
 
+  /// Text on the Sign in button while signing in.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in…'**
+  String get authSigningIn;
+
+  /// Button that signs in through a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with {provider}'**
+  String authContinueWith(String provider);
+
+  /// Text on the sign-in provider button while the provider’s page opens.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening {provider}…'**
+  String authOpeningProvider(String provider);
+
+  /// Title of the sign-in page.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get authWelcomeBack;
+
+  /// Under the sign-in page title when no server address is shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to continue to Anchor.'**
+  String get authSignInToAnchor;
+
+  /// Under the sign-in title. {server} is the server’s address, shown as a link that opens the server page.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to {server}'**
+  String authSignInTo(String server);
+
+  /// Notice at the top of the sign-in form while the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re offline. Connect to the internet to sign in.'**
+  String get authOfflineSignIn;
+
+  /// Followed by the link “Create an account”.
+  ///
+  /// In en, this message translates to:
+  /// **'New to Anchor?'**
+  String get authNewToAnchor;
+
+  /// Link after “New to Anchor?” on the sign-in page that opens the sign-up page.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get authCreateAnAccount;
+
+  /// Between the sign-in provider button and the email and password fields.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authOr;
+
+  /// Button that submits the sign-up form; also the sign-up page’s spoken name.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authCreateAccount;
+
+  /// Text on the Create account button while the account is being created.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating account…'**
+  String get authCreatingAccount;
+
+  /// Title of the sign-up page.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get authCreateYourAccount;
+
+  /// Under the sign-up page title when an admin must approve new accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'New accounts need admin approval before you can sign in.'**
+  String get authApprovalNeeded;
+
+  /// Under the sign-up page title, a short welcoming line.
+  ///
+  /// In en, this message translates to:
+  /// **'Start capturing your thoughts.'**
+  String get authRegisterSubtitle;
+
+  /// Followed by the link “Sign in”.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authAlreadyHaveAccount;
+
+  /// Message after creating an account. {name} is the person’s first name.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Anchor, {name}'**
+  String authWelcomeName(String name);
+
+  /// Title of the page shown after signing up, until an admin approves the account.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get authWaitingTitle;
+
+  /// Under the title of the page that waits for an admin to approve the account.
+  ///
+  /// In en, this message translates to:
+  /// **'An admin needs to approve your account before you can sign in.'**
+  String get authWaitingMessage;
+
+  /// Button on the waiting for approval page that returns to the sign-in page.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to sign in'**
+  String get authBackToSignIn;
+
+  /// Title of the change password page.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordTitle;
+
+  /// Button that saves the new password on the change password page.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get passwordChange;
+
+  /// Text on the Change password button while the new password is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing…'**
+  String get passwordChanging;
+
+  /// Toast after the password was changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed'**
+  String get passwordChanged;
+
+  /// Notice at the top of the change password page while the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re offline. Connect to the internet to change your password.'**
+  String get passwordOffline;
+
+  /// Title of the page where the person edits their name and photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTitle;
+
+  /// Toast after the profile changes were saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved'**
+  String get profileSaved;
+
+  /// Notice at the top of the profile page while the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re offline. Connect to the internet to change your profile.'**
+  String get profileOffline;
+
+  /// Title of the sheet with options for the person’s profile picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo'**
+  String get profilePhoto;
+
+  /// Under the profile photo sheet title: who sees the person’s picture.
+  ///
+  /// In en, this message translates to:
+  /// **'People you share notes with can see it.'**
+  String get profilePhotoVisible;
+
+  /// Option that opens the camera to take a new profile picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get profileTakePhoto;
+
+  /// Option that picks a profile picture from the phone’s photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo'**
+  String get profileChoosePhoto;
+
+  /// Option that removes the current profile picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get profileRemovePhoto;
+
+  /// Toast after a new profile picture was saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo updated'**
+  String get profilePhotoUpdated;
+
+  /// Toast when a new profile picture couldn’t be saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t update your photo'**
+  String get profilePhotoUpdateFailed;
+
+  /// Toast after the profile picture was removed, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo removed'**
+  String get profilePhotoRemoved;
+
+  /// Toast when the profile picture couldn’t be removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t remove your photo'**
+  String get profilePhotoRemoveFailed;
+
+  /// Help under the read-only email field on the profile page.
+  ///
+  /// In en, this message translates to:
+  /// **'Only an admin can change your email.'**
+  String get profileEmailAdminOnly;
+
+  /// Screen reader label of the profile picture button.
+  ///
+  /// In en, this message translates to:
+  /// **'Change profile photo'**
+  String get profileChangePhoto;
+
   /// Button that goes to the next step on the server page or in a permission dialog.
   ///
   /// In en, this message translates to:
   /// **'Continue'**
   String get commonContinue;
+
+  /// Screen reader text for a section heading that is open.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}, expanded'**
+  String commonExpandedItem(String label);
+
+  /// Screen reader text for a section heading that is closed.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}, collapsed'**
+  String commonCollapsedItem(String label);
+
+  /// Name of the server page, read by screen readers.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get serverTitle;
+
+  /// Title of the first page, where the person enters their server address.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Anchor'**
+  String get serverWelcome;
+
+  /// Under the title of the first page, where the server address is entered.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your server address to get started.'**
+  String get serverSubtitle;
+
+  /// Label of the field for the web address of the person’s Anchor server.
+  ///
+  /// In en, this message translates to:
+  /// **'Server address'**
+  String get serverAddress;
+
+  /// An example server address shown in the empty field.
+  ///
+  /// In en, this message translates to:
+  /// **'notes.example.com'**
+  String get serverAddressHint;
+
+  /// Text on the Continue button while the app checks the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get serverConnecting;
+
+  /// Heading of a section of extra connection settings that opens and closes.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get serverAdvanced;
+
+  /// Switch that lets the app trust a server certificate it can’t verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow self-signed certificates'**
+  String get serverSelfSigned;
+
+  /// Warning under the self-signed certificates switch while it’s on.
+  ///
+  /// In en, this message translates to:
+  /// **'Use only with a server you manage. Anchor can’t verify its identity.'**
+  String get serverSelfSignedWarning;
+
+  /// Note at the bottom of the server page: Anchor has no shared public server.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor requires a self-hosted server.'**
+  String get serverSelfHosted;
+
+  /// Error under the server address field when it’s left empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a server address.'**
+  String get serverEnterAddress;
+
+  /// Error under the server address field when the address isn’t valid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid server address.'**
+  String get serverEnterValidAddress;
+
+  /// Error at the top of the server page when connecting fails for an unknown reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t connect to the server. Try again.'**
+  String get serverConnectFailed;
+
+  /// Error when the address answers but isn’t an Anchor server.
+  ///
+  /// In en, this message translates to:
+  /// **'{host} isn’t an Anchor server. Check the address.'**
+  String serverNotAnchor(String host);
+
+  /// “Allow self-signed certificates” and “Advanced” are names of controls on the same page.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t verify the certificate for {host}. If it’s self-signed, turn on Allow self-signed certificates in Advanced.'**
+  String serverUntrusted(String host);
+
+  /// Shown when the address was typed without http:// or https://. Keep http:// and https:// as they are.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t reach {host}. Check the address, or add http:// if your server doesn’t use https.'**
+  String serverUnreachableNoScheme(String host);
+
+  /// Error when nothing answers at the server address.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t reach {host}. Check the address and your connection.'**
+  String serverUnreachable(String host);
+
+  /// Button in a dialog warning that the app and server versions don’t match.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect anyway'**
+  String get serverConnectAnyway;
+
+  /// Screen reader label of the server address link on the sign-in page.
+  ///
+  /// In en, this message translates to:
+  /// **'Server {host}. Change server'**
+  String serverLinkLabel(String host);
 
   /// Screen reader label of the three dots button that opens more actions.
   ///
@@ -358,6 +898,12 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get commonCopy;
 
+  /// Menu item on the logs page that starts selecting logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get commonSelect;
+
   /// Button that selects every item shown while selecting.
   ///
   /// In en, this message translates to:
@@ -369,6 +915,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deselect all'**
   String get commonDeselectAll;
+
+  /// Screen reader label of the button that leaves selection mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop selecting'**
+  String get commonStopSelecting;
 
   /// Page title while selecting items.
   ///
@@ -382,11 +934,209 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// Screen reader label of the card that opens the profile.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {email}. Profile'**
+  String settingsProfileCard(String name, String email);
+
+  /// Section label in Settings for theme and density.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// Setting for how tightly the app spaces notes and other items.
+  ///
+  /// In en, this message translates to:
+  /// **'Density'**
+  String get settingsDensity;
+
+  /// Under the Density setting; Compact is the name of one of its options.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact fits more notes on the screen.'**
+  String get settingsDensityHelp;
+
+  /// Screen reader name of the group of light, dark and automatic theme choices.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// Theme choice with a light background. Short: one of three tiles in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// Theme choice with a dark background. Short: one of three tiles in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// Theme that follows the phone’s light or dark setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get themeAutomatic;
+
+  /// Section label in Settings for how notes look and behave while writing.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor'**
+  String get settingsEditor;
+
+  /// Setting that picks the typeface used in notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get settingsFont;
+
+  /// Setting that picks how big the text in notes is.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get settingsTextSize;
+
+  /// Switch in Settings for checklists in notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Move checked items to the bottom'**
+  String get settingsMoveChecked;
+
+  /// Under the switch that moves checked checklist items to the bottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked items move below the unchecked ones.'**
+  String get settingsMoveCheckedHelp;
+
+  /// Title of a sample note that previews the font and text size.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekend in Lisbon'**
+  String get settingsPreviewTitle;
+
+  /// Text of a sample note that previews the font and text size.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack light. The hills are steep, and the trams fill up by nine.'**
+  String get settingsPreviewText;
+
+  /// Section label in Settings for password and sign out.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccount;
+
+  /// Row in Settings that opens the change password page, or shows who manages it.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get settingsPassword;
+
+  /// Under the Password row when the account signs in through a sign-in provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password is managed by {provider}.'**
+  String settingsPasswordManaged(String provider);
+
+  /// Under the Password row when the account uses a sign-in provider with no known name.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password is managed by your sign-in provider.'**
+  String get settingsPasswordManagedElsewhere;
+
+  /// Row in Settings and the confirm button of its dialog: signs out of the account.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get settingsSignOut;
+
+  /// The Sign out button of the sign-out dialog while signing out runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing out…'**
+  String get settingsSigningOut;
+
+  /// Title of the dialog that confirms signing out.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
+  String get settingsSignOutTitle;
+
   /// {count} is the number of changes not yet sent to the server.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}'**
   String settingsSignOutMessage(int count);
+
+  /// Section label in Settings for logs and supporting the developer.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get settingsHelp;
+
+  /// Row in Settings that opens the app’s technical activity records.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs'**
+  String get settingsLogs;
+
+  /// Under the Logs row in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity details for troubleshooting'**
+  String get settingsLogsHelp;
+
+  /// Row in Settings that opens a web page to donate to the developer.
+  ///
+  /// In en, this message translates to:
+  /// **'Support Anchor'**
+  String get settingsSupport;
+
+  /// Under the Support Anchor row: a small donation to the developer.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy the developer a coffee'**
+  String get settingsSupportHelp;
+
+  /// Small line at the bottom of Settings while the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline. Changes are saved on this phone.'**
+  String get settingsOffline;
+
+  /// {reason} is a short instruction, such as “Update your server.”
+  ///
+  /// In en, this message translates to:
+  /// **'Sync is paused. {reason}'**
+  String settingsSyncPaused(String reason);
+
+  /// Small line at the bottom of Settings when the server doesn’t answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Can’t reach {host}'**
+  String settingsCantReach(String host);
+
+  /// Small line at the bottom of Settings showing the server in use.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {host}'**
+  String settingsConnectedTo(String host);
+
+  /// Small line at the bottom of Settings showing the server and its version.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {host} · Server {version}'**
+  String settingsConnectedToVersion(String host, String version);
+
+  /// The app’s name and version at the bottom of Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor {version}'**
+  String settingsAppVersion(String version);
 
   /// The app’s short name, at the top of the menu and the bottom of Settings.
   ///
@@ -394,11 +1144,203 @@ abstract class AppLocalizations {
   /// **'Anchor'**
   String get settingsAppNameShort;
 
+  /// The app’s tagline under its version.
+  ///
+  /// In en, this message translates to:
+  /// **'Your thoughts, secured.'**
+  String get settingsTagline;
+
+  /// Title of the logs page and of its menu of actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs'**
+  String get logsTitle;
+
+  /// Under the title of the logs menu; Copy and Save are names of its options.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy and Save include earlier sessions too.'**
+  String get logsMenuHelp;
+
+  /// Menu item that copies every log, including earlier sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy all'**
+  String get logsCopyAll;
+
+  /// Menu item that saves every log to a file on the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to a file'**
+  String get logsSaveToFile;
+
+  /// Menu item and dialog button that delete all logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs'**
+  String get logsClear;
+
+  /// Toast after all logs were copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs copied, including earlier sessions'**
+  String get logsCopiedAll;
+
+  /// Toast after Copy all copied only the newest logs, because all of them are too long for the clipboard. "Save to a file" is the menu item next to Copy all.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest logs copied. Save to a file to get them all.'**
+  String get logsCopiedNewest;
+
+  /// Title of the dialog that confirms deleting all logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear logs?'**
+  String get logsClearTitle;
+
+  /// Message of the dialog that confirms deleting all logs.
+  ///
+  /// In en, this message translates to:
+  /// **'All logs on this phone will be deleted. This can’t be undone.'**
+  String get logsClearMessage;
+
+  /// Toast after all logs were deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs cleared'**
+  String get logsCleared;
+
+  /// Title of the system dialog for saving the logs file.
+  ///
+  /// In en, this message translates to:
+  /// **'Save logs'**
+  String get logsSaveDialog;
+
+  /// Toast after the logs were saved to a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name}'**
+  String logsSaved(String name);
+
+  /// Toast when the logs file couldn’t be saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save the logs'**
+  String get logsSaveFailed;
+
   /// Toast after the selected logs were copied.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 log copied} other{{count} logs copied}}'**
   String logsCopied(int count);
+
+  /// Page title while selecting logs and none is selected yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Select logs'**
+  String get logsSelectTitle;
+
+  /// Hint inside the empty search field on the logs page.
+  ///
+  /// In en, this message translates to:
+  /// **'Search logs'**
+  String get logsSearch;
+
+  /// Screen reader name of the bar shown while logs are selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected logs'**
+  String get logsSelected;
+
+  /// Screen reader name of the filter for log levels.
+  ///
+  /// In en, this message translates to:
+  /// **'Log level'**
+  String get logsLevel;
+
+  /// Filter that shows logs of every level. Short: one of five tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get logsAll;
+
+  /// Filter that shows only error logs. Short: one of five tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Errors'**
+  String get logsErrors;
+
+  /// Filter that shows only warning logs. Short: one of five tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get logsWarnings;
+
+  /// Filter that shows only general information logs. Short: one of five tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get logsInfo;
+
+  /// Filter that shows only detailed technical logs. Short: one of five tabs in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug'**
+  String get logsDebug;
+
+  /// Note under the log filters; Copy and Save are names of menu options.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing this session only. Copy and Save include earlier sessions too.'**
+  String get logsSessionNote;
+
+  /// Empty-screen title on the logs page when the search or filter matches nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching logs'**
+  String get logsNoMatches;
+
+  /// Empty-screen help on the logs page when the search or filter matches nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another word or show all levels.'**
+  String get logsNoMatchesHelp;
+
+  /// Empty-screen title on the logs page when nothing has been recorded.
+  ///
+  /// In en, this message translates to:
+  /// **'No logs yet'**
+  String get logsEmpty;
+
+  /// Empty-screen help on the logs page when nothing has been recorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity from this session appears here.'**
+  String get logsEmptyHelp;
+
+  /// Level tag on a single log line that records an error.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get logLevelError;
+
+  /// Level tag on a single log line that records a warning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get logLevelWarning;
+
+  /// Level tag on a single log line with general information.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get logLevelInfo;
+
+  /// Level tag on a single log line with detailed technical information.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug'**
+  String get logLevelDebug;
 
   /// The current day, as a date heading, on a note card or in a reminder time.
   ///

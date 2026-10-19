@@ -9,6 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get appName => 'Anchor Notes';
+
+  @override
   String get commonBack => 'Back';
 
   @override
@@ -133,7 +136,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSave => 'Save';
 
   @override
+  String get commonSaving => 'Saving…';
+
+  @override
   String get commonUndo => 'Undo';
+
+  @override
+  String get fieldName => 'Name';
+
+  @override
+  String get fieldNameHint => 'Your name';
+
+  @override
+  String get fieldEmail => 'Email';
+
+  @override
+  String get fieldEmailHint => 'you@example.com';
+
+  @override
+  String get fieldPassword => 'Password';
+
+  @override
+  String get fieldCurrentPassword => 'Current password';
+
+  @override
+  String get fieldNewPassword => 'New password';
 
   @override
   String passwordHelp(int count) {
@@ -147,10 +174,305 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get authEnterName => 'Enter your name.';
+
+  @override
+  String get authEnterEmail => 'Enter your email address.';
+
+  @override
+  String get authEnterValidEmail => 'Enter a valid email address.';
+
+  @override
+  String get authEnterPassword => 'Enter your password.';
+
+  @override
+  String get authEnterCurrentPassword => 'Enter your current password.';
+
+  @override
+  String authPasswordTooShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Use at least $count characters.',
+      one: 'Use at least 1 character.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get authIncorrectCredentials => 'Incorrect email or password.';
+
+  @override
+  String get authPasswordless =>
+      'This account doesn’t use a password. Sign in with your provider instead.';
+
+  @override
+  String get authPendingApproval =>
+      'Your account is waiting for admin approval.';
+
+  @override
+  String authPasswordSignInOff(String provider) {
+    return 'Email and password sign-in is turned off. Sign in with $provider.';
+  }
+
+  @override
+  String authPasswordSignUpOff(String provider) {
+    return 'Email and password sign-up is turned off. Sign up with $provider.';
+  }
+
+  @override
+  String get authPasswordSignInOffHere =>
+      'Email and password sign-in is turned off on this server.';
+
+  @override
+  String get authPasswordSignUpOffHere =>
+      'Email and password sign-up is turned off on this server.';
+
+  @override
+  String get authRegistrationClosed =>
+      'This server isn’t accepting new accounts.';
+
+  @override
+  String get authEmailTaken => 'An account with this email already exists.';
+
+  @override
+  String get authWrongCurrentPassword => 'Your current password is incorrect.';
+
+  @override
+  String get authSamePassword =>
+      'Your new password must be different from your current one.';
+
+  @override
+  String get authUnreachable =>
+      'Couldn’t reach your server. Check your connection and try again.';
+
+  @override
+  String get authProviderNotSetUp =>
+      'Signing in with a provider isn’t set up on this server.';
+
+  @override
+  String get authProviderFailed =>
+      'Couldn’t sign in with your provider. Try again.';
+
+  @override
+  String authProviderFailedWith(String detail) {
+    return 'Couldn’t sign in with your provider: $detail';
+  }
+
+  @override
   String get authSignIn => 'Sign in';
 
   @override
+  String get authSigningIn => 'Signing in…';
+
+  @override
+  String authContinueWith(String provider) {
+    return 'Continue with $provider';
+  }
+
+  @override
+  String authOpeningProvider(String provider) {
+    return 'Opening $provider…';
+  }
+
+  @override
+  String get authWelcomeBack => 'Welcome back';
+
+  @override
+  String get authSignInToAnchor => 'Sign in to continue to Anchor.';
+
+  @override
+  String authSignInTo(String server) {
+    return 'Sign in to $server';
+  }
+
+  @override
+  String get authOfflineSignIn =>
+      'You’re offline. Connect to the internet to sign in.';
+
+  @override
+  String get authNewToAnchor => 'New to Anchor?';
+
+  @override
+  String get authCreateAnAccount => 'Create an account';
+
+  @override
+  String get authOr => 'or';
+
+  @override
+  String get authCreateAccount => 'Create account';
+
+  @override
+  String get authCreatingAccount => 'Creating account…';
+
+  @override
+  String get authCreateYourAccount => 'Create your account';
+
+  @override
+  String get authApprovalNeeded =>
+      'New accounts need admin approval before you can sign in.';
+
+  @override
+  String get authRegisterSubtitle => 'Start capturing your thoughts.';
+
+  @override
+  String get authAlreadyHaveAccount => 'Already have an account?';
+
+  @override
+  String authWelcomeName(String name) {
+    return 'Welcome to Anchor, $name';
+  }
+
+  @override
+  String get authWaitingTitle => 'Waiting for approval';
+
+  @override
+  String get authWaitingMessage =>
+      'An admin needs to approve your account before you can sign in.';
+
+  @override
+  String get authBackToSignIn => 'Back to sign in';
+
+  @override
+  String get passwordTitle => 'Password';
+
+  @override
+  String get passwordChange => 'Change password';
+
+  @override
+  String get passwordChanging => 'Changing…';
+
+  @override
+  String get passwordChanged => 'Password changed';
+
+  @override
+  String get passwordOffline =>
+      'You’re offline. Connect to the internet to change your password.';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get profileSaved => 'Profile saved';
+
+  @override
+  String get profileOffline =>
+      'You’re offline. Connect to the internet to change your profile.';
+
+  @override
+  String get profilePhoto => 'Profile photo';
+
+  @override
+  String get profilePhotoVisible => 'People you share notes with can see it.';
+
+  @override
+  String get profileTakePhoto => 'Take photo';
+
+  @override
+  String get profileChoosePhoto => 'Choose photo';
+
+  @override
+  String get profileRemovePhoto => 'Remove photo';
+
+  @override
+  String get profilePhotoUpdated => 'Photo updated';
+
+  @override
+  String get profilePhotoUpdateFailed => 'Couldn’t update your photo';
+
+  @override
+  String get profilePhotoRemoved => 'Photo removed';
+
+  @override
+  String get profilePhotoRemoveFailed => 'Couldn’t remove your photo';
+
+  @override
+  String get profileEmailAdminOnly => 'Only an admin can change your email.';
+
+  @override
+  String get profileChangePhoto => 'Change profile photo';
+
+  @override
   String get commonContinue => 'Continue';
+
+  @override
+  String commonExpandedItem(String label) {
+    return '$label, expanded';
+  }
+
+  @override
+  String commonCollapsedItem(String label) {
+    return '$label, collapsed';
+  }
+
+  @override
+  String get serverTitle => 'Server';
+
+  @override
+  String get serverWelcome => 'Welcome to Anchor';
+
+  @override
+  String get serverSubtitle => 'Enter your server address to get started.';
+
+  @override
+  String get serverAddress => 'Server address';
+
+  @override
+  String get serverAddressHint => 'notes.example.com';
+
+  @override
+  String get serverConnecting => 'Connecting…';
+
+  @override
+  String get serverAdvanced => 'Advanced';
+
+  @override
+  String get serverSelfSigned => 'Allow self-signed certificates';
+
+  @override
+  String get serverSelfSignedWarning =>
+      'Use only with a server you manage. Anchor can’t verify its identity.';
+
+  @override
+  String get serverSelfHosted => 'Anchor requires a self-hosted server.';
+
+  @override
+  String get serverEnterAddress => 'Enter a server address.';
+
+  @override
+  String get serverEnterValidAddress => 'Enter a valid server address.';
+
+  @override
+  String get serverConnectFailed =>
+      'Couldn’t connect to the server. Try again.';
+
+  @override
+  String serverNotAnchor(String host) {
+    return '$host isn’t an Anchor server. Check the address.';
+  }
+
+  @override
+  String serverUntrusted(String host) {
+    return 'Couldn’t verify the certificate for $host. If it’s self-signed, turn on Allow self-signed certificates in Advanced.';
+  }
+
+  @override
+  String serverUnreachableNoScheme(String host) {
+    return 'Couldn’t reach $host. Check the address, or add http:// if your server doesn’t use https.';
+  }
+
+  @override
+  String serverUnreachable(String host) {
+    return 'Couldn’t reach $host. Check the address and your connection.';
+  }
+
+  @override
+  String get serverConnectAnyway => 'Connect anyway';
+
+  @override
+  String serverLinkLabel(String host) {
+    return 'Server $host. Change server';
+  }
 
   @override
   String get commonMore => 'More';
@@ -159,10 +481,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonCopy => 'Copy';
 
   @override
+  String get commonSelect => 'Select';
+
+  @override
   String get commonSelectAll => 'Select all';
 
   @override
   String get commonDeselectAll => 'Deselect all';
+
+  @override
+  String get commonStopSelecting => 'Stop selecting';
 
   @override
   String commonSelectedCount(int count) {
@@ -171,6 +499,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsTitle => 'Settings';
+
+  @override
+  String settingsProfileCard(String name, String email) {
+    return '$name, $email. Profile';
+  }
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsDensity => 'Density';
+
+  @override
+  String get settingsDensityHelp => 'Compact fits more notes on the screen.';
+
+  @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get themeAutomatic => 'Automatic';
+
+  @override
+  String get settingsEditor => 'Editor';
+
+  @override
+  String get settingsFont => 'Font';
+
+  @override
+  String get settingsTextSize => 'Text size';
+
+  @override
+  String get settingsMoveChecked => 'Move checked items to the bottom';
+
+  @override
+  String get settingsMoveCheckedHelp =>
+      'Checked items move below the unchecked ones.';
+
+  @override
+  String get settingsPreviewTitle => 'Weekend in Lisbon';
+
+  @override
+  String get settingsPreviewText =>
+      'Pack light. The hills are steep, and the trams fill up by nine.';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
+  String get settingsPassword => 'Password';
+
+  @override
+  String settingsPasswordManaged(String provider) {
+    return 'Your password is managed by $provider.';
+  }
+
+  @override
+  String get settingsPasswordManagedElsewhere =>
+      'Your password is managed by your sign-in provider.';
+
+  @override
+  String get settingsSignOut => 'Sign out';
+
+  @override
+  String get settingsSigningOut => 'Signing out…';
+
+  @override
+  String get settingsSignOutTitle => 'Sign out?';
 
   @override
   String settingsSignOutMessage(int count) {
@@ -187,7 +588,96 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsHelp => 'Help';
+
+  @override
+  String get settingsLogs => 'Logs';
+
+  @override
+  String get settingsLogsHelp => 'Activity details for troubleshooting';
+
+  @override
+  String get settingsSupport => 'Support Anchor';
+
+  @override
+  String get settingsSupportHelp => 'Buy the developer a coffee';
+
+  @override
+  String get settingsOffline => 'Offline. Changes are saved on this phone.';
+
+  @override
+  String settingsSyncPaused(String reason) {
+    return 'Sync is paused. $reason';
+  }
+
+  @override
+  String settingsCantReach(String host) {
+    return 'Can’t reach $host';
+  }
+
+  @override
+  String settingsConnectedTo(String host) {
+    return 'Connected to $host';
+  }
+
+  @override
+  String settingsConnectedToVersion(String host, String version) {
+    return 'Connected to $host · Server $version';
+  }
+
+  @override
+  String settingsAppVersion(String version) {
+    return 'Anchor $version';
+  }
+
+  @override
   String get settingsAppNameShort => 'Anchor';
+
+  @override
+  String get settingsTagline => 'Your thoughts, secured.';
+
+  @override
+  String get logsTitle => 'Logs';
+
+  @override
+  String get logsMenuHelp => 'Copy and Save include earlier sessions too.';
+
+  @override
+  String get logsCopyAll => 'Copy all';
+
+  @override
+  String get logsSaveToFile => 'Save to a file';
+
+  @override
+  String get logsClear => 'Clear logs';
+
+  @override
+  String get logsCopiedAll => 'Logs copied, including earlier sessions';
+
+  @override
+  String get logsCopiedNewest =>
+      'Newest logs copied. Save to a file to get them all.';
+
+  @override
+  String get logsClearTitle => 'Clear logs?';
+
+  @override
+  String get logsClearMessage =>
+      'All logs on this phone will be deleted. This can’t be undone.';
+
+  @override
+  String get logsCleared => 'Logs cleared';
+
+  @override
+  String get logsSaveDialog => 'Save logs';
+
+  @override
+  String logsSaved(String name) {
+    return 'Saved $name';
+  }
+
+  @override
+  String get logsSaveFailed => 'Couldn’t save the logs';
 
   @override
   String logsCopied(int count) {
@@ -199,6 +689,61 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get logsSelectTitle => 'Select logs';
+
+  @override
+  String get logsSearch => 'Search logs';
+
+  @override
+  String get logsSelected => 'Selected logs';
+
+  @override
+  String get logsLevel => 'Log level';
+
+  @override
+  String get logsAll => 'All';
+
+  @override
+  String get logsErrors => 'Errors';
+
+  @override
+  String get logsWarnings => 'Warnings';
+
+  @override
+  String get logsInfo => 'Info';
+
+  @override
+  String get logsDebug => 'Debug';
+
+  @override
+  String get logsSessionNote =>
+      'Showing this session only. Copy and Save include earlier sessions too.';
+
+  @override
+  String get logsNoMatches => 'No matching logs';
+
+  @override
+  String get logsNoMatchesHelp => 'Try another word or show all levels.';
+
+  @override
+  String get logsEmpty => 'No logs yet';
+
+  @override
+  String get logsEmptyHelp => 'Activity from this session appears here.';
+
+  @override
+  String get logLevelError => 'Error';
+
+  @override
+  String get logLevelWarning => 'Warning';
+
+  @override
+  String get logLevelInfo => 'Info';
+
+  @override
+  String get logLevelDebug => 'Debug';
 
   @override
   String get commonToday => 'Today';
