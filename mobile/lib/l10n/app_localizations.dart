@@ -1558,6 +1558,12 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get reminderRemove;
 
+  /// Error shown when a reminder picked in the reminder sheet couldn’t be saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t set the reminder'**
+  String get reminderSetFailed;
+
   /// Title of the dialog shown before the phone asks for notification permission.
   ///
   /// In en, this message translates to:
@@ -1948,11 +1954,29 @@ abstract class AppLocalizations {
   /// **'{reason} Your notes stay on this phone in the meantime.'**
   String syncPausedMessage(String reason);
 
+  /// Screen reader label of the bell button on a note without a reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reminder'**
+  String get reminderAdd;
+
   /// The day before today, as a date heading or on a note card.
   ///
   /// In en, this message translates to:
   /// **'Yesterday'**
   String get commonYesterday;
+
+  /// How many people a note is shared with, beside Sharing in the note’s menu.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person} other{{count} people}}'**
+  String peopleCount(int count);
+
+  /// Number of words in the note, in the small line under its title.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 word} other{{count} words}}'**
+  String wordsCount(int count);
 
   /// Page title while selecting notes and none is selected yet.
   ///
@@ -1984,6 +2008,12 @@ abstract class AppLocalizations {
   /// **'Only you can see this note.'**
   String get shareOnlyYou;
 
+  /// Notice in the share sheet when the list of people the note is shared with didn’t load, next to a Try again button.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load the people with access.'**
+  String get shareLoadFailed;
+
   /// Small line in the share sheet giving how many people can see the note.
   ///
   /// In en, this message translates to:
@@ -1995,6 +2025,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Shared with 1 person. Connect to see who has access.} other{Shared with {count} people. Connect to see who has access.}}'**
   String shareSharedWithOffline(int count);
+
+  /// Under a note’s title, or in a toast after sharing; {names} holds first names.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with {names}'**
+  String shareSharedWithNames(String names);
 
   /// A short line on a note, without a period.
   ///
@@ -2188,6 +2224,12 @@ abstract class AppLocalizations {
   /// **'{person} can now edit'**
   String shareNowCanEdit(String person);
 
+  /// Shown above a version’s changes when they’re compared with the latest text.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with the current version'**
+  String get revisionComparedCurrent;
+
   /// Shown above a version’s changes: the later version they’re compared with.
   ///
   /// In en, this message translates to:
@@ -2361,6 +2403,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Note unarchived} other{{count} notes unarchived}}'**
   String notesUnarchived(int count);
+
+  /// Toast after Uncheck all in a note's More menu, with an Undo button. The items are checklist items in the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Item unchecked} other{{count} items unchecked}}'**
+  String itemsUnchecked(int count);
+
+  /// Toast after Delete checked items in a note's More menu, with an Undo button. The items are checklist items in the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Checked item deleted} other{{count} checked items deleted}}'**
+  String checkedItemsDeleted(int count);
 
   /// Toast after notes were brought back from the trash, with an Undo button.
   ///
@@ -2590,11 +2644,71 @@ abstract class AppLocalizations {
   /// **'Shared by {name}'**
   String shareSharedBy(String name);
 
+  /// The Share action when the note is already shared.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get actionSharing;
+
+  /// Menu item that moves the open note to the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to trash'**
+  String get actionMoveToTrash;
+
+  /// For a note someone else shared with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from my notes'**
+  String get actionRemoveFromMine;
+
+  /// Bold lead before a sentence about when the note will be deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'In trash.'**
+  String get readOnlyInTrash;
+
+  /// Bold lead before a sentence about who can edit the note.
+  ///
+  /// In en, this message translates to:
+  /// **'View only.'**
+  String get readOnlyViewOnly;
+
+  /// Follows the bold “View only.” at the bottom of a note the person can’t edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the owner can edit it.'**
+  String get readOnlyOwnerEdits;
+
+  /// Follows the bold “View only.” at the bottom of a note someone shared with the person.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared by {name}.'**
+  String readOnlySharedBy(String name);
+
+  /// Shown on a note that is in the archive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get noteArchived;
+
+  /// Small button under the note’s title that opens the tag picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
+  String get tagAdd;
+
   /// Screen reader label of the remove button on a tag chip.
   ///
   /// In en, this message translates to:
   /// **'Remove {tag}'**
   String tagRemoveNamed(String tag);
+
+  /// Starts a bulleted list in an empty note.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get starterList;
 
   /// Adds a picture or an audio file to an empty note.
   ///
@@ -2619,6 +2733,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add picture or audio'**
   String get attachmentAddLabel;
+
+  /// Short label on a small square tile that adds a picture or audio.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get attachmentAdd;
 
   /// Shown when the person pulls down the list to sync while offline.
   ///
@@ -2944,11 +3064,41 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get commonTryAgain;
 
+  /// The note’s latest text, at the top of version history and as a page title.
+  ///
+  /// In en, this message translates to:
+  /// **'Current version'**
+  String get historyCurrent;
+
+  /// A note that hasn’t synced yet, so it has no edit time from the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this phone'**
+  String get historySavedOnPhone;
+
   /// A version that changed no lines, under its time in version history and in its title bar.
   ///
   /// In en, this message translates to:
   /// **'No changes'**
   String get historyNoChanges;
+
+  /// Empty-screen title in version history when the note has no earlier versions.
+  ///
+  /// In en, this message translates to:
+  /// **'No earlier versions yet'**
+  String get historyEmptyTitle;
+
+  /// Warning in version history when loading versions from the server failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t check for versions from your other devices.'**
+  String get historyFetchFailed;
+
+  /// Notice in version history while the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to see versions from your other devices.'**
+  String get historyOffline;
 
   /// Lines added in a version.
   ///
@@ -2986,11 +3136,437 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 line changed} other{{count} lines changed}}'**
   String diffLinesChanged(int count);
 
+  /// Screen reader label of the button that shows hidden lines that didn’t change.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Show 1 unchanged line} other{Show {count} unchanged lines}}'**
+  String diffShowUnchanged(int count);
+
+  /// Small label standing in for lines that didn’t change between versions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unchanged line} other{{count} unchanged lines}}'**
+  String diffUnchanged(int count);
+
+  /// Screen reader prefix before a line added in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'Added:'**
+  String get diffAddedMark;
+
+  /// Screen reader prefix before a line removed in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed:'**
+  String get diffRemovedMark;
+
+  /// Screen reader prefix before a line changed in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed:'**
+  String get diffChangedMark;
+
+  /// Screen reader prefix before a checked checklist item.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked:'**
+  String get diffCheckedMark;
+
+  /// Screen reader prefix before an unchecked checklist item.
+  ///
+  /// In en, this message translates to:
+  /// **'Not checked:'**
+  String get diffUncheckedMark;
+
+  /// Screen reader prefix before a title removed in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed title:'**
+  String get diffRemovedTitle;
+
+  /// Screen reader prefix before a title added in a version.
+  ///
+  /// In en, this message translates to:
+  /// **'Added title:'**
+  String get diffAddedTitle;
+
+  /// Bold lead of a warning on a version that couldn’t be saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved.'**
+  String get revisionNotSavedLead;
+
+  /// Follows the bold “Not saved.” on a version that couldn’t be saved.
+  ///
+  /// In en, this message translates to:
+  /// **'This edit wasn’t saved because the note changed on another device first. Restore it, or copy what you need.'**
+  String get revisionNotSavedText;
+
+  /// Toast when restoring a version whose text is the same as the note.
+  ///
+  /// In en, this message translates to:
+  /// **'The note already matches this version'**
+  String get revisionAlreadyMatches;
+
+  /// Toast when an earlier version couldn’t be restored.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t restore this version'**
+  String get revisionRestoreFailed;
+
+  /// Text on the Restore button while an earlier version is restored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring…'**
+  String get revisionRestoring;
+
+  /// Screen reader label of the back button on a version page.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the version list'**
+  String get revisionBackToList;
+
+  /// Screen reader label of the up arrow that shows the next newer version.
+  ///
+  /// In en, this message translates to:
+  /// **'Newer version'**
+  String get revisionNewer;
+
+  /// Screen reader label of the down arrow that shows the next older version.
+  ///
+  /// In en, this message translates to:
+  /// **'Older version'**
+  String get revisionOlder;
+
+  /// Which version is shown, such as “2 of 5”.
+  ///
+  /// In en, this message translates to:
+  /// **'{index} of {count}'**
+  String revisionPosition(int index, int count);
+
+  /// Shown on a version page when that version was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This version is no longer available.'**
+  String get revisionGone;
+
+  /// Shown above a version whose text matches the next newer version.
+  ///
+  /// In en, this message translates to:
+  /// **'Same text as the version after this one.'**
+  String get revisionSameAsNext;
+
+  /// Shown above a version whose text matches the note’s latest text.
+  ///
+  /// In en, this message translates to:
+  /// **'Same text as the current version.'**
+  String get revisionSameAsCurrent;
+
+  /// Shown on a version page when that version has no text.
+  ///
+  /// In en, this message translates to:
+  /// **'This version is empty.'**
+  String get revisionEmpty;
+
+  /// Toast when sharing a note with a person failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t share with {name}'**
+  String shareFailed(String name);
+
+  /// Screen reader name of the menu that changes someone’s access.
+  ///
+  /// In en, this message translates to:
+  /// **'Access for {name}'**
+  String shareAccessFor(String name);
+
+  /// Toast after a person was removed from a shared note, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} no longer has access'**
+  String shareRevoked(String name);
+
+  /// Toast when removing a person from a shared note failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t remove access for {name}'**
+  String shareRevokeFailed(String name);
+
+  /// Toast when changing a person’s access to a shared note failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t change access for {name}'**
+  String shareChangeFailed(String name);
+
+  /// Under the share sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'People you add will see this note in their list.'**
+  String get shareSubtitle;
+
+  /// Under the share sheet title while the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to share this note.'**
+  String get shareOffline;
+
+  /// Hint inside the empty field of the share sheet that finds people.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people by name or email'**
+  String get shareSearchHint;
+
+  /// Shown in the share sheet when the search finds no one.
+  ///
+  /// In en, this message translates to:
+  /// **'No one found. Only people with an account on this server can be added.'**
+  String get shareNoMatches;
+
+  /// Section label in the share sheet for people the person shared with before.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently shared with'**
+  String get shareRecent;
+
+  /// Section label in the share sheet for people found by the search.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get sharePeople;
+
+  /// Screen reader label of a person in the share search results.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {name}'**
+  String shareAddPerson(String name);
+
+  /// Section label in the share sheet for everyone who can see the note.
+  ///
+  /// In en, this message translates to:
+  /// **'People with access'**
+  String get shareWithAccess;
+
+  /// The person’s own name in the share sheet’s list of people.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (you)'**
+  String shareYou(String name);
+
+  /// Noun beside the person’s own name in the share sheet: they own the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get shareOwner;
+
+  /// Screen reader label of the access button, such as “Can edit. Change access for Ada Lovelace”.
+  ///
+  /// In en, this message translates to:
+  /// **'{permission}. Change access for {name}'**
+  String shareChangeAccess(String permission, String name);
+
+  /// Small label on a picture that can’t load while the phone is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get commonOffline;
+
+  /// Screen reader label of the delete button on an attachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}'**
+  String commonDeleteItem(String name);
+
+  /// Which picture is shown, such as “2 of 5”.
+  ///
+  /// In en, this message translates to:
+  /// **'{index} of {count}'**
+  String commonPosition(int index, int count);
+
+  /// Title of the sheet with options to add a picture or audio to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to note'**
+  String get addToNote;
+
+  /// Toast when the picked audio file is a type the app can’t play.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor supports MP3, WAV, M4A, OGG and AAC audio'**
+  String get addAudioFormats;
+
+  /// Toast when the picked photo is in a format the phone couldn’t read or convert.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t add this photo. Try a JPEG or PNG.'**
+  String get addPhotoUnsupported;
+
+  /// Toast when recording is blocked because the app has no microphone permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access in Settings to record'**
+  String get addMicDenied;
+
+  /// Option that opens the camera to take a photo for the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get addTakePhoto;
+
+  /// Option that picks a photo from the phone’s photo library to add to the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo'**
+  String get addChoosePhoto;
+
+  /// Option that starts recording a voice note.
+  ///
+  /// In en, this message translates to:
+  /// **'Record audio'**
+  String get addRecordAudio;
+
+  /// Noun: option that picks an audio file stored on the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio file'**
+  String get addAudioFile;
+
+  /// Noun: title of the sheet while a voice note is being recorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get recordingTitle;
+
+  /// Under the title while a voice note is being recorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak normally. The recording stays on this phone until it uploads.'**
+  String get recordingHelp;
+
+  /// Title of the sheet after recording, where the person listens before keeping it.
+  ///
+  /// In en, this message translates to:
+  /// **'Your recording'**
+  String get recordingReviewTitle;
+
+  /// Under the title after recording; {count} is the length in seconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 second. Listen, then keep it or record again.} other{{count} seconds. Listen, then keep it or record again.}}'**
+  String recordingReviewHelp(int count);
+
+  /// Under the title after a recording stopped by itself at the longest length a note can hold, about 70 minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped at the maximum length. Listen, then keep it or record again.'**
+  String get recordingStoppedAtLimit;
+
+  /// Screen reader text while recording. {time} is minutes and seconds, such as 0:12.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording, {time}'**
+  String recordingElapsed(String time);
+
+  /// Verb: button that ends the recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get recordingStop;
+
+  /// Button that throws away the recording without adding it to the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get recordingDiscard;
+
+  /// Records the audio again. Keep it short, it shares a row with two other buttons.
+  ///
+  /// In en, this message translates to:
+  /// **'Again'**
+  String get recordingAgain;
+
+  /// Toast when the person plays a voice note that hasn’t downloaded while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'This voice note will play when you’re back online'**
+  String get voiceOffline;
+
   /// Name of an audio recording made in the app.
   ///
   /// In en, this message translates to:
   /// **'Voice note'**
   String get voiceNote;
+
+  /// Short line on a voice note card when its audio couldn’t load.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load'**
+  String get voiceLoadFailed;
+
+  /// Short line on a voice note or audio file card while it uploads.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get attachmentUploading;
+
+  /// Short line on a voice note or audio file card when the server didn’t take it. A Try again button sits under it.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t upload'**
+  String get attachmentUploadFailed;
+
+  /// Screen reader name of the playback slider.
+  ///
+  /// In en, this message translates to:
+  /// **'Position in {name}'**
+  String voicePosition(String name);
+
+  /// Toast when saving a picture is blocked because the app has no Photos permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow access to Photos in Settings to save pictures'**
+  String get pictureAllowPhotos;
+
+  /// Toast after a picture was saved to the phone’s photo library.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Photos'**
+  String get pictureSaved;
+
+  /// Toast when saving a picture to the phone’s photo library failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save the picture'**
+  String get pictureSaveFailed;
+
+  /// Shown in the picture viewer when a picture can’t load while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'This picture will show when you’re back online'**
+  String get pictureOffline;
+
+  /// Shown in the picture viewer when a picture didn’t download while online, above a Try again button.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load this picture'**
+  String get pictureLoadFailed;
+
+  /// Screen reader label of the download button in the picture viewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Photos'**
+  String get pictureSaveToPhotos;
+
+  /// Screen reader label of the retry button on a picture, voice note or audio file that didn’t upload or download.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again, {name}'**
+  String attachmentRetry(String name);
+
+  /// Screen reader label of a picture in a note.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, open'**
+  String pictureOpen(String name);
 
   /// Heading of the pinned notes.
   ///
@@ -3009,6 +3585,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Archived'**
   String get groupArchived;
+
+  /// The note’s color or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get noteBackground;
+
+  /// Section label for note backgrounds with a repeating pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern'**
+  String get notePattern;
+
+  /// The note background with no color.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get noteColorDefault;
+
+  /// Note background pattern made of small dots.
+  ///
+  /// In en, this message translates to:
+  /// **'Dots'**
+  String get patternDots;
+
+  /// Note background pattern of squares, like graph paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get patternGrid;
+
+  /// Note background pattern of lines, like ruled paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines'**
+  String get patternLines;
+
+  /// Note background pattern of wavy lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Waves'**
+  String get patternWaves;
+
+  /// Note background pattern of small shopping bag drawings.
+  ///
+  /// In en, this message translates to:
+  /// **'Groceries'**
+  String get patternGroceries;
+
+  /// Note background pattern of small music note drawings.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get patternMusic;
+
+  /// Note background pattern of small airplane drawings.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get patternTravel;
+
+  /// Note background pattern of small computer code symbols.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get patternCode;
 
   /// Section label in the view options sheet for how notes are arranged.
   ///
@@ -3076,6 +3718,36 @@ abstract class AppLocalizations {
   /// **'Oldest first'**
   String get viewOldestFirst;
 
+  /// Screen reader label of the mark on a note that has changes only on this phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes not synced yet'**
+  String get noteUnsynced;
+
+  /// Short label in the note’s top bar while its changes haven’t synced yet.
+  ///
+  /// In en, this message translates to:
+  /// **'On this phone'**
+  String get noteOnThisPhone;
+
+  /// Toast when the open note was deleted or unshared elsewhere.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is no longer available'**
+  String get noteGone;
+
+  /// Toast after a note’s reminder was removed, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder removed'**
+  String get reminderRemoved;
+
+  /// Toast after an earlier version of the note was restored, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Version restored'**
+  String get versionRestored;
+
   /// Toast after a picture was added to a note.
   ///
   /// In en, this message translates to:
@@ -3130,11 +3802,29 @@ abstract class AppLocalizations {
   /// **'Couldn’t add the audio file'**
   String get attachmentAudioAddFailed;
 
+  /// Error toast when a picture, voice note or audio file is bigger than the server takes, so it isn’t added to the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Can’t add files over 50 MB.'**
+  String get attachmentTooBig;
+
   /// Toast after an audio file was removed from a note, with an Undo button.
   ///
   /// In en, this message translates to:
   /// **'Audio file deleted'**
   String get attachmentAudioDeleted;
+
+  /// Toast when the person plays an audio file that hasn’t downloaded while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'This audio file will play when you’re back online'**
+  String get audioFileOffline;
+
+  /// Placeholder of the note title.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get noteTitleHint;
 
   /// Section label in the view options sheet for the sort direction.
   ///
@@ -3159,6 +3849,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No results'**
   String get slashNoResults;
+
+  /// Section label for note background colors.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get noteColor;
 
   /// Line on a note card that stands in for the checked items of a checklist.
   ///

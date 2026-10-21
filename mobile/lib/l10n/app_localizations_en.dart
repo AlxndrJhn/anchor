@@ -895,6 +895,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderRemove => 'Remove';
 
   @override
+  String get reminderSetFailed => 'Couldn’t set the reminder';
+
+  @override
   String get reminderNotifyTitle => 'Allow notifications?';
 
   @override
@@ -1132,7 +1135,32 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get reminderAdd => 'Add a reminder';
+
+  @override
   String get commonYesterday => 'Yesterday';
+
+  @override
+  String peopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String wordsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count words',
+      one: '1 word',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get notesSelectTitle => 'Select notes';
@@ -1159,6 +1187,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareOnlyYou => 'Only you can see this note.';
 
   @override
+  String get shareLoadFailed => 'Couldn’t load the people with access.';
+
+  @override
   String shareSharedWith(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1178,6 +1209,11 @@ class AppLocalizationsEn extends AppLocalizations {
       one: 'Shared with 1 person. Connect to see who has access.',
     );
     return '$_temp0';
+  }
+
+  @override
+  String shareSharedWithNames(String names) {
+    return 'Shared with $names';
   }
 
   @override
@@ -1364,6 +1400,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get revisionComparedCurrent => 'Compared with the current version';
+
+  @override
   String revisionComparedTodayAt(String time) {
     return 'Compared with today at $time';
   }
@@ -1502,6 +1541,28 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$count notes unarchived',
       one: 'Note unarchived',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String itemsUnchecked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items unchecked',
+      one: 'Item unchecked',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checkedItemsDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count checked items deleted',
+      one: 'Checked item deleted',
     );
     return '$_temp0';
   }
@@ -1735,9 +1796,41 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get actionSharing => 'Sharing';
+
+  @override
+  String get actionMoveToTrash => 'Move to trash';
+
+  @override
+  String get actionRemoveFromMine => 'Remove from my notes';
+
+  @override
+  String get readOnlyInTrash => 'In trash.';
+
+  @override
+  String get readOnlyViewOnly => 'View only.';
+
+  @override
+  String get readOnlyOwnerEdits => 'Only the owner can edit it.';
+
+  @override
+  String readOnlySharedBy(String name) {
+    return 'Shared by $name.';
+  }
+
+  @override
+  String get noteArchived => 'Archived';
+
+  @override
+  String get tagAdd => 'Add tag';
+
+  @override
   String tagRemoveNamed(String tag) {
     return 'Remove $tag';
   }
+
+  @override
+  String get starterList => 'List';
 
   @override
   String get starterAttachment => 'Picture or audio';
@@ -1750,6 +1843,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get attachmentAddLabel => 'Add picture or audio';
+
+  @override
+  String get attachmentAdd => 'Add';
 
   @override
   String get pullOffline =>
@@ -1925,7 +2021,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonTryAgain => 'Try again';
 
   @override
+  String get historyCurrent => 'Current version';
+
+  @override
+  String get historySavedOnPhone => 'Saved on this phone';
+
+  @override
   String get historyNoChanges => 'No changes';
+
+  @override
+  String get historyEmptyTitle => 'No earlier versions yet';
+
+  @override
+  String get historyFetchFailed =>
+      'Couldn’t check for versions from your other devices.';
+
+  @override
+  String get historyOffline =>
+      'Connect to the internet to see versions from your other devices.';
 
   @override
   String diffAdded(int count) {
@@ -1976,7 +2089,283 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String diffShowUnchanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count unchanged lines',
+      one: 'Show 1 unchanged line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String diffUnchanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unchanged lines',
+      one: '1 unchanged line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get diffAddedMark => 'Added:';
+
+  @override
+  String get diffRemovedMark => 'Removed:';
+
+  @override
+  String get diffChangedMark => 'Changed:';
+
+  @override
+  String get diffCheckedMark => 'Checked:';
+
+  @override
+  String get diffUncheckedMark => 'Not checked:';
+
+  @override
+  String get diffRemovedTitle => 'Removed title:';
+
+  @override
+  String get diffAddedTitle => 'Added title:';
+
+  @override
+  String get revisionNotSavedLead => 'Not saved.';
+
+  @override
+  String get revisionNotSavedText =>
+      'This edit wasn’t saved because the note changed on another device first. Restore it, or copy what you need.';
+
+  @override
+  String get revisionAlreadyMatches => 'The note already matches this version';
+
+  @override
+  String get revisionRestoreFailed => 'Couldn’t restore this version';
+
+  @override
+  String get revisionRestoring => 'Restoring…';
+
+  @override
+  String get revisionBackToList => 'Back to the version list';
+
+  @override
+  String get revisionNewer => 'Newer version';
+
+  @override
+  String get revisionOlder => 'Older version';
+
+  @override
+  String revisionPosition(int index, int count) {
+    return '$index of $count';
+  }
+
+  @override
+  String get revisionGone => 'This version is no longer available.';
+
+  @override
+  String get revisionSameAsNext => 'Same text as the version after this one.';
+
+  @override
+  String get revisionSameAsCurrent => 'Same text as the current version.';
+
+  @override
+  String get revisionEmpty => 'This version is empty.';
+
+  @override
+  String shareFailed(String name) {
+    return 'Couldn’t share with $name';
+  }
+
+  @override
+  String shareAccessFor(String name) {
+    return 'Access for $name';
+  }
+
+  @override
+  String shareRevoked(String name) {
+    return '$name no longer has access';
+  }
+
+  @override
+  String shareRevokeFailed(String name) {
+    return 'Couldn’t remove access for $name';
+  }
+
+  @override
+  String shareChangeFailed(String name) {
+    return 'Couldn’t change access for $name';
+  }
+
+  @override
+  String get shareSubtitle =>
+      'People you add will see this note in their list.';
+
+  @override
+  String get shareOffline => 'Connect to the internet to share this note.';
+
+  @override
+  String get shareSearchHint => 'Add people by name or email';
+
+  @override
+  String get shareNoMatches =>
+      'No one found. Only people with an account on this server can be added.';
+
+  @override
+  String get shareRecent => 'Recently shared with';
+
+  @override
+  String get sharePeople => 'People';
+
+  @override
+  String shareAddPerson(String name) {
+    return 'Add $name';
+  }
+
+  @override
+  String get shareWithAccess => 'People with access';
+
+  @override
+  String shareYou(String name) {
+    return '$name (you)';
+  }
+
+  @override
+  String get shareOwner => 'Owner';
+
+  @override
+  String shareChangeAccess(String permission, String name) {
+    return '$permission. Change access for $name';
+  }
+
+  @override
+  String get commonOffline => 'Offline';
+
+  @override
+  String commonDeleteItem(String name) {
+    return 'Delete $name';
+  }
+
+  @override
+  String commonPosition(int index, int count) {
+    return '$index of $count';
+  }
+
+  @override
+  String get addToNote => 'Add to note';
+
+  @override
+  String get addAudioFormats =>
+      'Anchor supports MP3, WAV, M4A, OGG and AAC audio';
+
+  @override
+  String get addPhotoUnsupported =>
+      'Couldn’t add this photo. Try a JPEG or PNG.';
+
+  @override
+  String get addMicDenied => 'Allow microphone access in Settings to record';
+
+  @override
+  String get addTakePhoto => 'Take photo';
+
+  @override
+  String get addChoosePhoto => 'Choose photo';
+
+  @override
+  String get addRecordAudio => 'Record audio';
+
+  @override
+  String get addAudioFile => 'Audio file';
+
+  @override
+  String get recordingTitle => 'Recording';
+
+  @override
+  String get recordingHelp =>
+      'Speak normally. The recording stays on this phone until it uploads.';
+
+  @override
+  String get recordingReviewTitle => 'Your recording';
+
+  @override
+  String recordingReviewHelp(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seconds. Listen, then keep it or record again.',
+      one: '1 second. Listen, then keep it or record again.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recordingStoppedAtLimit =>
+      'Stopped at the maximum length. Listen, then keep it or record again.';
+
+  @override
+  String recordingElapsed(String time) {
+    return 'Recording, $time';
+  }
+
+  @override
+  String get recordingStop => 'Stop';
+
+  @override
+  String get recordingDiscard => 'Discard';
+
+  @override
+  String get recordingAgain => 'Again';
+
+  @override
+  String get voiceOffline =>
+      'This voice note will play when you’re back online';
+
+  @override
   String get voiceNote => 'Voice note';
+
+  @override
+  String get voiceLoadFailed => 'Couldn’t load';
+
+  @override
+  String get attachmentUploading => 'Uploading…';
+
+  @override
+  String get attachmentUploadFailed => 'Couldn’t upload';
+
+  @override
+  String voicePosition(String name) {
+    return 'Position in $name';
+  }
+
+  @override
+  String get pictureAllowPhotos =>
+      'Allow access to Photos in Settings to save pictures';
+
+  @override
+  String get pictureSaved => 'Saved to Photos';
+
+  @override
+  String get pictureSaveFailed => 'Couldn’t save the picture';
+
+  @override
+  String get pictureOffline => 'This picture will show when you’re back online';
+
+  @override
+  String get pictureLoadFailed => 'Couldn’t load this picture';
+
+  @override
+  String get pictureSaveToPhotos => 'Save to Photos';
+
+  @override
+  String attachmentRetry(String name) {
+    return 'Try again, $name';
+  }
+
+  @override
+  String pictureOpen(String name) {
+    return '$name, open';
+  }
 
   @override
   String get groupPinned => 'Pinned';
@@ -1986,6 +2375,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupArchived => 'Archived';
+
+  @override
+  String get noteBackground => 'Background';
+
+  @override
+  String get notePattern => 'Pattern';
+
+  @override
+  String get noteColorDefault => 'Default';
+
+  @override
+  String get patternDots => 'Dots';
+
+  @override
+  String get patternGrid => 'Grid';
+
+  @override
+  String get patternLines => 'Lines';
+
+  @override
+  String get patternWaves => 'Waves';
+
+  @override
+  String get patternGroceries => 'Groceries';
+
+  @override
+  String get patternMusic => 'Music';
+
+  @override
+  String get patternTravel => 'Travel';
+
+  @override
+  String get patternCode => 'Code';
 
   @override
   String get viewLayout => 'Layout';
@@ -2021,6 +2443,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewOldestFirst => 'Oldest first';
 
   @override
+  String get noteUnsynced => 'Changes not synced yet';
+
+  @override
+  String get noteOnThisPhone => 'On this phone';
+
+  @override
+  String get noteGone => 'This note is no longer available';
+
+  @override
+  String get reminderRemoved => 'Reminder removed';
+
+  @override
+  String get versionRestored => 'Version restored';
+
+  @override
   String get attachmentPictureAdded => 'Picture added';
 
   @override
@@ -2051,7 +2488,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attachmentAudioAddFailed => 'Couldn’t add the audio file';
 
   @override
+  String get attachmentTooBig => 'Can’t add files over 50 MB.';
+
+  @override
   String get attachmentAudioDeleted => 'Audio file deleted';
+
+  @override
+  String get audioFileOffline =>
+      'This audio file will play when you’re back online';
+
+  @override
+  String get noteTitleHint => 'Title';
 
   @override
   String get viewOrder => 'Order';
@@ -2064,6 +2511,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get slashNoResults => 'No results';
+
+  @override
+  String get noteColor => 'Color';
 
   @override
   String cardChecked(int count) {

@@ -1244,6 +1244,10 @@
   "@reminderRemove": {
     "description": "Button in the reminder sheet that deletes the note’s reminder."
   },
+  "reminderSetFailed": "Couldn’t set the reminder",
+  "@reminderSetFailed": {
+    "description": "Error shown when a reminder picked in the reminder sheet couldn’t be saved."
+  },
   "reminderNotifyTitle": "Allow notifications?",
   "@reminderNotifyTitle": {
     "description": "Title of the dialog shown before the phone asks for notification permission."
@@ -1570,9 +1574,33 @@
       }
     }
   },
+  "reminderAdd": "Add a reminder",
+  "@reminderAdd": {
+    "description": "Screen reader label of the bell button on a note without a reminder."
+  },
   "commonYesterday": "Yesterday",
   "@commonYesterday": {
     "description": "The day before today, as a date heading or on a note card."
+  },
+  "peopleCount": "{count, plural, =1{1 person} other{{count} people}}",
+  "@peopleCount": {
+    "description": "How many people a note is shared with, beside Sharing in the note’s menu.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "wordsCount": "{count, plural, =1{1 word} other{{count} words}}",
+  "@wordsCount": {
+    "description": "Number of words in the note, in the small line under its title.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "21"
+      }
+    }
   },
   "notesSelectTitle": "Select notes",
   "@notesSelectTitle": {
@@ -1618,6 +1646,10 @@
   "@shareOnlyYou": {
     "description": "Small line in the share sheet when the note isn’t shared with anyone."
   },
+  "shareLoadFailed": "Couldn’t load the people with access.",
+  "@shareLoadFailed": {
+    "description": "Notice in the share sheet when the list of people the note is shared with didn’t load, next to a Try again button."
+  },
   "shareSharedWith": "{count, plural, =1{Shared with 1 person.} other{Shared with {count} people.}}",
   "@shareSharedWith": {
     "description": "Small line in the share sheet giving how many people can see the note.",
@@ -1635,6 +1667,16 @@
       "count": {
         "type": "int",
         "example": "2"
+      }
+    }
+  },
+  "shareSharedWithNames": "Shared with {names}",
+  "@shareSharedWithNames": {
+    "description": "Under a note’s title, or in a toast after sharing; {names} holds first names.",
+    "placeholders": {
+      "names": {
+        "type": "String",
+        "example": "Ada and Ben"
       }
     }
   },
@@ -1888,6 +1930,10 @@
       }
     }
   },
+  "revisionComparedCurrent": "Compared with the current version",
+  "@revisionComparedCurrent": {
+    "description": "Shown above a version’s changes when they’re compared with the latest text."
+  },
   "revisionComparedTodayAt": "Compared with today at {time}",
   "@revisionComparedTodayAt": {
     "description": "Shown above a version’s changes: the later version they’re compared with.",
@@ -2061,6 +2107,26 @@
   "notesUnarchived": "{count, plural, =1{Note unarchived} other{{count} notes unarchived}}",
   "@notesUnarchived": {
     "description": "Toast after notes were moved out of the archive, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "itemsUnchecked": "{count, plural, =1{Item unchecked} other{{count} items unchecked}}",
+  "@itemsUnchecked": {
+    "description": "Toast after Uncheck all in a note's More menu, with an Undo button. The items are checklist items in the note.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "checkedItemsDeleted": "{count, plural, =1{Checked item deleted} other{{count} checked items deleted}}",
+  "@checkedItemsDeleted": {
+    "description": "Toast after Delete checked items in a note's More menu, with an Undo button. The items are checklist items in the note.",
     "placeholders": {
       "count": {
         "type": "int",
@@ -2325,6 +2391,48 @@
       }
     }
   },
+  "actionSharing": "Sharing",
+  "@actionSharing": {
+    "description": "The Share action when the note is already shared."
+  },
+  "actionMoveToTrash": "Move to trash",
+  "@actionMoveToTrash": {
+    "description": "Menu item that moves the open note to the trash."
+  },
+  "actionRemoveFromMine": "Remove from my notes",
+  "@actionRemoveFromMine": {
+    "description": "For a note someone else shared with the person."
+  },
+  "readOnlyInTrash": "In trash.",
+  "@readOnlyInTrash": {
+    "description": "Bold lead before a sentence about when the note will be deleted."
+  },
+  "readOnlyViewOnly": "View only.",
+  "@readOnlyViewOnly": {
+    "description": "Bold lead before a sentence about who can edit the note."
+  },
+  "readOnlyOwnerEdits": "Only the owner can edit it.",
+  "@readOnlyOwnerEdits": {
+    "description": "Follows the bold “View only.” at the bottom of a note the person can’t edit."
+  },
+  "readOnlySharedBy": "Shared by {name}.",
+  "@readOnlySharedBy": {
+    "description": "Follows the bold “View only.” at the bottom of a note someone shared with the person.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "noteArchived": "Archived",
+  "@noteArchived": {
+    "description": "Shown on a note that is in the archive."
+  },
+  "tagAdd": "Add tag",
+  "@tagAdd": {
+    "description": "Small button under the note’s title that opens the tag picker."
+  },
   "tagRemoveNamed": "Remove {tag}",
   "@tagRemoveNamed": {
     "description": "Screen reader label of the remove button on a tag chip.",
@@ -2334,6 +2442,10 @@
         "example": "work"
       }
     }
+  },
+  "starterList": "List",
+  "@starterList": {
+    "description": "Starts a bulleted list in an empty note."
   },
   "starterAttachment": "Picture or audio",
   "@starterAttachment": {
@@ -2350,6 +2462,10 @@
   "attachmentAddLabel": "Add picture or audio",
   "@attachmentAddLabel": {
     "description": "Screen reader label of the button that adds a picture or audio file to a note."
+  },
+  "attachmentAdd": "Add",
+  "@attachmentAdd": {
+    "description": "Short label on a small square tile that adds a picture or audio."
   },
   "pullOffline": "You’re offline. Your changes are saved on this phone.",
   "@pullOffline": {
@@ -2573,9 +2689,29 @@
   "@commonTryAgain": {
     "description": "Button that retries something that failed, such as a picture upload."
   },
+  "historyCurrent": "Current version",
+  "@historyCurrent": {
+    "description": "The note’s latest text, at the top of version history and as a page title."
+  },
+  "historySavedOnPhone": "Saved on this phone",
+  "@historySavedOnPhone": {
+    "description": "A note that hasn’t synced yet, so it has no edit time from the server."
+  },
   "historyNoChanges": "No changes",
   "@historyNoChanges": {
     "description": "A version that changed no lines, under its time in version history and in its title bar."
+  },
+  "historyEmptyTitle": "No earlier versions yet",
+  "@historyEmptyTitle": {
+    "description": "Empty-screen title in version history when the note has no earlier versions."
+  },
+  "historyFetchFailed": "Couldn’t check for versions from your other devices.",
+  "@historyFetchFailed": {
+    "description": "Warning in version history when loading versions from the server failed."
+  },
+  "historyOffline": "Connect to the internet to see versions from your other devices.",
+  "@historyOffline": {
+    "description": "Notice in version history while the phone is offline."
   },
   "diffAdded": "{count} added",
   "@diffAdded": {
@@ -2637,9 +2773,413 @@
       }
     }
   },
+  "diffShowUnchanged": "{count, plural, =1{Show 1 unchanged line} other{Show {count} unchanged lines}}",
+  "@diffShowUnchanged": {
+    "description": "Screen reader label of the button that shows hidden lines that didn’t change.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "diffUnchanged": "{count, plural, =1{1 unchanged line} other{{count} unchanged lines}}",
+  "@diffUnchanged": {
+    "description": "Small label standing in for lines that didn’t change between versions.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "diffAddedMark": "Added:",
+  "@diffAddedMark": {
+    "description": "Screen reader prefix before a line added in a version."
+  },
+  "diffRemovedMark": "Removed:",
+  "@diffRemovedMark": {
+    "description": "Screen reader prefix before a line removed in a version."
+  },
+  "diffChangedMark": "Changed:",
+  "@diffChangedMark": {
+    "description": "Screen reader prefix before a line changed in a version."
+  },
+  "diffCheckedMark": "Checked:",
+  "@diffCheckedMark": {
+    "description": "Screen reader prefix before a checked checklist item."
+  },
+  "diffUncheckedMark": "Not checked:",
+  "@diffUncheckedMark": {
+    "description": "Screen reader prefix before an unchecked checklist item."
+  },
+  "diffRemovedTitle": "Removed title:",
+  "@diffRemovedTitle": {
+    "description": "Screen reader prefix before a title removed in a version."
+  },
+  "diffAddedTitle": "Added title:",
+  "@diffAddedTitle": {
+    "description": "Screen reader prefix before a title added in a version."
+  },
+  "revisionNotSavedLead": "Not saved.",
+  "@revisionNotSavedLead": {
+    "description": "Bold lead of a warning on a version that couldn’t be saved."
+  },
+  "revisionNotSavedText": "This edit wasn’t saved because the note changed on another device first. Restore it, or copy what you need.",
+  "@revisionNotSavedText": {
+    "description": "Follows the bold “Not saved.” on a version that couldn’t be saved."
+  },
+  "revisionAlreadyMatches": "The note already matches this version",
+  "@revisionAlreadyMatches": {
+    "description": "Toast when restoring a version whose text is the same as the note."
+  },
+  "revisionRestoreFailed": "Couldn’t restore this version",
+  "@revisionRestoreFailed": {
+    "description": "Toast when an earlier version couldn’t be restored."
+  },
+  "revisionRestoring": "Restoring…",
+  "@revisionRestoring": {
+    "description": "Text on the Restore button while an earlier version is restored."
+  },
+  "revisionBackToList": "Back to the version list",
+  "@revisionBackToList": {
+    "description": "Screen reader label of the back button on a version page."
+  },
+  "revisionNewer": "Newer version",
+  "@revisionNewer": {
+    "description": "Screen reader label of the up arrow that shows the next newer version."
+  },
+  "revisionOlder": "Older version",
+  "@revisionOlder": {
+    "description": "Screen reader label of the down arrow that shows the next older version."
+  },
+  "revisionPosition": "{index} of {count}",
+  "@revisionPosition": {
+    "description": "Which version is shown, such as “2 of 5”.",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "2"
+      },
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "revisionGone": "This version is no longer available.",
+  "@revisionGone": {
+    "description": "Shown on a version page when that version was deleted."
+  },
+  "revisionSameAsNext": "Same text as the version after this one.",
+  "@revisionSameAsNext": {
+    "description": "Shown above a version whose text matches the next newer version."
+  },
+  "revisionSameAsCurrent": "Same text as the current version.",
+  "@revisionSameAsCurrent": {
+    "description": "Shown above a version whose text matches the note’s latest text."
+  },
+  "revisionEmpty": "This version is empty.",
+  "@revisionEmpty": {
+    "description": "Shown on a version page when that version has no text."
+  },
+  "shareFailed": "Couldn’t share with {name}",
+  "@shareFailed": {
+    "description": "Toast when sharing a note with a person failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareAccessFor": "Access for {name}",
+  "@shareAccessFor": {
+    "description": "Screen reader name of the menu that changes someone’s access.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "shareRevoked": "{name} no longer has access",
+  "@shareRevoked": {
+    "description": "Toast after a person was removed from a shared note, with an Undo button.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareRevokeFailed": "Couldn’t remove access for {name}",
+  "@shareRevokeFailed": {
+    "description": "Toast when removing a person from a shared note failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareChangeFailed": "Couldn’t change access for {name}",
+  "@shareChangeFailed": {
+    "description": "Toast when changing a person’s access to a shared note failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareSubtitle": "People you add will see this note in their list.",
+  "@shareSubtitle": {
+    "description": "Under the share sheet title."
+  },
+  "shareOffline": "Connect to the internet to share this note.",
+  "@shareOffline": {
+    "description": "Under the share sheet title while the phone is offline."
+  },
+  "shareSearchHint": "Add people by name or email",
+  "@shareSearchHint": {
+    "description": "Hint inside the empty field of the share sheet that finds people."
+  },
+  "shareNoMatches": "No one found. Only people with an account on this server can be added.",
+  "@shareNoMatches": {
+    "description": "Shown in the share sheet when the search finds no one."
+  },
+  "shareRecent": "Recently shared with",
+  "@shareRecent": {
+    "description": "Section label in the share sheet for people the person shared with before."
+  },
+  "sharePeople": "People",
+  "@sharePeople": {
+    "description": "Section label in the share sheet for people found by the search."
+  },
+  "shareAddPerson": "Add {name}",
+  "@shareAddPerson": {
+    "description": "Screen reader label of a person in the share search results.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "shareWithAccess": "People with access",
+  "@shareWithAccess": {
+    "description": "Section label in the share sheet for everyone who can see the note."
+  },
+  "shareYou": "{name} (you)",
+  "@shareYou": {
+    "description": "The person’s own name in the share sheet’s list of people.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "shareOwner": "Owner",
+  "@shareOwner": {
+    "description": "Noun beside the person’s own name in the share sheet: they own the note."
+  },
+  "shareChangeAccess": "{permission}. Change access for {name}",
+  "@shareChangeAccess": {
+    "description": "Screen reader label of the access button, such as “Can edit. Change access for Ada Lovelace”.",
+    "placeholders": {
+      "permission": {
+        "type": "String",
+        "example": "Can edit"
+      },
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "commonOffline": "Offline",
+  "@commonOffline": {
+    "description": "Small label on a picture that can’t load while the phone is offline."
+  },
+  "commonDeleteItem": "Delete {name}",
+  "@commonDeleteItem": {
+    "description": "Screen reader label of the delete button on an attachment.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "photo.jpg"
+      }
+    }
+  },
+  "commonPosition": "{index} of {count}",
+  "@commonPosition": {
+    "description": "Which picture is shown, such as “2 of 5”.",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "2"
+      },
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "addToNote": "Add to note",
+  "@addToNote": {
+    "description": "Title of the sheet with options to add a picture or audio to a note."
+  },
+  "addAudioFormats": "Anchor supports MP3, WAV, M4A, OGG and AAC audio",
+  "@addAudioFormats": {
+    "description": "Toast when the picked audio file is a type the app can’t play."
+  },
+  "addPhotoUnsupported": "Couldn’t add this photo. Try a JPEG or PNG.",
+  "@addPhotoUnsupported": {
+    "description": "Toast when the picked photo is in a format the phone couldn’t read or convert."
+  },
+  "addMicDenied": "Allow microphone access in Settings to record",
+  "@addMicDenied": {
+    "description": "Toast when recording is blocked because the app has no microphone permission."
+  },
+  "addTakePhoto": "Take photo",
+  "@addTakePhoto": {
+    "description": "Option that opens the camera to take a photo for the note."
+  },
+  "addChoosePhoto": "Choose photo",
+  "@addChoosePhoto": {
+    "description": "Option that picks a photo from the phone’s photo library to add to the note."
+  },
+  "addRecordAudio": "Record audio",
+  "@addRecordAudio": {
+    "description": "Option that starts recording a voice note."
+  },
+  "addAudioFile": "Audio file",
+  "@addAudioFile": {
+    "description": "Noun: option that picks an audio file stored on the phone."
+  },
+  "recordingTitle": "Recording",
+  "@recordingTitle": {
+    "description": "Noun: title of the sheet while a voice note is being recorded."
+  },
+  "recordingHelp": "Speak normally. The recording stays on this phone until it uploads.",
+  "@recordingHelp": {
+    "description": "Under the title while a voice note is being recorded."
+  },
+  "recordingReviewTitle": "Your recording",
+  "@recordingReviewTitle": {
+    "description": "Title of the sheet after recording, where the person listens before keeping it."
+  },
+  "recordingReviewHelp": "{count, plural, =1{1 second. Listen, then keep it or record again.} other{{count} seconds. Listen, then keep it or record again.}}",
+  "@recordingReviewHelp": {
+    "description": "Under the title after recording; {count} is the length in seconds.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "recordingStoppedAtLimit": "Stopped at the maximum length. Listen, then keep it or record again.",
+  "@recordingStoppedAtLimit": {
+    "description": "Under the title after a recording stopped by itself at the longest length a note can hold, about 70 minutes."
+  },
+  "recordingElapsed": "Recording, {time}",
+  "@recordingElapsed": {
+    "description": "Screen reader text while recording. {time} is minutes and seconds, such as 0:12.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:12"
+      }
+    }
+  },
+  "recordingStop": "Stop",
+  "@recordingStop": {
+    "description": "Verb: button that ends the recording."
+  },
+  "recordingDiscard": "Discard",
+  "@recordingDiscard": {
+    "description": "Button that throws away the recording without adding it to the note."
+  },
+  "recordingAgain": "Again",
+  "@recordingAgain": {
+    "description": "Records the audio again. Keep it short, it shares a row with two other buttons."
+  },
+  "voiceOffline": "This voice note will play when you’re back online",
+  "@voiceOffline": {
+    "description": "Toast when the person plays a voice note that hasn’t downloaded while offline."
+  },
   "voiceNote": "Voice note",
   "@voiceNote": {
     "description": "Name of an audio recording made in the app."
+  },
+  "voiceLoadFailed": "Couldn’t load",
+  "@voiceLoadFailed": {
+    "description": "Short line on a voice note card when its audio couldn’t load."
+  },
+  "attachmentUploading": "Uploading…",
+  "@attachmentUploading": {
+    "description": "Short line on a voice note or audio file card while it uploads."
+  },
+  "attachmentUploadFailed": "Couldn’t upload",
+  "@attachmentUploadFailed": {
+    "description": "Short line on a voice note or audio file card when the server didn’t take it. A Try again button sits under it."
+  },
+  "voicePosition": "Position in {name}",
+  "@voicePosition": {
+    "description": "Screen reader name of the playback slider.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Voice note"
+      }
+    }
+  },
+  "pictureAllowPhotos": "Allow access to Photos in Settings to save pictures",
+  "@pictureAllowPhotos": {
+    "description": "Toast when saving a picture is blocked because the app has no Photos permission."
+  },
+  "pictureSaved": "Saved to Photos",
+  "@pictureSaved": {
+    "description": "Toast after a picture was saved to the phone’s photo library."
+  },
+  "pictureSaveFailed": "Couldn’t save the picture",
+  "@pictureSaveFailed": {
+    "description": "Toast when saving a picture to the phone’s photo library failed."
+  },
+  "pictureOffline": "This picture will show when you’re back online",
+  "@pictureOffline": {
+    "description": "Shown in the picture viewer when a picture can’t load while offline."
+  },
+  "pictureLoadFailed": "Couldn’t load this picture",
+  "@pictureLoadFailed": {
+    "description": "Shown in the picture viewer when a picture didn’t download while online, above a Try again button."
+  },
+  "pictureSaveToPhotos": "Save to Photos",
+  "@pictureSaveToPhotos": {
+    "description": "Screen reader label of the download button in the picture viewer."
+  },
+  "attachmentRetry": "Try again, {name}",
+  "@attachmentRetry": {
+    "description": "Screen reader label of the retry button on a picture, voice note or audio file that didn’t upload or download.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "photo.jpg"
+      }
+    }
+  },
+  "pictureOpen": "{name}, open",
+  "@pictureOpen": {
+    "description": "Screen reader label of a picture in a note.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "photo.jpg"
+      }
+    }
   },
   "groupPinned": "Pinned",
   "@groupPinned": {
@@ -2652,6 +3192,50 @@
   "groupArchived": "Archived",
   "@groupArchived": {
     "description": "Heading of the archived notes listed below the others in search results and on a tag's page, with their count. On a tag's page it can be tapped to show or hide them."
+  },
+  "noteBackground": "Background",
+  "@noteBackground": {
+    "description": "The note’s color or pattern."
+  },
+  "notePattern": "Pattern",
+  "@notePattern": {
+    "description": "Section label for note backgrounds with a repeating pattern."
+  },
+  "noteColorDefault": "Default",
+  "@noteColorDefault": {
+    "description": "The note background with no color."
+  },
+  "patternDots": "Dots",
+  "@patternDots": {
+    "description": "Note background pattern made of small dots."
+  },
+  "patternGrid": "Grid",
+  "@patternGrid": {
+    "description": "Note background pattern of squares, like graph paper."
+  },
+  "patternLines": "Lines",
+  "@patternLines": {
+    "description": "Note background pattern of lines, like ruled paper."
+  },
+  "patternWaves": "Waves",
+  "@patternWaves": {
+    "description": "Note background pattern of wavy lines."
+  },
+  "patternGroceries": "Groceries",
+  "@patternGroceries": {
+    "description": "Note background pattern of small shopping bag drawings."
+  },
+  "patternMusic": "Music",
+  "@patternMusic": {
+    "description": "Note background pattern of small music note drawings."
+  },
+  "patternTravel": "Travel",
+  "@patternTravel": {
+    "description": "Note background pattern of small airplane drawings."
+  },
+  "patternCode": "Code",
+  "@patternCode": {
+    "description": "Note background pattern of small computer code symbols."
   },
   "viewLayout": "Layout",
   "@viewLayout": {
@@ -2697,6 +3281,26 @@
   "@viewOldestFirst": {
     "description": "Sort direction for dates, earliest first. Short: one of two tabs in a row."
   },
+  "noteUnsynced": "Changes not synced yet",
+  "@noteUnsynced": {
+    "description": "Screen reader label of the mark on a note that has changes only on this phone."
+  },
+  "noteOnThisPhone": "On this phone",
+  "@noteOnThisPhone": {
+    "description": "Short label in the note’s top bar while its changes haven’t synced yet."
+  },
+  "noteGone": "This note is no longer available",
+  "@noteGone": {
+    "description": "Toast when the open note was deleted or unshared elsewhere."
+  },
+  "reminderRemoved": "Reminder removed",
+  "@reminderRemoved": {
+    "description": "Toast after a note’s reminder was removed, with an Undo button."
+  },
+  "versionRestored": "Version restored",
+  "@versionRestored": {
+    "description": "Toast after an earlier version of the note was restored, with an Undo button."
+  },
   "attachmentPictureAdded": "Picture added",
   "@attachmentPictureAdded": {
     "description": "Toast after a picture was added to a note."
@@ -2733,9 +3337,21 @@
   "@attachmentAudioAddFailed": {
     "description": "Toast when an audio file from the phone couldn’t be added to a note."
   },
+  "attachmentTooBig": "Can’t add files over 50 MB.",
+  "@attachmentTooBig": {
+    "description": "Error toast when a picture, voice note or audio file is bigger than the server takes, so it isn’t added to the note."
+  },
   "attachmentAudioDeleted": "Audio file deleted",
   "@attachmentAudioDeleted": {
     "description": "Toast after an audio file was removed from a note, with an Undo button."
+  },
+  "audioFileOffline": "This audio file will play when you’re back online",
+  "@audioFileOffline": {
+    "description": "Toast when the person plays an audio file that hasn’t downloaded while offline."
+  },
+  "noteTitleHint": "Title",
+  "@noteTitleHint": {
+    "description": "Placeholder of the note title."
   },
   "viewOrder": "Order",
   "@viewOrder": {
@@ -2752,6 +3368,10 @@
   "slashNoResults": "No results",
   "@slashNoResults": {
     "description": "Shown in the slash menu when nothing matches."
+  },
+  "noteColor": "Color",
+  "@noteColor": {
+    "description": "Section label for note background colors."
   },
   "cardChecked": "{count, plural, =1{1 done} other{{count} done}}",
   "@cardChecked": {
