@@ -42,7 +42,6 @@ class NotesWidgetProvider : AppWidgetProvider() {
             R.id.widget_empty,
             context.getString(if (loggedIn) R.string.widget_empty else R.string.widget_logged_out),
         )
-        // Creating a note needs an account; the "+" can't act while logged out.
         views.setViewVisibility(R.id.widget_new_note, if (loggedIn) View.VISIBLE else View.GONE)
 
         views.setOnClickPendingIntent(

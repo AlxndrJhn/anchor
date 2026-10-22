@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Mirrors the app's "Deep Ocean & Sand" dark palette (lib/core/theme/app_theme.dart). -->
+<!-- Must match AnchorColors.dark from design/tokens. -->
 <resources>
-    <color name="widget_bg">#1C1E26</color>
-    <color name="widget_item_bg">#262A36</color>
+    <color name="widget_bg">#111214</color>
+    <color name="widget_item_bg">#1C1D21</color>
+    <color name="widget_item_edge">#2D2E33</color>
     <color name="widget_text_primary">#EAEAEA</color>
-    <color name="widget_text_secondary">#99EAEAEA</color>
-    <color name="widget_accent">#EF8354</color>
-    <color name="widget_on_accent">#FFFFFF</color>
+    <color name="widget_text_secondary">#9CA8B8</color>
+    <color name="widget_inverse">#E4E6EB</color>
+    <color name="widget_on_inverse">#111214</color>
     <color name="widget_ripple">#33EAEAEA</color>
+    <color name="widget_inverse_ripple">#1F111214</color>
 </resources>

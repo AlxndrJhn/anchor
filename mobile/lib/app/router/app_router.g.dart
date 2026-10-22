@@ -21,7 +21,7 @@ final class GoRouterProvider
         argument: null,
         retry: null,
         name: r'goRouterProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,4 +48,4 @@ final class GoRouterProvider
   }
 }
 
-String _$goRouterHash() => r'd915d911ac9ec28e14b5bb44e6fd26f6c16bd27c';
+String _$goRouterHash() => r'71eff86c9ddc001e36e62be27bcda1026b028ae5';

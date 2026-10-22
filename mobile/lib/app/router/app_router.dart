@@ -1,32 +1,45 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../legacy/features/auth/presentation/login_screen.dart';
-import '../../legacy/features/auth/presentation/register_screen.dart';
-import '../../legacy/features/auth/presentation/change_password_screen.dart';
-import '../../legacy/features/auth/presentation/edit_profile_screen.dart';
-import '../../legacy/features/notes/domain/note.dart';
-import '../../legacy/features/notes/presentation/notes_list_screen.dart';
-import '../../legacy/features/notes/presentation/note_edit_screen.dart';
-import '../../legacy/features/notes/presentation/note_history_screen.dart';
-import '../../legacy/features/notes/presentation/note_revision_screen.dart';
-import '../../features/notes/presentation/trash_screen.dart';
-import '../../features/notes/presentation/archive_screen.dart';
-import '../../core/app_initializer.dart';
-import '../../core/presentation/server_config_screen.dart';
-import '../../legacy/features/settings/presentation/settings_screen.dart';
-import '../../legacy/features/settings/presentation/log_viewer_screen.dart';
-import '../../legacy/features/auth/presentation/auth_controller.dart';
+
 import '../../core/network/server_config_provider.dart';
-import '../../core/router/app_routes.dart';
+import '../../features/auth/presentation/auth_controller.dart';
+import '../../features/auth/presentation/change_password_screen.dart';
+import '../../features/auth/presentation/edit_profile_screen.dart';
+import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/register_screen.dart';
+import '../../features/notes/domain/note.dart';
+import '../../features/notes/presentation/note_edit_screen.dart';
+import '../../features/notes/presentation/note_folder.dart';
+import '../../features/notes/presentation/note_history_screen.dart';
+import '../../features/notes/presentation/note_morph_route.dart';
+import '../../features/notes/presentation/note_revision_screen.dart';
+import '../../features/notes/presentation/notes_list_screen.dart';
+import '../../features/server/presentation/server_config_screen.dart';
+import '../../features/settings/presentation/log_viewer_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
+import '../app_bootstrap.dart';
+import 'app_routes.dart';
 
 part 'app_router.g.dart';
 
-@riverpod
+const _notePath = 'note/:id';
+const _newNotePath = 'note/new';
+const _historyPath = 'history';
+const _revisionPath = ':revisionId';
+const _trashPath = 'trash';
+const _archivePath = 'archive';
+const _settingsPath = 'settings';
+const _changePasswordPath = 'change-password';
+const _editProfilePath = 'edit-profile';
+const _logsPath = 'logs';
+const _widgetNotePath = '/widget/note/:id';
+
+@Riverpod(keepAlive: true)
 GoRouter goRouter(Ref ref) {
   final routerKey = GlobalKey<NavigatorState>(debugLabel: 'routerKey');
 
-  // Create listenables for auth and config state
   final authStateNotifier = ValueNotifier<AsyncValue<void>>(
     const AsyncLoading(),
   );
@@ -34,7 +47,6 @@ GoRouter goRouter(Ref ref) {
     const AsyncLoading(),
   );
 
-  // Update notifiers when providers change
   ref.listen(
     authControllerProvider,
     (_, next) => authStateNotifier.value = next,
@@ -44,10 +56,13 @@ GoRouter goRouter(Ref ref) {
     (_, next) => configStateNotifier.value = next,
   );
 
-  // Merge listenables to trigger router refresh
+  String showFolder(NoteFolder folder) {
+    ref.read(noteFolderProvider.notifier).go(folder);
+    return AppRoutes.home;
+  }
+
   final listenable = Listenable.merge([authStateNotifier, configStateNotifier]);
 
-  // Clean up notifiers when the provider is disposed
   ref.onDispose(() {
     authStateNotifier.dispose();
     configStateNotifier.dispose();
@@ -55,9 +70,9 @@ GoRouter goRouter(Ref ref) {
 
   return GoRouter(
     navigatorKey: routerKey,
-    initialLocation: initialRoute,
+    initialLocation: ref.read(appBootstrapProvider).initialRoute,
     refreshListenable: listenable,
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: kDebugMode,
     routes: [
       GoRoute(
         path: AppRoutes.serverConfig,
@@ -71,27 +86,32 @@ GoRouter goRouter(Ref ref) {
         builder: (context, state) => const NotesListScreen(),
         routes: [
           GoRoute(
-            path: AppRoutes.noteNew,
-            builder: (context, state) => const NoteEditScreen(),
+            path: _newNotePath,
+            pageBuilder: (context, state) => const NoteMorphPage(
+              key: ValueKey('note/new'),
+              child: NoteEditScreen(),
+            ),
           ),
           GoRoute(
-            path: AppRoutes.noteEdit,
+            path: _notePath,
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'];
               final note = state.extra as Note?;
-              return MaterialPage(
+              return NoteMorphPage(
                 key: ValueKey('note/$id'),
+                noteId: id,
+                backgroundId: note?.background,
                 child: NoteEditScreen(noteId: id, note: note),
               );
             },
             routes: [
               GoRoute(
-                path: AppRoutes.noteHistory,
+                path: _historyPath,
                 builder: (context, state) =>
                     NoteHistoryScreen(noteId: state.pathParameters['id']!),
                 routes: [
                   GoRoute(
-                    path: AppRoutes.noteRevision,
+                    path: _revisionPath,
                     builder: (context, state) => NoteRevisionScreen(
                       noteId: state.pathParameters['id']!,
                       revisionId: state.pathParameters['revisionId']!,
@@ -102,27 +122,27 @@ GoRouter goRouter(Ref ref) {
             ],
           ),
           GoRoute(
-            path: AppRoutes.trash,
-            builder: (context, state) => const TrashScreen(),
+            path: _trashPath,
+            redirect: (_, _) => showFolder(NoteFolder.trash),
           ),
           GoRoute(
-            path: AppRoutes.archive,
-            builder: (context, state) => const ArchiveScreen(),
+            path: _archivePath,
+            redirect: (_, _) => showFolder(NoteFolder.archive),
           ),
           GoRoute(
-            path: AppRoutes.settings,
+            path: _settingsPath,
             builder: (context, state) => const SettingsScreen(),
             routes: [
               GoRoute(
-                path: AppRoutes.changePassword,
+                path: _changePasswordPath,
                 builder: (context, state) => const ChangePasswordScreen(),
               ),
               GoRoute(
-                path: AppRoutes.editProfile,
+                path: _editProfilePath,
                 builder: (context, state) => const EditProfileScreen(),
               ),
               GoRoute(
-                path: AppRoutes.viewLogs,
+                path: _logsPath,
                 builder: (context, state) => const LogViewerScreen(),
               ),
             ],
@@ -138,7 +158,7 @@ GoRouter goRouter(Ref ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
-        path: AppRoutes.widgetNoteNew,
+        path: AppRoutes.widgetNewNote,
         pageBuilder: (context, state) {
           return MaterialPage(
             key: ValueKey('widget-note-new/${state.uri.query}'),
@@ -147,7 +167,7 @@ GoRouter goRouter(Ref ref) {
         },
       ),
       GoRoute(
-        path: AppRoutes.widgetNote,
+        path: _widgetNotePath,
         pageBuilder: (context, state) {
           final id = state.pathParameters['id'];
           return MaterialPage(
@@ -164,10 +184,6 @@ GoRouter goRouter(Ref ref) {
       final isAuthLoading = authState.isLoading;
       final isConfigLoading = configState.isLoading;
 
-      // While the initial state loads (local storage reads, no network) stay
-      // on the pre-computed initial route. This also prevents redirecting
-      // while a specialized loading state (like signing in) is active,
-      // preserving user input on the screen.
       if (isAuthLoading || isConfigLoading) {
         return null;
       }
@@ -179,22 +195,17 @@ GoRouter goRouter(Ref ref) {
       final isLogin = state.matchedLocation == AppRoutes.login;
       final isRegister = state.matchedLocation == AppRoutes.register;
 
-      // 1. Server Config Check
       if (!hasServerUrl) {
         return isServerConfig ? null : AppRoutes.serverConfig;
       }
 
-      // 2. Auth Check
       if (!isLoggedIn) {
-        // Allow login, register, and server config screens
         if (isLogin || isRegister || isServerConfig) {
           return null;
         }
         return AppRoutes.login;
       }
 
-      // 3. Logged In
-      // Redirect login and register to home
       if (isLogin || isRegister) {
         return AppRoutes.home;
       }

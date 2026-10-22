@@ -6,8 +6,12 @@
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+		</array>
 		<key>CFBundleDisplayName</key>
-		<string>Anchor</string>
+		<string>Anchor Notes</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -38,15 +42,15 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSAppleMusicUsageDescription</key>
-		<string>Anchor needs access to your music library to attach audio files to notes.</string>
+		<string>Anchor uses your music library to add audio files to notes.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>Anchor needs camera access to take photos and attach them to notes.</string>
+		<string>Anchor uses the camera to take pictures for your notes and your profile photo.</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>Anchor needs microphone access to record audio notes.</string>
+		<string>Anchor uses the microphone to record voice notes.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>Anchor needs access to save images to your photo library.</string>
+		<string>Anchor saves pictures from your notes to your photo library.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Anchor needs photo library access to attach images to notes.</string>
+		<string>Anchor uses your photo library to add pictures to notes and to choose your profile photo.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>
