@@ -26,6 +26,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { useHighlightPaint } from "@/lib/highlight-paint";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
 import { isPhoneWidth, useIsPhone } from "@/lib/hooks/use-is-phone";
+import { useNearScreen } from "@/lib/hooks/use-near-screen";
 import { cn } from "@/lib/utils";
 import { getNoteRevision, getNoteRevisions, restoreNoteRevision } from "../api";
 import {
@@ -49,6 +50,8 @@ import {
   diffVersions,
   type Fold,
   foldLines,
+  lineCounts,
+  splitChangedLines,
   type VersionLine,
   type WordPart,
 } from "../version-diff";
@@ -142,6 +145,12 @@ export function HistoryView(props: HistoryViewProps) {
     ? (detail.data?.title ?? entry?.title ?? "")
     : props.title;
   const titleChanged = !!diff && draftTitle(title) !== draftTitle(nextTitle);
+  // Edited lines show as the old line removed and the new one added.
+  const diffLines = React.useMemo(
+    () => (diff ? splitChangedLines(diff.lines) : []),
+    [diff],
+  );
+  const counts = diff ? lineCounts(diff, titleChanged) : null;
   const blocks = React.useMemo(
     () => (revision ? [] : deltaToBlocks(props.content)),
     [revision, props.content],
@@ -250,19 +259,15 @@ export function HistoryView(props: HistoryViewProps) {
 
   const versionView = (
     <div className="hs-paper">
-      {diff && (diff.added || diff.removed || diff.changed || titleChanged) ? (
+      {counts && (counts.added || counts.removed) ? (
         <div className="hs-legend">
           <span className="lg add">
             <span className="sg">+</span>
-            {diff.added} added
+            {counts.added} added
           </span>
           <span className="lg del">
             <span className="sg">−</span>
-            {diff.removed} removed
-          </span>
-          <span className="lg chg">
-            <span className="sg">±</span>
-            {diff.changed + (titleChanged ? 1 : 0)} changed
+            {counts.removed} removed
           </span>
           <span className="vs">
             Compared with{" "}
@@ -319,9 +324,9 @@ export function HistoryView(props: HistoryViewProps) {
               </p>
             )}
           {revision ? (
-            diff?.lines.length ? (
+            diffLines.length ? (
               <VersionBody
-                lines={diff.lines}
+                lines={diffLines}
                 open={new Set(unfolded[selectedId] ?? [])}
                 onOpen={(fold) =>
                   setUnfolded((prev) => ({
@@ -481,6 +486,17 @@ export function HistoryView(props: HistoryViewProps) {
           onRetry={() => void pages.refetch()}
           onMore={() => void pages.fetchNextPage()}
           onPick={(id) => showVersion(id, false)}
+          countsFor={(entry) =>
+            entry.revision && (
+              <VersionCounts
+                noteId={props.noteId}
+                revisionId={entry.revision.id}
+                comparedId={comparisonTargetId(revisions, entry.revision.id)}
+                currentTitle={props.title}
+                currentContent={props.content}
+              />
+            )
+          }
         />
         <div className="hs-foot">
           <span className="hs-keys">
@@ -514,6 +530,7 @@ function VersionList({
   onRetry,
   onMore,
   onPick,
+  countsFor,
 }: {
   listRef: React.RefObject<HTMLDivElement | null>;
   entries: TimelineEntry[];
@@ -530,6 +547,8 @@ function VersionList({
   onRetry: () => void;
   onMore: () => void;
   onPick: (id: string) => void;
+  /** A version's added and removed line counts. */
+  countsFor: (entry: TimelineEntry) => React.ReactNode;
 }) {
   const endRef = React.useRef<HTMLDivElement>(null);
   const showLoadingShapes = useDelayedFlag(loading);
@@ -635,6 +654,7 @@ function VersionList({
                         <span>{revisionAuthorName(entry, currentUserId)}</span>
                       )}
                     </span>
+                    {countsFor(entry)}
                   </>,
                   entry.revision?.cause,
                 ),
@@ -673,6 +693,65 @@ function VersionList({
         </EmptyState>
       )}
     </>
+  );
+}
+
+/**
+ * A version's "+added −removed" line counts in the list, fetched once its
+ * row comes near the screen.
+ */
+function VersionCounts({
+  noteId,
+  revisionId,
+  comparedId,
+  currentTitle,
+  currentContent,
+}: {
+  noteId: string;
+  revisionId: string;
+  comparedId: string | null;
+  currentTitle: string;
+  currentContent: string;
+}) {
+  const ref = React.useRef<HTMLSpanElement>(null);
+  const near = useNearScreen(ref);
+  const version = useQuery({
+    queryKey: ["note-revisions", noteId, revisionId],
+    queryFn: () => getNoteRevision(noteId, revisionId),
+    enabled: near,
+  });
+  const compared = useQuery({
+    queryKey: ["note-revisions", noteId, comparedId],
+    queryFn: () => getNoteRevision(noteId, comparedId as string),
+    enabled: near && !!comparedId,
+  });
+  const nextTitle = comparedId ? compared.data?.title : currentTitle;
+  const nextContent = comparedId ? compared.data?.content : currentContent;
+  const ready = !!version.data && (!comparedId || !!compared.data);
+  const counts = React.useMemo(() => {
+    if (!ready || !version.data) return null;
+    const diff = diffVersions(version.data.content, nextContent);
+    return lineCounts(
+      diff,
+      draftTitle(version.data.title) !== draftTitle(nextTitle ?? ""),
+    );
+  }, [ready, version.data, nextContent, nextTitle]);
+  return (
+    <span ref={ref} className="hs-counts">
+      {counts && (counts.added > 0 || counts.removed > 0) && (
+        <>
+          <span className="add" aria-hidden>
+            +{counts.added}
+          </span>
+          <span className="del" aria-hidden>
+            −{counts.removed}
+          </span>
+          <span className="sr-only">
+            {counts.added} lines added, {counts.removed} removed
+          </span>
+        </>
+      )}
+    </span>
   );
 }
 
@@ -856,10 +935,12 @@ function MarkLabel({ kind }: { kind: VersionLine["kind"] }) {
 }
 
 function LineText({ line }: { line: VersionLine }) {
-  if (line.kind !== "changed")
-    return <TextRuns runs={line.block.runs} card={false} />;
+  if (!line.words) return <TextRuns runs={line.block.runs} card={false} />;
+  // An edited line's old half shows what went, its new half what came.
+  const skip =
+    line.kind === "removed" ? "ins" : line.kind === "added" ? "del" : null;
   return line.words.map((word: WordPart, i) =>
-    word.kind === "same" ? (
+    word.kind === skip ? null : word.kind === "same" ? (
       <React.Fragment key={i}>{word.text}</React.Fragment>
     ) : word.kind === "del" ? (
       <del key={i}>{word.text}</del>

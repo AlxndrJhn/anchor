@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { QuillOp } from "./quill";
-import { diffVersions, diffWords, foldLines } from "./version-diff";
+import {
+  diffVersions,
+  diffWords,
+  foldLines,
+  lineCounts,
+  splitChangedLines,
+} from "./version-diff";
 
 interface Line {
   text: string;
@@ -144,5 +150,28 @@ describe("foldLines", () => {
   it("opens a fold that was opened", () => {
     const sample = lines("same", "same", "same", "same", "same", "added");
     expect(foldLines(sample, new Set([0, 1, 2]))).toEqual([0, 1, 2, 3, 4, 5]);
+  });
+});
+
+describe("splitChangedLines", () => {
+  it("shows an edited line as the old line removed and the new one added", () => {
+    const diff = diffVersions(
+      doc("Shopping", "Buy milk today"),
+      doc("Shopping", "Buy oat milk today"),
+    );
+    const lines = splitChangedLines(diff.lines);
+    expect(lines.map((l) => l.kind)).toEqual(["same", "removed", "added"]);
+    expect(lines[1].block.runs[0].text).toBe("Buy milk today");
+    expect(lines[2].block.runs[0].text).toBe("Buy oat milk today");
+    expect(lines[2].words?.some((w) => w.kind === "ins")).toBe(true);
+  });
+
+  it("counts an edited line, and an edited title, as one added and one removed", () => {
+    const diff = diffVersions(
+      doc("Buy milk today", "Call mum"),
+      doc("Buy oat milk today", "Pay rent"),
+    );
+    expect(lineCounts(diff)).toEqual({ added: 2, removed: 2 });
+    expect(lineCounts(diff, true)).toEqual({ added: 3, removed: 3 });
   });
 });

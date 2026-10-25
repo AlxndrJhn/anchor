@@ -6,8 +6,13 @@ export interface WordPart {
 }
 
 export type VersionLine =
-  | { kind: "same" | "removed" | "added"; block: NoteBlock }
-  | { kind: "changed"; block: NoteBlock; words: WordPart[] };
+  | {
+      kind: "same" | "removed" | "added";
+      block: NoteBlock;
+      /** On a split edited line: its word changes. */
+      words?: WordPart[];
+    }
+  | { kind: "changed"; block: NoteBlock; after: NoteBlock; words: WordPart[] };
 
 export interface VersionDiff {
   lines: VersionLine[];
@@ -137,6 +142,7 @@ export function diffVersions(
       return {
         kind: "changed",
         block: line.block,
+        after: added[match].block,
         words: diffWords(textOf(line.block), textOf(added[match].block)),
       };
     });
@@ -154,6 +160,28 @@ export function diffVersions(
     removed: lines.filter((line) => line.kind === "removed").length,
     changed: lines.filter((line) => line.kind === "changed").length,
   };
+}
+
+/**
+ * The diff with each edited line shown as its old line, removed, then its
+ * new line, added, the way `git diff` shows them. Both keep their word
+ * changes.
+ */
+export function splitChangedLines(lines: VersionLine[]): VersionLine[] {
+  return lines.flatMap((line): VersionLine[] =>
+    line.kind === "changed"
+      ? [
+          { kind: "removed", block: line.block, words: line.words },
+          { kind: "added", block: line.after, words: line.words },
+        ]
+      : [line],
+  );
+}
+
+/** How many lines a version adds and removes, an edited line counting as one of each. */
+export function lineCounts(diff: VersionDiff, titleChanged = false) {
+  const edited = diff.changed + (titleChanged ? 1 : 0);
+  return { added: diff.added + edited, removed: diff.removed + edited };
 }
 
 /** `open` holds the indexes of lines opened. */
