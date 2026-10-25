@@ -17,6 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Switch } from "@/components/ui/switch";
 import type { SortBy, SortOrder, ViewMode } from "@/features/preferences";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,8 @@ interface ViewOptionsProps {
   sortOrder: SortOrder;
   onLayout: (layout: ViewMode) => void;
   onSort: (sortBy: SortBy, sortOrder: SortOrder) => void;
+  showPictures: boolean;
+  onShowPictures: (show: boolean) => void;
 }
 
 const ORDER_OPTIONS: Record<SortBy, [SortOrder, string][]> = {
@@ -52,6 +55,8 @@ export function ViewOptions({
   sortOrder,
   onLayout,
   onSort,
+  showPictures,
+  onShowPictures,
 }: ViewOptionsProps) {
   return (
     <Popover>
@@ -103,6 +108,16 @@ export function ViewOptions({
             label,
           }))}
         />
+        <div className="flex items-center justify-between gap-3 border-0 border-border border-t border-solid pt-3 text-ui">
+          <label htmlFor="cards-pictures" className="cursor-pointer">
+            Pictures on cards
+          </label>
+          <Switch
+            id="cards-pictures"
+            checked={showPictures}
+            onCheckedChange={onShowPictures}
+          />
+        </div>
       </PopoverContent>
     </Popover>
   );

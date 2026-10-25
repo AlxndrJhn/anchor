@@ -34,6 +34,8 @@ export function NoteListActions({
         sortOrder={list.sortOrder}
         onLayout={list.setLayout}
         onSort={list.setSort}
+        showPictures={list.showPictures}
+        onShowPictures={list.setShowPictures}
       />
       <TopBarButton
         icon={<CircleCheck aria-hidden />}

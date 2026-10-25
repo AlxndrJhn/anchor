@@ -13,6 +13,8 @@ interface NotesPreferences {
   viewMode: ViewMode;
   sortBy: SortBy;
   sortOrder: SortOrder;
+  /** Pictures across the top of note cards. Unset (older saves) means on. */
+  showPictures?: boolean;
 }
 
 interface EditorPreferences {
@@ -45,6 +47,7 @@ const defaultNotesPreferences: NotesPreferences = {
   viewMode: "masonry",
   sortBy: "updatedAt",
   sortOrder: "desc",
+  showPictures: true,
 };
 
 const defaultEditorPreferences: EditorPreferences = {
