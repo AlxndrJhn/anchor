@@ -935,6 +935,69 @@ void main() {
       expect(deltaOf(saved?.content), deltaOf(groceries.content));
       await drainSnackbar(tester);
     });
+
+    testWidgets('Show checkboxes makes every line an item, then More offers '
+        'Hide checkboxes, and Undo puts the lines back', (tester) async {
+      await open(
+        tester,
+        const Note(
+          id: 'n1',
+          title: 'Groceries',
+          content: '{"ops":[{"insert":"Milk\\nEggs\\n"}]}',
+        ),
+      );
+      final before = editorController(tester).document.toDelta();
+
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hide checkboxes'), findsNothing);
+      expect(find.text('Uncheck all'), findsNothing);
+      await tester.tap(find.text('Show checkboxes'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(itemsOf(tester), [('Milk', 'unchecked'), ('Eggs', 'unchecked')]);
+      expect(find.text('2 checkboxes added'), findsOneWidget);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(editorController(tester).document.toDelta(), before);
+      await drainSnackbar(tester);
+
+      await choose(tester, 'Show checkboxes');
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Show checkboxes'), findsNothing);
+      expect(find.text('Hide checkboxes'), findsOneWidget);
+      await tester.tap(find.text('Hide checkboxes'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(itemsOf(tester), [('Milk', null), ('Eggs', null)]);
+      expect(find.text('2 checkboxes removed'), findsOneWidget);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets(
+      'More leaves out Show checkboxes in a note shared for viewing',
+      (tester) async {
+        await open(
+          tester,
+          const Note(
+            id: 'n1',
+            title: 'Codes',
+            content: '{"ops":[{"insert":"Door 4471\\n"}]}',
+            permission: NotePermission.viewer,
+          ),
+        );
+
+        await tester.tap(barButton('More'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Show checkboxes'), findsNothing);
+        expect(find.text('Hide checkboxes'), findsNothing);
+      },
+    );
   });
 
   group('a note shared for viewing', () {

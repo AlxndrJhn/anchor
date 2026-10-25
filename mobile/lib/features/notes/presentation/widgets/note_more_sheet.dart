@@ -14,6 +14,8 @@ Future<NoteAction?> showNoteMoreSheet(
   required int shareCount,
   bool hasChecklist = false,
   bool hasCheckedItems = false,
+  bool canShowCheckboxes = false,
+  bool canHideCheckboxes = false,
 }) {
   final l10n = context.l10n;
   return showChoiceSheet<NoteAction>(
@@ -41,6 +43,18 @@ Future<NoteAction?> showNoteMoreSheet(
           showChevron: true,
         ),
       null,
+      if (canShowCheckboxes)
+        SheetChoice(
+          value: NoteAction.showCheckboxes,
+          icon: LucideIcons.listChecks,
+          label: l10n.actionShowCheckboxes,
+        )
+      else if (canHideCheckboxes)
+        SheetChoice(
+          value: NoteAction.hideCheckboxes,
+          icon: LucideIcons.list,
+          label: l10n.actionHideCheckboxes,
+        ),
       if (hasChecklist) ...[
         SheetChoice(
           value: NoteAction.uncheckAll,

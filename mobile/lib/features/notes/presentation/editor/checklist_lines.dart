@@ -515,3 +515,58 @@ String? toggleChecklistItemContent(
   }
   return jsonEncode({'ops': document.toDelta().toJson()});
 }
+
+bool _isCodeLine(ParsedLine line) =>
+    line.newlineAttributes?[Attribute.codeBlock.key] != null;
+
+/// Whether "Show checkboxes" has written lines to turn into checklist items.
+bool hasLinesWithoutCheckboxes(List<ParsedLine> lines) => lines.any(
+  (line) => line.length > 1 && !line.isChecklist && !_isCodeLine(line),
+);
+
+/// Whether every written line is a checklist item, so "Hide checkboxes"
+/// applies.
+bool allLinesAreChecklist(List<ParsedLine> lines) {
+  final written = lines.where((line) => line.length > 1).toList();
+  return written.isNotEmpty && written.every((line) => line.isChecklist);
+}
+
+/// Makes every written line (code aside) an unchecked checklist item, like
+/// Google Keep's "Show checkboxes": headings, quotes and bullets become plain
+/// items, blank lines stay. Null when nothing changes.
+Delta? buildShowCheckboxesDelta(List<ParsedLine> lines) {
+  final delta = Delta();
+  var cursor = 0;
+  for (final line in lines) {
+    if (line.length <= 1 || line.isChecklist || _isCodeLine(line)) continue;
+    final newlineOffset = line.startOffset + line.length - 1;
+    if (newlineOffset > cursor) delta.retain(newlineOffset - cursor);
+    delta.retain(1, {
+      Attribute.list.key: Attribute.unchecked.value,
+      if (line.newlineAttributes?[Attribute.header.key] != null)
+        Attribute.header.key: null,
+      if (line.newlineAttributes?[Attribute.blockQuote.key] != null)
+        Attribute.blockQuote.key: null,
+    });
+    cursor = newlineOffset + 1;
+  }
+  return cursor > 0 ? delta : null;
+}
+
+/// Turns every checklist item back into a plain line ("Hide checkboxes").
+/// Plain lines have no indent. Null when there are none.
+Delta? buildHideCheckboxesDelta(List<ParsedLine> lines) {
+  final delta = Delta();
+  var cursor = 0;
+  for (final line in lines) {
+    if (!line.isChecklist) continue;
+    final newlineOffset = line.startOffset + line.length - 1;
+    if (newlineOffset > cursor) delta.retain(newlineOffset - cursor);
+    delta.retain(1, {
+      Attribute.list.key: null,
+      if (line.indent > 0) Attribute.indent.key: null,
+    });
+    cursor = newlineOffset + 1;
+  }
+  return cursor > 0 ? delta : null;
+}

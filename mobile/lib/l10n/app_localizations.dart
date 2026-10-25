@@ -2344,6 +2344,18 @@ abstract class AppLocalizations {
   /// **'Delete checked items'**
   String get actionDeleteChecked;
 
+  /// Item in a note's More menu that turns every written line of the note into an unchecked checklist item, like Google Keep. Shown while some line is not a checklist item.
+  ///
+  /// In en, this message translates to:
+  /// **'Show checkboxes'**
+  String get actionShowCheckboxes;
+
+  /// Item in a note's More menu that turns every checklist item of the note back into a plain line, like Google Keep. Shown in place of Show checkboxes when every line is a checklist item.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide checkboxes'**
+  String get actionHideCheckboxes;
+
   /// Verb: moves notes to the archive.
   ///
   /// In en, this message translates to:
@@ -2409,6 +2421,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Item unchecked} other{{count} items unchecked}}'**
   String itemsUnchecked(int count);
+
+  /// Toast after Show checkboxes in a note's More menu, with an Undo button. count is how many lines became checklist items.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Checkbox added} other{{count} checkboxes added}}'**
+  String checkboxesShown(int count);
+
+  /// Toast after Hide checkboxes in a note's More menu, with an Undo button. count is how many checklist items became plain lines.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Checkbox removed} other{{count} checkboxes removed}}'**
+  String checkboxesHidden(int count);
 
   /// Toast after Delete checked items in a note's More menu, with an Undo button. The items are checklist items in the note.
   ///

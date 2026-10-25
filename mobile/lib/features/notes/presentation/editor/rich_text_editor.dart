@@ -646,18 +646,48 @@ class RichTextEditorState extends State<RichTextEditor>
     );
   }
 
+  /// Whether "Show checkboxes" would turn a written line into an item.
+  bool get canShowCheckboxes =>
+      hasLinesWithoutCheckboxes(parseDocumentLines(_controller.document));
+
+  /// Whether every written line is a checklist item, for "Hide checkboxes".
+  bool get isAllChecklist =>
+      allLinesAreChecklist(parseDocumentLines(_controller.document));
+
   UndoableEdit? uncheckAll() => _editChecked(buildUncheckAllDelta);
 
   UndoableEdit? deleteChecked() => _editChecked(buildDeleteCheckedDelta);
 
-  UndoableEdit? _editChecked(Delta? Function(List<ParsedLine> lines) build) {
+  /// Makes every written line an unchecked item; the count is the lines
+  /// that became one.
+  UndoableEdit? showCheckboxes() => _editLines(
+    buildShowCheckboxesDelta,
+    (line) =>
+        line.length > 1 &&
+        !line.isChecklist &&
+        lineKindOf(line.newlineAttributes) != LineKind.code,
+  );
+
+  /// Turns every item back into a plain line; the count is the items.
+  UndoableEdit? hideCheckboxes() =>
+      _editLines(buildHideCheckboxesDelta, (line) => line.isChecklist);
+
+  UndoableEdit? _editChecked(Delta? Function(List<ParsedLine> lines) build) =>
+      _editLines(build, (line) => line.isChecked);
+
+  /// Applies [build]'s change as one undo step; [counts] picks the lines
+  /// the change is about, for the edit's count.
+  UndoableEdit? _editLines(
+    Delta? Function(List<ParsedLine> lines) build,
+    bool Function(ParsedLine line) counts,
+  ) {
     final lines = parseDocumentLines(_controller.document);
     final change = build(lines);
     if (change == null) return null;
     _sorter.cancelAll();
     final edit = UndoableEdit._(
       this,
-      lines.where((line) => line.isChecked).length,
+      lines.where(counts).length,
       change,
       _controller.document.toDelta(),
     );

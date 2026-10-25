@@ -1484,6 +1484,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionDeleteChecked => 'Delete checked items';
 
   @override
+  String get actionShowCheckboxes => 'Show checkboxes';
+
+  @override
+  String get actionHideCheckboxes => 'Hide checkboxes';
+
+  @override
   String get actionArchive => 'Archive';
 
   @override
@@ -1552,6 +1558,28 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$count items unchecked',
       one: 'Item unchecked',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checkboxesShown(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count checkboxes added',
+      one: 'Checkbox added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checkboxesHidden(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count checkboxes removed',
+      one: 'Checkbox removed',
     );
     return '$_temp0';
   }

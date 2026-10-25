@@ -630,6 +630,92 @@ void main() {
     });
   });
 
+  group('show and hide checkboxes', () {
+    test('show turns every written line into an unchecked item', () {
+      final doc = Document.fromJson([
+        {'insert': 'Groceries'},
+        {
+          'insert': '\n',
+          'attributes': {'header': 1},
+        },
+        {'insert': 'Milk'},
+        {
+          'insert': '\n',
+          'attributes': {'list': 'checked'},
+        },
+        {'insert': '\nEggs'},
+        {
+          'insert': '\n',
+          'attributes': {'list': 'bullet', 'indent': 1},
+        },
+        {'insert': 'Be kind'},
+        {
+          'insert': '\n',
+          'attributes': {'blockquote': true},
+        },
+        {'insert': 'x = 1'},
+        {
+          'insert': '\n',
+          'attributes': {'code-block': true},
+        },
+      ]);
+      final before = doc.toDelta();
+      final lines = parseDocumentLines(doc);
+      expect(hasLinesWithoutCheckboxes(lines), isTrue);
+      expect(allLinesAreChecklist(lines), isFalse);
+      final delta = buildShowCheckboxesDelta(lines)!;
+      doc.compose(delta, ChangeSource.local);
+
+      expect(nestedLinesOf(doc), [
+        ('Groceries', 'unchecked', 0),
+        ('Milk', 'checked', 0),
+        ('', null, 0),
+        ('Eggs', 'unchecked', 1),
+        ('Be kind', 'unchecked', 0),
+        ('x = 1', null, 0),
+      ]);
+      final after = parseDocumentLines(doc);
+      expect(after.first.newlineAttributes?['header'], isNull);
+      expect(after[4].newlineAttributes?['blockquote'], isNull);
+      expect(after.last.newlineAttributes?['code-block'], isTrue);
+      expect(hasLinesWithoutCheckboxes(after), isFalse);
+
+      final undone = Document.fromDelta(doc.toDelta())
+        ..compose(delta.invert(before), ChangeSource.local);
+      expect(undone.toDelta(), before);
+    });
+
+    test('hide turns the items back into plain lines', () {
+      final doc = nestedDoc([
+        ('Milk', 'checked', 0),
+        ('oat', 'unchecked', 1),
+        ('', null, 0),
+        ('Eggs', 'unchecked', 0),
+      ]);
+      final lines = parseDocumentLines(doc);
+      expect(allLinesAreChecklist(lines), isTrue);
+      expect(hasLinesWithoutCheckboxes(lines), isFalse);
+      doc.compose(buildHideCheckboxesDelta(lines)!, ChangeSource.local);
+      expect(nestedLinesOf(doc), [
+        ('Milk', null, 0),
+        ('oat', null, 0),
+        ('', null, 0),
+        ('Eggs', null, 0),
+      ]);
+    });
+
+    test('nothing to change gives no delta', () {
+      final items = parseDocumentLines(docFrom([('a', 'unchecked')]));
+      expect(buildShowCheckboxesDelta(items), isNull);
+      final plain = parseDocumentLines(docFrom([('a', null)]));
+      expect(buildHideCheckboxesDelta(plain), isNull);
+      expect(
+        allLinesAreChecklist(parseDocumentLines(docFrom([('', null)]))),
+        isFalse,
+      );
+    });
+  });
+
   group('uncheck all and delete checked', () {
     Document applied(Document doc, Delta? Function(List<ParsedLine>) build) {
       final before = doc.toDelta();

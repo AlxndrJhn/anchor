@@ -22,6 +22,8 @@ enum NoteAction {
   pin,
   share,
   history,
+  showCheckboxes,
+  hideCheckboxes,
   uncheckAll,
   deleteChecked,
   archive,
@@ -47,6 +49,14 @@ enum NoteAction {
     NoteAction.history => (
       icon: LucideIcons.history,
       label: l10n.actionHistory,
+    ),
+    NoteAction.showCheckboxes => (
+      icon: LucideIcons.listChecks,
+      label: l10n.actionShowCheckboxes,
+    ),
+    NoteAction.hideCheckboxes => (
+      icon: LucideIcons.list,
+      label: l10n.actionHideCheckboxes,
     ),
     NoteAction.uncheckAll => (
       icon: LucideIcons.listRestart,
@@ -116,6 +126,8 @@ class NoteActions {
         await deleteForever(notes, beforeChange: beforeChange);
       case NoteAction.share ||
           NoteAction.history ||
+          NoteAction.showCheckboxes ||
+          NoteAction.hideCheckboxes ||
           NoteAction.uncheckAll ||
           NoteAction.deleteChecked:
         break;

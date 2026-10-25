@@ -312,7 +312,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     if (note == null) {
       return;
     }
-    final checklist = _isReadOnly ? null : _editor?.checklistCount;
+    final editor = _isReadOnly ? null : _editor;
+    final checklist = editor?.checklistCount;
+    final canShowCheckboxes = editor?.canShowCheckboxes ?? false;
     final action = await showNoteMoreSheet(
       context,
       isPinned: note.isPinned,
@@ -322,6 +324,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       shareCount: note.shareIds?.length ?? 0,
       hasChecklist: (checklist?.items ?? 0) > 0,
       hasCheckedItems: (checklist?.checked ?? 0) > 0,
+      canShowCheckboxes: canShowCheckboxes,
+      canHideCheckboxes:
+          !canShowCheckboxes && (editor?.isAllChecklist ?? false),
     );
     if (action == null || !mounted) return;
     final actions = NoteActions(context, ref);
@@ -334,6 +339,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         await showShareSheet(context, noteId: note.id);
       case NoteAction.history:
         await _openHistory();
+      case NoteAction.showCheckboxes:
+        _offerUndo(_editor?.showCheckboxes(), l10n.checkboxesShown);
+      case NoteAction.hideCheckboxes:
+        _offerUndo(_editor?.hideCheckboxes(), l10n.checkboxesHidden);
       case NoteAction.uncheckAll:
         _offerUndo(_editor?.uncheckAll(), l10n.itemsUnchecked);
       case NoteAction.deleteChecked:
