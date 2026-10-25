@@ -87,15 +87,17 @@ function NotesView({ tagId }: { tagId: string | null }) {
   const list = useNoteList(notes, { pinnedFirst: true });
   const { visible, pinned, others, chosen } = list;
 
-  // A search also finds archived notes, shown after the others.
+  // A search, or a tag (whose count includes them), also lists archived
+  // notes, after the others.
+  const withArchived = !!list.term || !!tagId;
   const { data: archivedNotes } = useQuery({
     queryKey: ["notes", "archived"],
     queryFn: getArchivedNotes,
-    enabled: !!list.term,
+    enabled: withArchived,
   });
   const archivedMatches = React.useMemo(
     () =>
-      list.term && archivedNotes
+      withArchived && archivedNotes
         ? archivedNotes
             .filter(
               (n) =>
@@ -104,7 +106,14 @@ function NotesView({ tagId }: { tagId: string | null }) {
             )
             .sort(compareNotes(list.sortBy, list.sortOrder))
         : NO_NOTES,
-    [archivedNotes, list.term, tagId, list.sortBy, list.sortOrder],
+    [
+      withArchived,
+      archivedNotes,
+      list.term,
+      tagId,
+      list.sortBy,
+      list.sortOrder,
+    ],
   );
 
   const allPinned = chosen.length > 0 && chosen.every((n) => n.isPinned);
@@ -189,10 +198,15 @@ function NotesView({ tagId }: { tagId: string | null }) {
     c: () => router.push(newNote),
     l: () => router.push(newNoteHref("/notes", tagId, { list: true })),
   });
-  const noNotes = !isLoading && !loadFailed && notes.length === 0;
+  const noNotes =
+    !isLoading && !loadFailed && notes.length === 0 && !archivedMatches.length;
   const noResults =
     notes.length > 0 && visible.length === 0 && !archivedMatches.length;
-  const count = isLoading || loadFailed ? undefined : visible.length;
+  // A tag's count includes its archived notes, like the sidebar's.
+  const count =
+    isLoading || loadFailed
+      ? undefined
+      : visible.length + (tagId ? archivedMatches.length : 0);
   const newNoteButton = (
     <Button asChild>
       <Link
