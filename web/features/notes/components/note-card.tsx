@@ -22,6 +22,7 @@ import { rememberCard } from "@/lib/morph";
 import { cn } from "@/lib/utils";
 import { getNoteAttachments } from "../api";
 import { useAttachmentBlob } from "../hooks/use-attachment-blob";
+import { canTickFromCard, useCardChecklist } from "../hooks/use-card-checklist";
 import { deltaToBlocks, type NoteBlock } from "../note-blocks";
 import { hasTitle } from "../title";
 import type { Note } from "../types";
@@ -186,6 +187,7 @@ export const NoteCard = React.memo(function NoteCard({
   const hiddenCount = attachmentCount - shownPictures.length;
   const [viewing, setViewing] = React.useState<string | null>(null);
   const [readingOffline, setReadingOffline] = React.useState(false);
+  const tickItem = useCardChecklist();
   const zoom = (id: string) => (
     <button
       type="button"
@@ -275,6 +277,11 @@ export const NoteCard = React.memo(function NoteCard({
           blocks={blocks}
           variant="card"
           maxRows={ROW_LIMIT[layout]}
+          onToggle={
+            !picking && canTickFromCard(note)
+              ? (line) => void tickItem(note, line)
+              : undefined
+          }
         />
         {isList ? (
           <div className="nc-row">
