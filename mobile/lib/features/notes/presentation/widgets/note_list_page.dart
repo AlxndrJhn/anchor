@@ -6,12 +6,15 @@ import 'package:anchor/core/theme/context_extensions.dart';
 import 'package:anchor/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/app_page_scaffold.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
+import 'package:anchor/core/widgets/quill_preview.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
+import 'package:anchor/features/notes/presentation/widgets/notes_search_bar.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
 
-/// A titled, back-navigable list of [NoteCard]s with per-row actions.
-class NoteListPage extends StatelessWidget {
+/// A titled, back-navigable, searchable list of [NoteCard]s with per-row
+/// actions.
+class NoteListPage extends StatefulWidget {
   const NoteListPage({
     super.key,
     required this.title,
@@ -34,31 +37,85 @@ class NoteListPage extends StatelessWidget {
   final List<Widget> Function(Note note) trailingActions;
 
   @override
+  State<NoteListPage> createState() => _NoteListPageState();
+}
+
+class _NoteListPageState extends State<NoteListPage> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _matches(Note note) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return note.title.toLowerCase().contains(q) ||
+        extractPlainTextFromQuillContent(
+          note.content,
+        ).toLowerCase().contains(q);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AppPageScaffold(
-      title: Text(title),
+      title: Text(widget.title),
       wash: PageWash.content,
-      body: notes.when(
+      body: widget.notes.when(
         data: (notes) {
           if (notes.isEmpty) {
-            return AppEmptyState(icon: emptyIcon, message: emptyMessage);
+            return AppEmptyState(
+              icon: widget.emptyIcon,
+              message: widget.emptyMessage,
+            );
           }
           final dims = context.dims;
+          final shown = notes.where(_matches).toList();
           return ListView.builder(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: dims.screenInsets.copyWith(
               top: AppPageScaffold.topInset(context) + dims.screenGutter,
             ),
-            itemCount: notes.length + 1,
+            itemCount: shown.length + 2,
             itemBuilder: (context, index) {
               if (index == 0) return const SyncWarning();
-              final note = notes[index - 1];
+              if (index == 1) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: dims.listItemSpacing),
+                  child: Column(
+                    children: [
+                      NotesSearchBar(
+                        controller: _searchController,
+                        query: _query,
+                        onChanged: (value) => setState(() => _query = value),
+                        onClear: () {
+                          _searchController.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
+                      if (shown.isEmpty)
+                        Padding(
+                          padding: EdgeInsets.only(top: dims.xl),
+                          child: Text(
+                            'No matching notes found',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }
+              final note = shown[index - 2];
               return Padding(
                 padding: EdgeInsets.only(bottom: dims.listItemSpacing),
                 child: NoteCard(
                   note: note,
-                  datePrefix: datePrefix,
+                  datePrefix: widget.datePrefix,
                   onTap: () => context.push('/note/${note.id}', extra: note),
-                  trailingActions: trailingActions(note),
+                  trailingActions: widget.trailingActions(note),
                 ),
               );
             },

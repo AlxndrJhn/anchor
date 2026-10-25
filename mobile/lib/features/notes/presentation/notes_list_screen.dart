@@ -120,6 +120,45 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     );
   }
 
+  Widget _notesSliver(
+    List<Note> notes,
+    NotesViewOptions viewOptions,
+    bool isSelectionMode,
+    Set<String> selectedNoteIds, {
+    bool selectable = true,
+  }) {
+    final dims = context.dims;
+    Widget item(Note note) => selectable
+        ? _buildNoteItem(note, isSelectionMode, selectedNoteIds)
+        : NoteCard(
+            note: note,
+            isSelectionMode: false,
+            isSelected: false,
+            onLongPress: () {},
+            onTap: () => context.go('/note/${note.id}', extra: note),
+          );
+    return SliverPadding(
+      padding: dims.screenInsets.copyWith(bottom: dims.screenGutter),
+      sliver: viewOptions.viewType == ViewType.grid
+          ? SliverMasonryGrid.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: dims.gridSpacing,
+              crossAxisSpacing: dims.gridSpacing,
+              childCount: notes.length,
+              itemBuilder: (context, index) => item(notes[index]),
+            )
+          : SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => Padding(
+                  padding: EdgeInsets.only(bottom: dims.listItemSpacing),
+                  child: item(notes[index]),
+                ),
+                childCount: notes.length,
+              ),
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final notesAsync = ref.watch(notesControllerProvider);
@@ -295,17 +334,32 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                 ),
                 notesAsync.when(
                   data: (notes) {
-                    final filteredNotes = notes.where((note) {
-                      if (searchQuery.isEmpty) return true;
-                      final q = searchQuery.toLowerCase();
+                    final q = searchQuery.trim().toLowerCase();
+                    bool matches(Note note) {
+                      if (q.isEmpty) return true;
                       final contentText = extractPlainTextFromQuillContent(
                         note.content,
                       ).toLowerCase();
                       return note.title.toLowerCase().contains(q) ||
                           contentText.contains(q);
-                    }).toList();
+                    }
 
-                    if (filteredNotes.isEmpty) {
+                    final filteredNotes = notes.where(matches).toList();
+                    // A search also finds archived notes, listed after the
+                    // others as Google Keep does.
+                    final archivedMatches = q.isEmpty
+                        ? <Note>[]
+                        : (ref.watch(archiveControllerProvider).value ??
+                                  const <Note>[])
+                              .where(
+                                (note) =>
+                                    (selectedTagId == null ||
+                                        note.tagIds.contains(selectedTagId)) &&
+                                    matches(note),
+                              )
+                              .toList();
+
+                    if (filteredNotes.isEmpty && archivedMatches.isEmpty) {
                       if (searchQuery.isNotEmpty) {
                         return const SliverAppEmptyState(
                           icon: LucideIcons.search,
@@ -322,45 +376,49 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                       return const SliverToBoxAdapter(child: SizedBox.shrink());
                     }
 
-                    filteredNotes.sort(noteComparator(viewOptions));
+                    final comparator = noteComparator(viewOptions);
+                    filteredNotes.sort(comparator);
+                    archivedMatches.sort(comparator);
 
-                    return SliverPadding(
-                      padding: dims.screenInsets.copyWith(
-                        bottom:
-                            dims.screenGutter +
-                            (isSelectionMode ? 0 : _fabClearance),
-                      ),
-                      sliver: viewOptions.viewType == ViewType.grid
-                          ? SliverMasonryGrid.count(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: dims.gridSpacing,
-                              crossAxisSpacing: dims.gridSpacing,
-                              childCount: filteredNotes.length,
-                              itemBuilder: (context, index) {
-                                return _buildNoteItem(
-                                  filteredNotes[index],
-                                  isSelectionMode,
-                                  selectedNoteIds,
-                                );
-                              },
-                            )
-                          : SliverList(
-                              delegate: SliverChildBuilderDelegate((
-                                context,
-                                index,
-                              ) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: dims.listItemSpacing,
-                                  ),
-                                  child: _buildNoteItem(
-                                    filteredNotes[index],
-                                    isSelectionMode,
-                                    selectedNoteIds,
-                                  ),
-                                );
-                              }, childCount: filteredNotes.length),
+                    return SliverMainAxisGroup(
+                      slivers: [
+                        if (filteredNotes.isNotEmpty)
+                          _notesSliver(
+                            filteredNotes,
+                            viewOptions,
+                            isSelectionMode,
+                            selectedNoteIds,
+                          ),
+                        if (archivedMatches.isNotEmpty) ...[
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              dims.screenGutter,
+                              dims.sm,
+                              dims.screenGutter,
+                              dims.xs,
                             ),
+                            sliver: SliverToBoxAdapter(
+                              child: _SectionLabel(
+                                icon: LucideIcons.archive,
+                                label: 'Archived',
+                                count: archivedMatches.length,
+                              ),
+                            ),
+                          ),
+                          _notesSliver(
+                            archivedMatches,
+                            viewOptions,
+                            false,
+                            const <String>{},
+                            selectable: false,
+                          ),
+                        ],
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: isSelectionMode ? 0 : _fabClearance,
+                          ),
+                        ),
+                      ],
                     );
                   },
                   loading: () => const SliverFillRemaining(
@@ -382,6 +440,38 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                 label: const Text('New Note'),
               ),
       ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int count;
+
+  const _SectionLabel({
+    required this.icon,
+    required this.label,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    return Row(
+      children: [
+        Icon(icon, size: AppIconSizes.xs, color: color),
+        const SizedBox(width: 6),
+        Text(
+          '${label.toUpperCase()}  $count',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.6,
+          ),
+        ),
+      ],
     );
   }
 }
