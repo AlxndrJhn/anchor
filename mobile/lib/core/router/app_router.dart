@@ -18,6 +18,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/log_viewer_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../network/server_config_provider.dart';
+import '../share/share_handler.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -72,9 +73,18 @@ GoRouter goRouter(Ref ref) {
         routes: [
           GoRoute(
             path: AppRoutes.noteNew,
-            // The list passes its tag filter, which the new note starts with.
-            builder: (context, state) =>
-                NoteEditScreen(initialTagId: state.extra as String?),
+            // The list passes its tag filter, which the new note starts with;
+            // "Share to Anchor" passes what was shared.
+            pageBuilder: (context, state) {
+              final extra = state.extra;
+              return MaterialPage(
+                key: ValueKey('note-new/${state.uri.query}'),
+                child: NoteEditScreen(
+                  initialTagId: extra is String ? extra : null,
+                  shared: extra is SharedContent ? extra : null,
+                ),
+              );
+            },
           ),
           GoRoute(
             path: AppRoutes.noteEdit,

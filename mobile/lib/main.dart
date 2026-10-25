@@ -1,3 +1,4 @@
+import 'package:anchor/core/share/share_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,9 @@ class AnchorApp extends ConsumerWidget {
     // Keep the Android home-screen widget fed and handle its taps
     ref.watch(homeWidgetSyncProvider);
     ref.watch(homeWidgetLaunchHandlerProvider);
+
+    // Turn "Share to Anchor" into new notes
+    ref.watch(shareHandlerProvider);
 
     // Keep the OS's scheduled reminders in step and handle their taps
     ref.watch(reminderSchedulerProvider);

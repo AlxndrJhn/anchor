@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show File;
 
 import 'package:anchor/core/logging/app_logger.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/providers/active_user_id_provider.dart';
 import 'package:anchor/core/router/app_routes.dart';
+import 'package:anchor/core/share/share_handler.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/core/widgets/editor/link_utils.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/core/widgets/rich_text_editor.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
@@ -47,12 +50,16 @@ class NoteEditScreen extends ConsumerStatefulWidget {
 
   /// A search the note was opened from, marked in its text.
   final String? highlightTerm;
+
+  /// What another app shared, which a new note starts with.
+  final SharedContent? shared;
   const NoteEditScreen({
     super.key,
     this.noteId,
     this.note,
     this.initialTagId,
     this.highlightTerm,
+    this.shared,
   });
 
   @override
@@ -127,6 +134,17 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       _isPinned = false;
       _isLoaded = true;
       if (widget.initialTagId != null) _selectedTagIds = [widget.initialTagId!];
+      final shared = widget.shared;
+      if (shared != null) {
+        if (shared.title != null) {
+          _lastTitleText = shared.title!;
+          _titleController.text = shared.title!;
+        }
+        if (shared.text != null) _initialContent = _sharedText(shared.text!);
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _receiveShared(shared),
+        );
+      }
     }
 
     _titleFocusNode.addListener(_updateEditingState);
@@ -487,6 +505,62 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       AppSnackbar.showError(context, message: 'Failed to add attachment');
     }
   }
+
+  /// Shared text as note content; a lone link stays a link.
+  static String _sharedText(String text) => jsonEncode({
+    'ops': isLikelyUrl(text)
+        ? [
+            {
+              'insert': text,
+              'attributes': {'link': text},
+            },
+            {'insert': '\n'},
+          ]
+        : [
+            {'insert': '$text\n'},
+          ],
+  });
+
+  /// Saves the shared note and attaches what was shared with it.
+  Future<void> _receiveShared(SharedContent shared) async {
+    if (!mounted) return;
+    if (shared.title != null || shared.text != null) _onContentChanged();
+    final skipped = <String>[];
+    for (final file in shared.files) {
+      if (!_attachableTypes.contains(file.mimeType)) {
+        skipped.add(file.name);
+        continue;
+      }
+      await _addAttachment(file.path, file.mimeType, file.name);
+      if (!mounted) return;
+    }
+    for (final file in shared.files) {
+      try {
+        await File(file.path).delete();
+      } catch (_) {}
+    }
+    if (skipped.isNotEmpty && mounted) {
+      AppSnackbar.showWarning(
+        context,
+        message: 'Can\'t attach ${skipped.join(', ')}: only pictures and audio',
+      );
+    }
+  }
+
+  /// Attachment types the server accepts.
+  static const _attachableTypes = {
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'audio/mpeg',
+    'audio/wav',
+    'audio/mp4',
+    'audio/x-m4a',
+    'audio/ogg',
+    'audio/aac',
+    'audio/webm',
+  };
 
   /// A picture pasted from the keyboard becomes an attachment, as on the web.
   Future<void> _onImageInserted(Uint8List bytes, String mimeType) async {

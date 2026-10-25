@@ -300,7 +300,7 @@ final class TrashControllerProvider
   TrashController create() => TrashController();
 }
 
-String _$trashControllerHash() => r'bab1244e95ae3358ac5aba5bfaa843258f6987a3';
+String _$trashControllerHash() => r'b044c937f0fa71c82a14d0b6e38f0fb58a178592';
 
 abstract class _$TrashController extends $StreamNotifier<List<Note>> {
   Stream<List<Note>> build();
