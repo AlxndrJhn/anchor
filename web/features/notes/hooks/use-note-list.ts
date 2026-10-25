@@ -11,6 +11,13 @@ import {
 import { hasOverlay, isTypingTarget } from "@/lib/hooks/use-shortcuts";
 import { hasShortcutKey } from "@/lib/platform";
 import { useFlip } from "@/lib/use-flip";
+import {
+  filterCount,
+  filtersFromParams,
+  matchesFilters,
+  type NoteFilters,
+  writeFilterParams,
+} from "../note-filters";
 import { deltaToFullPlainText } from "../quill";
 import { compareNotes } from "../sort";
 import type { Note } from "../types";
@@ -46,28 +53,38 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const [query, setQueryValue] = React.useState(
     () => searchParams.get(SEARCH_PARAM) ?? "",
   );
+  const [filters, setFiltersValue] = React.useState<NoteFilters>(() =>
+    filtersFromParams(searchParams),
+  );
   const searchedQuery = React.useDeferredValue(query);
   const term = searchedQuery.trim().toLowerCase();
   React.useEffect(() => {
     const timer = window.setTimeout(() => {
       const url = new URL(window.location.href);
-      if ((url.searchParams.get(SEARCH_PARAM) ?? "") === query) return;
+      const before = url.search;
       if (query) url.searchParams.set(SEARCH_PARAM, query);
       else url.searchParams.delete(SEARCH_PARAM);
+      writeFilterParams(url.searchParams, filters);
+      if (url.search === before) return;
       window.history.replaceState(window.history.state, "", url);
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [query]);
+  }, [query, filters]);
+  const activeFilters = filterCount(filters);
   const [picking, setPicking] = React.useState(false);
   const [picked, setPicked] = React.useState<Set<string>>(new Set());
   const lastPick = React.useRef<string | null>(null);
 
   const visible = React.useMemo(() => {
-    const found = term
-      ? notes.filter((note) => matchesSearch(note, term))
-      : notes;
+    const found =
+      term || activeFilters
+        ? notes.filter(
+            (note) =>
+              matchesSearch(note, term) && matchesFilters(note, filters),
+          )
+        : notes;
     return [...found].sort(compareNotes(sortBy, sortOrder));
-  }, [notes, term, sortBy, sortOrder]);
+  }, [notes, term, filters, activeFilters, sortBy, sortOrder]);
   const pinned = React.useMemo(
     () => (pinnedFirst ? visible.filter((n) => n.isPinned) : []),
     [pinnedFirst, visible],
@@ -171,6 +188,15 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
       flip.prepare();
       setQueryValue(value);
     },
+    filters,
+    /** How many filters are on. */
+    activeFilters,
+    setFilters: (next: NoteFilters) => {
+      flip.prepare();
+      setFiltersValue(next);
+    },
+    /** Whether a search or a filter narrows the list. */
+    searching: !!term || activeFilters > 0,
     layout: viewMode,
     setLayout: (layout: ViewMode) => {
       flip.prepare();

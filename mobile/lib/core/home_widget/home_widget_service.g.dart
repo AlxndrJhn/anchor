@@ -83,7 +83,8 @@ abstract class _$HomeWidgetSync extends $Notifier<void> {
 }
 
 /// Routes home-screen widget taps into the app while it is running:
-/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`.
+/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`,
+/// and the launcher's app shortcuts, which use the same URIs.
 ///
 /// Cold-start taps never reach this handler; [initializeApp] turns them into
 /// the app's initial route before the first frame.
@@ -92,14 +93,16 @@ abstract class _$HomeWidgetSync extends $Notifier<void> {
 final homeWidgetLaunchHandlerProvider = HomeWidgetLaunchHandlerProvider._();
 
 /// Routes home-screen widget taps into the app while it is running:
-/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`.
+/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`,
+/// and the launcher's app shortcuts, which use the same URIs.
 ///
 /// Cold-start taps never reach this handler; [initializeApp] turns them into
 /// the app's initial route before the first frame.
 final class HomeWidgetLaunchHandlerProvider
     extends $NotifierProvider<HomeWidgetLaunchHandler, void> {
   /// Routes home-screen widget taps into the app while it is running:
-  /// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`.
+  /// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`,
+  /// and the launcher's app shortcuts, which use the same URIs.
   ///
   /// Cold-start taps never reach this handler; [initializeApp] turns them into
   /// the app's initial route before the first frame.
@@ -131,10 +134,11 @@ final class HomeWidgetLaunchHandlerProvider
 }
 
 String _$homeWidgetLaunchHandlerHash() =>
-    r'3a604ab1a7e6034da87fcda23bca98cd74ca6fb3';
+    r'3788983b1a32541da232712806f5d62cba83dbb2';
 
 /// Routes home-screen widget taps into the app while it is running:
-/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`.
+/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`,
+/// and the launcher's app shortcuts, which use the same URIs.
 ///
 /// Cold-start taps never reach this handler; [initializeApp] turns them into
 /// the app's initial route before the first frame.

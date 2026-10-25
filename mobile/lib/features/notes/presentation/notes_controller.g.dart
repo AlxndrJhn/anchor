@@ -160,6 +160,69 @@ abstract class _$SearchQuery extends $Notifier<String> {
   }
 }
 
+/// The list's filters besides the tag: colour, pictures, checklists and
+/// reminders.
+
+@ProviderFor(NoteFiltersController)
+final noteFiltersControllerProvider = NoteFiltersControllerProvider._();
+
+/// The list's filters besides the tag: colour, pictures, checklists and
+/// reminders.
+final class NoteFiltersControllerProvider
+    extends $NotifierProvider<NoteFiltersController, NoteFilters> {
+  /// The list's filters besides the tag: colour, pictures, checklists and
+  /// reminders.
+  NoteFiltersControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'noteFiltersControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$noteFiltersControllerHash();
+
+  @$internal
+  @override
+  NoteFiltersController create() => NoteFiltersController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NoteFilters value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NoteFilters>(value),
+    );
+  }
+}
+
+String _$noteFiltersControllerHash() =>
+    r'f622193f3ef0b2200441a6840e870a827c7e1190';
+
+/// The list's filters besides the tag: colour, pictures, checklists and
+/// reminders.
+
+abstract class _$NoteFiltersController extends $Notifier<NoteFilters> {
+  NoteFilters build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<NoteFilters, NoteFilters>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<NoteFilters, NoteFilters>,
+              NoteFilters,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Provider to track selection mode state
 
 @ProviderFor(SelectionMode)

@@ -16,6 +16,7 @@ import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
 import 'package:anchor/features/notes/presentation/widgets/notes_search_bar.dart';
+import 'package:anchor/features/notes/presentation/widgets/note_filters_sheet.dart';
 import 'package:anchor/features/notes/presentation/widgets/selection_app_bar_actions.dart';
 import 'package:anchor/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
@@ -227,6 +228,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   Widget build(BuildContext context) {
     final notesAsync = ref.watch(notesControllerProvider);
     final searchQuery = ref.watch(searchQueryProvider);
+    final filters = ref.watch(noteFiltersControllerProvider);
     ref.watch(reminderPermissionsControllerProvider);
     final notes = notesAsync.value;
     if (notes != null) _maybeAskForReminderPermissions(notes);
@@ -378,6 +380,12 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                             _searchController.clear();
                             ref.read(searchQueryProvider.notifier).set('');
                           },
+                          filterCount:
+                              filters.count + (selectedTagId != null ? 1 : 0),
+                          onFilter: () => AppBottomSheet.show(
+                            context,
+                            builder: (context) => const NoteFiltersSheet(),
+                          ),
                         ),
                         // Tag filter indicator
                         if (selectedTag != null) ...[
@@ -401,6 +409,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                   data: (notes) {
                     final q = searchQuery.trim().toLowerCase();
                     bool matches(Note note) {
+                      if (!filters.matches(note)) return false;
                       if (q.isEmpty) return true;
                       final contentText = extractPlainTextFromQuillContent(
                         note.content,
@@ -413,7 +422,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                     // A search, or a tag (whose count includes them), also
                     // lists archived notes after the others, as Google Keep
                     // does.
-                    final withArchived = q.isNotEmpty || selectedTagId != null;
+                    final withArchived =
+                        q.isNotEmpty ||
+                        selectedTagId != null ||
+                        !filters.isEmpty;
                     final archivedMatches = !withArchived
                         ? <Note>[]
                         : (ref.watch(archiveControllerProvider).value ??
@@ -427,7 +439,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                               .toList();
 
                     if (filteredNotes.isEmpty && archivedMatches.isEmpty) {
-                      if (searchQuery.isNotEmpty) {
+                      if (searchQuery.isNotEmpty || !filters.isEmpty) {
                         return const [
                           SliverAppEmptyState(
                             icon: LucideIcons.search,

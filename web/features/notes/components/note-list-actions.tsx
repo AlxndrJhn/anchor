@@ -6,17 +6,21 @@ import { SearchField, TopBarButton } from "@/components/layout/app-page";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { NoteList } from "../hooks/use-note-list";
+import { FilterMenu } from "./filter-menu";
 import { ViewOptions } from "./view-options";
 
 export function NoteListActions({
   list,
   placeholder,
   autoFocus,
+  showTagFilter,
   children,
 }: {
   list: NoteList;
   placeholder: string;
   autoFocus?: boolean;
+  /** Off in a tag's own view. */
+  showTagFilter?: boolean;
   children?: React.ReactNode;
 }) {
   return (
@@ -28,6 +32,7 @@ export function NoteListActions({
         placeholder={placeholder}
         autoFocus={autoFocus}
       />
+      <FilterMenu list={list} showTags={showTagFilter} />
       <ViewOptions
         layout={list.layout}
         sortBy={list.sortBy}
@@ -50,23 +55,32 @@ export function NoteListActions({
 }
 
 export function NoSearchResults({ list }: { list: NoteList }) {
+  const query = list.query.trim();
+  const filtered = list.activeFilters > 0;
   return (
     <EmptyState
       illustration="search"
-      title={`No results for “${list.query.trim()}”`}
+      title={query ? `No results for “${query}”` : "No matching notes"}
       action={
         <Button
           variant="secondary"
           onClick={() => {
             list.setQuery("");
+            list.setFilters({});
             list.searchRef.current?.focus();
           }}
         >
-          Clear search
+          {filtered && query
+            ? "Clear search and filters"
+            : filtered
+              ? "Clear filters"
+              : "Clear search"}
         </Button>
       }
     >
-      Check the spelling or try different words.
+      {filtered
+        ? "No note matches every filter."
+        : "Check the spelling or try different words."}
     </EmptyState>
   );
 }

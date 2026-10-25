@@ -47,6 +47,7 @@ import {
   useNoteList,
 } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
+import { matchesFilters } from "@/features/notes/note-filters";
 import { compareNotes } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
@@ -89,7 +90,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
 
   // A search, or a tag (whose count includes them), also lists archived
   // notes, after the others.
-  const withArchived = !!list.term || !!tagId;
+  const withArchived = list.searching || !!tagId;
   const { data: archivedNotes } = useQuery({
     queryKey: ["notes", "archived"],
     queryFn: getArchivedNotes,
@@ -102,7 +103,8 @@ function NotesView({ tagId }: { tagId: string | null }) {
             .filter(
               (n) =>
                 (!tagId || n.tagIds?.includes(tagId)) &&
-                matchesSearch(n, list.term),
+                matchesSearch(n, list.term) &&
+                matchesFilters(n, list.filters),
             )
             .sort(compareNotes(list.sortBy, list.sortOrder))
         : NO_NOTES,
@@ -110,6 +112,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
       withArchived,
       archivedNotes,
       list.term,
+      list.filters,
       tagId,
       list.sortBy,
       list.sortOrder,
@@ -264,6 +267,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
               list={list}
               placeholder={tag ? `Search #${tag.name}` : "Search notes"}
               autoFocus={searchParams.has("search")}
+              showTagFilter={!tagId}
             />
           )
         }

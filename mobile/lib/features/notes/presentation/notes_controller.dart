@@ -4,6 +4,7 @@ import 'package:anchor/features/notes/domain/note.dart';
 import '../data/repository/notes_repository.dart';
 import '../../tags/presentation/tags_controller.dart';
 
+import '../domain/note_filters.dart';
 part 'notes_controller.g.dart';
 
 /// Provider to track syncing state globally
@@ -58,6 +59,18 @@ class SearchQuery extends _$SearchQuery {
   void set(String query) {
     state = query;
   }
+}
+
+/// The list's filters besides the tag: colour, pictures, checklists and
+/// reminders.
+@riverpod
+class NoteFiltersController extends _$NoteFiltersController {
+  @override
+  NoteFilters build() => NoteFilters.none;
+
+  void set(NoteFilters filters) => state = filters;
+
+  void clear() => state = NoteFilters.none;
 }
 
 /// Provider to track selection mode state
