@@ -43,7 +43,6 @@ export class TagsService {
               notes: {
                 where: {
                   state: 'active',
-                  archives: { none: { userId } },
                 },
               },
             },
@@ -55,6 +54,8 @@ export class TagsService {
     });
   }
 
+  // Counts include archived notes, as Google Keep's labels do; a tag's view
+  // lists them in their own section.
   async findAll(userId: string) {
     return this.prisma.tag.findMany({
       where: {
@@ -68,7 +69,6 @@ export class TagsService {
             notes: {
               where: {
                 state: 'active',
-                archives: { none: { userId } },
               },
             },
           },
@@ -86,7 +86,6 @@ export class TagsService {
             notes: {
               where: {
                 state: 'active',
-                archives: { none: { userId } },
               },
             },
           },
@@ -143,7 +142,6 @@ export class TagsService {
               notes: {
                 where: {
                   state: 'active',
-                  archives: { none: { userId } },
                 },
               },
             },

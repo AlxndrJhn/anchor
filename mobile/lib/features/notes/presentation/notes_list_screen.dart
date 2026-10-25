@@ -348,9 +348,11 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                     }
 
                     final filteredNotes = notes.where(matches).toList();
-                    // A search also finds archived notes, listed after the
-                    // others as Google Keep does.
-                    final archivedMatches = q.isEmpty
+                    // A search, or a tag (whose count includes them), also
+                    // lists archived notes after the others, as Google Keep
+                    // does.
+                    final withArchived = q.isNotEmpty || selectedTagId != null;
+                    final archivedMatches = !withArchived
                         ? <Note>[]
                         : (ref.watch(archiveControllerProvider).value ??
                                   const <Note>[])

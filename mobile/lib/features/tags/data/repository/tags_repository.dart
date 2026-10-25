@@ -60,10 +60,10 @@ class TagsRepository {
           tagMap[tag.id] = _mapToDomain(tag);
         }
 
-        // Only count active, non-archived notes
+        // Count active notes, archived ones included as Google Keep does;
+        // the tag's list shows those in an Archived section.
         if (noteTag != null && note != null) {
-          final isActive = note.state == 'active' && !note.isArchived;
-          if (isActive) {
+          if (note.state == 'active') {
             tagCounts[tag.id] = (tagCounts[tag.id] ?? 0) + 1;
           }
         }
