@@ -145,6 +145,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   readOnly?: boolean;
   onAddAttachment?: () => void;
+  onRecordAudio?: () => void;
   below?: React.ReactNode;
 }
 
@@ -171,6 +172,7 @@ export const RichTextEditor = forwardRef<
       placeholder = "Start typing...",
       readOnly = false,
       onAddAttachment,
+      onRecordAudio,
       below,
     },
     ref,
@@ -801,6 +803,7 @@ export const RichTextEditor = forwardRef<
             updateKey={toolbarUpdateKey}
             onOpenLinkDialog={openLinkDialog}
             onAddAttachment={onAddAttachment}
+            onRecordAudio={onRecordAudio}
           />
         )}
         <div
@@ -894,6 +897,7 @@ export const RichTextEditor = forwardRef<
               getQuill={getQuill}
               container={editorContainerEl}
               onAddAttachment={onAddAttachment}
+              onRecordAudio={onRecordAudio}
               onAddLink={openLinkDialog}
             />
           )}

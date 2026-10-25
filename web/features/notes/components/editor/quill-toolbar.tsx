@@ -14,6 +14,7 @@ import {
   List,
   ListChecks,
   ListOrdered,
+  Mic,
   Quote,
   Redo2,
   Strikethrough,
@@ -94,6 +95,7 @@ interface QuillToolbarProps {
   updateKey: number;
   onOpenLinkDialog: () => void;
   onAddAttachment?: () => void;
+  onRecordAudio?: () => void;
 }
 
 export function QuillToolbar({
@@ -102,6 +104,7 @@ export function QuillToolbar({
   updateKey,
   onOpenLinkDialog,
   onAddAttachment,
+  onRecordAudio,
 }: QuillToolbarProps) {
   const [format, setFormat] = useState<Record<string, unknown>>({});
   const [canUndo, setCanUndo] = useState(false);
@@ -360,6 +363,7 @@ export function QuillToolbar({
       )}
       {onAddAttachment &&
         toolButton("Add a picture or audio", <ImagePlus />, onAddAttachment)}
+      {onRecordAudio && toolButton("Record audio", <Mic />, onRecordAudio)}
     </div>
   );
 }

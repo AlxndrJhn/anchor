@@ -10,6 +10,7 @@ import {
   List,
   ListChecks,
   ListOrdered,
+  Mic,
   Quote,
   Type,
 } from "lucide-react";
@@ -32,7 +33,8 @@ type Kind =
   | "code"
   | "text"
   | "link"
-  | "attachment";
+  | "attachment"
+  | "record";
 
 const ITEMS: {
   kind: Kind;
@@ -118,6 +120,12 @@ const ITEMS: {
     keywords: "image img photo file voice recording attachment",
     isPopular: true,
   },
+  {
+    kind: "record",
+    label: "Record audio",
+    icon: <Mic />,
+    keywords: "voice memo microphone mic recording sound",
+  },
 ];
 
 interface Slash {
@@ -135,6 +143,7 @@ interface SlashMenuProps {
   getQuill: () => QuillInstance | null;
   container: HTMLDivElement | null;
   onAddAttachment?: () => void;
+  onRecordAudio?: () => void;
   onAddLink: () => void;
 }
 
@@ -142,6 +151,7 @@ export function SlashMenu({
   getQuill,
   container,
   onAddAttachment,
+  onRecordAudio,
   onAddLink,
 }: SlashMenuProps) {
   const [slash, setSlash] = React.useState<Slash | null>(null);
@@ -158,10 +168,14 @@ export function SlashMenu({
   const items = React.useMemo(
     () =>
       findSlashItems(
-        ITEMS.filter((item) => item.kind !== "attachment" || onAddAttachment),
+        ITEMS.filter(
+          (item) =>
+            (item.kind !== "attachment" || onAddAttachment) &&
+            (item.kind !== "record" || onRecordAudio),
+        ),
         slash?.query ?? "",
       ),
-    [slash?.query, onAddAttachment],
+    [slash?.query, onAddAttachment, onRecordAudio],
   );
   const activeIndex = Math.min(active, Math.max(0, items.length - 1));
 
@@ -300,6 +314,7 @@ export function SlashMenu({
         quill.history.cutoff();
         quill.setSelection(from, 0, "silent");
         if (kind === "attachment") onAddAttachment?.();
+        else if (kind === "record") onRecordAudio?.();
         else if (kind === "link") onAddLink();
         return;
       }
@@ -316,7 +331,7 @@ export function SlashMenu({
       quill.history.cutoff();
       quill.setSelection(from, 0, "user");
     },
-    [getQuill, onAddAttachment, onAddLink, updateSlash],
+    [getQuill, onAddAttachment, onRecordAudio, onAddLink, updateSlash],
   );
 
   // Keys go to the menu before the editor sees them.

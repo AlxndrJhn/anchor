@@ -6,6 +6,7 @@ import {
   ImagePlus,
   List,
   ListChecks,
+  Mic,
   Paperclip,
   Plus,
   Repeat,
@@ -29,6 +30,7 @@ import { deltaToFullPlainText, isContentBlank } from "../../quill";
 import { isReminderPast, reminderLabel } from "../../reminder";
 import type { NoteReminder, ReminderRecurrence } from "../../types";
 import { AttachmentStrip, type AttachmentStripHandle } from "../attachments";
+import { canRecordAudio, VoiceRecorder } from "../attachments/voice-recorder";
 import { RichTextEditor, type RichTextEditorHandle } from "../editor";
 import { formatCardDate } from "../note-card";
 import { useRingOnce } from "../reminder-chip";
@@ -100,6 +102,12 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
   const edited = props.updatedAt ? formatCardDate(props.updatedAt) : null;
   const people = props.sharedBy ? [] : props.sharedWith;
   const [hasFiles, setHasFiles] = React.useState(false);
+  const [recording, setRecording] = React.useState(false);
+  // Known only in the browser, so it waits for the first paint.
+  const [canRecord, setCanRecord] = React.useState(false);
+  React.useEffect(() => setCanRecord(canRecordAudio()), []);
+  const record =
+    props.canUpload && canRecord ? () => setRecording(true) : undefined;
   const startersRoving = useRovingFocus<HTMLDivElement>();
 
   const starters = !props.readOnly &&
@@ -133,6 +141,12 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           <button type="button" onClick={() => strip.current?.pick()}>
             <ImagePlus aria-hidden />
             Picture or audio
+          </button>
+        )}
+        {record && (
+          <button type="button" onClick={record}>
+            <Mic aria-hidden />
+            Record audio
           </button>
         )}
         <span className="hint">
@@ -291,10 +305,17 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           onAddAttachment={
             props.canUpload ? () => strip.current?.pick() : undefined
           }
+          onRecordAudio={record}
           below={starters}
         />
       </div>
       <NoteOutline root={root} />
+      {recording && (
+        <VoiceRecorder
+          onRecorded={(file) => strip.current?.add([file])}
+          onClose={() => setRecording(false)}
+        />
+      )}
       {dropping &&
         createPortal(
           <div className="drop-ov" aria-hidden>
