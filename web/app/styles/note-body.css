@@ -395,3 +395,9 @@
 .doc.is-card .ck li:not(.done) > .box.tick:hover {
   border-color: var(--accent-strong);
 }
+
+/* Where a search term appears in a note opened from the search results. */
+::highlight(search-hit) {
+  background-color: color-mix(in srgb, var(--accent-strong) 30%, transparent);
+  color: inherit;
+}

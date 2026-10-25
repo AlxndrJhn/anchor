@@ -284,6 +284,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
         {noResults && <NoSearchResults list={list} />}
         {visible.length > 0 && (
           <NotesBoard
+            searchTerm={list.term || undefined}
             ref={list.boardRef}
             layout={list.layout}
             picking={list.picking}
@@ -315,6 +316,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
         )}
         {archivedMatches.length > 0 && !list.picking && (
           <NotesBoard
+            searchTerm={list.term || undefined}
             layout={list.layout}
             picking={false}
             picked={NO_PICKS}

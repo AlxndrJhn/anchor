@@ -27,6 +27,8 @@ interface NotesBoardProps {
   /** Keep it stable, or every card redraws. */
   renderActions?: (note: Note) => React.ReactNode;
   dateLabel?: (note: Note) => string;
+  /** The search the notes were found by. */
+  searchTerm?: string;
 }
 
 export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
@@ -40,6 +42,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
       onShare,
       renderActions,
       dateLabel,
+      searchTerm,
     },
     ref,
   ) => {
@@ -90,6 +93,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
                   onShare={onShare}
                   renderActions={renderActions}
                   dateLabel={dateLabel?.(note)}
+                  searchTerm={searchTerm}
                 />
               ))}
             </div>
