@@ -19,6 +19,7 @@ import {
   isRetryableError,
   saveNote,
 } from "../api";
+import { outboxEntry } from "../outbox";
 import { isStoredContentEmpty } from "../quill";
 import {
   draftUpdate,
@@ -32,7 +33,7 @@ import {
   sameReminder,
   toReminderInput,
 } from "../save-queue";
-import { noteSaveQueue, releaseSaveQueue } from "../save-queues";
+import { keepNewNote, noteSaveQueue, releaseSaveQueue } from "../save-queues";
 import { draftTitle } from "../title";
 import type {
   CreateNoteDto,
@@ -162,12 +163,16 @@ export function useNoteEditor({
   });
 
   const online = useSyncStatus((s) => s.online);
-  // Offline, the copy from the notes list can be read but not edited.
+  // A note made offline that the server doesn't have yet.
+  const [madeOffline] = useState(() => !isNew && !!outboxEntry(noteId)?.create);
+  // Offline, the copy kept on this device is edited; the edits go up later.
   const isOfflineCopy =
     !isNew &&
     !!storedNote &&
     (isPlaceholderData || !noteFromApi) &&
-    (!online || (!!noteError && !(noteError instanceof HTTPError)));
+    (!online ||
+      madeOffline ||
+      (!!noteError && !(noteError instanceof HTTPError)));
   const note = isNew
     ? null
     : (noteFromApi ?? (isOfflineCopy ? storedNote : null));
@@ -176,9 +181,7 @@ export function useNoteEditor({
   const isViewer = note ? note.permission === "viewer" : false;
   const isEditor = note ? note.permission === "editor" : false;
 
-  const isReadOnly = note
-    ? note.state === "trashed" || isViewer || isOfflineCopy
-    : false;
+  const isReadOnly = note ? note.state === "trashed" || isViewer : false;
   const canSaveDraft = note ? note.state !== "trashed" : true;
   const canUpload = isOwner || isEditor;
 
@@ -403,6 +406,7 @@ export function useNoteEditor({
       window.clearTimeout(createRetryTimer.current);
       for (const resolve of createWaiters.current.splice(0)) resolve(newNote);
       useSyncStatus.getState().setWaiting("new", 0);
+      keepNewNote(newNote.id, null);
       if (!mounted.current) {
         const latest = latestDraft.current;
         if (!noteDraftsEqual(latest, noteToDraft(newNote)))
@@ -546,6 +550,17 @@ export function useNoteEditor({
     queue.push(draft);
   }, [canSaveDraft, createNewNote, draft, hasUnsavedChanges, isNew, queue]);
 
+  // A new note is kept on the device until the server has it, so a reload
+  // while offline doesn't lose it.
+  useEffect(() => {
+    if (!isNew || createdNote.current || !canSaveDraft) return;
+    const timer = window.setTimeout(
+      () => keepNewNote(newNoteId, hasUnsavedChanges ? draft : null),
+      300,
+    );
+    return () => window.clearTimeout(timer);
+  }, [isNew, canSaveDraft, hasUnsavedChanges, draft, newNoteId]);
+
   const save = useCallback(() => {
     if (saveFailure && !saveFailure.retryable) return;
     pushDraft();
@@ -594,7 +609,9 @@ export function useNoteEditor({
         ...(replacesOtherEdit.current ? { replacesOtherEdit: true } : {}),
       }),
       onSaved: handleSaved,
-      onConflict: handleConflict,
+      onConflict: (serverNote, _draft, canRetry) =>
+        handleConflict(serverNote, canRetry),
+      base: () => lastSaved,
       onFailed: (failure) => {
         setIsSaveStuck(failure.retryable);
         setSaveFailure(failure);
