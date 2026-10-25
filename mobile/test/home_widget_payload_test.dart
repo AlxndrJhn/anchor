@@ -158,6 +158,13 @@ void main() {
       expect(homeWidgetRouteForUri(Uri.parse('anchorwidget://open')), '/');
     });
 
+    test('the New checklist shortcut starts a checklist', () {
+      expect(
+        homeWidgetRouteForUri(Uri.parse('anchorwidget://note/new?checklist=1')),
+        '/widget/note/new?checklist=1',
+      );
+    });
+
     test('ignores null and foreign-scheme URIs', () {
       expect(homeWidgetRouteForUri(null), isNull);
       expect(homeWidgetRouteForUri(Uri.parse('anchor://callback')), isNull);

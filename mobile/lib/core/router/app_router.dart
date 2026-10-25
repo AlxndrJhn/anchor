@@ -159,7 +159,9 @@ GoRouter goRouter(Ref ref) {
         pageBuilder: (context, state) {
           return MaterialPage(
             key: ValueKey('widget-note-new/${state.uri.query}'),
-            child: const NoteEditScreen(),
+            child: NoteEditScreen(
+              startAsChecklist: state.uri.queryParameters['checklist'] == '1',
+            ),
           );
         },
       ),

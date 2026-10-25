@@ -5,7 +5,6 @@ import 'package:anchor/core/theme/tokens/app_style.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-
   test('style ids round-trip and fall back to Default', () {
     for (final style in AppStyle.values) {
       expect(AppStyle.fromId(style.id), style);

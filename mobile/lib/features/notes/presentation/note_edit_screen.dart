@@ -53,6 +53,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
 
   /// What another app shared, which a new note starts with.
   final SharedContent? shared;
+
+  /// A new note starts as a checklist (the "New checklist" app shortcut).
+  final bool startAsChecklist;
   const NoteEditScreen({
     super.key,
     this.noteId,
@@ -60,6 +63,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.initialTagId,
     this.highlightTerm,
     this.shared,
+    this.startAsChecklist = false,
   });
 
   @override
@@ -145,6 +149,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           (_) => _receiveShared(shared),
         );
       } else {
+        if (widget.startAsChecklist) _initialContent = _emptyChecklist;
         // A new note opens with the caret in its text, ready to type.
         WidgetsBinding.instance.addPostFrameCallback(
           (_) => _editorKey.currentState?.focusStart(),
@@ -512,6 +517,15 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   }
 
   /// Shared text as note content; a lone link stays a link.
+  static final _emptyChecklist = jsonEncode({
+    'ops': [
+      {
+        'insert': '\n',
+        'attributes': {'list': 'unchecked'},
+      },
+    ],
+  });
+
   static String _sharedText(String text) => jsonEncode({
     'ops': isLikelyUrl(text)
         ? [

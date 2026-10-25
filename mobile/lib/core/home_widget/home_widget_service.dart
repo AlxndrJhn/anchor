@@ -88,7 +88,8 @@ class HomeWidgetSync extends _$HomeWidgetSync {
 }
 
 /// Routes home-screen widget taps into the app while it is running:
-/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`.
+/// `anchorwidget://note/new`, `anchorwidget://note/<id>`, `anchorwidget://open`,
+/// and the launcher's app shortcuts, which use the same URIs.
 ///
 /// Cold-start taps never reach this handler; [initializeApp] turns them into
 /// the app's initial route before the first frame.
@@ -126,8 +127,9 @@ class HomeWidgetLaunchHandler extends _$HomeWidgetLaunchHandler {
 
     // The nonce gives each new-note tap a distinct location (and page key),
     // so a draft already open from a previous tap is replaced by a fresh one.
-    final target = route == AppRoutes.widgetNoteNew
-        ? '$route?tap=${DateTime.now().microsecondsSinceEpoch}'
+    final tap = 'tap=${DateTime.now().microsecondsSinceEpoch}';
+    final target = Uri.parse(route).path == AppRoutes.widgetNoteNew
+        ? (route.contains('?') ? '$route&$tap' : '$route?$tap')
         : route;
     ref.read(goRouterProvider).go(target);
   }
