@@ -3,3 +3,5 @@ packages:
 
 allowBuilds:
   sharp: true
+  # Only a donation message after install.
+  tesseract.js: false

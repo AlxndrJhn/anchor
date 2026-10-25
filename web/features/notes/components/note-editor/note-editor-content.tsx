@@ -257,6 +257,11 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         onEnsureNoteId={props.onEnsureNoteIdForAttachmentUpload}
         dropping={!!dropping}
         onHasFiles={setHasFiles}
+        onGrabText={
+          props.readOnly
+            ? undefined
+            : (text) => props.contentEditorRef?.current?.appendText(text)
+        }
       />
       <div
         className={cn("ed-body", props.readOnly && "mt-4.5")}

@@ -136,6 +136,8 @@ interface AttachmentStripProps {
   onEnsureNoteId?: () => Promise<string | null>;
   dropping?: boolean;
   onHasFiles?: (has: boolean) => void;
+  /** Takes text read from a picture into the note ("Grab image text"). */
+  onGrabText?: (text: string) => void;
 }
 
 export function AttachmentStrip({
@@ -147,6 +149,7 @@ export function AttachmentStrip({
   onEnsureNoteId,
   dropping,
   onHasFiles,
+  onGrabText,
 }: AttachmentStripProps) {
   const queryClient = useQueryClient();
   const roving = useRovingFocus<HTMLDivElement>({
@@ -751,6 +754,7 @@ export function AttachmentStrip({
             remove(a);
           }}
           onReturnFocus={focusFromViewer}
+          onGrabText={onGrabText}
         />
       )}
     </>

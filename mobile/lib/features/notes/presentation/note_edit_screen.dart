@@ -672,6 +672,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     );
   }
 
+  /// Text read from one of the note's pictures goes at the end of the note.
+  void _appendText(String text) {
+    if (_isReadOnly) return;
+    _editorKey.currentState?.appendText(text);
+  }
+
   /// Hands the note to another app through Android's share sheet.
   Future<void> _sendNote() async {
     final text = noteToPlainText(_titleController.text, _editorContent);
@@ -1180,13 +1186,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             ),
           ),
         if (showAttachments)
-          NoteAttachmentsGallery(
-            noteId: widget.noteId ?? _existingNote!.id,
-            isOwner: _existingNote?.isOwner ?? false,
-            canEdit:
-                (_existingNote?.canEdit ?? false) &&
-                (_existingNote?.isActive ?? false),
-            currentUserId: ref.read(activeUserIdProvider),
+          GrabImageTextScope(
+            onText: _isReadOnly ? null : _appendText,
+            child: NoteAttachmentsGallery(
+              noteId: widget.noteId ?? _existingNote!.id,
+              isOwner: _existingNote?.isOwner ?? false,
+              canEdit:
+                  (_existingNote?.canEdit ?? false) &&
+                  (_existingNote?.isActive ?? false),
+              currentUserId: ref.read(activeUserIdProvider),
+            ),
           ),
       ],
     );

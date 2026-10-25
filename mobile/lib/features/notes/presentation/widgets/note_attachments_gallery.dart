@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:anchor/core/files/image_text.dart';
 import 'package:anchor/core/files/save_to_device.dart';
+import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +18,26 @@ import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/widgets/audio_player_row.dart';
+
+/// Lets the pictures of a note hand text read from them back to its editor
+/// ("Grab image text"). Absent where the note can't be edited.
+class GrabImageTextScope extends InheritedWidget {
+  const GrabImageTextScope({
+    super.key,
+    required this.onText,
+    required super.child,
+  });
+
+  /// Null while the note can't be edited.
+  final ValueChanged<String>? onText;
+
+  static ValueChanged<String>? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<GrabImageTextScope>()?.onText;
+
+  @override
+  bool updateShouldNotify(GrabImageTextScope oldWidget) =>
+      onText != oldWidget.onText;
+}
 
 class NoteAttachmentsGallery extends ConsumerStatefulWidget {
   final String noteId;
@@ -348,6 +370,7 @@ class _ImageTileState extends ConsumerState<_ImageTile> {
       canDeleteAttachment: widget.canDeleteAttachment,
       repo: widget.repo,
       isOnline: widget.isOnline,
+      onGrabText: GrabImageTextScope.maybeOf(context),
     );
   }
 
@@ -567,6 +590,9 @@ class _ImageLightboxGallery extends ConsumerStatefulWidget {
   final NoteAttachmentsRepository repo;
   final bool isOnline;
 
+  /// Takes text read from a picture into the note; null hides the button.
+  final ValueChanged<String>? onGrabText;
+
   const _ImageLightboxGallery({
     required this.noteId,
     required this.attachments,
@@ -574,6 +600,7 @@ class _ImageLightboxGallery extends ConsumerStatefulWidget {
     required this.canDeleteAttachment,
     required this.repo,
     required this.isOnline,
+    this.onGrabText,
   });
 
   @override
@@ -589,6 +616,32 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
   final Map<String, String?> _imagePaths = {};
   final Map<String, bool> _loading = {};
   final Map<String, bool> _errors = {};
+  bool _readingText = false;
+
+  /// Reads the picture's text and adds it to the note, as Google Keep does.
+  Future<void> _grabText(String path) async {
+    setState(() => _readingText = true);
+    try {
+      final text = await readImageText(path);
+      if (!mounted) return;
+      if (text.isEmpty) {
+        AppSnackbar.showError(
+          context,
+          message: 'No text found in this picture',
+        );
+        return;
+      }
+      widget.onGrabText!(text);
+      AppSnackbar.showSuccess(context, message: 'Text added to the note');
+      context.pop();
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(context, message: 'Couldn’t read this picture');
+      }
+    } finally {
+      if (mounted) setState(() => _readingText = false);
+    }
+  }
 
   @override
   void initState() {
@@ -854,6 +907,28 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
                         ],
                       ),
                     ),
+                    if (widget.onGrabText != null)
+                      IconButton(
+                        tooltip: 'Grab image text',
+                        onPressed:
+                            _imagePaths[currentAttachment.id] == null ||
+                                _readingText
+                            ? null
+                            : () =>
+                                  _grabText(_imagePaths[currentAttachment.id]!),
+                        icon: _readingText
+                            ? const SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                LucideIcons.scanText,
+                                color: Colors.white,
+                              ),
+                      ),
                     IconButton(
                       tooltip: 'Download',
                       onPressed: _imagePaths[currentAttachment.id] == null
@@ -896,6 +971,7 @@ void _showLightbox(
   required bool Function(NoteAttachment) canDeleteAttachment,
   required NoteAttachmentsRepository repo,
   required bool isOnline,
+  ValueChanged<String>? onGrabText,
 }) {
   showGeneralDialog(
     context: context,
@@ -910,6 +986,7 @@ void _showLightbox(
         canDeleteAttachment: canDeleteAttachment,
         repo: repo,
         isOnline: isOnline,
+        onGrabText: onGrabText,
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {

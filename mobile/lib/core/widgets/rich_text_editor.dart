@@ -504,6 +504,20 @@ class RichTextEditorState extends State<RichTextEditor>
     _focusNode.requestFocus();
   }
 
+  /// Adds [text] as new lines at the end of the note ("Grab image text").
+  void appendText(String text) {
+    if (_controller.readOnly || text.trim().isEmpty) return;
+    final end = _controller.document.length - 1;
+    final isEmpty = _controller.document.toPlainText().trim().isEmpty;
+    final insert = isEmpty ? text : '\n$text';
+    _controller.replaceText(
+      end,
+      0,
+      insert,
+      TextSelection.collapsed(offset: end + insert.length),
+    );
+  }
+
   /// Ticked checklist items in the note.
   int get checkedItemCount =>
       parseDocumentLines(_controller.document).where((l) => l.isChecked).length;
