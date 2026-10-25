@@ -2,7 +2,6 @@ import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/theme/tokens/app_dimensions.dart';
 import 'package:anchor/core/theme/tokens/app_schemes.dart';
 import 'package:anchor/core/theme/tokens/app_style.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
