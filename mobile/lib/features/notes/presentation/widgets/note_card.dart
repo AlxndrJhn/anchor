@@ -12,6 +12,7 @@ import 'package:anchor/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
 import 'package:anchor/core/widgets/image_shimmer.dart';
+import 'package:anchor/features/notes/presentation/notes_view_options.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_attachments_gallery.dart';
 import 'package:anchor/core/widgets/quill_preview.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
@@ -56,7 +57,9 @@ class NoteCard extends ConsumerWidget {
     final serverUrl = ref.watch(serverUrlProvider);
     final theme = Theme.of(context);
     final dims = context.dims;
-    final hasImages = note.imagePreviewData.isNotEmpty;
+    final showPictures =
+        ref.watch(notesViewOptionsProvider).value?.showPictures ?? true;
+    final hasImages = showPictures && note.imagePreviewData.isNotEmpty;
     final hasContent = note.content != null && note.content!.isNotEmpty;
     final showBadge = isSelectionMode && !hasImages;
     final showPin = !isSelectionMode && !hasImages && note.isPinned;

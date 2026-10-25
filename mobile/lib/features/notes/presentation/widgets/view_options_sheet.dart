@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:anchor/core/widgets/settings_row.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_durations.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
@@ -109,7 +110,15 @@ class ViewOptionsSheet extends ConsumerWidget {
             ),
           ),
 
-          SizedBox(height: dims.xl),
+          SizedBox(height: dims.lg),
+          SettingsSwitchRow(
+            title: 'Pictures on cards',
+            subtitle: 'Show a note\'s pictures at the top of its card',
+            icon: LucideIcons.image,
+            value: settings.showPictures,
+            onChanged: notifier.setShowPictures,
+          ),
+          SizedBox(height: dims.lg),
         ],
       ),
     );

@@ -13,21 +13,27 @@ class NotesViewOptions {
   final SortOption sortOption;
   final bool isAscending;
 
+  /// Pictures across the top of note cards.
+  final bool showPictures;
+
   const NotesViewOptions({
     this.viewType = ViewType.grid,
     this.sortOption = SortOption.dateModified,
     this.isAscending = false,
+    this.showPictures = true,
   });
 
   NotesViewOptions copyWith({
     ViewType? viewType,
     SortOption? sortOption,
     bool? isAscending,
+    bool? showPictures,
   }) {
     return NotesViewOptions(
       viewType: viewType ?? this.viewType,
       sortOption: sortOption ?? this.sortOption,
       isAscending: isAscending ?? this.isAscending,
+      showPictures: showPictures ?? this.showPictures,
     );
   }
 }
@@ -58,6 +64,7 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
   static const _keyViewType = 'notes_view_type';
   static const _keySortOption = 'notes_sort_option';
   static const _keyIsAscending = 'notes_is_ascending';
+  static const _keyShowPictures = 'notes_show_pictures';
 
   @override
   Future<NotesViewOptions> build() async {
@@ -69,6 +76,7 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
       final viewTypeStr = await _storage.read(key: _keyViewType);
       final sortOptionStr = await _storage.read(key: _keySortOption);
       final isAscendingStr = await _storage.read(key: _keyIsAscending);
+      final showPicturesStr = await _storage.read(key: _keyShowPictures);
 
       final viewType = viewTypeStr == 'list' ? ViewType.list : ViewType.grid;
 
@@ -82,6 +90,7 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
         viewType: viewType,
         sortOption: sortOption,
         isAscending: isAscending,
+        showPictures: showPicturesStr != 'false',
       );
     } catch (e) {
       return const NotesViewOptions();
@@ -103,6 +112,10 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
       await _storage.write(
         key: _keyIsAscending,
         value: options.isAscending.toString(),
+      );
+      await _storage.write(
+        key: _keyShowPictures,
+        value: options.showPictures.toString(),
       );
     } catch (e) {
       // Ignore storage errors
@@ -126,6 +139,13 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
   Future<void> toggleSortDirection() async {
     final current = state.value ?? const NotesViewOptions();
     final newOptions = current.copyWith(isAscending: !current.isAscending);
+    state = AsyncData(newOptions);
+    await _saveOptions(newOptions);
+  }
+
+  Future<void> setShowPictures(bool showPictures) async {
+    final current = state.value ?? const NotesViewOptions();
+    final newOptions = current.copyWith(showPictures: showPictures);
     state = AsyncData(newOptions);
     await _saveOptions(newOptions);
   }
