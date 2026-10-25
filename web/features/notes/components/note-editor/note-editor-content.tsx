@@ -142,7 +142,19 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
     );
 
   return (
-    <div ref={root} className="note-in">
+    <div
+      ref={root}
+      className="note-in"
+      onPasteCapture={(e) => {
+        if (!props.canUpload) return;
+        const images = pastedImages(e.clipboardData);
+        if (!images.length) return;
+        // Caught before Quill sees it, or the picture lands in the text.
+        e.preventDefault();
+        e.stopPropagation();
+        strip.current?.add(images);
+      }}
+    >
       {props.readOnlyBar}
       {props.readOnly ? (
         <h1 className="n-title">{props.title || "Untitled"}</h1>
@@ -295,6 +307,25 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         )}
     </div>
   );
+}
+
+/** Pictures on the clipboard, named so a pasted screenshot reads well. */
+function pastedImages(data: DataTransfer) {
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-");
+  return [...data.items]
+    .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+    .flatMap((item, i) => {
+      const file = item.getAsFile();
+      if (!file) return [];
+      // Browsers name every pasted screenshot “image.png”.
+      if (file.name && file.name !== "image.png") return [file];
+      const ext = file.type.split("/")[1] ?? "png";
+      return [
+        new File([file], `Pasted ${stamp}${i ? `-${i}` : ""}.${ext}`, {
+          type: file.type,
+        }),
+      ];
+    });
 }
 
 /** Returns the note while files are over it. */
