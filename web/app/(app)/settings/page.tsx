@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { AppPage, PageTitle } from "@/components/layout/app-page";
 import { AnchorLogo } from "@/components/layout/brand";
 import {
@@ -13,8 +14,15 @@ import {
   Section,
   SettingsNav,
 } from "@/features/settings";
+import { api } from "@/lib/api/client";
 
 export default function SettingsPage() {
+  // As in the Android app's About.
+  const { data: server } = useQuery({
+    queryKey: ["server-health"],
+    queryFn: () => api.get("api/health").json<{ version?: string }>(),
+    staleTime: 5 * 60 * 1000,
+  });
   return (
     <AppPage title={<PageTitle>Settings</PageTitle>} scrollKey="settings">
       <div className="grid grid-cols-[176px_minmax(0,640px)] items-start gap-10 pt-1 max-md:grid-cols-[minmax(0,1fr)] max-md:gap-5">
@@ -37,6 +45,11 @@ export default function SettingsPage() {
                   <span className="text-meta text-muted-foreground">
                     Your thoughts, secured.
                   </span>
+                  {server?.version && (
+                    <span className="text-meta text-muted-foreground">
+                      Server {server.version}
+                    </span>
+                  )}
                 </div>
               </div>
             </Row>
