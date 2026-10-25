@@ -106,6 +106,13 @@ Anchor focuses on speed, privacy, simplicity, and reliability across mobile and 
 4. **Access the app:**
    Open http://localhost:3000
 
+### This Fork's Image
+
+Every push to `main` of this fork publishes a multi-arch image (amd64 and
+arm64, so it runs on a Raspberry Pi 5) as
+`ghcr.io/alxndrjhn/anchor:fork-latest`, plus `:fork-<commit>` to pin a build.
+Use it in place of `ghcr.io/zhfahim/anchor:latest` in the compose file above.
+
 ### Pre-release (Beta) Image
 
 To test upcoming features before they are officially released, use the `next` tag:

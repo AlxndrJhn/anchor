@@ -1,0 +1,30 @@
+name: Docker Image (fork)
+
+# Publishes this fork's image (amd64 + arm64, e.g. a Raspberry Pi 5) on every
+# push to main, as ghcr.io/<owner>/<repo>:fork-latest and :fork-<sha>.
+
+on:
+  push:
+    branches: [main]
+    tags-ignore:
+      - "v*"
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker:
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      push: true
+      tags: |
+        type=raw,value=fork-latest
+        type=sha,prefix=fork-
