@@ -435,7 +435,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         floatingActionButton: isSelectionMode
             ? null
             : FloatingActionButton.extended(
-                onPressed: () => context.go('/note/new'),
+                onPressed: () => context.go('/note/new', extra: selectedTagId),
                 icon: const Icon(LucideIcons.plus),
                 label: const Text('New Note'),
               ),

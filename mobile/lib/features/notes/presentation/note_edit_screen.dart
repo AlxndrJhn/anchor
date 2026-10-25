@@ -37,7 +37,10 @@ import 'package:anchor/core/widgets/app_bottom_sheet.dart';
 class NoteEditScreen extends ConsumerStatefulWidget {
   final String? noteId;
   final Note? note;
-  const NoteEditScreen({super.key, this.noteId, this.note});
+
+  /// A tag a new note starts with.
+  final String? initialTagId;
+  const NoteEditScreen({super.key, this.noteId, this.note, this.initialTagId});
 
   @override
   ConsumerState<NoteEditScreen> createState() => _NoteEditScreenState();
@@ -110,6 +113,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       _isEditing = true;
       _isPinned = false;
       _isLoaded = true;
+      if (widget.initialTagId != null) _selectedTagIds = [widget.initialTagId!];
     }
 
     _titleFocusNode.addListener(_updateEditingState);

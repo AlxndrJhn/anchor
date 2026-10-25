@@ -72,7 +72,9 @@ GoRouter goRouter(Ref ref) {
         routes: [
           GoRoute(
             path: AppRoutes.noteNew,
-            builder: (context, state) => const NoteEditScreen(),
+            // The list passes its tag filter, which the new note starts with.
+            builder: (context, state) =>
+                NoteEditScreen(initialTagId: state.extra as String?),
           ),
           GoRoute(
             path: AppRoutes.noteEdit,
