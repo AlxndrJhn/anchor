@@ -521,3 +521,18 @@
     font-size: 25px;
   }
 }
+
+/* A version's added and removed line counts in the list. */
+.hs-counts {
+  flex: none;
+  display: inline-flex;
+  gap: --spacing(1.5);
+  font: var(--font-weight-semibold) var(--text-caption) / 1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.hs-counts .add {
+  color: var(--added-ink);
+}
+.hs-counts .del {
+  color: var(--removed-ink);
+}
