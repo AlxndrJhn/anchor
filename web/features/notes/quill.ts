@@ -727,6 +727,48 @@ export const QUILL_MODULES = {
           return false;
         },
       },
+      // Google Keep's keys: Ctrl+] / Ctrl+[ indent list items, and
+      // Ctrl+Shift+8 turns lines into a checklist and back.
+      "indent key": {
+        key: "]",
+        shortKey: true,
+        format: ["list"],
+        handler(
+          this: { quill: QuillInstance },
+          range: { index: number; length: number },
+        ) {
+          applyListIndent(this.quill, range, 1);
+          return false;
+        },
+      },
+      "outdent key": {
+        key: "[",
+        shortKey: true,
+        format: ["list"],
+        handler(
+          this: { quill: QuillInstance },
+          range: { index: number; length: number },
+        ) {
+          applyListIndent(this.quill, range, -1);
+          return false;
+        },
+      },
+      "checklist key": {
+        key: 56,
+        shortKey: true,
+        shiftKey: true,
+        handler(this: { quill: QuillInstance }) {
+          const list = this.quill.getFormat().list;
+          const isChecklist =
+            list === LIST_FORMATS.CHECKED || list === LIST_FORMATS.UNCHECKED;
+          this.quill.format(
+            "list",
+            isChecklist ? false : LIST_FORMATS.UNCHECKED,
+            "user",
+          );
+          return false;
+        },
+      },
       outdent: {
         key: "Tab",
         shiftKey: true,

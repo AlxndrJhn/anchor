@@ -6,6 +6,7 @@ import { Menu, Search, X } from "lucide-react";
 import * as React from "react";
 import { IconButton } from "@/components/ui/button";
 import { Tip } from "@/components/ui/tooltip";
+import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { hasShortcutKey, isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { useShellStore } from "./shell-store";
@@ -193,6 +194,16 @@ export const SearchField = React.forwardRef<
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  useShortcuts({
+    "/": () => {
+      setOpen(true);
+      requestAnimationFrame(() => {
+        input.current?.focus();
+        input.current?.select();
+      });
+    },
+  });
 
   React.useEffect(() => {
     if (!autoFocus) return;
