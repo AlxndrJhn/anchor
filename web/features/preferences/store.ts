@@ -5,8 +5,13 @@ export type ViewMode = "masonry" | "grid" | "list";
 export type SortBy = "updatedAt" | "createdAt" | "title";
 export type SortOrder = "asc" | "desc";
 
+export type AppStyle = "default" | "skeuomorphism" | "neo-brutalism" | "lofi";
+
 interface UIPreferences {
   sidebarCollapsed: boolean;
+  /** A colour scheme id from lib/design/schemes, or "anchor". */
+  colorScheme?: string;
+  style?: AppStyle;
 }
 
 interface NotesPreferences {

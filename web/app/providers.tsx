@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import { type ReactNode, useEffect, useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAppearance } from "@/lib/appearance";
 import { trackInputModality } from "@/lib/input-modality";
 
 interface ProvidersProps {
@@ -30,6 +31,7 @@ export function Providers({ children }: ProvidersProps) {
       }),
   );
   useEffect(trackInputModality, []);
+  useAppearance();
 
   return (
     <QueryClientProvider client={queryClient}>
