@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
     <application
-        android:label="Anchor Notes"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
