@@ -1,16 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Directory, File, Platform;
+import 'dart:io' show Platform;
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:path_provider/path_provider.dart';
 
+import '../../../core/files/save_to_device.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_clip.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -204,60 +203,22 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
     final stamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
     final filename = 'anchor-logs-$stamp.log';
 
-    Uri? result;
-    try {
-      result = await FilePicker.saveFile(
-        dialogTitle: 'Save logs',
-        fileName: filename,
-        bytes: bytes,
-        type: FileType.custom,
-        allowedExtensions: const ['log'],
-      );
-    } catch (e) {
-      AppLogger.instance.warn(
-        'LogViewer',
-        'Export picker failed, saving to Downloads instead: $e',
-      );
-      // Some devices have no document picker the app can reach.
-      final saved = await _saveToDownloads(filename, bytes);
-      if (!mounted) return;
-      if (saved != null) {
-        AppSnackbar.showSuccess(context, message: 'Saved to $saved');
-      } else {
-        AppSnackbar.showError(context, message: 'Export failed: $e');
-      }
-      return;
-    }
-    if (result == null) return; // user cancelled
-
+    final result = await saveToDevice(
+      filename: filename,
+      bytes: bytes,
+      tag: 'LogViewer',
+    );
     if (!mounted) return;
-    AppSnackbar.showSuccess(context, message: 'Saved $filename');
-  }
-
-  /// Writes the file straight into the shared Download folder, or the app's
-  /// own external folder when that isn't allowed. Returns where it went.
-  Future<String?> _saveToDownloads(String filename, Uint8List bytes) async {
-    if (!Platform.isAndroid) return null;
-    final folders = <Directory?>[
-      Directory('/storage/emulated/0/Download'),
-      await getExternalStorageDirectory(),
-    ];
-    for (final folder in folders) {
-      if (folder == null) continue;
-      try {
-        final file = File('${folder.path}/$filename');
-        await file.writeAsBytes(bytes, flush: true);
-        return file.path;
-      } catch (e, st) {
-        AppLogger.instance.error(
-          'LogViewer',
-          'Saving logs to ${folder.path} failed',
-          error: e,
-          stackTrace: st,
-        );
-      }
+    switch (result) {
+      case SavedWithPicker():
+        AppSnackbar.showSuccess(context, message: 'Saved $filename');
+      case SavedTo(:final path):
+        AppSnackbar.showSuccess(context, message: 'Saved to $path');
+      case SaveFailed(:final error):
+        AppSnackbar.showError(context, message: 'Export failed: $error');
+      case SaveCancelled():
+        break;
     }
-    return null;
   }
 
   void _confirmClear() {

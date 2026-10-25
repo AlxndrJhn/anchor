@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
+import 'package:anchor/core/files/save_to_device.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
@@ -153,6 +154,33 @@ class _AudioPlayerRowState extends State<AudioPlayerRow> {
         if (mounted) setState(() => _isLoading = false);
       }
     }
+  }
+
+  /// Saves the recording to the device, fetching it first if needed.
+  Future<void> _save() async {
+    var path = widget.localPath ?? _loadedPath;
+    if (path == null || !File(path).existsSync()) {
+      if (widget.onDownload == null) return;
+      if (!widget.isOnline) {
+        AppSnackbar.showInfo(context, message: 'Available when online');
+        return;
+      }
+      try {
+        path = await widget.onDownload!();
+      } catch (_) {
+        if (mounted) {
+          AppSnackbar.showError(context, message: 'Failed to load audio');
+        }
+        return;
+      }
+    }
+    if (!mounted) return;
+    await saveFileToDevice(
+      context,
+      sourcePath: path,
+      filename: widget.attachment.originalFilename,
+      tag: 'Attachments',
+    );
   }
 
   Future<void> _confirmDelete() async {
@@ -302,6 +330,23 @@ class _AudioPlayerRowState extends State<AudioPlayerRow> {
                       ),
                     ],
                   ),
+                ),
+
+                // Download button
+                SizedBox(width: dims.xs),
+                IconButton(
+                  onPressed: _save,
+                  icon: Icon(
+                    LucideIcons.download,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.7,
+                    ),
+                  ),
+                  tooltip: 'Download audio',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  style: IconButton.styleFrom(shape: const CircleBorder()),
                 ),
 
                 // Delete button
