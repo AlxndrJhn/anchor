@@ -27,7 +27,10 @@ import {
 } from "@/features/notes";
 import type { RichTextEditorHandle } from "@/features/notes/components/editor";
 import { parseStoredContent } from "@/features/notes/quill";
-import { countCheckedItems } from "@/features/notes/quill-checklist";
+import {
+  checkboxesAction,
+  countCheckedItems,
+} from "@/features/notes/quill-checklist";
 import { createTag, nextTagColor, type Tag, useTags } from "@/features/tags";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
 import {
@@ -112,10 +115,13 @@ function NoteEditor({
     string | null | false
   >(false);
   const [nudge, setNudge] = useState(0);
-  const checkedCount = useMemo(
-    () => countCheckedItems(parseStoredContent(editor.content)),
-    [editor.content],
-  );
+  const { checkedCount, checkboxes } = useMemo(() => {
+    const delta = parseStoredContent(editor.content);
+    return {
+      checkedCount: countCheckedItems(delta),
+      checkboxes: checkboxesAction(delta),
+    };
+  }, [editor.content]);
 
   const {
     data: allTags = [],
@@ -367,6 +373,12 @@ function NoteEditor({
             onArchive={actions.archive}
             onUnarchive={actions.unarchive}
             onTrash={actions.trash}
+            checkboxes={checkboxes}
+            onCheckboxes={() =>
+              checkboxes === "show"
+                ? contentEditorRef.current?.showCheckboxes()
+                : contentEditorRef.current?.hideCheckboxes()
+            }
             checkedCount={checkedCount}
             onUncheckAll={() => contentEditorRef.current?.uncheckAll()}
             onRemoveChecked={() => {

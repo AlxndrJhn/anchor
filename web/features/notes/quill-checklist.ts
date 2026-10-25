@@ -540,3 +540,58 @@ export function toggleChecklistItem(
   }
   return stringifyDelta({ ops: next.ops as QuillOp[] });
 }
+
+const isCodeLine = (line: DeltaLine) =>
+  !!line.newlineOp.attributes?.["code-block"];
+const isWritten = (line: DeltaLine) => getLineLength(line) > 1;
+
+/**
+ * Which of Google Keep's "Show checkboxes" / "Hide checkboxes" fits a note:
+ * show while a written line isn't a checklist item, hide once all are.
+ */
+export function checkboxesAction(delta: QuillDelta): "show" | "hide" | null {
+  const written = deltaToLines(delta.ops).filter(isWritten);
+  if (written.some((line) => !isChecklistLine(line) && !isCodeLine(line)))
+    return "show";
+  return written.length && written.every(isChecklistLine) ? "hide" : null;
+}
+
+/**
+ * Delta that makes every written line (code aside) an unchecked checklist
+ * item; headings and quotes become plain items. Null if nothing changes.
+ */
+export function createShowCheckboxesDelta(
+  delta: QuillDelta,
+): QuillDelta | null {
+  const change = new Delta();
+  let found = false;
+  for (const line of deltaToLines(delta.ops)) {
+    const length = getLineLength(line);
+    if (isWritten(line) && !isChecklistLine(line) && !isCodeLine(line)) {
+      found = true;
+      const attrs = line.newlineOp.attributes ?? {};
+      change.retain(length - 1).retain(1, {
+        list: LIST_FORMATS.UNCHECKED,
+        ...(attrs.header ? { header: null } : {}),
+        ...(attrs.blockquote ? { blockquote: null } : {}),
+      });
+    } else change.retain(length);
+  }
+  return found ? { ops: change.chop().ops as QuillOp[] } : null;
+}
+
+/** Delta that turns every checklist item back into a plain line. */
+export function createHideCheckboxesDelta(
+  delta: QuillDelta,
+): QuillDelta | null {
+  const change = new Delta();
+  let found = false;
+  for (const line of deltaToLines(delta.ops)) {
+    const length = getLineLength(line);
+    if (isChecklistLine(line)) {
+      found = true;
+      change.retain(length - 1).retain(1, { list: null });
+    } else change.retain(length);
+  }
+  return found ? { ops: change.chop().ops as QuillOp[] } : null;
+}

@@ -40,7 +40,9 @@ import {
   undoConversion,
 } from "../../quill";
 import {
+  createHideCheckboxesDelta,
   createRemoveCheckedDelta,
+  createShowCheckboxesDelta,
   createUncheckAllDelta,
 } from "../../quill-checklist";
 import { registerNoteFormats } from "../../quill-formats";
@@ -158,6 +160,9 @@ export interface RichTextEditorHandle {
   uncheckAll: () => void;
   /** Deletes every ticked checklist item, as one undo step. */
   removeChecked: () => void;
+  /** Makes every line a checklist item, or turns them back; one undo step. */
+  showCheckboxes: () => void;
+  hideCheckboxes: () => void;
   undo: () => void;
 }
 
@@ -686,6 +691,8 @@ export const RichTextEditor = forwardRef<
         },
         uncheckAll: () => applyBulk(createUncheckAllDelta),
         removeChecked: () => applyBulk(createRemoveCheckedDelta),
+        showCheckboxes: () => applyBulk(createShowCheckboxesDelta),
+        hideCheckboxes: () => applyBulk(createHideCheckboxesDelta),
         undo: () => {
           const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
           quill?.history.undo();

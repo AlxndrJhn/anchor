@@ -11,6 +11,8 @@ import {
   CloudOff,
   Ellipsis,
   History,
+  List,
+  ListChecks,
   ListRestart,
   ListX,
   LoaderCircle,
@@ -72,6 +74,9 @@ interface NoteEditorHeaderProps {
   onArchive: () => void;
   onUnarchive: () => void;
   onTrash: () => void;
+  /** Google Keep's "Show checkboxes" or "Hide checkboxes", whichever fits. */
+  checkboxes: "show" | "hide" | null;
+  onCheckboxes: () => void;
   /** Ticked checklist items in the note. */
   checkedCount: number;
   onUncheckAll: () => void;
@@ -220,6 +225,14 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                   )}
                   <DropdownMenuSeparator />
                 </div>
+                {!props.readOnly && props.checkboxes && (
+                  <DropdownMenuItem onSelect={props.onCheckboxes}>
+                    {props.checkboxes === "show" ? <ListChecks /> : <List />}
+                    {props.checkboxes === "show"
+                      ? "Show checkboxes"
+                      : "Hide checkboxes"}
+                  </DropdownMenuItem>
+                )}
                 {!props.readOnly && props.checkedCount > 0 && (
                   <>
                     <DropdownMenuItem onSelect={props.onUncheckAll}>

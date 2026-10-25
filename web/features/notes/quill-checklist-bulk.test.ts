@@ -2,8 +2,11 @@ import Delta, { type Op } from "quill-delta";
 import { describe, expect, it } from "vitest";
 import { parseStoredContent, type QuillDelta, type QuillOp } from "./quill";
 import {
+  checkboxesAction,
   countCheckedItems,
+  createHideCheckboxesDelta,
   createRemoveCheckedDelta,
+  createShowCheckboxesDelta,
   createUncheckAllDelta,
   toggleChecklistItem,
 } from "./quill-checklist";
@@ -126,5 +129,51 @@ describe("toggleChecklistItem", () => {
         false,
       ),
     ).toBeNull();
+  });
+});
+
+describe("show and hide checkboxes", () => {
+  const note: QuillDelta = {
+    ops: [
+      { insert: "Groceries" },
+      { insert: "\n", attributes: { header: 2 } },
+      { insert: "Milk" },
+      { insert: "\n", attributes: { list: "checked" } },
+      { insert: "\nEggs" },
+      { insert: "\n", attributes: { list: "bullet", indent: 1 } },
+    ],
+  };
+
+  it("makes every written line an unchecked item", () => {
+    expect(checkboxesAction(note)).toBe("show");
+    const after: QuillDelta = {
+      ops: apply(
+        note,
+        createShowCheckboxesDelta(note) as QuillDelta,
+      ) as QuillOp[],
+    };
+    expect(after.ops).toEqual(
+      norm([
+        { insert: "Groceries" },
+        { insert: "\n", attributes: { list: "unchecked" } },
+        { insert: "Milk" },
+        { insert: "\n", attributes: { list: "checked" } },
+        { insert: "\nEggs" },
+        { insert: "\n", attributes: { list: "unchecked", indent: 1 } },
+      ]),
+    );
+    expect(checkboxesAction(after)).toBe("hide");
+  });
+
+  it("hide turns the items back into plain lines", () => {
+    const list: QuillDelta = {
+      ops: [
+        { insert: "Milk" },
+        { insert: "\n", attributes: { list: "checked" } },
+      ],
+    };
+    expect(apply(list, createHideCheckboxesDelta(list) as QuillDelta)).toEqual(
+      norm([{ insert: "Milk\n" }]),
+    );
   });
 });
