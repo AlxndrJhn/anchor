@@ -83,7 +83,12 @@ GoRouter goRouter(Ref ref) {
               final note = state.extra as Note?;
               return MaterialPage(
                 key: ValueKey('note/$id'),
-                child: NoteEditScreen(noteId: id, note: note),
+                child: NoteEditScreen(
+                  noteId: id,
+                  note: note,
+                  // Set when opened from search results.
+                  highlightTerm: state.uri.queryParameters['hl'],
+                ),
               );
             },
             routes: [

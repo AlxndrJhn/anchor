@@ -44,7 +44,16 @@ class NoteEditScreen extends ConsumerStatefulWidget {
 
   /// A tag a new note starts with.
   final String? initialTagId;
-  const NoteEditScreen({super.key, this.noteId, this.note, this.initialTagId});
+
+  /// A search the note was opened from, marked in its text.
+  final String? highlightTerm;
+  const NoteEditScreen({
+    super.key,
+    this.noteId,
+    this.note,
+    this.initialTagId,
+    this.highlightTerm,
+  });
 
   @override
   ConsumerState<NoteEditScreen> createState() => _NoteEditScreenState();
@@ -1104,6 +1113,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                             contentPadding: context.dims.editorPadding,
                             header: _buildEditorHeader(theme),
                             onImageInserted: _onImageInserted,
+                            highlightTerm: widget.highlightTerm,
                           )
                         : const Center(child: CircularProgressIndicator()),
                   ),

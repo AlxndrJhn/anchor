@@ -95,6 +95,15 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// The note's page, carrying the search so the note marks its matches.
+  String _noteLocation(Note note) {
+    final query = ref.read(searchQueryProvider).trim();
+    return Uri(
+      path: '/note/${note.id}',
+      queryParameters: query.isEmpty ? null : {'hl': query},
+    ).toString();
+  }
+
   /// When Back last asked to be pressed again to leave the app.
   DateTime? _exitAskedAt;
 
@@ -148,7 +157,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         if (isSelectionMode) {
           ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
         } else {
-          context.go('/note/${note.id}', extra: note);
+          context.go(_noteLocation(note), extra: note);
         }
       },
     );
@@ -170,7 +179,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             isSelectionMode: false,
             isSelected: false,
             onLongPress: () {},
-            onTap: () => context.go('/note/${note.id}', extra: note),
+            onTap: () => context.go(_noteLocation(note), extra: note),
           );
     return SliverPadding(
       padding: dims.screenInsets.copyWith(

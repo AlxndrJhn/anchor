@@ -119,7 +119,15 @@ class _NoteListPageState extends State<NoteListPage> {
                 child: NoteCard(
                   note: note,
                   datePrefix: widget.datePrefix,
-                  onTap: () => context.push('/note/${note.id}', extra: note),
+                  onTap: () => context.push(
+                    Uri(
+                      path: '/note/${note.id}',
+                      queryParameters: _query.trim().isEmpty
+                          ? null
+                          : {'hl': _query.trim()},
+                    ).toString(),
+                    extra: note,
+                  ),
                   trailingActions: widget.trailingActions(note),
                 ),
               );

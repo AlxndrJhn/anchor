@@ -502,4 +502,47 @@ void main() {
       {'insert': 'hi\n'},
     ]);
   });
+
+  group('search highlight', () {
+    const note = '{"ops":[{"insert":"Buy eggs and more Eggs\\n"}]}';
+
+    List<TextSpan> marked(WidgetTester tester) {
+      final spans = <TextSpan>[];
+      for (final rich in tester.widgetList<RichText>(find.byType(RichText))) {
+        rich.text.visitChildren((span) {
+          if (span is TextSpan && span.style?.backgroundColor != null) {
+            spans.add(span);
+          }
+          return true;
+        });
+      }
+      return spans;
+    }
+
+    testWidgets('marks every match, ignoring case', (tester) async {
+      await tester.pumpWidget(
+        wrap(RichTextEditor(initialContent: note, highlightTerm: 'eggs')),
+      );
+      await tester.pumpAndSettle();
+      expect(marked(tester).map((s) => s.text), ['eggs', 'Eggs']);
+    });
+
+    testWidgets('typing in the note removes the marks', (tester) async {
+      await tester.pumpWidget(
+        wrap(RichTextEditor(initialContent: note, highlightTerm: 'eggs')),
+      );
+      await tester.pumpAndSettle();
+      final state = tester.state<RichTextEditorState>(
+        find.byType(RichTextEditor),
+      );
+      state.controller.replaceText(
+        0,
+        0,
+        'x',
+        const TextSelection.collapsed(offset: 1),
+      );
+      await tester.pumpAndSettle();
+      expect(marked(tester), isEmpty);
+    });
+  });
 }

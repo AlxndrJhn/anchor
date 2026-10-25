@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dart_quill_delta/dart_quill_delta.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -68,6 +69,10 @@ class RichTextEditor extends StatefulWidget {
   /// pictures.
   final void Function(Uint8List bytes, String mimeType)? onImageInserted;
 
+  /// A search the note was opened from: its matches are marked, and the
+  /// first is scrolled into view, until the text is edited.
+  final String? highlightTerm;
+
   const RichTextEditor({
     super.key,
     this.initialContent,
@@ -81,6 +86,7 @@ class RichTextEditor extends StatefulWidget {
     this.sortChecklistItems = true,
     this.header,
     this.onImageInserted,
+    this.highlightTerm,
   });
 
   @override
@@ -109,6 +115,9 @@ class RichTextEditorState extends State<RichTextEditor>
   @override
   RenderEditor? get renderEditor => _editorKey.currentState?.renderEditor;
 
+  String? _highlight;
+  StreamSubscription<DocChange>? _highlightSub;
+
   @override
   ScrollController get dragScrollController => _scrollController;
 
@@ -122,6 +131,16 @@ class RichTextEditorState extends State<RichTextEditor>
     _controller = _createController(widget.initialContent);
     _controller.readOnly = !widget.canEdit;
     _scrollController = ScrollController();
+    _highlight = widget.highlightTerm?.trim().toLowerCase();
+    if (_highlight?.isEmpty ?? true) _highlight = null;
+    if (_highlight != null) {
+      _highlightSub = _controller.changes.listen((change) {
+        if (change.source != ChangeSource.local) return;
+        _highlightSub?.cancel();
+        if (mounted) setState(() => _highlight = null);
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showFirstMatch());
+    }
     _onChangedSub = _controller.changes.listen((_) => widget.onChanged?.call());
     attachChecklistSorting();
 
@@ -187,6 +206,7 @@ class RichTextEditorState extends State<RichTextEditor>
     _onChangedSub?.cancel();
     _focusNode.removeListener(_onFocusChanged);
     _controller.dispose();
+    _highlightSub?.cancel();
     _scrollController.dispose();
     if (_isInternalFocusNode) {
       _focusNode.dispose();
@@ -385,6 +405,80 @@ class RichTextEditorState extends State<RichTextEditor>
     AppSnackbar.showSuccess(context, message: 'Link copied');
   }
 
+  /// Splits [text] so each match of the search term gets a marker colour.
+  InlineSpan _highlightSpanBuilder(
+    BuildContext context,
+    Node node,
+    int nodeOffset,
+    String text,
+    TextStyle? style,
+    GestureRecognizer? recognizer,
+  ) {
+    final term = _highlight;
+    final lower = text.toLowerCase();
+    if (term == null || !lower.contains(term)) {
+      return defaultSpanBuilder(
+        context,
+        node,
+        nodeOffset,
+        text,
+        style,
+        recognizer,
+      );
+    }
+    final mark = (style ?? const TextStyle()).copyWith(
+      backgroundColor: Theme.of(
+        context,
+      ).colorScheme.primary.withValues(alpha: 0.3),
+    );
+    final spans = <TextSpan>[];
+    var at = 0;
+    for (var hit = lower.indexOf(term); hit != -1;) {
+      if (hit > at) {
+        spans.add(
+          TextSpan(
+            text: text.substring(at, hit),
+            style: style,
+            recognizer: recognizer,
+          ),
+        );
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(hit, hit + term.length),
+          style: mark,
+          recognizer: recognizer,
+        ),
+      );
+      at = hit + term.length;
+      hit = lower.indexOf(term, at);
+    }
+    if (at < text.length) {
+      spans.add(
+        TextSpan(
+          text: text.substring(at),
+          style: style,
+          recognizer: recognizer,
+        ),
+      );
+    }
+    return TextSpan(children: spans, style: style);
+  }
+
+  void _showFirstMatch() {
+    final term = _highlight;
+    final editor = renderEditor;
+    if (!mounted || term == null || editor == null) return;
+    final at = _controller.document.toPlainText().toLowerCase().indexOf(term);
+    if (at < 0) return;
+    final rect = editor.getLocalRectForCaret(TextPosition(offset: at));
+    editor.showOnScreen(
+      rect: rect.inflate(80),
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
   // Public API
   String getContent() {
     final ops = _controller.document.toDelta().toJson();
@@ -545,6 +639,9 @@ class RichTextEditorState extends State<RichTextEditor>
                     showCursor: _isEditing && widget.canEdit,
                     enableInteractiveSelection: true,
                     customStyles: getEditorStyles(context),
+                    textSpanBuilder: _highlight == null
+                        ? defaultSpanBuilder
+                        : _highlightSpanBuilder,
                     customStyleBuilder: (attribute) =>
                         getCheckedListStyle(attribute, context),
                     // ignore: experimental_member_use
