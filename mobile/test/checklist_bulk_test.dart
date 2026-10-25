@@ -109,6 +109,37 @@ void main() {
     });
   });
 
+  group('show and hide checkboxes', () {
+    test('turns every written line into an unchecked item', () {
+      final doc = docFrom([
+        ('Groceries', null),
+        ('Milk', 'checked'),
+        ('', null),
+        ('Eggs', 'bullet'),
+      ]);
+      final lines = parseDocumentLines(doc);
+      expect(hasLinesWithoutCheckboxes(lines), isTrue);
+      doc.compose(buildShowCheckboxesDelta(lines)!, ChangeSource.local);
+      expect(linesOf(doc), [
+        ('Groceries', 'unchecked'),
+        ('Milk', 'checked'),
+        ('', null),
+        ('Eggs', 'unchecked'),
+      ]);
+      expect(allLinesAreChecklist(parseDocumentLines(doc)), isTrue);
+      expect(hasLinesWithoutCheckboxes(parseDocumentLines(doc)), isFalse);
+    });
+
+    test('hide turns the items back into plain lines', () {
+      final doc = docFrom([('Milk', 'checked'), ('Eggs', 'unchecked')]);
+      doc.compose(
+        buildHideCheckboxesDelta(parseDocumentLines(doc))!,
+        ChangeSource.local,
+      );
+      expect(linesOf(doc), [('Milk', null), ('Eggs', null)]);
+    });
+  });
+
   test('nothing ticked gives no change', () {
     final lines = parseDocumentLines(docFrom([('a', 'unchecked')]));
     expect(buildUncheckAllDelta(lines), isNull);

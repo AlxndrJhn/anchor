@@ -582,3 +582,54 @@ String? toggleChecklistItemContent(
   }
   return jsonEncode({'ops': document.toDelta().toJson()});
 }
+
+bool _isCodeLine(ParsedLine line) =>
+    line.newlineAttributes?[Attribute.codeBlock.key] != null;
+
+/// Whether "Show checkboxes" has lines to turn into checklist items.
+bool hasLinesWithoutCheckboxes(List<ParsedLine> lines) => lines.any(
+  (line) => line.length > 1 && !line.isChecklist && !_isCodeLine(line),
+);
+
+/// Whether every written line is a checklist item, so "Hide checkboxes"
+/// applies.
+bool allLinesAreChecklist(List<ParsedLine> lines) {
+  final written = lines.where((line) => line.length > 1).toList();
+  return written.isNotEmpty && written.every((line) => line.isChecklist);
+}
+
+/// Delta that makes every written line (code aside) an unchecked checklist
+/// item, like Google Keep's "Show checkboxes". Null when nothing changes.
+Delta? buildShowCheckboxesDelta(List<ParsedLine> lines) {
+  final delta = Delta();
+  var at = 0;
+  for (final line in lines) {
+    if (line.length <= 1 || line.isChecklist || _isCodeLine(line)) continue;
+    final newline = line.startOffset + line.length - 1;
+    if (newline > at) delta.retain(newline - at);
+    delta.retain(1, {
+      Attribute.list.key: 'unchecked',
+      if (line.newlineAttributes?[Attribute.header.key] != null)
+        Attribute.header.key: null,
+      if (line.newlineAttributes?[Attribute.blockQuote.key] != null)
+        Attribute.blockQuote.key: null,
+    });
+    at = newline + 1;
+  }
+  return delta.isEmpty ? null : delta;
+}
+
+/// Delta that turns every checklist item back into plain text ("Hide
+/// checkboxes"). Null when there are none.
+Delta? buildHideCheckboxesDelta(List<ParsedLine> lines) {
+  final delta = Delta();
+  var at = 0;
+  for (final line in lines) {
+    if (!line.isChecklist) continue;
+    final newline = line.startOffset + line.length - 1;
+    if (newline > at) delta.retain(newline - at);
+    delta.retain(1, {Attribute.list.key: null});
+    at = newline + 1;
+  }
+  return delta.isEmpty ? null : delta;
+}

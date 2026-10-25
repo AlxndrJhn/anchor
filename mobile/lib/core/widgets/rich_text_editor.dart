@@ -511,6 +511,20 @@ class RichTextEditorState extends State<RichTextEditor>
   /// Unticks every ticked item, as one undo step.
   void uncheckAll() => _applyBulk(buildUncheckAllDelta);
 
+  /// Whether "Show checkboxes" would turn any line into a checklist item.
+  bool get canShowCheckboxes =>
+      hasLinesWithoutCheckboxes(parseDocumentLines(_controller.document));
+
+  /// Whether every written line is a checklist item.
+  bool get isAllChecklist =>
+      allLinesAreChecklist(parseDocumentLines(_controller.document));
+
+  /// Makes every line an unchecked checklist item, as one undo step.
+  void showCheckboxes() => _applyBulk(buildShowCheckboxesDelta);
+
+  /// Turns every checklist item back into a plain line, as one undo step.
+  void hideCheckboxes() => _applyBulk(buildHideCheckboxesDelta);
+
   /// Deletes every ticked item, as one undo step.
   void removeChecked() => _applyBulk(buildRemoveCheckedDelta);
 

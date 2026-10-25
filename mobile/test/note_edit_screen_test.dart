@@ -196,6 +196,34 @@ void main() {
     verify(() => notesRepo.restoreNote('n1')).called(1);
   });
 
+  testWidgets('Show checkboxes turns every line into an unchecked item', (
+    tester,
+  ) async {
+    const note = Note(
+      id: 'n1',
+      title: 'Groceries',
+      content: '{"ops":[{"insert":"Milk\\nEggs\\n"}]}',
+    );
+    await pumpScreen(tester, note: note);
+
+    await tester.tap(find.byTooltip('More options'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hide checkboxes'), findsNothing);
+    await tester.tap(find.byIcon(LucideIcons.listChecks));
+    await tester.pumpAndSettle();
+
+    final ops = editorController(tester).document.toDelta().toJson();
+    expect(
+      ops.where((op) => (op['attributes'] as Map?)?['list'] == 'unchecked'),
+      hasLength(2),
+    );
+
+    await tester.tap(find.byTooltip('More options'));
+    await tester.pumpAndSettle();
+    expect(find.text('Show checkboxes'), findsNothing);
+    expect(find.text('Hide checkboxes'), findsOneWidget);
+  });
+
   testWidgets('cursor movement alone never saves an existing note', (
     tester,
   ) async {

@@ -625,6 +625,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         onArchiveTap: _toggleArchived,
         onDeleteTap: _deleteNote,
         onHistoryTap: !_isNew && !_isReadOnly ? _openHistory : null,
+        onShowCheckboxesTap:
+            !_isReadOnly && (editor?.canShowCheckboxes ?? false)
+            ? () => editor?.showCheckboxes()
+            : null,
+        onHideCheckboxesTap:
+            !_isReadOnly &&
+                !(editor?.canShowCheckboxes ?? true) &&
+                (editor?.isAllChecklist ?? false)
+            ? () => editor?.hideCheckboxes()
+            : null,
         onUncheckAllTap: checked > 0 ? () => editor?.uncheckAll() : null,
         onRemoveCheckedTap: checked > 0
             ? () {

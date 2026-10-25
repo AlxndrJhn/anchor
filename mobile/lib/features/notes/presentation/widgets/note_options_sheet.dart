@@ -23,6 +23,10 @@ class NoteOptionsSheet extends StatelessWidget {
   /// Null hides the option, for notes that have no history to read.
   final VoidCallback? onHistoryTap;
 
+  /// Null hides these; at most one of them is given.
+  final VoidCallback? onShowCheckboxesTap;
+  final VoidCallback? onHideCheckboxesTap;
+
   /// Null hides these, for notes without ticked checklist items.
   final VoidCallback? onUncheckAllTap;
   final VoidCallback? onRemoveCheckedTap;
@@ -41,6 +45,8 @@ class NoteOptionsSheet extends StatelessWidget {
     required this.onArchiveTap,
     required this.onDeleteTap,
     this.onHistoryTap,
+    this.onShowCheckboxesTap,
+    this.onHideCheckboxesTap,
     this.onUncheckAllTap,
     this.onRemoveCheckedTap,
   });
@@ -79,6 +85,18 @@ class NoteOptionsSheet extends StatelessWidget {
           icon: LucideIcons.paperclip,
           label: 'Attachment',
           onTap: onAttachmentTap,
+        ),
+      if (onShowCheckboxesTap != null)
+        _OptionSpec(
+          icon: LucideIcons.listChecks,
+          label: 'Show checkboxes',
+          onTap: onShowCheckboxesTap!,
+        ),
+      if (onHideCheckboxesTap != null)
+        _OptionSpec(
+          icon: LucideIcons.list,
+          label: 'Hide checkboxes',
+          onTap: onHideCheckboxesTap!,
         ),
       if (onUncheckAllTap != null)
         _OptionSpec(
