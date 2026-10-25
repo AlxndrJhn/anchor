@@ -12,6 +12,7 @@ import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_scaffold.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bar_title.dart';
 import '../../../core/widgets/selection_bar.dart';
 import '../../../l10n/l10n.dart';
@@ -59,6 +60,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   final _isBottomBarCompact = ValueNotifier(false);
   double _scrollDistance = 0;
   bool _searching = false;
+
+  /// Back leaves the app only while "Press back again to exit" shows, so a
+  /// stray press doesn't close it.
+  bool _canExit = false;
 
   NoteSelection get _selection => NoteSelection(ref);
 
@@ -118,6 +123,18 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         );
       }
     });
+  }
+
+  void _askToExit() {
+    AppSnackbar.show(
+      context,
+      context.l10n.listPressBackAgainToExit,
+      kind: SnackbarKind.info,
+      onClosed: (_) {
+        if (mounted) setState(() => _canExit = false);
+      },
+    );
+    setState(() => _canExit = true);
   }
 
   void _endSearch() {
@@ -391,6 +408,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
     return PopScope(
       canPop:
+          _canExit &&
           !isSelecting &&
           !_searching &&
           folder == NoteFolder.notes &&
@@ -402,7 +420,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         if (isSelecting) return _selection.end();
         if (_searching) return _endSearch();
         if (tagId != null) return clearTag();
-        ref.read(noteFolderProvider.notifier).go(NoteFolder.notes);
+        if (folder != NoteFolder.notes) {
+          return ref.read(noteFolderProvider.notifier).go(NoteFolder.notes);
+        }
+        _askToExit();
       },
       child: DrawerHost(
         key: _drawerKey,

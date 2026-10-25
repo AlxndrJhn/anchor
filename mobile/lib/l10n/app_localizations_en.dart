@@ -1723,6 +1723,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listViewOptions => 'View options';
 
   @override
+  String get listPressBackAgainToExit => 'Press back again to exit';
+
+  @override
   String searchTag(String tag) {
     return 'Search #$tag';
   }

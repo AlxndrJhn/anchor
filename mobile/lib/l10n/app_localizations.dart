@@ -2536,6 +2536,12 @@ abstract class AppLocalizations {
   /// **'View options'**
   String get listViewOptions;
 
+  /// Toast after Android's Back on the notes list: a second Back while it shows closes the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to exit'**
+  String get listPressBackAgainToExit;
+
   /// Hint inside the empty search field while the list shows only one tag.
   ///
   /// In en, this message translates to:

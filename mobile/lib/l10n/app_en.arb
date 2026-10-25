@@ -2290,6 +2290,10 @@
   "@listViewOptions": {
     "description": "Title of the sheet for layout and sort order, and the button that opens it."
   },
+  "listPressBackAgainToExit": "Press back again to exit",
+  "@listPressBackAgainToExit": {
+    "description": "Toast after Android's Back on the notes list: a second Back while it shows closes the app."
+  },
   "searchTag": "Search #{tag}",
   "@searchTag": {
     "description": "Hint inside the empty search field while the list shows only one tag.",

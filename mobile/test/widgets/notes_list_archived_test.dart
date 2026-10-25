@@ -19,6 +19,7 @@ import 'package:anchor/features/sync/data/sync_manager.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -234,6 +235,44 @@ void main() {
     await tester.tap(find.text('Undo'));
     await settle(tester);
     verify(() => repo.unarchive(['n1'])).called(1);
+    await tester.pump(const Duration(seconds: 7));
+  });
+
+  testWidgets('Back on the notes list asks first, and leaves the app only '
+      'when pressed again while the toast shows', (tester) async {
+    final exits = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') exits.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await pumpList(tester);
+
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(exits, isEmpty);
+    expect(find.text('Press back again to exit'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(exits, hasLength(1));
+
+    // Once the toast is gone, Back asks again.
+    exits.clear();
+    await tester.pump(const Duration(seconds: 7));
+    await settle(tester);
+    expect(find.text('Press back again to exit'), findsNothing);
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(exits, isEmpty);
     await tester.pump(const Duration(seconds: 7));
   });
 }
