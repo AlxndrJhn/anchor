@@ -457,3 +457,49 @@ export function buildChecklistDropDelta(
   }
   return buildSpanMoveDelta(lines, lineIndex, blockEnd, gap, indentDelta);
 }
+
+// ============================================================================
+// Checklist Bulk Actions
+// ============================================================================
+
+export function countCheckedItems(delta: QuillDelta): number {
+  return deltaToLines(delta.ops).filter(isCheckedLine).length;
+}
+
+/** Delta for `updateContents` that unticks every ticked item. Null if none. */
+export function createUncheckAllDelta(delta: QuillDelta): QuillDelta | null {
+  const change = new Delta();
+  let found = false;
+  for (const line of deltaToLines(delta.ops)) {
+    const length = getLineLength(line);
+    if (isCheckedLine(line)) {
+      found = true;
+      change.retain(length - 1).retain(1, { list: LIST_FORMATS.UNCHECKED });
+    } else {
+      change.retain(length);
+    }
+  }
+  return found ? { ops: change.chop().ops as QuillOp[] } : null;
+}
+
+/** Delta for `updateContents` that deletes every ticked item. Null if none. */
+export function createRemoveCheckedDelta(delta: QuillDelta): QuillDelta | null {
+  const change = new Delta();
+  const lines = deltaToLines(delta.ops);
+  let kept = 0;
+  let found = false;
+  for (const line of lines) {
+    const length = getLineLength(line);
+    if (isCheckedLine(line)) {
+      found = true;
+      change.delete(length);
+    } else {
+      kept++;
+      change.retain(length);
+    }
+  }
+  if (!found) return null;
+  // Quill needs a trailing line; keep an empty one when every line goes.
+  if (kept === 0) change.insert("\n");
+  return { ops: change.chop().ops as QuillOp[] };
+}
