@@ -31,6 +31,7 @@ class NoteCard extends StatefulWidget {
     this.onLongPress,
     this.onOpenPicture,
     this.showPictures = true,
+    this.onToggleItem,
   });
 
   final Note note;
@@ -52,6 +53,9 @@ class NoteCard extends StatefulWidget {
 
   /// Off in View options: no pictures on the card.
   final bool showPictures;
+
+  /// Ticks a checklist item from the card, by its line in the note.
+  final void Function(int line, String text)? onToggleItem;
 
   @override
   State<NoteCard> createState() => _NoteCardState();
@@ -128,6 +132,7 @@ class _NoteCardState extends State<NoteCard>
             status: widget.status,
             isSelected: widget.isSelected,
             showPictures: widget.showPictures,
+            onToggleItem: widget.isSelecting ? null : widget.onToggleItem,
             onOpenPicture: widget.isSelecting ? null : widget.onOpenPicture,
             check: widget.isSelecting
                 ? _SelectionCheck(

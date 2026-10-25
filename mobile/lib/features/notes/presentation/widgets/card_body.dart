@@ -19,6 +19,7 @@ class CardBody extends StatelessWidget {
     required this.appearance,
     required this.layout,
     this.firstLineEndInset = 0,
+    this.onToggleItem,
   });
 
   final String? content;
@@ -28,9 +29,18 @@ class CardBody extends StatelessWidget {
   /// Room kept at the end of the first line, for the selection check.
   final double firstLineEndInset;
 
+  /// Makes checkboxes tickable; gets the item's line in the note and its
+  /// text.
+  final void Function(int line, String text)? onToggleItem;
+
   @override
   Widget build(BuildContext context) {
-    final blocks = parseNoteBlocks(content).where((b) => !b.isEmpty).toList();
+    final all = parseNoteBlocks(content);
+    final lineOf = Map<NoteBlock, int>.identity();
+    for (var i = 0; i < all.length; i++) {
+      lineOf[all[i]] = i;
+    }
+    final blocks = all.where((b) => !b.isEmpty).toList();
     if (blocks.isEmpty) return const SizedBox.shrink();
     final lines = foldCheckedItems(blocks);
     final density = context.density;
@@ -73,9 +83,14 @@ class CardBody extends StatelessWidget {
         );
         continue;
       }
+      final block = line.block!;
+      final onToggle = onToggleItem;
       rows.add(
         _CardLine(
-          block: line.block!,
+          block: block,
+          onToggle: onToggle == null || block.type != BlockType.check
+              ? null
+              : () => onToggle(lineOf[block]!, block.text),
           marker: numbers[i],
           base: base,
           appearance: appearance,
@@ -124,9 +139,13 @@ class _CardLine extends StatelessWidget {
     required this.appearance,
     required this.isFirst,
     required this.isSingleLine,
+    this.onToggle,
   });
 
   final NoteBlock block;
+
+  /// Ticks or unticks a checklist item.
+  final VoidCallback? onToggle;
   final String? marker;
   final TextStyle base;
   final NoteAppearance appearance;
@@ -225,23 +244,32 @@ class _CardLine extends StatelessWidget {
         );
         final indent = block.level * AnchorTokens.sizeListIndentCard;
         final scaler = MediaQuery.textScalerOf(context);
+        Widget leading = SizedBox(
+          width: scaler.scale(21), // off-scale: card checkbox
+          height: scaler.scale(13) * 1.5, // off-scale: card checkbox
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: _ListMarker(
+              block: block,
+              marker: marker,
+              appearance: appearance,
+            ),
+          ),
+        );
+        if (onToggle case final toggle?) {
+          // Ticked straight from the card, without opening the note.
+          leading = GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: toggle,
+            child: leading,
+          );
+        }
         return Padding(
           padding: EdgeInsets.only(left: indent),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: scaler.scale(21), // off-scale: card checkbox
-                height: scaler.scale(13) * 1.5, // off-scale: card checkbox
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _ListMarker(
-                    block: block,
-                    marker: marker,
-                    appearance: appearance,
-                  ),
-                ),
-              ),
+              leading,
               Expanded(
                 child: HighlightedText(
                   span: span,

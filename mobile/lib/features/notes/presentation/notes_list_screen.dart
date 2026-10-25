@@ -286,6 +286,11 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         onLongPress: () =>
             isSelecting ? _selection.toggle(note) : _selection.start(note),
         showPictures: options.showPictures,
+        // Viewers, and archived or trashed notes, keep read-only boxes.
+        onToggleItem: note.canEdit && note.isActive && !note.isArchived
+            ? (line, text) =>
+                  NoteActions(context, ref).toggleItem(note, line, text)
+            : null,
         onOpenPicture: (id) =>
             showNotePictures(context, ref, noteId: note.id, attachmentId: id),
       ),

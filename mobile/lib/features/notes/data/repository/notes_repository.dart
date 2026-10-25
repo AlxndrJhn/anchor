@@ -282,6 +282,19 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.updateNote');
   }
 
+  /// Rewrites the note's stored content with [change], as an edit; nothing
+  /// happens when [change] gives null.
+  Future<void> changeContent(
+    String noteId,
+    String? Function(String? content) change,
+  ) async {
+    final note = await getNote(noteId);
+    if (note == null) return;
+    final content = change(note.content);
+    if (content == null || content == note.content) return;
+    await updateNote(note.copyWith(content: content));
+  }
+
   /// What the note says now is kept as a version of its own.
   Future<void> restoreVersion(String noteId, NoteRevision revision) async {
     await _db.transaction(() async {

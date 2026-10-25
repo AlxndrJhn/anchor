@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:anchor/features/notes/domain/note_blocks.dart';
 import 'package:anchor/features/notes/presentation/editor/checklist_lines.dart';
 import 'package:anchor/features/notes/presentation/editor/document_lines.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
@@ -748,5 +751,84 @@ void main() {
         ]);
       },
     );
+  });
+
+  group('toggleChecklistItemContent', () {
+    String stored(List<(String, String?)> lines) =>
+        jsonEncode({'ops': docFrom(lines).toDelta().toJson()});
+    List<(String, String?)> read(String? content) => linesOf(
+      Document.fromJson((jsonDecode(content!) as Map)['ops'] as List),
+    );
+    final list = stored([
+      ('Eggs', 'unchecked'),
+      ('Milk', 'unchecked'),
+      ('Done', 'checked'),
+    ]);
+
+    test('ticks an item in place', () {
+      expect(
+        read(toggleChecklistItemContent(list, 0, text: 'Eggs', sort: false)),
+        [('Eggs', 'checked'), ('Milk', 'unchecked'), ('Done', 'checked')],
+      );
+    });
+
+    test('moves a ticked item to the bottom when sorting', () {
+      expect(
+        read(toggleChecklistItemContent(list, 0, text: 'Eggs', sort: true)),
+        [('Milk', 'unchecked'), ('Done', 'checked'), ('Eggs', 'checked')],
+      );
+    });
+
+    test('unticks an item back above the ticked ones when sorting', () {
+      expect(
+        read(toggleChecklistItemContent(list, 2, text: 'Done', sort: true)),
+        [('Eggs', 'unchecked'), ('Milk', 'unchecked'), ('Done', 'unchecked')],
+      );
+    });
+
+    test('leaves lines that are not checklist items alone', () {
+      expect(
+        toggleChecklistItemContent(
+          stored([('a', null)]),
+          0,
+          text: 'a',
+          sort: false,
+        ),
+        isNull,
+      );
+    });
+
+    test('leaves the note alone when the line now reads differently', () {
+      expect(
+        toggleChecklistItemContent(list, 0, text: 'Bread', sort: false),
+        isNull,
+      );
+    });
+
+    test('finds the line the card shows under a picture', () {
+      final content = jsonEncode({
+        'ops': [
+          {'insert': 'Trip\n'},
+          {
+            'insert': {'image': 'a.jpg'},
+          },
+          {'insert': '\nTickets'},
+          {
+            'insert': '\n',
+            'attributes': {'list': 'unchecked'},
+          },
+        ],
+      });
+      final blocks = parseNoteBlocks(content);
+      final line = blocks.indexWhere((b) => b.text == 'Tickets');
+      final toggled = toggleChecklistItemContent(
+        content,
+        line,
+        text: 'Tickets',
+        sort: false,
+      );
+      expect(toggled, isNotNull);
+      expect(parseNoteBlocks(toggled).last.done, isTrue);
+    });
   });
 }

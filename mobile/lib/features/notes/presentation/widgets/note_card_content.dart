@@ -33,6 +33,7 @@ class NoteCardContent extends StatelessWidget {
     this.check,
     this.onOpenPicture,
     this.showPictures = true,
+    this.onToggleItem,
   });
 
   final Note note;
@@ -50,6 +51,9 @@ class NoteCardContent extends StatelessWidget {
 
   /// Off in View options: the card leaves out the note's pictures.
   final bool showPictures;
+
+  /// Ticks a checklist item from the card; null leaves the boxes read-only.
+  final void Function(int line, String text)? onToggleItem;
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +93,7 @@ class NoteCardContent extends StatelessWidget {
             appearance: appearance,
             layout: layout,
             firstLineEndInset: note.hasTitle ? 0 : checkInset,
+            onToggleItem: onToggleItem,
           ),
           if (list)
             _Footer(

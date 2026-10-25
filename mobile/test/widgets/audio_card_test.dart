@@ -13,6 +13,11 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('the download button saves the recording where the person '
       'picks', (tester) async {
+    // No audio engine in tests: the player's calls just succeed.
+    const audio = MethodChannel('com.ryanheise.just_audio.methods');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(audio, (_) async => <String, Object>{});
+    addTearDown(() => messenger.setMockMethodCallHandler(audio, null));
     final dir = Directory.systemTemp.createTempSync('audio_card_test');
     addTearDown(() => dir.deleteSync(recursive: true));
     final file = File('${dir.path}/memo.m4a')..writeAsBytesSync([1, 2, 3]);

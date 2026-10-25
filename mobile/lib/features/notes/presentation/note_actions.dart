@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/motion/haptics.dart';
 import '../../../core/widgets/anchor_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/choice_sheet.dart';
 import '../../../l10n/l10n.dart';
+import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_dates.dart';
+import 'editor/checklist_lines.dart';
 import 'notes_controller.dart';
 
 enum NoteAction {
@@ -117,6 +120,20 @@ class NoteActions {
           NoteAction.deleteChecked:
         break;
     }
+  }
+
+  /// Ticks or unticks a checklist item from the note's card, without
+  /// opening it; it moves like in the editor when Move checked items is on.
+  Future<void> toggleItem(Note note, int line, String text) async {
+    Haptics.selection();
+    final sort = ref
+        .read(editorPreferencesControllerProvider)
+        .sortChecklistItems;
+    await _repo.changeContent(
+      note.id,
+      (content) =>
+          toggleChecklistItemContent(content, line, text: text, sort: sort),
+    );
   }
 
   Future<void> pin(List<Note> notes) async {

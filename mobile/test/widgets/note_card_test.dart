@@ -37,6 +37,7 @@ void main() {
     VoidCallback? onTap,
     ValueChanged<String>? onOpenPicture,
     bool showPictures = true,
+    void Function(int line, String text)? onToggleItem,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -59,6 +60,7 @@ void main() {
                   onTap: onTap,
                   onOpenPicture: onOpenPicture,
                   showPictures: showPictures,
+                  onToggleItem: onToggleItem,
                 ),
               ),
             ),
@@ -249,6 +251,33 @@ void main() {
 
     expect(find.byIcon(LucideIcons.imageOff), findsNothing);
     expect(find.text('Trip'), findsOneWidget);
+  });
+
+  testWidgets('tapping a checkbox on a card ticks that item, not the note', (
+    tester,
+  ) async {
+    final toggled = <(int, String)>[];
+    var taps = 0;
+    const content =
+        '{"ops":[{"insert":"Eggs"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"\\n"},{"insert":"Milk"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
+    await pumpCard(
+      tester,
+      const Note(id: 'n1', title: 'Shopping', content: content),
+      200,
+      onTap: () => taps++,
+      onToggleItem: (line, text) => toggled.add((line, text)),
+    );
+
+    final milk = tester.getTopLeft(find.text('Milk'));
+    await tester.tapAt(milk + const Offset(-8, 6));
+    await tester.pumpAndSettle();
+    expect(toggled, [(2, 'Milk')]);
+    expect(taps, 0);
+
+    await tester.tap(find.text('Milk'));
+    await tester.pumpAndSettle();
+    expect(taps, 1);
   });
 
   testWidgets('no reminder still lays out', (tester) async {
