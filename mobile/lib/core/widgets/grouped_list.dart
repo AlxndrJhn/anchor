@@ -44,7 +44,7 @@ class GroupedList extends StatelessWidget {
 
   static BoxDecoration decorationOf(BuildContext context) => BoxDecoration(
     color: fillOf(context),
-    borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+    borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
     boxShadow: SheetSurface.of(context) ? null : context.anchor.shadowXs,
   );
 

@@ -121,9 +121,8 @@ class HighlightUnderlay extends CustomPainter {
     required bool isDimmed,
   }) {
     final color = isDimmed ? draggedColor(fill) : fill;
-    final font = typography.font;
     final fontSize = textScaler.scale(style.fontSize!);
-    final textHeight = (font.ascent + font.descent) * fontSize;
+    final textHeight = (typography.ascent + typography.descent) * fontSize;
     var position = start;
     var index = 0;
     var guard = 0;

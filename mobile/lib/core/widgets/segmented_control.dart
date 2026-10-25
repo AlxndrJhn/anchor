@@ -48,7 +48,7 @@ class SegmentedControl<T> extends StatelessWidget {
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: colors.appText.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+          borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {

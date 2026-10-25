@@ -73,7 +73,7 @@ class Notice extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: fill,
-        borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+        borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

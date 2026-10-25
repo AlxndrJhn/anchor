@@ -93,8 +93,17 @@ class NoteMorphRoute extends PageRoute<void> {
     _isOriginCard = isCard;
   }
 
-  double get _originRadius =>
-      _isOriginRound ? _origin!.shortestSide / 2 : AnchorTokens.radiusCard;
+  /// The corner of the card or button the note opens from, in the style.
+  double _originRadiusIn(BuildContext context) {
+    final style = context.appStyle;
+    if (_isOriginRound && style.roundFab) return _origin!.shortestSide / 2;
+    final token = _isOriginRound
+        ? AnchorTokens.radiusFab
+        : AnchorTokens.radiusCard;
+    final corner = style.corners(token).topLeft;
+    // Lo-fi's wobbly corners morph from the plain one.
+    return corner.x == corner.y ? corner.x : token;
+  }
 
   bool get _isBlankNew =>
       _wasNew && noteId.value == null && (isBlank?.call() ?? true);
@@ -519,7 +528,7 @@ class _NoteMorphState extends State<_NoteMorph>
         final to = closingRect ?? full;
         final rect = Rect.lerp(origin, to, progress)!;
         final radius = lerpDouble(
-          _route._originRadius,
+          _route._originRadiusIn(context),
           closingRect != null ? 28 : 0,
           progress,
         )!;

@@ -18,7 +18,10 @@ class NoteAppearance {
   String? get pattern => background.pattern;
 
   static NoteAppearance of(BuildContext context, String? backgroundId) {
-    final background = AnchorBackgrounds.of(backgroundId);
+    // Lo-fi draws every note as plain paper.
+    final background = AnchorBackgrounds.of(
+      context.appStyle.plainNotes ? null : backgroundId,
+    );
     return NoteAppearance(
       background: background,
       colors: context.anchor.notes[background.palette]!,

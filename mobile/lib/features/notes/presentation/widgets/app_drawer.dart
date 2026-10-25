@@ -101,9 +101,9 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
         width: AppDrawer.width,
         decoration: BoxDecoration(
           color: colors.appSidebar,
-          borderRadius: const BorderRadius.horizontal(
-            right: Radius.circular(AnchorTokens.radius4xl),
-          ),
+          borderRadius: context.appStyle
+              .corners(AnchorTokens.radius4xl)
+              .copyWith(topLeft: Radius.zero, bottomLeft: Radius.zero),
           boxShadow: colors.shadowDialog,
         ),
         padding: EdgeInsets.fromLTRB(
@@ -300,7 +300,7 @@ class _Item extends StatelessWidget {
       onLongPress: onLongPress,
       selected: isCurrent,
       semanticLabel: count == null ? label : '$label, $count',
-      tintRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+      tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
       child: SizedBox(
         height: AnchorTokens.sizeControlMedium,
         child: Padding(
@@ -355,7 +355,7 @@ class _Account extends ConsumerWidget {
       semanticLabel: user == null
           ? context.l10n.settingsTitle
           : context.l10n.drawerAccount(user.name),
-      tintRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+      tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: 8,

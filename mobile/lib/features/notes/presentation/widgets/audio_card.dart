@@ -238,10 +238,10 @@ class _AudioCardState extends ConsumerState<AudioCard> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: appearance.colors.surface,
-          borderRadius: BorderRadius.circular(AnchorTokens.radiusTile),
+          borderRadius: context.appStyle.corners(AnchorTokens.radiusTile),
         ),
         foregroundDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AnchorTokens.radiusTile),
+          borderRadius: context.appStyle.corners(AnchorTokens.radiusTile),
           border: Border.all(
             color: appearance.colors.border.withValues(alpha: 0.6),
           ),

@@ -7,6 +7,7 @@ import 'anchor_density.dart';
 import 'note_typography.dart';
 import 'system_bars.dart';
 import 'tokens/anchor_tokens.dart';
+import 'tokens/app_style.dart';
 
 extension ThemeContextX on BuildContext {
   AnchorDensity get density =>
@@ -21,6 +22,10 @@ extension ThemeContextX on BuildContext {
       (Theme.of(this).brightness == Brightness.dark
           ? AnchorColors.dark
           : AnchorColors.light);
+
+  /// The chosen style's corners, page texture and note treatment.
+  AnchorStyle get appStyle =>
+      Theme.of(this).extension<AnchorStyle>() ?? AnchorStyle.standard;
 
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
 

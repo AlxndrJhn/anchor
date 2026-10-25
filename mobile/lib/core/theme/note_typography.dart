@@ -52,6 +52,8 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
     this.font = NoteFont.sans,
     this.textSize = NoteTextSize.standard,
     required this.lineHeight,
+    this.sansFamily = AppTypography.sans,
+    this.titleFamily,
   });
 
   final NoteFont font;
@@ -59,14 +61,33 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
 
   final double lineHeight;
 
-  String get family => font.family;
+  /// What [NoteFont.sans] draws in: the style's UI family.
+  final String sansFamily;
+
+  /// The family titles are set in, when the style gives them their own.
+  final String? titleFamily;
+
+  String get family => font == NoteFont.sans ? sansFamily : font.family;
+
+  String get _titleFamily => titleFamily ?? family;
+
+  ({double ascent, double descent}) get _metrics =>
+      AppTypography.metricsOf(family);
+
+  /// Per em, from the bundled font's hhea table.
+  double get ascent => _metrics.ascent;
+  double get descent => _metrics.descent;
+
+  /// [NoteFont.lettersMiddleOffset] for the family notes are drawn in.
+  double lettersMiddleOffset(double fontSize, double lineHeight) =>
+      fontSize * (lineHeight / (ascent + descent) - 1) * (ascent - descent) / 2;
 
   double get scale => textSize.scale * font.editorScale;
 
   double get bodySize => AppTypography.noteBodySize * scale;
 
   TextStyle get title => AppTypography.noteTitle
-      .copyWith(fontFamily: family)
+      .copyWith(fontFamily: _titleFamily)
       .withSize(AppTypography.noteTitle.fontSize! * scale);
 
   TextStyle get body => AppTypography.noteBody
@@ -95,18 +116,18 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
   TextStyle get previewTitle => AppTypography.sheetTitle
       .withSize(AppTypography.sheetTitle.fontSize! * scale)
       .copyWith(
-        fontFamily: family,
+        fontFamily: _titleFamily,
         fontWeight: FontWeight.w700,
         letterSpacing: 0,
       );
 
   TextStyle get cardTitle =>
-      AppTypography.cardTitle.copyWith(fontFamily: family);
+      AppTypography.cardTitle.copyWith(fontFamily: _titleFamily);
 
   TextStyle get cardBody => AppTypography.cardBody.copyWith(fontFamily: family);
 
   TextStyle get versionTitle =>
-      AppTypography.noteTitle.copyWith(fontFamily: family);
+      AppTypography.noteTitle.copyWith(fontFamily: _titleFamily);
 
   TextStyle get versionBody =>
       AppTypography.noteBody.copyWith(fontFamily: family, height: lineHeight);
@@ -119,10 +140,14 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
     NoteFont? font,
     NoteTextSize? textSize,
     double? lineHeight,
+    String? sansFamily,
+    String? titleFamily,
   }) => NoteTypography(
     font: font ?? this.font,
     textSize: textSize ?? this.textSize,
     lineHeight: lineHeight ?? this.lineHeight,
+    sansFamily: sansFamily ?? this.sansFamily,
+    titleFamily: titleFamily ?? this.titleFamily,
   );
 
   @override
@@ -136,8 +161,11 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
       other is NoteTypography &&
       other.font == font &&
       other.textSize == textSize &&
-      other.lineHeight == lineHeight;
+      other.lineHeight == lineHeight &&
+      other.sansFamily == sansFamily &&
+      other.titleFamily == titleFamily;
 
   @override
-  int get hashCode => Object.hash(font, textSize, lineHeight);
+  int get hashCode =>
+      Object.hash(font, textSize, lineHeight, sansFamily, titleFamily);
 }

@@ -217,9 +217,9 @@ class _SheetFrameState extends State<_SheetFrame> {
         ? const BorderRadius.all(
             Radius.circular(40), // off-scale: the screen's corner less 8
           )
-        : const BorderRadius.vertical(
-            top: Radius.circular(AnchorTokens.radiusSheet),
-          );
+        : context.appStyle
+              .corners(AnchorTokens.radiusSheet)
+              .copyWith(bottomLeft: Radius.zero, bottomRight: Radius.zero);
 
     final sheet = Container(
       key: _sheetKey,

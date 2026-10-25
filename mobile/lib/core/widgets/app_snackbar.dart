@@ -300,7 +300,7 @@ class _SnackbarBody extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: colors.appInverse,
-            borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+            borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
             boxShadow: colors.shadowBar,
           ),
           child: Stack(

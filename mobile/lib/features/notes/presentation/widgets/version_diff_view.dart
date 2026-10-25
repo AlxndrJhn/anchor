@@ -297,7 +297,7 @@ class _Line extends StatelessWidget {
 
     final fontSize = MediaQuery.textScalerOf(context).scale(base.fontSize!);
     final lineHeight = fontSize * base.height!;
-    final lettersOffset = typography.font.lettersMiddleOffset(
+    final lettersOffset = typography.lettersMiddleOffset(
       fontSize,
       base.height!,
     );

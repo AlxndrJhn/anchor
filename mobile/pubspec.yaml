@@ -169,6 +169,13 @@ flutter:
         - asset: assets/fonts/JetBrainsMono-BoldItalic.ttf
           weight: 700
           style: italic
+    # The fonts of the Neo-Brutalism and Lo-fi styles (Settings › Style).
+    - family: Space Grotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+    - family: Patrick Hand
+      fonts:
+        - asset: assets/fonts/PatrickHand-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

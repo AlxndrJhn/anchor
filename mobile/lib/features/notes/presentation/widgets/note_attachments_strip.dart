@@ -188,7 +188,7 @@ class _AddTile extends StatelessWidget {
         height: AttachmentTile.height,
         decoration: BoxDecoration(
           color: appearance.colors.surface.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(AnchorTokens.radiusTile),
+          borderRadius: context.appStyle.corners(AnchorTokens.radiusTile),
           border: Border.all(
             color: appearance.colors.border.withValues(alpha: 0.9),
             width: 1.5,

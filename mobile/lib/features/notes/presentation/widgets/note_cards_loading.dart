@@ -107,7 +107,7 @@ class _CardShape extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.appSurface,
-        borderRadius: BorderRadius.circular(AnchorTokens.radiusCard),
+        borderRadius: context.appStyle.corners(AnchorTokens.radiusCard),
         border: Border.all(color: colors.appBorder.withValues(alpha: 0.6)),
         boxShadow: colors.shadowXs,
       ),

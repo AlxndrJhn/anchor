@@ -114,3 +114,115 @@ abstract class _$DisplayDensityController extends $Notifier<DisplayDensity> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// A colour scheme id: [anchorSchemeId] or one of `appSchemes`.
+
+@ProviderFor(ColorSchemeController)
+final colorSchemeControllerProvider = ColorSchemeControllerProvider._();
+
+/// A colour scheme id: [anchorSchemeId] or one of `appSchemes`.
+final class ColorSchemeControllerProvider
+    extends $NotifierProvider<ColorSchemeController, String> {
+  /// A colour scheme id: [anchorSchemeId] or one of `appSchemes`.
+  ColorSchemeControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'colorSchemeControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$colorSchemeControllerHash();
+
+  @$internal
+  @override
+  ColorSchemeController create() => ColorSchemeController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$colorSchemeControllerHash() =>
+    r'6a6508f76bf2f39351f638a6d6c84c1a938c4ea5';
+
+/// A colour scheme id: [anchorSchemeId] or one of `appSchemes`.
+
+abstract class _$ColorSchemeController extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(AppStyleController)
+final appStyleControllerProvider = AppStyleControllerProvider._();
+
+final class AppStyleControllerProvider
+    extends $NotifierProvider<AppStyleController, AppStyle> {
+  AppStyleControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appStyleControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appStyleControllerHash();
+
+  @$internal
+  @override
+  AppStyleController create() => AppStyleController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppStyle value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppStyle>(value),
+    );
+  }
+}
+
+String _$appStyleControllerHash() =>
+    r'5d044fa41baa1593b70fa421d42ce6b82d0a2edf';
+
+abstract class _$AppStyleController extends $Notifier<AppStyle> {
+  AppStyle build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AppStyle, AppStyle>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AppStyle, AppStyle>,
+              AppStyle,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

@@ -66,27 +66,29 @@ class _PictureTileState extends ConsumerState<PictureTile> {
     final fileKey = attachmentFileKeyOf(attachment);
     final loaded = ref.watch(attachmentFileProvider(fileKey));
     final file = loaded.value;
-    final radius = BorderRadius.circular(AnchorTokens.radiusTile);
+    final radius = context.appStyle.corners(AnchorTokens.radiusTile);
     final uploading = attachment.isPendingUpload;
     final isUploadFailed = attachment.isUploadFailed;
     final Widget body;
     if (file != null) {
       body = Hero(
         tag: 'picture-${attachment.id}',
-        child: Image.file(
-          File(file),
-          fit: BoxFit.cover,
-          cacheWidth: 320,
-          gaplessPlayback: true,
-          frameBuilder: (context, child, frame, sync) {
-            if (frame != null || sync) _onFirstFrame(file);
-            return AnimatedOpacity(
-              opacity: frame == null && !sync ? 0 : (uploading ? 0.55 : 1),
-              duration: context.motion(AnchorTokens.motionDurationFade),
-              child: child,
-            );
-          },
-          errorBuilder: (_, _, _) => const SizedBox.expand(),
+        child: context.appStyle.picture(
+          Image.file(
+            File(file),
+            fit: BoxFit.cover,
+            cacheWidth: 320,
+            gaplessPlayback: true,
+            frameBuilder: (context, child, frame, sync) {
+              if (frame != null || sync) _onFirstFrame(file);
+              return AnimatedOpacity(
+                opacity: frame == null && !sync ? 0 : (uploading ? 0.55 : 1),
+                duration: context.motion(AnchorTokens.motionDurationFade),
+                child: child,
+              );
+            },
+            errorBuilder: (_, _, _) => const SizedBox.expand(),
+          ),
         ),
       );
     } else if (loaded.isLoading) {

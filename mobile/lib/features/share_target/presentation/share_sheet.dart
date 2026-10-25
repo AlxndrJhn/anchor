@@ -239,7 +239,7 @@ class _DraftCard extends StatelessWidget {
     final colors = context.anchor;
     final l10n = context.l10n;
     final appearance = NoteAppearance.of(context, null);
-    final radius = BorderRadius.circular(AnchorTokens.radiusCard);
+    final radius = context.appStyle.corners(AnchorTokens.radiusCard);
     final hint = TextStyle(color: appearance.colors.muted);
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -325,7 +325,7 @@ class _LinkRow extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: appearance.colors.surface,
-        borderRadius: BorderRadius.circular(AnchorTokens.radiusTile),
+        borderRadius: context.appStyle.corners(AnchorTokens.radiusTile),
         border: Border.all(
           color: appearance.colors.border.withValues(alpha: 0.6),
         ),
@@ -386,7 +386,7 @@ class _FileTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
-    final radius = BorderRadius.circular(AnchorTokens.radiusTile);
+    final radius = context.appStyle.corners(AnchorTokens.radiusTile);
     final isPicture = file.kind == SharedFileKind.picture;
     final staged = file.file;
     final Widget body;

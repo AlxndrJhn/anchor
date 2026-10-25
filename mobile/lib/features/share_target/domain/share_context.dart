@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/display_density.dart';
+import '../../../core/theme/tokens/app_style.dart';
 import '../../tags/domain/tag.dart';
 
 /// Saved as `context.json`; keep `ShareFolder.swift` in step.
@@ -9,6 +10,8 @@ class ShareContext {
     this.userId,
     this.themeMode = ThemeMode.system,
     this.density = DisplayDensity.standard,
+    this.colorScheme = anchorSchemeId,
+    this.style = AppStyle.standard,
     this.tags = const [],
   });
 
@@ -18,6 +21,8 @@ class ShareContext {
   final String? userId;
   final ThemeMode themeMode;
   final DisplayDensity density;
+  final String colorScheme;
+  final AppStyle style;
 
   /// In name order.
   final List<Tag> tags;
@@ -27,6 +32,8 @@ class ShareContext {
     'userId': userId,
     'theme': themeMode.name,
     'density': density.name,
+    'scheme': colorScheme,
+    'style': style.id,
     'tags': [
       for (final tag in tags)
         {'id': tag.id, 'name': tag.name, 'color': tag.color},
@@ -37,6 +44,7 @@ class ShareContext {
     if (json is! Map<String, Object?>) return const ShareContext();
     final userId = json['userId'];
     final tags = json['tags'];
+    final scheme = json['scheme'];
     return ShareContext(
       userId: userId is String && userId.isNotEmpty ? userId : null,
       themeMode:
@@ -44,6 +52,13 @@ class ShareContext {
       density:
           DisplayDensity.values.asNameMap()[json['density']] ??
           DisplayDensity.standard,
+      colorScheme: scheme is String && schemeById(scheme) != null
+          ? scheme
+          : anchorSchemeId,
+      style: AppStyle.fromId(switch (json['style']) {
+        final String id => id,
+        _ => null,
+      }),
       tags: [
         if (tags is List)
           for (final tag in tags)

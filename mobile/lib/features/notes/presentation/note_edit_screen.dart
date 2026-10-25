@@ -737,7 +737,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                           )) *
                       (_flash.isAnimating ? 1 : 0),
                 ),
-                borderRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+                borderRadius: context.appStyle.corners(AnchorTokens.radiusLg),
               ),
               child: child,
             ),

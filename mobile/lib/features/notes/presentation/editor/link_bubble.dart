@@ -56,7 +56,7 @@ class LinkBubble extends StatelessWidget {
           onTap();
         },
         semanticLabel: label,
-        tintRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+        tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
         child: Container(
           height: AnchorTokens.sizeControlMedium,
           constraints: const BoxConstraints(

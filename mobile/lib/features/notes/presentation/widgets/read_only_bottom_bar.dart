@@ -62,7 +62,7 @@ class ReadOnlyBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AnchorTokens.radius4xl);
+    final radius = context.appStyle.corners(AnchorTokens.radius4xl);
     return Semantics(
       container: true,
       liveRegion: true,

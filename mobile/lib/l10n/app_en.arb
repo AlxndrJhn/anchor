@@ -712,6 +712,54 @@
   "@settingsDensityHelp": {
     "description": "Under the Density setting; Compact is the name of one of its options."
   },
+  "settingsColorScheme": "Color scheme",
+  "@settingsColorScheme": {
+    "description": "Label of the Appearance setting that picks the app's colors (Anchor, Nord, Dracula and so on)."
+  },
+  "settingsColorSchemeLofi": "Lo-fi draws in pencil grays, whatever the scheme.",
+  "@settingsColorSchemeLofi": {
+    "description": "Under the Color scheme setting while the Lo-fi style is on, which ignores the scheme. Lo-fi is the style's name."
+  },
+  "colorSchemeAnchor": "Anchor",
+  "@colorSchemeAnchor": {
+    "description": "Name of the app's own color scheme, listed with Nord, Dracula and others. The app's name."
+  },
+  "settingsStyle": "Style",
+  "@settingsStyle": {
+    "description": "Label of the Appearance setting that changes the app's look: corners, outlines, shadows and font."
+  },
+  "styleDefault": "Default",
+  "@styleDefault": {
+    "description": "The style that keeps the app as designed."
+  },
+  "styleDefaultHelp": "Anchor as designed",
+  "@styleDefaultHelp": {
+    "description": "Under the Default style. Anchor is the app's name."
+  },
+  "styleSkeuomorphism": "Skeuomorphism",
+  "@styleSkeuomorphism": {
+    "description": "A style imitating real materials: paper, linen and soft shadows."
+  },
+  "styleSkeuomorphismHelp": "Paper, linen and depth",
+  "@styleSkeuomorphismHelp": {
+    "description": "Under the Skeuomorphism style."
+  },
+  "styleNeoBrutalism": "Neo-Brutalism",
+  "@styleNeoBrutalism": {
+    "description": "A style with thick ink outlines, hard shadows and square corners."
+  },
+  "styleNeoBrutalismHelp": "Thick outlines, hard shadows",
+  "@styleNeoBrutalismHelp": {
+    "description": "Under the Neo-Brutalism style."
+  },
+  "styleLofi": "Lo-fi",
+  "@styleLofi": {
+    "description": "A style that draws the app like a pencil sketch, in grays and handwriting."
+  },
+  "styleLofiHelp": "A pencil-and-paper prototype",
+  "@styleLofiHelp": {
+    "description": "Under the Lo-fi style."
+  },
   "settingsTheme": "Theme",
   "@settingsTheme": {
     "description": "Screen reader name of the group of light, dark and automatic theme choices."

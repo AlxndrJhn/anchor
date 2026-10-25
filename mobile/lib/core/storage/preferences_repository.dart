@@ -107,6 +107,19 @@ class PreferencesRepository {
     await _storage.write(key: StorageKeys.displayDensity, value: density);
   }
 
+  Future<String?> getColorScheme() =>
+      _storage.read(key: StorageKeys.colorScheme);
+
+  Future<void> setColorScheme(String scheme) async {
+    await _storage.write(key: StorageKeys.colorScheme, value: scheme);
+  }
+
+  Future<String?> getAppStyle() => _storage.read(key: StorageKeys.appStyle);
+
+  Future<void> setAppStyle(String style) async {
+    await _storage.write(key: StorageKeys.appStyle, value: style);
+  }
+
   Future<bool> getAllowSelfSignedCert() async {
     final value = await _storage.read(key: StorageKeys.allowSelfSignedCert);
     return value == 'true';

@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/context_extensions.dart';
+import '../../../core/theme/note_typography.dart';
+import '../../../core/theme/style_typography.dart';
 import '../../../core/theme/system_bars.dart';
 import '../../../core/widgets/anchor_sheet.dart';
 import '../../../l10n/l10n.dart';
@@ -50,13 +52,25 @@ class ShareSheetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final density = shareContext.density;
+    final ShareContext(:density, :colorScheme, :style) = shareContext;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => context.l10n.appName,
       color: Colors.transparent,
-      theme: AppTheme.light(density),
-      darkTheme: AppTheme.dark(density),
+      theme: AppTheme.light(
+        density,
+        NoteFont.sans,
+        NoteTextSize.standard,
+        colorScheme,
+        style,
+      ),
+      darkTheme: AppTheme.dark(
+        density,
+        NoteFont.sans,
+        NoteTextSize.standard,
+        colorScheme,
+        style,
+      ),
       themeMode: shareContext.themeMode,
       themeAnimationStyle: AnimationStyle.noAnimation,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -71,7 +85,7 @@ class ShareSheetApp extends StatelessWidget {
             statusBarBrightness: behind.statusBarBrightness,
             statusBarIconBrightness: behind.statusBarIconBrightness,
           ),
-          child: child!,
+          child: StyleTypography(style: style, child: child!),
         );
       },
       home: _SheetHost(app: this),

@@ -958,6 +958,78 @@ abstract class AppLocalizations {
   /// **'Compact fits more notes on the screen.'**
   String get settingsDensityHelp;
 
+  /// Label of the Appearance setting that picks the app's colors (Anchor, Nord, Dracula and so on).
+  ///
+  /// In en, this message translates to:
+  /// **'Color scheme'**
+  String get settingsColorScheme;
+
+  /// Under the Color scheme setting while the Lo-fi style is on, which ignores the scheme. Lo-fi is the style's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Lo-fi draws in pencil grays, whatever the scheme.'**
+  String get settingsColorSchemeLofi;
+
+  /// Name of the app's own color scheme, listed with Nord, Dracula and others. The app's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor'**
+  String get colorSchemeAnchor;
+
+  /// Label of the Appearance setting that changes the app's look: corners, outlines, shadows and font.
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get settingsStyle;
+
+  /// The style that keeps the app as designed.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get styleDefault;
+
+  /// Under the Default style. Anchor is the app's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor as designed'**
+  String get styleDefaultHelp;
+
+  /// A style imitating real materials: paper, linen and soft shadows.
+  ///
+  /// In en, this message translates to:
+  /// **'Skeuomorphism'**
+  String get styleSkeuomorphism;
+
+  /// Under the Skeuomorphism style.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper, linen and depth'**
+  String get styleSkeuomorphismHelp;
+
+  /// A style with thick ink outlines, hard shadows and square corners.
+  ///
+  /// In en, this message translates to:
+  /// **'Neo-Brutalism'**
+  String get styleNeoBrutalism;
+
+  /// Under the Neo-Brutalism style.
+  ///
+  /// In en, this message translates to:
+  /// **'Thick outlines, hard shadows'**
+  String get styleNeoBrutalismHelp;
+
+  /// A style that draws the app like a pencil sketch, in grays and handwriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Lo-fi'**
+  String get styleLofi;
+
+  /// Under the Lo-fi style.
+  ///
+  /// In en, this message translates to:
+  /// **'A pencil-and-paper prototype'**
+  String get styleLofiHelp;
+
   /// Screen reader name of the group of light, dark and automatic theme choices.
   ///
   /// In en, this message translates to:

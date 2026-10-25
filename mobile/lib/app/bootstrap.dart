@@ -19,6 +19,7 @@ import '../core/storage/preferences_repository.dart';
 import '../core/storage/storage_keys.dart';
 import '../core/theme/display_density.dart';
 import '../core/theme/note_typography.dart';
+import '../core/theme/tokens/app_style.dart';
 import '../features/home_widget/data/home_widget_payload.dart';
 import '../features/reminders/presentation/notification_launch.dart';
 import '../features/settings/domain/editor_preferences.dart';
@@ -85,6 +86,12 @@ Future<AppBootstrap> initializeApp({
     orElse: () => DisplayDensity.standard,
   );
 
+  final savedScheme = await preferences.getColorScheme();
+  final colorScheme = schemeById(savedScheme) == null
+      ? anchorSchemeId
+      : savedScheme!;
+  final appStyle = AppStyle.fromId(await preferences.getAppStyle());
+
   final savedFont = await preferences.getNoteFont();
   final savedTextSize = await preferences.getNoteTextSize();
   final editorPreferences = EditorPreferences(
@@ -127,6 +134,8 @@ Future<AppBootstrap> initializeApp({
   return AppBootstrap(
     themeMode: themeMode,
     displayDensity: displayDensity,
+    colorScheme: colorScheme,
+    appStyle: appStyle,
     editorPreferences: editorPreferences,
     foldedChecklistNotes: await preferences.getFoldedChecklistNotes(),
     openArchivedTags: await preferences.getOpenArchivedTags(),

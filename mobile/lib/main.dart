@@ -7,6 +7,7 @@ import 'app/bootstrap.dart';
 import 'app/router/app_router.dart';
 import 'core/motion/springs.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/style_typography.dart';
 import 'features/home_widget/data/home_widget_service.dart';
 import 'features/reminders/data/reminder_scheduler.dart';
 import 'features/reminders/presentation/reminder_tap_handler.dart';
@@ -60,6 +61,8 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     final router = ref.watch(goRouterProvider);
     final themeMode = ref.watch(themeModeControllerProvider);
     final density = ref.watch(displayDensityControllerProvider);
+    final scheme = ref.watch(colorSchemeControllerProvider);
+    final style = ref.watch(appStyleControllerProvider);
     final (font, textSize) = ref.watch(
       editorPreferencesControllerProvider.select(
         (editor) => (editor.noteFont, editor.noteTextSize),
@@ -76,14 +79,17 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
 
     return MaterialApp.router(
       onGenerateTitle: (context) => context.l10n.appName,
-      theme: AppTheme.light(density, font, textSize),
-      darkTheme: AppTheme.dark(density, font, textSize),
+      theme: AppTheme.light(density, font, textSize, scheme, style),
+      darkTheme: AppTheme.dark(density, font, textSize, scheme, style),
       themeMode: themeMode,
       themeAnimationStyle: isSystemMotionReduced
           ? AnimationStyle.noAnimation
           : null,
       routerConfig: router,
-      builder: (context, child) => BackdropGroup(child: child!),
+      builder: (context, child) => StyleTypography(
+        style: style,
+        child: BackdropGroup(child: child!),
+      ),
       localizationsDelegates: const [
         ...AppLocalizations.localizationsDelegates,
         FlutterQuillLocalizations.delegate,

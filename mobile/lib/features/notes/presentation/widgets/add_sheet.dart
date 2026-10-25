@@ -482,7 +482,7 @@ class _Option extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: GroupedList.fillOf(context),
-          borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+          borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

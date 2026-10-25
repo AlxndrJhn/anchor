@@ -62,7 +62,7 @@ class NoteCardContent extends StatelessWidget {
     final previews = showPictures
         ? note.imagePreviewData
         : const <NoteImagePreview>[];
-    final radius = BorderRadius.circular(AnchorTokens.radiusCard);
+    final radius = context.appStyle.corners(AnchorTokens.radiusCard);
     final density = context.density;
     // The first line keeps clear of the selection check over it.
     final checkInset = check != null && (list || previews.isEmpty)
@@ -125,7 +125,7 @@ class NoteCardContent extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 12),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+                borderRadius: context.appStyle.corners(AnchorTokens.radiusLg),
                 child: SizedBox.square(
                   dimension: 52, // off-scale: the list card's picture
                   child: Stack(
@@ -461,19 +461,23 @@ class _Thumbnail extends ConsumerWidget {
     final picture = ColoredBox(
       color: appearance.colors.surface,
       child: path != null
-          ? Image.file(
-              File(path),
-              fit: BoxFit.cover,
-              cacheWidth: 400,
-              gaplessPlayback: true,
-              frameBuilder: (context, child, frame, sync) => sync
-                  ? child
-                  : AnimatedOpacity(
-                      opacity: frame == null ? 0 : 1,
-                      duration: context.motion(AnchorTokens.motionDurationSlow),
-                      child: child,
-                    ),
-              errorBuilder: (_, _, _) => missing,
+          ? context.appStyle.picture(
+              Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                cacheWidth: 400,
+                gaplessPlayback: true,
+                frameBuilder: (context, child, frame, sync) => sync
+                    ? child
+                    : AnimatedOpacity(
+                        opacity: frame == null ? 0 : 1,
+                        duration: context.motion(
+                          AnchorTokens.motionDurationSlow,
+                        ),
+                        child: child,
+                      ),
+                errorBuilder: (_, _, _) => missing,
+              ),
             )
           : loaded.isLoading
           ? Shimmer(color: appearance.colors.border.withValues(alpha: 0.6))

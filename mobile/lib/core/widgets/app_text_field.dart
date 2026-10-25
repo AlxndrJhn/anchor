@@ -119,7 +119,7 @@ class _AppTextFieldState extends State<AppTextField> {
       decoration: BoxDecoration(
         color: fill,
         border: edge,
-        borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+        borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
       ),
       child: Row(
         children: [

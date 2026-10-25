@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../core/theme/display_density.dart';
+import '../core/theme/tokens/app_style.dart';
 import '../features/settings/domain/editor_preferences.dart';
 import 'router/app_routes.dart';
 
@@ -11,6 +12,8 @@ class AppBootstrap {
   const AppBootstrap({
     this.themeMode = ThemeMode.system,
     this.displayDensity = DisplayDensity.standard,
+    this.colorScheme = anchorSchemeId,
+    this.appStyle = AppStyle.standard,
     this.editorPreferences = const EditorPreferences(),
     this.foldedChecklistNotes = const [],
     this.openArchivedTags = const [],
@@ -20,6 +23,10 @@ class AppBootstrap {
 
   final ThemeMode themeMode;
   final DisplayDensity displayDensity;
+
+  /// A colour scheme id: [anchorSchemeId] or one of `appSchemes`.
+  final String colorScheme;
+  final AppStyle appStyle;
   final EditorPreferences editorPreferences;
 
   final List<String> foldedChecklistNotes;

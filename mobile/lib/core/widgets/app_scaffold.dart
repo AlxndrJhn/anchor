@@ -6,6 +6,7 @@ import '../theme/context_extensions.dart';
 import 'bar_title.dart';
 import 'bottom_bar_frame.dart';
 import 'page_bar.dart';
+import 'style_texture.dart';
 
 enum PageBackground { plain, gradient }
 
@@ -178,7 +179,7 @@ class _AppScaffoldState extends State<AppScaffold> {
       type: MaterialType.transparency,
       child: Stack(
         children: [
-          Positioned.fill(child: background),
+          Positioned.fill(child: StyleTexture(child: background)),
           // A focused field scrolls into view only inside this viewport.
           Positioned(
             left: 0,

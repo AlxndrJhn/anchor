@@ -205,7 +205,15 @@ void main() {
     expect(dividersIn('Font'), findsNWidgets(2));
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
     await tester.pumpAndSettle();
-    expect(dividersIn('Density'), findsNothing);
+    // Lines only between Color scheme, Style and Density; none under the
+    // theme tiles.
+    expect(dividersIn('Density'), findsNWidgets(2));
+    final themeTiles = tester.getRect(find.text('Light')).bottom;
+    for (final line in tester.widgetList(dividersIn('Density'))) {
+      final top = tester.getRect(find.byWidget(line)).top;
+      expect(top, greaterThan(tester.getRect(find.text('Color scheme')).top));
+      expect(top, greaterThan(themeTiles));
+    }
   });
 
   testWidgets('picking a font and a size saves them on this phone and '

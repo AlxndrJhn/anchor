@@ -212,7 +212,12 @@ class _NotesBottomBarState extends State<NotesBottomBar> {
               width: control,
               height: control,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                shape: context.appStyle.roundFab
+                    ? BoxShape.circle
+                    : BoxShape.rectangle,
+                borderRadius: context.appStyle.roundFab
+                    ? null
+                    : context.appStyle.corners(AnchorTokens.radiusFab),
                 color: colors.appInverse,
                 boxShadow: colors.shadowFab,
               ),

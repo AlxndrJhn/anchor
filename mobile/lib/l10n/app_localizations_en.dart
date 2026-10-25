@@ -515,6 +515,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDensityHelp => 'Compact fits more notes on the screen.';
 
   @override
+  String get settingsColorScheme => 'Color scheme';
+
+  @override
+  String get settingsColorSchemeLofi =>
+      'Lo-fi draws in pencil grays, whatever the scheme.';
+
+  @override
+  String get colorSchemeAnchor => 'Anchor';
+
+  @override
+  String get settingsStyle => 'Style';
+
+  @override
+  String get styleDefault => 'Default';
+
+  @override
+  String get styleDefaultHelp => 'Anchor as designed';
+
+  @override
+  String get styleSkeuomorphism => 'Skeuomorphism';
+
+  @override
+  String get styleSkeuomorphismHelp => 'Paper, linen and depth';
+
+  @override
+  String get styleNeoBrutalism => 'Neo-Brutalism';
+
+  @override
+  String get styleNeoBrutalismHelp => 'Thick outlines, hard shadows';
+
+  @override
+  String get styleLofi => 'Lo-fi';
+
+  @override
+  String get styleLofiHelp => 'A pencil-and-paper prototype';
+
+  @override
   String get settingsTheme => 'Theme';
 
   @override

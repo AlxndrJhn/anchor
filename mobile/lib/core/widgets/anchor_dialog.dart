@@ -153,7 +153,9 @@ class _AnchorDialogState extends State<_AnchorDialog> {
                 ),
                 decoration: BoxDecoration(
                   color: colors.appSurface,
-                  borderRadius: BorderRadius.circular(AnchorTokens.radius4xl),
+                  borderRadius: context.appStyle.corners(
+                    AnchorTokens.radius4xl,
+                  ),
                   boxShadow: colors.shadowDialog,
                 ),
                 child: Column(

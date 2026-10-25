@@ -248,7 +248,7 @@ class MenuPanel extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: colors.appSurface,
-        borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+        borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
         boxShadow: colors.shadowMenu,
       ),
       child: child,
@@ -282,13 +282,13 @@ class MenuRow extends StatelessWidget {
       onTap: onPressed,
       semanticLabel: label,
       selected: isChecked || isHighlighted,
-      tintRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+      tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
       child: Container(
         height: AnchorTokens.sizeControlMedium,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: isHighlighted ? colors.appText.withValues(alpha: 0.07) : null,
-          borderRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+          borderRadius: context.appStyle.corners(AnchorTokens.radiusLg),
         ),
         child: Row(
           spacing: 12,

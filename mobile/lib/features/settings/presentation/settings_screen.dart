@@ -18,8 +18,11 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/display_density.dart';
 import '../../../core/theme/note_typography.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../core/theme/tokens/app_schemes.dart';
+import '../../../core/theme/tokens/app_style.dart';
 import '../../../core/widgets/anchor_dialog.dart';
 import '../../../core/widgets/anchor_logo.dart';
+import '../../../core/widgets/anchor_sheet.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../core/widgets/check_circle.dart';
 import '../../../core/widgets/grouped_list.dart';
@@ -106,7 +109,7 @@ class _AccountCard extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: colors.appSurface,
-          borderRadius: BorderRadius.circular(AnchorTokens.radius2xl),
+          borderRadius: context.appStyle.corners(AnchorTokens.radius2xl),
           boxShadow: colors.shadowXs,
         ),
         child: Row(
@@ -158,12 +161,32 @@ class _AppearanceSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final density = ref.watch(displayDensityControllerProvider);
+    final scheme = ref.watch(colorSchemeControllerProvider);
+    final style = ref.watch(appStyleControllerProvider);
     final l10n = context.l10n;
     return Section(
       label: l10n.settingsAppearance,
       child: GroupedList(
         children: [
           const _ThemePicker(),
+          GroupedListTile(
+            icon: LucideIcons.swatchBook,
+            label: l10n.settingsColorScheme,
+            // Lo-fi draws in its own greys.
+            subtitle: style == AppStyle.lofi
+                ? l10n.settingsColorSchemeLofi
+                : null,
+            value: _SchemeChoice.nameOf(scheme, l10n),
+            showChevron: true,
+            onTap: () => _showSchemePicker(context),
+          ),
+          GroupedListTile(
+            icon: LucideIcons.brush,
+            label: l10n.settingsStyle,
+            value: style.labelIn(l10n),
+            showChevron: true,
+            onTap: () => _showStylePicker(context),
+          ),
           StackedListTile(
             label: l10n.settingsDensity,
             subtitle: l10n.settingsDensityHelp,
@@ -181,6 +204,173 @@ class _AppearanceSection extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+Future<void> _showSchemePicker(BuildContext context) => showAnchorSheet<void>(
+  context,
+  semanticLabel: context.l10n.settingsColorScheme,
+  builder: (_) => const _SchemePickerSheet(),
+);
+
+Future<void> _showStylePicker(BuildContext context) => showAnchorSheet<void>(
+  context,
+  semanticLabel: context.l10n.settingsStyle,
+  builder: (_) => const _StylePickerSheet(),
+);
+
+/// A colour scheme as Settings lists it: Anchor's own, then the generated ones.
+class _SchemeChoice {
+  const _SchemeChoice(this.id, this.page, this.card, this.accent);
+
+  final String id;
+  final Color page;
+  final Color card;
+  final Color accent;
+
+  static List<_SchemeChoice> all(Brightness brightness) {
+    final anchor = brightness == Brightness.dark
+        ? AnchorColors.dark
+        : AnchorColors.light;
+    return [
+      _SchemeChoice(
+        anchorSchemeId,
+        anchor.appPage,
+        anchor.appSurface,
+        anchor.accentStrong,
+      ),
+      for (final scheme in appSchemes)
+        _SchemeChoice(
+          scheme.id,
+          scheme.of(brightness).background,
+          scheme.of(brightness).card,
+          scheme.of(brightness).accent,
+        ),
+    ];
+  }
+
+  static String nameOf(String id, AppLocalizations l10n) =>
+      schemeById(id)?.name ?? l10n.colorSchemeAnchor;
+}
+
+class _SchemePickerSheet extends ConsumerWidget {
+  const _SchemePickerSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(colorSchemeControllerProvider);
+    final l10n = context.l10n;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SheetHeader(title: l10n.settingsColorScheme, showDone: true),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GroupedList(
+              semanticLabel: l10n.settingsColorScheme,
+              children: [
+                for (final scheme in _SchemeChoice.all(
+                  Theme.of(context).brightness,
+                ))
+                  GroupedListTile(
+                    leading: _SchemeSwatch(scheme: scheme),
+                    leadingWidth: AnchorTokens.sizeIconLarge,
+                    label: _SchemeChoice.nameOf(scheme.id, l10n),
+                    checked: scheme.id == selected,
+                    onTap: () {
+                      if (scheme.id == selected) return;
+                      Haptics.selection();
+                      ref
+                          .read(colorSchemeControllerProvider.notifier)
+                          .setScheme(scheme.id);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SheetBottomSpace(),
+      ],
+    );
+  }
+}
+
+/// The scheme's page with a card and its accent on it.
+class _SchemeSwatch extends StatelessWidget {
+  const _SchemeSwatch({required this.scheme});
+
+  final _SchemeChoice scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AnchorTokens.sizeIconLarge,
+      height: AnchorTokens.sizeIconLarge,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: scheme.page,
+        shape: BoxShape.circle,
+        border: Border.all(color: context.anchor.appBorder),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: scheme.card,
+          shape: BoxShape.circle,
+          border: Border.all(color: scheme.accent, width: 3),
+        ),
+      ),
+    );
+  }
+}
+
+class _StylePickerSheet extends ConsumerWidget {
+  const _StylePickerSheet();
+
+  static const _icons = {
+    AppStyle.standard: LucideIcons.sparkles,
+    AppStyle.skeuomorphism: LucideIcons.layers,
+    AppStyle.neoBrutalism: LucideIcons.square,
+    AppStyle.lofi: LucideIcons.pencil,
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(appStyleControllerProvider);
+    final l10n = context.l10n;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SheetHeader(title: l10n.settingsStyle, showDone: true),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GroupedList(
+              semanticLabel: l10n.settingsStyle,
+              children: [
+                for (final style in AppStyle.values)
+                  GroupedListTile(
+                    icon: _icons[style],
+                    label: style.labelIn(l10n),
+                    subtitle: style.subtitleIn(l10n),
+                    checked: style == selected,
+                    onTap: () {
+                      if (style == selected) return;
+                      Haptics.selection();
+                      ref
+                          .read(appStyleControllerProvider.notifier)
+                          .setStyle(style);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SheetBottomSpace(),
+      ],
     );
   }
 }
@@ -463,11 +653,13 @@ class _ThemeTile extends StatelessWidget {
               height: math.min(constraints.maxWidth * 4 / 3, 132),
               // off-scale: a picture of the app
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+                borderRadius: context.appStyle.corners(AnchorTokens.radiusLg),
                 child: DecoratedBox(
                   position: DecorationPosition.foreground,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+                    borderRadius: context.appStyle.corners(
+                      AnchorTokens.radiusLg,
+                    ),
                     border: Border.all(color: border),
                   ),
                   child: picture,

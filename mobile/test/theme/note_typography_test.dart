@@ -193,5 +193,18 @@ void main() {
         expect(font.descent, metrics.descent, reason: file);
       }
     });
+
+    test('the style fonts\' ascent and descent are their own', () {
+      for (final (family, file) in [
+        (AppTypography.spaceGrotesk, 'SpaceGrotesk-Variable.ttf'),
+        (AppTypography.patrickHand, 'PatrickHand-Regular.ttf'),
+        (AppTypography.sans, 'DMSans-Variable.ttf'),
+      ]) {
+        final metrics = _metricsOf(file);
+        final own = AppTypography.metricsOf(family);
+        expect(own.ascent, closeTo(metrics.ascent, 0.001), reason: file);
+        expect(own.descent, closeTo(metrics.descent, 0.001), reason: file);
+      }
+    });
   });
 }

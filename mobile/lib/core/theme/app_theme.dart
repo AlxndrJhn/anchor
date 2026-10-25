@@ -2,50 +2,70 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../motion/page_transitions.dart';
+import 'anchor_appearance.dart';
 import 'anchor_density.dart';
 import 'app_typography.dart';
 import 'display_density.dart';
 import 'note_typography.dart';
 import 'tokens/anchor_tokens.dart';
+import 'tokens/app_schemes.dart';
+import 'tokens/app_style.dart';
 
 abstract final class AppTheme {
   static final Map<
-    (Brightness, DisplayDensity, NoteFont, NoteTextSize),
+    (Brightness, DisplayDensity, NoteFont, NoteTextSize, String, AppStyle),
     ThemeData
   >
   _cache = {};
 
+  /// [scheme] is a colour scheme id (Anchor's own or one of [appSchemes]).
   static ThemeData light([
     DisplayDensity density = DisplayDensity.standard,
     NoteFont font = NoteFont.sans,
     NoteTextSize textSize = NoteTextSize.standard,
+    String scheme = anchorSchemeId,
+    AppStyle style = AppStyle.standard,
   ]) => _cache.putIfAbsent((
     Brightness.light,
     density,
     font,
     textSize,
-  ), () => _build(Brightness.light, density, font, textSize));
+    scheme,
+    style,
+  ), () => _build(Brightness.light, density, font, textSize, scheme, style));
 
   static ThemeData dark([
     DisplayDensity density = DisplayDensity.standard,
     NoteFont font = NoteFont.sans,
     NoteTextSize textSize = NoteTextSize.standard,
+    String scheme = anchorSchemeId,
+    AppStyle style = AppStyle.standard,
   ]) => _cache.putIfAbsent((
     Brightness.dark,
     density,
     font,
     textSize,
-  ), () => _build(Brightness.dark, density, font, textSize));
+    scheme,
+    style,
+  ), () => _build(Brightness.dark, density, font, textSize, scheme, style));
 
   static ThemeData _build(
     Brightness brightness,
     DisplayDensity density,
     NoteFont font,
     NoteTextSize textSize,
+    String schemeId,
+    AppStyle style,
   ) {
     final spacing = AnchorDensity.of(density);
-    final isDark = brightness == Brightness.dark;
-    final colors = isDark ? AnchorColors.dark : AnchorColors.light;
+    // Lo-fi draws in its own greys; null keeps Anchor's own palette.
+    final palette = style == AppStyle.lofi
+        ? lofiScheme.of(brightness)
+        : schemeById(schemeId)?.of(brightness);
+    final colors = AnchorAppearance.colors(brightness, palette, style);
+    final accentFill = palette == null
+        ? AnchorTokens.colorAccentFill
+        : colors.accentStrong;
     Color mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 
     final scheme = ColorScheme(
@@ -59,12 +79,10 @@ abstract final class AppTheme {
       secondaryContainer: colors.appSubtle,
       onSecondaryContainer: colors.appText,
       tertiary: colors.accentStrong,
-      onTertiary: AnchorTokens.colorBrandWhite,
-      tertiaryContainer: mix(
-        colors.appSurface,
-        AnchorTokens.colorAccentFill,
-        0.16,
-      ),
+      onTertiary: palette == null
+          ? AnchorTokens.colorBrandWhite
+          : AnchorAppearance.onColor(colors.accentStrong),
+      tertiaryContainer: mix(colors.appSurface, accentFill, 0.16),
       onTertiaryContainer: colors.accentInk,
       error: colors.statusDanger,
       onError: colors.statusOnDanger,
@@ -90,13 +108,17 @@ abstract final class AppTheme {
       surfaceTint: const Color(0x00000000),
     );
 
-    final textTheme = AppTypography.textTheme(colors.appText, colors.appMuted);
+    final textTheme = AppTypography.textTheme(
+      colors.appText,
+      colors.appMuted,
+      style,
+    );
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
-      fontFamily: AppTypography.sans,
+      fontFamily: AppTypography.uiFamilyOf(style),
       textTheme: textTheme,
       scaffoldBackgroundColor: colors.appPage,
       canvasColor: colors.appPage,
@@ -123,7 +145,7 @@ abstract final class AppTheme {
       ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: colors.accentStrong,
-        selectionColor: AnchorTokens.colorAccentFill.withValues(alpha: 0.3),
+        selectionColor: accentFill.withValues(alpha: 0.3),
         selectionHandleColor: colors.accentStrong,
       ),
       switchTheme: SwitchThemeData(
@@ -146,7 +168,7 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationThemeData(
         isCollapsed: true,
         border: InputBorder.none,
-        hintStyle: AppTypography.row.copyWith(color: colors.appMuted),
+        hintStyle: textTheme.bodyLarge!.copyWith(color: colors.appMuted),
       ),
       scrollbarTheme: ScrollbarThemeData(
         thickness: const WidgetStatePropertyAll(4),
@@ -161,8 +183,14 @@ abstract final class AppTheme {
           font: font,
           textSize: textSize,
           lineHeight: spacing.noteLineHeight,
+          sansFamily: AppTypography.uiFamilyOf(style),
+          // Skeuomorphism sets note titles in the serif, as on the web.
+          titleFamily: style == AppStyle.skeuomorphism
+              ? AppTypography.serif
+              : null,
         ),
         colors,
+        AnchorStyle.of(style, colors.appText, brightness),
       ],
     );
   }

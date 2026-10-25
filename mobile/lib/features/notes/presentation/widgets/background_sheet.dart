@@ -137,7 +137,7 @@ class _Swatch extends StatelessWidget {
     );
 
     final radius = isSquare
-        ? BorderRadius.circular(AnchorTokens.radiusLg)
+        ? context.appStyle.corners(AnchorTokens.radiusLg)
         : BorderRadius.circular(size);
     return Pressable(
       style: PressStyle.thumb,
