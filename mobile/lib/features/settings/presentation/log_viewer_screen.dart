@@ -1,15 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
+import '../../../core/files/save_to_device.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/motion/haptics.dart';
@@ -113,8 +109,14 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
     final name =
         'anchor-logs-${DateFormat('yyyyMMdd-HHmmss').format(DateTime.now())}.log';
     try {
-      final saved = await _saveToFile(name, dump, l10n.logsSaveDialog);
-      if (saved != null && mounted) {
+      final saved = await saveBytesToDevice(
+        name: name,
+        bytes: Uint8List.fromList(utf8.encode(dump)),
+        dialogTitle: l10n.logsSaveDialog,
+        mimeType: 'text/plain',
+        allowedExtensions: const ['log'],
+      );
+      if (saved && mounted) {
         AppSnackbar.show(context, l10n.logsSaved(name));
       }
     } catch (e, stack) {
@@ -131,27 +133,6 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
           kind: SnackbarKind.error,
         );
       }
-    }
-  }
-
-  /// Opens the phone's save screen, or the share sheet when it has none.
-  Future<Uri?> _saveToFile(String name, String dump, String title) async {
-    try {
-      return await FilePicker.saveFile(
-        dialogTitle: title,
-        fileName: name,
-        bytes: Uint8List.fromList(utf8.encode(dump)),
-        type: FileType.custom,
-        allowedExtensions: const ['log'],
-      );
-    } on PlatformException catch (error) {
-      if (error.code != 'explorer_not_found') rethrow;
-      final file = File(p.join((await getTemporaryDirectory()).path, name));
-      await file.writeAsString(dump);
-      await SharePlus.instance.share(
-        ShareParams(files: [XFile(file.path, mimeType: 'text/plain')]),
-      );
-      return null;
     }
   }
 

@@ -2342,6 +2342,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String audioSave(String name) {
+    return 'Save $name';
+  }
+
+  @override
+  String get audioSaveDialog => 'Save audio';
+
+  @override
+  String audioSaved(String name) {
+    return 'Saved $name';
+  }
+
+  @override
+  String get audioSaveFailed => 'Couldn’t save the audio';
+
+  @override
   String get pictureAllowPhotos =>
       'Allow access to Photos in Settings to save pictures';
 

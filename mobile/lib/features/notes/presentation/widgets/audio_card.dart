@@ -5,7 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show NumberFormat;
 import 'package:just_audio/just_audio.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/files/save_to_device.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/logging/log_tags.dart';
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
@@ -133,6 +137,56 @@ class _AudioCardState extends ConsumerState<AudioCard> {
     }
   }
 
+  /// Saves the recording to a file on the phone, downloading it first if
+  /// needed.
+  Future<void> _save() async {
+    Haptics.light();
+    final l10n = context.l10n;
+    final attachment = widget.attachment;
+    try {
+      final local = attachment.localPath;
+      final file = local != null && File(local).existsSync()
+          ? local
+          : await ref.read(
+              attachmentFileProvider(attachmentFileKeyOf(attachment)).future,
+            );
+      if (!mounted) return;
+      if (file == null) {
+        AppSnackbar.show(
+          context,
+          attachment.kind == AttachmentKind.voiceNote
+              ? l10n.voiceOffline
+              : l10n.audioFileOffline,
+          kind: SnackbarKind.info,
+        );
+        return;
+      }
+      final saved = await saveFileToDevice(
+        path: file,
+        name: attachment.originalFilename,
+        dialogTitle: l10n.audioSaveDialog,
+        mimeType: attachment.mimeType,
+      );
+      if (saved && mounted) {
+        AppSnackbar.show(context, l10n.audioSaved(attachment.originalFilename));
+      }
+    } catch (error, stack) {
+      AppLogger.instance.error(
+        LogTags.attachments,
+        'Saving an audio attachment failed',
+        error: error,
+        stackTrace: stack,
+      );
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.audioSaveFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+    }
+  }
+
   String _nameIn(AppLocalizations l10n) {
     final name = widget.attachment.originalFilename;
     if (widget.attachment.kind == AttachmentKind.voiceNote) {
@@ -240,13 +294,33 @@ class _AudioCardState extends ConsumerState<AudioCard> {
                     .retryUpload(attachment.id),
               )
             else
-              _SeekBar(
-                progress: progress,
-                appearance: appearance,
-                label: l10n.voicePosition(name),
-                onSeek: _length == Duration.zero
-                    ? null
-                    : (f) => _player.seek(_length * f),
+              Row(
+                spacing: AnchorTokens.space8,
+                children: [
+                  Expanded(
+                    child: _SeekBar(
+                      progress: progress,
+                      appearance: appearance,
+                      label: l10n.voicePosition(name),
+                      onSeek: _length == Duration.zero
+                          ? null
+                          : (f) => _player.seek(_length * f),
+                    ),
+                  ),
+                  Pressable(
+                    style: PressStyle.plain,
+                    onTap: _save,
+                    semanticLabel: l10n.audioSave(name),
+                    child: SizedBox.square(
+                      dimension: _SeekBar.height,
+                      child: Icon(
+                        LucideIcons.download,
+                        size: AnchorTokens.sizeIconSmall,
+                        color: appearance.colors.muted,
+                      ),
+                    ),
+                  ),
+                ],
               ),
           ],
         ),

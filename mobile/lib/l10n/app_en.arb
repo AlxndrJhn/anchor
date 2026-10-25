@@ -3141,6 +3141,34 @@
       }
     }
   },
+  "audioSave": "Save {name}",
+  "@audioSave": {
+    "description": "Screen reader name of the download button on a voice note or audio file in a note.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Voice note"
+      }
+    }
+  },
+  "audioSaveDialog": "Save audio",
+  "@audioSaveDialog": {
+    "description": "Title of the system dialog for saving a voice note or audio file to the phone."
+  },
+  "audioSaved": "Saved {name}",
+  "@audioSaved": {
+    "description": "Toast after a voice note or audio file was saved to a file on the phone.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "voice-note.m4a"
+      }
+    }
+  },
+  "audioSaveFailed": "Couldn’t save the audio",
+  "@audioSaveFailed": {
+    "description": "Toast when a voice note or audio file couldn’t be saved to the phone."
+  },
   "pictureAllowPhotos": "Allow access to Photos in Settings to save pictures",
   "@pictureAllowPhotos": {
     "description": "Toast when saving a picture is blocked because the app has no Photos permission."

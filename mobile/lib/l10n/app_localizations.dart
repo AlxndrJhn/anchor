@@ -3526,6 +3526,30 @@ abstract class AppLocalizations {
   /// **'Position in {name}'**
   String voicePosition(String name);
 
+  /// Screen reader name of the download button on a voice note or audio file in a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {name}'**
+  String audioSave(String name);
+
+  /// Title of the system dialog for saving a voice note or audio file to the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Save audio'**
+  String get audioSaveDialog;
+
+  /// Toast after a voice note or audio file was saved to a file on the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name}'**
+  String audioSaved(String name);
+
+  /// Toast when a voice note or audio file couldn’t be saved to the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save the audio'**
+  String get audioSaveFailed;
+
   /// Toast when saving a picture is blocked because the app has no Photos permission.
   ///
   /// In en, this message translates to:
