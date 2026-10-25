@@ -35,6 +35,14 @@ import 'markdown_shortcuts.dart';
 import 'plain_insert_rule.dart';
 import 'slash_hint.dart';
 
+/// Picture types the keyboard may insert, which upload as attachments.
+const insertableImageTypes = <String>[
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+];
+
 /// Doesn't scroll by itself; the note page scrolls it.
 class RichTextEditor extends StatefulWidget {
   const RichTextEditor({
@@ -58,6 +66,7 @@ class RichTextEditor extends StatefulWidget {
     this.isCheckedFolded = false,
     this.onCheckedFoldChanged,
     this.visibleArea,
+    this.onImageInserted,
   });
 
   final String? initialContent;
@@ -96,6 +105,11 @@ class RichTextEditor extends StatefulWidget {
 
   /// In global coordinates; null falls back to the scroll view's edges.
   final Rect? Function()? visibleArea;
+
+  /// Called with a picture the keyboard inserts (for example a screenshot
+  /// pasted from Gboard's clipboard). Null keeps the keyboard from offering
+  /// pictures.
+  final void Function(Uint8List bytes, String mimeType)? onImageInserted;
 
   @override
   State<RichTextEditor> createState() => RichTextEditorState();
@@ -341,6 +355,12 @@ class RichTextEditorState extends State<RichTextEditor>
         ..ignoreFocusOnTextChange = false
         ..skipRequestKeyboard = false;
     });
+  }
+
+  void _onContentInserted(KeyboardInsertedContent content) {
+    final bytes = content.data;
+    if (bytes == null || bytes.isEmpty) return;
+    widget.onImageInserted?.call(bytes, content.mimeType);
   }
 
   @override
@@ -898,6 +918,13 @@ class RichTextEditorState extends State<RichTextEditor>
             focusNode: widget.focusNode,
             scrollController: widget.scrollController,
             config: QuillEditorConfig(
+              contentInsertionConfiguration:
+                  widget.onImageInserted == null || !widget.canEdit
+                  ? null
+                  : ContentInsertionConfiguration(
+                      allowedMimeTypes: insertableImageTypes,
+                      onContentInserted: _onContentInserted,
+                    ),
               placeholder: widget.canEdit && !_isEditing && _isBlank
                   ? context.l10n.editorPlaceholder
                   : null,

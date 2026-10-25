@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show File;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -6,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../../../app/router/app_routes.dart';
 import '../../../core/motion/haptics.dart';
@@ -423,6 +427,31 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     if (_isReadOnly) return;
     final file = await showAddSheet(context);
     if (file == null || !mounted) return;
+    await _addFile(file.path, file.mime, file.name);
+  }
+
+  /// A picture pasted from the keyboard becomes an attachment, as on the web.
+  Future<void> _onImageInserted(Uint8List bytes, String mimeType) async {
+    if (_isReadOnly) return;
+    final stamp = DateFormat('yyyy-MM-dd-HH-mm-ss').format(DateTime.now());
+    final ext = switch (mimeType) {
+      'image/jpeg' => 'jpg',
+      'image/gif' => 'gif',
+      'image/webp' => 'webp',
+      _ => 'png',
+    };
+    final filename = 'Pasted $stamp.$ext';
+    final dir = await getTemporaryDirectory();
+    final file = File(p.join(dir.path, filename));
+    await file.writeAsBytes(bytes, flush: true);
+    await _addFile(file.path, mimeType, filename);
+    try {
+      await file.delete();
+    } catch (_) {}
+  }
+
+  Future<void> _addFile(String path, String mime, String name) async {
+    final file = (path: path, mime: mime, name: name);
     final kind = AttachmentKind.of(mimeType: file.mime, filename: file.name);
     final l10n = context.l10n;
     final attachments = ref.read(noteAttachmentsRepositoryProvider);
@@ -719,6 +748,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                               .read(checkedFoldsProvider.notifier)
                               .setFolded(note.id, isFolded: isFolded),
                     visibleArea: _visibleArea,
+                    onImageInserted: _onImageInserted,
                     hasSlashHint: _openedAsNew,
                     onChanged: _draft.contentChanged,
                     onSelectionChanged: _editorOverlay.selectionMoved,
