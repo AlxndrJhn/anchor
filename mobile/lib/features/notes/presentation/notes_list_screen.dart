@@ -191,7 +191,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
   void _open(Note note) {
     if (_searching) FocusScope.of(context).unfocus();
-    context.go(AppRoutes.note(note.id), extra: note);
+    // From a search, the note marks what was searched for.
+    final search = _searching ? ref.read(searchQueryProvider).trim() : '';
+    context.go(AppRoutes.noteFromSearch(note.id, search), extra: note);
   }
 
   void _newNote() => context.go(AppRoutes.newNote);

@@ -11,6 +11,14 @@ class AppRoutes {
 
   static const newNote = '/note/new';
   static String note(String id) => '/note/$id';
+
+  /// A note opened from a search, which marks the search in its text.
+  static String noteFromSearch(String id, String search) => Uri(
+    path: note(id),
+    queryParameters: search.isEmpty ? null : {searchParameter: search},
+  ).toString();
+
+  static const searchParameter = 'q';
   static String history(String noteId) => '${note(noteId)}/history';
   static String revision(String noteId, String revisionId) =>
       '${history(noteId)}/$revisionId';

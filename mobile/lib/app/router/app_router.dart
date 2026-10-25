@@ -101,7 +101,12 @@ GoRouter goRouter(Ref ref) {
                 key: ValueKey('note/$id'),
                 noteId: id,
                 backgroundId: note?.background,
-                child: NoteEditScreen(noteId: id, note: note),
+                child: NoteEditScreen(
+                  noteId: id,
+                  note: note,
+                  searchTerm:
+                      state.uri.queryParameters[AppRoutes.searchParameter],
+                ),
               );
             },
             routes: [

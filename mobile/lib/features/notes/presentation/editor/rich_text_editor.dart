@@ -67,6 +67,7 @@ class RichTextEditor extends StatefulWidget {
     this.onCheckedFoldChanged,
     this.visibleArea,
     this.onImageInserted,
+    this.searchTerm,
   });
 
   final String? initialContent;
@@ -111,6 +112,10 @@ class RichTextEditor extends StatefulWidget {
   /// pictures.
   final void Function(Uint8List bytes, String mimeType)? onImageInserted;
 
+  /// The search the note was opened from: its matches are marked and the
+  /// first is scrolled into view, until the text is edited.
+  final String? searchTerm;
+
   @override
   State<RichTextEditor> createState() => RichTextEditorState();
 }
@@ -125,6 +130,9 @@ class RichTextEditorState extends State<RichTextEditor>
   final GlobalKey _stackKey = GlobalKey();
   final ValueNotifier<int> _paintTick = ValueNotifier(0);
   final ValueNotifier<String?> _slashQuery = ValueNotifier(null);
+
+  /// Lowercase; null once the text is edited.
+  String? _search;
 
   int? _typedSlashOffset;
   late TextSelection _selection;
@@ -186,12 +194,36 @@ class RichTextEditorState extends State<RichTextEditor>
     _refreshLists();
     _listen();
     widget.focusNode.addListener(_onFocusChanged);
+    final search = widget.searchTerm?.trim().toLowerCase() ?? '';
+    if (search.isNotEmpty) {
+      _search = search;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showFirstMatch());
+    }
     _repaintMarks();
+  }
+
+  /// Scrolls the first match of the search into view.
+  void _showFirstMatch() {
+    final search = _search;
+    final editor = _renderEditor;
+    if (!mounted || search == null || editor == null || !editor.hasSize) {
+      return;
+    }
+    final at = _controller.document.toPlainText().toLowerCase().indexOf(search);
+    if (at < 0) return;
+    final caret = editor.getLocalRectForCaret(TextPosition(offset: at));
+    editor.showOnScreen(
+      rect: caret.inflate(AnchorTokens.space48),
+      duration: context.motion(AnchorTokens.motionDurationSlow),
+      curve: AnchorTokens.motionEaseStandard,
+    );
   }
 
   /// `changes` belongs to the document: listen again after `document =`.
   void _listen() {
     _onChangedSub = _controller.changes.listen((change) {
+      // Editing ends the search's marks.
+      if (change.source == ChangeSource.local) _search = null;
       _followUndoable(change);
       _refreshLists();
       widget.onChanged?.call();
@@ -892,6 +924,7 @@ class RichTextEditorState extends State<RichTextEditor>
                   isDragged: _isDragged,
                   typography: context.noteTypography,
                   textScaler: MediaQuery.textScalerOf(context),
+                  searchTerm: () => _search,
                 ),
               ),
             ),

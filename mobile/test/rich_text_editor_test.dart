@@ -4,6 +4,7 @@ import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_format.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_link.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_palette.dart';
+import 'package:anchor/features/notes/presentation/editor/highlight_underlay.dart';
 import 'package:anchor/features/notes/presentation/editor/line_kind.dart';
 import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
@@ -1662,5 +1663,55 @@ void main() {
     expect(decoded['ops'], [
       {'insert': 'hi\n'},
     ]);
+  });
+
+  group('search marks', () {
+    const note = '{"ops":[{"insert":"Buy eggs and more Eggs\\n"}]}';
+
+    Future<RichTextEditorState> pumpSearch(WidgetTester tester) async {
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+      await tester.pumpWidget(
+        wrap(
+          (scroll) => RichTextEditor(
+            initialContent: note,
+            focusNode: focusNode,
+            scrollController: scroll,
+            palette: palette,
+            searchTerm: ' EGGS ',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return tester.state<RichTextEditorState>(find.byType(RichTextEditor));
+    }
+
+    RenderObject underlay(WidgetTester tester) => tester.renderObject(
+      find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is HighlightUnderlay,
+      ),
+    );
+
+    testWidgets('marks every match, ignoring case', (tester) async {
+      await pumpSearch(tester);
+      expect(
+        underlay(tester),
+        paints
+          ..path()
+          ..path(),
+      );
+    });
+
+    testWidgets('editing the note takes the marks off', (tester) async {
+      final state = await pumpSearch(tester);
+      state.controller.replaceText(
+        0,
+        0,
+        'x',
+        const TextSelection.collapsed(offset: 1),
+      );
+      await tester.pumpAndSettle();
+      expect(underlay(tester), isNot(paints..path()));
+    });
   });
 }

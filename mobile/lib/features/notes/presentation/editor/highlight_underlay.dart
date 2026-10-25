@@ -17,6 +17,7 @@ class HighlightUnderlay extends CustomPainter {
     required this.isDragged,
     required this.typography,
     required this.textScaler,
+    this.searchTerm,
   }) : super(repaint: repaint);
 
   final QuillController controller;
@@ -28,6 +29,10 @@ class HighlightUnderlay extends CustomPainter {
 
   final NoteTypography typography;
   final TextScaler textScaler;
+
+  /// The search the note was opened from, lowercase: every match is marked
+  /// in yellow, like a highlight, without changing the note.
+  final String? Function()? searchTerm;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -62,6 +67,7 @@ class HighlightUnderlay extends CustomPainter {
     final isDimmed = isDragged(node);
     final level = node.style.attributes[Attribute.header.key]?.value;
     final style = level is int ? typography.heading(level) : typography.body;
+    _paintMatches(canvas, node, render, host, start, style, isDimmed);
     var at = start;
     // Runs next to each other with the same highlight are one mark.
     String? name;
@@ -76,8 +82,8 @@ class HighlightUnderlay extends CustomPainter {
           host,
           runStart,
           end,
-          highlightName,
-          runText.toString(),
+          colors(highlightName),
+          '$highlightName|${_head(runText.toString())}',
           style: style,
           isDimmed: isDimmed,
         );
@@ -109,13 +115,12 @@ class HighlightUnderlay extends CustomPainter {
     RenderBox host,
     int start,
     int end,
-    String name,
-    String text, {
+    Color fill,
+    String key, {
     required TextStyle style,
     required bool isDimmed,
   }) {
-    final color = isDimmed ? draggedColor(colors(name)) : colors(name);
-    final key = '$name|${text.length > 14 ? text.substring(0, 14) : text}';
+    final color = isDimmed ? draggedColor(fill) : fill;
     final font = typography.font;
     final fontSize = textScaler.scale(style.fontSize!);
     final textHeight = (font.ascent + font.descent) * fontSize;
@@ -154,6 +159,37 @@ class HighlightUnderlay extends CustomPainter {
     }
   }
 
+  void _paintMatches(
+    Canvas canvas,
+    Line line,
+    RenderEditor render,
+    RenderBox host,
+    int start,
+    TextStyle style,
+    bool isDimmed,
+  ) {
+    final term = searchTerm?.call();
+    if (term == null || term.isEmpty) return;
+    final text = line.toPlainText().toLowerCase();
+    for (var hit = text.indexOf(term); hit != -1;) {
+      _paintRange(
+        canvas,
+        render,
+        host,
+        start + hit,
+        start + hit + term.length,
+        colors('yellow'),
+        'search|${_head(term)}',
+        style: style,
+        isDimmed: isDimmed,
+      );
+      hit = text.indexOf(term, hit + term.length);
+    }
+  }
+
   @override
   bool shouldRepaint(HighlightUnderlay old) => true;
 }
+
+/// Names a mark's stroke, so it keeps its shape between paints.
+String _head(String text) => text.length > 14 ? text.substring(0, 14) : text;

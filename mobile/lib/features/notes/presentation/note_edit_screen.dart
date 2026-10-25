@@ -56,10 +56,13 @@ import 'widgets/share_sheet.dart';
 import 'widgets/title_input_formatter.dart';
 
 class NoteEditScreen extends ConsumerStatefulWidget {
-  const NoteEditScreen({super.key, this.noteId, this.note});
+  const NoteEditScreen({super.key, this.noteId, this.note, this.searchTerm});
 
   final String? noteId;
   final Note? note;
+
+  /// The search the note was opened from, marked in its text.
+  final String? searchTerm;
 
   @override
   ConsumerState<NoteEditScreen> createState() => _NoteEditScreenState();
@@ -725,6 +728,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                     key: _editorKey,
                     initialContent: _draft.initialContent,
                     contentVersion: _draft.contentVersion,
+                    searchTerm: widget.searchTerm,
                     focusNode: _editorFocus,
                     canEdit: !_isReadOnly,
                     scrollController: _scroll,
