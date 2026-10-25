@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="23 21 62 62"><defs><clipPath id="r"><rect x="23" y="21" width="62" height="62" rx="13.64"/></clipPath></defs><g clip-path="url(#r)">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#5C6C88"/>
+      <stop offset="0.55" stop-color="#3E4A62"/>
+      <stop offset="1" stop-color="#232838"/>
+    </radialGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0"/>
+      <feComposite operator="in" in2="SourceGraphic"/>
+    </filter>
+    <pattern id="weave" width="1.2" height="1.2" patternUnits="userSpaceOnUse">
+      <rect width="1.2" height="0.45" fill="#fff" opacity="0.05"/>
+      <rect width="0.45" height="1.2" fill="#000" opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="108" height="108" fill="url(#bg)"/>
+  <rect width="108" height="108" fill="url(#weave)"/>
+  <rect width="108" height="108" fill="#000" filter="url(#grain)" opacity="0.35"/>
+
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDF6"/>
+      <stop offset="1" stop-color="#EEE6D3"/>
+    </linearGradient>
+    <linearGradient id="binding" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB083"/>
+      <stop offset="0.45" stop-color="#EF8354"/>
+      <stop offset="1" stop-color="#C85E31"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="brass" x1="40" y1="52" x2="68" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F3D27A"/>
+      <stop offset="0.45" stop-color="#C9952F"/>
+      <stop offset="1" stop-color="#8A5F17"/>
+    </linearGradient>
+    <filter id="drop" x="-30%" y="-30%" width="160%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.4"/>
+      <feOffset dy="3" result="b"/>
+      <feFlood flood-color="#0B0E16" flood-opacity="0.55"/>
+      <feComposite in2="b" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="emboss" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0.5"/>
+      <feOffset dy="0.8" result="b"/>
+      <feFlood flood-color="#5A3A08" flood-opacity="0.6"/>
+      <feComposite in2="b" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="pad"><rect x="29" y="25" width="50" height="62" rx="4"/></clipPath>
+  </defs>
+
+  <g transform="translate(54 54) scale(0.84) translate(-54 -57)">
+  <g filter="url(#drop)">
+    <!-- The pages underneath, peeking out at the bottom. -->
+    <rect x="30.5" y="27" width="48" height="62.6" rx="4" fill="#DCD3BE"/>
+    <rect x="29.8" y="26" width="49" height="61.9" rx="4" fill="#E9E2CF"/>
+    <rect x="29" y="25" width="50" height="62" rx="4" fill="url(#paper)"/>
+  </g>
+
+  <g clip-path="url(#pad)">
+    <!-- Ruled lines and the red margin. -->
+    <g stroke="#9DB3CF" stroke-width="0.6" opacity="0.8">
+      <path d="M29 47 H79"/><path d="M29 53 H79"/><path d="M29 59 H79"/>
+      <path d="M29 65 H79"/><path d="M29 71 H79"/><path d="M29 77 H79"/>
+      <path d="M29 83 H79"/>
+    </g>
+    <path d="M36.5 39 V87" stroke="#E07A7A" stroke-width="0.6" opacity="0.8"/>
+
+    <!-- Glued binding with a glossy top and a shadow on the paper. -->
+    <rect x="29" y="39" width="50" height="3" fill="#000" opacity="0.12"/>
+    <rect x="29" y="25" width="50" height="15" fill="url(#binding)"/>
+    <rect x="29" y="25" width="50" height="6.5" fill="url(#gloss)"/>
+    <path d="M29 40 H79" stroke="#8E3F1C" stroke-width="0.7" opacity="0.7"/>
+    <path d="M29 33.2 H79" stroke="#000" stroke-width="0.35" stroke-dasharray="1.2 1.2" opacity="0.25"/>
+  </g>
+  <!-- Paper edge highlight. -->
+  <rect x="29.3" y="25.3" width="49.4" height="61.4" rx="3.8" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="0.6"/>
+
+  <!-- A brass anchor, fixed to the page. -->
+  <g filter="url(#emboss)" transform="translate(54 69) scale(0.62) translate(-54 -69)">
+    
+  <g fill="none" stroke="url(#brass)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="54" cy="55.5" r="3.4"/>
+    <path d="M54 59 V80.5"/>
+    <path d="M47 64.5 H61"/>
+    <path d="M40.5 73.5 C41.5 80 47 83 54 83 C61 83 66.5 80 67.5 73.5"/>
+    <path d="M38 75.8 L40.5 73.2 L43.4 75.4"/>
+    <path d="M64.6 75.4 L67.5 73.2 L70 75.8"/>
+  </g>
+  </g>
+  <g transform="translate(54 69) scale(0.62) translate(-54 -69)" opacity="0.6">
+    <g fill="none" stroke="#FFF3C8" stroke-width="0.9" stroke-linecap="round">
+      <path d="M52.6 53.2 A3.4 3.4 0 0 1 56.6 53.6"/>
+      <path d="M53.2 61 V78"/>
+    </g>
+  </g>
+  </g>
+</g></svg>

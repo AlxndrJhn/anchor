@@ -1,28 +1,16 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+/** The app's icon: a ruled pad with a brass anchor on slate cloth. */
 export function AnchorLogo({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 32 32"
+    <img
+      src="/anchor-mark.svg"
+      alt=""
       aria-hidden
+      draggable={false}
       className={cn("flex-none rounded-sm shadow-edge", className)}
-    >
-      <rect width="32" height="32" rx="8" fill="#eef1f6" />
-      <path
-        d="M2.6 9V7.9A6.6 6.6 0 0 1 9.2 1.3h13.6a6.6 6.6 0 0 1 6.6 6.6V9Z"
-        fill="#ef8354"
-      />
-      <g fill="#dcdfe4">
-        <rect x="5.1" y="12.6" width="21.8" height="1.3" rx=".65" />
-        <rect x="5.1" y="17" width="12.2" height="1.3" rx=".65" />
-        <rect x="5.1" y="21.4" width="9.4" height="1.3" rx=".65" />
-      </g>
-      <g fill="none" stroke="#b9bec6" strokeWidth=".9" strokeLinecap="round">
-        <circle cx="22.9" cy="19.2" r="1.1" />
-        <path d="M22.9 20.3v6.2M19.3 23.4h1.1M25.4 23.4h1.2M19.3 23.4a3.6 3.6 0 0 0 7.3 0" />
-      </g>
-    </svg>
+    />
   );
 }
 
