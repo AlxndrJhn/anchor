@@ -986,6 +986,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 ),
                 textCapitalization: TextCapitalization.sentences,
                 showCursor: _isEditing && !isReadOnly,
+                // The keyboard's Next (or Enter) goes straight to the text.
+                textInputAction: TextInputAction.next,
+                onSubmitted: (_) => _editorKey.currentState?.focusStart(),
               ),
             ),
           ),

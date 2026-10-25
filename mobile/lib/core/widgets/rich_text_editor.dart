@@ -400,6 +400,16 @@ class RichTextEditorState extends State<RichTextEditor>
 
   bool get isEditing => _isEditing;
 
+  /// Puts the caret at the start of the text, as when leaving the title.
+  void focusStart() {
+    if (!widget.canEdit) return;
+    _controller.updateSelection(
+      const TextSelection.collapsed(offset: 0),
+      ChangeSource.local,
+    );
+    _focusNode.requestFocus();
+  }
+
   /// Ticked checklist items in the note.
   int get checkedItemCount =>
       parseDocumentLines(_controller.document).where((l) => l.isChecked).length;
