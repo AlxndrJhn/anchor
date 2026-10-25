@@ -7,4 +7,7 @@ class AppDurations {
   static const Duration slow = Duration(milliseconds: 300);
 
   static const Duration snackbar = Duration(seconds: 4);
+
+  /// Long enough to reach for Undo.
+  static const Duration undoSnackbar = Duration(seconds: 7);
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/providers/active_user_id_provider.dart';
+import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/core/widgets/rich_text_editor.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
@@ -167,6 +168,32 @@ void main() {
     final captured = verify(() => notesRepo.createNote(captureAny())).captured;
     expect(captured, hasLength(1));
     expect((captured.single as Note).title, 'My title');
+  });
+
+  testWidgets('deleting your note asks nothing and offers Undo', (
+    tester,
+  ) async {
+    when(() => notesRepo.deleteNote(any())).thenAnswer((_) async {});
+    when(() => notesRepo.restoreNote(any())).thenAnswer((_) async {});
+    const note = Note(
+      id: 'n1',
+      title: 'Mine',
+      content: '{"ops":[{"insert":"hi\\n"}]}',
+    );
+    await pumpScreen(tester, note: note);
+
+    await tester.tap(find.byTooltip('More options'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(LucideIcons.trash2));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ConfirmDialog), findsNothing);
+    verify(() => notesRepo.deleteNote('n1')).called(1);
+    expect(find.text('Note moved to trash'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    verify(() => notesRepo.restoreNote('n1')).called(1);
   });
 
   testWidgets('cursor movement alone never saves an existing note', (

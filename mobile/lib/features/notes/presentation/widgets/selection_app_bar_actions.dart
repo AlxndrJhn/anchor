@@ -1,3 +1,4 @@
+import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -60,35 +61,51 @@ class SelectionAppBarActions extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     List<String> ids,
-    int sharedCount,
+    Set<String> sharedIds,
   ) async {
-    final theme = Theme.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.trash2,
-        iconColor: theme.colorScheme.error,
-        title: 'Delete ${_notes(ids.length)}?',
-        message: _deleteMessage(ids.length, sharedCount),
-        cancelText: 'Cancel',
-        confirmText: 'Delete',
-        onConfirm: () {},
-      ),
-    );
-    if (confirmed == true && context.mounted) {
-      try {
-        await ref.read(notesControllerProvider.notifier).bulkDeleteNotes(ids);
-        onExitSelectionMode();
-        if (context.mounted) {
-          AppSnackbar.showSuccess(
-            context,
-            message: _deletedMessage(ids.length, sharedCount),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          AppSnackbar.showError(context, message: 'Failed to delete notes');
-        }
+    final sharedCount = sharedIds.length;
+    // Your own notes go to trash at once, with Undo. Shared ones ask first:
+    // Undo can't bring them back, their owners have to share them again.
+    if (sharedCount > 0) {
+      final theme = Theme.of(context);
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => ConfirmDialog(
+          icon: LucideIcons.trash2,
+          iconColor: theme.colorScheme.error,
+          title: 'Delete ${_notes(ids.length)}?',
+          message: _deleteMessage(ids.length, sharedCount),
+          cancelText: 'Cancel',
+          confirmText: 'Delete',
+          onConfirm: () {},
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+    final repo = ref.read(notesRepositoryProvider);
+    final owned = [
+      for (final id in ids)
+        if (!sharedIds.contains(id)) id,
+    ];
+    try {
+      await ref.read(notesControllerProvider.notifier).bulkDeleteNotes(ids);
+      onExitSelectionMode();
+      if (context.mounted) {
+        AppSnackbar.showSuccess(
+          context,
+          message: _deletedMessage(ids.length, sharedCount),
+          onUndo: owned.isEmpty
+              ? null
+              : () async {
+                  for (final id in owned) {
+                    await repo.restoreNote(id);
+                  }
+                },
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppSnackbar.showError(context, message: 'Failed to delete notes');
       }
     }
   }
@@ -207,11 +224,12 @@ class SelectionAppBarActions extends ConsumerWidget {
         .toList();
     final allSelectedPinned =
         selectedNotes.isNotEmpty && selectedNotes.every((n) => n.isPinned);
-    final selectedSharedCount = notes.maybeWhen(
-      data: (notesList) => notesList
-          .where((n) => selectedNoteIds.contains(n.id) && !n.isOwner)
-          .length,
-      orElse: () => 0,
+    final selectedSharedIds = notes.maybeWhen(
+      data: (notesList) => {
+        for (final n in notesList)
+          if (selectedNoteIds.contains(n.id) && !n.isOwner) n.id,
+      },
+      orElse: () => <String>{},
     );
 
     return Row(
@@ -255,7 +273,7 @@ class SelectionAppBarActions extends ConsumerWidget {
               context,
               ref,
               selectedNoteIds.toList(),
-              selectedSharedCount,
+              selectedSharedIds,
             ),
             tooltip: 'Delete',
             color: theme.colorScheme.error,

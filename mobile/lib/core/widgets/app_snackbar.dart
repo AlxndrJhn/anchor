@@ -11,11 +11,19 @@ import '../theme/tokens/app_radius.dart';
 class AppSnackbar {
   AppSnackbar._();
 
+  /// [onUndo] adds an Undo button, and keeps the message up a little longer.
   static void showSuccess(
     BuildContext context, {
     required String message,
     IconData icon = LucideIcons.checkCircle,
-  }) => _show(context, message, icon, context.colorTokens.success);
+    VoidCallback? onUndo,
+  }) => _show(
+    context,
+    message,
+    icon,
+    context.colorTokens.success,
+    onUndo: onUndo,
+  );
 
   static void showError(
     BuildContext context, {
@@ -39,8 +47,9 @@ class AppSnackbar {
     BuildContext context,
     String message,
     IconData icon,
-    Color iconColor,
-  ) {
+    Color iconColor, {
+    VoidCallback? onUndo,
+  }) {
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
 
@@ -51,12 +60,15 @@ class AppSnackbar {
           icon: icon,
           iconColor: iconColor,
           message: message,
+          onUndo: onUndo,
         ),
         // `margin` is only legal on a floating snackbar.
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.symmetric(horizontal: dims.md, vertical: dims.sm),
         padding: EdgeInsets.symmetric(horizontal: dims.md, vertical: dims.sm),
-        duration: AppDurations.snackbar,
+        duration: onUndo == null
+            ? AppDurations.snackbar
+            : AppDurations.undoSnackbar,
       ),
     );
   }
@@ -67,11 +79,13 @@ class _SnackbarContent extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.message,
+    this.onUndo,
   });
 
   final IconData icon;
   final Color iconColor;
   final String message;
+  final VoidCallback? onUndo;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +115,14 @@ class _SnackbarContent extends StatelessWidget {
             ),
           ),
         ),
+        if (onUndo != null)
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              onUndo!();
+            },
+            child: const Text('Undo'),
+          ),
         SizedBox(width: dims.xs),
         Material(
           color: Colors.transparent,

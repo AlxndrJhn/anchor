@@ -790,38 +790,41 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     }
 
     final isOwner = _existingNote?.isOwner ?? true;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.trash2,
-        iconColor: Theme.of(context).colorScheme.error,
-        title: isOwner ? 'Delete note?' : 'Remove note?',
-        message: isOwner
-            ? 'This note will be moved to trash.'
-            : 'This note will be removed from your notes.',
-        cancelText: 'Cancel',
-        confirmText: isOwner ? 'Delete' : 'Remove',
-        confirmColor: Theme.of(context).colorScheme.error,
-        onConfirm: () {},
-      ),
-    );
+    // Your own note goes to trash at once, with Undo. A shared note asks
+    // first: Undo can't bring it back, its owner has to share it again.
+    if (!isOwner) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => ConfirmDialog(
+          icon: LucideIcons.trash2,
+          iconColor: Theme.of(context).colorScheme.error,
+          title: 'Remove note?',
+          message: 'This note will be removed from your notes.',
+          cancelText: 'Cancel',
+          confirmText: 'Remove',
+          confirmColor: Theme.of(context).colorScheme.error,
+          onConfirm: () {},
+        ),
+      );
+      if (confirm != true || !mounted) return;
+    }
 
-    if (confirm == true && mounted) {
-      try {
-        await ref.read(notesRepositoryProvider).deleteNote(_noteId!);
-        _isDeleted = true;
-
-        if (mounted) {
-          AppSnackbar.showSuccess(
-            context,
-            message: isOwner ? 'Note moved to trash' : 'Note removed',
-          );
-          _popOrExit();
-        }
-      } catch (e) {
-        if (mounted) {
-          AppSnackbar.showError(context, message: 'Failed to delete note');
-        }
+    final noteId = _noteId!;
+    // Read now: Undo runs after this screen has closed.
+    final repo = ref.read(notesRepositoryProvider);
+    try {
+      await repo.deleteNote(noteId);
+      _isDeleted = true;
+      if (!mounted) return;
+      AppSnackbar.showSuccess(
+        context,
+        message: isOwner ? 'Note moved to trash' : 'Note removed',
+        onUndo: isOwner ? () => repo.restoreNote(noteId) : null,
+      );
+      _popOrExit();
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(context, message: 'Failed to delete note');
       }
     }
   }
