@@ -169,7 +169,8 @@ export const SearchField = React.forwardRef<
     forwardedRef,
     () => input.current as HTMLInputElement,
   );
-  const [open, setOpen] = React.useState(false);
+  // A search brought back from the address stays shown on phones.
+  const [open, setOpen] = React.useState(() => !!value);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

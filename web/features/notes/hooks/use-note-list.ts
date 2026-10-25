@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import {
   type SortBy,
@@ -11,6 +12,8 @@ import { useFlip } from "@/lib/use-flip";
 import { deltaToFullPlainText } from "../quill";
 import { compareNotes } from "../sort";
 import type { Note } from "../types";
+
+const SEARCH_PARAM = "q";
 
 const searchTextByNote = new WeakMap<Note, string>();
 
@@ -29,8 +32,22 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const boardRef = React.useRef<HTMLDivElement>(null);
   const searchRef = React.useRef<HTMLInputElement>(null);
   const flip = useFlip(boardRef);
-  const [query, setQueryValue] = React.useState("");
+  const searchParams = useSearchParams();
+  // Kept in the address, so Back from an opened note finds the same results.
+  const [query, setQueryValue] = React.useState(
+    () => searchParams.get(SEARCH_PARAM) ?? "",
+  );
   const searchedQuery = React.useDeferredValue(query);
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const url = new URL(window.location.href);
+      if ((url.searchParams.get(SEARCH_PARAM) ?? "") === query) return;
+      if (query) url.searchParams.set(SEARCH_PARAM, query);
+      else url.searchParams.delete(SEARCH_PARAM);
+      window.history.replaceState(window.history.state, "", url);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
   const [picking, setPicking] = React.useState(false);
   const [picked, setPicked] = React.useState<Set<string>>(new Set());
   const lastPick = React.useRef<string | null>(null);
