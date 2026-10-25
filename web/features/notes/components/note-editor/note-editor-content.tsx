@@ -156,7 +156,15 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           spellCheck={false}
           onChange={(e) => props.onTitleChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            // Tab skips the tag row, attachments and toolbar on the way.
+            const toBody =
+              e.key === "Enter" ||
+              (e.key === "Tab" &&
+                !e.shiftKey &&
+                !e.altKey &&
+                !e.ctrlKey &&
+                !e.metaKey);
+            if (toBody && !e.nativeEvent.isComposing) {
               e.preventDefault();
               props.contentEditorRef?.current?.setSelection(0, 0);
             }
