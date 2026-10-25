@@ -61,7 +61,7 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
             runSpacing: gap,
             children: [
               for (final background in items)
-                _Swatch(
+                BackgroundSwatch(
                   background: background,
                   size: size,
                   isSquare: isSquare,
@@ -113,8 +113,10 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
   }
 }
 
-class _Swatch extends StatelessWidget {
-  const _Swatch({
+/// A colour or pattern to pick, with a check when it is the chosen one.
+class BackgroundSwatch extends StatelessWidget {
+  const BackgroundSwatch({
+    super.key,
     required this.background,
     required this.size,
     required this.isSquare,
@@ -142,7 +144,7 @@ class _Swatch extends StatelessWidget {
     return Pressable(
       style: PressStyle.thumb,
       onTap: onTap,
-      semanticLabel: _nameOf(background, context.l10n),
+      semanticLabel: backgroundNameOf(background, context.l10n),
       selected: on,
       child: SizedBox.square(
         dimension: size,
@@ -206,7 +208,8 @@ class _Swatch extends StatelessWidget {
   }
 }
 
-String _nameOf(AnchorBackground background, AppLocalizations l10n) =>
+/// The background's name for people (and screen readers).
+String backgroundNameOf(AnchorBackground background, AppLocalizations l10n) =>
     switch (background.id) {
       null => l10n.noteColorDefault,
       'color_yellow' => l10n.colorYellow,

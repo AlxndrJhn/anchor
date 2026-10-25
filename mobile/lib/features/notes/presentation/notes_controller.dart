@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
+import '../domain/note_filters.dart';
 
 part 'notes_controller.g.dart';
 
@@ -36,6 +37,18 @@ class SearchQuery extends _$SearchQuery {
   void set(String query) {
     state = query;
   }
+}
+
+/// The list's filters besides the tag (colour, pictures, checklists and
+/// reminders). They belong to the search: ending it clears them.
+@riverpod
+class NoteFiltersController extends _$NoteFiltersController {
+  @override
+  NoteFilters build() => NoteFilters.none;
+
+  void set(NoteFilters filters) => state = filters;
+
+  void clear() => state = NoteFilters.none;
 }
 
 @riverpod

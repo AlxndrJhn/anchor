@@ -98,7 +98,7 @@ final class HomeWidgetLaunchHandlerProvider
 }
 
 String _$homeWidgetLaunchHandlerHash() =>
-    r'3bea2510924e43398e478a8925da9da7afe51b20';
+    r'2e7e54f3b25b3b6af367f4532967e637fc7bc3a5';
 
 /// Cold-start taps go through `initializeApp`.
 

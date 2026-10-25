@@ -2872,6 +2872,84 @@ abstract class AppLocalizations {
   /// **'Clear search'**
   String get searchClear;
 
+  /// Screen reader label of the filter button in the search field, while no filter is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter notes'**
+  String get searchFilter;
+
+  /// Screen reader label of the filter button in the search field, while filters are on.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Filter notes, 1 filter on} other{Filter notes, {count} filters on}}'**
+  String searchFiltersOn(int count);
+
+  /// Empty-screen title when the search filters (with no words typed) leave no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes match'**
+  String get searchNoMatches;
+
+  /// Empty-screen help when the search filters leave no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off a filter to see more notes.'**
+  String get searchNoMatchesHelp;
+
+  /// Title of the sheet that narrows the list to notes with pictures, a checklist, a reminder, a color or pattern, or a tag.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter notes'**
+  String get filterTitle;
+
+  /// Subtitle of the filter sheet while no filter is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Show only notes that match'**
+  String get filterHelp;
+
+  /// Subtitle of the filter sheet: how many filters are on.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 filter on} other{{count} filters on}}'**
+  String filterCount(int count);
+
+  /// Section label in the filter sheet, above Pictures, Checklists and Reminders: notes that have them.
+  ///
+  /// In en, this message translates to:
+  /// **'Has'**
+  String get filterHas;
+
+  /// Filter choice: only notes with pictures.
+  ///
+  /// In en, this message translates to:
+  /// **'Pictures'**
+  String get filterPictures;
+
+  /// Filter choice: only notes with checklist items.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklists'**
+  String get filterChecklists;
+
+  /// Filter choice: only notes with a reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get filterReminders;
+
+  /// Section label in the filter sheet above the tags; picking one shows only notes with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag'**
+  String get filterTag;
+
+  /// Button in the filter sheet that turns every filter off.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get filterClear;
+
   /// Line style: plain text.
   ///
   /// In en, this message translates to:

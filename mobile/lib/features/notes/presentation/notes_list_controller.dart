@@ -57,7 +57,8 @@ class VisibleNotes {
 
   final bool isLoaded;
 
-  /// In a search or on a tag's page, archived notes follow the others.
+  /// In a search, with filters on, or on a tag's page, archived notes follow
+  /// the others.
   final bool listsArchived;
   final bool isArchivedOpen;
 
@@ -84,10 +85,12 @@ VisibleNotes visibleNotes(Ref ref) {
 
   final words = query.trim().toLowerCase();
   final searchText = ref.watch(noteSearchTextProvider);
+  final filters = ref.watch(noteFiltersControllerProvider);
   bool matches(Note note) =>
-      words.isEmpty ||
-      note.title.toLowerCase().contains(words) ||
-      searchText.of(note).contains(words);
+      filters.matches(note) &&
+      (words.isEmpty ||
+          note.title.toLowerCase().contains(words) ||
+          searchText.of(note).contains(words));
   final comparator = noteComparator(options);
   final visible = [
     for (final note in notes)
@@ -100,7 +103,8 @@ VisibleNotes visibleNotes(Ref ref) {
   final tagId = folder == NoteFolder.notes
       ? ref.watch(selectedTagFilterProvider)
       : null;
-  final isSearching = words.isNotEmpty;
+  // Filters search too: they bring in matching archived notes, open.
+  final isSearching = words.isNotEmpty || !filters.isEmpty;
   if (folder != NoteFolder.notes || (!isSearching && tagId == null)) {
     return VisibleNotes(
       notes: visible,

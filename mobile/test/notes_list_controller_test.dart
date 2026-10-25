@@ -1,4 +1,5 @@
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_filters.dart';
 import 'package:anchor/features/notes/presentation/note_folder.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_list_controller.dart';
@@ -254,6 +255,58 @@ void main() {
       }
 
       expect(container.read(tagNoteCountsProvider)['travel'], 3);
+    });
+  });
+
+  group('filters', () {
+    final red = notes[0].copyWith(background: 'color_red');
+    final redArchived = Note(
+      id: 'a1',
+      title: 'Old',
+      content: delta('old'),
+      isArchived: true,
+      background: 'color_red',
+      updatedAt: DateTime.utc(2026, 7, 1),
+    );
+
+    test('narrow the list and bring in matching archived notes', () async {
+      final container = containerWith(
+        active: [red, notes[1], notes[2]],
+        archived: [redArchived],
+      );
+      container
+          .read(noteFiltersControllerProvider.notifier)
+          .set(const NoteFilters(background: 'color_red'));
+      final shown = await visibleIn(container);
+
+      expect(shown.notes.map((n) => n.id), ['n1', 'a1']);
+      expect(shown.groups.last.kind, NoteGroupKind.archived);
+      expect(shown.groups.last.isFolded, isFalse);
+    });
+
+    test('combine with the search', () async {
+      final container = containerWith(active: [red, notes[1], notes[2]]);
+      container
+          .read(noteFiltersControllerProvider.notifier)
+          .set(const NoteFilters(background: 'color_red'));
+      container.read(searchQueryProvider.notifier).set('lisbon');
+      expect((await visibleIn(container)).notes, isEmpty);
+
+      container.read(searchQueryProvider.notifier).set('eggs');
+      expect(container.read(visibleNotesProvider).notes.map((n) => n.id), [
+        'n1',
+      ]);
+    });
+
+    test('apply in Archive too', () async {
+      final container = containerWith(archived: [redArchived, notes[2]]);
+      container.read(noteFolderProvider.notifier).go(NoteFolder.archive);
+      container
+          .read(noteFiltersControllerProvider.notifier)
+          .set(const NoteFilters(background: 'color_red'));
+      final shown = await visibleIn(container);
+
+      expect(shown.notes.map((n) => n.id), ['a1']);
     });
   });
 

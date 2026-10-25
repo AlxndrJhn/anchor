@@ -2567,6 +2567,70 @@
   "@searchClear": {
     "description": "Screen reader label of the button that empties the search field."
   },
+  "searchFilter": "Filter notes",
+  "@searchFilter": {
+    "description": "Screen reader label of the filter button in the search field, while no filter is on."
+  },
+  "searchFiltersOn": "{count, plural, =1{Filter notes, 1 filter on} other{Filter notes, {count} filters on}}",
+  "@searchFiltersOn": {
+    "description": "Screen reader label of the filter button in the search field, while filters are on.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "searchNoMatches": "No notes match",
+  "@searchNoMatches": {
+    "description": "Empty-screen title when the search filters (with no words typed) leave no notes."
+  },
+  "searchNoMatchesHelp": "Turn off a filter to see more notes.",
+  "@searchNoMatchesHelp": {
+    "description": "Empty-screen help when the search filters leave no notes."
+  },
+  "filterTitle": "Filter notes",
+  "@filterTitle": {
+    "description": "Title of the sheet that narrows the list to notes with pictures, a checklist, a reminder, a color or pattern, or a tag."
+  },
+  "filterHelp": "Show only notes that match",
+  "@filterHelp": {
+    "description": "Subtitle of the filter sheet while no filter is on."
+  },
+  "filterCount": "{count, plural, =1{1 filter on} other{{count} filters on}}",
+  "@filterCount": {
+    "description": "Subtitle of the filter sheet: how many filters are on.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "filterHas": "Has",
+  "@filterHas": {
+    "description": "Section label in the filter sheet, above Pictures, Checklists and Reminders: notes that have them."
+  },
+  "filterPictures": "Pictures",
+  "@filterPictures": {
+    "description": "Filter choice: only notes with pictures."
+  },
+  "filterChecklists": "Checklists",
+  "@filterChecklists": {
+    "description": "Filter choice: only notes with checklist items."
+  },
+  "filterReminders": "Reminders",
+  "@filterReminders": {
+    "description": "Filter choice: only notes with a reminder."
+  },
+  "filterTag": "Tag",
+  "@filterTag": {
+    "description": "Section label in the filter sheet above the tags; picking one shows only notes with it."
+  },
+  "filterClear": "Clear filters",
+  "@filterClear": {
+    "description": "Button in the filter sheet that turns every filter off."
+  },
   "lineText": "Text",
   "@lineText": {
     "description": "Line style: plain text."

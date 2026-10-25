@@ -1933,6 +1933,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchClear => 'Clear search';
 
   @override
+  String get searchFilter => 'Filter notes';
+
+  @override
+  String searchFiltersOn(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Filter notes, $count filters on',
+      one: 'Filter notes, 1 filter on',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchNoMatches => 'No notes match';
+
+  @override
+  String get searchNoMatchesHelp => 'Turn off a filter to see more notes.';
+
+  @override
+  String get filterTitle => 'Filter notes';
+
+  @override
+  String get filterHelp => 'Show only notes that match';
+
+  @override
+  String filterCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count filters on',
+      one: '1 filter on',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get filterHas => 'Has';
+
+  @override
+  String get filterPictures => 'Pictures';
+
+  @override
+  String get filterChecklists => 'Checklists';
+
+  @override
+  String get filterReminders => 'Reminders';
+
+  @override
+  String get filterTag => 'Tag';
+
+  @override
+  String get filterClear => 'Clear filters';
+
+  @override
   String get lineText => 'Text';
 
   @override

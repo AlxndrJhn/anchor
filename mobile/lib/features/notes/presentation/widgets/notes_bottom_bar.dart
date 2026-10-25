@@ -24,6 +24,8 @@ class NotesBottomBar extends StatefulWidget {
     required this.onCancel,
     this.onNewNote,
     this.newNoteKey,
+    this.filterCount = 0,
+    this.onFilter,
   });
 
   final String placeholder;
@@ -38,6 +40,12 @@ class NotesBottomBar extends StatefulWidget {
   final VoidCallback? onNewNote;
 
   final GlobalKey? newNoteKey;
+
+  /// How many filters are on; the filter button shows on while any is.
+  final int filterCount;
+
+  /// Null leaves the filter button out of the search field.
+  final VoidCallback? onFilter;
 
   @override
   State<NotesBottomBar> createState() => _NotesBottomBarState();
@@ -154,8 +162,23 @@ class _NotesBottomBarState extends State<NotesBottomBar> {
                             _text.clear();
                             widget.onQuery('');
                           },
+                        ),
+                      if (widget.searching && widget.onFilter != null)
+                        BarButton(
+                          icon: LucideIcons.listFilter,
+                          label: widget.filterCount > 0
+                              ? context.l10n.searchFiltersOn(widget.filterCount)
+                              : context.l10n.searchFilter,
+                          size: BarButtonSize.medium,
+                          color: widget.filterCount > 0
+                              ? colors.appText
+                              : colors.appMuted,
+                          indicatorColor: widget.filterCount > 0
+                              ? colors.accentStrong
+                              : null,
+                          onPressed: widget.onFilter,
                         )
-                      else
+                      else if (!widget.searching || widget.query.isEmpty)
                         const SizedBox(width: 16),
                     ],
                   ),

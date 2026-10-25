@@ -38,6 +38,7 @@ import 'widgets/drawer_host.dart';
 import 'widgets/list_title.dart';
 import 'widgets/note_card.dart';
 import 'widgets/note_cards_loading.dart';
+import 'widgets/note_filters_sheet.dart';
 import 'widgets/note_surface.dart';
 import 'widgets/notes_board.dart';
 import 'widgets/notes_bottom_bar.dart';
@@ -140,6 +141,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   void _endSearch() {
     setState(() => _searching = false);
     ref.read(searchQueryProvider.notifier).set('');
+    ref.read(noteFiltersControllerProvider.notifier).clear();
   }
 
   Future<void> _runOnSelection(
@@ -232,6 +234,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     final options =
         ref.watch(notesViewOptionsProvider).value ?? const NotesViewOptions();
     final query = ref.watch(searchQueryProvider);
+    final filters = ref.watch(noteFiltersControllerProvider);
     final selectedNotes = visible
         .where((n) => selectedIds.contains(n.id))
         .toList();
@@ -345,6 +348,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             options.showPictures,
             tagId,
             query,
+            filters,
             ...visible.map((n) => n.id),
             ...visible.map((n) => n.isPinned),
             ...visible.map((n) => n.isArchived),
@@ -371,7 +375,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
               ? NoteCardsLoading(layout: layout)
               : visible.isEmpty
               ? firstDownload == FirstDownload.done
-                    ? _empty(folder, query, tag)
+                    ? _empty(folder, query, tag, hasFilters: !filters.isEmpty)
                     : _notDownloaded(firstDownload)
               : null,
         ),
@@ -393,6 +397,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             onCancel: _endSearch,
             onNewNote: folder == NoteFolder.notes ? _newNote : null,
             newNoteKey: CardRegistry.newNoteButton,
+            filterCount: activeFilterCount(ref),
+            onFilter: () => showNoteFiltersSheet(context),
           ),
         ),
         selectionBar: SelectionBar(
@@ -468,13 +474,27 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     );
   }
 
-  Widget _empty(NoteFolder folder, String query, Tag? tag) {
+  Widget _empty(
+    NoteFolder folder,
+    String query,
+    Tag? tag, {
+    required bool hasFilters,
+  }) {
     final l10n = context.l10n;
     if (query.trim().isNotEmpty) {
       return AppEmptyState(
         kind: EmptyStateKind.search,
         title: l10n.searchNoResults(query.trim()),
-        message: l10n.searchNoResultsHelp,
+        message: hasFilters
+            ? l10n.searchNoMatchesHelp
+            : l10n.searchNoResultsHelp,
+      );
+    }
+    if (hasFilters) {
+      return AppEmptyState(
+        kind: EmptyStateKind.search,
+        title: l10n.searchNoMatches,
+        message: l10n.searchNoMatchesHelp,
       );
     }
     return switch (folder) {
