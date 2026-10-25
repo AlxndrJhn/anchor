@@ -125,7 +125,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     if (_openedAsNew) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Future.delayed(const Duration(milliseconds: 280), () {
-          if (mounted) _titleFocus.requestFocus();
+          // Unless the title was tapped meanwhile.
+          if (!mounted || _writing) return;
+          // The caret starts in the text, as on the web: typing starts the
+          // note, and a title is optional.
+          final editor = _editorKey.currentState;
+          if (editor != null) {
+            editor.focusEnd();
+          } else {
+            _titleFocus.requestFocus();
+          }
         });
       });
     }
