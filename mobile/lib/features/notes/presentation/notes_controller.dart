@@ -122,6 +122,16 @@ class TrashController extends _$TrashController {
   Future<void> permanentDelete(String id) async {
     await ref.read(notesRepositoryProvider).permanentDelete(id);
   }
+
+  /// Deletes every note in the trash for good; returns how many.
+  Future<int> emptyTrash() async {
+    final notes = state.value ?? const <Note>[];
+    final repo = ref.read(notesRepositoryProvider);
+    for (final note in notes) {
+      await repo.permanentDelete(note.id);
+    }
+    return notes.length;
+  }
 }
 
 @riverpod

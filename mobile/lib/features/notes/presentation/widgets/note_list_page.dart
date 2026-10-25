@@ -23,6 +23,7 @@ class NoteListPage extends StatefulWidget {
     required this.emptyMessage,
     required this.datePrefix,
     required this.trailingActions,
+    this.actions,
   });
 
   final String title;
@@ -35,6 +36,9 @@ class NoteListPage extends StatefulWidget {
 
   /// Row actions for a given note, shown at the trailing edge of its card.
   final List<Widget> Function(Note note) trailingActions;
+
+  /// App bar actions.
+  final List<Widget>? actions;
 
   @override
   State<NoteListPage> createState() => _NoteListPageState();
@@ -63,6 +67,7 @@ class _NoteListPageState extends State<NoteListPage> {
   Widget build(BuildContext context) {
     return AppPageScaffold(
       title: Text(widget.title),
+      actions: widget.actions,
       wash: PageWash.content,
       body: widget.notes.when(
         data: (notes) {
