@@ -1,0 +1,119 @@
+name: Android APK
+
+# Builds an installable APK of this fork on every push to main and publishes
+# it on the rolling "android-latest" pre-release, so the newest build is
+# always at:
+#   https://github.com/<owner>/<repo>/releases/download/android-latest/anchor-fork.apk
+
+on:
+  push:
+    branches: [main]
+    tags-ignore:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      # Installs as "Anchor (fork)" next to the official app.
+      ORG_GRADLE_PROJECT_anchorFork: "true"
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.1
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # Use the repository's own key when its secrets are set. Otherwise keep a
+      # generated key in the Actions cache, so later builds install as updates.
+      - name: Restore generated signing key
+        if: ${{ env.HAS_KEY != 'true' }}
+        id: key-cache
+        uses: actions/cache@v4
+        with:
+          path: mobile/android/app/fork-keystore.jks
+          key: android-fork-signing-key-v1
+
+      - name: Set up signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+            STORE_FILE=./upload-keystore.jks
+          else
+            KEYSTORE_PASSWORD=anchor-fork
+            KEY_PASSWORD=anchor-fork
+            KEY_ALIAS=anchor-fork
+            STORE_FILE=./fork-keystore.jks
+            if [ ! -f android/app/fork-keystore.jks ]; then
+              keytool -genkeypair -v -keystore android/app/fork-keystore.jks \
+                -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
+                -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+                -dname "CN=Anchor fork"
+            fi
+          fi
+          cat > android/key.properties << EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=$STORE_FILE
+          EOF
+
+      - name: Build APK
+        run: |
+          VERSION=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
+          flutter build apk --release \
+            --build-name="$VERSION-fork.${GITHUB_SHA::7}" \
+            --build-number=$((1000 + GITHUB_RUN_NUMBER))
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/anchor-fork.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchor-fork-apk
+          path: mobile/build/app/outputs/flutter-apk/anchor-fork.apk
+
+      - name: Publish to the android-latest release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --cleanup-tag --yes || true
+          gh release create android-latest \
+            build/app/outputs/flutter-apk/anchor-fork.apk \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Android (latest fork build)" \
+            --notes "Built from ${GITHUB_SHA::7} on $(date -u +'%Y-%m-%d %H:%M UTC').
+
+          Install anchor-fork.apk on Android. It installs as \"Anchor (fork)\", next to the official app."
