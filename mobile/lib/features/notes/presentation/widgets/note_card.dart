@@ -12,6 +12,8 @@ import 'package:anchor/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
 import 'package:anchor/core/widgets/image_shimmer.dart';
+import 'package:anchor/features/notes/data/repository/notes_repository.dart';
+import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_attachments_gallery.dart';
 import 'package:anchor/core/widgets/quill_preview.dart';
@@ -64,9 +66,23 @@ class NoteCard extends ConsumerWidget {
     final showBadge = isSelectionMode && !hasImages;
     final showPin = !isSelectionMode && !hasImages && note.isPinned;
     final showTopRow = note.hasTitle || hasContent || showBadge || showPin;
+    // Items can be ticked from the card, without opening the note.
+    final canTick =
+        !isSelectionMode && note.canEdit && note.isActive && !note.isArchived;
     final preview = QuillPreview(
       content: note.content,
       maxLines: _previewMaxLines,
+      onToggleItem: canTick
+          ? (line) => ref
+                .read(notesRepositoryProvider)
+                .toggleChecklistItem(
+                  note.id,
+                  line,
+                  sort: ref
+                      .read(editorPreferencesControllerProvider)
+                      .sortChecklistItems,
+                )
+          : null,
     );
 
     final cardColor = note.background != null

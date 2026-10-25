@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
@@ -526,4 +528,57 @@ Delta? buildRemoveCheckedDelta(List<ParsedLine> lines) {
     at = line.startOffset + line.length;
   }
   return delta.isEmpty ? null : delta;
+}
+
+/// Stored note content with the checklist item on line [lineIndex] ticked or
+/// unticked, re-sorted like the editor when [sort] is on. Null when that
+/// line isn't a checklist item or the content can't be read.
+String? toggleChecklistItemContent(
+  String? content,
+  int lineIndex, {
+  required bool sort,
+}) {
+  if (content == null || content.isEmpty) return null;
+  final Document document;
+  try {
+    final json = jsonDecode(content);
+    if (json is! Map || json['ops'] is! List) return null;
+    document = Document.fromJson(json['ops'] as List);
+  } catch (_) {
+    return null;
+  }
+  final lines = parseDocumentLines(document);
+  if (lineIndex < 0 || lineIndex >= lines.length) return null;
+  final line = lines[lineIndex];
+  if (!line.isChecklist) return null;
+
+  final newline = line.startOffset + line.length - 1;
+  document.compose(
+    Delta()
+      ..retain(newline)
+      ..retain(1, {
+        Attribute.list.key: line.isChecked ? 'unchecked' : 'checked',
+      }),
+    ChangeSource.local,
+  );
+
+  if (sort) {
+    final after = parseDocumentLines(document);
+    var start = lineIndex;
+    var end = lineIndex;
+    while (start > 0 && after[start - 1].isChecklist) {
+      start--;
+    }
+    while (end < after.length - 1 && after[end + 1].isChecklist) {
+      end++;
+    }
+    final order = checklistSortOrder(after, start, end, lineIndex);
+    if (order != null) {
+      document.compose(
+        buildGroupReorderDelta(document, after, start, order),
+        ChangeSource.local,
+      );
+    }
+  }
+  return jsonEncode({'ops': document.toDelta().toJson()});
 }

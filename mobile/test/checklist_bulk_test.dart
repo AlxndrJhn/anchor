@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:anchor/core/widgets/editor/checklist_lines.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -69,6 +71,42 @@ void main() {
       ChangeSource.local,
     );
     expect(linesOf(doc), [('Eggs', 'unchecked'), ('', null)]);
+  });
+
+  group('toggleChecklistItemContent', () {
+    String stored(List<(String, String?)> lines) =>
+        jsonEncode({'ops': docFrom(lines).toDelta().toJson()});
+    List<(String, String?)> read(String? content) => linesOf(
+      Document.fromJson((jsonDecode(content!) as Map)['ops'] as List),
+    );
+    final list = stored([
+      ('Eggs', 'unchecked'),
+      ('Milk', 'unchecked'),
+      ('Done', 'checked'),
+    ]);
+
+    test('ticks an item in place', () {
+      expect(read(toggleChecklistItemContent(list, 0, sort: false)), [
+        ('Eggs', 'checked'),
+        ('Milk', 'unchecked'),
+        ('Done', 'checked'),
+      ]);
+    });
+
+    test('moves a ticked item to the bottom when sorting', () {
+      expect(read(toggleChecklistItemContent(list, 0, sort: true)), [
+        ('Milk', 'unchecked'),
+        ('Done', 'checked'),
+        ('Eggs', 'checked'),
+      ]);
+    });
+
+    test('ignores lines that are not checklist items', () {
+      expect(
+        toggleChecklistItemContent(stored([('a', null)]), 0, sort: false),
+        isNull,
+      );
+    });
   });
 
   test('nothing ticked gives no change', () {

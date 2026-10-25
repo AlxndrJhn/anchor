@@ -15,7 +15,15 @@ class _PreviewLine {
   /// Nesting level (0 = top level).
   final int indent;
 
-  const _PreviewLine({required this.text, this.listType, this.indent = 0});
+  /// The line's position in the note.
+  final int index;
+
+  const _PreviewLine({
+    required this.text,
+    required this.index,
+    this.listType,
+    this.indent = 0,
+  });
 
   bool get isChecklist => listType == 'checked' || listType == 'unchecked';
   bool get isChecked => listType == 'checked';
@@ -35,7 +43,16 @@ class QuillPreview extends StatelessWidget {
   /// Text style for the preview.
   final TextStyle? style;
 
-  const QuillPreview({super.key, this.content, this.maxLines = 6, this.style});
+  /// Makes checkboxes tappable; gets the item's line in the note.
+  final ValueChanged<int>? onToggleItem;
+
+  const QuillPreview({
+    super.key,
+    this.content,
+    this.maxLines = 6,
+    this.style,
+    this.onToggleItem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -81,18 +98,21 @@ class QuillPreview extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: EdgeInsets.only(right: dims.xs, top: 2),
-                  child: Icon(
-                    line.isChecked
-                        ? LucideIcons.checkSquare
-                        : LucideIcons.square,
-                    size: AppIconSizes.sm,
-                    color: line.isChecked
-                        ? theme.colorScheme.primary
-                        : theme.textTheme.bodyMedium?.color?.withValues(
-                            alpha: 0.6,
-                          ),
+                _tappable(
+                  line,
+                  Padding(
+                    padding: EdgeInsets.only(right: dims.xs, top: 2),
+                    child: Icon(
+                      line.isChecked
+                          ? LucideIcons.checkSquare
+                          : LucideIcons.square,
+                      size: AppIconSizes.sm,
+                      color: line.isChecked
+                          ? theme.colorScheme.primary
+                          : theme.textTheme.bodyMedium?.color?.withValues(
+                              alpha: 0.6,
+                            ),
+                    ),
                   ),
                 ),
                 Expanded(
@@ -191,6 +211,24 @@ class QuillPreview extends StatelessWidget {
   }
 }
 
+extension on QuillPreview {
+  /// The checkbox, tappable when items can be ticked from the card.
+  Widget _tappable(_PreviewLine line, Widget box) {
+    final onToggle = onToggleItem;
+    if (onToggle == null) return box;
+    return Semantics(
+      button: true,
+      checked: line.isChecked,
+      label: '${line.isChecked ? 'Untick' : 'Tick'} ${line.text.trim()}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onToggle(line.index),
+        child: box,
+      ),
+    );
+  }
+}
+
 /// Numbering state for ordered list lines. Feed every line through in order:
 /// deeper levels reset when the list returns to a shallower one, and a
 /// level's own count continues across nested runs, matching the editor.
@@ -281,7 +319,12 @@ List<_PreviewLine> _parseQuillContentToPreviewLines(String? content) {
           final listType = op.attributes?['list'] as String?;
           final indent = op.attributes?['indent'] as int? ?? 0;
           result.add(
-            _PreviewLine(text: lineText, listType: listType, indent: indent),
+            _PreviewLine(
+              text: lineText,
+              index: result.length,
+              listType: listType,
+              indent: indent,
+            ),
           );
           currentLineParts = [];
         }
@@ -290,7 +333,7 @@ List<_PreviewLine> _parseQuillContentToPreviewLines(String? content) {
 
     if (currentLineParts.isNotEmpty) {
       final lineText = currentLineParts.join();
-      result.add(_PreviewLine(text: lineText, listType: null));
+      result.add(_PreviewLine(text: lineText, index: result.length));
     }
 
     return result;

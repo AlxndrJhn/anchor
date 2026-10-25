@@ -1,3 +1,4 @@
+import 'package:anchor/core/widgets/editor/checklist_lines.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -429,6 +430,24 @@ class NotesRepository {
     );
 
     scheduleAppSync(trigger: 'NotesRepo.updateNote');
+  }
+
+  /// Ticks or unticks the checklist item on [lineIndex] without opening the
+  /// note, re-sorting its list when [sort] is on.
+  Future<void> toggleChecklistItem(
+    String noteId,
+    int lineIndex, {
+    required bool sort,
+  }) async {
+    final note = await getNote(noteId);
+    if (note == null) return;
+    final content = toggleChecklistItemContent(
+      note.content,
+      lineIndex,
+      sort: sort,
+    );
+    if (content == null) return;
+    await updateNote(note.copyWith(content: content));
   }
 
   /// Puts an earlier version back on the note. What it says now is kept as a
