@@ -126,6 +126,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     bool isSelectionMode,
     Set<String> selectedNoteIds, {
     bool selectable = true,
+    bool underLabel = false,
   }) {
     final dims = context.dims;
     Widget item(Note note) => selectable
@@ -138,7 +139,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             onTap: () => context.go('/note/${note.id}', extra: note),
           );
     return SliverPadding(
-      padding: dims.screenInsets.copyWith(bottom: dims.screenGutter),
+      padding: dims.screenInsets.copyWith(
+        top: underLabel ? dims.sm : dims.screenGutter,
+      ),
       sliver: viewOptions.viewType == ViewType.grid
           ? SliverMasonryGrid.count(
               crossAxisCount: 2,
@@ -380,30 +383,62 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                     filteredNotes.sort(comparator);
                     archivedMatches.sort(comparator);
 
+                    // Pinned and other notes get headings, as on the web.
+                    final pinned = filteredNotes
+                        .where((n) => n.isPinned)
+                        .toList();
+                    final others = filteredNotes
+                        .where((n) => !n.isPinned)
+                        .toList();
+                    Widget label(IconData icon, String text, int count) =>
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                            dims.screenGutter,
+                            dims.sm,
+                            dims.screenGutter,
+                            0,
+                          ),
+                          sliver: SliverToBoxAdapter(
+                            child: _SectionLabel(
+                              icon: icon,
+                              label: text,
+                              count: count,
+                            ),
+                          ),
+                        );
+
                     return SliverMainAxisGroup(
                       slivers: [
-                        if (filteredNotes.isNotEmpty)
+                        if (pinned.isNotEmpty) ...[
+                          label(LucideIcons.pin, 'Pinned', pinned.length),
                           _notesSliver(
-                            filteredNotes,
+                            pinned,
                             viewOptions,
                             isSelectionMode,
                             selectedNoteIds,
+                            underLabel: true,
                           ),
+                        ],
+                        if (others.isNotEmpty) ...[
+                          if (pinned.isNotEmpty)
+                            label(
+                              LucideIcons.stickyNote,
+                              'Others',
+                              others.length,
+                            ),
+                          _notesSliver(
+                            others,
+                            viewOptions,
+                            isSelectionMode,
+                            selectedNoteIds,
+                            underLabel: pinned.isNotEmpty,
+                          ),
+                        ],
                         if (archivedMatches.isNotEmpty) ...[
-                          SliverPadding(
-                            padding: EdgeInsets.fromLTRB(
-                              dims.screenGutter,
-                              dims.sm,
-                              dims.screenGutter,
-                              dims.xs,
-                            ),
-                            sliver: SliverToBoxAdapter(
-                              child: _SectionLabel(
-                                icon: LucideIcons.archive,
-                                label: 'Archived',
-                                count: archivedMatches.length,
-                              ),
-                            ),
+                          label(
+                            LucideIcons.archive,
+                            'Archived',
+                            archivedMatches.length,
                           ),
                           _notesSliver(
                             archivedMatches,
@@ -411,6 +446,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                             false,
                             const <String>{},
                             selectable: false,
+                            underLabel: true,
                           ),
                         ],
                         SliverToBoxAdapter(
