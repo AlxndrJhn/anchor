@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -11,6 +12,7 @@ import '../theme/tokens/app_durations.dart';
 import '../theme/tokens/app_icon_sizes.dart';
 import 'app_snackbar.dart';
 import 'editor/checklist_drag_mixin.dart';
+import 'editor/checklist_lines.dart';
 import 'editor/checklist_reorder_mixin.dart';
 import 'editor/editor_styles.dart';
 import 'editor/editor_toolbar.dart';
@@ -377,6 +379,30 @@ class RichTextEditorState extends State<RichTextEditor>
   bool get isEmpty => _controller.document.toPlainText().trim().isEmpty;
 
   bool get isEditing => _isEditing;
+
+  /// Ticked checklist items in the note.
+  int get checkedItemCount =>
+      parseDocumentLines(_controller.document).where((l) => l.isChecked).length;
+
+  /// Unticks every ticked item, as one undo step.
+  void uncheckAll() => _applyBulk(buildUncheckAllDelta);
+
+  /// Deletes every ticked item, as one undo step.
+  void removeChecked() => _applyBulk(buildRemoveCheckedDelta);
+
+  void _applyBulk(Delta? Function(List<ParsedLine> lines) plan) {
+    if (_controller.readOnly) return;
+    final change = plan(parseDocumentLines(_controller.document));
+    if (change == null) return;
+    final after = change.transformPosition(_controller.selection.extentOffset);
+    _controller.compose(
+      change,
+      TextSelection.collapsed(
+        offset: after.clamp(0, _controller.document.length - 1),
+      ),
+      ChangeSource.local,
+    );
+  }
 
   Widget? _buildLeading(Node node, LeadingConfig config) {
     final isCheck =

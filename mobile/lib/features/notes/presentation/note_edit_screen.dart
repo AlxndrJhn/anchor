@@ -493,6 +493,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   }
 
   void _showOptionsSheet() {
+    final editor = _editorKey.currentState;
+    final checked = _isReadOnly ? 0 : (editor?.checkedItemCount ?? 0);
     AppBottomSheet.show(
       context,
       builder: (context) => NoteOptionsSheet(
@@ -508,6 +510,17 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         onArchiveTap: _toggleArchived,
         onDeleteTap: _deleteNote,
         onHistoryTap: !_isNew && !_isReadOnly ? _openHistory : null,
+        onUncheckAllTap: checked > 0 ? () => editor?.uncheckAll() : null,
+        onRemoveCheckedTap: checked > 0
+            ? () {
+                editor?.removeChecked();
+                AppSnackbar.showSuccess(
+                  context,
+                  message:
+                      '${checked == 1 ? '1 ticked item' : '$checked ticked items'} deleted',
+                );
+              }
+            : null,
       ),
     );
   }

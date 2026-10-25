@@ -488,3 +488,42 @@ Map<String, dynamic>? _attributeDiff(
   }
   return diff.isEmpty ? null : diff;
 }
+
+/// Delta that unticks every ticked checklist line, or null when none is.
+Delta? buildUncheckAllDelta(List<ParsedLine> lines) {
+  final delta = Delta();
+  var at = 0;
+  for (final line in lines) {
+    if (!line.isChecked) continue;
+    final newline = line.startOffset + line.length - 1;
+    if (newline > at) delta.retain(newline - at);
+    delta.retain(1, {Attribute.list.key: 'unchecked'});
+    at = newline + 1;
+  }
+  return delta.isEmpty ? null : delta;
+}
+
+/// Delta that deletes every ticked checklist line, or null when none is.
+///
+/// The document's final newline can't be deleted, so a ticked last line
+/// keeps it and drops its list format instead.
+Delta? buildRemoveCheckedDelta(List<ParsedLine> lines) {
+  final delta = Delta();
+  var at = 0;
+  for (var i = 0; i < lines.length; i++) {
+    final line = lines[i];
+    if (!line.isChecked) continue;
+    if (line.startOffset > at) delta.retain(line.startOffset - at);
+    if (i == lines.length - 1) {
+      if (line.length > 1) delta.delete(line.length - 1);
+      delta.retain(1, {
+        Attribute.list.key: null,
+        if (line.indent > 0) Attribute.indent.key: null,
+      });
+    } else {
+      delta.delete(line.length);
+    }
+    at = line.startOffset + line.length;
+  }
+  return delta.isEmpty ? null : delta;
+}
