@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tip } from "@/components/ui/tooltip";
+import { usePreferencesStore } from "@/features/preferences";
 import { MoreChip, TagChip } from "@/features/tags/components/tag-chip";
 import type { TagLabel } from "@/features/tags/types";
 import { useHighlightPaint } from "@/lib/highlight-paint";
@@ -109,7 +110,10 @@ export const NoteCard = React.memo(function NoteCard({
   const title = hasTitle(note.title) ? note.title : "";
   const label = title || "Untitled";
   const isList = layout === "list";
-  const pictureIds = note.imagePreviewIds ?? [];
+  const showPictures = usePreferencesStore(
+    (s) => s.notes.showPictures !== false,
+  );
+  const pictureIds = showPictures ? (note.imagePreviewIds ?? []) : [];
   const attachmentCount = note.attachmentCount ?? 0;
   const loadPictures = useNearScreen(cardRef, pictureIds.length > 0);
   const tags = (note.tagIds ?? []).flatMap((id) => tagMap.get(id) ?? []);

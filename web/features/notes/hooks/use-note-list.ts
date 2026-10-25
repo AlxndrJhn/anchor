@@ -34,7 +34,9 @@ export function matchesSearch(note: Note, term: string) {
 }
 
 export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
-  const { viewMode, sortBy, sortOrder } = usePreferencesStore((s) => s.notes);
+  const { viewMode, sortBy, sortOrder, showPictures } = usePreferencesStore(
+    (s) => s.notes,
+  );
   const setNotesPreference = usePreferencesStore((s) => s.setNotesPreference);
   const boardRef = React.useRef<HTMLDivElement>(null);
   const searchRef = React.useRef<HTMLInputElement>(null);
@@ -176,6 +178,11 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
     },
     sortBy,
     sortOrder,
+    showPictures: showPictures !== false,
+    setShowPictures: (show: boolean) => {
+      flip.prepare();
+      setNotesPreference("showPictures", show);
+    },
     setSort: (by: SortBy, order: SortOrder) => {
       flip.prepare();
       setNotesPreference("sortBy", by);
