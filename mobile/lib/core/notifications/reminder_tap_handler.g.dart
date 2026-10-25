@@ -51,7 +51,7 @@ final class ReminderTapHandlerProvider
 }
 
 String _$reminderTapHandlerHash() =>
-    r'7135eadc4497b4db82b6304f29c8a34c32bd2c20';
+    r'413ef1a1c17dab4d8a4347f169478660d2bbf38c';
 
 /// Opens the note behind a reminder the user tapped while the app was running.
 ///

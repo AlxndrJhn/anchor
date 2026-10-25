@@ -569,6 +569,31 @@ class NotesRepository {
     return ids.length;
   }
 
+  /// Gives every note the same colour or pattern (null for none). Only notes
+  /// this person can edit change; the count says how many did.
+  Future<int> bulkSetBackground(List<String> ids, String? background) async {
+    if (ids.isEmpty) return 0;
+    final editable =
+        await (_db.select(_db.notes)
+              ..where((tbl) => tbl.id.isIn(ids))
+              ..where((tbl) => tbl.permission.isIn(const ['owner', 'editor'])))
+            .map((row) => row.id)
+            .get();
+    if (editable.isEmpty) return 0;
+
+    await (_db.update(_db.notes)..where((tbl) => tbl.id.isIn(editable))).write(
+      NotesCompanion.custom(
+        background: drift.Constant(background),
+        updatedAt: drift.Constant(DateTime.now().toUtc()),
+        isSynced: const drift.Constant(false),
+        localRev: _nextRev,
+      ),
+    );
+
+    scheduleAppSync(trigger: 'NotesRepo.bulkSetBackground');
+    return editable.length;
+  }
+
   // Bulk add tags to notes (merge — each note keeps its existing tags)
   Future<int> bulkAddTags(List<String> ids, List<String> tagIds) async {
     if (ids.isEmpty || tagIds.isEmpty) return 0;

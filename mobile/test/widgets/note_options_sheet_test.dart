@@ -26,6 +26,7 @@ void main() {
             onAttachmentTap: () {},
             onArchiveTap: () {},
             onDeleteTap: () {},
+            onSendTap: () {},
           ),
         ),
       ),

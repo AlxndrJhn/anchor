@@ -8,6 +8,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../logging/app_logger.dart';
 import 'notification_launch.dart';
+import 'reminder_actions.dart';
 
 part 'notification_gateway.g.dart';
 
@@ -108,6 +109,7 @@ class LocalNotificationGateway implements NotificationGateway {
       scheduledDate: at,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
+          actions: [reminderDoneAction],
           _channelId,
           'Reminders',
           channelDescription: 'Reminders you set on your notes',

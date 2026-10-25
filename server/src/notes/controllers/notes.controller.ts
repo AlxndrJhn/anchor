@@ -56,6 +56,11 @@ export class NotesController {
     return this.notesService.findOne(userId, id);
   }
 
+  @Post(':id/copy')
+  copy(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.notesService.copy(userId, id);
+  }
+
   @Patch(':id')
   update(
     @CurrentUser('id') userId: string,

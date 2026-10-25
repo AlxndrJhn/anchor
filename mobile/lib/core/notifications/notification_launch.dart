@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../router/app_routes.dart';
+import 'reminder_actions.dart';
 
 /// The one plugin instance the app uses.
 final FlutterLocalNotificationsPlugin notificationsPlugin =
@@ -10,6 +11,10 @@ final FlutterLocalNotificationsPlugin notificationsPlugin =
 
 /// Taps that arrive while the app is running.
 final StreamController<String> notificationTaps =
+    StreamController<String>.broadcast();
+
+/// Notes whose reminder was marked Done while the app is running.
+final StreamController<String> reminderDones =
     StreamController<String>.broadcast();
 
 /// Set by [initializeNotifications] when the app was launched by a tap, and
@@ -43,10 +48,14 @@ Future<String?> initializeNotifications() async {
     settings: settings,
     onDidReceiveNotificationResponse: (response) {
       final noteId = response.payload;
-      if (noteId != null && noteId.isNotEmpty) {
+      if (noteId == null || noteId.isEmpty) return;
+      if (response.actionId == reminderDoneActionId) {
+        reminderDones.add(noteId);
+      } else {
         notificationTaps.add(noteId);
       }
     },
+    onDidReceiveBackgroundNotificationResponse: onReminderActionInBackground,
   );
 
   final launch = await notificationsPlugin.getNotificationAppLaunchDetails();

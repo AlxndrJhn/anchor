@@ -49,6 +49,12 @@ class NotesController extends _$NotesController {
   Future<int> bulkAddTags(List<String> ids, List<String> tagIds) async {
     return await ref.read(notesRepositoryProvider).bulkAddTags(ids, tagIds);
   }
+
+  Future<int> bulkSetBackground(List<String> ids, String? background) async {
+    return await ref
+        .read(notesRepositoryProvider)
+        .bulkSetBackground(ids, background);
+  }
 }
 
 @riverpod

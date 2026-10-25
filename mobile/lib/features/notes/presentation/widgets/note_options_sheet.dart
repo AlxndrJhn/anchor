@@ -23,6 +23,12 @@ class NoteOptionsSheet extends StatelessWidget {
   /// Null hides the option, for notes that have no history to read.
   final VoidCallback? onHistoryTap;
 
+  /// Hands the note to another app as text.
+  final VoidCallback onSendTap;
+
+  /// Null hides "Make a copy", for notes not saved yet or in the trash.
+  final VoidCallback? onCopyTap;
+
   /// Null hides these; at most one of them is given.
   final VoidCallback? onShowCheckboxesTap;
   final VoidCallback? onHideCheckboxesTap;
@@ -44,6 +50,8 @@ class NoteOptionsSheet extends StatelessWidget {
     required this.onAttachmentTap,
     required this.onArchiveTap,
     required this.onDeleteTap,
+    required this.onSendTap,
+    this.onCopyTap,
     this.onHistoryTap,
     this.onShowCheckboxesTap,
     this.onHideCheckboxesTap,
@@ -109,6 +117,13 @@ class NoteOptionsSheet extends StatelessWidget {
           icon: LucideIcons.listX,
           label: 'Delete ticked',
           onTap: onRemoveCheckedTap!,
+        ),
+      _OptionSpec(icon: LucideIcons.send, label: 'Send', onTap: onSendTap),
+      if (onCopyTap != null)
+        _OptionSpec(
+          icon: LucideIcons.copy,
+          label: 'Make a copy',
+          onTap: onCopyTap!,
         ),
       if (onHistoryTap != null)
         _OptionSpec(

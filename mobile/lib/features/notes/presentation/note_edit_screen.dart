@@ -3,7 +3,11 @@ import 'dart:convert';
 import 'dart:io' show File;
 
 import 'package:anchor/core/logging/app_logger.dart';
+import 'package:anchor/core/network/dio_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
+import 'package:anchor/core/network/sync_requester.dart';
+import 'package:anchor/features/notes/domain/note_text.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:anchor/core/providers/active_user_id_provider.dart';
 import 'package:anchor/core/router/app_routes.dart';
 import 'package:anchor/core/share/share_handler.dart';
@@ -639,6 +643,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         onArchiveTap: _toggleArchived,
         onDeleteTap: _deleteNote,
         onHistoryTap: !_isNew && !_isReadOnly ? _openHistory : null,
+        onSendTap: _sendNote,
+        onCopyTap: !_isNew && !(_existingNote?.isTrashed ?? false)
+            ? _copyNote
+            : null,
         onShowCheckboxesTap:
             !_isReadOnly && (editor?.canShowCheckboxes ?? false)
             ? () => editor?.showCheckboxes()
@@ -662,6 +670,44 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             : null,
       ),
     );
+  }
+
+  /// Hands the note to another app through Android's share sheet.
+  Future<void> _sendNote() async {
+    final text = noteToPlainText(_titleController.text, _editorContent);
+    if (text.isEmpty) return;
+    final title = storedTitleOf(_titleController.text);
+    await SharePlus.instance.share(
+      ShareParams(text: text, subject: title.isEmpty ? null : title),
+    );
+  }
+
+  /// "Make a copy": the server copies the note with its attachments, then
+  /// the copy opens. The note goes up first, so the copy has what's on screen.
+  Future<void> _copyNote() async {
+    final noteId = widget.noteId ?? _existingNote?.id;
+    if (noteId == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _saveNote();
+      await requestAppSync(trigger: 'NoteEdit.copy');
+      final response = await ref
+          .read(dioProvider)
+          .post<Map<String, dynamic>>('/api/notes/$noteId/copy');
+      final copyId = response.data?['id'] as String?;
+      await requestAppSync(trigger: 'NoteEdit.copied');
+      if (!mounted || copyId == null) return;
+      AppSnackbar.showSuccess(context, message: 'Copy made');
+      context.go('/note/$copyId');
+    } catch (e) {
+      AppLogger.instance.warn('NoteEdit', 'Make a copy failed: $e');
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      AppSnackbar.showError(
+        context,
+        message: 'Couldn’t make a copy. It needs a connection to the server.',
+      );
+    }
   }
 
   /// Sends what is typed so far before showing the versions.

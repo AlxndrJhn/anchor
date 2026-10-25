@@ -135,6 +135,23 @@ export class NotesService {
     return this.findOne(userId, id);
   }
 
+  /**
+   * "Make a copy": a new note of this person's with the same title, text,
+   * colour, their tags and copies of the attachments. Reminders, pins and
+   * sharing stay with the original.
+   */
+  async copy(userId: string, id: string) {
+    const original = await this.findOne(userId, id);
+    const copy = await this.create(userId, {
+      title: original.title,
+      content: original.content ?? undefined,
+      background: original.background ?? undefined,
+      tagIds: original.tagIds,
+    });
+    await this.noteAttachmentsService.copyAll(userId, id, copy.id);
+    return this.findOne(userId, copy.id);
+  }
+
   async findAll(
     userId: string,
     search?: string,

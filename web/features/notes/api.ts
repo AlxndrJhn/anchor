@@ -31,6 +31,11 @@ export async function createNote(data: CreateNoteDto): Promise<Note> {
   return api.post("api/notes", { json: data }).json<Note>();
 }
 
+/** "Make a copy": the server copies the text, colour, tags and attachments. */
+export async function copyNote(id: string): Promise<Note> {
+  return api.post(`api/notes/${id}/copy`).json<Note>();
+}
+
 function isWorthAnotherTry(httpStatus: number): boolean {
   return httpStatus >= 500 || httpStatus === 408 || httpStatus === 429;
 }

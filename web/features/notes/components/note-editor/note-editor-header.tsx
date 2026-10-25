@@ -9,6 +9,7 @@ import {
   Check,
   CircleAlert,
   CloudOff,
+  Copy,
   Ellipsis,
   History,
   List,
@@ -20,6 +21,7 @@ import {
   Palette,
   Pin,
   PinOff,
+  Send,
   Trash2,
   UserPlus,
 } from "lucide-react";
@@ -71,6 +73,10 @@ interface NoteEditorHeaderProps {
   ) => void;
   onShare: () => void;
   onHistory: () => void;
+  /** Hands the note to another app (or copies it as text). */
+  onSend: () => void;
+  /** Makes a copy of the note; absent for a note not yet saved. */
+  onCopy?: () => void;
   onArchive: () => void;
   onUnarchive: () => void;
   onTrash: () => void;
@@ -246,6 +252,20 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem
+                  onSelect={() => {
+                    afterMenu.current = props.onSend;
+                  }}
+                >
+                  <Send />
+                  Send
+                </DropdownMenuItem>
+                {props.onCopy && (
+                  <DropdownMenuItem onSelect={props.onCopy}>
+                    <Copy />
+                    Make a copy
+                  </DropdownMenuItem>
+                )}
                 {props.canViewHistory && (
                   <DropdownMenuItem
                     onSelect={() => {
@@ -293,7 +313,7 @@ function SaveStatus({
   const labelClass = "max-md:sr-only";
   const waitingHint = online
     ? "The server isn’t answering. Keep this tab open so your changes can be saved."
-    : "You’re offline. Keep this tab open so your changes can be saved.";
+    : "You’re offline. Your changes are kept on this device and saved when you’re back online.";
   return (
     <span className="save" aria-live="polite">
       {state === "saved" && (

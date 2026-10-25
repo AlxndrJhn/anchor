@@ -1,3 +1,4 @@
+import 'package:anchor/features/notes/presentation/widgets/note_background_picker.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,6 +154,50 @@ class SelectionAppBarActions extends ConsumerWidget {
     }
   }
 
+  /// One colour or pattern for every selected note, applied once the sheet
+  /// closes.
+  Future<void> _handleBackground(
+    BuildContext context,
+    WidgetRef ref,
+    List<Note> selected,
+  ) async {
+    final current = selected.map((n) => n.background).toSet();
+    var chosen = current.length == 1 ? current.first : null;
+    var changed = false;
+    await AppBottomSheet.show(
+      context,
+      builder: (context) => NoteBackgroundPicker(
+        selectedColor: chosen,
+        onColorChanged: (background) {
+          chosen = background;
+          changed = true;
+        },
+      ),
+    );
+    if (!changed || !context.mounted) return;
+
+    try {
+      final count = await ref
+          .read(notesControllerProvider.notifier)
+          .bulkSetBackground(selected.map((n) => n.id).toList(), chosen);
+      onExitSelectionMode();
+      if (context.mounted) {
+        final skipped = selected.length - count;
+        AppSnackbar.showSuccess(
+          context,
+          message: skipped == 0
+              ? 'Changed the colour of ${_notes(count)}'
+              : 'Changed ${_notes(count)}; '
+                    '${_notes(skipped)} shared with you can’t be changed',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppSnackbar.showError(context, message: 'Failed to change the colour');
+      }
+    }
+  }
+
   Future<void> _handleTags(
     BuildContext context,
     WidgetRef ref,
@@ -242,6 +287,13 @@ class SelectionAppBarActions extends ConsumerWidget {
             onPressed: () =>
                 _handleTags(context, ref, selectedNoteIds.toList()),
             tooltip: 'Add tags',
+          ),
+        // Colour
+        if (selectedNoteIds.isNotEmpty)
+          IconButton(
+            icon: const Icon(LucideIcons.palette),
+            onPressed: () => _handleBackground(context, ref, selectedNotes),
+            tooltip: 'Colour',
           ),
         // Pin / unpin toggle
         if (selectedNoteIds.isNotEmpty)

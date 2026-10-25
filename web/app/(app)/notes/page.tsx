@@ -5,6 +5,7 @@ import {
   Archive,
   ArchiveRestore,
   Hash,
+  Palette,
   Pin,
   PinOff,
   Plus,
@@ -32,6 +33,7 @@ import {
   restoreNote,
   unarchiveNote,
 } from "@/features/notes/api";
+import { BulkColorPicker } from "@/features/notes/components/bulk-color-picker";
 import { BulkTagPicker } from "@/features/notes/components/bulk-tag-picker";
 import {
   NoSearchResults,
@@ -73,6 +75,9 @@ function NotesView({ tagId }: { tagId: string | null }) {
   const tagMap = useTagMap();
   const tag = tagId ? tagMap.get(tagId) : undefined;
   const [tagAnchor, setTagAnchor] = React.useState<HTMLElement | null>(null);
+  const [colorAnchor, setColorAnchor] = React.useState<HTMLElement | null>(
+    null,
+  );
   const [sharingNote, setSharingNote] = React.useState<Note | null>(null);
   const [confirmRemove, setConfirmRemove] = React.useState<{
     ids: string[];
@@ -377,6 +382,13 @@ function NotesView({ tagId }: { tagId: string | null }) {
             onClick: (button) =>
               setTagAnchor((current) => (current ? null : button)),
           },
+          {
+            key: "color",
+            label: "Colour",
+            icon: <Palette aria-hidden />,
+            onClick: (button) =>
+              setColorAnchor((current) => (current ? null : button)),
+          },
           allPinned
             ? {
                 key: "unpin",
@@ -434,6 +446,12 @@ function NotesView({ tagId }: { tagId: string | null }) {
         }
       />
 
+      <BulkColorPicker
+        anchor={colorAnchor}
+        notes={chosen}
+        onClose={() => setColorAnchor(null)}
+        onDone={list.stopPicking}
+      />
       <BulkTagPicker
         anchor={tagAnchor}
         notes={chosen}

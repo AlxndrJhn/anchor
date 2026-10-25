@@ -117,6 +117,52 @@ export class NoteAttachmentsService {
     }
   }
 
+  /**
+   * Copies every attachment of `fromNoteId` to `toNoteId`, files included,
+   * in the same order. Used by "Make a copy".
+   */
+  async copyAll(userId: string, fromNoteId: string, toNoteId: string) {
+    const attachments = await this.prisma.noteAttachment.findMany({
+      where: { noteId: fromNoteId },
+      orderBy: { position: 'asc' },
+    });
+    if (attachments.length === 0) return;
+
+    const written: string[] = [];
+    try {
+      const copies: Prisma.NoteAttachmentCreateManyInput[] = [];
+      for (const attachment of attachments) {
+        const data = await fs.readFile(
+          this.attachmentPath(fromNoteId, attachment.storedFilename),
+        );
+        const stored = await writeAttachmentFile(
+          this.attachmentDir(toNoteId),
+          attachment.originalFilename,
+          data,
+        );
+        written.push(stored.filePath);
+        copies.push({
+          noteId: toNoteId,
+          uploadedByUserId: userId,
+          type: attachment.type,
+          originalFilename: attachment.originalFilename,
+          storedFilename: stored.storedFilename,
+          mimeType: attachment.mimeType,
+          fileSize: attachment.fileSize,
+          position: attachment.position,
+        });
+      }
+      await this.prisma.$transaction(async (tx) => {
+        await tx.noteAttachment.createMany({ data: copies });
+        await this.emitAttachmentChange(tx, toNoteId);
+      });
+    } catch (error) {
+      for (const filePath of written)
+        await deleteFileIfExists(filePath, this.logger);
+      throw error;
+    }
+  }
+
   async findAll(userId: string, noteId: string) {
     const access = await this.noteAccessService.hasNoteAccess(userId, noteId);
     if (!access.hasAccess) {
