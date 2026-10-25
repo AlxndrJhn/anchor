@@ -339,35 +339,14 @@ class _ImageTileState extends ConsumerState<_ImageTile> {
 
   void _openLightbox() {
     HapticFeedback.lightImpact();
-    showGeneralDialog(
-      context: context,
-      barrierColor: Colors.black87,
-      barrierDismissible: false,
-      transitionDuration: const Duration(milliseconds: 260),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return _ImageLightboxGallery(
-          noteId: widget.noteId,
-          attachments: widget.allImages,
-          initialIndex: widget.index,
-          canDeleteAttachment: widget.canDeleteAttachment,
-          repo: widget.repo,
-          isOnline: widget.isOnline,
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.98, end: 1).animate(curved),
-            child: child,
-          ),
-        );
-      },
+    _showLightbox(
+      context,
+      noteId: widget.noteId,
+      attachments: widget.allImages,
+      initialIndex: widget.index,
+      canDeleteAttachment: widget.canDeleteAttachment,
+      repo: widget.repo,
+      isOnline: widget.isOnline,
     );
   }
 
@@ -891,4 +870,72 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
       ),
     );
   }
+}
+
+void _showLightbox(
+  BuildContext context, {
+  required String noteId,
+  required List<NoteAttachment> attachments,
+  required int initialIndex,
+  required bool Function(NoteAttachment) canDeleteAttachment,
+  required NoteAttachmentsRepository repo,
+  required bool isOnline,
+}) {
+  showGeneralDialog(
+    context: context,
+    barrierColor: Colors.black87,
+    barrierDismissible: false,
+    transitionDuration: const Duration(milliseconds: 260),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return _ImageLightboxGallery(
+        noteId: noteId,
+        attachments: attachments,
+        initialIndex: initialIndex,
+        canDeleteAttachment: canDeleteAttachment,
+        repo: repo,
+        isOnline: isOnline,
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.98, end: 1).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+/// Opens a note's pictures full size from outside the note, starting at
+/// [attachmentId]; nothing can be deleted from there.
+Future<void> showNotePicture(
+  BuildContext context,
+  WidgetRef ref, {
+  required String noteId,
+  required String attachmentId,
+}) async {
+  final repo = ref.read(noteAttachmentsRepositoryProvider);
+  final isOnline = ref.read(isOnlineProvider);
+  final images = (await repo.watchAttachments(noteId).first)
+      .where((a) => a.isImage)
+      .toList();
+  final index = images.indexWhere((a) => a.id == attachmentId);
+  if (index < 0 || !context.mounted) return;
+  HapticFeedback.lightImpact();
+  _showLightbox(
+    context,
+    noteId: noteId,
+    attachments: images,
+    initialIndex: index,
+    canDeleteAttachment: (_) => false,
+    repo: repo,
+    isOnline: isOnline,
+  );
 }

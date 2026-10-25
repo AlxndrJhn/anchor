@@ -12,6 +12,7 @@ import 'package:anchor/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
 import 'package:anchor/core/widgets/image_shimmer.dart';
+import 'package:anchor/features/notes/presentation/widgets/note_attachments_gallery.dart';
 import 'package:anchor/core/widgets/quill_preview.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
@@ -93,7 +94,18 @@ class NoteCard extends ConsumerWidget {
                 if (hasImages)
                   Stack(
                     children: [
-                      _NoteImagePreviews(previews: note.imagePreviewData),
+                      _NoteImagePreviews(
+                        previews: note.imagePreviewData,
+                        // Straight to the picture, as on the web.
+                        onOpen: isSelectionMode
+                            ? null
+                            : (id) => showNotePicture(
+                                context,
+                                ref,
+                                noteId: note.id,
+                                attachmentId: id,
+                              ),
+                      ),
                       if (isSelectionMode || note.isPinned)
                         Positioned(
                           top: 10,
@@ -336,7 +348,21 @@ class _PinBadge extends StatelessWidget {
 class _NoteImagePreviews extends StatelessWidget {
   final List<NoteImagePreview> previews;
 
-  const _NoteImagePreviews({required this.previews});
+  /// Opens a picture full size; null leaves taps to the card.
+  final ValueChanged<String>? onOpen;
+
+  const _NoteImagePreviews({required this.previews, this.onOpen});
+
+  Widget _thumb(int i) {
+    final preview = previews[i];
+    final thumb = _Thumb(key: ValueKey(preview.attachmentId), preview: preview);
+    if (onOpen == null) return thumb;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onOpen!(preview.attachmentId),
+      child: thumb,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -345,13 +371,7 @@ class _NoteImagePreviews extends StatelessWidget {
     final count = previews.length;
 
     if (count == 1) {
-      return AspectRatio(
-        aspectRatio: _singleImageAspect,
-        child: _Thumb(
-          key: ValueKey(previews[0].attachmentId),
-          preview: previews[0],
-        ),
-      );
+      return AspectRatio(aspectRatio: _singleImageAspect, child: _thumb(0));
     }
 
     if (count == 2) {
@@ -359,19 +379,9 @@ class _NoteImagePreviews extends StatelessWidget {
         aspectRatio: 2,
         child: Row(
           children: [
-            Expanded(
-              child: _Thumb(
-                key: ValueKey(previews[0].attachmentId),
-                preview: previews[0],
-              ),
-            ),
+            Expanded(child: _thumb(0)),
             const SizedBox(width: 3),
-            Expanded(
-              child: _Thumb(
-                key: ValueKey(previews[1].attachmentId),
-                preview: previews[1],
-              ),
-            ),
+            Expanded(child: _thumb(1)),
           ],
         ),
       );
@@ -382,31 +392,15 @@ class _NoteImagePreviews extends StatelessWidget {
         aspectRatio: 16 / 9,
         child: Row(
           children: [
-            Expanded(
-              flex: 2,
-              child: _Thumb(
-                key: ValueKey(previews[0].attachmentId),
-                preview: previews[0],
-              ),
-            ),
+            Expanded(flex: 2, child: _thumb(0)),
             const SizedBox(width: 3),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: _Thumb(
-                      key: ValueKey(previews[1].attachmentId),
-                      preview: previews[1],
-                    ),
-                  ),
+                  Expanded(child: _thumb(1)),
                   const SizedBox(height: 3),
-                  Expanded(
-                    child: _Thumb(
-                      key: ValueKey(previews[2].attachmentId),
-                      preview: previews[2],
-                    ),
-                  ),
+                  Expanded(child: _thumb(2)),
                 ],
               ),
             ),
@@ -423,19 +417,9 @@ class _NoteImagePreviews extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[0].attachmentId),
-                    preview: previews[0],
-                  ),
-                ),
+                Expanded(child: _thumb(0)),
                 const SizedBox(width: 3),
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[1].attachmentId),
-                    preview: previews[1],
-                  ),
-                ),
+                Expanded(child: _thumb(1)),
               ],
             ),
           ),
@@ -443,19 +427,9 @@ class _NoteImagePreviews extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[2].attachmentId),
-                    preview: previews[2],
-                  ),
-                ),
+                Expanded(child: _thumb(2)),
                 const SizedBox(width: 3),
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[3].attachmentId),
-                    preview: previews[3],
-                  ),
-                ),
+                Expanded(child: _thumb(3)),
               ],
             ),
           ),
