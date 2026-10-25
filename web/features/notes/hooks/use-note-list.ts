@@ -26,6 +26,11 @@ function searchTextOf(note: Note) {
   return text;
 }
 
+/** Whether a note's title or text has the (lowercase, trimmed) term. */
+export function matchesSearch(note: Note, term: string) {
+  return !term || searchTextOf(note).includes(term);
+}
+
 export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const { viewMode, sortBy, sortOrder } = usePreferencesStore((s) => s.notes);
   const setNotesPreference = usePreferencesStore((s) => s.setNotesPreference);
@@ -38,6 +43,7 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
     () => searchParams.get(SEARCH_PARAM) ?? "",
   );
   const searchedQuery = React.useDeferredValue(query);
+  const term = searchedQuery.trim().toLowerCase();
   React.useEffect(() => {
     const timer = window.setTimeout(() => {
       const url = new URL(window.location.href);
@@ -53,12 +59,11 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const lastPick = React.useRef<string | null>(null);
 
   const visible = React.useMemo(() => {
-    const term = searchedQuery.trim().toLowerCase();
     const found = term
-      ? notes.filter((note) => searchTextOf(note).includes(term))
+      ? notes.filter((note) => matchesSearch(note, term))
       : notes;
     return [...found].sort(compareNotes(sortBy, sortOrder));
-  }, [notes, searchedQuery, sortBy, sortOrder]);
+  }, [notes, term, sortBy, sortOrder]);
   const pinned = React.useMemo(
     () => (pinnedFirst ? visible.filter((n) => n.isPinned) : []),
     [pinnedFirst, visible],
@@ -138,6 +143,8 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
     searchRef,
     prepareCardMotion: flip.prepare,
     query,
+    /** The searched term, lowercase and trimmed; lags typing a little. */
+    term,
     setQuery: (value: string) => {
       flip.prepare();
       setQueryValue(value);

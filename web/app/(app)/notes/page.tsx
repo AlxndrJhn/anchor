@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Archive,
+  ArchiveRestore,
   Hash,
   Pin,
   PinOff,
@@ -26,6 +27,7 @@ import {
   bulkArchiveNotes,
   bulkDeleteNotes,
   bulkPinNotes,
+  getArchivedNotes,
   getNotes,
   restoreNote,
   unarchiveNote,
@@ -40,8 +42,12 @@ import {
   NotesBoardSkeleton,
 } from "@/features/notes/components/notes-board";
 import { ShareDialog } from "@/features/notes/components/share-dialog";
-import { useNoteList } from "@/features/notes/hooks/use-note-list";
+import {
+  matchesSearch,
+  useNoteList,
+} from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
+import { compareNotes } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
 import { tagColorStyle, useTagMap } from "@/features/tags";
@@ -50,6 +56,7 @@ import { rememberNewNoteButton } from "@/lib/morph";
 import { plural } from "@/lib/utils";
 
 const NO_NOTES: Note[] = [];
+const NO_PICKS = new Set<string>();
 
 export default function NotesPage() {
   const tagId = useSearchParams().get("tagId");
@@ -78,6 +85,26 @@ function NotesView({ tagId }: { tagId: string | null }) {
   const loadFailed = isError && !data;
   const list = useNoteList(notes, { pinnedFirst: true });
   const { visible, pinned, others, chosen } = list;
+
+  // A search also finds archived notes, shown after the others.
+  const { data: archivedNotes } = useQuery({
+    queryKey: ["notes", "archived"],
+    queryFn: getArchivedNotes,
+    enabled: !!list.term,
+  });
+  const archivedMatches = React.useMemo(
+    () =>
+      list.term && archivedNotes
+        ? archivedNotes
+            .filter(
+              (n) =>
+                (!tagId || n.tagIds?.includes(tagId)) &&
+                matchesSearch(n, list.term),
+            )
+            .sort(compareNotes(list.sortBy, list.sortOrder))
+        : NO_NOTES,
+    [archivedNotes, list.term, tagId, list.sortBy, list.sortOrder],
+  );
 
   const allPinned = chosen.length > 0 && chosen.every((n) => n.isPinned);
 
@@ -158,7 +185,8 @@ function NotesView({ tagId }: { tagId: string | null }) {
 
   const newNote = newNoteHref("/notes", tagId);
   const noNotes = !isLoading && !loadFailed && notes.length === 0;
-  const noResults = notes.length > 0 && visible.length === 0;
+  const noResults =
+    notes.length > 0 && visible.length === 0 && !archivedMatches.length;
   const count = isLoading || loadFailed ? undefined : visible.length;
   const newNoteButton = (
     <Button asChild>
@@ -277,6 +305,22 @@ function NotesView({ tagId }: { tagId: string | null }) {
                     },
                   ]
                 : []),
+            ]}
+          />
+        )}
+        {archivedMatches.length > 0 && !list.picking && (
+          <NotesBoard
+            layout={list.layout}
+            picking={false}
+            picked={NO_PICKS}
+            onShare={setSharingNote}
+            groups={[
+              {
+                key: "archived",
+                label: "Archived",
+                icon: <ArchiveRestore aria-hidden />,
+                notes: archivedMatches,
+              },
             ]}
           />
         )}

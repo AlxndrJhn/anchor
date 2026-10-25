@@ -21,7 +21,8 @@ interface NotesBoardProps {
   layout: CardLayout;
   picking: boolean;
   picked: Set<string>;
-  onPick: (noteId: string, range: boolean) => void;
+  /** Leave out for cards that can't be picked. */
+  onPick?: (noteId: string, range: boolean) => void;
   onShare?: (note: Note) => void;
   /** Keep it stable, or every card redraws. */
   renderActions?: (note: Note) => React.ReactNode;
