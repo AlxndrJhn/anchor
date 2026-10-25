@@ -61,6 +61,8 @@ void main() {
     String? tagId,
     String query = '',
     DisplayDensity density = DisplayDensity.standard,
+    List<Note>? notes,
+    List<Note>? archived,
   }) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
@@ -72,10 +74,14 @@ void main() {
           authControllerProvider.overrideWith(_SignedIn.new),
           notesRepositoryProvider.overrideWithValue(repo),
           preferencesRepositoryProvider.overrideWithValue(preferences),
-          notesProvider.overrideWith((ref) => Stream.value([trip])),
-          archivedNotesProvider.overrideWith((ref) => Stream.value([oldTrip])),
+          notesProvider.overrideWith((ref) => Stream.value(notes ?? [trip])),
+          archivedNotesProvider.overrideWith(
+            (ref) => Stream.value(archived ?? [oldTrip]),
+          ),
           trashedNotesProvider.overrideWith((ref) => Stream.value([])),
-          allActiveNotesProvider.overrideWith((ref) => Stream.value([trip])),
+          allActiveNotesProvider.overrideWith(
+            (ref) => Stream.value(notes ?? [trip]),
+          ),
           tagsControllerProvider.overrideWith(_Tags.new),
           selectedTagFilterProvider.overrideWith(() => _Tag(tagId)),
           searchQueryProvider.overrideWith(() => _Query(query)),
@@ -236,6 +242,66 @@ void main() {
     await settle(tester);
     verify(() => repo.unarchive(['n1'])).called(1);
     await tester.pump(const Duration(seconds: 7));
+  });
+
+  String checklist(int lines) =>
+      '{"ops":[${List.generate(lines, (i) => '{"insert":"item $i"},{"insert":"\\n","attributes":{"list":"unchecked"}}').join(',')}]}';
+
+  List<Note> notesNamed(String prefix, int count, {int pinned = 0}) => [
+    for (var i = 0; i < count; i++)
+      Note(
+        id: '$prefix$i',
+        title: '$prefix $i',
+        content: checklist(2 + i % 5),
+        isPinned: i < pinned,
+        isArchived: prefix == 'Old',
+        updatedAt: DateTime.utc(2026, 1, 30 - i),
+      ),
+  ];
+
+  Future<void> scrollToEnd(WidgetTester tester) async {
+    for (var i = 0; i < 25; i++) {
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+      await settle(tester);
+    }
+  }
+
+  ScrollPosition listPosition(WidgetTester tester) => tester
+      .state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      )
+      .position;
+
+  // Lazy masonry sections in one list can keep correcting each other's
+  // estimated height and bounce the list back before its end.
+  testWidgets('scrolls to the last note below the pinned ones', (tester) async {
+    await pumpList(tester, notes: notesNamed('Note', 15, pinned: 3));
+
+    await scrollToEnd(tester);
+
+    final position = listPosition(tester);
+    expect(position.pixels, closeTo(position.maxScrollExtent, 0.5));
+    expect(find.text('Note 14'), findsOneWidget);
+  });
+
+  testWidgets('scrolls to the last archived search result', (tester) async {
+    await pumpList(
+      tester,
+      query: 'item',
+      notes: notesNamed('Note', 12, pinned: 2),
+      archived: notesNamed('Old', 6),
+    );
+
+    await scrollToEnd(tester);
+
+    final position = listPosition(tester);
+    expect(position.pixels, closeTo(position.maxScrollExtent, 0.5));
+    expect(find.text('Old 5'), findsOneWidget);
   });
 
   testWidgets('Back on the notes list asks first, and leaves the app only '
