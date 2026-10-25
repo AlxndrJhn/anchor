@@ -217,6 +217,25 @@ services:
 
 Alternatively, configure OIDC via the admin panel (Settings → OIDC Authentication) when the three env vars are not all set.
 
+## Keyboard Shortcuts (Web)
+
+Modelled on Google Keep. Single keys work when no text field has focus.
+
+| Where | Key | Action |
+|---|---|---|
+| Note lists | `C` | New note |
+| | `L` | New checklist |
+| | `/` or `Ctrl/⌘ K` | Search |
+| | `Ctrl/⌘ A` | Select all notes |
+| Open note | `E` | Archive / unarchive |
+| | `#` | Move to trash |
+| | `F` | Pin / unpin |
+| | `Esc` | Close the note (in a text field, the first `Esc` leaves the field) |
+| | `Ctrl/⌘ Enter` | Close the note, from anywhere |
+| In the text | `Ctrl/⌘ Shift 8` | Checklist on / off |
+| | `Ctrl/⌘ ]` / `Ctrl/⌘ [` | Indent / outdent list item |
+| | `Tab` in the title | Jump to the note text |
+
 ## Backup and Restore
 
 Log into your Anchor deployment, go to **Settings**, scroll to **Export & Import** and export **Anchor backup (.zip)**.

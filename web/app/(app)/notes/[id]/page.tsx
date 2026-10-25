@@ -2,8 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HTTPError } from "ky";
-import { useParams, usePathname } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "@/components/ui/toast";
@@ -30,7 +30,13 @@ import { parseStoredContent } from "@/features/notes/quill";
 import { countCheckedItems } from "@/features/notes/quill-checklist";
 import { createTag, nextTagColor, type Tag, useTags } from "@/features/tags";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
+import {
+  hasOverlay,
+  isTypingTarget,
+  useShortcuts,
+} from "@/lib/hooks/use-shortcuts";
 import { swapView } from "@/lib/morph";
+import { hasShortcutKey } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 
 export default function NoteEditorPage() {
@@ -168,6 +174,86 @@ function NoteEditor({
       ?.focus({ preventScroll: true });
   };
 
+  const leave = () => {
+    save();
+    actions.goBack();
+  };
+  const leaveRef = useRef(leave);
+  leaveRef.current = leave;
+  const trashedNote = note?.state === "trashed";
+  const canEditNote = !isNew && !trashedNote && !editor.isReadOnly;
+  // Google Keep's keys while no text field has focus.
+  useShortcuts(
+    {
+      Escape: leave,
+      e: () =>
+        editor.isArchived
+          ? actions.unarchive()
+          : canEditNote && actions.archive(),
+      "#": () => !isNew && !trashedNote && actions.trash(),
+      f: () => canEditNote && editor.setIsPinned((was) => !was),
+    },
+    !editor.historyOpen,
+  );
+  // Ctrl+Enter finishes from anywhere; Esc first leaves the text field.
+  useEffect(() => {
+    if (editor.historyOpen) return;
+    let overlayAtPress = false;
+    // Caught before Quill, which takes every Enter.
+    const capture = (e: KeyboardEvent) => {
+      overlayAtPress = hasOverlay();
+      if (
+        e.key === "Enter" &&
+        hasShortcutKey(e) &&
+        !e.altKey &&
+        !e.shiftKey &&
+        !e.isComposing &&
+        !overlayAtPress
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        leaveRef.current();
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (
+        e.key === "Escape" &&
+        !overlayAtPress &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        isTypingTarget(e.target) &&
+        window.getSelection()?.isCollapsed !== false
+      ) {
+        e.preventDefault();
+        (e.target as HTMLElement).blur();
+      }
+    };
+    window.addEventListener("keydown", capture, true);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", capture, true);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [editor.historyOpen]);
+
+  // "New list" (the L key) opens with a checklist started.
+  const searchParams = useSearchParams();
+  const startsList = isNew && searchParams.get("list") === "1";
+  useEffect(() => {
+    if (!startsList) return;
+    let frame = 0;
+    let tries = 0;
+    const start = () => {
+      if (document.querySelector(".ed .ql-editor")) {
+        contentEditorRef.current?.startList("unchecked");
+      } else if (++tries < 120) frame = requestAnimationFrame(start);
+    };
+    frame = requestAnimationFrame(start);
+    return () => cancelAnimationFrame(frame);
+  }, [startsList]);
+
   const showSkeleton = useDelayedFlag(isLoading && !isNew);
   if (isLoading && !isNew) return showSkeleton ? <EditorSkeleton /> : null;
   if (!isNew && !note && editor.noteError)
@@ -250,10 +336,7 @@ function NoteEditor({
           <NoteEditorHeader
             saveState={trashed || saveRefused ? "new" : saveState}
             onRetrySave={editor.retrySave}
-            onBack={() => {
-              save();
-              actions.goBack();
-            }}
+            onBack={leave}
             trashed={trashed}
             readOnly={readOnly}
             saved={!isNew && !saveRefused}

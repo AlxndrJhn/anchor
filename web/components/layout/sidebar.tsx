@@ -72,10 +72,16 @@ const PAGES = [
   { href: "/trash", label: "Trash", icon: Trash2 },
 ] as const;
 
-export function newNoteHref(pathname: string, tagId?: string | null) {
-  return pathname === "/notes" && tagId
-    ? `/notes/new?tagId=${encodeURIComponent(tagId)}`
-    : "/notes/new";
+export function newNoteHref(
+  pathname: string,
+  tagId?: string | null,
+  { list = false } = {},
+) {
+  const params = new URLSearchParams();
+  if (pathname === "/notes" && tagId) params.set("tagId", tagId);
+  if (list) params.set("list", "1");
+  const query = params.toString();
+  return query ? `/notes/new?${query}` : "/notes/new";
 }
 
 // 11.5px puts each icon at the center of the folded rail.

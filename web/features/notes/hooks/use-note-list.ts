@@ -8,6 +8,8 @@ import {
   usePreferencesStore,
   type ViewMode,
 } from "@/features/preferences";
+import { hasOverlay, isTypingTarget } from "@/lib/hooks/use-shortcuts";
+import { hasShortcutKey } from "@/lib/platform";
 import { useFlip } from "@/lib/use-flip";
 import { deltaToFullPlainText } from "../quill";
 import { compareNotes } from "../sort";
@@ -96,6 +98,24 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [picking, stopPicking]);
+
+  React.useEffect(() => {
+    // Select every note shown, as in Google Keep.
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || !hasShortcutKey(e) || e.altKey || e.shiftKey)
+        return;
+      if (e.key.toLowerCase() !== "a") return;
+      if (isTypingTarget(e.target) || hasOverlay()) return;
+      const ids = shownRef.current.map((n) => n.id);
+      if (!ids.length) return;
+      e.preventDefault();
+      window.getSelection()?.removeAllRanges();
+      setPicking(true);
+      setPicked(new Set(ids));
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   React.useEffect(() => {
     const visibleIds = new Set(visible.map((note) => note.id));

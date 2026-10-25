@@ -52,6 +52,7 @@ import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
 import { tagColorStyle, useTagMap } from "@/features/tags";
 import { eachLimited } from "@/lib/each";
+import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { rememberNewNoteButton } from "@/lib/morph";
 import { plural } from "@/lib/utils";
 
@@ -184,6 +185,10 @@ function NotesView({ tagId }: { tagId: string | null }) {
   };
 
   const newNote = newNoteHref("/notes", tagId);
+  useShortcuts({
+    c: () => router.push(newNote),
+    l: () => router.push(newNoteHref("/notes", tagId, { list: true })),
+  });
   const noNotes = !isLoading && !loadFailed && notes.length === 0;
   const noResults =
     notes.length > 0 && visible.length === 0 && !archivedMatches.length;
