@@ -1,6 +1,13 @@
 "use client";
 
-import { Archive, ArchiveRestore, Lock, RotateCcw, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  CloudOff,
+  Lock,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import * as React from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,7 +25,8 @@ type ReadOnlyBarProps =
     }
   | { kind: "view"; sharedBy: Person }
   | { kind: "archived"; onUnarchive: () => void }
-  | { kind: "refused" };
+  | { kind: "refused" }
+  | { kind: "offline" };
 
 /** A new `nudge` number shakes it. */
 export function ReadOnlyBar(props: ReadOnlyBarProps & { nudge?: number }) {
@@ -102,6 +110,15 @@ export function ReadOnlyBar(props: ReadOnlyBarProps & { nudge?: number }) {
               <ArchiveRestore aria-hidden />
               Unarchive
             </Button>
+          </span>
+        </>
+      )}
+      {props.kind === "offline" && (
+        <>
+          {icon(<CloudOff />)}
+          <span className="ro-msg">
+            <b>You’re offline.</b> This is the copy from your notes list; you
+            can edit it once you’re back online.
           </span>
         </>
       )}

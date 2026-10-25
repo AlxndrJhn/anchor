@@ -281,7 +281,9 @@ function NoteEditor({
             ? "saving"
             : "saved";
 
-  const readOnlyBar = trashed ? (
+  const readOnlyBar = editor.isOfflineCopy ? (
+    <ReadOnlyBar kind="offline" nudge={nudge} />
+  ) : trashed ? (
     <ReadOnlyBar
       kind="trash"
       nudge={nudge}

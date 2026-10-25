@@ -1,10 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Check, ImageOff, Paperclip, Users } from "lucide-react";
+import { Check, CloudOff, ImageOff, Paperclip, Users } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { Avatar } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tip } from "@/components/ui/tooltip";
 import { MoreChip, TagChip } from "@/features/tags/components/tag-chip";
@@ -178,6 +185,7 @@ export const NoteCard = React.memo(function NoteCard({
       : [];
   const hiddenCount = attachmentCount - shownPictures.length;
   const [viewing, setViewing] = React.useState<string | null>(null);
+  const [readingOffline, setReadingOffline] = React.useState(false);
   const zoom = (id: string) => (
     <button
       type="button"
@@ -211,6 +219,12 @@ export const NoteCard = React.memo(function NoteCard({
             e.preventDefault();
             window.getSelection()?.removeAllRanges();
             onPick?.(note.id, e.shiftKey);
+            return;
+          }
+          // Offline the note's page can't load; read the list's copy here.
+          if (!navigator.onLine) {
+            e.preventDefault();
+            setReadingOffline(true);
             return;
           }
           sessionStorage.setItem(`note-${note.id}`, JSON.stringify(note));
@@ -288,6 +302,14 @@ export const NoteCard = React.memo(function NoteCard({
         </div>
       )}
       {actions && <div className="nc-acts">{actions}</div>}
+      {readingOffline && (
+        <OfflineNote
+          note={note}
+          blocks={blocks}
+          tags={tags}
+          onClose={() => setReadingOffline(false)}
+        />
+      )}
       {viewing && (
         <CardViewer
           noteId={note.id}
@@ -301,6 +323,44 @@ export const NoteCard = React.memo(function NoteCard({
     </article>
   );
 });
+
+/** The note read-only, from the list's copy, while the browser is offline. */
+function OfflineNote({
+  note,
+  blocks,
+  tags,
+  onClose,
+}: {
+  note: Note;
+  blocks: NoteBlock[];
+  tags: TagLabel[];
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="lg" data-note={note.background ?? ""}>
+        <DialogTitle>
+          {hasTitle(note.title) ? note.title : "Untitled"}
+        </DialogTitle>
+        <DialogDescription className="flex items-center gap-1.5">
+          <CloudOff aria-hidden className="size-3.5" />
+          You’re offline, so this is read-only. Open it again to edit once
+          you’re back online.
+        </DialogDescription>
+        <DialogBody className="grid gap-3">
+          {tags.length > 0 && (
+            <div className="nc-tags">
+              {tags.map((t) => (
+                <TagChip key={t.id} name={t.name} color={t.color} size="sm" />
+              ))}
+            </div>
+          )}
+          <NoteBody blocks={blocks} variant="full" />
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 /** The note's pictures, full size, opened from a card. */
 function CardViewer({

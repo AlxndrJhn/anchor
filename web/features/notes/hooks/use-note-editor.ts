@@ -1,6 +1,12 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { HTTPError } from "ky";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
@@ -55,6 +61,18 @@ function readStoredNote(noteId: string): Note | null {
   } catch {
     return null;
   }
+}
+
+/** The note as a loaded notes list has it. */
+function cachedListNote(queryClient: QueryClient, noteId: string) {
+  for (const [, data] of queryClient.getQueriesData<unknown>({
+    queryKey: ["notes"],
+  })) {
+    if (!Array.isArray(data)) continue;
+    const found = (data as Note[]).find((n) => n?.id === noteId);
+    if (found) return found;
+  }
+  return null;
 }
 
 const createFields = (id: string, draft: NoteDraft): CreateNoteDto => ({
@@ -116,8 +134,11 @@ export function useNoteEditor({
   const queueId = isNew ? newNoteId : noteId;
   const { queue, live } = noteSaveQueue(queueId);
 
+  // Painted before the fetch lands, and shown read-only if it can't.
   const [storedNote] = useState<Note | null>(() =>
-    isNew ? null : readStoredNote(noteId),
+    isNew
+      ? null
+      : (readStoredNote(noteId) ?? cachedListNote(queryClient, noteId)),
   );
 
   useEffect(() => {
@@ -128,6 +149,7 @@ export function useNoteEditor({
   const {
     data: noteFromApi,
     isLoading,
+    isPlaceholderData,
     error: noteError,
     refetch: refetchNote,
   } = useQuery({
@@ -139,13 +161,24 @@ export function useNoteEditor({
     refetchOnMount: "always",
   });
 
-  const note = isNew ? null : (noteFromApi ?? null);
+  const online = useSyncStatus((s) => s.online);
+  // Offline, the copy from the notes list can be read but not edited.
+  const isOfflineCopy =
+    !isNew &&
+    !!storedNote &&
+    (isPlaceholderData || !noteFromApi) &&
+    (!online || (!!noteError && !(noteError instanceof HTTPError)));
+  const note = isNew
+    ? null
+    : (noteFromApi ?? (isOfflineCopy ? storedNote : null));
 
   const isOwner = note ? note.permission === "owner" : true;
   const isViewer = note ? note.permission === "viewer" : false;
   const isEditor = note ? note.permission === "editor" : false;
 
-  const isReadOnly = note ? note.state === "trashed" || isViewer : false;
+  const isReadOnly = note
+    ? note.state === "trashed" || isViewer || isOfflineCopy
+    : false;
   const canSaveDraft = note ? note.state !== "trashed" : true;
   const canUpload = isOwner || isEditor;
 
@@ -703,6 +736,7 @@ export function useNoteEditor({
     isOwner,
     isViewer,
     isReadOnly,
+    isOfflineCopy,
     canUpload,
     title,
     setTitle,
