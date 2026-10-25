@@ -37,6 +37,7 @@ import {
 } from "@/lib/hooks/use-shortcuts";
 import { swapView } from "@/lib/morph";
 import { hasShortcutKey } from "@/lib/platform";
+import { useSearchHits } from "@/lib/search-hits";
 import { cn } from "@/lib/utils";
 
 export default function NoteEditorPage() {
@@ -240,6 +241,8 @@ function NoteEditor({
 
   // "New list" (the L key) opens with a checklist started.
   const searchParams = useSearchParams();
+  // Opened from search results: mark the term in the note.
+  useSearchHits(articleRef, searchParams.get("hl"), !isLoading);
   const startsList = isNew && searchParams.get("list") === "1";
   useEffect(() => {
     if (!startsList) return;

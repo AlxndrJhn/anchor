@@ -42,6 +42,8 @@ interface NoteCardProps {
   onShare?: (note: Note) => void;
   renderActions?: (note: Note) => React.ReactNode;
   dateLabel?: string;
+  /** A search the card was found by, marked in the note when it opens. */
+  searchTerm?: string;
 }
 
 const ROW_LIMIT: Record<CardLayout, number> = { list: 2, grid: 4, masonry: 6 };
@@ -90,6 +92,7 @@ export const NoteCard = React.memo(function NoteCard({
   onShare,
   renderActions,
   dateLabel,
+  searchTerm,
 }: NoteCardProps) {
   const blocks = cardBlocks(note);
   const hasHighlights = blocks.some((block) =>
@@ -213,7 +216,11 @@ export const NoteCard = React.memo(function NoteCard({
       className={cn("nc", picked && "picked")}
     >
       <Link
-        href={`/notes/${note.id}`}
+        href={
+          searchTerm
+            ? `/notes/${note.id}?hl=${encodeURIComponent(searchTerm)}`
+            : `/notes/${note.id}`
+        }
         aria-label={label}
         className="nc-link absolute inset-0 z-1 rounded-[inherit] outline-none"
         onClick={(e) => {

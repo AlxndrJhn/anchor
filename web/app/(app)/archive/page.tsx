@@ -173,6 +173,7 @@ export default function ArchivePage() {
         {hasNotes && !list.visible.length && <NoSearchResults list={list} />}
         {list.visible.length > 0 && (
           <NotesBoard
+            searchTerm={list.term || undefined}
             ref={list.boardRef}
             layout={list.layout}
             picking={list.picking}
