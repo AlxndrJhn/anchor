@@ -22,6 +22,7 @@ import '../../../../core/widgets/page_bar.dart';
 import '../../../../core/widgets/pressable.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/repository/attachment_file_provider.dart';
+import '../../data/repository/note_attachments_repository.dart';
 import '../../data/repository/picture_aspect_ratios.dart';
 import '../../domain/note_attachment.dart';
 
@@ -50,6 +51,31 @@ Future<void> showPictureViewer(
       ),
       transitionsBuilder: (_, animation, _, child) => child,
     ),
+  );
+}
+
+/// Opens a note's pictures from outside the note (a card's picture),
+/// starting at [attachmentId]. Nothing can be deleted from there.
+Future<void> showNotePictures(
+  BuildContext context,
+  WidgetRef ref, {
+  required String noteId,
+  required String attachmentId,
+}) async {
+  final repo = ref.read(noteAttachmentsRepositoryProvider);
+  final pictures = (await repo.watchAttachments(noteId).first)
+      .where((attachment) => attachment.isImage)
+      .toList();
+  final initial = pictures.indexWhere((p) => p.id == attachmentId);
+  if (initial < 0 || !context.mounted) return;
+  Haptics.light();
+  await showPictureViewer(
+    context,
+    noteId: noteId,
+    pictures: pictures,
+    initial: initial,
+    canDelete: (_) => false,
+    onDelete: (_) {},
   );
 }
 

@@ -34,6 +34,8 @@ void main() {
     bool isSelecting = false,
     List<Tag> tags = const [],
     FutureOr<String?> Function()? picture,
+    VoidCallback? onTap,
+    ValueChanged<String>? onOpenPicture,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -53,6 +55,8 @@ void main() {
                   note: note,
                   tags: tags,
                   isSelecting: isSelecting,
+                  onTap: onTap,
+                  onOpenPicture: onOpenPicture,
                 ),
               ),
             ),
@@ -182,6 +186,52 @@ void main() {
 
     expect(find.byType(Shimmer), findsNothing);
     expect(find.byIcon(LucideIcons.imageOff), findsOneWidget);
+  });
+
+  testWidgets('tapping a card picture opens it, the rest opens the note', (
+    tester,
+  ) async {
+    final opened = <String>[];
+    var taps = 0;
+    await pumpCard(
+      tester,
+      withPicture(),
+      160,
+      picture: () => null,
+      onTap: () => taps++,
+      onOpenPicture: opened.add,
+    );
+
+    await tester.tap(find.byIcon(LucideIcons.imageOff));
+    await tester.pumpAndSettle();
+    expect(opened, ['a1']);
+    expect(taps, 0);
+
+    await tester.tap(find.text('Trip'));
+    await tester.pumpAndSettle();
+    expect(opened, ['a1']);
+    expect(taps, 1);
+  });
+
+  testWidgets('while selecting, tapping a card picture selects the card', (
+    tester,
+  ) async {
+    final opened = <String>[];
+    var taps = 0;
+    await pumpCard(
+      tester,
+      withPicture(),
+      160,
+      isSelecting: true,
+      picture: () => null,
+      onTap: () => taps++,
+      onOpenPicture: opened.add,
+    );
+
+    await tester.tap(find.byIcon(LucideIcons.imageOff));
+    await tester.pumpAndSettle();
+    expect(opened, isEmpty);
+    expect(taps, 1);
   });
 
   testWidgets('no reminder still lays out', (tester) async {

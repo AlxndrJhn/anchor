@@ -31,6 +31,7 @@ class NoteCardContent extends StatelessWidget {
     required this.status,
     required this.isSelected,
     this.check,
+    this.onOpenPicture,
   });
 
   final Note note;
@@ -41,6 +42,10 @@ class NoteCardContent extends StatelessWidget {
   final bool isSelected;
 
   final Widget? check;
+
+  /// Opens a picture, by attachment id, full size; null leaves taps on the
+  /// pictures to the card.
+  final ValueChanged<String>? onOpenPicture;
 
   @override
   Widget build(BuildContext context) {
@@ -118,24 +123,29 @@ class NoteCardContent extends StatelessWidget {
                       _Thumbnail(
                         preview: previews.first,
                         appearance: appearance,
+                        onOpen: onOpenPicture,
                       ),
                       if (note.attachmentCount > 1)
                         Positioned(
                           right: 3, // off-scale: picture count
                           bottom: 3, // off-scale: as above
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              color: AnchorTokens.colorMediaShadeStrong,
-                              borderRadius: BorderRadius.circular(
-                                AnchorTokens.radiusPill,
+                          child: IgnorePointer(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
                               ),
-                            ),
-                            child: Text(
-                              '+${note.attachmentCount - 1}',
-                              style: AppTypography.footnote.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: AnchorTokens.colorMediaText,
+                              decoration: BoxDecoration(
+                                color: AnchorTokens.colorMediaShadeStrong,
+                                borderRadius: BorderRadius.circular(
+                                  AnchorTokens.radiusPill,
+                                ),
+                              ),
+                              child: Text(
+                                '+${note.attachmentCount - 1}',
+                                style: AppTypography.footnote.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AnchorTokens.colorMediaText,
+                                ),
                               ),
                             ),
                           ),
@@ -159,6 +169,7 @@ class NoteCardContent extends StatelessWidget {
               fileCount: note.attachmentCount,
               appearance: appearance,
               grid: layout == CardLayout.grid,
+              onOpen: onOpenPicture,
             ),
           content,
         ],
@@ -325,12 +336,14 @@ class _Pictures extends StatelessWidget {
     required this.fileCount,
     required this.appearance,
     required this.grid,
+    this.onOpen,
   });
 
   final List<NoteImagePreview> previews;
   final int fileCount;
   final NoteAppearance appearance;
   final bool grid;
+  final ValueChanged<String>? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -343,16 +356,18 @@ class _Pictures extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          _Thumbnail(preview: shown[i], appearance: appearance),
+          _Thumbnail(preview: shown[i], appearance: appearance, onOpen: onOpen),
           if (i == shown.length - 1 && extra > 0)
-            ColoredBox(
-              color: AnchorTokens.colorMediaShade,
-              child: Center(
-                child: Text(
-                  '+$extra',
-                  style: AppTypography.row.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AnchorTokens.colorMediaText,
+            IgnorePointer(
+              child: ColoredBox(
+                color: AnchorTokens.colorMediaShade,
+                child: Center(
+                  child: Text(
+                    '+$extra',
+                    style: AppTypography.row.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AnchorTokens.colorMediaText,
+                    ),
                   ),
                 ),
               ),
@@ -411,10 +426,15 @@ class _Pictures extends StatelessWidget {
 }
 
 class _Thumbnail extends ConsumerWidget {
-  const _Thumbnail({required this.preview, required this.appearance});
+  const _Thumbnail({
+    required this.preview,
+    required this.appearance,
+    this.onOpen,
+  });
 
   final NoteImagePreview preview;
   final NoteAppearance appearance;
+  final ValueChanged<String>? onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -427,7 +447,7 @@ class _Thumbnail extends ConsumerWidget {
         color: appearance.colors.muted,
       ),
     );
-    return ColoredBox(
+    final picture = ColoredBox(
       color: appearance.colors.surface,
       child: path != null
           ? Image.file(
@@ -447,6 +467,14 @@ class _Thumbnail extends ConsumerWidget {
           : loaded.isLoading
           ? Shimmer(color: appearance.colors.border.withValues(alpha: 0.6))
           : missing,
+    );
+    if (onOpen == null) return picture;
+    // Straight to the picture full size, as on the web; the rest of the
+    // card still opens the note.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onOpen!(preview.attachmentId),
+      child: picture,
     );
   }
 }

@@ -40,6 +40,7 @@ import 'widgets/note_cards_loading.dart';
 import 'widgets/note_surface.dart';
 import 'widgets/notes_board.dart';
 import 'widgets/notes_bottom_bar.dart';
+import 'widgets/picture_viewer.dart';
 import 'widgets/pull_to_refresh.dart';
 import 'widgets/view_options_sheet.dart';
 
@@ -267,6 +268,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         onTap: () => isSelecting ? _selection.toggle(note) : _open(note),
         onLongPress: () =>
             isSelecting ? _selection.toggle(note) : _selection.start(note),
+        onOpenPicture: (id) =>
+            showNotePictures(context, ref, noteId: note.id, attachmentId: id),
       ),
     );
 
