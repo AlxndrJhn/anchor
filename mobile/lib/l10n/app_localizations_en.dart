@@ -2504,6 +2504,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewOrder => 'Order';
 
   @override
+  String get viewCards => 'Cards';
+
+  @override
+  String get viewCardPictures => 'Pictures on cards';
+
+  @override
+  String get viewCardPicturesHelp => 'Show a note’s pictures on its card';
+
+  @override
   String get editorDragHint => 'Drag to reorder';
 
   @override

@@ -268,6 +268,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         onTap: () => isSelecting ? _selection.toggle(note) : _open(note),
         onLongPress: () =>
             isSelecting ? _selection.toggle(note) : _selection.start(note),
+        showPictures: options.showPictures,
         onOpenPicture: (id) =>
             showNotePictures(context, ref, noteId: note.id, attachmentId: id),
       ),
@@ -317,6 +318,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
           generation: Object.hashAll([
             folder,
             layout,
+            options.showPictures,
             tagId,
             query,
             ...visible.map((n) => n.id),

@@ -30,6 +30,7 @@ class NoteCard extends StatefulWidget {
     this.onTap,
     this.onLongPress,
     this.onOpenPicture,
+    this.showPictures = true,
   });
 
   final Note note;
@@ -48,6 +49,9 @@ class NoteCard extends StatefulWidget {
 
   /// Opens one of the card's pictures full size, by attachment id.
   final ValueChanged<String>? onOpenPicture;
+
+  /// Off in View options: no pictures on the card.
+  final bool showPictures;
 
   @override
   State<NoteCard> createState() => _NoteCardState();
@@ -123,6 +127,7 @@ class _NoteCardState extends State<NoteCard>
             layout: widget.layout,
             status: widget.status,
             isSelected: widget.isSelected,
+            showPictures: widget.showPictures,
             onOpenPicture: widget.isSelecting ? null : widget.onOpenPicture,
             check: widget.isSelecting
                 ? _SelectionCheck(

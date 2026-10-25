@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/widgets/anchor_sheet.dart';
 import '../../../../core/widgets/grouped_list.dart';
 import '../../../../core/widgets/segmented_control.dart';
+import '../../../../core/widgets/switch_row.dart';
 import '../../../../l10n/l10n.dart';
 import '../notes_view_options.dart';
 
@@ -104,6 +105,21 @@ class _ViewOptionsSheet extends ConsumerWidget {
                           Segment(value: false, label: l10n.viewNewestFirst),
                           Segment(value: true, label: l10n.viewOldestFirst),
                         ],
+                ),
+              ),
+              Section(
+                label: l10n.viewCards,
+                child: GroupedList(
+                  semanticLabel: l10n.viewCards,
+                  children: [
+                    SwitchRow(
+                      icon: LucideIcons.image,
+                      label: l10n.viewCardPictures,
+                      subtitle: l10n.viewCardPicturesHelp,
+                      value: options.showPictures,
+                      onChanged: notifier.setShowPictures,
+                    ),
+                  ],
                 ),
               ),
             ],

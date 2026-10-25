@@ -36,6 +36,7 @@ void main() {
     FutureOr<String?> Function()? picture,
     VoidCallback? onTap,
     ValueChanged<String>? onOpenPicture,
+    bool showPictures = true,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -57,6 +58,7 @@ void main() {
                   isSelecting: isSelecting,
                   onTap: onTap,
                   onOpenPicture: onOpenPicture,
+                  showPictures: showPictures,
                 ),
               ),
             ),
@@ -232,6 +234,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(opened, isEmpty);
     expect(taps, 1);
+  });
+
+  testWidgets('with pictures turned off, a card leaves them out', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      withPicture(),
+      160,
+      picture: () => null,
+      showPictures: false,
+    );
+
+    expect(find.byIcon(LucideIcons.imageOff), findsNothing);
+    expect(find.text('Trip'), findsOneWidget);
   });
 
   testWidgets('no reminder still lays out', (tester) async {

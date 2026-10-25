@@ -32,6 +32,7 @@ class NoteCardContent extends StatelessWidget {
     required this.isSelected,
     this.check,
     this.onOpenPicture,
+    this.showPictures = true,
   });
 
   final Note note;
@@ -47,11 +48,16 @@ class NoteCardContent extends StatelessWidget {
   /// pictures to the card.
   final ValueChanged<String>? onOpenPicture;
 
+  /// Off in View options: the card leaves out the note's pictures.
+  final bool showPictures;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final list = layout == CardLayout.list;
-    final previews = note.imagePreviewData;
+    final previews = showPictures
+        ? note.imagePreviewData
+        : const <NoteImagePreview>[];
     final radius = BorderRadius.circular(AnchorTokens.radiusCard);
     final density = context.density;
     // The first line keeps clear of the selection check over it.

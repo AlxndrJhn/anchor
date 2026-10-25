@@ -1,5 +1,8 @@
+import 'package:anchor/core/storage/preferences_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -74,5 +77,39 @@ void main() {
       expect(order(tied, options), expected);
       expect(order(tied.reversed.toList(), options), expected);
     }
+  });
+
+  group('pictures on cards', () {
+    ProviderContainer container() => ProviderContainer(
+      overrides: [
+        preferencesRepositoryProvider.overrideWithValue(
+          const PreferencesRepository(FlutterSecureStorage()),
+        ),
+      ],
+    );
+
+    test('are shown by default', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      final c = container();
+      addTearDown(c.dispose);
+
+      final options = await c.read(notesViewOptionsProvider.future);
+      expect(options.showPictures, isTrue);
+    });
+
+    test('turned off stays off on the next start', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      final first = container();
+      await first.read(notesViewOptionsProvider.future);
+      await first
+          .read(notesViewOptionsProvider.notifier)
+          .setShowPictures(false);
+      first.dispose();
+
+      final next = container();
+      addTearDown(next.dispose);
+      final options = await next.read(notesViewOptionsProvider.future);
+      expect(options.showPictures, isFalse);
+    });
   });
 }

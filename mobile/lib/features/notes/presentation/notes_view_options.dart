@@ -17,21 +17,27 @@ class NotesViewOptions {
   final SortOption sortOption;
   final bool isAscending;
 
+  /// A note's pictures on its card.
+  final bool showPictures;
+
   const NotesViewOptions({
     this.viewType = ViewType.masonry,
     this.sortOption = SortOption.dateModified,
     this.isAscending = false,
+    this.showPictures = true,
   });
 
   NotesViewOptions copyWith({
     ViewType? viewType,
     SortOption? sortOption,
     bool? isAscending,
+    bool? showPictures,
   }) {
     return NotesViewOptions(
       viewType: viewType ?? this.viewType,
       sortOption: sortOption ?? this.sortOption,
       isAscending: isAscending ?? this.isAscending,
+      showPictures: showPictures ?? this.showPictures,
     );
   }
 }
@@ -68,6 +74,7 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
       final viewTypeStr = await preferences.getNotesViewType();
       final sortOptionStr = await preferences.getNotesSortOption();
       final isAscending = await preferences.getNotesSortAscending();
+      final showPictures = await preferences.getNotesShowPictures();
 
       final viewType = switch (viewTypeStr) {
         'list' => ViewType.list,
@@ -83,6 +90,7 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
         viewType: viewType,
         sortOption: sortOption,
         isAscending: isAscending,
+        showPictures: showPictures,
       );
     } catch (error) {
       AppLogger.instance.warn(
@@ -106,6 +114,7 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
         options.sortOption == SortOption.title ? 'title' : 'dateModified',
       );
       await preferences.setNotesSortAscending(options.isAscending);
+      await preferences.setNotesShowPictures(options.showPictures);
     } catch (error) {
       AppLogger.instance.warn(
         LogTags.settings,
@@ -126,6 +135,9 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
 
   Future<void> setSortDirection(bool isAscending) =>
       _update((options) => options.copyWith(isAscending: isAscending));
+
+  Future<void> setShowPictures(bool showPictures) =>
+      _update((options) => options.copyWith(showPictures: showPictures));
 
   Future<void> _update(
     NotesViewOptions Function(NotesViewOptions options) change,

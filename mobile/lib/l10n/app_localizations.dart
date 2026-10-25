@@ -3832,6 +3832,24 @@ abstract class AppLocalizations {
   /// **'Order'**
   String get viewOrder;
 
+  /// Section label in the view options sheet for what note cards show.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get viewCards;
+
+  /// Switch in the view options sheet: shows a note's pictures on its card in the notes list.
+  ///
+  /// In en, this message translates to:
+  /// **'Pictures on cards'**
+  String get viewCardPictures;
+
+  /// Under the Pictures on cards switch in the view options sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a note’s pictures on its card'**
+  String get viewCardPicturesHelp;
+
   /// Spoken hint on a checklist item that can be dragged.
   ///
   /// In en, this message translates to:

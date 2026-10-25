@@ -144,4 +144,17 @@ class PreferencesRepository {
       value: isAscending.toString(),
     );
   }
+
+  /// On unless turned off.
+  Future<bool> getNotesShowPictures() async {
+    final value = await _storage.read(key: StorageKeys.notesShowPictures);
+    return value != 'false';
+  }
+
+  Future<void> setNotesShowPictures(bool showPictures) async {
+    await _storage.write(
+      key: StorageKeys.notesShowPictures,
+      value: showPictures.toString(),
+    );
+  }
 }

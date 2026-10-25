@@ -3357,6 +3357,18 @@
   "@viewOrder": {
     "description": "Section label in the view options sheet for the sort direction."
   },
+  "viewCards": "Cards",
+  "@viewCards": {
+    "description": "Section label in the view options sheet for what note cards show."
+  },
+  "viewCardPictures": "Pictures on cards",
+  "@viewCardPictures": {
+    "description": "Switch in the view options sheet: shows a note's pictures on its card in the notes list."
+  },
+  "viewCardPicturesHelp": "Show a note’s pictures on its card",
+  "@viewCardPicturesHelp": {
+    "description": "Under the Pictures on cards switch in the view options sheet."
+  },
   "editorDragHint": "Drag to reorder",
   "@editorDragHint": {
     "description": "Spoken hint on a checklist item that can be dragged."
