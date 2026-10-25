@@ -31,6 +31,14 @@ export async function createNote(data: CreateNoteDto): Promise<Note> {
   return api.post("api/notes", { json: data }).json<Note>();
 }
 
+/** Moves a note in this person's own order ("Custom" sort). */
+export async function setNotePosition(
+  id: string,
+  position: number | null,
+): Promise<void> {
+  await api.patch(`api/notes/${id}/position`, { json: { position } });
+}
+
 /** "Make a copy": the server copies the text, colour, tags and attachments. */
 export async function copyNote(id: string): Promise<Note> {
   return api.post(`api/notes/${id}/copy`).json<Note>();

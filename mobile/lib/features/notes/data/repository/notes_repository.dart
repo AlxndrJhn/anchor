@@ -218,6 +218,7 @@ class NotesRepository {
               background: drift.Value(note.background),
               state: drift.Value(NoteState.active.name),
               updatedAt: drift.Value(DateTime.now().toUtc()),
+              createdAt: drift.Value(DateTime.now().toUtc()),
               isSynced: const drift.Value(false),
               localRev: const drift.Value(1),
               // The server creates notes unpinned.
@@ -575,6 +576,8 @@ class NotesRepository {
       background: row.background,
       state: NoteState.fromString(row.state),
       updatedAt: row.updatedAt,
+      createdAt: row.createdAt,
+      position: row.position,
       tagIds: tagIds,
       permission: NotePermission.fromString(row.permission),
       shareIds: decodeShareIds(row.shareIds),

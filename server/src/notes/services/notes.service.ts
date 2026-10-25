@@ -17,6 +17,7 @@ import { NoteAttachmentsService } from './note-attachments.service';
 import { NoteSharesService } from './note-shares.service';
 import { transformNote } from '../utils/note-transformer.util';
 import { ownedTagIds, reconcileUserTags } from '../utils/note-tags.util';
+import { setNotePosition } from '../utils/note-order.util';
 import { setNoteArchive } from '../utils/note-archive.util';
 import {
   guardedNoteFieldsChanged,
@@ -37,6 +38,7 @@ import {
   NOTE_LIST_ORDER,
   noteAccessibleBy,
   noteArchiveInclude,
+  noteOrderInclude,
   notePinInclude,
   noteReminderInclude,
   TRASH_RETENTION_DAYS,
@@ -135,6 +137,20 @@ export class NotesService {
     return this.findOne(userId, id);
   }
 
+  /** Moves a note in this person's own order ("Custom" sort). */
+  async setPosition(userId: string, id: string, position: number | null) {
+    const access = await this.noteAccessService.hasNoteAccess(userId, id);
+    if (!access.hasAccess) {
+      throw new NotFoundException(ERROR_MESSAGES.NOTE_NOT_FOUND);
+    }
+    await this.prisma.$transaction(async (tx) => {
+      if (await setNotePosition(tx, userId, id, position)) {
+        await this.syncEmitter.emit(tx, noteEmissions([userId], id));
+      }
+    });
+    return { id, position };
+  }
+
   /**
    * "Make a copy": a new note of this person's with the same title, text,
    * colour, their tags and copies of the attachments. Reminders, pins and
@@ -202,6 +218,7 @@ export class NotesService {
         ...NOTE_INCLUDE_ATTACHMENT_COUNT,
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
+        ...noteOrderInclude(userId),
         ...noteReminderInclude(userId),
       },
       orderBy: NOTE_LIST_ORDER,
@@ -226,6 +243,7 @@ export class NotesService {
         ...NOTE_INCLUDE_ATTACHMENT_COUNT,
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
+        ...noteOrderInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -324,6 +342,7 @@ export class NotesService {
           ...NOTE_INCLUDE_SHARES,
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
+          ...noteOrderInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -355,6 +374,7 @@ export class NotesService {
         ...NOTE_INCLUDE_ATTACHMENT_COUNT,
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
+        ...noteOrderInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -412,6 +432,7 @@ export class NotesService {
           ...NOTE_INCLUDE_TAGS,
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
+          ...noteOrderInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -447,6 +468,7 @@ export class NotesService {
           ...NOTE_INCLUDE_TAGS,
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
+          ...noteOrderInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -478,6 +500,7 @@ export class NotesService {
           ...NOTE_INCLUDE_TAGS,
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
+          ...noteOrderInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -501,6 +524,7 @@ export class NotesService {
         ...NOTE_INCLUDE_ATTACHMENT_COUNT,
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
+        ...noteOrderInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -523,6 +547,7 @@ export class NotesService {
         ...NOTE_INCLUDE_ATTACHMENT_COUNT,
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
+        ...noteOrderInclude(userId),
         ...noteReminderInclude(userId),
       },
     });

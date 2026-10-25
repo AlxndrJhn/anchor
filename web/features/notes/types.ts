@@ -67,6 +67,8 @@ export interface Note {
   imagePreviewIds?: string[];
   reminder?: NoteReminder | null;
   stateChangedAt?: string;
+  /** This person's place for the note in the "Custom" sort, set by dragging. */
+  position?: number | null;
 }
 
 // "conflict" holds content the server turned down, which never reached the note.

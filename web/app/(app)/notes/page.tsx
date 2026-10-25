@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
   ArchiveRestore,
@@ -31,6 +31,7 @@ import {
   getArchivedNotes,
   getNotes,
   restoreNote,
+  setNotePosition,
   unarchiveNote,
 } from "@/features/notes/api";
 import { BulkColorPicker } from "@/features/notes/components/bulk-color-picker";
@@ -50,7 +51,7 @@ import {
 } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { matchesFilters } from "@/features/notes/note-filters";
-import { compareNotes } from "@/features/notes/sort";
+import { compareNotes, positionForDrop } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
 import { tagColorStyle, useTagMap } from "@/features/tags";
@@ -70,6 +71,7 @@ export default function NotesPage() {
 
 function NotesView({ tagId }: { tagId: string | null }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const refresh = useRefreshNotes();
   const tagMap = useTagMap();
@@ -125,6 +127,37 @@ function NotesView({ tagId }: { tagId: string | null }) {
   );
 
   const allPinned = chosen.length > 0 && chosen.every((n) => n.isPinned);
+
+  /** Dragging to arrange ("Custom" sort): the note takes its new place. */
+  const moveNote = (
+    noteId: string,
+    targetId: string,
+    side: "before" | "after",
+  ) => {
+    const group = pinned.some((n) => n.id === noteId) ? pinned : others;
+    const position = positionForDrop(group, noteId, targetId, side);
+    if (position === null) return;
+    const before = notes.find((n) => n.id === noteId)?.position ?? null;
+    const setPlace = (place: number | null) =>
+      queryClient.setQueriesData<unknown>(
+        { queryKey: ["notes"] },
+        (data: unknown) =>
+          Array.isArray(data)
+            ? (data as Note[]).map((n) =>
+                n.id === noteId ? { ...n, position: place } : n,
+              )
+            : data,
+      );
+    list.prepareCardMotion();
+    setPlace(position);
+    setNotePosition(noteId, position).catch(() => {
+      list.prepareCardMotion();
+      setPlace(before);
+      toast.error("Couldn’t move the note", {
+        retry: () => moveNote(noteId, targetId, side),
+      });
+    });
+  };
 
   const noteAction = useMutation({
     mutationFn: async ({
@@ -308,6 +341,11 @@ function NotesView({ tagId }: { tagId: string | null }) {
         {visible.length > 0 && (
           <NotesBoard
             searchTerm={list.term || undefined}
+            onMove={
+              list.sortBy === "custom" && !list.searching && !list.picking
+                ? moveNote
+                : undefined
+            }
             ref={list.boardRef}
             layout={list.layout}
             picking={list.picking}

@@ -17,6 +17,7 @@ import {
   NOTE_INCLUDE_SHARES,
   NOTE_INCLUDE_ATTACHMENT_COUNT,
   noteArchiveInclude,
+  noteOrderInclude,
   notePinInclude,
   noteReminderInclude,
 } from '../notes/constants/notes.constants';
@@ -42,6 +43,7 @@ interface NoteRow {
   userId: string;
   pins: Array<{ userId: string }>;
   archives: Array<{ userId: string }>;
+  orders: Array<{ position: number }>;
   reminders: Array<{
     remindAt: string;
     recurrence: ReminderRecurrence;
@@ -181,6 +183,7 @@ export class SyncHydratorService {
         ...NOTE_INCLUDE_ATTACHMENT_COUNT,
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
+        ...noteOrderInclude(userId),
         ...noteReminderInclude(userId),
       },
     });

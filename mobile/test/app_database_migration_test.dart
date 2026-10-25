@@ -38,7 +38,11 @@ void main() {
       await withDatabase((db) async {
         await db.customStatement('DROP TABLE note_revisions');
         await db.customStatement('DROP TABLE note_history_state');
-        await dropColumns(db, [..._reminderColumns, ..._syncedCopyColumns]);
+        await dropColumns(db, [
+          ..._reminderColumns,
+          ..._syncedCopyColumns,
+          ..._orderColumns,
+        ]);
         await db.customStatement('PRAGMA user_version = 8');
       });
 
@@ -87,7 +91,11 @@ void main() {
               localRev: const Value(4),
             ),
           );
-      await dropColumns(db, [..._reminderColumns, ..._syncedCopyColumns]);
+      await dropColumns(db, [
+        ..._reminderColumns,
+        ..._syncedCopyColumns,
+        ..._orderColumns,
+      ]);
       await db.customStatement('PRAGMA user_version = 9');
     });
 
@@ -106,6 +114,38 @@ void main() {
     });
   });
 
+  test('a database from before custom order gains its columns and re-downloads '
+      'the feed', () async {
+    await withDatabase((db) async {
+      await db
+          .into(db.syncState)
+          .insert(const SyncStateCompanion(cursor: Value('cursor-7')));
+      await dropColumns(db, _orderColumns);
+      await db.customStatement('PRAGMA user_version = 11');
+    });
+
+    await withDatabase((db) async {
+      await db
+          .into(db.notes)
+          .insert(
+            NotesCompanion.insert(
+              id: 'n',
+              title: 'Moved',
+              createdAt: Value(DateTime.utc(2026, 10, 1)),
+              position: const Value(12.5),
+            ),
+          );
+      final row = await db.select(db.notes).getSingle();
+      expect(row.position, 12.5);
+      expect(
+        row.createdAt?.isAtSameMomentAs(DateTime.utc(2026, 10, 1)),
+        isTrue,
+      );
+      final state = await db.select(db.syncState).getSingle();
+      expect(state.cursor, isNull);
+    });
+  });
+
   test(
     'a database from the first reminders release re-downloads the feed',
     () async {
@@ -113,7 +153,7 @@ void main() {
         await db
             .into(db.syncState)
             .insert(const SyncStateCompanion(cursor: Value('cursor-42')));
-        await dropColumns(db, _syncedCopyColumns);
+        await dropColumns(db, [..._syncedCopyColumns, ..._orderColumns]);
         await db.customStatement('PRAGMA user_version = 10');
       });
 
@@ -160,7 +200,7 @@ void main() {
                 isSynced: const Value(true),
               ),
             );
-        await dropColumns(db, _syncedCopyColumns);
+        await dropColumns(db, [..._syncedCopyColumns, ..._orderColumns]);
         await db.customStatement('PRAGMA user_version = 10');
       });
 
@@ -186,7 +226,11 @@ void main() {
       await db
           .into(db.syncState)
           .insert(const SyncStateCompanion(cursor: Value('cursor-42')));
-      await dropColumns(db, [..._reminderColumns, ..._syncedCopyColumns]);
+      await dropColumns(db, [
+        ..._reminderColumns,
+        ..._syncedCopyColumns,
+        ..._orderColumns,
+      ]);
       await db.customStatement('PRAGMA user_version = 9');
     });
 
@@ -196,6 +240,8 @@ void main() {
     });
   });
 }
+
+const _orderColumns = ['created_at', 'position'];
 
 const _syncedCopyColumns = [
   'synced_title',

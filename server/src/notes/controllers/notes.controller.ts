@@ -1,3 +1,4 @@
+import { NotePositionDto } from '../dto/note-position.dto';
 import {
   Controller,
   Get,
@@ -54,6 +55,15 @@ export class NotesController {
   @Get(':id')
   findOne(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.notesService.findOne(userId, id);
+  }
+
+  @Patch(':id/position')
+  setPosition(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: NotePositionDto,
+  ) {
+    return this.notesService.setPosition(userId, id, dto.position);
   }
 
   @Post(':id/copy')

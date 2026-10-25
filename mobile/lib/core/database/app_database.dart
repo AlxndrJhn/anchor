@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -105,6 +105,22 @@ class AppDatabase extends _$AppDatabase {
 
         // The server sends each feed entry once; only a sync with no cursor
         // repeats them.
+        await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
+          const SyncStateCompanion(cursor: Value(null)),
+        );
+      }
+      if (from < 12) {
+        // Databases from the first releases still carry a created_at column.
+        final existing = await customSelect(
+          'PRAGMA table_info(notes)',
+        ).map((row) => row.read<String>('name')).get();
+        if (!existing.contains('created_at')) {
+          await migrator.addColumn(notes, notes.createdAt);
+        }
+        if (!existing.contains('position')) {
+          await migrator.addColumn(notes, notes.position);
+        }
+        // A sync with no cursor resends every note, with when it was made.
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
           const SyncStateCompanion(cursor: Value(null)),
         );

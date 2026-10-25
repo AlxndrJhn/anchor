@@ -80,11 +80,15 @@ class SyncNoteChange extends SyncChange {
     required this.background,
     required this.state,
     required this.tagIds,
+    this.position,
     this.revisions = const [],
     this.isRevisionsOnly = false,
   });
 
   final int localRev;
+
+  /// This person's place for the note in their "Custom" sort.
+  final double? position;
   final int? baseVersion;
   final String title;
   final String? content;
@@ -123,6 +127,7 @@ class SyncNoteChange extends SyncChange {
     'background': background,
     if (state != null) 'state': state,
     'tagIds': tagIds,
+    if (position != null) 'position': position,
     if (revisions.isNotEmpty)
       'revisions': [for (final revision in revisions) revision.toJson()],
     if (isRevisionsOnly) 'revisionsOnly': true,

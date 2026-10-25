@@ -117,6 +117,9 @@ class SyncServerNote {
     required this.sharedBy,
     required this.hasReminderField,
     required this.reminder,
+    this.createdAt,
+    this.hasPositionField = false,
+    this.position,
   });
 
   factory SyncServerNote.fromJson(Map<String, dynamic> json) {
@@ -131,6 +134,10 @@ class SyncServerNote {
       background: json['background'] as String?,
       state: json['state'] as String? ?? NoteState.active.name,
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '')?.toUtc(),
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toUtc(),
+      // Servers without "Custom" sort leave it out: keep what is here.
+      hasPositionField: json.containsKey('position'),
+      position: (json['position'] as num?)?.toDouble(),
       tagIds: (json['tagIds'] as List?)?.cast<String>() ?? const [],
       permission: json['permission'] as String? ?? NotePermission.owner.name,
       shareIds: (json['shareIds'] as List?)?.cast<String>() ?? const [],
@@ -152,6 +159,9 @@ class SyncServerNote {
   final String? background;
   final String state;
   final DateTime? updatedAt;
+  final DateTime? createdAt;
+  final bool hasPositionField;
+  final double? position;
   final List<String> tagIds;
   final String permission;
   final List<String> shareIds;
