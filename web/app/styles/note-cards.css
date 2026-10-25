@@ -403,3 +403,14 @@
     padding: --spacing(2);
   }
 }
+
+/* Opens the picture full size, above the card's link. */
+.nc-zoom {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Check, ImageOff, Paperclip, Users } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -12,10 +13,12 @@ import { useHighlightPaint } from "@/lib/highlight-paint";
 import { useNearScreen } from "@/lib/hooks/use-near-screen";
 import { rememberCard } from "@/lib/morph";
 import { cn } from "@/lib/utils";
+import { getNoteAttachments } from "../api";
 import { useAttachmentBlob } from "../hooks/use-attachment-blob";
 import { deltaToBlocks, type NoteBlock } from "../note-blocks";
 import { hasTitle } from "../title";
 import type { Note } from "../types";
+import { Viewer } from "./attachments/attachment-viewer";
 import { NoteBody } from "./note-body";
 import { ReminderChip } from "./reminder-chip";
 
@@ -174,6 +177,22 @@ export const NoteCard = React.memo(function NoteCard({
       ? pictureIds.slice(0, layout === "grid" ? 1 : 4)
       : [];
   const hiddenCount = attachmentCount - shownPictures.length;
+  const [viewing, setViewing] = React.useState<string | null>(null);
+  const zoom = (id: string) => (
+    <button
+      type="button"
+      className="nc-zoom"
+      tabIndex={-1}
+      aria-label="View picture"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (picking || e.metaKey || e.ctrlKey || e.shiftKey)
+          onPick?.(note.id, e.shiftKey);
+        else setViewing(id);
+      }}
+    />
+  );
 
   return (
     <article
@@ -230,6 +249,7 @@ export const NoteCard = React.memo(function NoteCard({
               {i === shownPictures.length - 1 && hiddenCount > 0 && (
                 <span className="more">+{hiddenCount}</span>
               )}
+              {zoom(id)}
             </div>
           ))}
         </div>
@@ -264,12 +284,59 @@ export const NoteCard = React.memo(function NoteCard({
           {attachmentCount > 1 && (
             <span className="more">+{attachmentCount - 1}</span>
           )}
+          {zoom(pictureIds[0])}
         </div>
       )}
       {actions && <div className="nc-acts">{actions}</div>}
+      {viewing && (
+        <CardViewer
+          noteId={note.id}
+          id={viewing}
+          onShow={setViewing}
+          onClosed={() =>
+            cardRef.current?.querySelector<HTMLElement>(".nc-link")?.focus()
+          }
+        />
+      )}
     </article>
   );
 });
+
+/** The note's pictures, full size, opened from a card. */
+function CardViewer({
+  noteId,
+  id,
+  onShow,
+  onClosed,
+}: {
+  noteId: string;
+  id: string;
+  onShow: (id: string | null) => void;
+  onClosed: () => void;
+}) {
+  const { data } = useQuery({
+    queryKey: ["attachments", noteId],
+    queryFn: () => getNoteAttachments(noteId),
+  });
+  const pictures = React.useMemo(
+    () => (data ?? []).filter((a) => a.type === "image"),
+    [data],
+  );
+  return (
+    <Viewer
+      noteId={noteId}
+      pictures={pictures}
+      id={id}
+      onShow={onShow}
+      canDelete={() => false}
+      onDelete={() => {}}
+      onReturnFocus={() => {
+        onClosed();
+        return true;
+      }}
+    />
+  );
+}
 
 function CardPicture({
   noteId,
