@@ -109,7 +109,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Design tokens match the generated files
-        run: node ../design/build/build.mjs --check
+        run: node ../design/build/build.mjs --check && node ../design/build/schemes.mjs --check
 
       - name: Lint & format check
         run: pnpm check

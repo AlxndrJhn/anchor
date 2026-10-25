@@ -1,5 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, JetBrains_Mono, Playfair_Display } from "next/font/google";
+import {
+  DM_Sans,
+  JetBrains_Mono,
+  Patrick_Hand,
+  Playfair_Display,
+  Space_Grotesk,
+} from "next/font/google";
+import { appearanceScript } from "@/lib/appearance-script";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -19,6 +26,22 @@ const jetBrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   display: "swap",
+});
+
+// The Neo-Brutalism and Lo-fi styles' typefaces, fetched only when used.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
+
+const patrickHand = Patrick_Hand({
+  variable: "--font-patrick-hand",
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -42,8 +65,14 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${playfair.variable} ${jetBrainsMono.variable}`}
+      className={`${dmSans.variable} ${playfair.variable} ${jetBrainsMono.variable} ${spaceGrotesk.variable} ${patrickHand.variable}`}
     >
+      <head>
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed script, set before paint
+          dangerouslySetInnerHTML={{ __html: appearanceScript }}
+        />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

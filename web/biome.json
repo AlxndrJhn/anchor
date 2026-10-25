@@ -15,7 +15,9 @@
       "!build",
       "!app/styles/tokens.css",
       "!app/styles/notes.css",
-      "!lib/design/tokens.ts"
+      "!lib/design/tokens.ts",
+      "!app/styles/schemes.css",
+      "!lib/design/schemes.ts"
     ]
   },
   "formatter": {

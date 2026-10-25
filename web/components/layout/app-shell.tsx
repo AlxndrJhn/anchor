@@ -83,7 +83,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [router, setUI]);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background text-foreground">
+    <div
+      data-slot="app-shell"
+      className="flex h-dvh overflow-hidden bg-background text-foreground"
+    >
       <div className="hidden min-h-0 lg:flex">
         <Sidebar
           folded={folded}
