@@ -108,10 +108,13 @@ Anchor focuses on speed, privacy, simplicity, and reliability across mobile and 
 
 ### This Fork's Image
 
-Every push to `main` of this fork publishes a multi-arch image (amd64 and
-arm64, so it runs on a Raspberry Pi 5) as
-`ghcr.io/alxndrjhn/anchor:fork-latest`, plus `:fork-<commit>` to pin a build.
-Use it in place of `ghcr.io/zhfahim/anchor:latest` in the compose file above.
+Every push to `main` of this fork makes a release named
+`fork-<version>.<build>` with the Android APK attached
+([latest APK](https://github.com/AlxndrJhn/anchor/releases/latest/download/anchor-fork.apk)),
+and publishes a multi-arch image (amd64 and arm64, so it runs on a Raspberry
+Pi 5) under the same tag, plus `ghcr.io/alxndrjhn/anchor:fork-latest` and
+`:fork-<commit>`. Use it in place of `ghcr.io/zhfahim/anchor:latest` in the
+compose file above.
 
 ### Pre-release (Beta) Image
 

@@ -1,0 +1,199 @@
+name: Release (fork)
+
+# Every push to main releases this fork: a GitHub release tagged
+# fork-<app version>.<run>, with the APK attached, and the Docker image
+# (amd64 + arm64) tagged with the same name plus :fork-latest and
+# :fork-<sha>. The newest APK is always at:
+#   https://github.com/<owner>/<repo>/releases/latest/download/anchor-fork.apk
+
+on:
+  push:
+    branches: [main]
+    tags-ignore:
+      - "v*"
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+# Queue releases instead of cancelling one that is half published.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Name the release
+        id: version
+        run: |
+          VERSION=$(sed -n 's/^version: *\([^+]*\).*/\1/p' mobile/pubspec.yaml)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=fork-$VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+
+  docker:
+    needs: version
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      push: ${{ github.ref == 'refs/heads/main' }}
+      tags: |
+        type=raw,value=${{ needs.version.outputs.tag }}
+        type=raw,value=fork-latest
+        type=sha,prefix=fork-
+
+  build-apk:
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      # Installs as "Anchor (fork)" next to the official app.
+      ORG_GRADLE_PROJECT_anchorFork: "true"
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.1
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # Use the repository's own key when its secrets are set. Otherwise keep a
+      # generated key in the Actions cache, so later builds install as updates.
+      - name: Restore generated signing key
+        if: ${{ env.HAS_KEY != 'true' }}
+        id: key-cache
+        uses: actions/cache@v4
+        with:
+          path: mobile/android/app/fork-keystore.jks
+          key: android-fork-signing-key-v1
+
+      - name: Set up signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+            STORE_FILE=./upload-keystore.jks
+          else
+            KEYSTORE_PASSWORD=anchor-fork
+            KEY_PASSWORD=anchor-fork
+            KEY_ALIAS=anchor-fork
+            STORE_FILE=./fork-keystore.jks
+            if [ ! -f android/app/fork-keystore.jks ]; then
+              keytool -genkeypair -v -keystore android/app/fork-keystore.jks \
+                -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
+                -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+                -dname "CN=Anchor fork"
+            fi
+          fi
+          cat > android/key.properties << EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=$STORE_FILE
+          EOF
+
+      - name: Build APK
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        # Build numbers continue past the old "Android APK" workflow's
+        # (1000 + run), so a new APK always installs as an update.
+        run: |
+          flutter build apk --release \
+            --build-name="$VERSION-fork.${GITHUB_SHA::7}" \
+            --build-number=$((2000 + GITHUB_RUN_NUMBER))
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/anchor-fork.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchor-fork-apk
+          path: mobile/build/app/outputs/flutter-apk/anchor-fork.apk
+
+  release:
+    needs: [version, build-apk, docker]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: anchor-fork-apk
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.version.outputs.tag }}
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          IMAGE=${IMAGE,,}
+          PREVIOUS=$(git describe --tags --abbrev=0 --match 'fork-*' HEAD^ 2>/dev/null || true)
+          {
+            echo "Built from ${GITHUB_SHA::7} on $(date -u +'%Y-%m-%d %H:%M UTC')."
+            echo
+            echo "## Android"
+            echo
+            echo 'Install `anchor-fork.apk`. It installs as "Anchor (fork)", next to the official app, and updates the previous fork build.'
+            echo
+            echo "## Docker (amd64, arm64)"
+            echo
+            echo '```bash'
+            echo "docker pull $IMAGE:$TAG"
+            echo '```'
+            echo
+            echo "Also published as \`$IMAGE:fork-latest\` and \`$IMAGE:fork-${GITHUB_SHA::7}\`."
+            echo
+            echo "## Changes"
+            echo
+            if [ -n "$PREVIOUS" ]; then
+              git log --no-merges --format='- %s (%h)' "$PREVIOUS..HEAD"
+              echo
+              echo "**Full changelog:** https://github.com/$GITHUB_REPOSITORY/compare/$PREVIOUS...$TAG"
+            else
+              git log --no-merges --format='- %s (%h)' -20
+            fi
+          } > notes.md
+          gh release create "$TAG" anchor-fork.apk \
+            --target "$GITHUB_SHA" \
+            --title "Anchor fork $TAG" \
+            --notes-file notes.md \
+            --latest
+          # Superseded by the per-commit releases above.
+          gh release delete android-latest --cleanup-tag --yes || true
