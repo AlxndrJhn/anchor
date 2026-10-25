@@ -20,6 +20,14 @@ import 'editor/link_actions_sheet.dart';
 import 'editor/link_edit_sheet.dart';
 import 'editor/link_utils.dart';
 
+/// Picture types the keyboard may insert, which upload as attachments.
+const insertableImageTypes = <String>[
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+];
+
 /// A reusable rich text editor widget powered by flutter_quill.
 ///
 /// Content is stored and loaded as JSON Delta format.
@@ -55,6 +63,11 @@ class RichTextEditor extends StatefulWidget {
   /// Optional header widget placed above the editor, scrolling together.
   final Widget? header;
 
+  /// Called with a picture the keyboard inserts (for example a screenshot
+  /// pasted from Gboard's clipboard). Null keeps the keyboard from offering
+  /// pictures.
+  final void Function(Uint8List bytes, String mimeType)? onImageInserted;
+
   const RichTextEditor({
     super.key,
     this.initialContent,
@@ -67,6 +80,7 @@ class RichTextEditor extends StatefulWidget {
     this.contentPadding = const EdgeInsets.symmetric(vertical: 16),
     this.sortChecklistItems = true,
     this.header,
+    this.onImageInserted,
   });
 
   @override
@@ -225,6 +239,12 @@ class RichTextEditorState extends State<RichTextEditor>
       }
     }
     return Document();
+  }
+
+  void _onContentInserted(KeyboardInsertedContent content) {
+    final bytes = content.data;
+    if (bytes == null || bytes.isEmpty) return;
+    widget.onImageInserted?.call(bytes, content.mimeType);
   }
 
   Future<bool> _onClipboardPaste() async {
@@ -500,6 +520,13 @@ class RichTextEditorState extends State<RichTextEditor>
                   focusNode: _focusNode,
                   scrollController: _scrollController,
                   config: QuillEditorConfig(
+                    contentInsertionConfiguration:
+                        widget.onImageInserted == null || !widget.canEdit
+                        ? null
+                        : ContentInsertionConfiguration(
+                            allowedMimeTypes: insertableImageTypes,
+                            onContentInserted: _onContentInserted,
+                          ),
                     placeholder: widget.hintText,
                     padding: widget.contentPadding,
                     autoFocus: false,

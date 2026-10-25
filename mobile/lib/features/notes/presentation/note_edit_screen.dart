@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show File;
 
 import 'package:anchor/core/logging/app_logger.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
@@ -22,6 +23,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
 
@@ -450,25 +454,48 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   void _showAttachmentSheet() {
     AppBottomSheet.show(
       context,
-      builder: (context) => NoteAttachmentSheet(
-        onFileSelected: (filePath, mimeType, filename) async {
-          try {
-            // Attachments are keyed to a persisted note. For a brand-new note
-            // the user may start by adding an attachment, so create the note
-            // now that there's something to attach to.
-            var noteId = widget.noteId ?? _existingNote?.id;
-            noteId ??= await _createNote();
-            final repo = ref.read(noteAttachmentsRepositoryProvider);
-            await repo.addAttachment(noteId, filePath, mimeType, filename);
-            if (!context.mounted) return;
-            AppSnackbar.showSuccess(context, message: 'Attachment added');
-          } catch (_) {
-            if (!context.mounted) return;
-            AppSnackbar.showError(context, message: 'Failed to add attachment');
-          }
-        },
-      ),
+      builder: (context) => NoteAttachmentSheet(onFileSelected: _addAttachment),
     );
+  }
+
+  Future<void> _addAttachment(
+    String filePath,
+    String mimeType,
+    String filename,
+  ) async {
+    try {
+      // Attachments are keyed to a persisted note. For a brand-new note
+      // the user may start by adding an attachment, so create the note
+      // now that there's something to attach to.
+      var noteId = widget.noteId ?? _existingNote?.id;
+      noteId ??= await _createNote();
+      final repo = ref.read(noteAttachmentsRepositoryProvider);
+      await repo.addAttachment(noteId, filePath, mimeType, filename);
+      if (!mounted) return;
+      AppSnackbar.showSuccess(context, message: 'Attachment added');
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, message: 'Failed to add attachment');
+    }
+  }
+
+  /// A picture pasted from the keyboard becomes an attachment, as on the web.
+  Future<void> _onImageInserted(Uint8List bytes, String mimeType) async {
+    final stamp = DateFormat('yyyy-MM-dd-HH-mm-ss').format(DateTime.now());
+    final ext = switch (mimeType) {
+      'image/jpeg' => 'jpg',
+      'image/gif' => 'gif',
+      'image/webp' => 'webp',
+      _ => 'png',
+    };
+    final filename = 'Pasted $stamp.$ext';
+    final dir = await getTemporaryDirectory();
+    final file = File(p.join(dir.path, filename));
+    await file.writeAsBytes(bytes, flush: true);
+    await _addAttachment(file.path, mimeType, filename);
+    try {
+      await file.delete();
+    } catch (_) {}
   }
 
   void _showTagPicker() {
@@ -1073,6 +1100,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                                 .sortChecklistItems,
                             contentPadding: context.dims.editorPadding,
                             header: _buildEditorHeader(theme),
+                            onImageInserted: _onImageInserted,
                           )
                         : const Center(child: CircularProgressIndicator()),
                   ),
