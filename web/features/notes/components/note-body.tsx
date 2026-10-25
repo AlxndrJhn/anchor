@@ -19,6 +19,8 @@ interface NoteBodyProps {
   variant?: "card" | "full";
   maxRows?: number;
   className?: string;
+  /** Makes checklist boxes tickable; gets the item's line and new state. */
+  onToggle?: (line: number, done: boolean) => void;
   ref?: React.Ref<HTMLDivElement>;
 }
 
@@ -44,6 +46,7 @@ export function NoteBody({
   maxRows = Number.POSITIVE_INFINITY,
   className,
   ref,
+  onToggle,
 }: NoteBodyProps) {
   const card = variant === "card";
   const shown = blocks.filter(
@@ -82,7 +85,21 @@ export function NoteBody({
                   style={{ "--lvl": block.level } as React.CSSProperties}
                   className={block.done ? "done" : undefined}
                 >
-                  {block.type === "check" ? (
+                  {block.type === "check" &&
+                  onToggle &&
+                  block.line !== undefined ? (
+                    <button
+                      type="button"
+                      className="box tick"
+                      aria-pressed={!!block.done}
+                      aria-label={`${block.done ? "Untick" : "Tick"} ${block.runs.map((r) => r.text).join("")}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onToggle(block.line as number, !block.done);
+                      }}
+                    />
+                  ) : block.type === "check" ? (
                     <span className="box" aria-hidden />
                   ) : (
                     <span className="mk" aria-hidden>

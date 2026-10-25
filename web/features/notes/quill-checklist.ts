@@ -1,5 +1,11 @@
 import Delta from "quill-delta";
-import { LIST_FORMATS, type QuillDelta, type QuillOp } from "./quill";
+import {
+  LIST_FORMATS,
+  parseStoredContent,
+  type QuillDelta,
+  type QuillOp,
+  stringifyDelta,
+} from "./quill";
 import {
   blockEndIndex,
   type DeltaLine,
@@ -502,4 +508,35 @@ export function createRemoveCheckedDelta(delta: QuillDelta): QuillDelta | null {
   // Quill needs a trailing line; keep an empty one when every line goes.
   if (kept === 0) change.insert("\n");
   return { ops: change.chop().ops as QuillOp[] };
+}
+
+/**
+ * Stored content with the checklist item on [lineIndex] ticked or unticked,
+ * re-sorted like the editor does when [sort] is on. Null if that line isn't
+ * a checklist item.
+ */
+export function toggleChecklistItem(
+  content: string | null | undefined,
+  lineIndex: number,
+  sort: boolean,
+): string | null {
+  const doc = parseStoredContent(content);
+  const lines = deltaToLines(doc.ops);
+  const line = lines[lineIndex];
+  if (!line || !isChecklistLine(line)) return null;
+  const newline =
+    getLineStartPosition(lines, lineIndex) + getLineLength(line) - 1;
+  const list = isCheckedLine(line)
+    ? LIST_FORMATS.UNCHECKED
+    : LIST_FORMATS.CHECKED;
+  let next = new Delta(doc.ops as never).compose(
+    new Delta().retain(newline).retain(1, { list }),
+  );
+  if (sort) {
+    const moved = createChecklistSortDelta(newline, {
+      ops: next.ops as QuillOp[],
+    });
+    if (moved) next = next.compose(new Delta(moved.ops as never));
+  }
+  return stringifyDelta({ ops: next.ops as QuillOp[] });
 }

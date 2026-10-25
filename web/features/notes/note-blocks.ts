@@ -29,6 +29,8 @@ export interface NoteBlock {
   level: number;
   runs: InlineRun[];
   done?: boolean;
+  /** A checklist item's line in the note, for ticking it from a card. */
+  line?: number;
   /** An ordered item's marker: “1.”, “a.”, “i.”. */
   marker?: string;
 }
@@ -62,7 +64,7 @@ export function deltaToBlocks(content: string | null | undefined): NoteBlock[] {
   const lines = deltaToLines(parseStoredContent(content).ops);
   const blocks: NoteBlock[] = [];
   const counters = new Map<number, number>();
-  for (const line of lines) {
+  for (const [lineIndex, line] of lines.entries()) {
     const attrs = line.newlineOp.attributes ?? {};
     const level = indentOf(line);
     const runs = runsOf(line.contentOps);
@@ -103,6 +105,7 @@ export function deltaToBlocks(content: string | null | undefined): NoteBlock[] {
       level,
       runs,
       done: type === "check" ? attrs.list === "checked" : undefined,
+      line: type === "check" ? lineIndex : undefined,
     });
   }
   return blocks;

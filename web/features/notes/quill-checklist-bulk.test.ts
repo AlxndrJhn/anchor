@@ -1,11 +1,13 @@
 import Delta, { type Op } from "quill-delta";
 import { describe, expect, it } from "vitest";
-import type { QuillDelta, QuillOp } from "./quill";
+import { parseStoredContent, type QuillDelta, type QuillOp } from "./quill";
 import {
   countCheckedItems,
   createRemoveCheckedDelta,
   createUncheckAllDelta,
+  toggleChecklistItem,
 } from "./quill-checklist";
+import { deltaToLines, getLineText } from "./quill-lines";
 
 const doc: QuillDelta = {
   ops: [
@@ -75,5 +77,54 @@ describe("checklist bulk actions", () => {
     const none: QuillDelta = { ops: [{ insert: "a\n" }] };
     expect(createUncheckAllDelta(none)).toBeNull();
     expect(createRemoveCheckedDelta(none)).toBeNull();
+  });
+});
+
+describe("toggleChecklistItem", () => {
+  const stored = JSON.stringify({
+    ops: [
+      { insert: "Eggs" },
+      { insert: "\n", attributes: { list: "unchecked" } },
+      { insert: "Milk" },
+      { insert: "\n", attributes: { list: "unchecked" } },
+      { insert: "Done" },
+      { insert: "\n", attributes: { list: "checked" } },
+    ],
+  });
+  const items = (content: string | null) =>
+    deltaToLines(parseStoredContent(content).ops).map(
+      (l) => `${getLineText(l)}:${l.newlineOp.attributes?.list}`,
+    );
+
+  it("ticks an item in place", () => {
+    expect(items(toggleChecklistItem(stored, 0, false))).toEqual([
+      "Eggs:checked",
+      "Milk:unchecked",
+      "Done:checked",
+    ]);
+  });
+
+  it("moves a ticked item to the bottom when sorting is on", () => {
+    expect(items(toggleChecklistItem(stored, 0, true))).toEqual([
+      "Milk:unchecked",
+      "Done:checked",
+      "Eggs:checked",
+    ]);
+  });
+
+  it("unticks a ticked item", () => {
+    expect(items(toggleChecklistItem(stored, 2, false))[2]).toBe(
+      "Done:unchecked",
+    );
+  });
+
+  it("ignores lines that aren't checklist items", () => {
+    expect(
+      toggleChecklistItem(
+        JSON.stringify({ ops: [{ insert: "a\n" }] }),
+        0,
+        false,
+      ),
+    ).toBeNull();
   });
 });
