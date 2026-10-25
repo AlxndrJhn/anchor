@@ -19,6 +19,7 @@ import '../data/repository/note_history_repository.dart';
 import '../data/repository/note_revisions_store.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
+import '../domain/note_diff.dart';
 import '../domain/note_history.dart';
 import '../domain/note_revision.dart';
 import 'note_revision_screen.dart';
@@ -169,6 +170,33 @@ class _NoteHistoryScreenState extends ConsumerState<NoteHistoryScreen> {
     );
   }
 
+  final _counts = <String, (String?, String?, LineCounts)>{};
+
+  /// Lines a version added and removed, against the version after it (or the
+  /// note as it is now), the way the version itself shows them. An edited
+  /// title counts as one of each.
+  LineCounts _countsFor(NoteRevision revision, Note? note) {
+    final compared = comparisonTarget(_revisions, revision.id);
+    final nextTitle = compared == null ? note?.title : compared.title;
+    final nextContent = compared == null ? note?.content : compared.content;
+    final cached = _counts[revision.id];
+    if (cached != null && cached.$1 == nextContent && cached.$2 == nextTitle) {
+      return cached.$3;
+    }
+    final diff = diffNoteContent(revision.content, nextContent);
+    final titleEdits =
+        nextTitle != null &&
+            storedTitleOf(nextTitle) != storedTitleOf(revision.title)
+        ? 1
+        : 0;
+    final counts = (
+      added: diff.added + titleEdits,
+      removed: diff.removed + titleEdits,
+    );
+    _counts[revision.id] = (nextContent, nextTitle, counts);
+    return counts;
+  }
+
   Widget _buildBody(ThemeData theme) {
     if (_revisions.isEmpty) {
       if (_isFetching) return const Center(child: CircularProgressIndicator());
@@ -221,6 +249,7 @@ class _NoteHistoryScreenState extends ConsumerState<NoteHistoryScreen> {
                     currentUserId,
                   ),
                   author: showAuthors ? revision.author : null,
+                  counts: _countsFor(revision, note),
                   onTap: () => _open(revision.id),
                 ),
             ],
@@ -279,12 +308,15 @@ class _EntryCard extends StatelessWidget {
   }
 }
 
+typedef LineCounts = ({int added, int removed});
+
 class _EntryTile extends StatelessWidget {
   const _EntryTile({
     required this.title,
     this.subtitle,
     this.author,
     this.isCurrent = false,
+    this.counts,
     required this.onTap,
   });
 
@@ -292,6 +324,9 @@ class _EntryTile extends StatelessWidget {
   final String? subtitle;
   final NoteRevisionAuthor? author;
   final bool isCurrent;
+
+  /// The version's added and removed lines, shown as "+3 −1".
+  final LineCounts? counts;
   final VoidCallback onTap;
 
   @override
@@ -337,6 +372,35 @@ class _EntryTile extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (counts case final c? when c.added > 0 || c.removed > 0)
+                  Padding(
+                    padding: EdgeInsets.only(left: dims.sm),
+                    child: Semantics(
+                      label: '${c.added} lines added, ${c.removed} removed',
+                      excludeSemantics: true,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '+${c.added}',
+                              style: TextStyle(
+                                color: context.colorTokens.success,
+                              ),
+                            ),
+                            const TextSpan(text: '  '),
+                            TextSpan(
+                              text: '\u2212${c.removed}',
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
+                          ],
+                        ),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                  ),
                 Icon(
                   LucideIcons.chevronRight,
                   size: AppIconSizes.sm,

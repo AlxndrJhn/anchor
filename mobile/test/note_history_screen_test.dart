@@ -158,6 +158,14 @@ void main() {
     expect(find.text('10:30 AM'), findsOneWidget);
   });
 
+  testWidgets('shows the lines each version added and removed', (tester) async {
+    await pumpScreen(tester);
+
+    // r2 (milk, bread) became the note (milk, eggs); r1 (milk) became r2.
+    expect(find.text('+1  \u22121', findRichText: true), findsOneWidget);
+    expect(find.text('+1  \u22120', findRichText: true), findsOneWidget);
+  });
+
   testWidgets('reads a version with no connection at all', (tester) async {
     await pumpScreen(tester, isOnline: false);
     await tester.tap(find.text('10:30 AM'));
