@@ -11,6 +11,7 @@ import 'package:anchor/features/notes/data/repository/note_attachments_repositor
 import 'package:anchor/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
+import 'package:anchor/core/theme/tokens/app_style.dart';
 import 'package:anchor/core/widgets/image_shimmer.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
@@ -89,225 +90,240 @@ class NoteCard extends ConsumerWidget {
         ? NoteBackground.resolveColor(context, note.background)
         : theme.cardTheme.color ?? theme.colorScheme.surface;
 
+    final style = context.styleTokens;
+    final selectedSide = BorderSide(
+      color: style.style == AppStyle.standard
+          ? theme.colorScheme.primary
+          : theme.colorScheme.tertiary,
+      width: style.style == AppStyle.neoBrutalism ? 3 : 2,
+    );
+
     return Hero(
       tag: 'note_${note.id}',
       child: Material(
         color: Colors.transparent,
-        child: Card(
-          color: cardColor,
-          clipBehavior: Clip.antiAlias,
-          elevation: isSelected ? 2 : 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.lgBorder,
-            side: isSelected
-                ? BorderSide(color: theme.colorScheme.primary, width: 2)
-                : BorderSide.none,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: style.cardRadius,
+            boxShadow: style.cardShadows,
           ),
-          child: InkWell(
-            onTap: onTap ?? () => context.go('/note/${note.id}', extra: note),
-            onLongPress: onLongPress,
-            borderRadius: AppRadius.lgBorder,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (hasImages)
-                  Stack(
-                    children: [
-                      _NoteImagePreviews(
-                        previews: note.imagePreviewData,
-                        // Straight to the picture, as on the web.
-                        onOpen: isSelectionMode
-                            ? null
-                            : (id) => showNotePicture(
-                                context,
-                                ref,
-                                noteId: note.id,
-                                attachmentId: id,
-                              ),
-                      ),
-                      if (isSelectionMode || note.isPinned)
-                        Positioned(
-                          top: 10,
-                          right: 10,
-                          child: isSelectionMode
-                              ? _SelectionBadge(isSelected: isSelected)
-                              : _PinBadge(),
-                        ),
-                    ],
-                  ),
-                NoteBackground(
-                  styleId: note.background,
-                  borderRadius: BorderRadius.zero,
-                  child: Padding(
-                    padding: dims.noteCardPadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          child: Card(
+            color: cardColor,
+            clipBehavior: Clip.antiAlias,
+            elevation: isSelected && style.cardShadows.isEmpty ? 2 : 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: style.cardRadius,
+              side: isSelected ? selectedSide : style.cardSide,
+            ),
+            child: InkWell(
+              onTap: onTap ?? () => context.go('/note/${note.id}', extra: note),
+              onLongPress: onLongPress,
+              borderRadius: style.cardRadius,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasImages)
+                    Stack(
                       children: [
-                        if (showTopRow)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (showBadge) ...[
-                                _SelectionBadge(isSelected: isSelected),
-                                SizedBox(width: dims.sm),
-                              ],
-                              Expanded(
-                                child: note.hasTitle
-                                    ? Text(
-                                        note.title,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: -0.3,
-                                            ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      )
-                                    : preview,
-                              ),
-                              if (showPin) ...[
-                                SizedBox(width: dims.xs),
-                                Icon(
-                                  LucideIcons.pin,
-                                  size: AppIconSizes.sm,
-                                  color: theme.colorScheme.primary,
+                        _NoteImagePreviews(
+                          grayscale: style.plainNotes,
+                          previews: note.imagePreviewData,
+                          // Straight to the picture, as on the web.
+                          onOpen: isSelectionMode
+                              ? null
+                              : (id) => showNotePicture(
+                                  context,
+                                  ref,
+                                  noteId: note.id,
+                                  attachmentId: id,
                                 ),
-                              ],
-                            ],
-                          ),
-                        if (note.hasTitle && hasContent) ...[
-                          SizedBox(height: dims.noteCardTitleGap),
-                          preview,
-                        ],
-                        if (note.tagIds.isNotEmpty) ...[
-                          if (showTopRow) SizedBox(height: dims.noteCardTagGap),
-                          tagsAsync.when(
-                            data: (allTags) {
-                              final userNoteTags = allTags
-                                  .where((t) => note.tagIds.contains(t.id))
-                                  .toList();
-                              if (userNoteTags.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-                              final displayedTags = userNoteTags
-                                  .take(3)
-                                  .toList();
-                              final remaining =
-                                  userNoteTags.length - displayedTags.length;
-                              return Wrap(
-                                spacing: dims.xxs,
-                                runSpacing: dims.xxs,
-                                children: [
-                                  ...displayedTags.map(
-                                    (tag) => TagChip(tag: tag, selected: false),
-                                  ),
-                                  if (remaining > 0)
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: dims.xs,
-                                        vertical: dims.xxs,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                        borderRadius: AppRadius.smBorder,
-                                      ),
-                                      child: Text(
-                                        '+$remaining',
-                                        style: theme.textTheme.labelSmall,
-                                      ),
-                                    ),
-                                ],
-                              );
-                            },
-                            loading: () => const SizedBox.shrink(),
-                            error: (_, _) => const SizedBox.shrink(),
-                          ),
-                        ],
-                        SizedBox(height: dims.noteCardFooterGap),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Bounds the row so the reminder chip can ellipsize.
-                            Expanded(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (note.sharedBy != null) ...[
-                                    Tooltip(
-                                      message:
-                                          'Shared by ${note.sharedBy!.name}',
-                                      child: _SharedByAvatar(
-                                        sharedBy: note.sharedBy!,
-                                        serverUrl: serverUrl,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    SizedBox(width: dims.xs),
-                                  ],
-                                  if (note.isOwner && note.hasShares) ...[
-                                    _SharedByMeIndicator(
-                                      count: note.shareIds!.length,
-                                      onTap: isSelectionMode
-                                          ? null
-                                          : () => AppBottomSheet.show(
-                                              context,
-                                              builder: (_) => ShareNoteSheet(
-                                                noteId: note.id,
-                                              ),
-                                            ),
-                                    ),
-                                    SizedBox(width: dims.xs),
-                                  ],
-                                  if (note.reminder != null) ...[
-                                    Flexible(
-                                      child: ReminderChip(
-                                        reminder: note.reminder!,
-                                        compact: true,
-                                      ),
-                                    ),
-                                    SizedBox(width: dims.xs),
-                                  ],
-                                  if (note.updatedAt != null)
-                                    Text(
-                                      datePrefix != null
-                                          ? '$datePrefix ${DateFormat.MMMd().format(note.updatedAt!)}'
-                                          : DateFormat.MMMd().format(
-                                              note.updatedAt!,
-                                            ),
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: theme.colorScheme.onSurface
-                                                .withValues(
-                                                  alpha: AppOpacity.secondary,
-                                                ),
-                                          ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            if (trailingActions != null)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: trailingActions!,
-                              ),
-                            if (trailingActions == null && !note.isSynced)
-                              Icon(
-                                LucideIcons.cloudOff,
-                                size: AppIconSizes.sm,
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: AppOpacity.secondary,
-                                ),
-                              ),
-                          ],
                         ),
+                        if (isSelectionMode || note.isPinned)
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: isSelectionMode
+                                ? _SelectionBadge(isSelected: isSelected)
+                                : _PinBadge(),
+                          ),
                       ],
                     ),
+                  NoteBackground(
+                    styleId: note.background,
+                    borderRadius: BorderRadius.zero,
+                    child: Padding(
+                      padding: dims.noteCardPadding,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (showTopRow)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (showBadge) ...[
+                                  _SelectionBadge(isSelected: isSelected),
+                                  SizedBox(width: dims.sm),
+                                ],
+                                Expanded(
+                                  child: note.hasTitle
+                                      ? Text(
+                                          note.title,
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: -0.3,
+                                              ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : preview,
+                                ),
+                                if (showPin) ...[
+                                  SizedBox(width: dims.xs),
+                                  Icon(
+                                    LucideIcons.pin,
+                                    size: AppIconSizes.sm,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          if (note.hasTitle && hasContent) ...[
+                            SizedBox(height: dims.noteCardTitleGap),
+                            preview,
+                          ],
+                          if (note.tagIds.isNotEmpty) ...[
+                            if (showTopRow)
+                              SizedBox(height: dims.noteCardTagGap),
+                            tagsAsync.when(
+                              data: (allTags) {
+                                final userNoteTags = allTags
+                                    .where((t) => note.tagIds.contains(t.id))
+                                    .toList();
+                                if (userNoteTags.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                final displayedTags = userNoteTags
+                                    .take(3)
+                                    .toList();
+                                final remaining =
+                                    userNoteTags.length - displayedTags.length;
+                                return Wrap(
+                                  spacing: dims.xxs,
+                                  runSpacing: dims.xxs,
+                                  children: [
+                                    ...displayedTags.map(
+                                      (tag) =>
+                                          TagChip(tag: tag, selected: false),
+                                    ),
+                                    if (remaining > 0)
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: dims.xs,
+                                          vertical: dims.xxs,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme
+                                              .surfaceContainerHighest,
+                                          borderRadius: AppRadius.smBorder,
+                                        ),
+                                        child: Text(
+                                          '+$remaining',
+                                          style: theme.textTheme.labelSmall,
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, _) => const SizedBox.shrink(),
+                            ),
+                          ],
+                          SizedBox(height: dims.noteCardFooterGap),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Bounds the row so the reminder chip can ellipsize.
+                              Expanded(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (note.sharedBy != null) ...[
+                                      Tooltip(
+                                        message:
+                                            'Shared by ${note.sharedBy!.name}',
+                                        child: _SharedByAvatar(
+                                          sharedBy: note.sharedBy!,
+                                          serverUrl: serverUrl,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      SizedBox(width: dims.xs),
+                                    ],
+                                    if (note.isOwner && note.hasShares) ...[
+                                      _SharedByMeIndicator(
+                                        count: note.shareIds!.length,
+                                        onTap: isSelectionMode
+                                            ? null
+                                            : () => AppBottomSheet.show(
+                                                context,
+                                                builder: (_) => ShareNoteSheet(
+                                                  noteId: note.id,
+                                                ),
+                                              ),
+                                      ),
+                                      SizedBox(width: dims.xs),
+                                    ],
+                                    if (note.reminder != null) ...[
+                                      Flexible(
+                                        child: ReminderChip(
+                                          reminder: note.reminder!,
+                                          compact: true,
+                                        ),
+                                      ),
+                                      SizedBox(width: dims.xs),
+                                    ],
+                                    if (note.updatedAt != null)
+                                      Text(
+                                        datePrefix != null
+                                            ? '$datePrefix ${DateFormat.MMMd().format(note.updatedAt!)}'
+                                            : DateFormat.MMMd().format(
+                                                note.updatedAt!,
+                                              ),
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                              color: theme.colorScheme.onSurface
+                                                  .withValues(
+                                                    alpha: AppOpacity.secondary,
+                                                  ),
+                                            ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (trailingActions != null)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: trailingActions!,
+                                ),
+                              if (trailingActions == null && !note.isSynced)
+                                Icon(
+                                  LucideIcons.cloudOff,
+                                  size: AppIconSizes.sm,
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: AppOpacity.secondary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -370,11 +386,26 @@ class _NoteImagePreviews extends StatelessWidget {
   /// Opens a picture full size; null leaves taps to the card.
   final ValueChanged<String>? onOpen;
 
-  const _NoteImagePreviews({required this.previews, this.onOpen});
+  /// Lo-fi shows pictures in grey.
+  final bool grayscale;
+
+  const _NoteImagePreviews({
+    required this.previews,
+    this.onOpen,
+    this.grayscale = false,
+  });
 
   Widget _thumb(int i) {
     final preview = previews[i];
-    final thumb = _Thumb(key: ValueKey(preview.attachmentId), preview: preview);
+    final Widget thumb = grayscale
+        ? ColorFiltered(
+            colorFilter: grayscaleFilter,
+            child: _Thumb(
+              key: ValueKey(preview.attachmentId),
+              preview: preview,
+            ),
+          )
+        : _Thumb(key: ValueKey(preview.attachmentId), preview: preview);
     if (onOpen == null) return thumb;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

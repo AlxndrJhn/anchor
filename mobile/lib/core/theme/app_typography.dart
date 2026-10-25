@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'tokens/app_style.dart';
+
 /// Font choices for the app: DM Sans for UI text, Playfair Display for
 /// display/headline styles, JetBrains Mono for code.
 ///
@@ -21,7 +23,25 @@ class AppTypography {
   static const double editorH2Size = 24;
   static const double editorH3Size = 20;
 
-  static TextTheme buildTextTheme(TextTheme base) {
+  static TextTheme buildTextTheme(
+    TextTheme base, [
+    AppStyle style = AppStyle.standard,
+  ]) {
+    // Neo-Brutalism sets everything in a bold grotesque, Lo-fi in handwriting.
+    if (style == AppStyle.neoBrutalism) {
+      final theme = GoogleFonts.spaceGroteskTextTheme(base);
+      return theme.copyWith(
+        displayLarge: theme.displayLarge?.copyWith(fontWeight: FontWeight.w700),
+        displayMedium: theme.displayMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        headlineMedium: theme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        titleLarge: theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+      );
+    }
+    if (style == AppStyle.lofi) return GoogleFonts.patrickHandTextTheme(base);
     return GoogleFonts.dmSansTextTheme(base).copyWith(
       displayLarge: GoogleFonts.playfairDisplay(
         textStyle: base.displayLarge,

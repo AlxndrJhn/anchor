@@ -8,6 +8,8 @@ class PreferenceKeys {
   static const sortChecklistItems = 'editor_sort_checklist_items';
   static const themeMode = 'theme_mode';
   static const displayDensity = 'display_density';
+  static const colorScheme = 'color_scheme';
+  static const appStyle = 'app_style';
   static const exactAlarmsOffered = 'reminders_exact_alarms_offered';
 }
 
@@ -49,5 +51,13 @@ class PreferencesRepository {
 
   Future<void> setDisplayDensity(String density) async {
     await _storage.write(key: PreferenceKeys.displayDensity, value: density);
+  }
+
+  Future<void> setColorScheme(String scheme) async {
+    await _storage.write(key: PreferenceKeys.colorScheme, value: scheme);
+  }
+
+  Future<void> setAppStyle(String style) async {
+    await _storage.write(key: PreferenceKeys.appStyle, value: style);
   }
 }

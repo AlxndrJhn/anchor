@@ -13,6 +13,7 @@ import 'logging/app_logger.dart';
 import 'notifications/notification_launch.dart';
 import 'router/app_routes.dart';
 import 'theme/tokens/app_dimensions.dart';
+import 'theme/tokens/app_style.dart';
 
 const _serverUrlKey = 'server_url';
 const _accessTokenKey = 'access_token';
@@ -25,6 +26,10 @@ ThemeMode initialThemeMode = ThemeMode.system;
 /// Holds the initial display density loaded before the app starts
 /// This is set by [initializeApp] and read by the density provider
 DisplayDensity initialDisplayDensity = DisplayDensity.standard;
+
+/// The colour scheme and style loaded before the app starts.
+String initialColorScheme = anchorSchemeId;
+AppStyle initialAppStyle = AppStyle.standard;
 
 /// Holds the initial user ID loaded before the app starts
 /// This is set by [initializeApp] and read by [ActiveUserId] provider
@@ -76,6 +81,14 @@ Future<void> initializeApp() async {
       orElse: () => DisplayDensity.standard,
     );
   }
+
+  final savedScheme = await _storage.read(key: PreferenceKeys.colorScheme);
+  if (savedScheme != null && schemeById(savedScheme) != null) {
+    initialColorScheme = savedScheme;
+  }
+  initialAppStyle = AppStyle.fromId(
+    await _storage.read(key: PreferenceKeys.appStyle),
+  );
 
   // User id for per-user database selection, read from the persisted user json.
   final userData = await _storage.read(key: 'user_data');

@@ -9,50 +9,103 @@ import 'tokens/app_dimensions.dart';
 import 'tokens/app_opacity.dart';
 import 'tokens/app_palette.dart';
 import 'tokens/app_radius.dart';
+import 'tokens/app_schemes.dart';
+import 'tokens/app_style.dart';
 
 /// Builds the app's [ThemeData], including the component themes.
 class AppTheme {
   AppTheme._();
 
-  static final Map<(Brightness, DisplayDensity), ThemeData> _cache = {};
+  static final Map<(Brightness, DisplayDensity, String, AppStyle), ThemeData>
+  _cache = {};
 
-  static ThemeData light([DisplayDensity density = DisplayDensity.standard]) =>
-      _cache.putIfAbsent((
-        Brightness.light,
-        density,
-      ), () => _build(Brightness.light, density));
+  static ThemeData light([
+    DisplayDensity density = DisplayDensity.standard,
+    String scheme = anchorSchemeId,
+    AppStyle style = AppStyle.standard,
+  ]) => _cache.putIfAbsent((
+    Brightness.light,
+    density,
+    scheme,
+    style,
+  ), () => _build(Brightness.light, density, scheme, style));
 
-  static ThemeData dark([DisplayDensity density = DisplayDensity.standard]) =>
-      _cache.putIfAbsent((
-        Brightness.dark,
-        density,
-      ), () => _build(Brightness.dark, density));
+  static ThemeData dark([
+    DisplayDensity density = DisplayDensity.standard,
+    String scheme = anchorSchemeId,
+    AppStyle style = AppStyle.standard,
+  ]) => _cache.putIfAbsent((
+    Brightness.dark,
+    density,
+    scheme,
+    style,
+  ), () => _build(Brightness.dark, density, scheme, style));
 
-  static ThemeData _build(Brightness brightness, DisplayDensity density) {
+  static ThemeData _build(
+    Brightness brightness,
+    DisplayDensity density,
+    String schemeId,
+    AppStyle style,
+  ) {
     final isDark = brightness == Brightness.dark;
     final base = isDark ? ThemeData.dark() : ThemeData.light();
-    final primary = isDark ? AppPalette.offWhite : AppPalette.slate;
-    final background = isDark ? AppPalette.bgDark : AppPalette.bgLight;
-    final container = isDark ? AppPalette.surfaceDark : AppPalette.surfaceLight;
+    // Lo-fi draws in its own greys; null keeps Anchor's hand-tuned palette.
+    final palette = style == AppStyle.lofi
+        ? lofiScheme.of(brightness)
+        : schemeById(schemeId)?.of(brightness);
+    final primary =
+        palette?.foreground ??
+        (isDark ? AppPalette.offWhite : AppPalette.slate);
+    final secondary = palette?.mutedForeground ?? AppPalette.slateBlue;
+    final accent = palette?.accent ?? AppPalette.burntOrange;
+    final background =
+        palette?.background ??
+        (isDark ? AppPalette.bgDark : AppPalette.bgLight);
+    final container =
+        palette?.card ??
+        (isDark ? AppPalette.surfaceDark : AppPalette.surfaceLight);
     final dims = AppDimensions.of(density);
-    final tokens = AppColorTokens.of(brightness);
+    final styleTokens = AppStyleTokens.of(
+      style,
+      primary,
+      brightness,
+      noteFill: palette?.card,
+    );
+    final tokens = _colorTokens(brightness, palette, style, primary);
+    final brutal = style == AppStyle.neoBrutalism;
+    final lofi = style == AppStyle.lofi;
 
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppPalette.slateBlue,
+      seedColor: palette?.accentStrong ?? AppPalette.slateBlue,
       primary: primary,
-      secondary: AppPalette.slateBlue,
-      tertiary: AppPalette.burntOrange,
+      secondary: secondary,
+      tertiary: accent,
       surface: background,
       onSurface: primary,
+      error: palette?.destructive,
+      outline: palette?.border,
       brightness: brightness,
     );
+
+    final fabBackground = lofi || brutal
+        ? container
+        : palette?.accentStrong ??
+              (isDark ? AppPalette.burntOrange : AppPalette.slate);
+    final fabForeground = lofi || brutal
+        ? primary
+        : palette == null
+        ? Colors.white
+        : _onColor(fabBackground);
+    final sharpCorners = brutal
+        ? const BorderRadius.all(Radius.circular(6))
+        : null;
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: background,
-      textTheme: AppTypography.buildTextTheme(base.textTheme),
+      textTheme: AppTypography.buildTextTheme(base.textTheme, style),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -71,16 +124,21 @@ class AppTheme {
         elevation: 0,
         color: container,
         margin: EdgeInsets.zero,
-        shape: const RoundedRectangleBorder(
-          borderRadius: AppRadius.lgBorder,
-          side: BorderSide.none,
+        shape: RoundedRectangleBorder(
+          borderRadius: styleTokens.cardRadius,
+          side: styleTokens.cardSide,
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: isDark ? AppPalette.burntOrange : AppPalette.slate,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.fabBorder),
+        backgroundColor: fabBackground,
+        foregroundColor: fabForeground,
+        elevation: lofi || brutal ? 0 : 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: lofi
+              ? AppStyleTokens.wobbly
+              : sharpCorners ?? AppRadius.fabBorder,
+          side: lofi || brutal ? styleTokens.cardSide : BorderSide.none,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -93,10 +151,12 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           padding: dims.buttonPadding,
-          shape: const RoundedRectangleBorder(
-            borderRadius: AppRadius.buttonBorder,
+          shape: RoundedRectangleBorder(
+            borderRadius: sharpCorners ?? AppRadius.buttonBorder,
           ),
-          side: BorderSide(color: primary.withValues(alpha: AppOpacity.border)),
+          side: brutal || lofi
+              ? styleTokens.cardSide
+              : BorderSide(color: primary.withValues(alpha: AppOpacity.border)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -114,8 +174,11 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: container,
         surfaceTintColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(
-          borderRadius: AppRadius.sheetBorder,
+        shape: RoundedRectangleBorder(
+          borderRadius: lofi
+              ? AppStyleTokens.wobbly
+              : sharpCorners ?? AppRadius.sheetBorder,
+          side: styleTokens.cardSide,
         ),
       ),
       datePickerTheme: DatePickerThemeData(
@@ -140,9 +203,7 @@ class AppTheme {
         hourMinuteShape: const RoundedRectangleBorder(
           borderRadius: AppRadius.mdBorder,
         ),
-        dialBackgroundColor: AppPalette.slateBlue.withValues(
-          alpha: AppOpacity.subtleFill,
-        ),
+        dialBackgroundColor: secondary.withValues(alpha: AppOpacity.subtleFill),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Colors.transparent,
@@ -157,24 +218,93 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.xlBorder,
-          side: BorderSide(
-            color: primary.withValues(alpha: AppOpacity.hairline),
-          ),
+          side: brutal || lofi
+              ? styleTokens.cardSide
+              : BorderSide(
+                  color: primary.withValues(alpha: AppOpacity.hairline),
+                ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: tokens.inputFill,
-        border: const OutlineInputBorder(
-          borderRadius: AppRadius.mdBorder,
-          borderSide: BorderSide.none,
+        border: OutlineInputBorder(
+          borderRadius: sharpCorners ?? AppRadius.mdBorder,
+          borderSide: brutal || lofi ? styleTokens.cardSide : BorderSide.none,
         ),
+        enabledBorder: brutal || lofi
+            ? OutlineInputBorder(
+                borderRadius: sharpCorners ?? AppRadius.mdBorder,
+                borderSide: styleTokens.cardSide,
+              )
+            : null,
         contentPadding: EdgeInsets.all(dims.lg),
-        hintStyle: TextStyle(
-          color: AppPalette.slateBlue.withValues(alpha: 0.5),
+        hintStyle: TextStyle(color: secondary.withValues(alpha: 0.5)),
+      ),
+      extensions: [dims, tokens, styleTokens],
+    );
+  }
+
+  /// White or near-black, whichever reads on [color].
+  static Color _onColor(Color color) =>
+      color.computeLuminance() > 0.45 ? const Color(0xFF1B1B1B) : Colors.white;
+
+  /// Anchor's tokens, recoloured for a scheme and adjusted for a style.
+  static AppColorTokens _colorTokens(
+    Brightness brightness,
+    SchemePalette? palette,
+    AppStyle style,
+    Color ink,
+  ) {
+    final isDark = brightness == Brightness.dark;
+    var tokens = AppColorTokens.of(brightness);
+    if (palette != null) {
+      tokens = tokens.copyWith(
+        pageGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [palette.background, palette.sidebar],
+        ),
+        sheetGradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [palette.card, palette.background],
+        ),
+        subtleBorder: ink.withValues(alpha: 0.08),
+        cardFill: palette.card.withValues(alpha: isDark ? 0.85 : 0.9),
+        inputFill: palette.muted.withValues(alpha: 0.7),
+        shimmerBase: palette.muted,
+        shimmerHighlight: Color.lerp(palette.muted, palette.card, 0.6),
+      );
+    }
+    final card =
+        palette?.card ?? (isDark ? AppPalette.surfaceDark : Colors.white);
+    return switch (style) {
+      AppStyle.standard => tokens,
+      AppStyle.skeuomorphism => tokens.copyWith(
+        subtleBorder: ink.withValues(alpha: 0.1),
+        cardFill: card,
+        cardShadow: BoxShadow(
+          color: Colors.black.withValues(alpha: isDark ? 0.55 : 0.2),
+          blurRadius: 16,
+          spreadRadius: -4,
+          offset: const Offset(0, 8),
         ),
       ),
-      extensions: [dims, tokens],
-    );
+      AppStyle.neoBrutalism => tokens.copyWith(
+        subtleBorder: ink,
+        cardFill: card,
+        inputFill: card,
+        cardShadow: BoxShadow(color: ink, offset: const Offset(4, 4)),
+        sheetShadow: BoxShadow(color: ink, offset: const Offset(0, -3)),
+      ),
+      AppStyle.lofi => tokens.copyWith(
+        subtleBorder: ink.withValues(alpha: 0.6),
+        cardFill: card,
+        inputFill: card,
+        cardShadow: const BoxShadow(color: Colors.transparent),
+        sheetShadow: const BoxShadow(color: Colors.transparent),
+      ),
+    };
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/theme/tokens/app_style.dart';
+
 class NoteBackground extends StatelessWidget {
   final String? styleId;
   final Widget child;
@@ -16,7 +18,10 @@ class NoteBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgData = NoteBackgroundStyle.getStyle(styleId, theme);
+    final bgData = NoteBackgroundStyle.getStyle(
+      _effectiveId(theme, styleId),
+      theme,
+    );
     final isDark = theme.brightness == Brightness.dark;
 
     // Resolve base color
@@ -24,7 +29,7 @@ class NoteBackground extends StatelessWidget {
     if (bgData != null) {
       backgroundColor = isDark ? bgData.darkColor : bgData.lightColor;
     } else {
-      backgroundColor = theme.colorScheme.surface;
+      backgroundColor = _plainColor(theme);
     }
 
     return Container(
@@ -50,15 +55,25 @@ class NoteBackground extends StatelessWidget {
   /// without rendering the pattern.
   static Color resolveColor(BuildContext context, String? styleId) {
     final theme = Theme.of(context);
-    final bgData = NoteBackgroundStyle.getStyle(styleId, theme);
+    final bgData = NoteBackgroundStyle.getStyle(
+      _effectiveId(theme, styleId),
+      theme,
+    );
     final isDark = theme.brightness == Brightness.dark;
 
     if (bgData != null) {
       return isDark ? bgData.darkColor : bgData.lightColor;
     }
 
-    return theme.colorScheme.surface;
+    return _plainColor(theme);
   }
+
+  /// Lo-fi draws every note as plain paper.
+  static String? _effectiveId(ThemeData theme, String? styleId) =>
+      theme.extension<AppStyleTokens>()?.plainNotes ?? false ? null : styleId;
+
+  static Color _plainColor(ThemeData theme) =>
+      theme.extension<AppStyleTokens>()?.noteFill ?? theme.colorScheme.surface;
 }
 
 class NoteBackgroundData {

@@ -7,6 +7,10 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_dimensions.dart';
 import '../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../core/theme/tokens/app_opacity.dart';
+import '../../../core/theme/tokens/app_palette.dart';
+import '../../../core/theme/tokens/app_radius.dart';
+import '../../../core/theme/tokens/app_schemes.dart';
+import '../../../core/theme/tokens/app_style.dart';
 import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/editor/link_utils.dart';
@@ -74,6 +78,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     (ThemeMode.dark, 'Dark', 'Always use dark theme', LucideIcons.moon),
   ];
 
+  static const _styleIcons = {
+    AppStyle.standard: LucideIcons.sparkles,
+    AppStyle.skeuomorphism: LucideIcons.layers,
+    AppStyle.neoBrutalism: LucideIcons.square,
+    AppStyle.lofi: LucideIcons.pencil,
+  };
+
   static const _densities = [
     (DisplayDensity.standard, 'More breathing room', LucideIcons.alignLeft),
     (DisplayDensity.compact, 'Fit more on screen', LucideIcons.alignJustify),
@@ -84,6 +95,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final dims = context.dims;
     final currentThemeMode = ref.watch(themeModeControllerProvider);
     final currentDensity = ref.watch(displayDensityControllerProvider);
+    final currentScheme = ref.watch(colorSchemeControllerProvider);
+    final currentStyle = ref.watch(appStyleControllerProvider);
     final editorPrefs = ref.watch(editorPreferencesControllerProvider);
     final serverUrl = ref.watch(serverUrlProvider);
     final serverInfoAsync = ref.watch(serverInfoProvider);
@@ -113,6 +126,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             onTap: () => ref
                                 .read(themeModeControllerProvider.notifier)
                                 .setThemeMode(mode),
+                          ),
+                      ],
+                    ),
+
+                    _Section(
+                      title: 'Colour scheme',
+                      icon: LucideIcons.swatchBook,
+                      children: [
+                        _SchemePicker(
+                          selected: currentScheme,
+                          // Lo-fi draws in its own greys.
+                          note: currentStyle == AppStyle.lofi
+                              ? 'Lo-fi draws in pencil greys, whatever the scheme.'
+                              : null,
+                          onSelected: (id) => ref
+                              .read(colorSchemeControllerProvider.notifier)
+                              .setScheme(id),
+                        ),
+                      ],
+                    ),
+
+                    _Section(
+                      title: 'Style',
+                      icon: LucideIcons.brush,
+                      children: [
+                        for (final style in AppStyle.values)
+                          SettingsSelectRow(
+                            title: style.label,
+                            subtitle: style.subtitle,
+                            icon: _styleIcons[style]!,
+                            isSelected: currentStyle == style,
+                            onTap: () => ref
+                                .read(appStyleControllerProvider.notifier)
+                                .setStyle(style),
                           ),
                       ],
                     ),
@@ -218,6 +265,212 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Anchor's own scheme, as a swatch beside the generated ones.
+const _anchorScheme = AppScheme(
+  id: anchorSchemeId,
+  name: 'Anchor',
+  light: SchemePalette(
+    background: AppPalette.bgLight,
+    card: AppPalette.surfaceLight,
+    sidebar: AppPalette.gradientLightBottom,
+    muted: AppPalette.shimmerBaseLight,
+    foreground: AppPalette.slate,
+    mutedForeground: AppPalette.slateBlue,
+    accent: AppPalette.burntOrange,
+    accentStrong: AppPalette.burntOrange,
+    accentInk: AppPalette.burntOrange,
+    border: AppPalette.shimmerBaseLight,
+    divider: AppPalette.shimmerBaseLight,
+    input: AppPalette.slateBlue,
+    destructive: Color(0xFFD32F2F),
+  ),
+  dark: SchemePalette(
+    background: AppPalette.bgDark,
+    card: AppPalette.surfaceDark,
+    sidebar: AppPalette.bgDark,
+    muted: AppPalette.shimmerBaseDark,
+    foreground: AppPalette.offWhite,
+    mutedForeground: AppPalette.slateBlue,
+    accent: AppPalette.burntOrange,
+    accentStrong: AppPalette.burntOrange,
+    accentInk: AppPalette.burntOrange,
+    border: AppPalette.shimmerBaseDark,
+    divider: AppPalette.shimmerBaseDark,
+    input: AppPalette.slateBlue,
+    destructive: Color(0xFFEF5350),
+  ),
+);
+
+/// A grid of colour scheme swatches, each in the current brightness.
+class _SchemePicker extends StatelessWidget {
+  const _SchemePicker({
+    required this.selected,
+    required this.onSelected,
+    this.note,
+  });
+
+  final String selected;
+  final ValueChanged<String> onSelected;
+  final String? note;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dims = context.dims;
+    return Padding(
+      padding: EdgeInsets.all(dims.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 8.0;
+              final columns = constraints.maxWidth > 420 ? 4 : 3;
+              final width =
+                  (constraints.maxWidth - gap * (columns - 1)) / columns;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  for (final scheme in [_anchorScheme, ...appSchemes])
+                    SizedBox(
+                      width: width,
+                      child: _SchemeTile(
+                        scheme: scheme,
+                        isSelected: scheme.id == selected,
+                        onTap: () => onSelected(scheme.id),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          if (note != null) ...[
+            SizedBox(height: dims.sm),
+            Text(
+              note!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(
+                  alpha: AppOpacity.secondary,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SchemeTile extends StatelessWidget {
+  const _SchemeTile({
+    required this.scheme,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final AppScheme scheme;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = scheme.of(theme.brightness);
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: '${scheme.name} colour scheme',
+      child: Material(
+        color: palette.background,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.mdBorder,
+          side: BorderSide(
+            color: isSelected
+                ? theme.colorScheme.tertiary
+                : palette.foreground.withValues(alpha: 0.12),
+            width: isSelected ? 2.5 : 1,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // A miniature card: a title line in the ink, an accent dot.
+                Container(
+                  height: 34,
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: palette.card,
+                    borderRadius: AppRadius.xsBorder,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 5,
+                              width: 34,
+                              color: palette.foreground,
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              height: 4,
+                              width: 24,
+                              color: palette.mutedForeground,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: palette.accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        scheme.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: palette.foreground,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (isSelected)
+                      Icon(
+                        LucideIcons.check,
+                        size: 14,
+                        color: palette.foreground,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
