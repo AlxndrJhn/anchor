@@ -239,23 +239,28 @@ function NoteEditor({
     };
   }, [editor.historyOpen]);
 
-  // "New list" (the L key) opens with a checklist started.
+  // A new note opens with the caret in its text, ready to type ("New list",
+  // the L key, starts a checklist there).
   const searchParams = useSearchParams();
   // Opened from search results: mark the term in the note.
   useSearchHits(articleRef, searchParams.get("hl"), !isLoading);
-  const startsList = isNew && searchParams.get("list") === "1";
+  const startsList = searchParams.get("list") === "1";
   useEffect(() => {
-    if (!startsList) return;
+    if (!isNew) return;
     let frame = 0;
     let tries = 0;
     const start = () => {
-      if (document.querySelector(".ed .ql-editor")) {
-        contentEditorRef.current?.startList("unchecked");
-      } else if (++tries < 120) frame = requestAnimationFrame(start);
+      if (!document.querySelector(".ed .ql-editor")) {
+        if (++tries < 120) frame = requestAnimationFrame(start);
+        return;
+      }
+      const editor = contentEditorRef.current;
+      if (startsList) editor?.startList("unchecked");
+      else editor?.setSelection(0, 0);
     };
     frame = requestAnimationFrame(start);
     return () => cancelAnimationFrame(frame);
-  }, [startsList]);
+  }, [isNew, startsList]);
 
   const showSkeleton = useDelayedFlag(isLoading && !isNew);
   if (isLoading && !isNew) return showSkeleton ? <EditorSkeleton /> : null;

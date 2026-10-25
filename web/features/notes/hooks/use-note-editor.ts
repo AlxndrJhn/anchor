@@ -285,25 +285,7 @@ export function useNoteEditor({
     );
   }, [live]);
 
-  useEffect(() => {
-    if (!isNew) return;
-    const frameId = requestAnimationFrame(() => {
-      const activeElement = document.activeElement;
-      const hasInteractiveFocus =
-        activeElement instanceof HTMLElement &&
-        activeElement !== document.body &&
-        (activeElement.tagName === "INPUT" ||
-          activeElement.tagName === "TEXTAREA" ||
-          activeElement.isContentEditable ||
-          activeElement.closest(".ql-editor") !== null);
-      const titleInput = titleInputRef.current;
-      if (hasInteractiveFocus || !titleInput) return;
-      titleInput.focus();
-      const cursorPosition = titleInput.value.length;
-      titleInput.setSelectionRange(cursorPosition, cursorPosition);
-    });
-    return () => cancelAnimationFrame(frameId);
-  }, [isNew]);
+  // A new note's caret goes to its text; the editor page puts it there.
 
   // Fields fill once per note, so background refetches don't reset focus.
   useEffect(() => {
