@@ -8,6 +8,9 @@ import 'package:gal/gal.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/files/image_text.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/logging/log_tags.dart';
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
 import '../../../../core/network/connectivity_provider.dart';
@@ -33,6 +36,7 @@ Future<void> showPictureViewer(
   required int initial,
   required bool Function(NoteAttachment) canDelete,
   required ValueChanged<NoteAttachment> onDelete,
+  ValueChanged<String>? onGrabText,
 }) {
   return Navigator.of(context, rootNavigator: true).push(
     PageRouteBuilder<void>(
@@ -48,6 +52,7 @@ Future<void> showPictureViewer(
         initial: initial,
         canDelete: canDelete,
         onDelete: onDelete,
+        onGrabText: canReadImageText ? onGrabText : null,
       ),
       transitionsBuilder: (_, animation, _, child) => child,
     ),
@@ -86,6 +91,7 @@ class _Viewer extends ConsumerStatefulWidget {
     required this.initial,
     required this.canDelete,
     required this.onDelete,
+    this.onGrabText,
   });
 
   final String noteId;
@@ -93,6 +99,10 @@ class _Viewer extends ConsumerStatefulWidget {
   final int initial;
   final bool Function(NoteAttachment) canDelete;
   final ValueChanged<NoteAttachment> onDelete;
+
+  /// Takes the text read from a picture into the note ("Grab image text");
+  /// null hides the button, where the note can't be edited.
+  final ValueChanged<String>? onGrabText;
 
   @override
   ConsumerState<_Viewer> createState() => _ViewerState();
@@ -111,6 +121,7 @@ class _ViewerState extends ConsumerState<_Viewer>
   final Map<String, TransformationController> _zoom = {};
   bool _isImmersive = false;
   bool _zoomed = false;
+  bool _isReadingText = false;
 
   /// The pull down, in pixels.
   late final AnimationController _pull = AnimationController.unbounded(
@@ -279,6 +290,43 @@ class _ViewerState extends ConsumerState<_Viewer>
           kind: SnackbarKind.error,
         );
       }
+    }
+  }
+
+  /// Reads the picture's text and adds it to the note, as Google Keep does.
+  Future<void> _grabText() async {
+    final file = _files[_current.id];
+    final onText = widget.onGrabText;
+    if (file == null || onText == null || _isReadingText) return;
+    final l10n = context.l10n;
+    setState(() => _isReadingText = true);
+    try {
+      final text = await readImageText(file);
+      if (!mounted) return;
+      if (text.isEmpty) {
+        AppSnackbar.show(context, l10n.pictureNoText, kind: SnackbarKind.info);
+        return;
+      }
+      onText(text);
+      Haptics.success();
+      _close();
+      AppSnackbar.show(context, l10n.pictureTextAdded);
+    } catch (error, stack) {
+      AppLogger.instance.warn(
+        LogTags.notes,
+        'Grab image text failed',
+        error: error,
+        stackTrace: stack,
+      );
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.pictureTextFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isReadingText = false);
     }
   }
 
@@ -483,6 +531,26 @@ class _ViewerState extends ConsumerState<_Viewer>
                         color: ink,
                         onPressed: _save,
                       ),
+                      if (widget.onGrabText != null)
+                        _isReadingText
+                            ? Semantics(
+                                label: context.l10n.pictureReadingText,
+                                child: const SizedBox.square(
+                                  dimension: AnchorTokens.sizeControlMedium,
+                                  child: Center(
+                                    child: Spinner(
+                                      size: AnchorTokens.sizeIconLarge,
+                                      color: ink,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : BarButton(
+                                icon: LucideIcons.scanText,
+                                label: context.l10n.pictureGrabText,
+                                color: ink,
+                                onPressed: hasPicture ? _grabText : null,
+                              ),
                       if (widget.canDelete(_current))
                         BarButton(
                           icon: LucideIcons.trash2,

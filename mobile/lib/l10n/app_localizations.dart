@@ -3814,6 +3814,36 @@ abstract class AppLocalizations {
   /// **'Couldn’t load this picture'**
   String get pictureLoadFailed;
 
+  /// Button in the picture viewer: reads the text in the picture and adds it at the end of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Grab image text'**
+  String get pictureGrabText;
+
+  /// Screen reader label while Grab image text reads the picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the picture’s text'**
+  String get pictureReadingText;
+
+  /// Toast after Grab image text added the picture's text at the end of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Text added to the note'**
+  String get pictureTextAdded;
+
+  /// Toast when Grab image text finds no text in the picture.
+  ///
+  /// In en, this message translates to:
+  /// **'No text found in this picture'**
+  String get pictureNoText;
+
+  /// Error toast when Grab image text fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read this picture'**
+  String get pictureTextFailed;
+
   /// Screen reader label of the download button in the picture viewer.
   ///
   /// In en, this message translates to:

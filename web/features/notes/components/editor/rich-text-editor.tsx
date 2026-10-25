@@ -164,6 +164,8 @@ export interface RichTextEditorHandle {
   showCheckboxes: () => void;
   hideCheckboxes: () => void;
   undo: () => void;
+  /** Adds plain lines at the end of the note ("Grab image text"). */
+  appendText: (text: string) => void;
 }
 
 export const RichTextEditor = forwardRef<
@@ -663,6 +665,24 @@ export const RichTextEditor = forwardRef<
         quill.history.cutoff();
       };
       return {
+        appendText: (text: string) => {
+          if (readOnly || !text.trim()) return;
+          const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
+          if (!quill) return;
+          const end = quill.getLength() - 1;
+          const prefix = quill.getText().trim() ? "\n" : "";
+          quill.history.cutoff();
+          quill.insertText(end, `${prefix}${text}`, "user");
+          // Plain lines, whatever list the note ended in.
+          quill.formatLine(
+            end + prefix.length,
+            text.length,
+            "list",
+            false,
+            "user",
+          );
+          quill.history.cutoff();
+        },
         setSelection: (index: number, length: number) => {
           if (readOnly) return;
           const quill = quillRef.current?.getEditor?.() as QuillInstance | null;

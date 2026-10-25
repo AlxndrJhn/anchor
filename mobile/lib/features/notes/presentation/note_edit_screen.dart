@@ -761,6 +761,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             canEdit: note.canEdit && note.isActive,
             currentUserId: ref.watch(activeUserIdProvider),
             onAdd: _showAdd,
+            onGrabText: _isReadOnly
+                ? null
+                : (text) => _editorKey.currentState?.appendText(text),
           ),
         ValueListenableBuilder(
           valueListenable: _showsEmptyNoteActions,

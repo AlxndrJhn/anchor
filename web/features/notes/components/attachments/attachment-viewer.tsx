@@ -6,11 +6,13 @@ import {
   ChevronRight,
   CircleAlert,
   Download,
+  LoaderCircle,
+  ScanText,
   Trash2,
   X,
 } from "lucide-react";
 import * as React from "react";
-import { toastHostRef } from "@/components/ui/toast";
+import { toast, toastHostRef } from "@/components/ui/toast";
 import { useAttachmentBlob } from "../../hooks/use-attachment-blob";
 import type { NoteAttachment } from "../../types";
 
@@ -22,6 +24,7 @@ export function Viewer({
   canDelete,
   onDelete,
   onReturnFocus,
+  onGrabText,
 }: {
   noteId: string;
   pictures: NoteAttachment[];
@@ -31,6 +34,8 @@ export function Viewer({
   onDelete: (a: NoteAttachment) => void;
   /** True when it put focus back in the strip. */
   onReturnFocus: (pictureId: string) => boolean;
+  /** Takes text read from a picture into the note; absent hides the button. */
+  onGrabText?: (text: string) => void;
 }) {
   // The last picture stays while the viewer fades out.
   const [last, setLast] = React.useState(id);
@@ -47,6 +52,31 @@ export function Viewer({
     if (pictures.length < 2) return;
     const next = pictures[(index + step + pictures.length) % pictures.length];
     onShow(next.id);
+  };
+
+  const [reading, setReading] = React.useState(false);
+  const grabText = async () => {
+    if (!blobUrl || !onGrabText) return;
+    setReading(true);
+    try {
+      const { readImageText } = await import("@/lib/image-text");
+      const text = await readImageText(blobUrl);
+      if (!text) {
+        toast.error("No text found in this picture");
+        return;
+      }
+      onGrabText(text);
+      onShow(null);
+      toast.success("Text added to the note");
+    } catch {
+      toast.error(
+        navigator.onLine
+          ? "Couldn’t read this picture"
+          : "Reading pictures needs a connection the first time",
+      );
+    } finally {
+      setReading(false);
+    }
   };
 
   const download = () => {
@@ -86,6 +116,24 @@ export function Viewer({
                 </div>
               </div>
               <div className="vw-actions">
+                {onGrabText && (
+                  <button
+                    type="button"
+                    aria-label="Grab image text"
+                    onClick={grabText}
+                    disabled={!blobUrl || reading}
+                    aria-busy={reading || undefined}
+                  >
+                    {reading ? (
+                      <LoaderCircle aria-hidden className="animate-spin" />
+                    ) : (
+                      <ScanText aria-hidden />
+                    )}
+                    <span className="vw-lbl">
+                      {reading ? "Reading…" : "Grab text"}
+                    </span>
+                  </button>
+                )}
                 <button
                   type="button"
                   aria-label="Download"

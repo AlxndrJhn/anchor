@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anchor/core/files/image_text.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
@@ -42,7 +43,11 @@ void main() {
 
   setUp(() => repo = MockAttachmentsRepository());
 
-  Future<void> openViewer(WidgetTester tester, {bool isOnline = true}) async {
+  Future<void> openViewer(
+    WidgetTester tester, {
+    bool isOnline = true,
+    ValueChanged<String>? onGrabText,
+  }) async {
     final online = NotifierProvider<Online, bool>(() => Online(isOnline));
     await tester.pumpWidget(
       ProviderScope(
@@ -63,6 +68,7 @@ void main() {
                   initial: 0,
                   canDelete: (_) => false,
                   onDelete: (_) {},
+                  onGrabText: onGrabText,
                 ),
                 child: const Text('Open'),
               ),
@@ -120,5 +126,61 @@ void main() {
       findsOneWidget,
     );
     semantics.dispose();
+  });
+
+  group('Grab image text', () {
+    tearDown(() => debugImageTextReader = null);
+
+    testWidgets('adds the picture\'s text to the note and closes', (
+      tester,
+    ) async {
+      download(() async => '/nowhere/harbor.jpg');
+      String? read;
+      debugImageTextReader = (path) async {
+        read = path;
+        return 'Harbor Road 12\nOpen 9-5';
+      };
+      String? added;
+      await openViewer(tester, onGrabText: (text) => added = text);
+
+      await tester.tap(find.bySemanticsLabel('Grab image text'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(read, '/nowhere/harbor.jpg');
+      expect(added, 'Harbor Road 12\nOpen 9-5');
+      expect(find.byType(PageView), findsNothing);
+      await tester.pumpAndSettle();
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('a picture with no text says so and stays open', (
+      tester,
+    ) async {
+      download(() async => '/nowhere/harbor.jpg');
+      debugImageTextReader = (_) async => '';
+      String? added;
+      await openViewer(tester, onGrabText: (text) => added = text);
+
+      await tester.tap(find.bySemanticsLabel('Grab image text'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(added, isNull);
+      expect(find.byType(PageView), findsOneWidget);
+      expect(
+        find.textContaining('No text found', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.pumpAndSettle();
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('is not offered where the note can\'t be edited', (
+      tester,
+    ) async {
+      download(() async => '/nowhere/harbor.jpg');
+      await openViewer(tester);
+
+      expect(find.bySemanticsLabel('Grab image text'), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
   });
 }

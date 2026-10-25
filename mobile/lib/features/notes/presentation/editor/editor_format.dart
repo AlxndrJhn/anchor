@@ -114,6 +114,34 @@ extension EditorFormat on QuillController {
     );
   }
 
+  /// Adds [text] as plain lines at the end of the note ("Grab image text"),
+  /// whatever the last line is; a note with only a blank line takes it there.
+  void appendPlainLines(String text) {
+    final lines = text.trim();
+    if (lines.isEmpty) return;
+    final last = parseDocumentLines(document).last;
+    final attributes = last.newlineAttributes ?? const <String, dynamic>{};
+    final isBlank = document.length == 1 && attributes.isEmpty;
+    // Composed as is: Quill's insert rules would copy the last line's style.
+    // The last line keeps its style on a newline of its own; the note's
+    // final newline then ends the new text, as a plain line.
+    compose(
+      isBlank
+          ? (Delta()..insert(lines))
+          : (Delta()
+              ..retain(document.length - 1)
+              ..insert('\n', attributes.isEmpty ? null : attributes)
+              ..insert(lines)
+              ..retain(1, {for (final key in attributes.keys) key: null})),
+      selection,
+      ChangeSource.local,
+    );
+    updateSelection(
+      TextSelection.collapsed(offset: document.length - 1),
+      ChangeSource.local,
+    );
+  }
+
   /// Null when the first line isn't plain text.
   String? removeFirstLine() {
     final first = document.root.children.first;

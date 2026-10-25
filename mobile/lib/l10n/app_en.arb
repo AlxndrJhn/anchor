@@ -3387,6 +3387,26 @@
   "@pictureLoadFailed": {
     "description": "Shown in the picture viewer when a picture didn’t download while online, above a Try again button."
   },
+  "pictureGrabText": "Grab image text",
+  "@pictureGrabText": {
+    "description": "Button in the picture viewer: reads the text in the picture and adds it at the end of the note."
+  },
+  "pictureReadingText": "Reading the picture’s text",
+  "@pictureReadingText": {
+    "description": "Screen reader label while Grab image text reads the picture."
+  },
+  "pictureTextAdded": "Text added to the note",
+  "@pictureTextAdded": {
+    "description": "Toast after Grab image text added the picture's text at the end of the note."
+  },
+  "pictureNoText": "No text found in this picture",
+  "@pictureNoText": {
+    "description": "Toast when Grab image text finds no text in the picture."
+  },
+  "pictureTextFailed": "Couldn’t read this picture",
+  "@pictureTextFailed": {
+    "description": "Error toast when Grab image text fails."
+  },
   "pictureSaveToPhotos": "Save to Photos",
   "@pictureSaveToPhotos": {
     "description": "Screen reader label of the download button in the picture viewer."

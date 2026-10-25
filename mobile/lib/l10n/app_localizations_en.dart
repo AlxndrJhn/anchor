@@ -2551,6 +2551,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pictureLoadFailed => 'Couldn’t load this picture';
 
   @override
+  String get pictureGrabText => 'Grab image text';
+
+  @override
+  String get pictureReadingText => 'Reading the picture’s text';
+
+  @override
+  String get pictureTextAdded => 'Text added to the note';
+
+  @override
+  String get pictureNoText => 'No text found in this picture';
+
+  @override
+  String get pictureTextFailed => 'Couldn’t read this picture';
+
+  @override
   String get pictureSaveToPhotos => 'Save to Photos';
 
   @override

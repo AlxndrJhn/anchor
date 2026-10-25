@@ -606,6 +606,16 @@ class RichTextEditorState extends State<RichTextEditor>
     _controller.startLineAtTop(kind);
   }
 
+  /// Text read from one of the note's pictures, as plain lines at its end;
+  /// one undo step.
+  void appendText(String text) {
+    if (!widget.canEdit || text.trim().isEmpty) return;
+    _ownUndoStep(() {
+      _controller.appendPlainLines(text);
+      return true;
+    });
+  }
+
   void addFirstLine(String text) {
     widget.focusNode.requestFocus();
     _ownUndoStep(() {
