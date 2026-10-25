@@ -204,6 +204,7 @@ class SyncService {
       title: note.title,
       content: note.content,
       isArchived: note.isArchived,
+      position: note.position,
       background: note.background,
       state: note.permission == 'owner' || note.state == 'deleted'
           ? note.state
@@ -591,6 +592,12 @@ class SyncService {
             background: Value(note.background),
             state: Value(note.state),
             updatedAt: Value(note.updatedAt),
+            createdAt: note.createdAt == null
+                ? const Value.absent()
+                : Value(note.createdAt),
+            position: note.hasPositionField
+                ? Value(note.position)
+                : const Value.absent(),
             version: Value(note.version),
             isSynced: const Value(true),
             syncedTitle: Value(note.title),

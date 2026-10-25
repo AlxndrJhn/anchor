@@ -76,6 +76,31 @@
 .nc.picked::after {
   box-shadow: none;
 }
+/* Dragging to arrange ("Custom" sort): the card in hand fades, and a bar
+   shows which side of the card under it it will land. */
+.nc[data-dragging] {
+  opacity: 0.4;
+}
+.cards:not(.list) .nc[data-drop="before"] {
+  box-shadow:
+    -6px 0 0 -1px var(--accent-strong),
+    var(--sh-xs);
+}
+.cards:not(.list) .nc[data-drop="after"] {
+  box-shadow:
+    6px 0 0 -1px var(--accent-strong),
+    var(--sh-xs);
+}
+.cards.list .nc[data-drop="before"] {
+  box-shadow:
+    0 -5px 0 -1px var(--accent-strong),
+    var(--sh-xs);
+}
+.cards.list .nc[data-drop="after"] {
+  box-shadow:
+    0 5px 0 -1px var(--accent-strong),
+    var(--sh-xs);
+}
 .nc-pics {
   display: grid;
   grid-template-columns: 1fr 1fr;

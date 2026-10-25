@@ -88,11 +88,15 @@ class SyncNoteChange extends SyncChange {
     required this.background,
     required this.state,
     required this.tagIds,
+    this.position,
     this.revisions = const [],
     this.isRevisionsOnly = false,
   });
 
   final int localRev;
+
+  /// This person's place in their "Custom" sort; sent once they set one.
+  final double? position;
   final int? baseVersion;
   final String title;
   final String? content;
@@ -131,6 +135,7 @@ class SyncNoteChange extends SyncChange {
     'background': background,
     if (state != null) 'state': state,
     'tagIds': tagIds,
+    if (position != null) 'position': position,
     if (revisions.isNotEmpty)
       'revisions': [for (final revision in revisions) revision.toJson()],
     if (isRevisionsOnly) 'revisionsOnly': true,
@@ -339,6 +344,9 @@ class SyncServerNote {
     required this.sharedBy,
     required this.hasReminderField,
     required this.reminder,
+    this.createdAt,
+    this.hasPositionField = false,
+    this.position,
   });
 
   factory SyncServerNote.fromJson(Map<String, dynamic> json) {
@@ -353,6 +361,10 @@ class SyncServerNote {
       background: json['background'] as String?,
       state: json['state'] as String? ?? 'active',
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '')?.toUtc(),
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toUtc(),
+      // Servers without "Custom" sort leave it out: keep what is here.
+      hasPositionField: json.containsKey('position'),
+      position: (json['position'] as num?)?.toDouble(),
       tagIds: (json['tagIds'] as List?)?.cast<String>() ?? const [],
       permission: json['permission'] as String? ?? 'owner',
       shareIds: (json['shareIds'] as List?)?.cast<String>() ?? const [],
@@ -376,6 +388,9 @@ class SyncServerNote {
   final String? background;
   final String state;
   final DateTime? updatedAt;
+  final DateTime? createdAt;
+  final bool hasPositionField;
+  final double? position;
   final List<String> tagIds;
   final String permission;
   final List<String> shareIds;

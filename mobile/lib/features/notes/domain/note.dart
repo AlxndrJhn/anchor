@@ -132,6 +132,9 @@ abstract class Note with _$Note {
     String? background,
     @Default(NoteState.active) NoteState state,
     DateTime? updatedAt,
+    DateTime? createdAt,
+    // This person's place in their "Custom" sort; null sorts by createdAt.
+    double? position,
     @Default([]) List<String> tagIds,
     @Default(NotePermission.owner) NotePermission permission,
     List<String>? shareIds,

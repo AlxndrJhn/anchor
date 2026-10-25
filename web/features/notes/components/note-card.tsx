@@ -45,6 +45,18 @@ interface NoteCardProps {
   dateLabel?: string;
   /** A search the card was found by, marked in the note when it opens. */
   searchTerm?: string;
+  /** Dragging to arrange ("Custom" sort): stable handlers for every card. */
+  drag?: CardDrag;
+  /** Where a dragged card would land next to this one. */
+  dropSide?: "before" | "after";
+}
+
+export interface CardDrag {
+  group: string;
+  onDragStart: React.DragEventHandler<HTMLElement>;
+  onDragOver: React.DragEventHandler<HTMLElement>;
+  onDrop: React.DragEventHandler<HTMLElement>;
+  onDragEnd: React.DragEventHandler<HTMLElement>;
 }
 
 const ROW_LIMIT: Record<CardLayout, number> = { list: 2, grid: 4, masonry: 6 };
@@ -94,6 +106,8 @@ export const NoteCard = React.memo(function NoteCard({
   renderActions,
   dateLabel,
   searchTerm,
+  drag,
+  dropSide,
 }: NoteCardProps) {
   const blocks = cardBlocks(note);
   const hasHighlights = blocks.some((block) =>
@@ -216,6 +230,13 @@ export const NoteCard = React.memo(function NoteCard({
       ref={cardRef}
       data-note={note.background ?? ""}
       data-flip={note.id}
+      data-drag-group={drag?.group}
+      data-drop={dropSide}
+      draggable={!!drag && !picking}
+      onDragStart={drag?.onDragStart}
+      onDragOver={drag?.onDragOver}
+      onDrop={drag?.onDrop}
+      onDragEnd={drag?.onDragEnd}
       aria-label={label}
       className={cn("nc", picked && "picked")}
     >

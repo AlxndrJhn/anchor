@@ -74,41 +74,49 @@ class ViewOptionsSheet extends ConsumerWidget {
                   isSelected: settings.sortOption == SortOption.title,
                   onTap: () => notifier.setSortOption(SortOption.title),
                 ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: dims.xl),
-
-          const _SectionHeader(title: 'Order'),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: dims.xl),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ViewOptionCard(
-                    icon: isDateSort
-                        ? LucideIcons.arrowUp
-                        : LucideIcons.arrowDownAZ,
-                    label: isDateSort ? 'Oldest first' : 'A to Z',
-                    isSelected: settings.isAscending,
-                    onTap: () => notifier.setSortDirection(true),
-                  ),
-                ),
-                SizedBox(width: dims.sm),
-                Expanded(
-                  child: _ViewOptionCard(
-                    icon: isDateSort
-                        ? LucideIcons.arrowDown
-                        : LucideIcons.arrowUpAZ,
-                    label: isDateSort ? 'Newest first' : 'Z to A',
-                    isSelected: !settings.isAscending,
-                    onTap: () => notifier.setSortDirection(false),
-                  ),
+                SizedBox(height: dims.xs),
+                _SortOptionTile(
+                  title: 'Custom (hold and drag to arrange)',
+                  isSelected: settings.sortOption == SortOption.custom,
+                  onTap: () => notifier.setSortOption(SortOption.custom),
                 ),
               ],
             ),
           ),
+
+          if (settings.sortOption != SortOption.custom) ...[
+            SizedBox(height: dims.xl),
+
+            const _SectionHeader(title: 'Order'),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: dims.xl),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ViewOptionCard(
+                      icon: isDateSort
+                          ? LucideIcons.arrowUp
+                          : LucideIcons.arrowDownAZ,
+                      label: isDateSort ? 'Oldest first' : 'A to Z',
+                      isSelected: settings.isAscending,
+                      onTap: () => notifier.setSortDirection(true),
+                    ),
+                  ),
+                  SizedBox(width: dims.sm),
+                  Expanded(
+                    child: _ViewOptionCard(
+                      icon: isDateSort
+                          ? LucideIcons.arrowDown
+                          : LucideIcons.arrowUpAZ,
+                      label: isDateSort ? 'Newest first' : 'Z to A',
+                      isSelected: !settings.isAscending,
+                      onTap: () => notifier.setSortDirection(false),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           SizedBox(height: dims.lg),
           SettingsSwitchRow(

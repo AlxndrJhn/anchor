@@ -17,11 +17,13 @@ import {
 import { transformNote } from '../notes/utils/note-transformer.util';
 import { ownedTagIds, reconcileUserTags } from '../notes/utils/note-tags.util';
 import { setNoteArchive } from '../notes/utils/note-archive.util';
+import { setNotePosition } from '../notes/utils/note-order.util';
 import {
   NOTE_INCLUDE_TAGS,
   NOTE_INCLUDE_SHARES,
   NOTE_INCLUDE_ATTACHMENT_COUNT,
   noteArchiveInclude,
+  noteOrderInclude,
   notePinInclude,
 } from '../notes/constants/notes.constants';
 import {
@@ -248,10 +250,16 @@ export class SyncApplyService {
         change.id,
         change.isArchived,
       );
+      const moved = await setNotePosition(
+        tx,
+        userId,
+        change.id,
+        change.position,
+      );
       const tagged =
         change.tagIds !== undefined &&
         (await reconcileUserTags(tx, change.id, userId, change.tagIds));
-      if (archived || tagged) {
+      if (archived || moved || tagged) {
         await this.syncEmitter.emit(tx, noteEmissions([userId], change.id));
       }
     });
@@ -315,6 +323,7 @@ export class SyncApplyService {
         select: { state: true, version: true },
       });
       await setNoteArchive(tx, userId, change.id, change.isArchived);
+      await setNotePosition(tx, userId, change.id, change.position);
 
       if (change.revisions?.length) {
         await this.noteRevisions.recordClient(
@@ -350,6 +359,7 @@ export class SyncApplyService {
         ...NOTE_INCLUDE_ATTACHMENT_COUNT,
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
+        ...noteOrderInclude(userId),
       },
     });
     if (!note) {

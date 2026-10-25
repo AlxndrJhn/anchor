@@ -76,6 +76,7 @@ model User {
   uploadedAttachments  NoteAttachment[]
   notePins             NotePin[]
   noteArchives         NoteArchive[]
+  noteOrders           NoteOrder[]
   syncState            SyncState?
   changeLog            ChangeLog[]
   noteRevisions        NoteRevision[]
@@ -107,6 +108,7 @@ model Note {
   attachments NoteAttachment[]
   pins        NotePin[]
   archives    NoteArchive[]
+  orders      NoteOrder[]
   reminders   NoteReminder[]
   revisions   NoteRevision[]
 
@@ -125,6 +127,20 @@ model NoteReminder {
   updatedAt  DateTime           @updatedAt
   user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   note       Note               @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@id([userId, noteId])
+  @@index([noteId])
+}
+
+// Where a note sits in its person's own order ("Custom" sort, set by
+// dragging). Notes without one sort by when they were made.
+model NoteOrder {
+  userId    String
+  noteId    String
+  position  Float
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@id([userId, noteId])
   @@index([noteId])

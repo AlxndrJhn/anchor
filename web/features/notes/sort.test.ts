@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { SortBy, SortOrder } from "@/features/preferences";
-import { compareNotes, type SortableNote } from "./sort";
+import {
+  compareNotes,
+  notePosition,
+  positionForDrop,
+  type SortableNote,
+} from "./sort";
 
 const note = (
   id: string,
@@ -107,5 +112,39 @@ describe("compareNotes by title", () => {
   it("puts untitled notes last, Z to A too", () => {
     expect(ids("desc").slice(0, 2)).toEqual(["1", "3"]);
     expect(ids("desc").slice(2).sort()).toEqual(["2", "4"]);
+  });
+});
+
+describe("custom order", () => {
+  const n = (id: string, createdAt: string, position?: number | null) => ({
+    id,
+    title: id,
+    createdAt,
+    updatedAt: createdAt,
+    position,
+  });
+  const a = n("a", "2026-01-03T00:00:00Z");
+  const b = n("b", "2026-01-02T00:00:00Z");
+  const c = n("c", "2026-01-01T00:00:00Z");
+
+  it("starts newest first and follows dragged places", () => {
+    const order = (notes: ReturnType<typeof n>[]) =>
+      [...notes].sort(compareNotes("custom", "asc")).map((x) => x.id);
+    expect(order([c, a, b])).toEqual(["a", "b", "c"]);
+    const moved = { ...c, position: notePosition(a) + 1 };
+    expect(order([moved, a, b])).toEqual(["c", "a", "b"]);
+  });
+
+  it("puts a dropped note between its new neighbours", () => {
+    const ordered = [a, b, c];
+    const between = positionForDrop(ordered, "c", "b", "before");
+    expect(between).toBe((notePosition(a) + notePosition(b)) / 2);
+    expect(positionForDrop(ordered, "c", "a", "before")).toBe(
+      notePosition(a) + 1000,
+    );
+    expect(positionForDrop(ordered, "a", "c", "after")).toBe(
+      notePosition(c) - 1000,
+    );
+    expect(positionForDrop(ordered, "a", "zz", "after")).toBeNull();
   });
 });

@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type ViewMode = "masonry" | "grid" | "list";
-export type SortBy = "updatedAt" | "createdAt" | "title";
+/** "custom" is the person's own order, set by dragging notes. */
+export type SortBy = "updatedAt" | "createdAt" | "title" | "custom";
 export type SortOrder = "asc" | "desc";
 
 export type AppStyle = "default" | "skeuomorphism" | "neo-brutalism" | "lofi";

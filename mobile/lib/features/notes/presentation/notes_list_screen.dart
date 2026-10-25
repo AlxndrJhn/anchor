@@ -17,6 +17,8 @@ import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
 import 'package:anchor/features/notes/presentation/widgets/notes_search_bar.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_filters_sheet.dart';
+import 'package:anchor/features/notes/presentation/widgets/reorderable_note_card.dart';
+import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/presentation/widgets/selection_app_bar_actions.dart';
 import 'package:anchor/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
@@ -164,6 +166,21 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     );
   }
 
+  /// A note dropped on another card of [group] takes that card's place.
+  void _moveNote(List<Note> group, String draggedId, String targetId) {
+    final from = group.indexWhere((n) => n.id == draggedId);
+    final to = group.indexWhere((n) => n.id == targetId);
+    if (from < 0 || to < 0) return;
+    final position = positionForDrop(
+      group,
+      draggedId,
+      targetId,
+      before: from > to,
+    );
+    if (position == null) return;
+    ref.read(notesRepositoryProvider).setPosition(draggedId, position);
+  }
+
   Widget _notesSliver(
     List<Note> notes,
     NotesViewOptions viewOptions,
@@ -172,9 +189,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     bool selectable = true,
     bool underLabel = false,
     bool lazy = true,
+    String? reorderGroup,
   }) {
     final dims = context.dims;
-    Widget item(Note note) => selectable
+    Widget card(Note note) => selectable
         ? _buildNoteItem(note, isSelectionMode, selectedNoteIds)
         : NoteCard(
             note: note,
@@ -182,6 +200,19 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             isSelected: false,
             onLongPress: () {},
             onTap: () => context.go(_noteLocation(note), extra: note),
+          );
+    Widget item(Note note) => reorderGroup == null
+        ? card(note)
+        : ReorderableNoteCard(
+            key: ValueKey('drag-${note.id}'),
+            noteId: note.id,
+            group: reorderGroup,
+            onDropped: (draggedId) => _moveNote(notes, draggedId, note.id),
+            onHeld: () {
+              ref.read(selectionModeProvider.notifier).setEnabled(true);
+              ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
+            },
+            child: card(note),
           );
     return SliverPadding(
       padding: dims.screenInsets.copyWith(
@@ -465,6 +496,14 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                     filteredNotes.sort(comparator);
                     archivedMatches.sort(comparator);
 
+                    // Dragging arranges the notes in "Custom" sort, when
+                    // the whole list is shown.
+                    final canReorder =
+                        viewOptions.sortOption == SortOption.custom &&
+                        !isSelectionMode &&
+                        q.isEmpty &&
+                        filters.isEmpty;
+
                     // Pinned and other notes get headings, as on the web.
                     final pinned = filteredNotes
                         .where((n) => n.isPinned)
@@ -499,6 +538,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           selectedNoteIds,
                           underLabel: true,
                           lazy: others.isEmpty,
+                          reorderGroup: canReorder ? 'pinned' : null,
                         ),
                       ],
                       if (others.isNotEmpty) ...[
@@ -514,6 +554,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           isSelectionMode,
                           selectedNoteIds,
                           underLabel: pinned.isNotEmpty,
+                          reorderGroup: canReorder ? 'others' : null,
                         ),
                       ],
                       if (archivedMatches.isNotEmpty) ...[

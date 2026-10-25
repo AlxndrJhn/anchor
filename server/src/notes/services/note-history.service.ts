@@ -22,6 +22,7 @@ import {
   NOTE_INCLUDE_TAGS,
   USER_SELECT_FIELDS,
   noteArchiveInclude,
+  noteOrderInclude,
   notePinInclude,
 } from '../constants/notes.constants';
 
@@ -97,6 +98,7 @@ export class NoteHistoryService {
       ...NOTE_INCLUDE_TAGS,
       ...notePinInclude(userId),
       ...noteArchiveInclude(userId),
+      ...noteOrderInclude(userId),
     };
     const note = await this.prisma.$transaction(async (tx) => {
       const revision = await tx.noteRevision.findFirst({

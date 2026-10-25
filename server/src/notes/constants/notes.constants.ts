@@ -60,6 +60,15 @@ export const notePinInclude = (userId: string) =>
     },
   }) as const;
 
+// Include the requesting user's own place for the note ("Custom" sort).
+export const noteOrderInclude = (userId: string) =>
+  ({
+    orders: {
+      where: { userId },
+      select: { position: true },
+    },
+  }) as const;
+
 // Include the requesting user's archive state.
 export const noteArchiveInclude = (userId: string) =>
   ({

@@ -62,6 +62,10 @@ _Note _$NoteFromJson(Map<String, dynamic> json) => _Note(
   updatedAt: json['updatedAt'] == null
       ? null
       : DateTime.parse(json['updatedAt'] as String),
+  createdAt: json['createdAt'] == null
+      ? null
+      : DateTime.parse(json['createdAt'] as String),
+  position: (json['position'] as num?)?.toDouble(),
   tagIds:
       (json['tagIds'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
@@ -88,6 +92,8 @@ Map<String, dynamic> _$NoteToJson(_Note instance) => <String, dynamic>{
   'background': instance.background,
   'state': _$NoteStateEnumMap[instance.state]!,
   'updatedAt': instance.updatedAt?.toIso8601String(),
+  'createdAt': instance.createdAt?.toIso8601String(),
+  'position': instance.position,
   'tagIds': instance.tagIds,
   'permission': _$NotePermissionEnumMap[instance.permission]!,
   'shareIds': instance.shareIds,

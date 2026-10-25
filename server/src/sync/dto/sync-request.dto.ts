@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsNumber,
   IsDateString,
   IsIn,
   IsInt,
@@ -90,6 +91,11 @@ export class SyncNoteChangeDto extends SyncChangeBaseDto {
   @IsBoolean()
   @IsOptional()
   isArchived?: boolean;
+
+  // Per-user, like isArchived: this person's place in their "Custom" sort.
+  @IsNumber({ allowNaN: false, allowInfinity: false })
+  @IsOptional()
+  position?: number;
 
   @IsString()
   @IsOptional()

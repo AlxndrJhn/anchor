@@ -10,6 +10,10 @@ class Notes extends Table {
   // State: 'active', 'trashed', 'deleted'
   TextColumn get state => text().withDefault(const Constant('active'))();
   DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  // This person's place in their "Custom" sort, set by dragging; synced with
+  // the note. Null sorts by createdAt.
+  RealColumn get position => real().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   // The server version this note was written against; null until it exists there.
   IntColumn get version => integer().nullable()();
