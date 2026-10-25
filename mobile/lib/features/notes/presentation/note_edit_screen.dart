@@ -10,11 +10,15 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app/router/app_routes.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_tags.dart';
 import '../../../core/motion/haptics.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
+import '../../../core/network/sync_requester.dart';
 import '../../../core/session/active_user_id_provider.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
@@ -29,11 +33,13 @@ import '../../tags/domain/tag.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
 import '../data/repository/note_attachments_repository.dart';
+import '../data/repository/note_copies_repository.dart';
 import '../data/repository/note_shares_repository.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_attachment.dart';
 import '../domain/note_history.dart';
+import '../domain/note_text.dart';
 import 'checked_folds_controller.dart';
 import 'editor/editor_overlay.dart';
 import 'editor/editor_overlay_controller.dart';
@@ -337,6 +343,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       isOwner: note.isOwner,
       isArchived: note.isArchived,
       canSeeHistory: !_draft.isViewOnly,
+      canCopy: !note.isTrashed,
       shareCount: note.shareIds?.length ?? 0,
       hasChecklist: (checklist?.items ?? 0) > 0,
       hasCheckedItems: (checklist?.checked ?? 0) > 0,
@@ -355,6 +362,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         await showShareSheet(context, noteId: note.id);
       case NoteAction.history:
         await _openHistory();
+      case NoteAction.send:
+        await _send();
+      case NoteAction.copy:
+        await _makeCopy(note.id);
       case NoteAction.showCheckboxes:
         _offerUndo(_editor?.showCheckboxes(), l10n.checkboxesShown);
       case NoteAction.hideCheckboxes:
@@ -377,8 +388,59 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           beforeChange: _draft.flushOnLeave,
           afterChange: _leaveDeleted,
         );
-      case NoteAction.tag || NoteAction.restore || NoteAction.deleteForever:
+      case NoteAction.tag ||
+          NoteAction.background ||
+          NoteAction.restore ||
+          NoteAction.deleteForever:
         break;
+    }
+  }
+
+  /// Hands the note to another app as text, through the share sheet.
+  Future<void> _send() async {
+    final title = storedTitleOf(_draft.title.text);
+    final text = noteToPlainText(
+      title,
+      _editorKey.currentState?.getContent() ?? _draft.note?.content,
+    );
+    if (text.isEmpty) {
+      AppSnackbar.show(context, context.l10n.noteSendEmpty);
+      return;
+    }
+    final box = context.findRenderObject() as RenderBox?;
+    await SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        subject: title.isEmpty ? null : title,
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
+      ),
+    );
+  }
+
+  /// The server makes the copy (attachments too), so what is on screen goes
+  /// up first; then the copy comes down and opens.
+  Future<void> _makeCopy(String noteId) async {
+    final l10n = context.l10n;
+    try {
+      await _draft.saveNow();
+      await requestAppSync(trigger: 'NoteEdit.copy');
+      final copyId = await ref.read(noteCopiesRepositoryProvider).copy(noteId);
+      await requestAppSync(trigger: 'NoteEdit.copied');
+      if (!mounted) return;
+      Haptics.success();
+      context.go(AppRoutes.note(copyId));
+      AppSnackbar.show(context, l10n.noteCopyMade);
+    } catch (error, stack) {
+      AppLogger.instance.warn(
+        LogTags.notes,
+        'Make a copy failed',
+        error: error,
+        stackTrace: stack,
+      );
+      if (!mounted) return;
+      AppSnackbar.show(context, l10n.noteCopyFailed, kind: SnackbarKind.error);
     }
   }
 

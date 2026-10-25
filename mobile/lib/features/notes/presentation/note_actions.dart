@@ -16,12 +16,16 @@ import '../domain/note.dart';
 import '../domain/note_dates.dart';
 import 'editor/checklist_lines.dart';
 import 'notes_controller.dart';
+import 'widgets/background_sheet.dart';
 
 enum NoteAction {
   tag,
   pin,
+  background,
   share,
   history,
+  send,
+  copy,
   showCheckboxes,
   hideCheckboxes,
   uncheckAll,
@@ -45,7 +49,13 @@ enum NoteAction {
       label: l10n.actionUnpin,
     ),
     NoteAction.pin => (icon: LucideIcons.pin, label: l10n.actionPin),
+    NoteAction.background => (
+      icon: LucideIcons.palette,
+      label: l10n.actionColor,
+    ),
     NoteAction.share => (icon: LucideIcons.userPlus, label: l10n.actionShare),
+    NoteAction.send => (icon: LucideIcons.send, label: l10n.actionSend),
+    NoteAction.copy => (icon: LucideIcons.copy, label: l10n.actionMakeCopy),
     NoteAction.history => (
       icon: LucideIcons.history,
       label: l10n.actionHistory,
@@ -99,8 +109,8 @@ class NoteActions {
 
   NotesRepository get _repo => ref.read(notesRepositoryProvider);
 
-  /// Share, history and the checklist actions do nothing here; an open note
-  /// handles them itself.
+  /// Share, history, Send, Make a copy and the checklist actions do nothing
+  /// here; an open note handles them itself.
   Future<void> run(
     NoteAction action,
     List<Note> notes, {
@@ -112,6 +122,8 @@ class NoteActions {
       case NoteAction.pin:
         await beforeChange?.call();
         await pin(notes);
+      case NoteAction.background:
+        await setBackground(notes, beforeChange: beforeChange);
       case NoteAction.archive:
         await archive(notes, beforeChange: beforeChange);
       case NoteAction.unarchive:
@@ -126,6 +138,8 @@ class NoteActions {
         await deleteForever(notes, beforeChange: beforeChange);
       case NoteAction.share ||
           NoteAction.history ||
+          NoteAction.send ||
+          NoteAction.copy ||
           NoteAction.showCheckboxes ||
           NoteAction.hideCheckboxes ||
           NoteAction.uncheckAll ||
@@ -172,6 +186,58 @@ class NoteActions {
       onAction: () async {
         await repo.setPinned(wasPinned, true);
         await repo.setPinned(wasUnpinned, false);
+      },
+    );
+  }
+
+  /// One colour or pattern for every note, picked in the background sheet
+  /// and applied once it closes. Notes shared with you to view stay as they
+  /// are.
+  Future<void> setBackground(
+    List<Note> notes, {
+    FutureOr<void> Function()? beforeChange,
+  }) async {
+    if (notes.isEmpty) return;
+    final backgrounds = {for (final n in notes) n.background};
+    String? chosen;
+    var picked = false;
+    await showBackgroundSheet(
+      context,
+      current: backgrounds.length == 1 ? backgrounds.single : null,
+      isMixed: backgrounds.length > 1,
+      onChanged: (background) {
+        chosen = background;
+        picked = true;
+      },
+    );
+    if (!picked || !context.mounted) return;
+    final l10n = context.l10n;
+    final repo = _repo;
+    await beforeChange?.call();
+    final changed = await repo.setBackground(_idsOf(notes), chosen);
+    if (!context.mounted) return;
+    final skipped = notes.length - changed.length;
+    if (changed.isEmpty) {
+      AppSnackbar.show(context, l10n.notesColorUnchanged(skipped));
+      return;
+    }
+    // Undo puts each note's own background back.
+    final before = <String?, List<String>>{};
+    for (final note in notes) {
+      if (changed.contains(note.id)) {
+        (before[note.background] ??= []).add(note.id);
+      }
+    }
+    AppSnackbar.show(
+      context,
+      skipped == 0
+          ? l10n.notesColorChanged(changed.length)
+          : l10n.notesColorChangedExcept(skipped),
+      actionLabel: l10n.commonUndo,
+      onAction: () async {
+        for (final MapEntry(key: background, value: ids) in before.entries) {
+          await repo.setBackground(ids, background);
+        }
       },
     );
   }

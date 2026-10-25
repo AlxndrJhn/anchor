@@ -1332,6 +1332,10 @@
   "@reminderChannelDescription": {
     "description": "Description of the app’s notification category in Android’s settings."
   },
+  "reminderDone": "Done",
+  "@reminderDone": {
+    "description": "Button on a reminder notification: clears a one-time reminder without opening the app."
+  },
   "notesCount": "{count, plural, =1{1 note} other{{count} notes}}",
   "@notesCount": {
     "description": "Number of notes, under the list title, in the tag sheet and the Empty trash menu.",
@@ -2081,6 +2085,60 @@
   "actionUnpin": "Unpin",
   "@actionUnpin": {
     "description": "Verb, in the note menu and selection bar: stops keeping notes at the top."
+  },
+  "actionColor": "Color",
+  "@actionColor": {
+    "description": "Selection bar action: gives every selected note one color or pattern. Short: one of five actions in a row."
+  },
+  "actionSend": "Send",
+  "@actionSend": {
+    "description": "Note menu action: hands the note to another app as text, through the system share sheet."
+  },
+  "actionMakeCopy": "Make a copy",
+  "@actionMakeCopy": {
+    "description": "Note menu action: makes a new note of your own with the same title, text, color, tags and attachments, then opens it."
+  },
+  "noteSendEmpty": "There’s nothing to send yet",
+  "@noteSendEmpty": {
+    "description": "Toast when Send is chosen on a note with no title and no text."
+  },
+  "noteCopyMade": "This is your copy",
+  "@noteCopyMade": {
+    "description": "Toast shown when the copy made with Make a copy opens."
+  },
+  "noteCopyFailed": "Couldn’t make a copy. It needs a connection to the server.",
+  "@noteCopyFailed": {
+    "description": "Error toast when Make a copy fails, usually because the app is offline."
+  },
+  "notesColorChanged": "{count, plural, =1{Color changed on 1 note} other{Color changed on {count} notes}}",
+  "@notesColorChanged": {
+    "description": "Toast after giving the selected notes a color or pattern; it has an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesColorChangedExcept": "{count, plural, =1{Color changed. 1 note shared with you to view stays as it was} other{Color changed. {count} notes shared with you to view stay as they were}}",
+  "@notesColorChangedExcept": {
+    "description": "Toast after giving the selected notes a color, when some are shared with you only to view and could not change.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesColorUnchanged": "{count, plural, =1{This note is shared with you to view, so its color can’t change} other{These notes are shared with you to view, so their color can’t change}}",
+  "@notesColorUnchanged": {
+    "description": "Toast when none of the selected notes could get the color, because all are shared with you only to view.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
   },
   "actionShare": "Share",
   "@actionShare": {

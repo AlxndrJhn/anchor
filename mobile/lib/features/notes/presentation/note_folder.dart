@@ -24,10 +24,15 @@ enum NoteFolder {
     NoteFolder.notes => const [
       NoteAction.tag,
       NoteAction.pin,
+      NoteAction.background,
       NoteAction.archive,
       NoteAction.trash,
     ],
-    NoteFolder.archive => const [NoteAction.unarchive, NoteAction.trash],
+    NoteFolder.archive => const [
+      NoteAction.background,
+      NoteAction.unarchive,
+      NoteAction.trash,
+    ],
     NoteFolder.trash => const [NoteAction.restore, NoteAction.deleteForever],
   };
 }

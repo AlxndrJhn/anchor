@@ -175,7 +175,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     List<Note> selectedNotes,
     VisibleNotes shown,
   ) {
-    if (action == NoteAction.pin) return const [];
+    if (action == NoteAction.pin || action == NoteAction.background) {
+      return const [];
+    }
     if (action != NoteAction.archive) {
       return [for (final note in selectedNotes) note.id];
     }

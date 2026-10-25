@@ -445,6 +445,39 @@ void main() {
     });
   });
 
+  group('setBackground', () {
+    test('colours the notes you can edit and queues them to sync', () async {
+      await insertNote(id: 'own');
+      await insertNote(id: 'edits', permission: 'editor');
+      await insertNote(id: 'views', permission: 'viewer');
+
+      final changed = await repo.setBackground([
+        'own',
+        'edits',
+        'views',
+      ], 'color_red');
+
+      expect(changed, unorderedEquals(['own', 'edits']));
+      final rows = {
+        for (final row in await db.select(db.notes).get()) row.id: row,
+      };
+      expect(rows['own']!.background, 'color_red');
+      expect(rows['own']!.isSynced, isFalse);
+      expect(rows['own']!.localRev, greaterThan(0));
+      expect(rows['edits']!.background, 'color_red');
+      expect(rows['views']!.background, isNull);
+    });
+
+    test('null takes the colour off', () async {
+      await insertNote(id: 'own');
+      await repo.setBackground(['own'], 'pattern_dots');
+      await repo.setBackground(['own'], null);
+
+      final row = await db.noteRow('own');
+      expect(row!.background, isNull);
+    });
+  });
+
   group('tags for note', () {
     test('setNoteTags queues the tags and leaves the note alone', () async {
       final edited = DateTime.utc(2026, 7, 1);

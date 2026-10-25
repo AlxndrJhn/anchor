@@ -2,7 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HTTPError } from "ky";
-import { useParams, usePathname, useSearchParams } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -25,7 +30,9 @@ import {
   useNoteActions,
   useNoteEditor,
 } from "@/features/notes";
+import { copyNote } from "@/features/notes/api";
 import type { RichTextEditorHandle } from "@/features/notes/components/editor";
+import { sendNote } from "@/features/notes/note-text";
 import { parseStoredContent } from "@/features/notes/quill";
 import {
   checkboxesAction,
@@ -78,6 +85,7 @@ function NoteEditor({
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const pageRef = useRef<HTMLDivElement>(null);
   const editorTop = useRef(0);
   const editor = useNoteEditor({
@@ -370,6 +378,38 @@ function NoteEditor({
             onReminder={editor.changeReminder}
             onShare={() => setShareDialogOpen(true)}
             onHistory={openHistory}
+            onSend={async () => {
+              try {
+                const sent = await sendNote(editor.title, editor.content);
+                if (sent === "copied") toast.success("Note copied as text");
+              } catch {
+                toast.error("Couldn’t send the note");
+              }
+            }}
+            onCopy={
+              isNew || trashed
+                ? undefined
+                : async () => {
+                    try {
+                      await editor.flushEdits();
+                      const copy = await copyNote(noteId);
+                      queryClient.invalidateQueries({ queryKey: ["notes"] });
+                      queryClient.invalidateQueries({ queryKey: ["tags"] });
+                      toast.success("Copy made", {
+                        action: {
+                          label: "Open",
+                          onClick: () => router.push(`/notes/${copy.id}`),
+                        },
+                      });
+                    } catch {
+                      toast.error(
+                        navigator.onLine
+                          ? "Couldn’t make a copy"
+                          : "Making a copy needs a connection",
+                      );
+                    }
+                  }
+            }
             onArchive={actions.archive}
             onUnarchive={actions.unarchive}
             onTrash={actions.trash}

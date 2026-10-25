@@ -12,6 +12,7 @@ Future<NoteAction?> showNoteMoreSheet(
   required bool isArchived,
   required bool canSeeHistory,
   required int shareCount,
+  bool canCopy = true,
   bool hasChecklist = false,
   bool hasCheckedItems = false,
   bool canShowCheckboxes = false,
@@ -41,6 +42,17 @@ Future<NoteAction?> showNoteMoreSheet(
           icon: LucideIcons.history,
           label: l10n.actionHistory,
           showChevron: true,
+        ),
+      SheetChoice(
+        value: NoteAction.send,
+        icon: LucideIcons.send,
+        label: l10n.actionSend,
+      ),
+      if (canCopy)
+        SheetChoice(
+          value: NoteAction.copy,
+          icon: LucideIcons.copy,
+          label: l10n.actionMakeCopy,
         ),
       null,
       if (canShowCheckboxes)

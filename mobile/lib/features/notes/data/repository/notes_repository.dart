@@ -454,6 +454,49 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.setPinned');
   }
 
+  /// Gives the notes one colour or pattern (null for none). Only notes this
+  /// person can edit change; returns the ids that did.
+  Future<List<String>> setBackground(
+    List<String> ids,
+    String? background,
+  ) async {
+    if (ids.isEmpty) return const [];
+    final changed = await _db.transaction(() async {
+      final editable =
+          await (_db.select(_db.notes)..where(
+                (tbl) =>
+                    tbl.id.isIn(ids) &
+                    tbl.permission.isIn([
+                      NotePermission.owner.name,
+                      NotePermission.editor.name,
+                    ]),
+              ))
+              .map((row) => row.id)
+              .get();
+      if (editable.isEmpty) return const <String>[];
+      await (_db.update(
+        _db.notes,
+      )..where((tbl) => tbl.id.isIn(editable))).write(
+        NotesCompanion.custom(
+          background: drift.Constant(background),
+          updatedAt: drift.Constant(DateTime.now().toUtc()),
+          isSynced: const drift.Constant(false),
+          localRev: _db.nextLocalRev,
+        ),
+      );
+      return editable;
+    });
+
+    if (changed.isNotEmpty) {
+      AppLogger.instance.info(
+        LogTags.notes,
+        'setBackground count=${changed.length} background=$background',
+      );
+      scheduleAppSync(trigger: 'NotesRepo.setBackground');
+    }
+    return changed;
+  }
+
   Future<void> addTags(List<String> ids, List<String> tagIds) async {
     if (ids.isEmpty || tagIds.isEmpty) return;
 

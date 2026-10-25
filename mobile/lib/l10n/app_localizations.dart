@@ -1690,6 +1690,12 @@ abstract class AppLocalizations {
   /// **'Reminders you set on your notes'**
   String get reminderChannelDescription;
 
+  /// Button on a reminder notification: clears a one-time reminder without opening the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get reminderDone;
+
   /// Number of notes, under the list title, in the tag sheet and the Empty trash menu.
   ///
   /// In en, this message translates to:
@@ -2391,6 +2397,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unpin'**
   String get actionUnpin;
+
+  /// Selection bar action: gives every selected note one color or pattern. Short: one of five actions in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get actionColor;
+
+  /// Note menu action: hands the note to another app as text, through the system share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get actionSend;
+
+  /// Note menu action: makes a new note of your own with the same title, text, color, tags and attachments, then opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a copy'**
+  String get actionMakeCopy;
+
+  /// Toast when Send is chosen on a note with no title and no text.
+  ///
+  /// In en, this message translates to:
+  /// **'There’s nothing to send yet'**
+  String get noteSendEmpty;
+
+  /// Toast shown when the copy made with Make a copy opens.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your copy'**
+  String get noteCopyMade;
+
+  /// Error toast when Make a copy fails, usually because the app is offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t make a copy. It needs a connection to the server.'**
+  String get noteCopyFailed;
+
+  /// Toast after giving the selected notes a color or pattern; it has an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Color changed on 1 note} other{Color changed on {count} notes}}'**
+  String notesColorChanged(int count);
+
+  /// Toast after giving the selected notes a color, when some are shared with you only to view and could not change.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Color changed. 1 note shared with you to view stays as it was} other{Color changed. {count} notes shared with you to view stay as they were}}'**
+  String notesColorChangedExcept(int count);
+
+  /// Toast when none of the selected notes could get the color, because all are shared with you only to view.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{This note is shared with you to view, so its color can’t change} other{These notes are shared with you to view, so their color can’t change}}'**
+  String notesColorUnchanged(int count);
 
   /// Verb: opens sharing for a note or a picture; also the title of the share sheet.
   ///

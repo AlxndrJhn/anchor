@@ -965,6 +965,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderChannelDescription => 'Reminders you set on your notes';
 
   @override
+  String get reminderDone => 'Done';
+
+  @override
   String notesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1507,6 +1510,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionUnpin => 'Unpin';
+
+  @override
+  String get actionColor => 'Color';
+
+  @override
+  String get actionSend => 'Send';
+
+  @override
+  String get actionMakeCopy => 'Make a copy';
+
+  @override
+  String get noteSendEmpty => 'There’s nothing to send yet';
+
+  @override
+  String get noteCopyMade => 'This is your copy';
+
+  @override
+  String get noteCopyFailed =>
+      'Couldn’t make a copy. It needs a connection to the server.';
+
+  @override
+  String notesColorChanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Color changed on $count notes',
+      one: 'Color changed on 1 note',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesColorChangedExcept(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Color changed. $count notes shared with you to view stay as they were',
+      one: 'Color changed. 1 note shared with you to view stays as it was',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesColorUnchanged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'These notes are shared with you to view, so their color can’t change',
+      one: 'This note is shared with you to view, so its color can’t change',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get actionShare => 'Share';

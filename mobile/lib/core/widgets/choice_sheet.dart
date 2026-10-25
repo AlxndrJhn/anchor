@@ -55,31 +55,34 @@ Future<T?> showChoiceSheet<T>(
           SheetHeader(title: title, subtitle: subtitle)
         else
           SizedBox(height: sheet.density.space8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: sheet.density.space16,
-            children: [
-              for (final group in groups)
-                if (group.isNotEmpty)
-                  GroupedList(
-                    children: [
-                      for (final choice in group)
-                        GroupedListTile(
-                          icon: choice.icon,
-                          label: choice.label,
-                          subtitle: choice.subtitle,
-                          value: choice.detail,
-                          showChevron: choice.showChevron,
-                          isDanger: choice.isDanger,
-                          enabled: choice.enabled,
-                          onTap: () => Navigator.of(sheet).pop(choice.value),
-                        ),
-                    ],
-                  ),
-            ],
+        // A long menu scrolls on a short screen.
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: sheet.density.space16,
+              children: [
+                for (final group in groups)
+                  if (group.isNotEmpty)
+                    GroupedList(
+                      children: [
+                        for (final choice in group)
+                          GroupedListTile(
+                            icon: choice.icon,
+                            label: choice.label,
+                            subtitle: choice.subtitle,
+                            value: choice.detail,
+                            showChevron: choice.showChevron,
+                            isDanger: choice.isDanger,
+                            enabled: choice.enabled,
+                            onTap: () => Navigator.of(sheet).pop(choice.value),
+                          ),
+                      ],
+                    ),
+              ],
+            ),
           ),
         ),
         const SheetBottomSpace(),

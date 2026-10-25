@@ -11,6 +11,7 @@ import '../../../core/logging/log_tags.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../l10n/l10n.dart';
 import '../presentation/notification_launch.dart';
+import 'reminder_actions.dart';
 
 part 'notification_gateway.g.dart';
 
@@ -107,6 +108,7 @@ class LocalNotificationGateway implements NotificationGateway {
           // Must be a flat vector: Android masks the icon to alpha.
           icon: 'ic_stat_reminder',
           color: AnchorTokens.colorBrandOrange,
+          actions: [reminderDoneAction(l10n)],
         ),
         iOS: DarwinNotificationDetails(),
       ),

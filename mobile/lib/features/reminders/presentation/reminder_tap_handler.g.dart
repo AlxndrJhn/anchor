@@ -8,15 +8,18 @@ part of 'reminder_tap_handler.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Cold-start taps go through `initializeApp`.
+/// Opens the note behind a tapped reminder, and completes one whose Done was
+/// tapped while the app runs. Cold-start taps go through `initializeApp`.
 
 @ProviderFor(ReminderTapHandler)
 final reminderTapHandlerProvider = ReminderTapHandlerProvider._();
 
-/// Cold-start taps go through `initializeApp`.
+/// Opens the note behind a tapped reminder, and completes one whose Done was
+/// tapped while the app runs. Cold-start taps go through `initializeApp`.
 final class ReminderTapHandlerProvider
     extends $NotifierProvider<ReminderTapHandler, void> {
-  /// Cold-start taps go through `initializeApp`.
+  /// Opens the note behind a tapped reminder, and completes one whose Done was
+  /// tapped while the app runs. Cold-start taps go through `initializeApp`.
   ReminderTapHandlerProvider._()
     : super(
         from: null,
@@ -45,9 +48,10 @@ final class ReminderTapHandlerProvider
 }
 
 String _$reminderTapHandlerHash() =>
-    r'ea74bf1c591a1038133043fe8d6caaf218565f96';
+    r'7e898437edfe4efbd6612cfd0433a04a2b860783';
 
-/// Cold-start taps go through `initializeApp`.
+/// Opens the note behind a tapped reminder, and completes one whose Done was
+/// tapped while the app runs. Cold-start taps go through `initializeApp`.
 
 abstract class _$ReminderTapHandler extends $Notifier<void> {
   void build();

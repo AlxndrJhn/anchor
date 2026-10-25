@@ -8,6 +8,7 @@ import 'package:anchor/core/storage/preferences_repository.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/grouped_list.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
+import 'package:anchor/features/notes/data/repository/note_copies_repository.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/editor/document_lines.dart';
@@ -48,6 +49,8 @@ class MockAttachmentsRepository extends Mock
 
 class MockPreferencesRepository extends Mock implements PreferencesRepository {}
 
+class MockCopiesRepository extends Mock implements NoteCopiesRepository {}
+
 class FakeActiveUserId extends ActiveUserId {
   @override
   String? build() => 'user-1';
@@ -60,6 +63,7 @@ void main() {
   late MockAttachmentsRepository attachmentsRepo;
   late MockPreferencesRepository prefsRepo;
   late FakeGateway gateway;
+  late MockCopiesRepository copiesRepo;
 
   setUpAll(() {
     registerFallbackValue(const Note(id: 'fallback', title: ''));
@@ -89,6 +93,7 @@ void main() {
     ).thenAnswer((_) async => false);
     when(() => prefsRepo.setNotificationsAsked(any())).thenAnswer((_) async {});
     gateway = FakeGateway();
+    copiesRepo = MockCopiesRepository();
   });
 
   Future<void> pumpScreen(
@@ -111,6 +116,7 @@ void main() {
           ),
           activeUserIdProvider.overrideWith(FakeActiveUserId.new),
           notificationGatewayProvider.overrideWithValue(gateway),
+          noteCopiesRepositoryProvider.overrideWithValue(copiesRepo),
         ],
         child: MaterialApp.router(
           localizationsDelegates: const [
@@ -134,6 +140,11 @@ void main() {
                 path: '/',
                 builder: (_, _) => const Scaffold(body: Text('Notes')),
                 routes: [
+                  GoRoute(
+                    path: 'note/:id',
+                    builder: (_, state) =>
+                        Text('Opened ${state.pathParameters['id']}'),
+                  ),
                   GoRoute(
                     path: 'note',
                     builder: (_, _) => NoteEditScreen(
@@ -754,6 +765,111 @@ void main() {
     verify(() => notesRepo.setPinned(['n1'], true)).called(1);
     verifyNever(() => notesRepo.updateNote(any()));
     await drainSnackbar(tester);
+  });
+
+  testWidgets('Send hands the note to the share sheet as text', (tester) async {
+    Map<Object?, Object?>? shared;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/share'),
+      (call) async {
+        shared = call.arguments as Map<Object?, Object?>;
+        return 'dev.fluttercommunity.plus/share/unavailable';
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('dev.fluttercommunity.plus/share'),
+        null,
+      ),
+    );
+    await pumpScreen(
+      tester,
+      note: Note(
+        id: 'n1',
+        title: 'Groceries',
+        content: jsonEncode({
+          'ops': [
+            {'insert': 'Milk'},
+            {
+              'insert': '\n',
+              'attributes': {'list': 'checked'},
+            },
+          ],
+        }),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await pickFromMore(tester, 'Send');
+
+    expect(shared?['text'], 'Groceries\n\n☑ Milk');
+    expect(shared?['subject'], 'Groceries');
+  });
+
+  testWidgets('Make a copy saves the note, then opens the copy', (
+    tester,
+  ) async {
+    when(() => copiesRepo.copy('n1')).thenAnswer((_) async => 'copy-1');
+    await pumpScreen(
+      tester,
+      note: const Note(id: 'n1', title: 'Groceries'),
+    );
+    await tester.pumpAndSettle();
+    editorController(tester).replaceText(0, 0, 'eggs', null);
+    await tester.pump();
+
+    await tester.tap(barButton('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Make a copy'));
+    // Not settled: that would wait out the toast.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    verify(() => notesRepo.updateNote(any())).called(1);
+    verify(() => copiesRepo.copy('n1')).called(1);
+    expect(find.text('Opened copy-1'), findsOneWidget);
+    // The toast keeps its last words together.
+    expect(
+      find.textContaining('This is your', findRichText: true),
+      findsOneWidget,
+    );
+    await drainSnackbar(tester);
+  });
+
+  testWidgets('Make a copy that fails says it needs the server', (
+    tester,
+  ) async {
+    when(() => copiesRepo.copy('n1')).thenThrow(Exception('offline'));
+    await pumpScreen(
+      tester,
+      note: const Note(id: 'n1', title: 'Groceries'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(barButton('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Make a copy'));
+    // Not settled: that would wait out the toast.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(
+      find.textContaining('Couldn’t make a copy.', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.text('Groceries'), findsWidgets);
+    await drainSnackbar(tester);
+  });
+
+  testWidgets('a trashed note offers no copy', (tester) async {
+    await pumpScreen(
+      tester,
+      note: const Note(id: 'n1', title: 'Old', state: NoteState.trashed),
+    );
+    await tester.pumpAndSettle();
+    expect(barButton('More'), findsNothing);
   });
 
   group('checked items', () {

@@ -16,18 +16,30 @@ Future<void> showBackgroundSheet(
   BuildContext context, {
   required String? current,
   required ValueChanged<String?> onChanged,
+  bool isMixed = false,
 }) {
   return showAnchorSheet<void>(
     context,
     semanticLabel: context.l10n.noteBackground,
-    builder: (_) => _BackgroundSheet(current: current, onChanged: onChanged),
+    builder: (_) => _BackgroundSheet(
+      current: current,
+      isMixed: isMixed,
+      onChanged: onChanged,
+    ),
   );
 }
 
 class _BackgroundSheet extends StatefulWidget {
-  const _BackgroundSheet({required this.current, required this.onChanged});
+  const _BackgroundSheet({
+    required this.current,
+    required this.onChanged,
+    this.isMixed = false,
+  });
 
   final String? current;
+
+  /// Notes with different backgrounds: none is shown as chosen.
+  final bool isMixed;
   final ValueChanged<String?> onChanged;
 
   @override
@@ -35,7 +47,10 @@ class _BackgroundSheet extends StatefulWidget {
 }
 
 class _BackgroundSheetState extends State<_BackgroundSheet> {
-  late String? _id = AnchorBackgrounds.of(widget.current).id;
+  late String? _id = widget.isMixed
+      ? _noneChosen
+      : AnchorBackgrounds.of(widget.current).id;
+  static const _noneChosen = '';
 
   void _pick(String? id) {
     if (id == _id) return;
