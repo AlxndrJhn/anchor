@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ import 'package:anchor/core/notifications/reminder_permission_prompt.dart';
 import 'package:anchor/core/notifications/reminder_permissions.dart';
 import 'package:anchor/core/widgets/quill_preview.dart';
 import 'package:anchor/core/widgets/app_drawer.dart';
+import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
@@ -90,6 +92,38 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     ref.read(selectionModeProvider.notifier).setEnabled(false);
     ref.read(selectedNoteIdsProvider.notifier).clear();
   }
+
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// When Back last asked to be pressed again to leave the app.
+  DateTime? _exitAskedAt;
+
+  /// Back steps out of selection, then the search, and only leaves the app
+  /// when pressed twice, so a stray press doesn't close it.
+  void _onBack(bool isSelectionMode, String searchQuery) {
+    final scaffold = _scaffoldKey.currentState;
+    if (scaffold?.isDrawerOpen ?? false) return scaffold!.closeDrawer();
+    if (isSelectionMode) return _exitSelectionMode();
+    if (searchQuery.isNotEmpty) {
+      _searchController.clear();
+      ref.read(searchQueryProvider.notifier).set('');
+      return;
+    }
+    final now = DateTime.now();
+    final asked = _exitAskedAt;
+    if (asked != null && now.difference(asked) < _exitWindow) {
+      SystemNavigator.pop();
+      return;
+    }
+    _exitAskedAt = now;
+    AppSnackbar.showInfo(
+      context,
+      message: 'Press back again to exit',
+      icon: LucideIcons.logOut,
+    );
+  }
+
+  static const _exitWindow = Duration(seconds: 2);
 
   Future<void> _onRefresh() async {
     await ref.read(notesControllerProvider.notifier).sync();
@@ -188,13 +222,12 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     }
 
     return PopScope(
-      canPop: !isSelectionMode,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && isSelectionMode) {
-          _exitSelectionMode();
-        }
+        if (!didPop) _onBack(isSelectionMode, searchQuery);
       },
       child: Scaffold(
+        key: _scaffoldKey,
         drawer: const AppDrawer(),
         body: ContentBackground(
           child: RefreshIndicator.adaptive(
