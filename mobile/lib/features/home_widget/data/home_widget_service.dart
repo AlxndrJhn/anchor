@@ -92,9 +92,11 @@ class HomeWidgetLaunchHandler extends _$HomeWidgetLaunchHandler {
       final route = homeWidgetRouteForUri(uri);
       if (route == null) return;
       // Each new-note tap needs its own location to open a fresh draft.
+      // App shortcuts use the same URIs (New checklist adds ?checklist=1).
+      final tap = 'tap=${DateTime.now().microsecondsSinceEpoch}';
       pending.open(
-        route == AppRoutes.widgetNewNote
-            ? '$route?tap=${DateTime.now().microsecondsSinceEpoch}'
+        Uri.parse(route).path == AppRoutes.widgetNewNote
+            ? (route.contains('?') ? '$route&$tap' : '$route?$tap')
             : route,
       );
     });

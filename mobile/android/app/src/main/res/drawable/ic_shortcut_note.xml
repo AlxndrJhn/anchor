@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App shortcut: New note. A paper disc with an orange-bound pad and a plus. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path android:fillColor="#F7F2E6" android:pathData="M24,2a22,22 0,1 1,0 44a22,22 0,1 1,0 -44z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M16,13h16a2,2 0,0 1,2 2v19a2,2 0,0 1,-2 2h-16a2,2 0,0 1,-2 -2v-19a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#EF8354" android:pathData="M16,13h16a2,2 0,0 1,2 2v3h-20v-3a2,2 0,0 1,2 -2z" />
+    <path android:strokeColor="#2D3142" android:strokeWidth="1.6" android:fillColor="#00000000"
+        android:pathData="M16,13h16a2,2 0,0 1,2 2v19a2,2 0,0 1,-2 2h-16a2,2 0,0 1,-2 -2v-19a2,2 0,0 1,2 -2z" />
+    <path android:strokeColor="#2D3142" android:strokeWidth="2" android:strokeLineCap="round"
+        android:pathData="M24,22.5v9M19.5,27h9" />
+</vector>

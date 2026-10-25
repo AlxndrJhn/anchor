@@ -56,13 +56,24 @@ import 'widgets/share_sheet.dart';
 import 'widgets/title_input_formatter.dart';
 
 class NoteEditScreen extends ConsumerStatefulWidget {
-  const NoteEditScreen({super.key, this.noteId, this.note, this.searchTerm});
+  const NoteEditScreen({
+    super.key,
+    this.noteId,
+    this.note,
+    this.searchTerm,
+    this.startAsChecklist = false,
+  });
 
   final String? noteId;
   final Note? note;
 
   /// The search the note was opened from, marked in its text.
   final String? searchTerm;
+
+  /// A new note starts as a checklist, its first item ready to type (the
+  /// launcher's "New checklist" shortcut). Left empty, it is discarded like
+  /// any new note.
+  final bool startAsChecklist;
 
   @override
   ConsumerState<NoteEditScreen> createState() => _NoteEditScreenState();
@@ -124,6 +135,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     _editorOverlay.addListener(_editorOverlayChanged);
     if (_openedAsNew) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (widget.startAsChecklist && mounted) {
+          // As the empty note's Checklist button does.
+          _editorKey.currentState?.applyLineKind(LineKind.checklist);
+          return;
+        }
         Future.delayed(const Duration(milliseconds: 280), () {
           // Unless the title was tapped meanwhile.
           if (!mounted || _writing) return;

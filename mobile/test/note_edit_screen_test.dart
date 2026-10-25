@@ -96,6 +96,7 @@ void main() {
     Note? note,
     bool isOnlyPage = false,
     bool opensFromList = false,
+    bool startAsChecklist = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -135,8 +136,11 @@ void main() {
                 routes: [
                   GoRoute(
                     path: 'note',
-                    builder: (_, _) =>
-                        NoteEditScreen(note: note, noteId: note?.id),
+                    builder: (_, _) => NoteEditScreen(
+                      note: note,
+                      noteId: note?.id,
+                      startAsChecklist: startAsChecklist,
+                    ),
                   ),
                 ],
               ),
@@ -278,6 +282,44 @@ void main() {
     );
     expect(tester.widget<QuillEditor>(editable).focusNode.hasFocus, isTrue);
     expect(editorController(tester).selection.baseOffset, 0);
+  });
+
+  testWidgets('New checklist starts with one unchecked item, caret in it', (
+    tester,
+  ) async {
+    await pumpScreen(tester, startAsChecklist: true);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final controller = editorController(tester);
+    final ops = controller.document.toDelta().toJson();
+    expect(ops, [
+      {
+        'insert': '\n',
+        'attributes': {'list': 'unchecked'},
+      },
+    ]);
+    final editable = find.descendant(
+      of: find.byType(RichTextEditor),
+      matching: find.byType(QuillEditor),
+    );
+    expect(tester.widget<QuillEditor>(editable).focusNode.hasFocus, isTrue);
+    expect(controller.selection.baseOffset, 0);
+
+    controller.replaceText(0, 0, 'milk', null);
+    await tester.pump(const Duration(seconds: 3));
+    final note =
+        verify(() => notesRepo.createNote(captureAny())).captured.single
+            as Note;
+    expect(note.content, contains('"list":"unchecked"'));
+    expect(note.content, contains('milk'));
+  });
+
+  testWidgets('an untouched New checklist is never saved', (tester) async {
+    await pumpScreen(tester, startAsChecklist: true);
+    await tester.pump(const Duration(milliseconds: 300));
+    await leaveNote(tester);
+
+    verifyNever(() => notesRepo.createNote(any()));
   });
 
   testWidgets('an untouched new note is never saved', (tester) async {

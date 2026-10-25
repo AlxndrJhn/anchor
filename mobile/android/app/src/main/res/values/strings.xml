@@ -5,6 +5,8 @@
     <string name="widget_description">See your notes and start a new one from the home screen.</string>
     <string name="widget_app_name">Anchor</string>
     <string name="widget_new_note">New note</string>
+    <string name="shortcut_new_note">New note</string>
+    <string name="shortcut_new_checklist">New checklist</string>
     <string name="widget_empty">No notes yet.\nTap + to write your first one.</string>
     <string name="widget_logged_out">Sign in to Anchor\nto see your notes here.</string>
 </resources>

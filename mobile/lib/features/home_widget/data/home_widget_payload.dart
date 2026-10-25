@@ -10,13 +10,16 @@ const homeWidgetNotesKey = 'widget_notes';
 
 const _widgetUriScheme = 'anchorwidget';
 
+/// Maps a widget or app shortcut launch URI to a router location, or null to
+/// ignore it. `anchorwidget://note/new?checklist=1` starts a checklist.
 String? homeWidgetRouteForUri(Uri? uri) {
   if (uri == null || uri.scheme != _widgetUriScheme) return null;
   if (uri.host == 'note' && uri.pathSegments.isNotEmpty) {
     final target = uri.pathSegments.first;
-    return target == 'new'
-        ? AppRoutes.widgetNewNote
-        : AppRoutes.widgetNote(target);
+    if (target != 'new') return AppRoutes.widgetNote(target);
+    return uri.queryParameters['checklist'] == '1'
+        ? '${AppRoutes.widgetNewNote}?checklist=1'
+        : AppRoutes.widgetNewNote;
   }
   return AppRoutes.home;
 }

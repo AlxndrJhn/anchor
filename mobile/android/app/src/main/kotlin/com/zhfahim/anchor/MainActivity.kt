@@ -1,6 +1,9 @@
 package com.zhfahim.anchor
 
 import android.content.Intent
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -17,6 +20,39 @@ class MainActivity : FlutterActivity() {
         attachWidgetNoteUri(intent)
         super.onCreate(savedInstanceState)
         preferFastestRefreshRate()
+        publishShortcuts()
+    }
+
+    /**
+     * The launcher's long-press menu: New note and New checklist. They are
+     * dynamic so they target whichever package this is (the fork's id
+     * differs), and launch like the widget's buttons, which home_widget
+     * hands to the Flutter side on both cold and warm starts.
+     */
+    private fun publishShortcuts() {
+        if (Build.VERSION.SDK_INT < 25) return
+        try {
+            val manager = getSystemService(ShortcutManager::class.java) ?: return
+            fun shortcut(id: String, label: String, uri: String, icon: Int) =
+                ShortcutInfo.Builder(this, id)
+                    .setShortLabel(label)
+                    .setLongLabel(label)
+                    .setIcon(Icon.createWithResource(this, icon))
+                    .setIntent(
+                        Intent(this, MainActivity::class.java)
+                            .setAction(HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION)
+                            .setData(Uri.parse(uri))
+                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                    )
+                    .build()
+            val scheme = NotesWidgetProvider.URI_SCHEME
+            manager.setDynamicShortcuts(listOf(
+                shortcut("new_note", getString(R.string.shortcut_new_note), "$scheme://note/new", R.drawable.ic_shortcut_note),
+                shortcut("new_checklist", getString(R.string.shortcut_new_checklist), "$scheme://note/new?checklist=1", R.drawable.ic_shortcut_checklist),
+            ))
+        } catch (e: Exception) {
+            android.util.Log.w("AnchorShortcuts", "Couldn't publish app shortcuts", e)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
