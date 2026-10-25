@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HTTPError } from "ky";
 import { useParams, usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "@/components/ui/toast";
@@ -26,6 +26,8 @@ import {
   useNoteEditor,
 } from "@/features/notes";
 import type { RichTextEditorHandle } from "@/features/notes/components/editor";
+import { parseStoredContent } from "@/features/notes/quill";
+import { countCheckedItems } from "@/features/notes/quill-checklist";
 import { createTag, nextTagColor, type Tag, useTags } from "@/features/tags";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
 import { swapView } from "@/lib/morph";
@@ -103,6 +105,10 @@ function NoteEditor({
     string | null | false
   >(false);
   const [nudge, setNudge] = useState(0);
+  const checkedCount = useMemo(
+    () => countCheckedItems(parseStoredContent(editor.content)),
+    [editor.content],
+  );
 
   const {
     data: allTags = [],
@@ -268,6 +274,15 @@ function NoteEditor({
             onArchive={actions.archive}
             onUnarchive={actions.unarchive}
             onTrash={actions.trash}
+            checkedCount={checkedCount}
+            onUncheckAll={() => contentEditorRef.current?.uncheckAll()}
+            onRemoveChecked={() => {
+              contentEditorRef.current?.removeChecked();
+              toast.success(
+                `${checkedCount === 1 ? "1 ticked item" : `${checkedCount} ticked items`} deleted`,
+                { undo: () => contentEditorRef.current?.undo() },
+              );
+            }}
           />
           <NoteEditorContent
             noteId={!isNew ? noteId : undefined}

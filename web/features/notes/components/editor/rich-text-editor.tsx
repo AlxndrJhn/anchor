@@ -39,6 +39,10 @@ import {
   stringifyDelta,
   undoConversion,
 } from "../../quill";
+import {
+  createRemoveCheckedDelta,
+  createUncheckAllDelta,
+} from "../../quill-checklist";
 import { registerNoteFormats } from "../../quill-formats";
 import {
   targetHandlesOwnUndo,
@@ -149,6 +153,11 @@ export interface RichTextEditorHandle {
   /** False when read-only. */
   focusEnd: (extend: boolean) => boolean;
   startList: (kind: "unchecked" | "bullet") => void;
+  /** Unticks every ticked checklist item, as one undo step. */
+  uncheckAll: () => void;
+  /** Deletes every ticked checklist item, as one undo step. */
+  removeChecked: () => void;
+  undo: () => void;
 }
 
 export const RichTextEditor = forwardRef<
@@ -635,9 +644,18 @@ export const RichTextEditor = forwardRef<
       setIsFocused(false);
     }, []);
 
-    useImperativeHandle(
-      ref,
-      () => ({
+    useImperativeHandle(ref, () => {
+      const applyBulk = (plan: (delta: QuillDelta) => QuillDelta | null) => {
+        if (readOnly) return;
+        const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
+        if (!quill) return;
+        const change = plan(quill.getContents() as QuillDelta);
+        if (!change) return;
+        quill.history.cutoff();
+        quill.updateContents(change, "user");
+        quill.history.cutoff();
+      };
+      return {
         setSelection: (index: number, length: number) => {
           if (readOnly) return;
           const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
@@ -664,9 +682,14 @@ export const RichTextEditor = forwardRef<
           quill.format("list", kind, "user");
           setIsFocused(true);
         },
-      }),
-      [readOnly],
-    );
+        uncheckAll: () => applyBulk(createUncheckAllDelta),
+        removeChecked: () => applyBulk(createRemoveCheckedDelta),
+        undo: () => {
+          const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
+          quill?.history.undo();
+        },
+      };
+    }, [readOnly]);
 
     useEffect(() => {
       const host = editorContainerEl;

@@ -11,6 +11,8 @@ import {
   CloudOff,
   Ellipsis,
   History,
+  ListRestart,
+  ListX,
   LoaderCircle,
   LogOut,
   Palette,
@@ -70,6 +72,10 @@ interface NoteEditorHeaderProps {
   onArchive: () => void;
   onUnarchive: () => void;
   onTrash: () => void;
+  /** Ticked checklist items in the note. */
+  checkedCount: number;
+  onUncheckAll: () => void;
+  onRemoveChecked: () => void;
 }
 
 export function NoteEditorHeader(props: NoteEditorHeaderProps) {
@@ -214,6 +220,19 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                   )}
                   <DropdownMenuSeparator />
                 </div>
+                {!props.readOnly && props.checkedCount > 0 && (
+                  <>
+                    <DropdownMenuItem onSelect={props.onUncheckAll}>
+                      <ListRestart />
+                      Untick all items
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={props.onRemoveChecked}>
+                      <ListX />
+                      Delete ticked items
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 {props.canViewHistory && (
                   <DropdownMenuItem
                     onSelect={() => {
