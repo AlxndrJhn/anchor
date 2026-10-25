@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Directory, File, Platform;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +9,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_clip.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/theme/context_extensions.dart';
@@ -170,9 +172,30 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
 
   Future<void> _copyAll() async {
     final dump = await AppLogger.instance.dumpAll();
-    await Clipboard.setData(ClipboardData(text: dump));
+    final text = clipboardSafeLog(dump);
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+    } catch (e, st) {
+      AppLogger.instance.error(
+        'LogViewer',
+        'Copy all failed',
+        error: e,
+        stackTrace: st,
+      );
+      if (!mounted) return;
+      AppSnackbar.showError(
+        context,
+        message: 'Couldn’t copy the logs. Try saving them to a file.',
+      );
+      return;
+    }
     if (!mounted) return;
-    AppSnackbar.showSuccess(context, message: 'Logs copied to clipboard');
+    AppSnackbar.showSuccess(
+      context,
+      message: text.length < dump.length
+          ? 'Newest logs copied (the full log is too big for the clipboard)'
+          : 'Logs copied to clipboard',
+    );
   }
 
   Future<void> _exportToFile() async {
@@ -190,21 +213,51 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
         type: FileType.custom,
         allowedExtensions: const ['log'],
       );
-    } catch (e, st) {
-      AppLogger.instance.error(
+    } catch (e) {
+      AppLogger.instance.warn(
         'LogViewer',
-        'Export picker failed',
-        error: e,
-        stackTrace: st,
+        'Export picker failed, saving to Downloads instead: $e',
       );
+      // Some devices have no document picker the app can reach.
+      final saved = await _saveToDownloads(filename, bytes);
       if (!mounted) return;
-      AppSnackbar.showError(context, message: 'Export failed: $e');
+      if (saved != null) {
+        AppSnackbar.showSuccess(context, message: 'Saved to $saved');
+      } else {
+        AppSnackbar.showError(context, message: 'Export failed: $e');
+      }
       return;
     }
     if (result == null) return; // user cancelled
 
     if (!mounted) return;
     AppSnackbar.showSuccess(context, message: 'Saved $filename');
+  }
+
+  /// Writes the file straight into the shared Download folder, or the app's
+  /// own external folder when that isn't allowed. Returns where it went.
+  Future<String?> _saveToDownloads(String filename, Uint8List bytes) async {
+    if (!Platform.isAndroid) return null;
+    final folders = <Directory?>[
+      Directory('/storage/emulated/0/Download'),
+      await getExternalStorageDirectory(),
+    ];
+    for (final folder in folders) {
+      if (folder == null) continue;
+      try {
+        final file = File('${folder.path}/$filename');
+        await file.writeAsBytes(bytes, flush: true);
+        return file.path;
+      } catch (e, st) {
+        AppLogger.instance.error(
+          'LogViewer',
+          'Saving logs to ${folder.path} failed',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
+    return null;
   }
 
   void _confirmClear() {
