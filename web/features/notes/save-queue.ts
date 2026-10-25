@@ -43,6 +43,8 @@ export interface NoteSaveQueue {
   /** The newest draft not yet saved: waiting, retrying or on its way. */
   newestDraft: () => NoteDraft | null;
   setBaseVersion: (version: number | undefined) => void;
+  /** The server version the next save is based on. */
+  baseVersion: () => number | undefined;
   settled: () => Promise<void>;
 }
 
@@ -280,6 +282,7 @@ export function createNoteSaveQueue(
       baseVersion = version;
       conflicts = 0;
     },
+    baseVersion: () => baseVersion,
     sendingDraft: () => sending,
     newestDraft: () => pending ?? sending,
     async settled() {

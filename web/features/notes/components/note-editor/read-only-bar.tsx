@@ -117,8 +117,8 @@ export function ReadOnlyBar(props: ReadOnlyBarProps & { nudge?: number }) {
         <>
           {icon(<CloudOff />)}
           <span className="ro-msg">
-            <b>You’re offline.</b> This is the copy from your notes list; you
-            can edit it once you’re back online.
+            <b>You’re offline.</b> Your changes are kept on this device and sync
+            when you’re back online.
           </span>
         </>
       )}

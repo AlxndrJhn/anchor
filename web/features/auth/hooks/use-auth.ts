@@ -18,10 +18,18 @@ import type { LoginCredentials, RegisterCredentials } from "../types";
 async function initialize() {
   const { isInitialized, setUser, setInitialized, setUnreachable, logout } =
     useAuthStore.getState();
-  if (isInitialized) return;
+  if (isInitialized && !useAuthStore.getState().unreachable) return;
 
   if (!hasAccessToken()) {
     logout();
+    return;
+  }
+
+  // Known to be offline: don't wait for the request's retries to give up.
+  if (!navigator.onLine && useAuthStore.getState().user) {
+    setUnreachable(true);
+    setInitialized(true);
+    window.addEventListener("online", () => void initialize(), { once: true });
     return;
   }
 
@@ -36,7 +44,17 @@ async function initialize() {
       (error.response.status === 401 || error.response.status === 403)
     )
       logout();
-    else setUnreachable(true);
+    else {
+      setUnreachable(true);
+      // Offline with a session kept on this device: work from what it holds,
+      // and check the session again once the connection is back.
+      if (!(error instanceof HTTPError) && useAuthStore.getState().user) {
+        setInitialized(true);
+        window.addEventListener("online", () => void initialize(), {
+          once: true,
+        });
+      }
+    }
   }
 }
 

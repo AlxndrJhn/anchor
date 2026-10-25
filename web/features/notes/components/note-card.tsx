@@ -234,8 +234,9 @@ export const NoteCard = React.memo(function NoteCard({
             onPick?.(note.id, e.shiftKey);
             return;
           }
-          // Offline the note's page can't load; read the list's copy here.
-          if (!navigator.onLine) {
+          // Offline the note's page can't load unless the service worker
+          // keeps the app; without it, read the list's copy here.
+          if (!navigator.onLine && !navigator.serviceWorker?.controller) {
             e.preventDefault();
             setReadingOffline(true);
             return;
