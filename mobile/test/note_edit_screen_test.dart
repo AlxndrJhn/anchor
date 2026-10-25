@@ -135,6 +135,18 @@ void main() {
     expect(note.title, isEmpty);
   });
 
+  testWidgets('a new note opens with the caret in its text', (tester) async {
+    await pumpScreen(tester);
+    await tester.pump();
+
+    final editable = find.descendant(
+      of: find.byType(RichTextEditor),
+      matching: find.byType(QuillEditor),
+    );
+    expect(tester.widget<QuillEditor>(editable).focusNode.hasFocus, isTrue);
+    expect(editorController(tester).selection.baseOffset, 0);
+  });
+
   testWidgets('an untouched new note is never saved', (tester) async {
     await pumpScreen(tester);
 

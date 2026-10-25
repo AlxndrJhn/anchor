@@ -144,6 +144,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         WidgetsBinding.instance.addPostFrameCallback(
           (_) => _receiveShared(shared),
         );
+      } else {
+        // A new note opens with the caret in its text, ready to type.
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _editorKey.currentState?.focusStart(),
+        );
       }
     }
 
