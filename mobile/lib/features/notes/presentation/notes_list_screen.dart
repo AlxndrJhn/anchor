@@ -170,6 +170,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     Set<String> selectedNoteIds, {
     bool selectable = true,
     bool underLabel = false,
+    bool lazy = true,
   }) {
     final dims = context.dims;
     Widget item(Note note) => selectable
@@ -185,7 +186,24 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       padding: dims.screenInsets.copyWith(
         top: underLabel ? dims.sm : dims.screenGutter,
       ),
-      sliver: viewOptions.viewType == ViewType.grid
+      // Only one lazy masonry grid per list: two of them keep correcting
+      // each other's estimated height, and the list can't reach its end.
+      // The short sections (pinned, archived) are laid out in full.
+      sliver: viewOptions.viewType == ViewType.grid && !lazy
+          ? SliverToBoxAdapter(
+              child: MasonryGridView.count(
+                shrinkWrap: true,
+                primary: false,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                crossAxisCount: 2,
+                mainAxisSpacing: dims.gridSpacing,
+                crossAxisSpacing: dims.gridSpacing,
+                itemCount: notes.length,
+                itemBuilder: (context, index) => item(notes[index]),
+              ),
+            )
+          : viewOptions.viewType == ViewType.grid
           ? SliverMasonryGrid.count(
               crossAxisCount: 2,
               mainAxisSpacing: dims.gridSpacing,
@@ -377,7 +395,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                     ),
                   ),
                 ),
-                notesAsync.when(
+                // Each section is its own sliver here: grouped, the masonry
+                // grids' estimated heights stop scrolling short of the end.
+                ...notesAsync.when(
                   data: (notes) {
                     final q = searchQuery.trim().toLowerCase();
                     bool matches(Note note) {
@@ -408,19 +428,25 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
                     if (filteredNotes.isEmpty && archivedMatches.isEmpty) {
                       if (searchQuery.isNotEmpty) {
-                        return const SliverAppEmptyState(
-                          icon: LucideIcons.search,
-                          message: 'No matching notes found',
-                        );
+                        return const [
+                          SliverAppEmptyState(
+                            icon: LucideIcons.search,
+                            message: 'No matching notes found',
+                          ),
+                        ];
                       }
-                      return const SliverAppEmptyState(
-                        icon: LucideIcons.sparkles,
-                        message: 'Capture your ideas here',
-                      );
+                      return const [
+                        SliverAppEmptyState(
+                          icon: LucideIcons.sparkles,
+                          message: 'Capture your ideas here',
+                        ),
+                      ];
                     }
 
                     if (viewOptions == null) {
-                      return const SliverToBoxAdapter(child: SizedBox.shrink());
+                      return const [
+                        SliverToBoxAdapter(child: SizedBox.shrink()),
+                      ];
                     }
 
                     final comparator = noteComparator(viewOptions);
@@ -451,62 +477,66 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           ),
                         );
 
-                    return SliverMainAxisGroup(
-                      slivers: [
-                        if (pinned.isNotEmpty) ...[
-                          label(LucideIcons.pin, 'Pinned', pinned.length),
-                          _notesSliver(
-                            pinned,
-                            viewOptions,
-                            isSelectionMode,
-                            selectedNoteIds,
-                            underLabel: true,
-                          ),
-                        ],
-                        if (others.isNotEmpty) ...[
-                          if (pinned.isNotEmpty)
-                            label(
-                              LucideIcons.stickyNote,
-                              'Others',
-                              others.length,
-                            ),
-                          _notesSliver(
-                            others,
-                            viewOptions,
-                            isSelectionMode,
-                            selectedNoteIds,
-                            underLabel: pinned.isNotEmpty,
-                          ),
-                        ],
-                        if (archivedMatches.isNotEmpty) ...[
-                          label(
-                            LucideIcons.archive,
-                            'Archived',
-                            archivedMatches.length,
-                          ),
-                          _notesSliver(
-                            archivedMatches,
-                            viewOptions,
-                            false,
-                            const <String>{},
-                            selectable: false,
-                            underLabel: true,
-                          ),
-                        ],
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: isSelectionMode ? 0 : _fabClearance,
-                          ),
+                    return [
+                      if (pinned.isNotEmpty) ...[
+                        label(LucideIcons.pin, 'Pinned', pinned.length),
+                        _notesSliver(
+                          pinned,
+                          viewOptions,
+                          isSelectionMode,
+                          selectedNoteIds,
+                          underLabel: true,
+                          lazy: others.isEmpty,
                         ),
                       ],
-                    );
+                      if (others.isNotEmpty) ...[
+                        if (pinned.isNotEmpty)
+                          label(
+                            LucideIcons.stickyNote,
+                            'Others',
+                            others.length,
+                          ),
+                        _notesSliver(
+                          others,
+                          viewOptions,
+                          isSelectionMode,
+                          selectedNoteIds,
+                          underLabel: pinned.isNotEmpty,
+                        ),
+                      ],
+                      if (archivedMatches.isNotEmpty) ...[
+                        label(
+                          LucideIcons.archive,
+                          'Archived',
+                          archivedMatches.length,
+                        ),
+                        _notesSliver(
+                          archivedMatches,
+                          viewOptions,
+                          false,
+                          const <String>{},
+                          selectable: false,
+                          underLabel: true,
+                          lazy: filteredNotes.isEmpty,
+                        ),
+                      ],
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: isSelectionMode ? 0 : _fabClearance,
+                        ),
+                      ),
+                    ];
                   },
-                  loading: () => const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (err, stack) => SliverFillRemaining(
-                    child: Center(child: Text('Error: $err')),
-                  ),
+                  loading: () => const [
+                    SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ],
+                  error: (err, stack) => [
+                    SliverFillRemaining(
+                      child: Center(child: Text('Error: $err')),
+                    ),
+                  ],
                 ),
               ],
             ),
