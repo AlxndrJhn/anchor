@@ -16,6 +16,9 @@ class NoteAttachments extends Table {
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
   // Server assigned ID (null before first upload)
   TextColumn get serverAttachmentId => text().nullable()();
+  // Text the server read from a picture, for search (null if none, or not
+  // read yet)
+  TextColumn get pictureText => text().nullable()();
   // Null for local uploads not yet sent.
   TextColumn get uploadedByUserId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

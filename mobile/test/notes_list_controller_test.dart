@@ -133,6 +133,17 @@ void main() {
     expect(shown.notes.map((n) => n.id), ['n3']);
   });
 
+  test('a search finds the text read from a note\'s pictures', () async {
+    final withPicture = [
+      for (final n in notes)
+        n.id == 'n3' ? n.copyWith(pictureText: 'Call the Dentist') : n,
+    ];
+    final container = containerWith(active: withPicture);
+    container.read(searchQueryProvider.notifier).set('dentist');
+    final shown = await visibleIn(container);
+    expect(shown.notes.map((n) => n.id), ['n3']);
+  });
+
   test('Archive shows its notes in one group', () async {
     final container = containerWith(archived: [notes[0]]);
     container.read(noteFolderProvider.notifier).go(NoteFolder.archive);
@@ -323,6 +334,10 @@ void main() {
     expect(
       searchText.of(note.copyWith(content: delta('Bread'))),
       contains('bread'),
+    );
+    expect(
+      searchText.of(note.copyWith(pictureText: 'Kassenbon')),
+      contains('kassenbon'),
     );
   });
 

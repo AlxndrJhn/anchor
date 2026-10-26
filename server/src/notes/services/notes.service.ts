@@ -206,6 +206,17 @@ export class NotesService {
                         mode: 'insensitive' as const,
                       },
                     },
+                    // What the note's pictures say.
+                    {
+                      attachments: {
+                        some: {
+                          text: {
+                            contains: search,
+                            mode: 'insensitive' as const,
+                          },
+                        },
+                      },
+                    },
                   ],
                 },
               ]

@@ -169,15 +169,28 @@ List<NoteGroup> _pinnedFirst(List<Note> notes) {
   ];
 }
 
-/// Lower-cased note text for search, cached per content.
+/// Lower-cased note text for search, cached per content: the note's text
+/// and the text read from its pictures.
 class NoteSearchText {
-  final Map<String, ({String? content, String text})> _cache = {};
+  final Map<String, ({String? content, String pictureText, String text})>
+  _cache = {};
 
   String of(Note note) {
     final known = _cache[note.id];
-    if (known != null && known.content == note.content) return known.text;
-    final text = plainTextOf(note.content).toLowerCase();
-    _cache[note.id] = (content: note.content, text: text);
+    if (known != null &&
+        known.content == note.content &&
+        known.pictureText == note.pictureText) {
+      return known.text;
+    }
+    final text = [
+      plainTextOf(note.content),
+      if (note.pictureText.isNotEmpty) note.pictureText,
+    ].join('\n').toLowerCase();
+    _cache[note.id] = (
+      content: note.content,
+      pictureText: note.pictureText,
+      text: text,
+    );
     return text;
   }
 }

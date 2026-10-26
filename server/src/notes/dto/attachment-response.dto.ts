@@ -8,6 +8,8 @@ export class AttachmentResponseDto {
   mimeType: string;
   fileSize: number;
   position: number;
+  /** Text read from a picture, for search; null until read or if none. */
+  text: string | null;
   uploadedByUserId: string;
   createdAt: Date;
 }
@@ -23,6 +25,7 @@ export function toAttachmentResponse(
     mimeType: attachment.mimeType,
     fileSize: attachment.fileSize,
     position: attachment.position,
+    text: attachment.text,
     uploadedByUserId: attachment.uploadedByUserId,
     createdAt: attachment.createdAt,
   };

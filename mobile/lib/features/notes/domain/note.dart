@@ -127,6 +127,8 @@ abstract class Note with _$Note {
     int? reminderSlot,
     @Default([]) List<NoteImagePreview> imagePreviewData,
     @Default(0) int attachmentCount,
+    // The text read from the note's pictures, for search.
+    @Default('') String pictureText,
   }) = _Note;
 
   bool get hasTitle => hasTitleText(title);

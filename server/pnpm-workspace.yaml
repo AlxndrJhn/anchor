@@ -10,3 +10,4 @@ allowBuilds:
   protobufjs: false
   ssh2: false
   '@swc/core': false
+  tesseract.js: false

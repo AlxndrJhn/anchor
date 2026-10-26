@@ -122,4 +122,24 @@ void main() {
 
     expect((await readNote('n1')).updatedAt!.isAtSameMomentAs(past), isTrue);
   });
+
+  test('the server\'s attachments bring the text read from pictures', () async {
+    await insertNote('n1');
+
+    await repo.applyServerAttachments('n1', [
+      NoteAttachment.fromJson({
+        'id': 'a1',
+        'noteId': 'n1',
+        'type': 'image',
+        'originalFilename': 'receipt.png',
+        'mimeType': 'image/png',
+        'fileSize': 10,
+        'position': 0,
+        'text': 'Kassenbon EUR 4,20',
+      }),
+    ]);
+
+    final row = await db.select(db.noteAttachments).getSingle();
+    expect(row.pictureText, 'Kassenbon EUR 4,20');
+  });
 }

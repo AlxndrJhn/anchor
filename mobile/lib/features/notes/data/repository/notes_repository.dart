@@ -133,6 +133,8 @@ class NotesRepository {
 
     final previewsOf = <String, List<NoteImagePreview>>{};
     final fileIdsOf = <String, Set<String>>{};
+    // The text read from each picture, by attachment.
+    final pictureTextsOf = <String, Map<String, String>>{};
     final files =
         await (_db.select(_db.noteAttachments)
               ..where(
@@ -150,6 +152,10 @@ class NotesRepository {
     for (final file in files) {
       final attachmentId = file.serverAttachmentId ?? file.id;
       final isNew = (fileIdsOf[file.noteId] ??= {}).add(attachmentId);
+      final pictureText = file.pictureText;
+      if (pictureText != null && pictureText.isNotEmpty) {
+        (pictureTextsOf[file.noteId] ??= {})[attachmentId] = pictureText;
+      }
       if (!isNew || file.type != AttachmentType.image.name) continue;
       final previews = previewsOf[file.noteId] ??= [];
       if (previews.length < maxImagePreviews) {
@@ -171,6 +177,7 @@ class NotesRepository {
           tagIds: tagIdsOf[row.id] ?? const [],
           imagePreviews: previewsOf[row.id] ?? const [],
           attachmentCount: fileIdsOf[row.id]?.length ?? 0,
+          pictureText: pictureTextsOf[row.id]?.values.join('\n\n') ?? '',
         ),
     ];
   }
@@ -580,6 +587,7 @@ class NotesRepository {
     List<String> tagIds = const [],
     List<NoteImagePreview> imagePreviews = const [],
     int attachmentCount = 0,
+    String pictureText = '',
   }) {
     return Note(
       id: row.id,
@@ -608,6 +616,7 @@ class NotesRepository {
       reminderSlot: row.reminderSlot,
       imagePreviewData: imagePreviews,
       attachmentCount: attachmentCount,
+      pictureText: pictureText,
       reminder: row.reminderAt == null
           ? null
           : NoteReminder(

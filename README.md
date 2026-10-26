@@ -40,6 +40,7 @@ differences. "Web" and "Android" say where each one is available.
 | Empty the trash in one go | (upstream) | ✓ |
 | **Search** | | |
 | Filters for colour, tag, pictures, checklists and reminders | ✓ | ✓ |
+| Search finds the text in pictures (screenshots, receipts), read on the server | ✓ | ✓ |
 | Search also finds archived notes; Archive and Trash can be searched ([#190](https://github.com/ZhFahim/anchor/issues/190)) | ✓ | ✓ |
 | The searched words are marked in the note you open ([#134](https://github.com/ZhFahim/anchor/issues/134)) | ✓ | ✓ |
 | The search is kept when you come back from a note ([#206](https://github.com/ZhFahim/anchor/issues/206)) | ✓ | ✓ |
@@ -144,6 +145,7 @@ differences. "Web" and "Android" say where each one is available.
    | `APP_URL` | No | `http://localhost:3000` | Base URL where Anchor is served |
    | `JWT_SECRET` | No | (auto-generated) | Auth token secret. Min 16 characters when set |
    | `DATA_DIR` | No | `/data` | Root directory for persisted uploads |
+   | `PICTURE_TEXT` | No | `on` | `off` stops reading the text in pictures for search |
    | `CORS_ORIGINS` | No | (allow all) | Comma-separated allowlist of CORS origins |
    | `PG_HOST` | No | (empty) | External Postgres host (leave empty for embedded) |
    | `PG_PORT` | No | `5432` | Postgres port |

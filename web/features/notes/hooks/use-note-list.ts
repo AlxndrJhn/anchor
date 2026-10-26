@@ -18,27 +18,13 @@ import {
   type NoteFilters,
   writeFilterParams,
 } from "../note-filters";
-import { deltaToFullPlainText } from "../quill";
+import { matchesSearch } from "../search";
 import { compareNotes } from "../sort";
 import type { Note } from "../types";
 
+export { matchesSearch };
+
 const SEARCH_PARAM = "q";
-
-const searchTextByNote = new WeakMap<Note, string>();
-
-function searchTextOf(note: Note) {
-  let text = searchTextByNote.get(note);
-  if (text === undefined) {
-    text = `${note.title}\n${deltaToFullPlainText(note.content)}`.toLowerCase();
-    searchTextByNote.set(note, text);
-  }
-  return text;
-}
-
-/** Whether a note's title or text has the (lowercase, trimmed) term. */
-export function matchesSearch(note: Note, term: string) {
-  return !term || searchTextOf(note).includes(term);
-}
 
 export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const {

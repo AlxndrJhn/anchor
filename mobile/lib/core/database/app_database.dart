@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -129,6 +129,18 @@ class AppDatabase extends _$AppDatabase {
         await migrator.addColumn(notes, notes.positionedAt);
         // Resent notes say when each was dragged, so the order matches the
         // web's.
+        await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
+          const SyncStateCompanion(cursor: Value(null)),
+        );
+      }
+      if (from < 14) {
+        final existing = await customSelect(
+          'PRAGMA table_info(note_attachments)',
+        ).map((row) => row.read<String>('name')).get();
+        if (!existing.contains('picture_text')) {
+          await migrator.addColumn(noteAttachments, noteAttachments.pictureText);
+        }
+        // Resent attachments bring the text read from each picture.
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
           const SyncStateCompanion(cursor: Value(null)),
         );

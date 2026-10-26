@@ -110,6 +110,7 @@ class NoteAttachmentsRepository {
                 syncStatus: drift.Value(AttachmentSyncStatus.synced.dbValue),
                 serverAttachmentId: drift.Value(attachment.id),
                 uploadedByUserId: drift.Value(attachment.uploadedByUserId),
+                pictureText: drift.Value(attachment.text),
               ),
             );
       }
@@ -452,6 +453,7 @@ class NoteAttachmentsRepository {
                   ),
                   serverAttachmentId: drift.Value(attachment.id),
                   uploadedByUserId: drift.Value(attachment.uploadedByUserId),
+                  pictureText: drift.Value(attachment.text),
                 ),
               );
 
@@ -654,6 +656,7 @@ class NoteAttachmentsRepository {
       fileSize: row.fileSize,
       position: row.position,
       uploadedByUserId: row.uploadedByUserId,
+      text: row.pictureText,
       localPath: row.localPath,
       isPendingUpload:
           AttachmentSyncStatus.fromString(row.syncStatus) ==

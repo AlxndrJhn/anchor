@@ -639,4 +639,36 @@ void main() {
       expect(await revisions.watch('n1').first, isEmpty);
     });
   });
+
+  test('a note carries the text read from its pictures, once each', () async {
+    await insertTag('t1');
+    await insertTag('t2');
+    await insertNote(id: 'n1');
+    await linkTag('n1', 't1');
+    await linkTag('n1', 't2');
+    for (final (id, text, position) in [
+      ('a1', 'Kassenbon EUR 4,20', 0),
+      ('a2', null, 1),
+      ('a3', 'Call the dentist', 2),
+    ]) {
+      await db
+          .into(db.noteAttachments)
+          .insert(
+            NoteAttachmentsCompanion.insert(
+              id: id,
+              noteId: 'n1',
+              type: 'image',
+              originalFilename: '$id.png',
+              mimeType: 'image/png',
+              fileSize: 1,
+              position: Value(position),
+              pictureText: Value(text),
+            ),
+          );
+    }
+
+    final note = (await repo.watchNotes().first).single;
+
+    expect(note.pictureText, 'Kassenbon EUR 4,20\n\nCall the dentist');
+  });
 }

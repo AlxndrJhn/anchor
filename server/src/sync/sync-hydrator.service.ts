@@ -62,7 +62,7 @@ interface NoteRow {
     };
   }>;
   _count: { attachments: number };
-  attachments: Array<{ id: string }>;
+  attachments: Array<{ id: string; text: string | null }>;
 }
 
 // ChangeLog rows have no FK on entityId, so a row can outlive its entity. Any
