@@ -1842,6 +1842,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trashEmptied => 'Trash emptied';
 
   @override
+  String get listSelectNotes => 'Select notes';
+
+  @override
   String get listViewOptions => 'View options';
 
   @override

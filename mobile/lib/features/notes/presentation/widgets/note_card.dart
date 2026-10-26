@@ -29,6 +29,7 @@ class NoteCard extends StatefulWidget {
     this.status,
     this.onTap,
     this.onLongPress,
+    this.holdDrags = false,
     this.onOpenPicture,
     this.showPictures = true,
     this.onToggleItem,
@@ -47,6 +48,11 @@ class NoteCard extends StatefulWidget {
   final String? status;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+
+  /// A hold picks the card up to drag it (see ReorderableNoteCard), so the
+  /// card doesn't take the hold itself; [onLongPress] stays for screen
+  /// readers.
+  final bool holdDrags;
 
   /// Opens one of the card's pictures full size, by attachment id.
   final ValueChanged<String>? onOpenPicture;
@@ -147,18 +153,19 @@ class _NoteCardState extends State<NoteCard>
     );
 
     final gestures = <Type, GestureRecognizerFactory>{
-      LongPressGestureRecognizer:
-          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
-            () => LongPressGestureRecognizer(
-              duration: AnchorTokens.motionDurationLongPress,
+      if (!widget.holdDrags)
+        LongPressGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+              () => LongPressGestureRecognizer(
+                duration: AnchorTokens.motionDurationLongPress,
+              ),
+              (recognizer) {
+                recognizer.onLongPressStart = (_) {
+                  _release();
+                  widget.onLongPress?.call();
+                };
+              },
             ),
-            (recognizer) {
-              recognizer.onLongPressStart = (_) {
-                _release();
-                widget.onLongPress?.call();
-              };
-            },
-          ),
       TapGestureRecognizer:
           GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
             TapGestureRecognizer.new,

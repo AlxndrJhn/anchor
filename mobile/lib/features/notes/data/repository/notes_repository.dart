@@ -455,6 +455,20 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.setPinned');
   }
 
+  /// Puts a note where it was dragged among the notes; it stays there until it
+  /// is next edited, and goes up with the note.
+  Future<void> setPosition(String noteId, double position) async {
+    await (_db.update(_db.notes)..where((tbl) => tbl.id.equals(noteId))).write(
+      NotesCompanion.custom(
+        position: drift.Constant(position),
+        positionedAt: drift.Constant(DateTime.now().toUtc()),
+        isSynced: const drift.Constant(false),
+        localRev: _db.nextLocalRev,
+      ),
+    );
+    scheduleAppSync(trigger: 'NotesRepo.setPosition');
+  }
+
   /// Gives the notes one colour or pattern (null for none). Only notes this
   /// person can edit change; returns the ids that did.
   Future<List<String>> setBackground(

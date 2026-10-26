@@ -2686,6 +2686,12 @@ abstract class AppLocalizations {
   /// **'Trash emptied'**
   String get trashEmptied;
 
+  /// Button in the notes list's top bar that starts choosing several notes, since holding a card drags it.
+  ///
+  /// In en, this message translates to:
+  /// **'Select notes'**
+  String get listSelectNotes;
+
   /// Title of the sheet for layout and sort order, and the button that opens it.
   ///
   /// In en, this message translates to:

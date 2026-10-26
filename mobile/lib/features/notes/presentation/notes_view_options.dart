@@ -54,6 +54,18 @@ double noteSortKey(Note note) {
   return positionedAt.millisecondsSinceEpoch >= edited ? position : edited;
 }
 
+/// The place for a note dropped between [above] and [below] (either may be
+/// missing at the ends), in [noteSortKey] terms.
+double positionBetween(Note? above, Note? below) {
+  const step = 1000.0;
+  if (above != null && below != null) {
+    return (noteSortKey(above) + noteSortKey(below)) / 2;
+  }
+  if (above != null) return noteSortKey(above) - step;
+  if (below != null) return noteSortKey(below) + step;
+  return DateTime.now().millisecondsSinceEpoch.toDouble();
+}
+
 /// Pinned notes stay on top, then the chosen sort, then the id.
 int Function(Note, Note) noteComparator(NotesViewOptions options) {
   return (a, b) {

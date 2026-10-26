@@ -36,6 +36,7 @@ class NotesBoard extends StatelessWidget {
   /// The scroll view the cards are measured in.
   final GlobalKey contentKey;
 
+  /// Builds a note's card, keyed by `ValueKey(note.id)`.
   final Widget Function(Note note, int index) cardBuilder;
 
   final List<Widget> header;
@@ -88,12 +89,20 @@ class NotesBoard extends StatelessWidget {
   Widget _cards(BuildContext context, List<Note> notes) {
     final count = notes.length;
     final gap = context.density.space12;
+    // Cards are keyed by note, so one keeps its state when the order changes
+    // under it, as while a note is dragged.
+    int? indexOf(Key key) {
+      final index = notes.indexWhere((note) => ValueKey(note.id) == key);
+      return index < 0 ? null : index;
+    }
+
     return switch (layout) {
       CardLayout.masonry => SliverMasonry(
         itemKeys: [for (final note in notes) note.id],
         mainAxisSpacing: gap,
         crossAxisSpacing: gap,
         itemBuilder: (context, i) => cardBuilder(notes[i], i),
+        findChildIndexCallback: indexOf,
       ),
       CardLayout.grid => SliverList.separated(
         itemCount: (count + 1) ~/ 2,
@@ -117,6 +126,7 @@ class NotesBoard extends StatelessWidget {
         itemCount: count,
         separatorBuilder: (_, _) => SizedBox(height: gap),
         itemBuilder: (context, i) => cardBuilder(notes[i], i),
+        findItemIndexCallback: indexOf,
       ),
     };
   }

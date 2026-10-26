@@ -11,6 +11,7 @@ class SliverMasonry extends SliverMultiBoxAdaptorWidget {
     super.key,
     required this.itemKeys,
     required NullableIndexedWidgetBuilder itemBuilder,
+    ChildIndexGetter? findChildIndexCallback,
     this.columnCount = 2,
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
@@ -18,6 +19,7 @@ class SliverMasonry extends SliverMultiBoxAdaptorWidget {
          delegate: SliverChildBuilderDelegate(
            itemBuilder,
            childCount: itemKeys.length,
+           findChildIndexCallback: findChildIndexCallback,
          ),
        );
 

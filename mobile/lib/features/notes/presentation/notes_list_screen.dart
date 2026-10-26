@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../app/router/app_routes.dart';
+import '../../../core/motion/haptics.dart';
 import '../../../core/motion/reorder_animation.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
@@ -23,6 +25,7 @@ import '../../sync/presentation/sync_warning.dart';
 import '../../tags/domain/tag.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
+import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_dates.dart';
 import 'note_actions.dart';
@@ -44,6 +47,7 @@ import 'widgets/notes_board.dart';
 import 'widgets/notes_bottom_bar.dart';
 import 'widgets/picture_viewer.dart';
 import 'widgets/pull_to_refresh.dart';
+import 'widgets/reorderable_note_card.dart';
 import 'widgets/view_options_sheet.dart';
 
 class NotesListScreen extends ConsumerStatefulWidget {
@@ -67,6 +71,125 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   bool _canExit = false;
 
   NoteSelection get _selection => NoteSelection(ref);
+
+  /// A note being dragged to a new place: the order its group would take if
+  /// it were let go now. Once let go it is [_settling] until the list itself
+  /// has that order, so nothing flashes back to the old one.
+  _NoteDrag? _drag;
+  bool _settling = false;
+  DateTime _lastShuffle = DateTime(0);
+
+  /// No new place until the cards have moved out of the way.
+  static const _shuffleCooldown = Duration(milliseconds: 280);
+  static const _settleTimeout = Duration(seconds: 2);
+
+  /// A card let go this close to where it was lifted was only held.
+  static const double _holdSlop = 12;
+
+  void _onDragStarted(NoteGroup group, Note note, Offset start) {
+    final ids = [for (final n in group.notes) n.id];
+    setState(() {
+      _settling = false;
+      _drag = _NoteDrag(
+        group: group.kind,
+        draggedId: note.id,
+        ids: ids,
+        start: ids,
+        from: start,
+      );
+    });
+  }
+
+  void _onDragHover(NoteGroupKind group, String draggedId, String targetId) {
+    final drag = _drag;
+    if (drag == null || _settling || drag.group != group) return;
+    if (drag.draggedId != draggedId) return;
+    final now = DateTime.now();
+    if (now.difference(_lastShuffle) < _shuffleCooldown) return;
+    final from = drag.ids.indexOf(draggedId);
+    final to = drag.ids.indexOf(targetId);
+    if (from < 0 || to < 0 || from == to) return;
+    final ids = [...drag.ids]
+      ..removeAt(from)
+      ..insert(to, draggedId);
+    _lastShuffle = now;
+    Haptics.selection();
+    setState(() => _drag = drag.withIds(ids));
+  }
+
+  /// Let go: the note goes between its new neighbours. Held without moving,
+  /// it is selected instead.
+  void _onDragEnded(List<NoteGroup> groups, Offset end) {
+    final drag = _drag;
+    if (drag == null || _settling) return;
+    final notes = [
+      for (final group in groups)
+        if (group.kind == drag.group) ...group.notes,
+    ];
+    final byId = {for (final n in notes) n.id: n};
+    if (listEquals(drag.ids, drag.start)) {
+      setState(() => _drag = null);
+      final note = byId[drag.draggedId];
+      if (note != null && (end - drag.from).distance < _holdSlop) {
+        _selection.start(note);
+      }
+      return;
+    }
+    final index = drag.ids.indexOf(drag.draggedId);
+    final position = positionBetween(
+      index > 0 ? byId[drag.ids[index - 1]] : null,
+      index + 1 < drag.ids.length ? byId[drag.ids[index + 1]] : null,
+    );
+    setState(() => _settling = true);
+    ref.read(notesRepositoryProvider).setPosition(drag.draggedId, position);
+    Future.delayed(_settleTimeout, () {
+      if (mounted && _settling && identical(_drag, drag)) {
+        setState(() {
+          _drag = null;
+          _settling = false;
+        });
+      }
+    });
+  }
+
+  /// [groups] in the order a drag is showing, if one is under way.
+  List<NoteGroup> _inDragOrder(List<NoteGroup> groups) {
+    final drag = _drag;
+    if (drag == null) return groups;
+    return [
+      for (final group in groups)
+        if (group.kind != drag.group)
+          group
+        else
+          NoteGroup(
+            group.kind,
+            _notesInDragOrder(drag, group.notes),
+            isFolded: group.isFolded,
+            canFold: group.canFold,
+          ),
+    ];
+  }
+
+  List<Note> _notesInDragOrder(_NoteDrag drag, List<Note> notes) {
+    if (_settling && listEquals([for (final n in notes) n.id], drag.ids)) {
+      // The list has caught up: stop holding the order.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && identical(_drag, drag)) {
+          setState(() {
+            _drag = null;
+            _settling = false;
+          });
+        }
+      });
+      return notes;
+    }
+    final byId = {for (final n in notes) n.id: n};
+    return [
+      for (final id in drag.ids) ?byId[id],
+      for (final n in notes)
+        if (!drag.ids.contains(n.id)) n,
+    ];
+  }
 
   @override
   void initState() {
@@ -245,6 +368,22 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       ViewType.grid => CardLayout.grid,
       ViewType.list => CardLayout.list,
     };
+    // Notes are dragged to new places in the default order, as on the web,
+    // while the whole list is shown.
+    final canReorder =
+        folder == NoteFolder.notes &&
+        !isSelecting &&
+        !_searching &&
+        query.isEmpty &&
+        filters.isEmpty &&
+        options.sortOption == SortOption.dateModified &&
+        !options.isAscending;
+    final groupOf = {
+      for (final group in shown.groups)
+        if (group.kind != NoteGroupKind.archived)
+          for (final note in group.notes) note.id: group,
+    };
+    final groups = _inDragOrder(shown.groups);
     void openMenu() => _drawerKey.currentState?.open();
     void clearTag() => ref.read(selectedTagFilterProvider.notifier).clear();
 
@@ -258,6 +397,17 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
           onPressed: () => _selection.toggleAll(visible),
         )
       else ...[
+        // Selecting without a hold, which picks a card up to drag it.
+        if (folder == NoteFolder.notes && visible.isNotEmpty)
+          BarButton(
+            icon: LucideIcons.squareCheck,
+            label: context.l10n.listSelectNotes,
+            onPressed: () {
+              Haptics.selection();
+              FocusManager.instance.primaryFocus?.unfocus();
+              ref.read(selectionModeProvider.notifier).setEnabled(true);
+            },
+          ),
         if (folder == NoteFolder.trash)
           BarButton(
             icon: LucideIcons.ellipsis,
@@ -275,11 +425,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       ],
     ];
 
-    Widget card(Note note, int index) => ReorderAnimatedBox(
-      key: ValueKey(note.id),
-      id: note.id,
-      memory: _reorderPositions,
-      child: NoteCard(
+    Widget card(Note note, int index) {
+      final group = canReorder ? groupOf[note.id] : null;
+      final noteCard = NoteCard(
         note: note,
         tags: tagsByName(note.tagIds, tagsById),
         layout: layout,
@@ -292,6 +440,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         onTap: () => isSelecting ? _selection.toggle(note) : _open(note),
         onLongPress: () =>
             isSelecting ? _selection.toggle(note) : _selection.start(note),
+        holdDrags: group != null,
         showPictures: options.showPictures,
         // Viewers, and archived or trashed notes, keep read-only boxes.
         onToggleItem: note.canEdit && note.isActive && !note.isArchived
@@ -300,8 +449,25 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             : null,
         onOpenPicture: (id) =>
             showNotePictures(context, ref, noteId: note.id, attachmentId: id),
-      ),
-    );
+      );
+      return ReorderAnimatedBox(
+        key: ValueKey(note.id),
+        id: note.id,
+        memory: _reorderPositions,
+        child: group == null
+            ? noteCard
+            : ReorderableNoteCard(
+                noteId: note.id,
+                group: group.kind,
+                isLifted: _drag?.draggedId == note.id,
+                onDragStarted: (start) => _onDragStarted(group, note, start),
+                onHover: (draggedId) =>
+                    _onDragHover(group.kind, draggedId, note.id),
+                onDragEnded: (end) => _onDragEnded(shown.groups, end),
+                child: noteCard,
+              ),
+      );
+    }
 
     final page = AppScaffold(
       title: tag == null ? folder.titleIn(context.l10n) : '#${tag.name}',
@@ -342,7 +508,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             ),
       slivers: [
         NotesBoard(
-          groups: shown.groups,
+          groups: groups,
           layout: layout,
           generation: Object.hashAll([
             folder,
@@ -354,6 +520,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             ...visible.map((n) => n.id),
             ...visible.map((n) => n.isPinned),
             ...visible.map((n) => n.isArchived),
+            ...?_drag?.ids,
           ]),
           contentKey: _scrollKey,
           cardBuilder: card,
@@ -524,4 +691,32 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       ),
     };
   }
+}
+
+class _NoteDrag {
+  const _NoteDrag({
+    required this.group,
+    required this.draggedId,
+    required this.ids,
+    required this.start,
+    required this.from,
+  });
+
+  final NoteGroupKind group;
+  final String draggedId;
+
+  /// The group's notes in the order shown now, and before the drag.
+  final List<String> ids;
+  final List<String> start;
+
+  /// Where the card was lifted, to tell a hold from a drag.
+  final Offset from;
+
+  _NoteDrag withIds(List<String> ids) => _NoteDrag(
+    group: group,
+    draggedId: draggedId,
+    ids: ids,
+    start: start,
+    from: from,
+  );
 }

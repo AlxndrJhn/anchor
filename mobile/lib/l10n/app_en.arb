@@ -2420,6 +2420,10 @@
   "@trashEmptied": {
     "description": "Toast after every note in the trash was permanently deleted."
   },
+  "listSelectNotes": "Select notes",
+  "@listSelectNotes": {
+    "description": "Button in the notes list's top bar that starts choosing several notes, since holding a card drags it."
+  },
   "listViewOptions": "View options",
   "@listViewOptions": {
     "description": "Title of the sheet for layout and sort order, and the button that opens it."
