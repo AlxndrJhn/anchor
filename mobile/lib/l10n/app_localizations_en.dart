@@ -625,6 +625,72 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsUpdates => 'Updates';
+
+  @override
+  String get settingsCheckForUpdates => 'Check for updates';
+
+  @override
+  String get settingsUpdateChecking => 'Checking…';
+
+  @override
+  String settingsUpdateBuild(int build, String repository) {
+    return 'This is build $build of $repository';
+  }
+
+  @override
+  String get settingsCheckAutomatically => 'Check automatically';
+
+  @override
+  String get settingsCheckAutomaticallyHelp =>
+      'Look for a new release when Anchor starts';
+
+  @override
+  String get updateAvailable => 'Update available';
+
+  @override
+  String get updateSeeWhatsNew => 'See what’s new';
+
+  @override
+  String get updateWhatsNew => 'What’s new';
+
+  @override
+  String updateMoreChanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'and $count more',
+      one: 'and 1 more',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get updateInstall => 'Download and install';
+
+  @override
+  String updateInstallSize(int megabytes) {
+    return 'Download and install ($megabytes MB)';
+  }
+
+  @override
+  String updateDownloading(int percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get updateViewRelease => 'View the release on GitHub';
+
+  @override
+  String get updateCheckFailed => 'Couldn’t check for updates';
+
+  @override
+  String get updateDownloadFailed => 'The update couldn’t be downloaded';
+
+  @override
+  String get updateUpToDate => 'Anchor is up to date';
+
+  @override
   String get settingsHelp => 'Help';
 
   @override

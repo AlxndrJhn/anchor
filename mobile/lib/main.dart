@@ -8,6 +8,7 @@ import 'app/router/app_router.dart';
 import 'core/motion/springs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/style_typography.dart';
+import 'core/update/app_updater.dart';
 import 'features/home_widget/data/home_widget_service.dart';
 import 'features/reminders/data/reminder_scheduler.dart';
 import 'features/reminders/presentation/reminder_tap_handler.dart';
@@ -72,6 +73,8 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     ref.watch(syncManagerProvider);
     ref.watch(homeWidgetSyncProvider);
     ref.watch(homeWidgetLaunchHandlerProvider);
+    // Look for a newer release of the fork when the app starts.
+    ref.watch(updateControllerProvider);
     ref.watch(reminderSchedulerProvider);
     ref.watch(reminderTapHandlerProvider);
     ref.watch(shareImportProvider);

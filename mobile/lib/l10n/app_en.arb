@@ -848,6 +848,102 @@
       }
     }
   },
+  "settingsUpdates": "Updates",
+  "@settingsUpdates": {
+    "description": "Section label in Settings for this fork's updates from its GitHub releases (Android release builds only)."
+  },
+  "settingsCheckForUpdates": "Check for updates",
+  "@settingsCheckForUpdates": {
+    "description": "Row in Settings › Updates that looks for a newer release now."
+  },
+  "settingsUpdateChecking": "Checking…",
+  "@settingsUpdateChecking": {
+    "description": "Subtitle of Check for updates while it looks for a newer release."
+  },
+  "settingsUpdateBuild": "This is build {build} of {repository}",
+  "@settingsUpdateBuild": {
+    "description": "Subtitle of Check for updates: the installed build number and the GitHub repository it updates from.",
+    "placeholders": {
+      "build": {
+        "type": "int",
+        "example": "22"
+      },
+      "repository": {
+        "type": "String",
+        "example": "AlxndrJhn/anchor"
+      }
+    }
+  },
+  "settingsCheckAutomatically": "Check automatically",
+  "@settingsCheckAutomatically": {
+    "description": "Switch in Settings › Updates."
+  },
+  "settingsCheckAutomaticallyHelp": "Look for a new release when Anchor starts",
+  "@settingsCheckAutomaticallyHelp": {
+    "description": "Help under the Check automatically switch."
+  },
+  "updateAvailable": "Update available",
+  "@updateAvailable": {
+    "description": "Title of the banner above the notes and of the sheet, when a newer release of the app is out."
+  },
+  "updateSeeWhatsNew": "See what’s new",
+  "@updateSeeWhatsNew": {
+    "description": "Button in the Update available banner above the notes that opens the update sheet."
+  },
+  "updateWhatsNew": "What’s new",
+  "@updateWhatsNew": {
+    "description": "Heading over the list of changes in the update sheet."
+  },
+  "updateMoreChanges": "{count, plural, =1{and 1 more} other{and {count} more}}",
+  "@updateMoreChanges": {
+    "description": "Under the update's list of changes, when not all are shown.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "updateInstall": "Download and install",
+  "@updateInstall": {
+    "description": "Button in the update sheet, when the download's size is unknown."
+  },
+  "updateInstallSize": "Download and install ({megabytes} MB)",
+  "@updateInstallSize": {
+    "description": "Button in the update sheet, with the size of the download.",
+    "placeholders": {
+      "megabytes": {
+        "type": "int",
+        "example": "44"
+      }
+    }
+  },
+  "updateDownloading": "Downloading… {percent}%",
+  "@updateDownloading": {
+    "description": "The update sheet's button while the update downloads.",
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "example": "42"
+      }
+    }
+  },
+  "updateViewRelease": "View the release on GitHub",
+  "@updateViewRelease": {
+    "description": "Button in the update sheet that opens the release's page."
+  },
+  "updateCheckFailed": "Couldn’t check for updates",
+  "@updateCheckFailed": {
+    "description": "Error when looking for a newer release failed."
+  },
+  "updateDownloadFailed": "The update couldn’t be downloaded",
+  "@updateDownloadFailed": {
+    "description": "Error in the update sheet when the download failed."
+  },
+  "updateUpToDate": "Anchor is up to date",
+  "@updateUpToDate": {
+    "description": "Toast after Check for updates found no newer release."
+  },
   "settingsHelp": "Help",
   "@settingsHelp": {
     "description": "Section label in Settings for logs and supporting the developer."

@@ -1144,6 +1144,108 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}'**
   String settingsSignOutMessage(int count);
 
+  /// Section label in Settings for this fork's updates from its GitHub releases (Android release builds only).
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get settingsUpdates;
+
+  /// Row in Settings › Updates that looks for a newer release now.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get settingsCheckForUpdates;
+
+  /// Subtitle of Check for updates while it looks for a newer release.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get settingsUpdateChecking;
+
+  /// Subtitle of Check for updates: the installed build number and the GitHub repository it updates from.
+  ///
+  /// In en, this message translates to:
+  /// **'This is build {build} of {repository}'**
+  String settingsUpdateBuild(int build, String repository);
+
+  /// Switch in Settings › Updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check automatically'**
+  String get settingsCheckAutomatically;
+
+  /// Help under the Check automatically switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Look for a new release when Anchor starts'**
+  String get settingsCheckAutomaticallyHelp;
+
+  /// Title of the banner above the notes and of the sheet, when a newer release of the app is out.
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get updateAvailable;
+
+  /// Button in the Update available banner above the notes that opens the update sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'See what’s new'**
+  String get updateSeeWhatsNew;
+
+  /// Heading over the list of changes in the update sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'What’s new'**
+  String get updateWhatsNew;
+
+  /// Under the update's list of changes, when not all are shown.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{and 1 more} other{and {count} more}}'**
+  String updateMoreChanges(int count);
+
+  /// Button in the update sheet, when the download's size is unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Download and install'**
+  String get updateInstall;
+
+  /// Button in the update sheet, with the size of the download.
+  ///
+  /// In en, this message translates to:
+  /// **'Download and install ({megabytes} MB)'**
+  String updateInstallSize(int megabytes);
+
+  /// The update sheet's button while the update downloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading… {percent}%'**
+  String updateDownloading(int percent);
+
+  /// Button in the update sheet that opens the release's page.
+  ///
+  /// In en, this message translates to:
+  /// **'View the release on GitHub'**
+  String get updateViewRelease;
+
+  /// Error when looking for a newer release failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t check for updates'**
+  String get updateCheckFailed;
+
+  /// Error in the update sheet when the download failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The update couldn’t be downloaded'**
+  String get updateDownloadFailed;
+
+  /// Toast after Check for updates found no newer release.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor is up to date'**
+  String get updateUpToDate;
+
   /// Section label in Settings for logs and supporting the developer.
   ///
   /// In en, this message translates to:

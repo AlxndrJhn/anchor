@@ -131,10 +131,14 @@ jobs:
         # the old "Android APK" workflow's (1000 + run), and Flutter adds
         # 1000 × the type's number (arm64 2, x86_64 4) on top, so a new APK
         # always installs as an update, also over the older all-in-one ones.
+        # FORK_BUILD (the number ending the release tag) and UPDATE_REPO let
+        # the app find and install newer releases itself.
         run: |
           flutter build apk --release --split-per-abi \
             --build-name="$VERSION-fork.${GITHUB_SHA::7}" \
-            --build-number=$((2000 + GITHUB_RUN_NUMBER))
+            --build-number=$((2000 + GITHUB_RUN_NUMBER)) \
+            --dart-define=FORK_BUILD="$GITHUB_RUN_NUMBER" \
+            --dart-define=UPDATE_REPO="$GITHUB_REPOSITORY"
           cd build/app/outputs/flutter-apk
           mv app-arm64-v8a-release.apk anchor-fork.apk
           mv app-armeabi-v7a-release.apk anchor-fork-armeabi-v7a.apk

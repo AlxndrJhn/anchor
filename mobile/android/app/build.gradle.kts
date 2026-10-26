@@ -77,4 +77,6 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    // FileProvider, to hand a downloaded update to Android's installer.
+    implementation("androidx.core:core:1.17.0")
 }

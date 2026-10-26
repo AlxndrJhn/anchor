@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import com.zhfahim.anchor.photos.PhotoConverterPlugin
 import com.zhfahim.anchor.share.ShareFolderPlugin
+import com.zhfahim.anchor.update.UpdateInstallerPlugin
 import com.zhfahim.anchor.widget.NotesWidgetProvider
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import io.flutter.embedding.android.FlutterActivity
@@ -67,6 +68,7 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         flutterEngine.plugins.add(PhotoConverterPlugin())
         flutterEngine.plugins.add(ShareFolderPlugin(listens = true))
+        flutterEngine.plugins.add(UpdateInstallerPlugin())
     }
 
     private fun preferFastestRefreshRate() {

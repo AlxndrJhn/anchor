@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Where downloaded updates wait for Android's installer (UpdateSource in
+     lib/core/update/app_updater.dart). -->
+<paths>
+    <cache-path name="updates" path="updates/" />
+</paths>

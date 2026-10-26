@@ -11,6 +11,8 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29"/>
+    <!-- Installing the fork's own updates, downloaded from its releases. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <application
         android:label="${appLabel}"
@@ -19,6 +21,17 @@
         android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:requestLegacyExternalStorage="true">
+        <!-- Hands a downloaded update to Android's installer
+             (update/UpdateInstallerPlugin). -->
+        <provider
+            android:name=".UpdateFileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_paths" />
+        </provider>
         <activity
             android:name=".MainActivity"
             android:exported="true"

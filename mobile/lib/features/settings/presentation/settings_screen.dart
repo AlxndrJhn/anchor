@@ -13,6 +13,7 @@ import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/network/server_address.dart';
 import '../../../core/network/server_config_provider.dart';
+import '../../../core/storage/preferences_repository.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/display_density.dart';
@@ -20,10 +21,14 @@ import '../../../core/theme/note_typography.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/theme/tokens/app_schemes.dart';
 import '../../../core/theme/tokens/app_style.dart';
+import '../../../core/update/app_release.dart';
+import '../../../core/update/app_updater.dart';
+import '../../../core/update/update_sheet.dart';
 import '../../../core/widgets/anchor_dialog.dart';
 import '../../../core/widgets/anchor_logo.dart';
 import '../../../core/widgets/anchor_sheet.dart';
 import '../../../core/widgets/app_scaffold.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/check_circle.dart';
 import '../../../core/widgets/grouped_list.dart';
 import '../../../core/widgets/person_avatar.dart';
@@ -80,6 +85,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               gap,
               _AccountSection(user: user),
               gap,
+              if (canSelfUpdate) ...[const _UpdatesSection(), gap],
               const _HelpSection(),
               _About(version: _version),
             ],
@@ -565,6 +571,84 @@ class _AccountSection extends ConsumerWidget {
             label: l10n.settingsSignOut,
             isDanger: true,
             onTap: () => _signOut(context, ref),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// This fork's updates from its GitHub releases (release builds on Android).
+class _UpdatesSection extends ConsumerStatefulWidget {
+  const _UpdatesSection();
+
+  @override
+  ConsumerState<_UpdatesSection> createState() => _UpdatesSectionState();
+}
+
+class _UpdatesSectionState extends ConsumerState<_UpdatesSection> {
+  /// "Check automatically", once read from storage.
+  bool _checkAutomatically = true;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(preferencesRepositoryProvider).getCheckForUpdates().then((on) {
+      if (mounted) setState(() => _checkAutomatically = on);
+    });
+  }
+
+  Future<void> _checkNow() async {
+    final l10n = context.l10n;
+    final release = await ref.read(updateControllerProvider.notifier).check();
+    if (!mounted) return;
+    if (release != null) {
+      await showUpdateSheet(context);
+      return;
+    }
+    final error = ref.read(updateControllerProvider).error;
+    if (error != null) {
+      AppSnackbar.show(
+        context,
+        updateErrorText(error, l10n),
+        kind: SnackbarKind.error,
+      );
+    } else {
+      AppSnackbar.show(
+        context,
+        l10n.updateUpToDate,
+        kind: SnackbarKind.success,
+      );
+    }
+  }
+
+  Future<void> _setCheckAutomatically(bool on) async {
+    setState(() => _checkAutomatically = on);
+    await ref.read(preferencesRepositoryProvider).setCheckForUpdates(on);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isChecking =
+        ref.watch(updateControllerProvider).status == UpdateStatus.checking;
+    return Section(
+      label: l10n.settingsUpdates,
+      child: GroupedList(
+        children: [
+          GroupedListTile(
+            icon: LucideIcons.refreshCw,
+            label: l10n.settingsCheckForUpdates,
+            subtitle: isChecking
+                ? l10n.settingsUpdateChecking
+                : l10n.settingsUpdateBuild(installedBuild, updateRepository),
+            onTap: isChecking ? null : _checkNow,
+          ),
+          SwitchRow(
+            label: l10n.settingsCheckAutomatically,
+            subtitle: l10n.settingsCheckAutomaticallyHelp,
+            value: _checkAutomatically,
+            onChanged: _setCheckAutomatically,
           ),
         ],
       ),

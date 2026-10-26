@@ -15,6 +15,7 @@ import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../core/update/update_sheet.dart';
 import '../../../core/widgets/anchor_menu.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_empty_state.dart';
@@ -594,7 +595,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
               ? null
               : () => ref.read(openArchivedTagsProvider.notifier).toggle(tagId),
           header: [
-            if (folder == NoteFolder.notes)
+            if (folder == NoteFolder.notes) ...[
               SliverToBoxAdapter(
                 child: SyncWarning(
                   padding: EdgeInsets.fromLTRB(
@@ -605,6 +606,17 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                   ),
                 ),
               ),
+              SliverToBoxAdapter(
+                child: UpdateBanner(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    context.density.space8,
+                    16,
+                    context.density.space8,
+                  ),
+                ),
+              ),
+            ],
           ],
           empty: isLoading
               ? NoteCardsLoading(layout: layout)

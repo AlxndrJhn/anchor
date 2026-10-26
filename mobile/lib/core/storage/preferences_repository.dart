@@ -57,6 +57,30 @@ class PreferencesRepository {
   Future<void> _writeIds(String key, List<String> ids) =>
       _storage.write(key: key, value: jsonEncode(ids));
 
+  /// Whether the app looks for a newer release of the fork when it starts.
+  Future<bool> getCheckForUpdates() async {
+    final value = await _storage.read(key: StorageKeys.checkForUpdates);
+    return value != 'false';
+  }
+
+  Future<void> setCheckForUpdates(bool value) async {
+    await _storage.write(
+      key: StorageKeys.checkForUpdates,
+      value: value.toString(),
+    );
+  }
+
+  /// The release build the user said "Later" to.
+  Future<int?> getDismissedUpdate() async =>
+      int.tryParse(await _storage.read(key: StorageKeys.dismissedUpdate) ?? '');
+
+  Future<void> setDismissedUpdate(int build) async {
+    await _storage.write(
+      key: StorageKeys.dismissedUpdate,
+      value: build.toString(),
+    );
+  }
+
   Future<bool> getNotificationsAsked() async {
     final value = await _storage.read(key: StorageKeys.notificationsAsked);
     return value == 'true';
