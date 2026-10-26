@@ -24,7 +24,7 @@ class AnchorIcon extends StatelessWidget {
       ),
       // The picture carries its own rounded corners.
       child: Image.asset(
-        'assets/icons/anchor_icon.png',
+        'assets/icons/anchor_logo.png',
         width: size,
         height: size,
         fit: BoxFit.contain,
