@@ -28,6 +28,7 @@ import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
 import 'package:anchor/core/update/update_sheet.dart';
+import 'package:anchor/features/picture_search/picture_search.dart';
 import 'note_search.dart';
 import 'notes_controller.dart';
 import 'notes_view_options.dart';
@@ -644,19 +645,31 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                         q.isNotEmpty ||
                         selectedTagId != null ||
                         !filters.isEmpty;
-                    final archivedMatches = !withArchived
-                        ? <Note>[]
+                    final archived = !withArchived
+                        ? const <Note>[]
                         : (ref.watch(archiveControllerProvider).value ??
                                   const <Note>[])
                               .where(
                                 (note) =>
-                                    (selectedTagId == null ||
-                                        note.tagIds.contains(selectedTagId)) &&
-                                    matches(note),
+                                    selectedTagId == null ||
+                                    note.tagIds.contains(selectedTagId),
                               )
                               .toList();
+                    final archivedMatches = archived.where(matches).toList();
+                    // Notes whose pictures look like the search, for those
+                    // who turned picture search on.
+                    final pictureMatches = q.isEmpty
+                        ? const <Note>[]
+                        : notesForMatches(
+                            ref.watch(pictureMatchesProvider(q)).value ??
+                                const [],
+                            [...notes, ...archived].where(filters.matches),
+                            [...filteredNotes, ...archivedMatches],
+                          );
 
-                    if (filteredNotes.isEmpty && archivedMatches.isEmpty) {
+                    if (filteredNotes.isEmpty &&
+                        archivedMatches.isEmpty &&
+                        pictureMatches.isEmpty) {
                       if (searchQuery.isNotEmpty || !filters.isEmpty) {
                         return const [
                           SliverAppEmptyState(
@@ -762,6 +775,23 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           selectable: false,
                           underLabel: true,
                           lazy: filteredNotes.isEmpty,
+                        ),
+                      ],
+                      if (pictureMatches.isNotEmpty) ...[
+                        label(
+                          LucideIcons.images,
+                          'Pictures that may match',
+                          pictureMatches.length,
+                        ),
+                        _notesSliver(
+                          pictureMatches,
+                          viewOptions,
+                          false,
+                          const <String>{},
+                          selectable: false,
+                          underLabel: true,
+                          lazy:
+                              filteredNotes.isEmpty && archivedMatches.isEmpty,
                         ),
                       ],
                       SliverToBoxAdapter(

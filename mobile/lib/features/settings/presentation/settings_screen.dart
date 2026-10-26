@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +31,7 @@ import '../../../core/update/app_release.dart';
 import '../../../core/update/app_updater.dart';
 import '../../../core/update/update_sheet.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../picture_search/picture_search.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -231,6 +234,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ],
                     ),
+
+                    const _PictureSearchSection(),
 
                     _Section(
                       title: 'Account',
@@ -532,6 +537,86 @@ class _SchemeTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The opt-in to finding notes by what their pictures show, with how far
+/// the server is; shown when the server offers it.
+class _PictureSearchSection extends ConsumerStatefulWidget {
+  const _PictureSearchSection();
+
+  @override
+  ConsumerState<_PictureSearchSection> createState() =>
+      _PictureSearchSectionState();
+}
+
+class _PictureSearchSectionState extends ConsumerState<_PictureSearchSection> {
+  Timer? _poll;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  /// Follows the download and the indexing while they run.
+  void _followProgress(PictureSearchStatus status) {
+    if (!status.isBusy) {
+      _poll?.cancel();
+      _poll = null;
+      return;
+    }
+    _poll ??= Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) ref.invalidate(pictureSearchStatusProvider);
+    });
+  }
+
+  Future<void> _setEnabled(bool enabled) async {
+    setState(() => _saving = true);
+    try {
+      await ref.read(pictureSearchRepositoryProvider).setEnabled(enabled);
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.showError(
+          context,
+          message: 'Couldn’t change picture search',
+        );
+      }
+    }
+    if (!mounted) return;
+    ref.invalidate(pictureSearchStatusProvider);
+    setState(() => _saving = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = ref.watch(pictureSearchStatusProvider).value;
+    ref.listen(pictureSearchStatusProvider, (_, next) {
+      if (next.value case final status?) _followProgress(status);
+    });
+    if (status == null || !status.available) return const SizedBox.shrink();
+    final progress = status.progressText;
+    return _Section(
+      title: 'Search',
+      icon: LucideIcons.search,
+      children: [
+        SettingsSwitchRow(
+          title: 'Find pictures by what they show',
+          subtitle:
+              'Search for “Sonnenuntergang am Meer” or “receipt” and find '
+              'notes with such pictures, in most languages. Your server '
+              'downloads a model once (about 380 MB) and looks at each '
+              'picture; nothing leaves your server.'
+              '${progress == null ? '' : '\n\n$progress'}',
+          icon: LucideIcons.images,
+          value: status.enabled,
+          onChanged: (on) {
+            if (!_saving) _setEnabled(on);
+          },
+        ),
+      ],
     );
   }
 }

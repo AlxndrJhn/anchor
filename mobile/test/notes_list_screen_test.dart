@@ -8,6 +8,7 @@ import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/notes_list_screen.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
+import 'package:anchor/features/picture_search/picture_search.dart';
 import 'package:anchor/features/settings/data/repository/preferences_repository.dart';
 import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
@@ -40,6 +41,9 @@ class FakeSyncManager extends SyncManager {
   bool build() => false;
 }
 
+class MockPictureSearchRepository extends Mock
+    implements PictureSearchRepository {}
+
 class GridViewOptions extends NotesViewOptionsNotifier {
   @override
   Future<NotesViewOptions> build() async => const NotesViewOptions();
@@ -67,6 +71,7 @@ void main() {
     WidgetTester tester,
     List<Note> notes, {
     List<Note> archived = const [],
+    PictureSearchRepository? pictureSearch,
   }) async {
     when(
       () => notesRepo.watchNotes(tagId: any(named: 'tagId')),
@@ -91,6 +96,14 @@ void main() {
             (ref) => Completer<SyncCompatibility>().future,
           ),
           notesViewOptionsProvider.overrideWith(GridViewOptions.new),
+          if (pictureSearch != null)
+            pictureSearchRepositoryProvider.overrideWithValue(pictureSearch),
+          pictureSearchStatusProvider.overrideWith(
+            (ref) async => PictureSearchStatus(
+              available: true,
+              enabled: pictureSearch != null,
+            ),
+          ),
         ],
         child: MaterialApp.router(
           routerConfig: GoRouter(
@@ -167,6 +180,40 @@ void main() {
     final position = listPosition(tester);
     expect(position.pixels, position.maxScrollExtent);
     expect(find.text('Old 5'), findsOneWidget);
+  });
+
+  testWidgets('a search also lists notes whose pictures look like it', (
+    tester,
+  ) async {
+    final pictureSearch = MockPictureSearchRepository();
+    when(
+      () => pictureSearch.search('katze'),
+    ).thenAnswer((_) async => ['cats', 'kitten', 'old-cat']);
+    await pumpList(
+      tester,
+      const [
+        Note(id: 'cats', title: 'Holiday'),
+        Note(id: 'kitten', title: 'Katze Mimi'),
+        Note(id: 'dog', title: 'Walks'),
+      ],
+      archived: const [
+        Note(id: 'old-cat', title: 'Last year', isArchived: true),
+      ],
+      pictureSearch: pictureSearch,
+    );
+
+    await tester.enterText(find.byType(TextField), 'Katze');
+    await tester.pump();
+    // The server is asked once typing pauses.
+    await tester.pump(pictureSearchPause);
+    await tester.pumpAndSettle();
+
+    expect(find.text('PICTURES THAT MAY MATCH  2'), findsOneWidget);
+    expect(find.text('Holiday'), findsOneWidget);
+    expect(find.text('Last year'), findsOneWidget);
+    // Found by its text already: listed once.
+    expect(find.text('Katze Mimi'), findsOneWidget);
+    expect(find.text('Walks'), findsNothing);
   });
 
   group('dragging notes', () {
