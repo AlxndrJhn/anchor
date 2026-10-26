@@ -17,6 +17,63 @@ Anchor focuses on speed, privacy, simplicity, and reliability across mobile and 
 
 </div>
 
+## Anchor vs this fork
+
+This is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
+to date with it. Everything upstream does, this fork does too; these are the
+differences. "Web" and "Android" say where each one is available.
+
+| | Web | Android |
+|---|:---:|:---:|
+| **Notes and lists** | | |
+| Drag notes to arrange them, as in Google Keep: the others make room as you drag, and a moved note stays put until it is edited again | ✓ | |
+| Make a copy of a note, with its pictures and attachments | ✓ | ✓ |
+| Send a note to other apps as text (checklists as ☐/☑) | ✓ | ✓ |
+| Change the colour of many selected notes at once | ✓ | ✓ |
+| Tick checklist items straight from the notes list ([#70](https://github.com/ZhFahim/anchor/issues/70)) | ✓ | ✓ |
+| Show checkboxes / Hide checkboxes, Untick all, Delete ticked items | ✓ | ✓ |
+| A new note opens with the cursor in its text | ✓ | ✓ |
+| Delete without a confirmation, with Undo instead | (upstream) | ✓ |
+| Pinned and Others headings in the notes list | (upstream) | ✓ |
+| Option to hide pictures on note cards ([#177](https://github.com/ZhFahim/anchor/issues/177)) | ✓ | ✓ |
+| Empty the trash in one go | (upstream) | ✓ |
+| **Search** | | |
+| Filters for colour, tag, pictures, checklists and reminders | ✓ | ✓ |
+| Search also finds archived notes; Archive and Trash can be searched ([#190](https://github.com/ZhFahim/anchor/issues/190)) | ✓ | ✓ |
+| The searched words are marked in the note you open ([#134](https://github.com/ZhFahim/anchor/issues/134)) | ✓ | ✓ |
+| The search is kept when you come back from a note ([#206](https://github.com/ZhFahim/anchor/issues/206)) | ✓ | ✓ |
+| Tag counts include archived notes, and a tag lists them ([#114](https://github.com/ZhFahim/anchor/issues/114)) | ✓ | ✓ |
+| **Pictures, files and recordings** | | |
+| Grab image text (OCR): adds a picture's text to the note | ✓ | ✓ |
+| Paste a picture to add it as an attachment | ✓ | ✓ |
+| Click a card's picture to view it full size | ✓ | ✓ |
+| Record audio straight into a note | ✓ | |
+| Download pictures and recordings ([#164](https://github.com/ZhFahim/anchor/issues/164)) | | ✓ |
+| Share to Anchor from other apps: text, links, pictures, files ([#52](https://github.com/ZhFahim/anchor/issues/52)) | | ✓ |
+| **History** | | |
+| Each version shows its added (+) and removed (−) lines | ✓ | ✓ |
+| **Offline** | | |
+| Open, edit and create notes without a connection, even after a reload; changes sync when back online ([#202](https://github.com/ZhFahim/anchor/issues/202)) | ✓ | (upstream) |
+| **Reminders** | | |
+| Done button on the reminder notification | | ✓ |
+| **Appearance** | | |
+| Colour schemes: Nord, Dracula, Solarized, Gruvbox, Catppuccin, Tokyo Night, One, Rosé Pine, Monokai, GitHub | ✓ | ✓ |
+| Styles: Skeuomorphism, Neo-Brutalism and Lo-fi | ✓ | ✓ |
+| A skeuomorphic app icon (adaptive and themed icon on Android) | ✓ | ✓ |
+| **Getting around** | | |
+| Google Keep keyboard shortcuts ([#201](https://github.com/ZhFahim/anchor/issues/201)) | ✓ | |
+| Tab (web) or Next (Android) in the title goes to the note text | ✓ | ✓ |
+| Long-press the app icon: New note, New checklist | | ✓ |
+| A new note gets the tag the list is filtered by | | ✓ |
+| Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)) | | ✓ |
+| The server's version in Settings › About | ✓ | |
+| **Fixes** | | |
+| Copying and saving the logs on Android ([#187](https://github.com/ZhFahim/anchor/issues/187), [#188](https://github.com/ZhFahim/anchor/issues/188)) | | ✓ |
+| The notes list can scroll to the end with pinned notes and pictures | | ✓ |
+| Next.js upgraded to 16.4.3 for security fixes | ✓ | |
+| **Releases** | | |
+| Every push to `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
+
 ## Features
 
 - **Rich Text Editor** - Create and edit notes with powerful formatting (bold, italic, underline, headings, lists, checkboxes)
