@@ -27,6 +27,7 @@ import 'package:anchor/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
+import 'package:anchor/core/update/update_sheet.dart';
 import 'notes_controller.dart';
 import 'notes_view_options.dart';
 import 'widgets/view_options_sheet.dart';
@@ -600,6 +601,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SyncWarning(),
+                        const UpdateBanner(),
                         NotesSearchBar(
                           controller: _searchController,
                           query: searchQuery,

@@ -11,6 +11,8 @@ class PreferenceKeys {
   static const colorScheme = 'color_scheme';
   static const appStyle = 'app_style';
   static const exactAlarmsOffered = 'reminders_exact_alarms_offered';
+  static const checkForUpdates = 'updates_check_automatically';
+  static const dismissedUpdate = 'updates_dismissed_build';
 }
 
 /// Repository for managing user preferences in secure storage
@@ -41,6 +43,31 @@ class PreferencesRepository {
     await _storage.write(
       key: PreferenceKeys.exactAlarmsOffered,
       value: value.toString(),
+    );
+  }
+
+  /// Whether the app looks for a newer release when it starts.
+  Future<bool> getCheckForUpdates() async {
+    final value = await _storage.read(key: PreferenceKeys.checkForUpdates);
+    return value != 'false'; // Default to true
+  }
+
+  Future<void> setCheckForUpdates(bool value) async {
+    await _storage.write(
+      key: PreferenceKeys.checkForUpdates,
+      value: value.toString(),
+    );
+  }
+
+  /// The release build the user said "Later" to.
+  Future<int?> getDismissedUpdate() async => int.tryParse(
+    await _storage.read(key: PreferenceKeys.dismissedUpdate) ?? '',
+  );
+
+  Future<void> setDismissedUpdate(int build) async {
+    await _storage.write(
+      key: PreferenceKeys.dismissedUpdate,
+      value: build.toString(),
     );
   }
 

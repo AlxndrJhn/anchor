@@ -67,6 +67,7 @@ differences. "Web" and "Android" say where each one is available.
 | Long-press the app icon: New note, New checklist | | ✓ |
 | Hold the New Note button for New list | | ✓ |
 | Double-tap the New Note button to paste the clipboard into a new note | | ✓ |
+| Updates itself from this fork's GitHub releases (Settings › Updates) | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |
 | Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)) | | ✓ |
 | The server's version in Settings › About | ✓ | |

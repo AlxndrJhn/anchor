@@ -25,6 +25,10 @@ import '../data/server_info_provider.dart';
 import 'controllers/editor_preferences_controller.dart';
 import 'controllers/theme_preferences_controller.dart';
 import '../../sync/data/sync_compatibility.dart';
+import '../../../core/update/app_release.dart';
+import '../../../core/update/app_updater.dart';
+import '../../../core/update/update_sheet.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -36,10 +40,38 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _appVersion = '';
 
+  /// "Check automatically", once read from storage.
+  bool _checkForUpdates = true;
+
   @override
   void initState() {
     super.initState();
     _loadAppVersion();
+    if (canSelfUpdate) {
+      ref.read(preferencesRepositoryProvider).getCheckForUpdates().then((on) {
+        if (mounted) setState(() => _checkForUpdates = on);
+      });
+    }
+  }
+
+  Future<void> _checkForUpdatesNow() async {
+    final release = await ref.read(updateControllerProvider.notifier).check();
+    if (!mounted) return;
+    if (release != null) {
+      showUpdateSheet(context);
+      return;
+    }
+    final error = ref.read(updateControllerProvider).error;
+    if (error != null) {
+      AppSnackbar.showError(context, message: error);
+    } else {
+      AppSnackbar.showSuccess(context, message: 'Anchor is up to date');
+    }
+  }
+
+  Future<void> _setCheckForUpdates(bool on) async {
+    setState(() => _checkForUpdates = on);
+    await ref.read(preferencesRepositoryProvider).setCheckForUpdates(on);
   }
 
   Future<void> _loadAppVersion() async {
@@ -237,6 +269,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ],
                     ),
+
+                    if (canSelfUpdate)
+                      _Section(
+                        title: 'Updates',
+                        icon: LucideIcons.download,
+                        children: [
+                          SettingsActionRow(
+                            title: 'Check for updates',
+                            subtitle:
+                                ref.watch(updateControllerProvider).status ==
+                                    UpdateStatus.checking
+                                ? 'Checking…'
+                                : 'This is build $installedBuild of '
+                                      '$updateRepository',
+                            icon: LucideIcons.refreshCw,
+                            onTap: _checkForUpdatesNow,
+                          ),
+                          SettingsSwitchRow(
+                            title: 'Check automatically',
+                            subtitle:
+                                'Look for a new release when Anchor starts',
+                            icon: LucideIcons.bellRing,
+                            value: _checkForUpdates,
+                            onChanged: _setCheckForUpdates,
+                          ),
+                        ],
+                      ),
 
                     _Section(
                       title: 'Support',

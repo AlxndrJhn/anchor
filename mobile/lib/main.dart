@@ -10,6 +10,7 @@ import 'core/notifications/reminder_scheduler.dart';
 import 'core/notifications/reminder_tap_handler.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/update/app_updater.dart';
 import 'features/settings/presentation/controllers/theme_preferences_controller.dart';
 
 void main() async {
@@ -37,6 +38,9 @@ class AnchorApp extends ConsumerWidget {
 
     // Turn "Share to Anchor" into new notes
     ref.watch(shareHandlerProvider);
+
+    // Look for a newer release of the fork when the app starts
+    ref.watch(updateControllerProvider);
 
     // Keep the OS's scheduled reminders in step and handle their taps
     ref.watch(reminderSchedulerProvider);
