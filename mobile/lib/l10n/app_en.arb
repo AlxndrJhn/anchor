@@ -2506,6 +2506,10 @@
   "@notesLoadPausedHelp": {
     "description": "Under “Couldn’t load your notes” while syncing is paused (signed out, or the app or the server needs an update). A warning above the list says what to do."
   },
+  "noteNewList": "New list",
+  "@noteNewList": {
+    "description": "Menu item, shown by holding the New note button, that starts a new note as a checklist."
+  },
   "noteNew": "New note",
   "@noteNew": {
     "description": "Button that starts a new note, on the empty list and the plus button."

@@ -87,9 +87,14 @@ GoRouter goRouter(Ref ref) {
         routes: [
           GoRoute(
             path: _newNotePath,
-            pageBuilder: (context, state) => const NoteMorphPage(
-              key: ValueKey('note/new'),
-              child: NoteEditScreen(),
+            pageBuilder: (context, state) => NoteMorphPage(
+              key: const ValueKey('note/new'),
+              child: NoteEditScreen(
+                // "New list", from holding the New note button.
+                startAsChecklist:
+                    state.uri.queryParameters[AppRoutes.checklistParameter] ==
+                    '1',
+              ),
             ),
           ),
           GoRoute(

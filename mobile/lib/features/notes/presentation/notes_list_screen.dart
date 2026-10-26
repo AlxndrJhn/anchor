@@ -11,6 +11,7 @@ import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../core/widgets/anchor_menu.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_scaffold.dart';
@@ -325,6 +326,31 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
   void _newNote() => context.go(AppRoutes.newNote);
 
+  /// New list or new note, by the New note button that was held, as in
+  /// Google Keep.
+  Future<void> _showNewMenu() async {
+    final button = CardRegistry.newNoteButton.currentContext;
+    if (button == null) return;
+    final l10n = context.l10n;
+    final isList = await showAnchorMenu<bool>(
+      button,
+      items: [
+        AnchorMenuItem(
+          value: true,
+          icon: LucideIcons.listChecks,
+          label: l10n.noteNewList,
+        ),
+        AnchorMenuItem(
+          value: false,
+          icon: LucideIcons.penLine,
+          label: l10n.noteNew,
+        ),
+      ],
+    );
+    if (!mounted || isList == null) return;
+    context.go(isList ? AppRoutes.newList : AppRoutes.newNote);
+  }
+
   void _openSettings() {
     _drawerKey.currentState?.close();
     Future.delayed(const Duration(milliseconds: 120), () {
@@ -565,6 +591,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             onQuery: (q) => ref.read(searchQueryProvider.notifier).set(q),
             onCancel: _endSearch,
             onNewNote: folder == NoteFolder.notes ? _newNote : null,
+            onHoldNewNote: _showNewMenu,
             newNoteKey: CardRegistry.newNoteButton,
             filterCount: activeFilterCount(ref),
             onFilter: () => showNoteFiltersSheet(context),

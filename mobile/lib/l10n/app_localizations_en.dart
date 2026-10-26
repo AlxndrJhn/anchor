@@ -1902,6 +1902,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your notes will appear here once they sync.';
 
   @override
+  String get noteNewList => 'New list';
+
+  @override
   String get noteNew => 'New note';
 
   @override

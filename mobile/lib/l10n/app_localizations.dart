@@ -2788,6 +2788,12 @@ abstract class AppLocalizations {
   /// **'Your notes will appear here once they sync.'**
   String get notesLoadPausedHelp;
 
+  /// Menu item, shown by holding the New note button, that starts a new note as a checklist.
+  ///
+  /// In en, this message translates to:
+  /// **'New list'**
+  String get noteNewList;
+
   /// Button that starts a new note, on the empty list and the plus button.
   ///
   /// In en, this message translates to:

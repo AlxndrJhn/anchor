@@ -23,6 +23,7 @@ class NotesBottomBar extends StatefulWidget {
     required this.onQuery,
     required this.onCancel,
     this.onNewNote,
+    this.onHoldNewNote,
     this.newNoteKey,
     this.filterCount = 0,
     this.onFilter,
@@ -38,6 +39,9 @@ class NotesBottomBar extends StatefulWidget {
 
   /// Null hides New note.
   final VoidCallback? onNewNote;
+
+  /// Holding the New note button, for more kinds of new note.
+  final VoidCallback? onHoldNewNote;
 
   final GlobalKey? newNoteKey;
 
@@ -229,6 +233,7 @@ class _NotesBottomBarState extends State<NotesBottomBar> {
           Pressable(
             style: PressStyle.bottomBar,
             onTap: widget.onNewNote,
+            onLongPress: widget.onHoldNewNote,
             semanticLabel: context.l10n.noteNew,
             child: Container(
               key: widget.newNoteKey,

@@ -180,6 +180,16 @@ void main() {
 
     expect(find.text('1 selected'), findsOneWidget);
   });
+
+  testWidgets('holding New note offers a new list', (tester) async {
+    await pumpList(tester, notesNamed('Note', 2));
+
+    await tester.longPress(find.bySemanticsLabel('New note'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New list'), findsOneWidget);
+    expect(find.text('New note'), findsOneWidget);
+  });
 }
 
 class _SignedIn extends AuthController {

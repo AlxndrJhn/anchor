@@ -10,6 +10,10 @@ class AppRoutes {
   static const archive = '/archive';
 
   static const newNote = '/note/new';
+
+  /// A new note that starts as a checklist ("New list").
+  static const newList = '$newNote?$checklistParameter=1';
+  static const checklistParameter = 'checklist';
   static String note(String id) => '/note/$id';
 
   /// A note opened from a search, which marks the search in its text.
