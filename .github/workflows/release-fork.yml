@@ -3,7 +3,7 @@ name: Release (fork)
 # Every push to main releases this fork: a GitHub release tagged
 # fork-<app version>.<run>, with the APK attached, and the Docker image
 # (amd64 + arm64) tagged with the same name plus :fork-latest and
-# :fork-<sha>. The newest APK is always at:
+# :fork-<sha>. The newest APK (arm64, for nearly every phone) is always at:
 #   https://github.com/<owner>/<repo>/releases/latest/download/anchor-fork.apk
 
 on:
@@ -126,19 +126,25 @@ jobs:
       - name: Build APK
         env:
           VERSION: ${{ needs.version.outputs.version }}
-        # Build numbers continue past the old "Android APK" workflow's
-        # (1000 + run), so a new APK always installs as an update.
+        # One APK per processor type: a phone only uses one, and an APK with
+        # all three is about three times the size. Build numbers continue past
+        # the old "Android APK" workflow's (1000 + run), and Flutter adds
+        # 1000 × the type's number (arm64 2, x86_64 4) on top, so a new APK
+        # always installs as an update, also over the older all-in-one ones.
         run: |
-          flutter build apk --release \
+          flutter build apk --release --split-per-abi \
             --build-name="$VERSION-fork.${GITHUB_SHA::7}" \
             --build-number=$((2000 + GITHUB_RUN_NUMBER))
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/anchor-fork.apk
+          cd build/app/outputs/flutter-apk
+          mv app-arm64-v8a-release.apk anchor-fork.apk
+          mv app-armeabi-v7a-release.apk anchor-fork-armeabi-v7a.apk
+          mv app-x86_64-release.apk anchor-fork-x86_64.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: anchor-fork-apk
-          path: mobile/build/app/outputs/flutter-apk/anchor-fork.apk
+          path: mobile/build/app/outputs/flutter-apk/anchor-fork*.apk
 
   release:
     needs: [version, build-apk, docker]
@@ -172,6 +178,8 @@ jobs:
             echo
             echo 'Install `anchor-fork.apk`. It installs as "Anchor (fork)", next to the official app, and updates the previous fork build.'
             echo
+            echo 'It is for 64-bit ARM, which nearly every phone since 2017 is. For an older 32-bit phone take `anchor-fork-armeabi-v7a.apk`; for an emulator or x86 tablet, `anchor-fork-x86_64.apk`.'
+            echo
             echo "## Docker (amd64, arm64)"
             echo
             echo '```bash'
@@ -190,7 +198,7 @@ jobs:
               git log --no-merges --format='- %s (%h)' -20
             fi
           } > notes.md
-          gh release create "$TAG" anchor-fork.apk \
+          gh release create "$TAG" anchor-fork*.apk \
             --target "$GITHUB_SHA" \
             --title "Anchor fork $TAG" \
             --notes-file notes.md \

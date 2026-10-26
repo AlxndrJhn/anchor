@@ -168,8 +168,9 @@ differences. "Web" and "Android" say where each one is available.
 ### This Fork's Image
 
 Every push to `main` of this fork makes a release named
-`fork-<version>.<build>` with the Android APK attached
-([latest APK](https://github.com/AlxndrJhn/anchor/releases/latest/download/anchor-fork.apk)),
+`fork-<version>.<build>` with the Android APKs attached
+([latest APK](https://github.com/AlxndrJhn/anchor/releases/latest/download/anchor-fork.apk)
+for 64-bit ARM phones; the release also has 32-bit ARM and x86_64 builds),
 and publishes a multi-arch image (amd64 and arm64, so it runs on a Raspberry
 Pi 5) under the same tag, plus `ghcr.io/alxndrjhn/anchor:fork-latest` and
 `:fork-<commit>`. Use it in place of `ghcr.io/zhfahim/anchor:latest` in the

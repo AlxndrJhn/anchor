@@ -6,8 +6,10 @@
 // iOS takes the single 1024px icon this writes and Xcode makes the rest.)
 //
 // Writes, under mobile/assets/icons/:
-//   anchor_icon.png       1024px rounded icon: the in-app logo, macOS,
-//                         Windows and the Flutter web build
+//   anchor_icon.png       1024px rounded icon for macOS, Windows and the
+//                         Flutter web build
+//   anchor_logo.png       384px rounded icon: the in-app logo, drawn at up
+//                         to 100dp
 //   app_icon_square.png   1024px full-bleed icon for iOS, which rounds it
 //   splash_logo.png       512px rounded icon for the splash screen
 //   splash_logo_android12[_dark].png  1152px canvas with the icon inside the
@@ -40,6 +42,7 @@ function icon(rounded) {
 
   await render(sized(icon(true), 1024), 1024, path.join(mobile, 'assets/icons/anchor_icon.png'));
   fs.copyFileSync(path.join(mobile, 'assets/icons/anchor_icon.png'), path.join(web, 'public/icons/anchor_icon.png'));
+  await render(sized(icon(true), 384), 384, path.join(mobile, 'assets/icons/anchor_logo.png'));
   await render(sized(icon(false), 1024), 1024, path.join(mobile, 'assets/icons/app_icon_square.png'), false);
   fs.copyFileSync(
     path.join(mobile, 'assets/icons/app_icon_square.png'),

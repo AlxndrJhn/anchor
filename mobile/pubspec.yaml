@@ -129,7 +129,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/icons/anchor_icon.png
+    - assets/icons/anchor_logo.png
 
   # Licenses (SIL OFL 1.1) sit next to the files.
   fonts:

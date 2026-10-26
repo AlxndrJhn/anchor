@@ -12,7 +12,7 @@ class AnchorLogo extends StatelessWidget {
   static const double heading = 64; // off-scale: the app's icon
 
   /// The picture drawn by tool/launcher_icon/render-assets.js.
-  static const asset = 'assets/icons/anchor_icon.png';
+  static const asset = 'assets/icons/anchor_logo.png';
 
   /// How round the picture's own corners are, against its width.
   static const cornerRatio = 0.22;
