@@ -114,6 +114,36 @@ void main() {
     });
   });
 
+  test('a database from before the dragged-at time gains it and re-downloads '
+      'the feed', () async {
+    await withDatabase((db) async {
+      await db
+          .into(db.syncState)
+          .insert(const SyncStateCompanion(cursor: Value('cursor-12')));
+      await dropColumns(db, ['positioned_at']);
+      await db.customStatement('PRAGMA user_version = 12');
+    });
+
+    await withDatabase((db) async {
+      await db
+          .into(db.notes)
+          .insert(
+            NotesCompanion.insert(
+              id: 'n',
+              title: 'Dragged',
+              positionedAt: Value(DateTime.utc(2026, 10, 2)),
+            ),
+          );
+      final row = await db.select(db.notes).getSingle();
+      expect(
+        row.positionedAt?.isAtSameMomentAs(DateTime.utc(2026, 10, 2)),
+        isTrue,
+      );
+      final state = await db.select(db.syncState).getSingle();
+      expect(state.cursor, isNull);
+    });
+  });
+
   test('a database from before custom order gains its columns and re-downloads '
       'the feed', () async {
     await withDatabase((db) async {
@@ -241,7 +271,7 @@ void main() {
   });
 }
 
-const _orderColumns = ['created_at', 'position'];
+const _orderColumns = ['created_at', 'position', 'positioned_at'];
 
 const _syncedCopyColumns = [
   'synced_title',

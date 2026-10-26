@@ -42,6 +42,19 @@ class NotesViewOptions {
   }
 }
 
+/// Where a note sorts in "Date modified, newest first", as on the web: by its
+/// last edit, unless it was dragged (on the web) since, in which case where
+/// it was put. Both are milliseconds, so dragged and edited notes mix.
+double noteSortKey(Note note) {
+  final edited = (note.updatedAt ?? DateTime(0)).millisecondsSinceEpoch
+      .toDouble();
+  final position = note.position;
+  final positionedAt = note.positionedAt;
+  if (position == null || positionedAt == null) return edited;
+  return positionedAt.millisecondsSinceEpoch >= edited ? position : edited;
+}
+
+/// Pinned notes stay on top, then the chosen sort, then the id.
 int Function(Note, Note) noteComparator(NotesViewOptions options) {
   return (a, b) {
     if (a.isPinned != b.isPinned) {
@@ -49,9 +62,12 @@ int Function(Note, Note) noteComparator(NotesViewOptions options) {
     }
 
     final int compare = switch (options.sortOption) {
-      SortOption.dateModified => (a.updatedAt ?? DateTime(0)).compareTo(
-        b.updatedAt ?? DateTime(0),
-      ),
+      // Newest first takes dragged places into account; oldest first is the
+      // plain edit time.
+      SortOption.dateModified =>
+        options.isAscending
+            ? (a.updatedAt ?? DateTime(0)).compareTo(b.updatedAt ?? DateTime(0))
+            : noteSortKey(a).compareTo(noteSortKey(b)),
       SortOption.title => a.title.trim().toLowerCase().compareTo(
         b.title.trim().toLowerCase(),
       ),

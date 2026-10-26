@@ -578,6 +578,7 @@ class NotesRepository {
       updatedAt: row.updatedAt,
       createdAt: row.createdAt,
       position: row.position,
+      positionedAt: row.positionedAt,
       tagIds: tagIds,
       permission: NotePermission.fromString(row.permission),
       shareIds: decodeShareIds(row.shareIds),
