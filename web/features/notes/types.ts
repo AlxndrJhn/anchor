@@ -67,8 +67,9 @@ export interface Note {
   imagePreviewIds?: string[];
   reminder?: NoteReminder | null;
   stateChangedAt?: string;
-  /** This person's place for the note in the "Custom" sort, set by dragging. */
+  /** Where this person dragged the note, and when (see `sortKey`). */
   position?: number | null;
+  positionedAt?: string | null;
 }
 
 // "conflict" holds content the server turned down, which never reached the note.

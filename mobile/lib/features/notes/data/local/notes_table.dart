@@ -12,8 +12,8 @@ class Notes extends Table {
   TextColumn get state => text().withDefault(const Constant('active'))();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().nullable()();
-  // This person's place in their "Custom" sort, set by dragging; synced with
-  // the note. Null sorts by createdAt.
+  // Where this person dragged the note on the web; kept and sent back with
+  // the note so it isn't lost.
   RealColumn get position => real().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   // The server version this note was written against; null until it exists there.

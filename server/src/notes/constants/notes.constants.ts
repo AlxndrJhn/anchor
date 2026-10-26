@@ -60,12 +60,12 @@ export const notePinInclude = (userId: string) =>
     },
   }) as const;
 
-// Include the requesting user's own place for the note ("Custom" sort).
+// Include where the requesting user dragged the note, and when.
 export const noteOrderInclude = (userId: string) =>
   ({
     orders: {
       where: { userId },
-      select: { position: true },
+      select: { position: true, updatedAt: true },
     },
   }) as const;
 

@@ -87,7 +87,7 @@ class SyncNoteChange extends SyncChange {
 
   final int localRev;
 
-  /// This person's place for the note in their "Custom" sort.
+  /// Where this person dragged the note on the web, sent back unchanged.
   final double? position;
   final int? baseVersion;
   final String title;

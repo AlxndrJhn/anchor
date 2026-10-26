@@ -76,30 +76,31 @@
 .nc.picked::after {
   box-shadow: none;
 }
-/* Dragging to arrange ("Custom" sort): the card in hand fades, and a bar
-   shows which side of the card under it it will land. */
+/* Dragging to arrange, as in Google Keep: the card lifts off and follows
+   the pointer, and its place stays open as a gap the others move around. */
 .nc[data-dragging] {
-  opacity: 0.4;
+  opacity: 0;
 }
-.cards:not(.list) .nc[data-drop="before"] {
-  box-shadow:
-    -6px 0 0 -1px var(--accent-strong),
-    var(--sh-xs);
+.nc-ghost {
+  z-index: var(--z-float);
+  pointer-events: none;
+  scale: 1.03;
+  rotate: 1.5deg;
+  transition:
+    scale var(--duration-hover) var(--ease-standard),
+    rotate var(--duration-hover) var(--ease-standard);
 }
-.cards:not(.list) .nc[data-drop="after"] {
-  box-shadow:
-    6px 0 0 -1px var(--accent-strong),
-    var(--sh-xs);
+.nc-ghost > .nc {
+  box-shadow: var(--sh-lift);
 }
-.cards.list .nc[data-drop="before"] {
-  box-shadow:
-    0 -5px 0 -1px var(--accent-strong),
-    var(--sh-xs);
+.nc-ghost.landing {
+  scale: 1;
+  rotate: 0deg;
 }
-.cards.list .nc[data-drop="after"] {
-  box-shadow:
-    0 5px 0 -1px var(--accent-strong),
-    var(--sh-xs);
+html.note-dragging,
+html.note-dragging * {
+  cursor: grabbing;
+  user-select: none;
 }
 .nc-pics {
   display: grid;

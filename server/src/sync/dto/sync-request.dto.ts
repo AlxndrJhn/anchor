@@ -92,7 +92,7 @@ export class SyncNoteChangeDto extends SyncChangeBaseDto {
   @IsOptional()
   isArchived?: boolean;
 
-  // Per-user, like isArchived: this person's place in their "Custom" sort.
+  // Per-user, like isArchived: where this person dragged the note.
   @IsNumber({ allowNaN: false, allowInfinity: false })
   @IsOptional()
   position?: number;
