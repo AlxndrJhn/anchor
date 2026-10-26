@@ -221,4 +221,14 @@ void main() {
       expect(find.text('1 note'), findsOneWidget);
     });
   });
+
+  testWidgets('holding New Note offers a new list', (tester) async {
+    await pumpList(tester, notesNamed('Note', 2));
+
+    await tester.longPress(find.text('New Note'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New list'), findsOneWidget);
+    expect(find.text('New note'), findsOneWidget);
+  });
 }

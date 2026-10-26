@@ -65,6 +65,7 @@ differences. "Web" and "Android" say where each one is available.
 | Google Keep keyboard shortcuts ([#201](https://github.com/ZhFahim/anchor/issues/201)) | ✓ | |
 | Tab (web) or Next (Android) in the title goes to the note text | ✓ | ✓ |
 | Long-press the app icon: New note, New checklist | | ✓ |
+| Hold the New Note button for New list | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |
 | Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)) | | ✓ |
 | The server's version in Settings › About | ✓ | |

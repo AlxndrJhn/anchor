@@ -82,6 +82,9 @@ GoRouter goRouter(Ref ref) {
                 child: NoteEditScreen(
                   initialTagId: extra is String ? extra : null,
                   shared: extra is SharedContent ? extra : null,
+                  // "New list", from holding the New Note button.
+                  startAsChecklist:
+                      state.uri.queryParameters['checklist'] == '1',
                 ),
               );
             },

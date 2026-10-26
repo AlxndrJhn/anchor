@@ -193,6 +193,46 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// New note or new list, above the New Note button that was held.
+  Future<void> _showNewMenu(BuildContext fabContext, String? tagId) async {
+    HapticFeedback.mediumImpact();
+    final box = fabContext.findRenderObject() as RenderBox?;
+    final overlay =
+        Overlay.of(fabContext).context.findRenderObject() as RenderBox?;
+    if (box == null || overlay == null) return;
+    final topLeft = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final choice = await showMenu<String>(
+      context: fabContext,
+      position: RelativeRect.fromLTRB(
+        topLeft.dx,
+        topLeft.dy - 8,
+        overlay.size.width - topLeft.dx - box.size.width,
+        overlay.size.height - topLeft.dy,
+      ),
+      items: const [
+        PopupMenuItem(
+          value: 'list',
+          child: ListTile(
+            leading: Icon(LucideIcons.listChecks),
+            title: Text('New list'),
+          ),
+        ),
+        PopupMenuItem(
+          value: 'note',
+          child: ListTile(
+            leading: Icon(LucideIcons.stickyNote),
+            title: Text('New note'),
+          ),
+        ),
+      ],
+    );
+    if (!mounted || choice == null) return;
+    context.go(
+      choice == 'list' ? '/note/new?checklist=1' : '/note/new',
+      extra: tagId,
+    );
+  }
+
   /// The note's page, carrying the search so the note marks its matches.
   String _noteLocation(Note note) {
     final query = ref.read(searchQueryProvider).trim();
@@ -723,10 +763,18 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         ),
         floatingActionButton: isSelectionMode
             ? null
-            : FloatingActionButton.extended(
-                onPressed: () => context.go('/note/new', extra: selectedTagId),
-                icon: const Icon(LucideIcons.plus),
-                label: const Text('New Note'),
+            : Builder(
+                // Holding the button offers a new list as well, as in
+                // Google Keep.
+                builder: (fabContext) => GestureDetector(
+                  onLongPress: () => _showNewMenu(fabContext, selectedTagId),
+                  child: FloatingActionButton.extended(
+                    onPressed: () =>
+                        context.go('/note/new', extra: selectedTagId),
+                    icon: const Icon(LucideIcons.plus),
+                    label: const Text('New Note'),
+                  ),
+                ),
               ),
       ),
     );
