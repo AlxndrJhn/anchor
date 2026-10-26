@@ -13,9 +13,12 @@ import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:anchor/features/sync/data/sync_manager.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockNotesRepository extends Mock implements NotesRepository {}
@@ -44,6 +47,7 @@ void main() {
     WidgetTester tester,
     List<Note> notes, {
     NotesViewOptions options = const NotesViewOptions(),
+    bool routed = false,
   }) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
@@ -68,10 +72,26 @@ void main() {
           isOnlineProvider.overrideWith((ref) => true),
           firstDownloadProvider.overrideWithValue(FirstDownload.done),
         ],
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          home: const NotesListScreen(),
-        ),
+        child: routed
+            ? MaterialApp.router(
+                theme: AppTheme.light(),
+                routerConfig: GoRouter(
+                  routes: [
+                    GoRoute(
+                      path: '/',
+                      builder: (context, state) => const NotesListScreen(),
+                    ),
+                    GoRoute(
+                      path: '/note/new',
+                      builder: (context, state) => Text('Opened ${state.uri}'),
+                    ),
+                  ],
+                ),
+              )
+            : MaterialApp(
+                theme: AppTheme.light(),
+                home: const NotesListScreen(),
+              ),
       ),
     );
     await tester.pump(const Duration(milliseconds: 400));
@@ -189,6 +209,61 @@ void main() {
 
     expect(find.text('New list'), findsOneWidget);
     expect(find.text('New note'), findsOneWidget);
+  });
+
+  group('New note with text on the clipboard', () {
+    void setClipboard(WidgetTester tester, {required bool hasText}) {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async =>
+            call.method == 'Clipboard.hasStrings' ? {'value': hasText} : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+    }
+
+    testWidgets('a double tap opens a new note with it pasted in', (
+      tester,
+    ) async {
+      setClipboard(tester, hasText: true);
+      await pumpList(tester, notesNamed('Note', 2), routed: true);
+
+      await tester.tap(find.bySemanticsLabel('New note'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.bySemanticsLabel('New note'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Opened /note/new?paste=1'), findsOneWidget);
+    });
+
+    testWidgets('a single tap still opens an empty note', (tester) async {
+      setClipboard(tester, hasText: true);
+      await pumpList(tester, notesNamed('Note', 2), routed: true);
+
+      await tester.tap(find.bySemanticsLabel('New note'));
+      await tester.pump(kDoubleTapTimeout);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Opened /note/new'), findsOneWidget);
+    });
+
+    testWidgets('with nothing to paste, a tap opens a note at once', (
+      tester,
+    ) async {
+      setClipboard(tester, hasText: false);
+      await pumpList(tester, notesNamed('Note', 2), routed: true);
+
+      await tester.tap(find.bySemanticsLabel('New note'));
+      // Well before a second tap could come.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.text('Opened /note/new'), findsOneWidget);
+    });
   });
 }
 

@@ -102,6 +102,7 @@ void main() {
     bool isOnlyPage = false,
     bool opensFromList = false,
     bool startAsChecklist = false,
+    bool pasteClipboard = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -151,6 +152,7 @@ void main() {
                       note: note,
                       noteId: note?.id,
                       startAsChecklist: startAsChecklist,
+                      pasteClipboard: pasteClipboard,
                     ),
                   ),
                 ],
@@ -293,6 +295,50 @@ void main() {
     );
     expect(tester.widget<QuillEditor>(editable).focusNode.hasFocus, isTrue);
     expect(editorController(tester).selection.baseOffset, 0);
+  });
+
+  testWidgets('a note opened by double-tapping New note has the clipboard, '
+      'the caret after it', (tester) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => call.method == 'Clipboard.getData'
+          ? {'text': '  Copied from the browser  '}
+          : null,
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await pumpScreen(tester, pasteClipboard: true);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final controller = editorController(tester);
+    expect(controller.document.toPlainText(), 'Copied from the browser\n');
+    expect(
+      controller.selection,
+      const TextSelection.collapsed(offset: 'Copied from the browser'.length),
+    );
+  });
+
+  testWidgets('with nothing on the clipboard, it opens empty', (tester) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => null,
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await pumpScreen(tester, pasteClipboard: true);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(editorController(tester).document.toPlainText(), '\n');
   });
 
   testWidgets('New checklist starts with one unchecked item, caret in it', (

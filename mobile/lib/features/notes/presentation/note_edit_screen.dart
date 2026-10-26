@@ -68,6 +68,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.note,
     this.searchTerm,
     this.startAsChecklist = false,
+    this.pasteClipboard = false,
   });
 
   final String? noteId;
@@ -80,6 +81,10 @@ class NoteEditScreen extends ConsumerStatefulWidget {
   /// launcher's "New checklist" shortcut). Left empty, it is discarded like
   /// any new note.
   final bool startAsChecklist;
+
+  /// A new note starts with the clipboard's text, the caret after it (New
+  /// note double-tapped).
+  final bool pasteClipboard;
 
   @override
   ConsumerState<NoteEditScreen> createState() => _NoteEditScreenState();
@@ -146,6 +151,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           _editorKey.currentState?.applyLineKind(LineKind.checklist);
           return;
         }
+        if (widget.pasteClipboard) _pasteClipboard();
         Future.delayed(const Duration(milliseconds: 280), () {
           // Unless the title was tapped meanwhile.
           if (!mounted || _writing) return;
@@ -163,6 +169,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     _titleFocus.addListener(_focusChanged);
     _editorFocus.addListener(_focusChanged);
     if (_openedAsNew) _draft.title.addListener(_updateEmptyNoteActions);
+  }
+
+  /// The clipboard's text, into the new note, with the caret after it.
+  Future<void> _pasteClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final editor = _editorKey.currentState;
+    if (!mounted || editor == null) return;
+    final text = data?.text?.trim();
+    if (text != null && text.isNotEmpty) editor.appendText(text);
+    if (!_titleFocus.hasFocus) editor.focusEnd();
   }
 
   @override

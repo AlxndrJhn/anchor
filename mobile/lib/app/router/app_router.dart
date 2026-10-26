@@ -94,6 +94,9 @@ GoRouter goRouter(Ref ref) {
                 startAsChecklist:
                     state.uri.queryParameters[AppRoutes.checklistParameter] ==
                     '1',
+                // Double-tapping New note pastes the clipboard into it.
+                pasteClipboard:
+                    state.uri.queryParameters[AppRoutes.pasteParameter] == '1',
               ),
             ),
           ),

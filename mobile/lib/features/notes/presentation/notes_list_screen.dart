@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -195,6 +199,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   @override
   void initState() {
     super.initState();
+    _checkClipboard();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) NoteSurfacePainter.precachePatterns(context);
     });
@@ -207,6 +212,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
   @override
   void dispose() {
+    _newNoteTap?.cancel();
     _scroll.dispose();
     _isBottomBarCompact.dispose();
     super.dispose();
@@ -325,6 +331,40 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   }
 
   void _newNote() => context.go(AppRoutes.newNote);
+
+  /// Whether the clipboard holds text, checked as a finger lands on the
+  /// bottom bar.
+  bool _clipboardHasText = false;
+
+  /// A first tap on New note, waiting to see if a second follows.
+  Timer? _newNoteTap;
+
+  Future<void> _checkClipboard() async {
+    final hasText = await Clipboard.hasStrings();
+    if (mounted) _clipboardHasText = hasText;
+  }
+
+  /// The bottom bar's New note: a tap opens a new note. With text on the
+  /// clipboard, a double tap opens one with that text in it; only then does
+  /// a tap wait for a second one.
+  void _onNewNotePressed() {
+    final first = _newNoteTap;
+    if (first != null && first.isActive) {
+      first.cancel();
+      _newNoteTap = null;
+      Haptics.light();
+      context.go(AppRoutes.newNoteWithClipboard);
+      return;
+    }
+    if (!_clipboardHasText) {
+      _newNote();
+      return;
+    }
+    _newNoteTap = Timer(kDoubleTapTimeout, () {
+      _newNoteTap = null;
+      if (mounted) _newNote();
+    });
+  }
 
   /// New list or new note, by the New note button that was held, as in
   /// Google Keep.
@@ -580,21 +620,24 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         isSelecting: isSelecting,
         bottomBar: ValueListenableBuilder<bool>(
           valueListenable: _isBottomBarCompact,
-          builder: (context, isCompact, _) => NotesBottomBar(
-            placeholder: tag != null
-                ? context.l10n.searchTag(tag.name)
-                : folder.searchHintIn(context.l10n),
-            compact: isCompact,
-            searching: _searching,
-            query: query,
-            onStartSearch: () => setState(() => _searching = true),
-            onQuery: (q) => ref.read(searchQueryProvider.notifier).set(q),
-            onCancel: _endSearch,
-            onNewNote: folder == NoteFolder.notes ? _newNote : null,
-            onHoldNewNote: _showNewMenu,
-            newNoteKey: CardRegistry.newNoteButton,
-            filterCount: activeFilterCount(ref),
-            onFilter: () => showNoteFiltersSheet(context),
+          builder: (context, isCompact, _) => Listener(
+            onPointerDown: (_) => _checkClipboard(),
+            child: NotesBottomBar(
+              placeholder: tag != null
+                  ? context.l10n.searchTag(tag.name)
+                  : folder.searchHintIn(context.l10n),
+              compact: isCompact,
+              searching: _searching,
+              query: query,
+              onStartSearch: () => setState(() => _searching = true),
+              onQuery: (q) => ref.read(searchQueryProvider.notifier).set(q),
+              onCancel: _endSearch,
+              onNewNote: folder == NoteFolder.notes ? _onNewNotePressed : null,
+              onHoldNewNote: _showNewMenu,
+              newNoteKey: CardRegistry.newNoteButton,
+              filterCount: activeFilterCount(ref),
+              onFilter: () => showNoteFiltersSheet(context),
+            ),
           ),
         ),
         selectionBar: SelectionBar(

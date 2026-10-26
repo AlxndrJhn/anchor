@@ -14,6 +14,11 @@ class AppRoutes {
   /// A new note that starts as a checklist ("New list").
   static const newList = '$newNote?$checklistParameter=1';
   static const checklistParameter = 'checklist';
+
+  /// A new note that starts with the clipboard's text (New note
+  /// double-tapped).
+  static const newNoteWithClipboard = '$newNote?$pasteParameter=1';
+  static const pasteParameter = 'paste';
   static String note(String id) => '/note/$id';
 
   /// A note opened from a search, which marks the search in its text.
