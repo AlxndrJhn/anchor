@@ -4,34 +4,37 @@ import type { Note } from "./types";
 
 export type SortableNote = Pick<
   Note,
-  "id" | "title" | "createdAt" | "updatedAt" | "position"
+  "id" | "title" | "createdAt" | "updatedAt" | "position" | "positionedAt"
 >;
 
 /**
- * A note's place in the "Custom" sort, highest first. Notes never dragged
- * sort by when they were made, so the order starts out newest first.
+ * Where a note sorts in "Last edited, newest first", as in Google Keep: by
+ * its last edit, unless it was dragged since, in which case where it was
+ * put. Both are milliseconds, so dragged and edited notes mix.
  */
-export const notePosition = (note: Pick<Note, "position" | "createdAt">) =>
-  note.position ?? new Date(note.createdAt).getTime();
+export function sortKey(
+  note: Pick<Note, "updatedAt" | "position" | "positionedAt">,
+): number {
+  const edited = new Date(note.updatedAt).getTime();
+  if (note.position == null || !note.positionedAt) return edited;
+  return new Date(note.positionedAt).getTime() >= edited
+    ? note.position
+    : edited;
+}
 
 /**
- * The place for a note dropped next to `target` in `ordered` (highest place
- * first), leaving out the dragged note itself.
+ * The place for a note dropped between `above` and `below` (either may be
+ * missing at the ends), in `sortKey` terms.
  */
-export function positionForDrop(
-  ordered: SortableNote[],
-  draggedId: string,
-  targetId: string,
-  side: "before" | "after",
-): number | null {
-  const others = ordered.filter((n) => n.id !== draggedId);
-  const index = others.findIndex((n) => n.id === targetId);
-  if (index < 0) return null;
-  const target = notePosition(others[index]);
-  const neighbour = others[side === "before" ? index - 1 : index + 1];
+export function positionBetween(
+  above: SortableNote | undefined,
+  below: SortableNote | undefined,
+): number {
   const step = 1000;
-  if (!neighbour) return side === "before" ? target + step : target - step;
-  return (target + notePosition(neighbour)) / 2;
+  if (above && below) return (sortKey(above) + sortKey(below)) / 2;
+  if (above) return sortKey(above) - step;
+  if (below) return sortKey(below) + step;
+  return Date.now();
 }
 
 export const compareNotes =
@@ -44,15 +47,15 @@ export const compareNotes =
       if (aUntitled !== !hasTitle(b.title)) return aUntitled ? 1 : -1;
       comparison = a.title.trim().localeCompare(b.title.trim());
     } else if (sortBy === "updatedAt") {
+      // Newest first takes dragged places into account; oldest first is the
+      // plain edit time.
       comparison =
-        new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+        sortOrder === "desc"
+          ? sortKey(a) - sortKey(b)
+          : new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
     } else if (sortBy === "createdAt") {
       comparison =
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    } else if (sortBy === "custom") {
-      // Highest place first, whatever the order setting says.
-      const custom = notePosition(b) - notePosition(a);
-      if (custom !== 0) return custom;
     }
 
     const ordered = sortOrder === "asc" ? comparison : -comparison;

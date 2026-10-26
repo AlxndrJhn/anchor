@@ -133,7 +133,7 @@ abstract class Note with _$Note {
     @Default(NoteState.active) NoteState state,
     DateTime? updatedAt,
     DateTime? createdAt,
-    // This person's place in their "Custom" sort; null sorts by createdAt.
+    // Where this person dragged the note on the web, kept for the sync.
     double? position,
     @Default([]) List<String> tagIds,
     @Default(NotePermission.owner) NotePermission permission,

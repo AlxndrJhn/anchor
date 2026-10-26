@@ -43,7 +43,7 @@ interface NoteRow {
   userId: string;
   pins: Array<{ userId: string }>;
   archives: Array<{ userId: string }>;
-  orders: Array<{ position: number }>;
+  orders: Array<{ position: number; updatedAt: Date }>;
   reminders: Array<{
     remindAt: string;
     recurrence: ReminderRecurrence;

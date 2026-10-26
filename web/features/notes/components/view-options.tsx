@@ -4,7 +4,6 @@ import {
   ALargeSmall,
   CalendarPlus,
   Check,
-  GripVertical,
   LayoutDashboard,
   LayoutGrid,
   PencilLine,
@@ -46,8 +45,6 @@ const ORDER_OPTIONS: Record<SortBy, [SortOrder, string][]> = {
     ["asc", "A to Z"],
     ["desc", "Z to A"],
   ],
-  // Dragging sets it; there is no other direction.
-  custom: [],
 };
 
 const headingClass = "m-0 mb-2 text-label text-muted-foreground uppercase";
@@ -101,18 +98,16 @@ export function ViewOptions({
           </h2>
           <SortChoices sortBy={sortBy} onSort={onSort} />
         </div>
-        {sortBy !== "custom" && (
-          <SegmentedControl
-            full
-            aria-label="Order"
-            value={sortOrder}
-            onValueChange={(order) => onSort(sortBy, order)}
-            options={ORDER_OPTIONS[sortBy].map(([value, label]) => ({
-              value,
-              label,
-            }))}
-          />
-        )}
+        <SegmentedControl
+          full
+          aria-label="Order"
+          value={sortOrder}
+          onValueChange={(order) => onSort(sortBy, order)}
+          options={ORDER_OPTIONS[sortBy].map(([value, label]) => ({
+            value,
+            label,
+          }))}
+        />
         <div className="flex items-center justify-between gap-3 border-0 border-border border-t border-solid pt-3 text-ui">
           <label htmlFor="cards-pictures" className="cursor-pointer">
             Pictures on cards
@@ -132,7 +127,6 @@ const SORT_CHOICES = [
   ["updatedAt", "Last edited", PencilLine],
   ["createdAt", "Date created", CalendarPlus],
   ["title", "Title", ALargeSmall],
-  ["custom", "Custom (drag to arrange)", GripVertical],
 ] as const;
 
 function SortChoices({

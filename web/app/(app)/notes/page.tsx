@@ -51,7 +51,7 @@ import {
 } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { matchesFilters } from "@/features/notes/note-filters";
-import { compareNotes, positionForDrop } from "@/features/notes/sort";
+import { compareNotes, positionBetween } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
 import { tagColorStyle, useTagMap } from "@/features/tags";
@@ -128,33 +128,37 @@ function NotesView({ tagId }: { tagId: string | null }) {
 
   const allPinned = chosen.length > 0 && chosen.every((n) => n.isPinned);
 
-  /** Dragging to arrange ("Custom" sort): the note takes its new place. */
-  const moveNote = (
-    noteId: string,
-    targetId: string,
-    side: "before" | "after",
-  ) => {
-    const group = pinned.some((n) => n.id === noteId) ? pinned : others;
-    const position = positionForDrop(group, noteId, targetId, side);
-    if (position === null) return;
-    const before = notes.find((n) => n.id === noteId)?.position ?? null;
-    const setPlace = (place: number | null) =>
+  /**
+   * A note let go at a new place, as in Google Keep: it goes between its new
+   * neighbours, and stays there until it is next edited.
+   */
+  const reorderNote = (noteId: string, ids: string[]) => {
+    const index = ids.indexOf(noteId);
+    const byId = new Map(notes.map((n) => [n.id, n]));
+    const position = positionBetween(
+      byId.get(ids[index - 1]),
+      byId.get(ids[index + 1]),
+    );
+    const before = byId.get(noteId);
+    const place = (fields: Pick<Note, "position" | "positionedAt">) =>
       queryClient.setQueriesData<unknown>(
         { queryKey: ["notes"] },
         (data: unknown) =>
           Array.isArray(data)
             ? (data as Note[]).map((n) =>
-                n.id === noteId ? { ...n, position: place } : n,
+                n.id === noteId ? { ...n, ...fields } : n,
               )
             : data,
       );
-    list.prepareCardMotion();
-    setPlace(position);
+    place({ position, positionedAt: new Date().toISOString() });
     setNotePosition(noteId, position).catch(() => {
       list.prepareCardMotion();
-      setPlace(before);
+      place({
+        position: before?.position ?? null,
+        positionedAt: before?.positionedAt ?? null,
+      });
       toast.error("Couldn’t move the note", {
-        retry: () => moveNote(noteId, targetId, side),
+        retry: () => reorderNote(noteId, ids),
       });
     });
   };
@@ -341,9 +345,12 @@ function NotesView({ tagId }: { tagId: string | null }) {
         {visible.length > 0 && (
           <NotesBoard
             searchTerm={list.term || undefined}
-            onMove={
-              list.sortBy === "custom" && !list.searching && !list.picking
-                ? moveNote
+            onReorder={
+              list.sortBy === "updatedAt" &&
+              list.sortOrder === "desc" &&
+              !list.searching &&
+              !list.picking
+                ? reorderNote
                 : undefined
             }
             ref={list.boardRef}

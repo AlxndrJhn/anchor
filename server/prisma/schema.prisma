@@ -132,8 +132,8 @@ model NoteReminder {
   @@index([noteId])
 }
 
-// Where a note sits in its person's own order ("Custom" sort, set by
-// dragging). Notes without one sort by when they were made.
+// Where a person dragged a note among their notes; until they edit it
+// again, it sorts there instead of by when it was last edited.
 model NoteOrder {
   userId    String
   noteId    String

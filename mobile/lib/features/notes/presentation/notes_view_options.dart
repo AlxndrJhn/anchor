@@ -6,36 +6,7 @@ import 'package:anchor/features/notes/domain/note.dart';
 
 enum ViewType { grid, list }
 
-/// [custom] is the person's own order, set by dragging notes.
-enum SortOption { dateModified, title, custom }
-
-/// A note's place in the "Custom" sort, highest first. Notes never dragged
-/// sort by when they were made, so the order starts out newest first; the
-/// web app uses the same numbers.
-double notePosition(Note note) =>
-    note.position ??
-    (note.createdAt ?? note.updatedAt ?? DateTime(0)).millisecondsSinceEpoch
-        .toDouble();
-
-/// The place for a note dropped next to [targetId] in [ordered] (highest place
-/// first), leaving out the dragged note itself; null if the target is gone.
-double? positionForDrop(
-  List<Note> ordered,
-  String draggedId,
-  String targetId, {
-  required bool before,
-}) {
-  final others = ordered.where((n) => n.id != draggedId).toList();
-  final index = others.indexWhere((n) => n.id == targetId);
-  if (index < 0) return null;
-  final target = notePosition(others[index]);
-  final neighbourIndex = before ? index - 1 : index + 1;
-  const step = 1000.0;
-  if (neighbourIndex < 0 || neighbourIndex >= others.length) {
-    return before ? target + step : target - step;
-  }
-  return (target + notePosition(others[neighbourIndex])) / 2;
-}
+enum SortOption { dateModified, title }
 
 class NotesViewOptions {
   final ViewType viewType;
@@ -81,14 +52,7 @@ int Function(Note, Note) noteComparator(NotesViewOptions options) {
       SortOption.title => a.title.trim().toLowerCase().compareTo(
         b.title.trim().toLowerCase(),
       ),
-      SortOption.custom => 0,
     };
-
-    if (options.sortOption == SortOption.custom) {
-      // Highest place first, whatever the order setting says.
-      final custom = notePosition(b).compareTo(notePosition(a));
-      return custom != 0 ? custom : b.id.compareTo(a.id);
-    }
 
     final ordered = options.isAscending ? compare : -compare;
     return ordered != 0 ? ordered : b.id.compareTo(a.id);
@@ -116,11 +80,9 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
 
       final viewType = viewTypeStr == 'list' ? ViewType.list : ViewType.grid;
 
-      final sortOption = switch (sortOptionStr) {
-        'title' => SortOption.title,
-        'custom' => SortOption.custom,
-        _ => SortOption.dateModified,
-      };
+      final sortOption = sortOptionStr == 'title'
+          ? SortOption.title
+          : SortOption.dateModified;
 
       final isAscending = isAscendingStr == 'true';
 
@@ -141,7 +103,12 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
         key: _keyViewType,
         value: options.viewType == ViewType.list ? 'list' : 'grid',
       );
-      await _storage.write(key: _keySortOption, value: options.sortOption.name);
+      await _storage.write(
+        key: _keySortOption,
+        value: options.sortOption == SortOption.title
+            ? 'title'
+            : 'dateModified',
+      );
       await _storage.write(
         key: _keyIsAscending,
         value: options.isAscending.toString(),

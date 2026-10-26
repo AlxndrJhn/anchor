@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { SortBy, SortOrder } from "@/features/preferences";
 import {
   compareNotes,
-  notePosition,
-  positionForDrop,
+  positionBetween,
   type SortableNote,
+  sortKey,
 } from "./sort";
 
 const note = (
@@ -115,36 +115,62 @@ describe("compareNotes by title", () => {
   });
 });
 
-describe("custom order", () => {
-  const n = (id: string, createdAt: string, position?: number | null) => ({
+describe("dragged notes in newest-first order", () => {
+  const n = (
+    id: string,
+    updatedAt: string,
+    position?: number,
+    positionedAt?: string,
+  ) => ({
     id,
     title: id,
-    createdAt,
-    updatedAt: createdAt,
-    position,
+    createdAt: updatedAt,
+    updatedAt,
+    position: position ?? null,
+    positionedAt: positionedAt ?? null,
   });
+  const order = (notes: ReturnType<typeof n>[]) =>
+    [...notes].sort(compareNotes("updatedAt", "desc")).map((x) => x.id);
   const a = n("a", "2026-01-03T00:00:00Z");
   const b = n("b", "2026-01-02T00:00:00Z");
   const c = n("c", "2026-01-01T00:00:00Z");
 
-  it("starts newest first and follows dragged places", () => {
-    const order = (notes: ReturnType<typeof n>[]) =>
-      [...notes].sort(compareNotes("custom", "asc")).map((x) => x.id);
+  it("sorts by last edit until a note is dragged", () => {
     expect(order([c, a, b])).toEqual(["a", "b", "c"]);
-    const moved = { ...c, position: notePosition(a) + 1 };
-    expect(order([moved, a, b])).toEqual(["c", "a", "b"]);
   });
 
-  it("puts a dropped note between its new neighbours", () => {
-    const ordered = [a, b, c];
-    const between = positionForDrop(ordered, "c", "b", "before");
-    expect(between).toBe((notePosition(a) + notePosition(b)) / 2);
-    expect(positionForDrop(ordered, "c", "a", "before")).toBe(
-      notePosition(a) + 1000,
+  it("keeps a dragged note where it was put", () => {
+    // a dragged below b.
+    const moved = n(
+      "a",
+      "2026-01-03T00:00:00Z",
+      positionBetween(b, c),
+      "2026-01-04T00:00:00Z",
     );
-    expect(positionForDrop(ordered, "a", "c", "after")).toBe(
-      notePosition(c) - 1000,
+    expect(order([moved, b, c])).toEqual(["b", "a", "c"]);
+    expect(sortKey(moved)).toBe((sortKey(b) + sortKey(c)) / 2);
+  });
+
+  it("moves a dragged note back to the top when it is edited again", () => {
+    const editedLater = n(
+      "c",
+      "2026-01-05T00:00:00Z",
+      positionBetween(b, undefined),
+      "2026-01-04T00:00:00Z",
     );
-    expect(positionForDrop(ordered, "a", "zz", "after")).toBeNull();
+    expect(order([a, b, editedLater])).toEqual(["c", "a", "b"]);
+  });
+
+  it("places a note between neighbours, or just past the ends", () => {
+    expect(positionBetween(a, b)).toBe((sortKey(a) + sortKey(b)) / 2);
+    expect(positionBetween(undefined, a)).toBe(sortKey(a) + 1000);
+    expect(positionBetween(c, undefined)).toBe(sortKey(c) - 1000);
+  });
+
+  it("ignores places in oldest-first order", () => {
+    const moved = n("a", "2026-01-03T00:00:00Z", 0, "2026-01-04T00:00:00Z");
+    expect(
+      [moved, b, c].sort(compareNotes("updatedAt", "asc")).map((x) => x.id),
+    ).toEqual(["c", "b", "a"]);
   });
 });

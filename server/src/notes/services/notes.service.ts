@@ -137,7 +137,7 @@ export class NotesService {
     return this.findOne(userId, id);
   }
 
-  /** Moves a note in this person's own order ("Custom" sort). */
+  /** Puts a note where this person dragged it among their notes. */
   async setPosition(userId: string, id: string, position: number | null) {
     const access = await this.noteAccessService.hasNoteAccess(userId, id);
     if (!access.hasAccess) {

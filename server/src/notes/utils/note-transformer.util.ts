@@ -41,9 +41,11 @@ export interface TransformedNote {
   imagePreviewIds?: string[];
   // Absent means "not loaded"; null means "this user has no reminder".
   reminder?: TransformedReminder | null;
-  // This user's place for the note in their "Custom" sort; null when they
-  // never moved it (it then sorts by createdAt). Absent means "not loaded".
+  // Where this user dragged the note, and when; null when they never did.
+  // Absent means "not loaded". A note edited after it was dragged sorts by
+  // the edit again, as in Google Keep.
   position?: number | null;
+  positionedAt?: string | null;
 }
 
 // Input type for notes from Prisma with includes
@@ -60,7 +62,7 @@ interface NoteWithIncludes {
   userId: string;
   pins?: Array<{ userId: string }>;
   archives: Array<{ userId: string }>;
-  orders?: Array<{ position: number }>;
+  orders?: Array<{ position: number; updatedAt: Date }>;
   reminders?: Array<{
     remindAt: string;
     recurrence: ReminderRecurrence;
@@ -137,6 +139,9 @@ export function transformNote(
 
   if (orders) {
     transformed.position = orders[0]?.position ?? null;
+    transformed.positionedAt = orders[0]
+      ? toISOString(orders[0].updatedAt)
+      : null;
   }
 
   if (note.state === 'trashed' && stateChangedAt) {

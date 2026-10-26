@@ -570,19 +570,6 @@ class NotesRepository {
     return ids.length;
   }
 
-  /// Moves a note in this person's own order ("Custom" sort); it goes up
-  /// with the note.
-  Future<void> setPosition(String noteId, double position) async {
-    await (_db.update(_db.notes)..where((tbl) => tbl.id.equals(noteId))).write(
-      NotesCompanion.custom(
-        position: drift.Constant(position),
-        isSynced: const drift.Constant(false),
-        localRev: _nextRev,
-      ),
-    );
-    scheduleAppSync(trigger: 'NotesRepo.setPosition');
-  }
-
   /// Gives every note the same colour or pattern (null for none). Only notes
   /// this person can edit change; the count says how many did.
   Future<int> bulkSetBackground(List<String> ids, String? background) async {
