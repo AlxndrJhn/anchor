@@ -9,7 +9,8 @@ import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 
 /// A picture with the text found in it marked, to pick some of it, as the
-/// text actions on Windows do: hold on a word and drag to select, or select
+/// text actions on Windows do: hold on a word and drag to select the words
+/// in between, hold beside the text and drag a box over words, or select
 /// all; then copy it or put it in the note.
 class ImageTextView extends StatefulWidget {
   const ImageTextView({
@@ -35,22 +36,23 @@ class ImageTextView extends StatefulWidget {
 }
 
 class _ImageTextViewState extends State<ImageTextView> {
-  /// The selected words, as a range in reading order: where the hold started
-  /// and where the finger is.
+  /// The selected words, by index.
+  Set<int> _selected = {};
+
+  /// While a hold that started on a word drags: that word.
   int? _anchor;
-  int? _focus;
+
+  /// While a hold that started beside the text drags: the box drawn, in the
+  /// picture's pixels.
+  Offset? _boxStart;
+  Rect? _box;
 
   List<ImageWord> get _words => widget.text.words;
 
-  bool get _hasSelection => _anchor != null && _focus != null;
+  bool _isSelected(int index) => _selected.contains(index);
 
-  int get _first => math.min(_anchor!, _focus!);
-  int get _last => math.max(_anchor!, _focus!);
-
-  bool _isSelected(int index) =>
-      _hasSelection && index >= _first && index <= _last;
-
-  String get _selectedText => joinImageWords(_words.sublist(_first, _last + 1));
+  String get _selectedText =>
+      joinImageWords([for (final i in _selected.toList()..sort()) _words[i]]);
 
   /// Where the picture sits in [box] (shown whole, centred), and its scale.
   ({double scale, Offset offset}) _fit(Size box) {
@@ -65,21 +67,64 @@ class _ImageTextViewState extends State<ImageTextView> {
     return (scale: scale, offset: offset);
   }
 
-  int? _wordAt(Offset position, Size box) {
+  /// A point on the screen in the picture's pixels.
+  Offset _toImage(Offset position, Size box) {
     final fit = _fit(box);
-    return imageWordAt(
-      _words,
-      (position - fit.offset) / fit.scale,
-      slop: 12 / fit.scale,
-    );
+    return (position - fit.offset) / fit.scale;
   }
 
-  void _selectAll() => setState(() {
-    _anchor = 0;
-    _focus = _words.length - 1;
+  int? _wordAt(Offset position, Size box) =>
+      imageWordAt(_words, _toImage(position, box), slop: 12 / _fit(box).scale);
+
+  void _select(Iterable<int> indices) {
+    final next = indices.toSet();
+    if (next.length != _selected.length || !next.containsAll(_selected)) {
+      HapticFeedback.selectionClick();
+    }
+    setState(() => _selected = next);
+  }
+
+  void _onHoldStart(Offset position, Size box) {
+    final index = _wordAt(position, box);
+    if (index != null) {
+      _anchor = index;
+      _select({index});
+    } else {
+      // Beside the text: a box, which starts empty.
+      HapticFeedback.selectionClick();
+      final at = _toImage(position, box);
+      setState(() {
+        _boxStart = at;
+        _box = Rect.fromPoints(at, at);
+        _selected = {};
+      });
+    }
+  }
+
+  void _onHoldMove(Offset position, Size box) {
+    final anchor = _anchor;
+    final start = _boxStart;
+    if (anchor != null) {
+      final index = _wordAt(position, box);
+      if (index == null) return;
+      final first = math.min(anchor, index), last = math.max(anchor, index);
+      _select([for (var i = first; i <= last; i++) i]);
+    } else if (start != null) {
+      final area = Rect.fromPoints(start, _toImage(position, box));
+      _box = area;
+      _select(imageWordsIn(_words, area));
+    }
+  }
+
+  void _onHoldEnd() => setState(() {
+    _anchor = null;
+    _boxStart = null;
+    _box = null;
   });
 
-  void _clear() => setState(() => _anchor = _focus = null);
+  void _selectAll() => _select([for (var i = 0; i < _words.length; i++) i]);
+
+  void _clear() => setState(() => _selected = {});
 
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: _selectedText));
@@ -91,7 +136,7 @@ class _ImageTextViewState extends State<ImageTextView> {
     final theme = Theme.of(context);
     final dims = context.dims;
     final words = _words.length;
-    final chosen = _hasSelection ? _last - _first + 1 : 0;
+    final chosen = _selected.length;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -121,26 +166,18 @@ class _ImageTextViewState extends State<ImageTextView> {
                 return GestureDetector(
                   key: const ValueKey('image-text-area'),
                   behavior: HitTestBehavior.opaque,
-                  onLongPressStart: (details) {
-                    final index = _wordAt(details.localPosition, box);
-                    if (index == null) return;
-                    HapticFeedback.selectionClick();
-                    setState(() => _anchor = _focus = index);
-                  },
-                  onLongPressMoveUpdate: (details) {
-                    if (_anchor == null) return;
-                    final index = _wordAt(details.localPosition, box);
-                    if (index != null && index != _focus) {
-                      HapticFeedback.selectionClick();
-                      setState(() => _focus = index);
-                    }
-                  },
+                  onLongPressStart: (details) =>
+                      _onHoldStart(details.localPosition, box),
+                  onLongPressMoveUpdate: (details) =>
+                      _onHoldMove(details.localPosition, box),
+                  onLongPressEnd: (_) => _onHoldEnd(),
+                  onLongPressCancel: _onHoldEnd,
                   onTapUp: (details) {
                     final index = _wordAt(details.localPosition, box);
                     if (index == null) {
                       _clear();
                     } else {
-                      setState(() => _anchor = _focus = index);
+                      _select({index});
                     }
                   },
                   child: Stack(
@@ -154,6 +191,7 @@ class _ImageTextViewState extends State<ImageTextView> {
                           scale: fit.scale,
                           offset: fit.offset,
                           selectedColor: theme.colorScheme.primary,
+                          box: _box,
                         ),
                       ),
                     ],
@@ -173,7 +211,8 @@ class _ImageTextViewState extends State<ImageTextView> {
                     Padding(
                       padding: EdgeInsets.only(bottom: dims.sm),
                       child: Text(
-                        'Hold a word and drag to select text',
+                        'Hold a word and drag to select text, or hold '
+                        'beside it and drag a box',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.white70,
                         ),
@@ -258,6 +297,7 @@ class _WordsPainter extends CustomPainter {
     required this.scale,
     required this.offset,
     required this.selectedColor,
+    this.box,
   });
 
   final List<ImageWord> words;
@@ -265,6 +305,16 @@ class _WordsPainter extends CustomPainter {
   final double scale;
   final Offset offset;
   final Color selectedColor;
+
+  /// The box being drawn, in the picture's pixels.
+  final Rect? box;
+
+  Rect _onScreen(Rect rect) => Rect.fromLTRB(
+    offset.dx + rect.left * scale,
+    offset.dy + rect.top * scale,
+    offset.dx + rect.right * scale,
+    offset.dy + rect.bottom * scale,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -275,12 +325,7 @@ class _WordsPainter extends CustomPainter {
       ..strokeWidth = 1;
     final chosen = Paint()..color = selectedColor.withValues(alpha: 0.45);
     for (final (i, word) in words.indexed) {
-      final rect = Rect.fromLTRB(
-        offset.dx + word.rect.left * scale,
-        offset.dy + word.rect.top * scale,
-        offset.dx + word.rect.right * scale,
-        offset.dy + word.rect.bottom * scale,
-      ).inflate(2);
+      final rect = _onScreen(word.rect).inflate(2);
       final shape = RRect.fromRectAndRadius(rect, const Radius.circular(3));
       if (isSelected(i)) {
         canvas.drawRRect(shape, chosen);
@@ -289,6 +334,19 @@ class _WordsPainter extends CustomPainter {
           ..drawRRect(shape, found)
           ..drawRRect(shape, edge);
       }
+    }
+    final area = box;
+    if (area != null) {
+      final rect = _onScreen(area);
+      canvas
+        ..drawRect(rect, Paint()..color = selectedColor.withValues(alpha: 0.12))
+        ..drawRect(
+          rect,
+          Paint()
+            ..color = selectedColor
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5,
+        );
     }
   }
 

@@ -3,7 +3,13 @@
 import { ClipboardCopy, TextCursorInput, TextSelect } from "lucide-react";
 import * as React from "react";
 import { toast } from "@/components/ui/toast";
-import { type ImageText, imageWordAt, joinImageWords } from "@/lib/image-text";
+import {
+  type ImageBox,
+  type ImageText,
+  imageWordAt,
+  imageWordsIn,
+  joinImageWords,
+} from "@/lib/image-text";
 
 /** How long a finger holds still before a drag selects text. */
 const HOLD_MS = 400;
@@ -15,15 +21,19 @@ interface Press {
   x: number;
   y: number;
   touch: boolean;
-  /** Selecting: the pointer sweeps words; otherwise it may yet be a tap. */
-  selecting: boolean;
+  /**
+   * What a drag does: from a word it selects the words in between; from
+   * beside the text it draws a box. Unset, the press may yet be a tap.
+   */
+  mode?: { range: number } | { boxFrom: { x: number; y: number } };
   moved: boolean;
   timer?: number;
 }
 
 /**
  * A picture with the text found in it marked, to pick some of it, as the
- * text actions on Windows do: drag over words (hold first on a touch
+ * text actions on Windows do: drag from a word to select the words in
+ * between, drag from beside the text to box words in (hold first on a touch
  * screen), click one, or select all; then copy it or put it in the note.
  */
 export function ImageTextView({
@@ -39,16 +49,18 @@ export function ImageTextView({
   onInsert?: (text: string) => void;
 }) {
   const { words } = text;
-  const [selection, setSelectionState] = React.useState<{
-    anchor: number;
-    focus: number;
-  } | null>(null);
+  // The selected words, by index.
+  const [selection, setSelectionState] = React.useState<ReadonlySet<number>>(
+    () => new Set(),
+  );
+  // The box being drawn, in the picture's pixels.
+  const [box, setBox] = React.useState<ImageBox | null>(null);
   // Said in the status line: a toast would cover these buttons.
   const [copied, setCopied] = React.useState(false);
   // A new selection hasn't been copied.
-  const setSelection: typeof setSelectionState = (next) => {
+  const setSelection = (indices: Iterable<number>) => {
     setCopied(false);
-    setSelectionState(next);
+    setSelectionState(new Set(indices));
   };
   const picture = React.useRef<HTMLDivElement>(null);
   const root = React.useRef<HTMLDivElement>(null);
@@ -64,32 +76,57 @@ export function ImageTextView({
     [],
   );
 
-  const first = selection ? Math.min(selection.anchor, selection.focus) : -1;
-  const last = selection ? Math.max(selection.anchor, selection.focus) : -2;
-  const chosen = last - first + 1;
-  const chosenText = () => joinImageWords(words.slice(first, last + 1));
+  const chosen = selection.size;
+  const chosenText = () =>
+    joinImageWords([...selection].sort((a, b) => a - b).map((i) => words[i]));
+
+  /** A pointer's place in the picture's pixels, and a finger's width. */
+  const toImage = (clientX: number, clientY: number) => {
+    const shown = picture.current?.getBoundingClientRect();
+    if (!shown?.width) return null;
+    const scale = text.width / shown.width;
+    return {
+      x: (clientX - shown.left) * scale,
+      y: (clientY - shown.top) * scale,
+      slop: 12 * scale,
+    };
+  };
 
   /** The word under a pointer, with a finger's width of slack. */
   const wordAt = (clientX: number, clientY: number) => {
-    const box = picture.current?.getBoundingClientRect();
-    if (!box?.width) return null;
-    const scale = text.width / box.width;
-    return imageWordAt(
-      words,
-      (clientX - box.left) * scale,
-      (clientY - box.top) * scale,
-      12 * scale,
+    const at = toImage(clientX, clientY);
+    return at && imageWordAt(words, at.x, at.y, at.slop);
+  };
+
+  const range = (from: number, to: number) =>
+    Array.from(
+      { length: Math.abs(to - from) + 1 },
+      (_, i) => Math.min(from, to) + i,
     );
+
+  /** The drag starts: from a word, or a box from beside the text. */
+  const startDrag = (clientX: number, clientY: number) => {
+    const p = press.current;
+    const at = toImage(clientX, clientY);
+    if (!p || !at) return;
+    const word = imageWordAt(words, at.x, at.y, at.slop);
+    if (word !== null) {
+      p.mode = { range: word };
+      setSelection([word]);
+    } else {
+      p.mode = { boxFrom: { x: at.x, y: at.y } };
+      setBox({ left: at.x, top: at.y, right: at.x, bottom: at.y });
+      setSelection([]);
+    }
   };
 
-  const startSelecting = (at: number | null) => {
-    if (at === null || !press.current) return;
-    press.current.selecting = true;
-    setSelection({ anchor: at, focus: at });
+  const endDrag = () => {
+    window.clearTimeout(press.current?.timer);
+    press.current = null;
+    setBox(null);
   };
 
-  const selectAll = () =>
-    words.length && setSelection({ anchor: 0, focus: words.length - 1 });
+  const selectAll = () => setSelection(words.keys());
 
   const copy = async () => {
     if (chosen <= 0) return;
@@ -133,21 +170,21 @@ export function ImageTextView({
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             e.currentTarget.setPointerCapture(e.pointerId);
-            const at = wordAt(e.clientX, e.clientY);
             const touch = e.pointerType !== "mouse";
-            press.current = {
+            const { clientX, clientY } = e;
+            const p: Press = {
               pointerId: e.pointerId,
-              x: e.clientX,
-              y: e.clientY,
+              x: clientX,
+              y: clientY,
               touch,
-              selecting: false,
               moved: false,
             };
+            press.current = p;
             // A mouse selects as it drags; a finger holds first.
-            if (!touch) startSelecting(at);
+            if (!touch) startDrag(clientX, clientY);
             else
-              press.current.timer = window.setTimeout(() => {
-                startSelecting(at);
+              p.timer = window.setTimeout(() => {
+                startDrag(clientX, clientY);
                 navigator.vibrate?.(10);
               }, HOLD_MS);
           }}
@@ -156,26 +193,38 @@ export function ImageTextView({
             if (p?.pointerId !== e.pointerId) return;
             if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > STILL_PX) {
               p.moved = true;
-              if (!p.selecting) window.clearTimeout(p.timer);
+              if (!p.mode) window.clearTimeout(p.timer);
             }
-            if (!p.selecting) return;
-            const at = wordAt(e.clientX, e.clientY);
-            if (at !== null) setSelection((s) => (s ? { ...s, focus: at } : s));
+            const mode = p.mode;
+            if (!mode) return;
+            if ("range" in mode) {
+              const at = wordAt(e.clientX, e.clientY);
+              if (at !== null) setSelection(range(mode.range, at));
+              return;
+            }
+            const at = toImage(e.clientX, e.clientY);
+            if (!at) return;
+            const drawn = {
+              left: Math.min(mode.boxFrom.x, at.x),
+              top: Math.min(mode.boxFrom.y, at.y),
+              right: Math.max(mode.boxFrom.x, at.x),
+              bottom: Math.max(mode.boxFrom.y, at.y),
+            };
+            setBox(drawn);
+            setSelection(imageWordsIn(words, drawn));
           }}
           onPointerUp={(e) => {
             const p = press.current;
             if (p?.pointerId !== e.pointerId) return;
-            window.clearTimeout(p.timer);
-            press.current = null;
-            if (p.selecting || p.moved) return;
-            // A click or tap: that word, or nothing when beside the text.
+            endDrag();
+            // A drag keeps what it selected, and a swipe selects nothing.
+            // Otherwise it was a click or tap: on a word, that word; beside
+            // the text, none.
+            if (p.moved || (p.mode && "range" in p.mode)) return;
             const at = wordAt(e.clientX, e.clientY);
-            setSelection(at === null ? null : { anchor: at, focus: at });
+            setSelection(at === null ? [] : [at]);
           }}
-          onPointerCancel={() => {
-            window.clearTimeout(press.current?.timer);
-            press.current = null;
-          }}
+          onPointerCancel={endDrag}
         >
           <img src={src} alt={alt} draggable={false} />
           {words.map((word, i) => (
@@ -183,7 +232,7 @@ export function ImageTextView({
               key={i}
               aria-hidden
               className="itv-w"
-              data-on={i >= first && i <= last ? "" : undefined}
+              data-on={selection.has(i) ? "" : undefined}
               style={{
                 left: `${(word.left / text.width) * 100}%`,
                 top: `${(word.top / text.height) * 100}%`,
@@ -192,6 +241,18 @@ export function ImageTextView({
               }}
             />
           ))}
+          {box && (
+            <span
+              aria-hidden
+              className="itv-box"
+              style={{
+                left: `${(box.left / text.width) * 100}%`,
+                top: `${(box.top / text.height) * 100}%`,
+                width: `${((box.right - box.left) / text.width) * 100}%`,
+                height: `${((box.bottom - box.top) / text.height) * 100}%`,
+              }}
+            />
+          )}
         </div>
       </div>
       <div className="itv-bar">
@@ -202,8 +263,13 @@ export function ImageTextView({
             `${chosen} ${chosen === 1 ? "word" : "words"} selected`
           ) : (
             <>
-              <span className="dk">Drag over the text to select it</span>
-              <span className="ph">Hold a word and drag to select text</span>
+              <span className="dk">
+                Drag over the text to select it, or from beside it to draw a box
+              </span>
+              <span className="ph">
+                Hold a word and drag to select text, or hold beside it and drag
+                a box
+              </span>
             </>
           )}
         </div>
