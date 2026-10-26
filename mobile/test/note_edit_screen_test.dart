@@ -17,6 +17,7 @@ import 'package:anchor/features/tags/data/repository/tags_repository.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,7 +75,11 @@ void main() {
     when(() => prefsRepo.getExactAlarmsOffered()).thenAnswer((_) async => true);
   });
 
-  Future<void> pumpScreen(WidgetTester tester, {Note? note}) async {
+  Future<void> pumpScreen(
+    WidgetTester tester, {
+    Note? note,
+    bool pasteClipboard = false,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -101,7 +106,11 @@ void main() {
             routes: [
               GoRoute(
                 path: '/',
-                builder: (_, _) => NoteEditScreen(note: note, noteId: note?.id),
+                builder: (_, _) => NoteEditScreen(
+                  note: note,
+                  noteId: note?.id,
+                  pasteClipboard: pasteClipboard,
+                ),
               ),
             ],
           ),
@@ -117,6 +126,33 @@ void main() {
 
   QuillController editorController(WidgetTester tester) =>
       tester.state<RichTextEditorState>(find.byType(RichTextEditor)).controller;
+
+  testWidgets('a note opened by double-tapping New Note has the clipboard', (
+    tester,
+  ) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => call.method == 'Clipboard.getData'
+          ? {'text': '  Copied from the browser  '}
+          : null,
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await pumpScreen(tester, pasteClipboard: true);
+    await tester.pump();
+
+    final controller = editorController(tester);
+    expect(controller.document.toPlainText(), 'Copied from the browser\n');
+    expect(
+      controller.selection,
+      const TextSelection.collapsed(offset: 'Copied from the browser'.length),
+    );
+  });
 
   testWidgets('typing in a new note autosaves it after the idle window', (
     tester,

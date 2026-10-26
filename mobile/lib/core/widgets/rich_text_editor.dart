@@ -504,6 +504,16 @@ class RichTextEditorState extends State<RichTextEditor>
     _focusNode.requestFocus();
   }
 
+  /// Puts the caret at the end of the text, ready to type on.
+  void focusEnd() {
+    if (!widget.canEdit) return;
+    _controller.updateSelection(
+      TextSelection.collapsed(offset: _controller.document.length - 1),
+      ChangeSource.local,
+    );
+    _focusNode.requestFocus();
+  }
+
   /// Adds [text] as new lines at the end of the note ("Grab image text").
   void appendText(String text) {
     if (_controller.readOnly || text.trim().isEmpty) return;

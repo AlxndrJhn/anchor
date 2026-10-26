@@ -60,6 +60,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
 
   /// A new note starts as a checklist (the "New checklist" app shortcut).
   final bool startAsChecklist;
+
+  /// Starts the new note with the clipboard's text (New Note double-tapped).
+  final bool pasteClipboard;
   const NoteEditScreen({
     super.key,
     this.noteId,
@@ -68,6 +71,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.highlightTerm,
     this.shared,
     this.startAsChecklist = false,
+    this.pasteClipboard = false,
   });
 
   @override
@@ -156,7 +160,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         if (widget.startAsChecklist) _initialContent = _emptyChecklist;
         // A new note opens with the caret in its text, ready to type.
         WidgetsBinding.instance.addPostFrameCallback(
-          (_) => _editorKey.currentState?.focusStart(),
+          (_) => widget.pasteClipboard
+              ? _pasteClipboard()
+              : _editorKey.currentState?.focusStart(),
         );
       }
     }
@@ -672,6 +678,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             : null,
       ),
     );
+  }
+
+  /// The clipboard's text, into the new note, with the caret after it.
+  Future<void> _pasteClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    final editor = _editorKey.currentState;
+    final text = data?.text?.trim();
+    if (text != null && text.isNotEmpty) editor?.appendText(text);
+    editor?.focusEnd();
   }
 
   /// Text read from one of the note's pictures goes at the end of the note.

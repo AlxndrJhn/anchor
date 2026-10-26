@@ -85,6 +85,8 @@ GoRouter goRouter(Ref ref) {
                   // "New list", from holding the New Note button.
                   startAsChecklist:
                       state.uri.queryParameters['checklist'] == '1',
+                  // Double-tapping New Note pastes the clipboard into it.
+                  pasteClipboard: state.uri.queryParameters['paste'] == '1',
                 ),
               );
             },

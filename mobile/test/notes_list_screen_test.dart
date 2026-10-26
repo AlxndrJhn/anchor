@@ -14,7 +14,9 @@ import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:anchor/features/tags/data/repository/tags_repository.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -96,6 +98,10 @@ void main() {
               GoRoute(
                 path: '/',
                 builder: (context, state) => const NotesListScreen(),
+              ),
+              GoRoute(
+                path: '/note/new',
+                builder: (context, state) => Text('Opened ${state.uri}'),
               ),
             ],
           ),
@@ -230,5 +236,62 @@ void main() {
 
     expect(find.text('New list'), findsOneWidget);
     expect(find.text('New note'), findsOneWidget);
+  });
+
+  group('New Note with text on the clipboard', () {
+    Future<void> setClipboard(
+      WidgetTester tester, {
+      required bool hasText,
+    }) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async =>
+            call.method == 'Clipboard.hasStrings' ? {'value': hasText} : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+    }
+
+    testWidgets('a double tap opens a new note with it pasted in', (
+      tester,
+    ) async {
+      await setClipboard(tester, hasText: true);
+      await pumpList(tester, notesNamed('Note', 2));
+
+      await tester.tap(find.text('New Note'));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.text('New Note'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Opened /note/new?paste=1'), findsOneWidget);
+    });
+
+    testWidgets('a single tap still opens an empty note', (tester) async {
+      await setClipboard(tester, hasText: true);
+      await pumpList(tester, notesNamed('Note', 2));
+
+      await tester.tap(find.text('New Note'));
+      await tester.pump(kDoubleTapTimeout);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Opened /note/new'), findsOneWidget);
+    });
+
+    testWidgets('with nothing to paste, a tap opens a note at once', (
+      tester,
+    ) async {
+      await setClipboard(tester, hasText: false);
+      await pumpList(tester, notesNamed('Note', 2));
+
+      await tester.tap(find.text('New Note'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Opened /note/new'), findsOneWidget);
+    });
   });
 }

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -154,6 +156,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     if (currentQuery.isNotEmpty) {
       _searchController.text = currentQuery;
     }
+    _checkClipboard();
   }
 
   /// Asks for what a reminder needs the first time this device holds one.
@@ -182,8 +185,41 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
   @override
   void dispose() {
+    _newNoteTap?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Whether the clipboard holds text, checked as a finger lands on New Note.
+  bool _clipboardHasText = false;
+
+  /// A first tap on New Note, waiting to see if a second follows.
+  Timer? _newNoteTap;
+
+  Future<void> _checkClipboard() async {
+    final hasText = await Clipboard.hasStrings();
+    if (mounted) _clipboardHasText = hasText;
+  }
+
+  /// A tap opens a new note. With text on the clipboard, a double tap opens
+  /// one with that text in it; only then does a tap wait for a second one.
+  void _onNewNotePressed(String? tagId) {
+    final first = _newNoteTap;
+    if (first != null && first.isActive) {
+      first.cancel();
+      _newNoteTap = null;
+      HapticFeedback.lightImpact();
+      context.go('/note/new?paste=1', extra: tagId);
+      return;
+    }
+    if (!_clipboardHasText) {
+      context.go('/note/new', extra: tagId);
+      return;
+    }
+    _newNoteTap = Timer(kDoubleTapTimeout, () {
+      _newNoteTap = null;
+      if (mounted) context.go('/note/new', extra: tagId);
+    });
   }
 
   void _exitSelectionMode() {
@@ -765,14 +801,17 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             ? null
             : Builder(
                 // Holding the button offers a new list as well, as in
-                // Google Keep.
-                builder: (fabContext) => GestureDetector(
-                  onLongPress: () => _showNewMenu(fabContext, selectedTagId),
-                  child: FloatingActionButton.extended(
-                    onPressed: () =>
-                        context.go('/note/new', extra: selectedTagId),
-                    icon: const Icon(LucideIcons.plus),
-                    label: const Text('New Note'),
+                // Google Keep; double-tapping it pastes the clipboard into a
+                // new note.
+                builder: (fabContext) => Listener(
+                  onPointerDown: (_) => _checkClipboard(),
+                  child: GestureDetector(
+                    onLongPress: () => _showNewMenu(fabContext, selectedTagId),
+                    child: FloatingActionButton.extended(
+                      onPressed: () => _onNewNotePressed(selectedTagId),
+                      icon: const Icon(LucideIcons.plus),
+                      label: const Text('New Note'),
+                    ),
                   ),
                 ),
               ),
