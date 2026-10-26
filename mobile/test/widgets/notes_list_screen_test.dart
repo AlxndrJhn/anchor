@@ -8,6 +8,7 @@ import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_list_screen.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
+import 'package:anchor/features/picture_search/picture_search.dart';
 import 'package:anchor/features/reminders/data/reminder_permissions.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:anchor/features/sync/data/sync_manager.dart';
@@ -22,6 +23,9 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockNotesRepository extends Mock implements NotesRepository {}
+
+class _MockPictureSearchRepository extends Mock
+    implements PictureSearchRepository {}
 
 void main() {
   String delta(String text) => '{"ops":[{"insert":"$text\\n"}]}';
@@ -48,6 +52,8 @@ void main() {
     List<Note> notes, {
     NotesViewOptions options = const NotesViewOptions(),
     bool routed = false,
+    List<Note> archived = const [],
+    PictureSearchRepository? pictureSearch,
   }) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
@@ -59,7 +65,7 @@ void main() {
           authControllerProvider.overrideWith(_SignedIn.new),
           notesRepositoryProvider.overrideWithValue(repo),
           notesProvider.overrideWith((ref) => Stream.value(notes)),
-          archivedNotesProvider.overrideWith((ref) => Stream.value([])),
+          archivedNotesProvider.overrideWith((ref) => Stream.value(archived)),
           trashedNotesProvider.overrideWith((ref) => Stream.value([])),
           allActiveNotesProvider.overrideWith((ref) => Stream.value(notes)),
           tagsControllerProvider.overrideWith(_Tags.new),
@@ -71,6 +77,14 @@ void main() {
           ),
           isOnlineProvider.overrideWith((ref) => true),
           firstDownloadProvider.overrideWithValue(FirstDownload.done),
+          if (pictureSearch != null)
+            pictureSearchRepositoryProvider.overrideWithValue(pictureSearch),
+          pictureSearchStatusProvider.overrideWith(
+            (ref) async => PictureSearchStatus(
+              available: true,
+              enabled: pictureSearch != null,
+            ),
+          ),
         ],
         child: routed
             ? MaterialApp.router(
@@ -199,6 +213,55 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('1 selected'), findsOneWidget);
+  });
+
+  testWidgets('a search also lists notes whose pictures look like it', (
+    tester,
+  ) async {
+    final pictureSearch = _MockPictureSearchRepository();
+    when(
+      () => pictureSearch.search('Katze'),
+    ).thenAnswer((_) async => ['cats', 'kitten', 'old-cat']);
+    await pumpList(
+      tester,
+      const [
+        Note(id: 'cats', title: 'Holiday'),
+        Note(id: 'kitten', title: 'Katze Mimi'),
+        Note(id: 'dog', title: 'Walks'),
+      ],
+      archived: const [
+        Note(id: 'old-cat', title: 'Last year', isArchived: true),
+      ],
+      pictureSearch: pictureSearch,
+    );
+
+    await tester.tap(find.bySemanticsLabel('Search notes'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Katze');
+    await tester.pump();
+    // The server is asked once typing pauses.
+    await tester.pump(pictureSearchPause);
+    await tester.pumpAndSettle();
+
+    expect(find.bySemanticsLabel('Pictures that may match, 2'), findsOneWidget);
+    expect(find.text('Holiday'), findsOneWidget);
+    expect(find.text('Last year'), findsOneWidget);
+    // Found by its text already: listed once.
+    expect(find.text('Katze Mimi'), findsOneWidget);
+    expect(find.text('Walks'), findsNothing);
+  });
+
+  testWidgets('with picture search off, only words find notes', (tester) async {
+    await pumpList(tester, const [Note(id: 'cats', title: 'Holiday')]);
+
+    await tester.tap(find.bySemanticsLabel('Search notes'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Katze');
+    await tester.pump(pictureSearchPause);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Holiday'), findsNothing);
+    expect(find.textContaining('PICTURES'), findsNothing);
   });
 
   testWidgets('holding New note offers a new list', (tester) async {

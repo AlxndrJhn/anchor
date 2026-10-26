@@ -138,7 +138,10 @@ class AppDatabase extends _$AppDatabase {
           'PRAGMA table_info(note_attachments)',
         ).map((row) => row.read<String>('name')).get();
         if (!existing.contains('picture_text')) {
-          await migrator.addColumn(noteAttachments, noteAttachments.pictureText);
+          await migrator.addColumn(
+            noteAttachments,
+            noteAttachments.pictureText,
+          );
         }
         // Resent attachments bring the text read from each picture.
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(

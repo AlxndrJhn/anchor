@@ -6,6 +6,7 @@ import '../../../app/app_bootstrap.dart';
 import '../../../core/motion/haptics.dart';
 import '../../../core/storage/preferences_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../picture_search/picture_search.dart';
 import '../../reminders/data/reminder_permissions.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../domain/note.dart';
@@ -16,7 +17,15 @@ import 'notes_view_options.dart';
 
 part 'notes_list_controller.g.dart';
 
-enum NoteGroupKind { all, pinned, others, archived }
+enum NoteGroupKind {
+  all,
+  pinned,
+  others,
+  archived,
+
+  /// In a search, notes the server found by what their pictures show.
+  pictures,
+}
 
 class NoteGroup {
   const NoteGroup(
@@ -39,6 +48,7 @@ class NoteGroup {
     NoteGroupKind.pinned => l10n.groupPinned,
     NoteGroupKind.others => l10n.groupOthers,
     NoteGroupKind.archived => l10n.groupArchived,
+    NoteGroupKind.pictures => l10n.groupPictureMatches,
   };
 }
 
@@ -118,6 +128,19 @@ VisibleNotes visibleNotes(Ref ref) {
     for (final note in archivedSource.value ?? const <Note>[])
       if ((tagId == null || note.tagIds.contains(tagId)) && matches(note)) note,
   ]..sort(comparator);
+  // Notes whose pictures look like the search, for those who turned picture
+  // search on, after the ones found by their words.
+  final pictures = words.isEmpty
+      ? const <Note>[]
+      : notesForMatches(
+          ref.watch(pictureMatchesProvider(query.trim())).value ?? const [],
+          [
+            ...notes,
+            for (final note in archivedSource.value ?? const <Note>[])
+              if (tagId == null || note.tagIds.contains(tagId)) note,
+          ].where(filters.matches),
+          [...visible, ...archived],
+        );
   final isOpen =
       isSearching || ref.watch(openArchivedTagsProvider).contains(tagId);
   final isFolded = _isArchivedFolded(
@@ -125,7 +148,7 @@ VisibleNotes visibleNotes(Ref ref) {
     hasOtherNotes: visible.isNotEmpty,
   );
   return VisibleNotes(
-    notes: [...visible, if (!isFolded) ...archived],
+    notes: [...visible, if (!isFolded) ...archived, ...pictures],
     groups: [
       for (final group in groups)
         if (group.notes.isNotEmpty) group,
@@ -136,6 +159,7 @@ VisibleNotes visibleNotes(Ref ref) {
           isFolded: isFolded,
           canFold: !isSearching && visible.isNotEmpty,
         ),
+      if (pictures.isNotEmpty) NoteGroup(NoteGroupKind.pictures, pictures),
     ],
     isLoaded: source.hasValue && archivedSource.hasValue,
     listsArchived: true,

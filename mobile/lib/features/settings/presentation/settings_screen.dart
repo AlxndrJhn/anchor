@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -41,6 +43,7 @@ import '../../auth/domain/user.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/oidc_config_provider.dart';
 import '../../notes/presentation/notes_controller.dart';
+import '../../picture_search/picture_search.dart';
 import '../../server/data/server_info_provider.dart';
 import '../../sync/data/sync_compatibility.dart';
 import '../../sync/presentation/compatibility_messages.dart';
@@ -83,6 +86,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               gap,
               const _EditorSection(),
               gap,
+              const _PictureSearchSection(),
               _AccountSection(user: user),
               gap,
               if (canSelfUpdate) ...[const _UpdatesSection(), gap],
@@ -651,6 +655,88 @@ class _UpdatesSectionState extends ConsumerState<_UpdatesSection> {
             onChanged: _setCheckAutomatically,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The opt-in to finding notes by what their pictures show, with how far the
+/// server is, followed while it works; shown when the server offers it.
+class _PictureSearchSection extends ConsumerStatefulWidget {
+  const _PictureSearchSection();
+
+  @override
+  ConsumerState<_PictureSearchSection> createState() =>
+      _PictureSearchSectionState();
+}
+
+class _PictureSearchSectionState extends ConsumerState<_PictureSearchSection> {
+  Timer? _poll;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  /// Asks again every two seconds while the download or indexing runs.
+  void _followProgress(PictureSearchStatus status) {
+    if (!status.isBusy) {
+      _poll?.cancel();
+      _poll = null;
+      return;
+    }
+    _poll ??= Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) ref.invalidate(pictureSearchStatusProvider);
+    });
+  }
+
+  Future<void> _setEnabled(bool enabled) async {
+    final l10n = context.l10n;
+    setState(() => _saving = true);
+    try {
+      await ref.read(pictureSearchRepositoryProvider).setEnabled(enabled);
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.pictureSearchChangeFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+    }
+    if (!mounted) return;
+    ref.invalidate(pictureSearchStatusProvider);
+    setState(() => _saving = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    ref.listen(pictureSearchStatusProvider, (_, next) {
+      if (next.value case final status?) _followProgress(status);
+    });
+    final status = ref.watch(pictureSearchStatusProvider).value;
+    if (status == null || !status.available) return const SizedBox.shrink();
+    final progress = pictureSearchProgressText(status, l10n);
+    return Padding(
+      padding: EdgeInsets.only(bottom: Section.gapOf(context)),
+      child: Section(
+        label: l10n.settingsSearch,
+        child: GroupedList(
+          children: [
+            SwitchRow(
+              icon: LucideIcons.images,
+              label: l10n.settingsPictureSearch,
+              subtitle: progress == null
+                  ? l10n.settingsPictureSearchHelp
+                  : '${l10n.settingsPictureSearchHelp}\n\n$progress',
+              value: status.enabled,
+              onChanged: _saving ? null : _setEnabled,
+            ),
+          ],
+        ),
       ),
     );
   }

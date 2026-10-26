@@ -156,6 +156,7 @@ class _GroupHeader extends StatelessWidget {
       icon: switch (group.kind) {
         NoteGroupKind.pinned => LucideIcons.pin,
         NoteGroupKind.archived => LucideIcons.archive,
+        NoteGroupKind.pictures => LucideIcons.images,
         NoteGroupKind.all || NoteGroupKind.others => null,
       },
       count: group.notes.length,

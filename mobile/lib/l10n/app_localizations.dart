@@ -1180,6 +1180,54 @@ abstract class AppLocalizations {
   /// **'Look for a new release when Anchor starts'**
   String get settingsCheckAutomaticallyHelp;
 
+  /// Section label in Settings for search options. Shown only when the server offers picture search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get settingsSearch;
+
+  /// Switch in Settings › Search: searches then also find notes whose pictures look like what was typed (an AI model on the user's own server).
+  ///
+  /// In en, this message translates to:
+  /// **'Find pictures by what they show'**
+  String get settingsPictureSearch;
+
+  /// Help under the Find pictures by what they show switch. The examples may be translated.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for “sunset by the sea” or “receipt” and find notes with such pictures, in most languages. Your server downloads a model once (about 380 MB) and looks at each picture; nothing leaves your server.'**
+  String get settingsPictureSearchHelp;
+
+  /// Picture search status in Settings while the server downloads its model.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading the picture model… {percent}%'**
+  String pictureSearchDownloading(int percent);
+
+  /// Picture search status in Settings when the server could not download its model.
+  ///
+  /// In en, this message translates to:
+  /// **'The picture model couldn’t be downloaded. Turn it off and on to try again.'**
+  String get pictureSearchFailed;
+
+  /// Picture search status in Settings while the server goes through the user's pictures.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking at your pictures… {indexed} of {total}'**
+  String pictureSearchIndexing(int indexed, int total);
+
+  /// Picture search status in Settings once every picture of the user's notes has been looked at.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Your pictures will be searchable as you add them.} =1{Your picture is ready to search.} other{All {count} pictures are ready to search.}}'**
+  String pictureSearchReady(int count);
+
+  /// Error snackbar when turning picture search on or off in Settings fails (e.g. offline).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t change picture search'**
+  String get pictureSearchChangeFailed;
+
   /// Title of the banner above the notes and of the sheet, when a newer release of the app is out.
   ///
   /// In en, this message translates to:
@@ -4023,6 +4071,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Archived'**
   String get groupArchived;
+
+  /// Heading, in a search, of the notes the server found by what their pictures show (not by their words), listed after the others with their count. Only for users who turned on picture search in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Pictures that may match'**
+  String get groupPictureMatches;
 
   /// The note’s color or pattern.
   ///

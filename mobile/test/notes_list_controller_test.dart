@@ -4,6 +4,7 @@ import 'package:anchor/features/notes/presentation/note_folder.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_list_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
+import 'package:anchor/features/picture_search/picture_search.dart';
 import 'package:anchor/features/reminders/data/notification_gateway.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,6 +80,9 @@ void main() {
         archivedNotesProvider.overrideWith((ref) => Stream.value(archived)),
         trashedNotesProvider.overrideWith((ref) => Stream.value(const [])),
         notesViewOptionsProvider.overrideWith(_DefaultOptions.new),
+        pictureSearchStatusProvider.overrideWith(
+          (ref) async => PictureSearchStatus.off,
+        ),
         notificationGatewayProvider.overrideWithValue(
           gateway ?? FakeGateway(notifications: true, exact: true),
         ),

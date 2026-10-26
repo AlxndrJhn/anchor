@@ -447,7 +447,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         !options.isAscending;
     final groupOf = {
       for (final group in shown.groups)
-        if (group.kind != NoteGroupKind.archived)
+        if (group.kind != NoteGroupKind.archived &&
+            group.kind != NoteGroupKind.pictures)
           for (final note in group.notes) note.id: group,
     };
     final groups = _inDragOrder(shown.groups);

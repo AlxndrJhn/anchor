@@ -882,6 +882,41 @@
   "@settingsCheckAutomaticallyHelp": {
     "description": "Help under the Check automatically switch."
   },
+  "settingsSearch": "Search",
+  "@settingsSearch": {
+    "description": "Section label in Settings for search options. Shown only when the server offers picture search."
+  },
+  "settingsPictureSearch": "Find pictures by what they show",
+  "@settingsPictureSearch": {
+    "description": "Switch in Settings › Search: searches then also find notes whose pictures look like what was typed (an AI model on the user's own server)."
+  },
+  "settingsPictureSearchHelp": "Search for “sunset by the sea” or “receipt” and find notes with such pictures, in most languages. Your server downloads a model once (about 380 MB) and looks at each picture; nothing leaves your server.",
+  "@settingsPictureSearchHelp": {
+    "description": "Help under the Find pictures by what they show switch. The examples may be translated."
+  },
+  "pictureSearchDownloading": "Downloading the picture model… {percent}%",
+  "@pictureSearchDownloading": {
+    "description": "Picture search status in Settings while the server downloads its model.",
+    "placeholders": {"percent": {"type": "int", "example": "42"}}
+  },
+  "pictureSearchFailed": "The picture model couldn’t be downloaded. Turn it off and on to try again.",
+  "@pictureSearchFailed": {
+    "description": "Picture search status in Settings when the server could not download its model."
+  },
+  "pictureSearchIndexing": "Looking at your pictures… {indexed} of {total}",
+  "@pictureSearchIndexing": {
+    "description": "Picture search status in Settings while the server goes through the user's pictures.",
+    "placeholders": {"indexed": {"type": "int", "example": "1"}, "total": {"type": "int", "example": "4"}}
+  },
+  "pictureSearchReady": "{count, plural, =0{Your pictures will be searchable as you add them.} =1{Your picture is ready to search.} other{All {count} pictures are ready to search.}}",
+  "@pictureSearchReady": {
+    "description": "Picture search status in Settings once every picture of the user's notes has been looked at.",
+    "placeholders": {"count": {"type": "int", "example": "3"}}
+  },
+  "pictureSearchChangeFailed": "Couldn’t change picture search",
+  "@pictureSearchChangeFailed": {
+    "description": "Error snackbar when turning picture search on or off in Settings fails (e.g. offline)."
+  },
   "updateAvailable": "Update available",
   "@updateAvailable": {
     "description": "Title of the banner above the notes and of the sheet, when a newer release of the app is out."
@@ -3572,6 +3607,10 @@
   "groupArchived": "Archived",
   "@groupArchived": {
     "description": "Heading of the archived notes listed below the others in search results and on a tag's page, with their count. On a tag's page it can be tapped to show or hide them."
+  },
+  "groupPictureMatches": "Pictures that may match",
+  "@groupPictureMatches": {
+    "description": "Heading, in a search, of the notes the server found by what their pictures show (not by their words), listed after the others with their count. Only for users who turned on picture search in Settings."
   },
   "noteBackground": "Background",
   "@noteBackground": {

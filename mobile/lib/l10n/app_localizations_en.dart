@@ -646,6 +646,45 @@ class AppLocalizationsEn extends AppLocalizations {
       'Look for a new release when Anchor starts';
 
   @override
+  String get settingsSearch => 'Search';
+
+  @override
+  String get settingsPictureSearch => 'Find pictures by what they show';
+
+  @override
+  String get settingsPictureSearchHelp =>
+      'Search for “sunset by the sea” or “receipt” and find notes with such pictures, in most languages. Your server downloads a model once (about 380 MB) and looks at each picture; nothing leaves your server.';
+
+  @override
+  String pictureSearchDownloading(int percent) {
+    return 'Downloading the picture model… $percent%';
+  }
+
+  @override
+  String get pictureSearchFailed =>
+      'The picture model couldn’t be downloaded. Turn it off and on to try again.';
+
+  @override
+  String pictureSearchIndexing(int indexed, int total) {
+    return 'Looking at your pictures… $indexed of $total';
+  }
+
+  @override
+  String pictureSearchReady(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'All $count pictures are ready to search.',
+      one: 'Your picture is ready to search.',
+      zero: 'Your pictures will be searchable as you add them.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pictureSearchChangeFailed => 'Couldn’t change picture search';
+
+  @override
   String get updateAvailable => 'Update available';
 
   @override
@@ -2682,6 +2721,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupArchived => 'Archived';
+
+  @override
+  String get groupPictureMatches => 'Pictures that may match';
 
   @override
   String get noteBackground => 'Background';

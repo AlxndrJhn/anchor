@@ -41,7 +41,7 @@ differences. "Web" and "Android" say where each one is available.
 | **Search** | | |
 | Filters for colour, tag, pictures, checklists and reminders | ✓ | ✓ |
 | Search finds the text in pictures (screenshots, receipts), read on the server | ✓ | ✓ |
-| Opt-in: find notes by what their pictures show ("Katzen", "receipt"), in most languages, on your server | ✓ | |
+| Opt-in: find notes by what their pictures show ("Katzen", "receipt"), in most languages, on your server | ✓ | ✓ |
 | Search also finds archived notes; Archive and Trash can be searched ([#190](https://github.com/ZhFahim/anchor/issues/190)) | ✓ | ✓ |
 | The searched words are marked in the note you open ([#134](https://github.com/ZhFahim/anchor/issues/134)) | ✓ | ✓ |
 | The search is kept when you come back from a note ([#206](https://github.com/ZhFahim/anchor/issues/206)) | ✓ | ✓ |
