@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   type ImageWord,
   imageWordAt,
+  imageWordsIn,
   joinImageWords,
   type TesseractBlock,
   wordsFromBlocks,
@@ -105,5 +106,25 @@ describe("imageWordAt", () => {
   it("finds none far from any text", () => {
     expect(imageWordAt(words, 50, 45)).toBeNull();
     expect(imageWordAt(words, 400, 10)).toBeNull();
+  });
+});
+
+describe("imageWordsIn", () => {
+  const words = [
+    word("Milk", 0, 0),
+    word("bread", 140, 0),
+    word("Call", 0, 60, 1),
+  ];
+  const box = (left: number, top: number, right: number, bottom: number) => ({
+    left,
+    top,
+    right,
+    bottom,
+  });
+
+  it("takes the words a box touches, in reading order", () => {
+    expect(imageWordsIn(words, box(50, 10, 60, 70))).toEqual([0, 2]);
+    expect(imageWordsIn(words, box(90, -5, 150, 5))).toEqual([0, 1]);
+    expect(imageWordsIn(words, box(110, 30, 130, 50))).toEqual([]);
   });
 });

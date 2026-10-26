@@ -68,6 +68,32 @@ export function imageWordAt(
   return nearest;
 }
 
+/** A box in the picture's pixels, drawn from any corner to the opposite. */
+export interface ImageBox {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/** The indices of the words a box touches, in reading order. */
+export function imageWordsIn(
+  words: readonly ImageWord[],
+  box: ImageBox,
+): number[] {
+  const indices: number[] = [];
+  words.forEach((word, i) => {
+    if (
+      word.left < box.right &&
+      word.right > box.left &&
+      word.top < box.bottom &&
+      word.bottom > box.top
+    )
+      indices.push(i);
+  });
+  return indices;
+}
+
 interface TesseractBox {
   x0: number;
   y0: number;

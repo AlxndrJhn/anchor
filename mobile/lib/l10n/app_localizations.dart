@@ -3871,7 +3871,7 @@ abstract class AppLocalizations {
   /// Hint under the picture on the Grab image text page, until a word is selected.
   ///
   /// In en, this message translates to:
-  /// **'Hold a word and drag to select text'**
+  /// **'Hold a word and drag to select text, or hold beside it and drag a box'**
   String get pictureSelectHint;
 
   /// Button on the Grab image text page that puts the selected words at the end of the note.

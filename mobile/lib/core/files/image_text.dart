@@ -115,6 +115,13 @@ int? imageWordAt(List<ImageWord> words, Offset point, {double slop = 12}) {
   return nearest;
 }
 
+/// The indices of the words a box (in the picture's pixels) touches, in
+/// reading order.
+List<int> imageWordsIn(List<ImageWord> words, Rect box) => [
+  for (final (i, word) in words.indexed)
+    if (word.rect.overlaps(box)) i,
+];
+
 /// "Grab image text": finds the words in a picture on the phone itself, with
 /// ML Kit's Latin-script model, so it also works offline.
 ///

@@ -2586,7 +2586,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pictureSelectHint => 'Hold a word and drag to select text';
+  String get pictureSelectHint =>
+      'Hold a word and drag to select text, or hold beside it and drag a box';
 
   @override
   String get pictureInsertText => 'Insert in note';

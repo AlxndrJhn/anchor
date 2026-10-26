@@ -171,7 +171,10 @@ void main() {
     await pumpView(tester);
 
     expect(find.text('Select text'), findsOneWidget);
-    expect(find.text('Hold a word and drag to select text'), findsOneWidget);
+    expect(
+      find.textContaining('hold beside it and drag a box'),
+      findsOneWidget,
+    );
     await tester.tap(find.bySemanticsLabel('Copy'));
     await tester.pump();
     expect(copied, isNull);
@@ -205,6 +208,51 @@ void main() {
     await tester.pump();
 
     expect(copied, 'and bread\nCall');
+    await tester.pump(const Duration(seconds: 11));
+  });
+
+  Future<void> holdAndDrawBox(
+    WidgetTester tester,
+    Offset from,
+    Offset to,
+  ) async {
+    final gesture = await tester.startGesture(
+      onScreen(tester, from),
+      kind: PointerDeviceKind.touch,
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+    await gesture.moveTo(onScreen(tester, (from + to) / 2));
+    await tester.pump();
+    await gesture.moveTo(onScreen(tester, to));
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+  }
+
+  testWidgets('holding beside the text and dragging boxes in words', (
+    tester,
+  ) async {
+    await pumpView(tester);
+
+    await holdAndDrawBox(tester, const Offset(20, 20), const Offset(440, 260));
+    expect(find.text('4 words selected'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Copy'));
+    await tester.pump();
+    expect(copied, 'Shopping list\n\nMilk and');
+    await tester.pump(const Duration(seconds: 11));
+  });
+
+  testWidgets('a box down one side picks words from several lines', (
+    tester,
+  ) async {
+    await pumpView(tester);
+
+    await holdAndDrawBox(tester, const Offset(20, 20), const Offset(240, 420));
+    await tester.tap(find.bySemanticsLabel('Copy'));
+    await tester.pump();
+
+    expect(copied, 'Shopping\n\nMilk\nCall');
     await tester.pump(const Duration(seconds: 11));
   });
 

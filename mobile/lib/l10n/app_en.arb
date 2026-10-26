@@ -3429,7 +3429,7 @@
       }
     }
   },
-  "pictureSelectHint": "Hold a word and drag to select text",
+  "pictureSelectHint": "Hold a word and drag to select text, or hold beside it and drag a box",
   "@pictureSelectHint": {
     "description": "Hint under the picture on the Grab image text page, until a word is selected."
   },

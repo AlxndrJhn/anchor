@@ -148,6 +148,18 @@ void main() {
     expect(joinImageWords(words.skip(1).take(2)), 'and\nbread');
   });
 
+  test('a box takes the words it touches, in reading order', () {
+    final words = [
+      _word('Milk', const Rect.fromLTWH(0, 0, 100, 20)),
+      _word('bread', const Rect.fromLTWH(140, 0, 100, 20)),
+      _word('Call', const Rect.fromLTWH(0, 60, 100, 20), line: 1),
+    ];
+
+    expect(imageWordsIn(words, const Rect.fromLTRB(50, 10, 60, 70)), [0, 2]);
+    expect(imageWordsIn(words, const Rect.fromLTRB(90, -5, 150, 5)), [0, 1]);
+    expect(imageWordsIn(words, const Rect.fromLTRB(110, 30, 130, 50)), []);
+  });
+
   group('the word under a finger', () {
     final words = [
       _word('Milk', const Rect.fromLTWH(0, 0, 100, 20)),

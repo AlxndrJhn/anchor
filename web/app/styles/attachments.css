@@ -652,6 +652,13 @@
   background: color-mix(in srgb, var(--color-accent) 45%, transparent);
   box-shadow: none;
 }
+.itv-box {
+  position: absolute;
+  border: 1.5px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-radius: 2px;
+  pointer-events: none;
+}
 .itv-bar {
   display: flex;
   flex-wrap: wrap;
