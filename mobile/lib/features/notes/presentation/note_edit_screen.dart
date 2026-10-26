@@ -341,7 +341,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       context,
       isPinned: note.isPinned,
       isOwner: note.isOwner,
-      isArchived: note.isArchived,
       canSeeHistory: !_draft.isViewOnly,
       canCopy: !note.isTrashed,
       shareCount: note.shareIds?.length ?? 0,
@@ -374,26 +373,44 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         _offerUndo(_editor?.uncheckAll(), l10n.itemsUnchecked);
       case NoteAction.deleteChecked:
         _offerUndo(_editor?.deleteChecked(), l10n.checkedItemsDeleted);
-      case NoteAction.archive:
-        await actions.archive(
-          [note],
-          beforeChange: _draft.flushOnLeave,
-          afterChange: _leave,
-        );
-      case NoteAction.unarchive:
-        await actions.unarchive([note]);
+      case NoteAction.archive || NoteAction.unarchive:
+        await _toggleArchived();
       case NoteAction.trash:
-        await actions.trash(
-          [note],
-          beforeChange: _draft.flushOnLeave,
-          afterChange: _leaveDeleted,
-        );
+        await _trash();
       case NoteAction.tag ||
           NoteAction.background ||
           NoteAction.restore ||
           NoteAction.deleteForever:
         break;
     }
+  }
+
+  /// The bar's Archive: archiving leaves the note, unarchiving stays.
+  Future<void> _toggleArchived() async {
+    final note = _draft.note;
+    if (note == null) return;
+    final actions = NoteActions(context, ref);
+    if (note.isArchived) {
+      await actions.unarchive([note]);
+    } else {
+      await actions.archive(
+        [note],
+        beforeChange: _draft.flushOnLeave,
+        afterChange: _leave,
+      );
+    }
+  }
+
+  /// The bar's Delete: moves your note to the trash, or takes a note shared
+  /// with you out of your notes, and leaves it.
+  Future<void> _trash() async {
+    final note = _draft.note;
+    if (note == null) return;
+    await NoteActions(context, ref).trash(
+      [note],
+      beforeChange: _draft.flushOnLeave,
+      afterChange: _leaveDeleted,
+    );
   }
 
   /// Hands the note to another app as text, through the share sheet.
@@ -669,10 +686,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       isUnsynced: note != null && !note.isSynced && !_isReadOnly,
       isTrashed: isTrashed,
       isReadOnly: _isReadOnly,
+      isArchived: note?.isArchived ?? false,
+      isOwner: note?.isOwner ?? true,
       onBack: _back,
       onHistory: _openHistory,
       onBackground: _showBackground,
       onReminder: _showReminder,
+      onArchive: isNew || note == null ? null : _toggleArchived,
+      onTrash: isNew || note == null ? null : _trash,
       onMore: isNew ? null : _showMore,
     );
 

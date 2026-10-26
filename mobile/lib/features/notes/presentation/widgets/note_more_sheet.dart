@@ -9,7 +9,6 @@ Future<NoteAction?> showNoteMoreSheet(
   BuildContext context, {
   required bool isPinned,
   required bool isOwner,
-  required bool isArchived,
   required bool canSeeHistory,
   required int shareCount,
   bool canCopy = true,
@@ -81,32 +80,7 @@ Future<NoteAction?> showNoteMoreSheet(
           isDanger: true,
           enabled: hasCheckedItems,
         ),
-        null,
       ],
-      isArchived
-          ? SheetChoice(
-              value: NoteAction.unarchive,
-              icon: LucideIcons.archiveRestore,
-              label: l10n.actionUnarchive,
-            )
-          : SheetChoice(
-              value: NoteAction.archive,
-              icon: LucideIcons.archive,
-              label: l10n.actionArchive,
-            ),
-      isOwner
-          ? SheetChoice(
-              value: NoteAction.trash,
-              icon: LucideIcons.trash2,
-              label: l10n.actionMoveToTrash,
-              isDanger: true,
-            )
-          : SheetChoice(
-              value: NoteAction.trash,
-              icon: LucideIcons.logOut,
-              label: l10n.actionRemoveFromMine,
-              isDanger: true,
-            ),
     ],
   );
 }

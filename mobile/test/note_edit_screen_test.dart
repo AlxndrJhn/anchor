@@ -863,6 +863,107 @@ void main() {
     await drainSnackbar(tester);
   });
 
+  group('the bar\'s Archive and Delete', () {
+    const mine = Note(
+      id: 'n1',
+      title: 'Mine',
+      content: '{"ops":[{"insert":"hi\\n"}]}',
+    );
+
+    setUp(() {
+      when(() => notesRepo.archive(any())).thenAnswer((_) async {});
+      when(() => notesRepo.unarchive(any())).thenAnswer((_) async {});
+      when(() => notesRepo.trash(any())).thenAnswer((_) async {});
+      when(() => notesRepo.restore(any())).thenAnswer((_) async {});
+    });
+
+    testWidgets('an open note has Archive and Move to trash in its bar; '
+        'More keeps Share and leaves them out', (tester) async {
+      await pumpScreen(tester, note: mine);
+      await tester.pumpAndSettle();
+
+      expect(barButton('Archive'), findsOneWidget);
+      expect(barButton('Move to trash'), findsOneWidget);
+
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Share'), findsOneWidget);
+      expect(find.text('Archive'), findsNothing);
+      expect(find.text('Move to trash'), findsNothing);
+    });
+
+    testWidgets('a new note has neither', (tester) async {
+      await pumpScreen(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(barButton('Archive'), findsNothing);
+      expect(barButton('Move to trash'), findsNothing);
+    });
+
+    testWidgets('Move to trash asks nothing, leaves the note and offers Undo', (
+      tester,
+    ) async {
+      await pumpScreen(tester, note: mine);
+      await tester.pumpAndSettle();
+
+      await tester.tap(barButton('Move to trash'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verify(() => notesRepo.trash(['n1'])).called(1);
+      expect(find.text('Notes'), findsOneWidget);
+      await tester.tap(find.text('Undo'));
+      verify(() => notesRepo.restore(['n1'])).called(1);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('Archive archives the note and leaves it', (tester) async {
+      await pumpScreen(tester, note: mine);
+      await tester.pumpAndSettle();
+
+      await tester.tap(barButton('Archive'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verify(() => notesRepo.archive(['n1'])).called(1);
+      expect(find.text('Notes'), findsOneWidget);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('an archived note offers Unarchive and stays open', (
+      tester,
+    ) async {
+      await pumpScreen(tester, note: mine.copyWith(isArchived: true));
+      await tester.pumpAndSettle();
+
+      await tester.tap(barButton('Unarchive'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verify(() => notesRepo.unarchive(['n1'])).called(1);
+      expect(find.text('Notes'), findsNothing);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('a note shared with you is removed from yours, after asking', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        note: mine.copyWith(permission: NotePermission.editor),
+      );
+      await tester.pumpAndSettle();
+
+      expect(barButton('Move to trash'), findsNothing);
+      await tester.tap(barButton('Remove from my notes'));
+      await tester.pumpAndSettle();
+      verifyNever(() => notesRepo.trash(any()));
+    });
+  });
+
   testWidgets('a trashed note offers no copy', (tester) async {
     await pumpScreen(
       tester,
@@ -968,7 +1069,7 @@ void main() {
       expect(row('Delete checked items').enabled, isFalse);
       await tester.tap(find.text('Delete checked items'));
       await tester.pumpAndSettle();
-      expect(find.text('Archive'), findsOneWidget);
+      expect(find.text('Send'), findsOneWidget);
       expect(editorController(tester).document.toDelta(), before);
     });
 
