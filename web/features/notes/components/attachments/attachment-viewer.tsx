@@ -13,8 +13,10 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { toast, toastHostRef } from "@/components/ui/toast";
+import type { ImageText } from "@/lib/image-text";
 import { useAttachmentBlob } from "../../hooks/use-attachment-blob";
 import type { NoteAttachment } from "../../types";
+import { ImageTextView } from "./image-text-view";
 
 export function Viewer({
   noteId,
@@ -34,7 +36,10 @@ export function Viewer({
   onDelete: (a: NoteAttachment) => void;
   /** True when it put focus back in the strip. */
   onReturnFocus: (pictureId: string) => boolean;
-  /** Takes text read from a picture into the note; absent hides the button. */
+  /**
+   * Takes text read from a picture into the note; absent when the note can't
+   * be edited, which leaves copying it.
+   */
   onGrabText?: (text: string) => void;
 }) {
   // The last picture stays while the viewer fades out.
@@ -55,19 +60,25 @@ export function Viewer({
   };
 
   const [reading, setReading] = React.useState(false);
+  // The text found in the shown picture, marked on it to pick from.
+  const [found, setFound] = React.useState<{
+    pictureId: string;
+    text: ImageText;
+  } | null>(null);
+  if (found && found.pictureId !== picture?.id) setFound(null);
+
   const grabText = async () => {
-    if (!blobUrl || !onGrabText) return;
+    if (found) return setFound(null);
+    if (!blobUrl || !picture) return;
     setReading(true);
     try {
-      const { readImageText } = await import("@/lib/image-text");
-      const text = await readImageText(blobUrl);
-      if (!text) {
+      const { recognizeImageText } = await import("@/lib/image-text");
+      const text = await recognizeImageText(blobUrl);
+      if (!text.words.length) {
         toast.error("No text found in this picture");
         return;
       }
-      onGrabText(text);
-      onShow(null);
-      toast.success("Text added to the note");
+      setFound({ pictureId: picture.id, text });
     } catch {
       toast.error(
         navigator.onLine
@@ -101,7 +112,14 @@ export function Viewer({
             onCloseAutoFocus={(e) => {
               if (onReturnFocus(picture.id)) e.preventDefault();
             }}
+            onEscapeKeyDown={(e) => {
+              // Esc leaves the text first, then the viewer.
+              if (!found) return;
+              e.preventDefault();
+              setFound(null);
+            }}
             onKeyDown={(e) => {
+              if (found) return;
               if (e.key === "ArrowLeft") go(-1);
               else if (e.key === "ArrowRight") go(1);
             }}
@@ -116,24 +134,23 @@ export function Viewer({
                 </div>
               </div>
               <div className="vw-actions">
-                {onGrabText && (
-                  <button
-                    type="button"
-                    aria-label="Grab image text"
-                    onClick={grabText}
-                    disabled={!blobUrl || reading}
-                    aria-busy={reading || undefined}
-                  >
-                    {reading ? (
-                      <LoaderCircle aria-hidden className="animate-spin" />
-                    ) : (
-                      <ScanText aria-hidden />
-                    )}
-                    <span className="vw-lbl">
-                      {reading ? "Reading…" : "Grab text"}
-                    </span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label="Grab image text"
+                  aria-pressed={!!found}
+                  onClick={grabText}
+                  disabled={!blobUrl || reading}
+                  aria-busy={reading || undefined}
+                >
+                  {reading ? (
+                    <LoaderCircle aria-hidden className="animate-spin" />
+                  ) : (
+                    <ScanText aria-hidden />
+                  )}
+                  <span className="vw-lbl">
+                    {reading ? "Reading…" : "Grab text"}
+                  </span>
+                </button>
                 <button
                   type="button"
                   aria-label="Download"
@@ -158,66 +175,84 @@ export function Viewer({
                 </DialogPrimitive.Close>
               </div>
             </div>
-            <div
-              className="vw-stage"
-              onPointerDown={(e) => {
-                if (e.pointerType !== "mouse")
-                  swipe.current = { x: e.clientX, y: e.clientY };
-              }}
-              onPointerUp={(e) => {
-                const start = swipe.current;
-                swipe.current = null;
-                if (!start) return;
-                const dx = e.clientX - start.x;
-                if (
-                  Math.abs(dx) > 50 &&
-                  Math.abs(dx) > Math.abs(e.clientY - start.y)
-                )
-                  go(dx < 0 ? 1 : -1);
-              }}
-            >
-              <button
-                type="button"
-                className="vw-nav"
-                aria-label="Previous picture"
-                disabled={pictures.length < 2}
-                onClick={() => go(-1)}
-              >
-                <ChevronLeft aria-hidden />
-              </button>
-              <div className="vw-img">
-                {error ? (
-                  <div className="vw-fail">
-                    <CircleAlert aria-hidden />
-                    Couldn’t load the picture
-                    <button type="button" onClick={retry}>
-                      Try again
-                    </button>
+            {found && blobUrl ? (
+              <ImageTextView
+                src={blobUrl}
+                alt={picture.originalFilename}
+                text={found.text}
+                onInsert={
+                  onGrabText &&
+                  ((text) => {
+                    onGrabText(text);
+                    onShow(null);
+                    toast.success("Text added to the note");
+                  })
+                }
+              />
+            ) : (
+              <>
+                <div
+                  className="vw-stage"
+                  onPointerDown={(e) => {
+                    if (e.pointerType !== "mouse")
+                      swipe.current = { x: e.clientX, y: e.clientY };
+                  }}
+                  onPointerUp={(e) => {
+                    const start = swipe.current;
+                    swipe.current = null;
+                    if (!start) return;
+                    const dx = e.clientX - start.x;
+                    if (
+                      Math.abs(dx) > 50 &&
+                      Math.abs(dx) > Math.abs(e.clientY - start.y)
+                    )
+                      go(dx < 0 ? 1 : -1);
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="vw-nav"
+                    aria-label="Previous picture"
+                    disabled={pictures.length < 2}
+                    onClick={() => go(-1)}
+                  >
+                    <ChevronLeft aria-hidden />
+                  </button>
+                  <div className="vw-img">
+                    {error ? (
+                      <div className="vw-fail">
+                        <CircleAlert aria-hidden />
+                        Couldn’t load the picture
+                        <button type="button" onClick={retry}>
+                          Try again
+                        </button>
+                      </div>
+                    ) : blobUrl ? (
+                      <img
+                        key={picture.id}
+                        src={blobUrl}
+                        alt={picture.originalFilename}
+                      />
+                    ) : (
+                      <div className="vw-wait" />
+                    )}
                   </div>
-                ) : blobUrl ? (
-                  <img
-                    key={picture.id}
-                    src={blobUrl}
-                    alt={picture.originalFilename}
-                  />
-                ) : (
-                  <div className="vw-wait" />
-                )}
-              </div>
-              <button
-                type="button"
-                className="vw-nav"
-                aria-label="Next picture"
-                disabled={pictures.length < 2}
-                onClick={() => go(1)}
-              >
-                <ChevronRight aria-hidden />
-              </button>
-            </div>
-            <div className="vw-hint">
-              <span className="dk">← → to move · Esc to close</span>
-              <span className="ph">Swipe to move</span>
-            </div>
+                  <button
+                    type="button"
+                    className="vw-nav"
+                    aria-label="Next picture"
+                    disabled={pictures.length < 2}
+                    onClick={() => go(1)}
+                  >
+                    <ChevronRight aria-hidden />
+                  </button>
+                </div>
+                <div className="vw-hint">
+                  <span className="dk">← → to move · Esc to close</span>
+                  <span className="ph">Swipe to move</span>
+                </div>
+              </>
+            )}
           </DialogPrimitive.Content>
         )}
       </DialogPrimitive.Portal>

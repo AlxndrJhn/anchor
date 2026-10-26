@@ -45,7 +45,7 @@ differences. "Web" and "Android" say where each one is available.
 | The search is kept when you come back from a note ([#206](https://github.com/ZhFahim/anchor/issues/206)) | ✓ | ✓ |
 | Tag counts include archived notes, and a tag lists them ([#114](https://github.com/ZhFahim/anchor/issues/114)) | ✓ | ✓ |
 | **Pictures, files and recordings** | | |
-| Grab image text (OCR): adds a picture's text to the note (Android: pick the text on the picture, then copy it or insert it) | ✓ | ✓ |
+| Grab image text (OCR): marks the text on a picture to select, copy or insert in the note | ✓ | ✓ |
 | Paste a picture to add it as an attachment | ✓ | ✓ |
 | Click a card's picture to view it full size | ✓ | ✓ |
 | Record audio straight into a note | ✓ | |
