@@ -113,7 +113,10 @@ void main() {
 
   Future<void> scrollToEnd(WidgetTester tester) async {
     for (var i = 0; i < 25; i++) {
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -500),
+      );
       await tester.pumpAndSettle();
     }
   }

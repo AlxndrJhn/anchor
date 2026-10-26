@@ -24,6 +24,7 @@ import 'package:anchor/features/notes/presentation/widgets/selection_app_bar_act
 import 'package:anchor/features/notes/presentation/widgets/reorderable_note_card.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/core/widgets/app_empty_state.dart';
+import 'package:anchor/core/widgets/masonry/reorderable_masonry_grid.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
@@ -391,6 +392,22 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       return index < 0 ? null : index;
     }
 
+    // Stays right when cards change places (a drag), unlike the package's
+    // masonry grid; see ReorderableMasonryGrid.
+    Widget masonry() => ReorderableMasonryGrid(
+      ids: [for (final n in notes) n.id],
+      gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
+      mainAxisSpacing: dims.gridSpacing,
+      crossAxisSpacing: dims.gridSpacing,
+      delegate: SliverChildBuilderDelegate(
+        (context, index) => item(notes[index]),
+        childCount: notes.length,
+        findChildIndexCallback: indexOf,
+      ),
+    );
+
     return SliverPadding(
       padding: dims.screenInsets.copyWith(
         top: underLabel ? dims.sm : dims.screenGutter,
@@ -400,38 +417,15 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       // The short sections (pinned, archived) are laid out in full.
       sliver: viewOptions.viewType == ViewType.grid && !lazy
           ? SliverToBoxAdapter(
-              child: MasonryGridView.custom(
+              child: CustomScrollView(
                 shrinkWrap: true,
                 primary: false,
                 physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                gridDelegate:
-                    const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                    ),
-                mainAxisSpacing: dims.gridSpacing,
-                crossAxisSpacing: dims.gridSpacing,
-                childrenDelegate: SliverChildBuilderDelegate(
-                  (context, index) => item(notes[index]),
-                  childCount: notes.length,
-                  findChildIndexCallback: indexOf,
-                ),
+                slivers: [masonry()],
               ),
             )
           : viewOptions.viewType == ViewType.grid
-          ? SliverMasonryGrid(
-              gridDelegate:
-                  const SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                  ),
-              mainAxisSpacing: dims.gridSpacing,
-              crossAxisSpacing: dims.gridSpacing,
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => item(notes[index]),
-                childCount: notes.length,
-                findChildIndexCallback: indexOf,
-              ),
-            )
+          ? masonry()
           : SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => Padding(
