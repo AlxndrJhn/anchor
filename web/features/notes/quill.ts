@@ -1,3 +1,4 @@
+import Delta from "quill-delta";
 import {
   buildListIndentDelta,
   deltaToLines,
@@ -917,6 +918,22 @@ export function stringifyDelta(delta: unknown): string {
     return JSON.stringify({ ops: (delta as { ops: QuillOp[] }).ops });
   }
   return JSON.stringify(emptyDelta());
+}
+
+/**
+ * Stored content with text added as new lines at the end, as the editor's
+ * `appendText` does; for a note that isn't open.
+ */
+export function appendTextToContent(
+  content: string | null | undefined,
+  text: string,
+): string {
+  const doc = new Delta(parseStoredContent(content).ops as never);
+  const prefix = isStoredContentEmpty(content) ? "" : "\n";
+  const change = new Delta()
+    .retain(Math.max(doc.length() - 1, 0))
+    .insert(`${prefix}${text}`);
+  return stringifyDelta({ ops: doc.compose(change).ops });
 }
 
 export function isStoredContentEmpty(

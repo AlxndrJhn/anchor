@@ -141,6 +141,7 @@ void main() {
     ];
 
     expect(joinImageWords(words), 'Milk and\nbread\n\nCall');
+    expect(joinImageWords(words, paragraphs: false), 'Milk and\nbread\nCall');
     expect(joinImageWords(words.skip(1).take(2)), 'and\nbread');
   });
 

@@ -81,6 +81,9 @@ describe("joinImageWords", () => {
 
     expect(joinImageWords(words)).toBe("Milk and\nbread\n\nCall");
     expect(joinImageWords(words.slice(1, 3))).toBe("and\nbread");
+    expect(joinImageWords(words, { paragraphs: false })).toBe(
+      "Milk and\nbread\nCall",
+    );
   });
 });
 

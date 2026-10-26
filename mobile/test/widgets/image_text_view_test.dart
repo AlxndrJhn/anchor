@@ -240,7 +240,7 @@ void main() {
 
     await tester.tap(find.text('Copy'));
     await tester.pump();
-    expect(copied, 'Shopping list\n\nMilk and');
+    expect(copied, 'Shopping list\nMilk and');
   });
 
   testWidgets('a box down one side picks words from several lines', (
@@ -252,7 +252,40 @@ void main() {
     await tester.tap(find.text('Copy'));
     await tester.pump();
 
-    expect(copied, 'Shopping\n\nMilk\nCall');
+    expect(copied, 'Shopping\nMilk\nCall');
+  });
+
+  testWidgets('the hint fades over the picture without moving it', (
+    tester,
+  ) async {
+    await pumpView(tester);
+    final area = find.byKey(const ValueKey('image-text-area'));
+    final before = tester.getRect(area);
+    double hintOpacity() => tester
+        .widget<AnimatedOpacity>(
+          find.ancestor(
+            of: find.textContaining('drag a box'),
+            matching: find.byType(AnimatedOpacity),
+          ),
+        )
+        .opacity;
+    expect(hintOpacity(), 1);
+
+    await holdAndDrawBox(tester, const Offset(20, 20), const Offset(440, 260));
+    await tester.pumpAndSettle();
+
+    expect(hintOpacity(), 0);
+    expect(tester.getRect(area), before);
+  });
+
+  testWidgets('a boxed selection can go into the note', (tester) async {
+    await pumpView(tester);
+
+    await holdAndDrawBox(tester, const Offset(20, 20), const Offset(440, 260));
+    await tester.tap(find.text('Insert in note'));
+    await tester.pump();
+
+    expect(inserted, 'Shopping list\nMilk and');
   });
 
   testWidgets('a tap picks one word, and a tap beside the text clears it', (

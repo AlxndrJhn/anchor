@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import 'package:anchor/core/theme/tokens/app_radius.dart';
 import 'package:anchor/core/widgets/image_shimmer.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
+import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/widgets/audio_player_row.dart';
 
@@ -1042,7 +1044,8 @@ void _showLightbox(
 }
 
 /// Opens a note's pictures full size from outside the note, starting at
-/// [attachmentId]; nothing can be deleted from there.
+/// [attachmentId]; nothing can be deleted from there. Text grabbed from a
+/// picture goes at the end of the note, when the user may edit it.
 Future<void> showNotePicture(
   BuildContext context,
   WidgetRef ref, {
@@ -1055,7 +1058,10 @@ Future<void> showNotePicture(
       .where((a) => a.isImage)
       .toList();
   final index = images.indexWhere((a) => a.id == attachmentId);
+  final notes = ref.read(notesRepositoryProvider);
+  final note = await notes.getNote(noteId);
   if (index < 0 || !context.mounted) return;
+  final canAddText = note != null && note.isActive && note.canEdit;
   HapticFeedback.lightImpact();
   _showLightbox(
     context,
@@ -1065,5 +1071,8 @@ Future<void> showNotePicture(
     canDeleteAttachment: (_) => false,
     repo: repo,
     isOnline: isOnline,
+    onGrabText: canAddText
+        ? (text) => unawaited(notes.appendText(noteId, text))
+        : null,
   );
 }

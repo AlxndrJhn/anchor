@@ -1,3 +1,4 @@
+import 'package:anchor/core/widgets/editor/append_text.dart';
 import 'package:anchor/core/widgets/editor/checklist_lines.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -449,6 +450,16 @@ class NotesRepository {
     );
     if (content == null) return;
     await updateNote(note.copyWith(content: content));
+  }
+
+  /// Adds lines of text at the end of a note that isn't open ("Grab image
+  /// text" on a picture opened from the list).
+  Future<void> appendText(String noteId, String text) async {
+    final note = await getNote(noteId);
+    if (note == null || text.trim().isEmpty) return;
+    await updateNote(
+      note.copyWith(content: appendTextContent(note.content, text)),
+    );
   }
 
   /// Puts an earlier version back on the note. What it says now is kept as a

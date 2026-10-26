@@ -57,10 +57,14 @@ export function ImageTextView({
   const [box, setBox] = React.useState<ImageBox | null>(null);
   // Said in the status line: a toast would cover these buttons.
   const [copied, setCopied] = React.useState(false);
+  // Boxed in, words can come from anywhere on the picture: their text keeps
+  // no blank lines between paragraphs.
+  const [boxed, setBoxed] = React.useState(false);
   // A new selection hasn't been copied.
-  const setSelection = (indices: Iterable<number>) => {
+  const setSelection = (indices: Iterable<number>, fromBox = false) => {
     setCopied(false);
     setSelectionState(new Set(indices));
+    setBoxed(fromBox);
   };
   const picture = React.useRef<HTMLDivElement>(null);
   const root = React.useRef<HTMLDivElement>(null);
@@ -78,7 +82,10 @@ export function ImageTextView({
 
   const chosen = selection.size;
   const chosenText = () =>
-    joinImageWords([...selection].sort((a, b) => a - b).map((i) => words[i]));
+    joinImageWords(
+      [...selection].sort((a, b) => a - b).map((i) => words[i]),
+      { paragraphs: !boxed },
+    );
 
   /** A pointer's place in the picture's pixels, and a finger's width. */
   const toImage = (clientX: number, clientY: number) => {
@@ -211,7 +218,7 @@ export function ImageTextView({
               bottom: Math.max(mode.boxFrom.y, at.y),
             };
             setBox(drawn);
-            setSelection(imageWordsIn(words, drawn));
+            setSelection(imageWordsIn(words, drawn), true);
           }}
           onPointerUp={(e) => {
             const p = press.current;
@@ -254,24 +261,28 @@ export function ImageTextView({
             />
           )}
         </div>
+        {/* Over the picture, so its fading doesn't move the picture. */}
+        <div
+          className="itv-hint"
+          aria-hidden={chosen > 0 || !!box}
+          data-hidden={chosen > 0 || box ? "" : undefined}
+        >
+          <span className="dk">
+            Drag over the text to select it, or from beside it to draw a box
+          </span>
+          <span className="ph">
+            Hold a word and drag to select text, or hold beside it and drag a
+            box
+          </span>
+        </div>
       </div>
       <div className="itv-bar">
         <div className="itv-status" aria-live="polite">
-          {copied ? (
-            "Copied"
-          ) : chosen > 0 ? (
-            `${chosen} ${chosen === 1 ? "word" : "words"} selected`
-          ) : (
-            <>
-              <span className="dk">
-                Drag over the text to select it, or from beside it to draw a box
-              </span>
-              <span className="ph">
-                Hold a word and drag to select text, or hold beside it and drag
-                a box
-              </span>
-            </>
-          )}
+          {copied
+            ? "Copied"
+            : chosen > 0
+              ? `${chosen} ${chosen === 1 ? "word" : "words"} selected`
+              : "Nothing selected"}
         </div>
         <div className="itv-actions">
           <button

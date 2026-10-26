@@ -50,16 +50,16 @@ class ImageText {
 }
 
 /// Puts words back together as text: spaces within a line, a line break
-/// between lines and an empty line between paragraphs.
-String joinImageWords(Iterable<ImageWord> words) {
+/// between lines and, with [paragraphs], an empty line between paragraphs.
+String joinImageWords(Iterable<ImageWord> words, {bool paragraphs = true}) {
   final out = StringBuffer();
   ImageWord? previous;
   for (final word in words) {
     if (previous != null) {
       out.write(
-        word.block != previous.block
+        word.block != previous.block && paragraphs
             ? '\n\n'
-            : word.line != previous.line
+            : word.line != previous.line || word.block != previous.block
             ? '\n'
             : ' ',
       );

@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import { toast } from "@/components/ui/toast";
 import { usePreferencesStore } from "@/features/preferences";
 import { saveNote } from "../api";
+import { appendTextToContent } from "../quill";
 import { toggleChecklistItem } from "../quill-checklist";
 import type { Note } from "../types";
 
@@ -16,13 +17,12 @@ export function canTickFromCard(note: Note) {
 }
 
 /**
- * Ticks or unticks a checklist item from a note's card, without opening the
- * note: the lists show it at once, then it is saved on top of the note's
- * version, and re-applied once if someone else changed the note meanwhile.
+ * Changes a note's content from its card, without opening the note: the
+ * lists show it at once, then it is saved on top of the note's version, and
+ * re-applied once if someone else changed the note meanwhile.
  */
-export function useCardChecklist() {
+function useCardContentChange() {
   const queryClient = useQueryClient();
-  const sort = usePreferencesStore((s) => s.editor.sortChecklistItems);
 
   const putInLists = useCallback(
     (note: Note) => {
@@ -39,8 +39,12 @@ export function useCardChecklist() {
   );
 
   return useCallback(
-    async (note: Note, line: number) => {
-      const content = toggleChecklistItem(note.content, line, sort);
+    async (
+      note: Note,
+      change: (content: string | null | undefined) => string | null,
+      failure: string,
+    ) => {
+      const content = change(note.content);
       if (content === null) return;
       putInLists({ ...note, content });
 
@@ -49,11 +53,7 @@ export function useCardChecklist() {
         baseVersion: note.version,
       });
       if (outcome.status === "conflict") {
-        const again = toggleChecklistItem(
-          outcome.serverNote.content,
-          line,
-          sort,
-        );
+        const again = change(outcome.serverNote.content);
         outcome = again
           ? await saveNote(note.id, {
               content: again,
@@ -64,10 +64,42 @@ export function useCardChecklist() {
       if (outcome.status === "saved") putInLists(outcome.note);
       else {
         putInLists(note);
-        toast.error("Couldn’t save that tick. Open the note to try again.");
+        toast.error(failure);
       }
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
-    [putInLists, queryClient, sort],
+    [putInLists, queryClient],
+  );
+}
+
+/** Ticks or unticks a checklist item from a note's card. */
+export function useCardChecklist() {
+  const changeContent = useCardContentChange();
+  const sort = usePreferencesStore((s) => s.editor.sortChecklistItems);
+  return useCallback(
+    (note: Note, line: number) =>
+      changeContent(
+        note,
+        (content) => toggleChecklistItem(content, line, sort),
+        "Couldn’t save that tick. Open the note to try again.",
+      ),
+    [changeContent, sort],
+  );
+}
+
+/**
+ * Adds lines of text at the end of a note from its card ("Grab image text"
+ * on a picture opened there).
+ */
+export function useCardAppendText() {
+  const changeContent = useCardContentChange();
+  return useCallback(
+    (note: Note, text: string) =>
+      changeContent(
+        note,
+        (content) => (text.trim() ? appendTextToContent(content, text) : null),
+        "Couldn’t add the text. Open the note to try again.",
+      ),
+    [changeContent],
   );
 }

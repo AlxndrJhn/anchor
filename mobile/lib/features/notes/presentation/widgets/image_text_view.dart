@@ -39,6 +39,10 @@ class _ImageTextViewState extends State<ImageTextView> {
   /// The selected words, by index.
   Set<int> _selected = {};
 
+  /// Whether the selection was boxed in, which can take words from anywhere
+  /// on the picture: its text keeps no blank lines between paragraphs.
+  bool _boxed = false;
+
   /// While a hold that started on a word drags: that word.
   int? _anchor;
 
@@ -51,8 +55,12 @@ class _ImageTextViewState extends State<ImageTextView> {
 
   bool _isSelected(int index) => _selected.contains(index);
 
-  String get _selectedText =>
-      joinImageWords([for (final i in _selected.toList()..sort()) _words[i]]);
+  String get _selectedText => joinImageWords([
+    for (final i in _selected.toList()..sort()) _words[i],
+  ], paragraphs: !_boxed);
+
+  /// The hint shows until something is picked, and fades while holding.
+  bool get _showHint => _selected.isEmpty && _box == null && _anchor == null;
 
   /// Where the picture sits in [box] (shown whole, centred), and its scale.
   ({double scale, Offset offset}) _fit(Size box) {
@@ -76,12 +84,15 @@ class _ImageTextViewState extends State<ImageTextView> {
   int? _wordAt(Offset position, Size box) =>
       imageWordAt(_words, _toImage(position, box), slop: 12 / _fit(box).scale);
 
-  void _select(Iterable<int> indices) {
+  void _select(Iterable<int> indices, {bool boxed = false}) {
     final next = indices.toSet();
     if (next.length != _selected.length || !next.containsAll(_selected)) {
       HapticFeedback.selectionClick();
     }
-    setState(() => _selected = next);
+    setState(() {
+      _selected = next;
+      _boxed = boxed;
+    });
   }
 
   void _onHoldStart(Offset position, Size box) {
@@ -112,7 +123,7 @@ class _ImageTextViewState extends State<ImageTextView> {
     } else if (start != null) {
       final area = Rect.fromPoints(start, _toImage(position, box));
       _box = area;
-      _select(imageWordsIn(_words, area));
+      _select(imageWordsIn(_words, area), boxed: true);
     }
   }
 
@@ -194,6 +205,41 @@ class _ImageTextViewState extends State<ImageTextView> {
                           box: _box,
                         ),
                       ),
+                      // Over the picture, so its coming and going doesn't
+                      // move the picture under the finger.
+                      Positioned(
+                        left: dims.md,
+                        right: dims.md,
+                        bottom: dims.sm,
+                        child: IgnorePointer(
+                          child: AnimatedOpacity(
+                            opacity: _showHint ? 1 : 0,
+                            duration: const Duration(milliseconds: 200),
+                            child: Center(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: dims.sm,
+                                    vertical: dims.xs,
+                                  ),
+                                  child: Text(
+                                    'Hold a word and drag to select text, or '
+                                    'hold beside it and drag a box',
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -207,17 +253,6 @@ class _ImageTextViewState extends State<ImageTextView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (chosen == 0)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: dims.sm),
-                      child: Text(
-                        'Hold a word and drag to select text, or hold '
-                        'beside it and drag a box',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ),
                   Wrap(
                     alignment: WrapAlignment.center,
                     spacing: dims.sm,
