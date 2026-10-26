@@ -19,17 +19,20 @@ export interface ImageText {
 
 /**
  * Puts words back together as text: spaces within a line, a line break
- * between lines and an empty line between paragraphs.
+ * between lines and, with `paragraphs`, an empty line between paragraphs.
  */
-export function joinImageWords(words: readonly ImageWord[]): string {
+export function joinImageWords(
+  words: readonly ImageWord[],
+  { paragraphs = true } = {},
+): string {
   let out = "";
   let previous: ImageWord | undefined;
   for (const word of words) {
     if (previous)
       out +=
-        word.block !== previous.block
+        word.block !== previous.block && paragraphs
           ? "\n\n"
-          : word.line !== previous.line
+          : word.line !== previous.line || word.block !== previous.block
             ? "\n"
             : " ";
     out += word.text;

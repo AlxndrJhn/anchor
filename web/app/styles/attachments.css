@@ -612,6 +612,7 @@
   outline: none;
 }
 .itv-stage {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
@@ -671,7 +672,25 @@
   font-size: var(--text-small);
   color: var(--color-media-muted);
 }
-.itv-status .ph {
+.itv-hint {
+  position: absolute;
+  left: 50%;
+  bottom: --spacing(4);
+  translate: -50% 0;
+  max-width: calc(100% - --spacing(8));
+  padding: --spacing(1.5) --spacing(3);
+  border-radius: var(--radius-full, 999px);
+  background: rgb(0 0 0 / 0.72);
+  color: #fff;
+  font-size: var(--text-small);
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.itv-hint[data-hidden] {
+  opacity: 0;
+}
+.itv-hint .ph {
   display: none;
 }
 .itv-actions {
@@ -718,10 +737,10 @@
 
 @media (width < 768px) {
   .vw-hint .ph,
-  .itv-status .ph {
+  .itv-hint .ph {
     display: inline;
   }
-  .itv-status .dk {
+  .itv-hint .dk {
     display: none;
   }
   .itv-stage {

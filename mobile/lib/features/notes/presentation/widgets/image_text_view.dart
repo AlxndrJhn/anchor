@@ -61,8 +61,16 @@ class _ImageTextViewState extends State<ImageTextView> {
 
   bool _isSelected(int index) => _selected.contains(index);
 
-  String get _selectedText =>
-      joinImageWords([for (final i in _selected.toList()..sort()) _words[i]]);
+  /// Whether the selection was boxed in, which can take words from anywhere
+  /// on the picture: its text keeps no blank lines between paragraphs.
+  bool _boxed = false;
+
+  String get _selectedText => joinImageWords([
+    for (final i in _selected.toList()..sort()) _words[i],
+  ], paragraphs: !_boxed);
+
+  /// The hint shows until something is picked, and fades while holding.
+  bool get _showHint => _selected.isEmpty && _box == null && _anchor == null;
 
   /// Where the picture sits in [box] (shown whole, centred), and its scale.
   ({double scale, Offset offset}) _fit(Size box) {
@@ -86,12 +94,15 @@ class _ImageTextViewState extends State<ImageTextView> {
   int? _wordAt(Offset position, Size box) =>
       imageWordAt(_words, _toImage(position, box), slop: 12 / _fit(box).scale);
 
-  void _select(Iterable<int> indices) {
+  void _select(Iterable<int> indices, {bool boxed = false}) {
     final next = indices.toSet();
     if (next.length != _selected.length || !next.containsAll(_selected)) {
       Haptics.selection();
     }
-    setState(() => _selected = next);
+    setState(() {
+      _selected = next;
+      _boxed = boxed;
+    });
   }
 
   void _onHoldStart(Offset position, Size box) {
@@ -122,7 +133,7 @@ class _ImageTextViewState extends State<ImageTextView> {
     } else if (start != null) {
       final area = Rect.fromPoints(start, _toImage(position, box));
       _box = area;
-      _select(imageWordsIn(_words, area));
+      _select(imageWordsIn(_words, area), boxed: true);
     }
   }
 
@@ -233,6 +244,42 @@ class _ImageTextViewState extends State<ImageTextView> {
                           box: _box,
                         ),
                       ),
+                      // Over the picture, so its coming and going doesn't
+                      // move the picture under the finger.
+                      Positioned(
+                        left: AnchorTokens.spaceGutterPhone,
+                        right: AnchorTokens.spaceGutterPhone,
+                        bottom: context.density.space12,
+                        child: IgnorePointer(
+                          child: AnimatedOpacity(
+                            opacity: _showHint ? 1 : 0,
+                            duration: context.motion(
+                              AnchorTokens.motionDurationFade,
+                            ),
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AnchorTokens.colorMediaShadeStrong,
+                                  borderRadius: BorderRadius.circular(
+                                    AnchorTokens.radiusPill,
+                                  ),
+                                ),
+                                child: Text(
+                                  l10n.pictureSelectHint,
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.footnote.copyWith(
+                                    color: AnchorTokens.colorMediaText,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -246,42 +293,28 @@ class _ImageTextViewState extends State<ImageTextView> {
               AnchorTokens.spaceGutterPhone,
               media.padding.bottom + context.density.space12,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: context.density.space12,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                if (chosen == 0)
-                  Text(
-                    l10n.pictureSelectHint,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.footnote.copyWith(
-                      color: AnchorTokens.colorMediaMuted,
-                    ),
-                  ),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _MediaPill(
-                      icon: LucideIcons.textSelect,
-                      label: l10n.commonSelectAll,
-                      onPressed: chosen == _words.length ? null : _selectAll,
-                    ),
-                    _MediaPill(
-                      icon: LucideIcons.copy,
-                      label: l10n.commonCopy,
-                      onPressed: chosen == 0 ? null : _copy,
-                    ),
-                    if (onInsert != null)
-                      _MediaPill(
-                        icon: LucideIcons.textCursorInput,
-                        label: l10n.pictureInsertText,
-                        isProminent: true,
-                        onPressed: chosen == 0 ? null : _insert,
-                      ),
-                  ],
+                _MediaPill(
+                  icon: LucideIcons.textSelect,
+                  label: l10n.commonSelectAll,
+                  onPressed: chosen == _words.length ? null : _selectAll,
                 ),
+                _MediaPill(
+                  icon: LucideIcons.copy,
+                  label: l10n.commonCopy,
+                  onPressed: chosen == 0 ? null : _copy,
+                ),
+                if (onInsert != null)
+                  _MediaPill(
+                    icon: LucideIcons.textCursorInput,
+                    label: l10n.pictureInsertText,
+                    isProminent: true,
+                    onPressed: chosen == 0 ? null : _insert,
+                  ),
               ],
             ),
           ),

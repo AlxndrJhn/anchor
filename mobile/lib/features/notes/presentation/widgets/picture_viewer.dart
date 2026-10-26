@@ -26,8 +26,10 @@ import '../../../../core/widgets/pressable.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/repository/attachment_file_provider.dart';
 import '../../data/repository/note_attachments_repository.dart';
+import '../../data/repository/notes_repository.dart';
 import '../../data/repository/picture_aspect_ratios.dart';
 import '../../domain/note_attachment.dart';
+import '../editor/append_text.dart';
 import 'image_text_view.dart';
 
 Future<void> showPictureViewer(
@@ -62,7 +64,9 @@ Future<void> showPictureViewer(
 }
 
 /// Opens a note's pictures from outside the note (a card's picture),
-/// starting at [attachmentId]. Nothing can be deleted from there.
+/// starting at [attachmentId]. Nothing can be deleted from there; text
+/// grabbed from a picture goes at the end of the note, when the user may
+/// edit it.
 Future<void> showNotePictures(
   BuildContext context,
   WidgetRef ref, {
@@ -75,6 +79,10 @@ Future<void> showNotePictures(
       .toList();
   final initial = pictures.indexWhere((p) => p.id == attachmentId);
   if (initial < 0 || !context.mounted) return;
+  final notes = ref.read(notesRepositoryProvider);
+  final note = await notes.getNote(noteId);
+  final canAddText = note != null && note.isActive && note.canEdit;
+  if (!context.mounted) return;
   Haptics.light();
   await showPictureViewer(
     context,
@@ -83,6 +91,14 @@ Future<void> showNotePictures(
     initial: initial,
     canDelete: (_) => false,
     onDelete: (_) {},
+    onGrabText: canAddText
+        ? (text) => unawaited(
+            notes.changeContent(
+              noteId,
+              (content) => appendTextContent(content, text),
+            ),
+          )
+        : null,
   );
 }
 

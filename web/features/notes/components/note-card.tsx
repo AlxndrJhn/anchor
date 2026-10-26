@@ -23,7 +23,11 @@ import { rememberCard } from "@/lib/morph";
 import { cn } from "@/lib/utils";
 import { getNoteAttachments } from "../api";
 import { useAttachmentBlob } from "../hooks/use-attachment-blob";
-import { canTickFromCard, useCardChecklist } from "../hooks/use-card-checklist";
+import {
+  canTickFromCard,
+  useCardAppendText,
+  useCardChecklist,
+} from "../hooks/use-card-checklist";
 import { deltaToBlocks, type NoteBlock } from "../note-blocks";
 import { hasTitle } from "../title";
 import type { Note } from "../types";
@@ -195,6 +199,7 @@ export const NoteCard = React.memo(function NoteCard({
   const [viewing, setViewing] = React.useState<string | null>(null);
   const [readingOffline, setReadingOffline] = React.useState(false);
   const tickItem = useCardChecklist();
+  const appendText = useCardAppendText();
   const zoom = (id: string) => (
     <button
       type="button"
@@ -334,6 +339,11 @@ export const NoteCard = React.memo(function NoteCard({
           noteId={note.id}
           id={viewing}
           onShow={setViewing}
+          onGrabText={
+            canTickFromCard(note)
+              ? (text) => void appendText(note, text)
+              : undefined
+          }
           onClosed={() =>
             cardRef.current?.querySelector<HTMLElement>(".nc-link")?.focus()
           }
@@ -387,11 +397,14 @@ function CardViewer({
   id,
   onShow,
   onClosed,
+  onGrabText,
 }: {
   noteId: string;
   id: string;
   onShow: (id: string | null) => void;
   onClosed: () => void;
+  /** Adds text read from a picture to the note; absent when it can't. */
+  onGrabText?: (text: string) => void;
 }) {
   const { data } = useQuery({
     queryKey: ["attachments", noteId],
@@ -413,6 +426,7 @@ function CardViewer({
         onClosed();
         return true;
       }}
+      onGrabText={onGrabText}
     />
   );
 }
