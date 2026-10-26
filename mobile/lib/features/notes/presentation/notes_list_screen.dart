@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,8 @@ import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
 import 'package:anchor/features/notes/presentation/widgets/notes_search_bar.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_filters_sheet.dart';
 import 'package:anchor/features/notes/presentation/widgets/selection_app_bar_actions.dart';
+import 'package:anchor/features/notes/presentation/widgets/reorderable_note_card.dart';
+import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/features/notes/domain/note.dart';
@@ -41,6 +44,100 @@ class NotesListScreen extends ConsumerStatefulWidget {
 
 class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   final _searchController = TextEditingController();
+
+  /// A note being dragged to a new place: the order its section would take
+  /// if it were let go now. Once let go it is [_settling] until the list
+  /// itself has that order, so nothing flashes back to the old one.
+  ({String group, String draggedId, List<String> ids, List<String> start})?
+  _drag;
+  bool _settling = false;
+  DateTime _lastShuffle = DateTime(0);
+
+  /// No new place until the cards have moved out of the way.
+  static const _shuffleCooldown = Duration(milliseconds: 280);
+  static const _settleTimeout = Duration(seconds: 2);
+
+  void _onDragStarted(String group, String noteId, List<Note> notes) {
+    final ids = [for (final n in notes) n.id];
+    setState(() {
+      _settling = false;
+      _drag = (group: group, draggedId: noteId, ids: ids, start: ids);
+    });
+  }
+
+  void _onDragHover(String group, String draggedId, String targetId) {
+    final drag = _drag;
+    if (drag == null || _settling || drag.group != group) return;
+    if (drag.draggedId != draggedId) return;
+    final now = DateTime.now();
+    if (now.difference(_lastShuffle) < _shuffleCooldown) return;
+    final from = drag.ids.indexOf(draggedId);
+    final to = drag.ids.indexOf(targetId);
+    if (from < 0 || to < 0 || from == to) return;
+    final ids = [...drag.ids]
+      ..removeAt(from)
+      ..insert(to, draggedId);
+    _lastShuffle = now;
+    HapticFeedback.selectionClick();
+    setState(
+      () => _drag = (
+        group: drag.group,
+        draggedId: drag.draggedId,
+        ids: ids,
+        start: drag.start,
+      ),
+    );
+  }
+
+  /// Let go: the note goes between its new neighbours.
+  void _onDragEnded(List<Note> notes) {
+    final drag = _drag;
+    if (drag == null) return;
+    if (listEquals(drag.ids, drag.start)) {
+      setState(() => _drag = null);
+      return;
+    }
+    final byId = {for (final n in notes) n.id: n};
+    final index = drag.ids.indexOf(drag.draggedId);
+    final position = positionBetween(
+      index > 0 ? byId[drag.ids[index - 1]] : null,
+      index + 1 < drag.ids.length ? byId[drag.ids[index + 1]] : null,
+    );
+    setState(() => _settling = true);
+    ref.read(notesRepositoryProvider).setPosition(drag.draggedId, position);
+    Future.delayed(_settleTimeout, () {
+      if (mounted && _settling && identical(_drag, drag)) {
+        setState(() {
+          _drag = null;
+          _settling = false;
+        });
+      }
+    });
+  }
+
+  /// [notes] in the order a drag is showing, if one is under way in [group].
+  List<Note> _inDragOrder(String group, List<Note> notes) {
+    final drag = _drag;
+    if (drag == null || drag.group != group) return notes;
+    if (_settling && listEquals([for (final n in notes) n.id], drag.ids)) {
+      // The list has caught up: stop holding the order.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && identical(_drag, drag)) {
+          setState(() {
+            _drag = null;
+            _settling = false;
+          });
+        }
+      });
+      return notes;
+    }
+    final byId = {for (final n in notes) n.id: n};
+    return [
+      for (final id in drag.ids) ?byId[id],
+      for (final n in notes)
+        if (!drag.ids.contains(n.id)) n,
+    ];
+  }
 
   /// Height of an extended FAB, which Material does not export.
   static const double _extendedFabHeight = 56;
@@ -142,18 +239,22 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   Widget _buildNoteItem(
     Note note,
     bool isSelectionMode,
-    Set<String> selectedNoteIds,
-  ) {
+    Set<String> selectedNoteIds, {
+    bool canDrag = false,
+  }) {
     return NoteCard(
       note: note,
       isSelectionMode: isSelectionMode,
       isSelected: selectedNoteIds.contains(note.id),
-      onLongPress: () {
-        if (!isSelectionMode) {
-          ref.read(selectionModeProvider.notifier).setEnabled(true);
-        }
-        ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
-      },
+      // While notes can be dragged, the drag's own hold selects instead.
+      onLongPress: canDrag
+          ? null
+          : () {
+              if (!isSelectionMode) {
+                ref.read(selectionModeProvider.notifier).setEnabled(true);
+              }
+              ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
+            },
       onTap: () {
         if (isSelectionMode) {
           ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
@@ -172,10 +273,17 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     bool selectable = true,
     bool underLabel = false,
     bool lazy = true,
+    String? reorderGroup,
+    List<Note>? reorderNotes,
   }) {
     final dims = context.dims;
-    Widget item(Note note) => selectable
-        ? _buildNoteItem(note, isSelectionMode, selectedNoteIds)
+    Widget card(Note note) => selectable
+        ? _buildNoteItem(
+            note,
+            isSelectionMode,
+            selectedNoteIds,
+            canDrag: reorderGroup != null,
+          )
         : NoteCard(
             note: note,
             isSelectionMode: false,
@@ -183,6 +291,29 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             onLongPress: () {},
             onTap: () => context.go(_noteLocation(note), extra: note),
           );
+    Widget item(Note note) => reorderGroup == null
+        ? KeyedSubtree(key: ValueKey(note.id), child: card(note))
+        : ReorderableNoteCard(
+            // Keyed by note, so the card in hand survives the reordering.
+            key: ValueKey(note.id),
+            noteId: note.id,
+            group: reorderGroup,
+            onDragStarted: () =>
+                _onDragStarted(reorderGroup, note.id, reorderNotes ?? notes),
+            onHover: (draggedId) =>
+                _onDragHover(reorderGroup, draggedId, note.id),
+            onDragEnded: () => _onDragEnded(reorderNotes ?? notes),
+            onHeld: () {
+              ref.read(selectionModeProvider.notifier).setEnabled(true);
+              ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
+            },
+            child: card(note),
+          );
+    int? indexOf(Key key) {
+      final index = notes.indexWhere((n) => ValueKey(n.id) == key);
+      return index < 0 ? null : index;
+    }
+
     return SliverPadding(
       padding: dims.screenInsets.copyWith(
         top: underLabel ? dims.sm : dims.screenGutter,
@@ -192,33 +323,47 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       // The short sections (pinned, archived) are laid out in full.
       sliver: viewOptions.viewType == ViewType.grid && !lazy
           ? SliverToBoxAdapter(
-              child: MasonryGridView.count(
+              child: MasonryGridView.custom(
                 shrinkWrap: true,
                 primary: false,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
-                crossAxisCount: 2,
+                gridDelegate:
+                    const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                    ),
                 mainAxisSpacing: dims.gridSpacing,
                 crossAxisSpacing: dims.gridSpacing,
-                itemCount: notes.length,
-                itemBuilder: (context, index) => item(notes[index]),
+                childrenDelegate: SliverChildBuilderDelegate(
+                  (context, index) => item(notes[index]),
+                  childCount: notes.length,
+                  findChildIndexCallback: indexOf,
+                ),
               ),
             )
           : viewOptions.viewType == ViewType.grid
-          ? SliverMasonryGrid.count(
-              crossAxisCount: 2,
+          ? SliverMasonryGrid(
+              gridDelegate:
+                  const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                  ),
               mainAxisSpacing: dims.gridSpacing,
               crossAxisSpacing: dims.gridSpacing,
-              childCount: notes.length,
-              itemBuilder: (context, index) => item(notes[index]),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => item(notes[index]),
+                childCount: notes.length,
+                findChildIndexCallback: indexOf,
+              ),
             )
           : SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => Padding(
+                  key: ValueKey(notes[index].id),
                   padding: EdgeInsets.only(bottom: dims.listItemSpacing),
                   child: item(notes[index]),
                 ),
                 childCount: notes.length,
+                findChildIndexCallback: indexOf,
               ),
             ),
     );
@@ -341,6 +486,14 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           padding: EdgeInsets.only(right: dims.xs),
                           child: Center(child: _SyncIndicator(theme: theme)),
                         ),
+                      // Selecting without a long press, which now drags.
+                      IconButton(
+                        icon: const Icon(LucideIcons.squareCheck),
+                        tooltip: 'Select notes',
+                        onPressed: () => ref
+                            .read(selectionModeProvider.notifier)
+                            .setEnabled(true),
+                      ),
                       if (viewOptions != null)
                         IconButton(
                           icon: Icon(
@@ -466,12 +619,22 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                     archivedMatches.sort(comparator);
 
                     // Pinned and other notes get headings, as on the web.
-                    final pinned = filteredNotes
+                    final sortedPinned = filteredNotes
                         .where((n) => n.isPinned)
                         .toList();
-                    final others = filteredNotes
+                    final sortedOthers = filteredNotes
                         .where((n) => !n.isPinned)
                         .toList();
+                    // Notes can be dragged to new places in the default
+                    // order, as on the web, while the whole list is shown.
+                    final canReorder =
+                        viewOptions.sortOption == SortOption.dateModified &&
+                        !viewOptions.isAscending &&
+                        !isSelectionMode &&
+                        q.isEmpty &&
+                        filters.isEmpty;
+                    final pinned = _inDragOrder('pinned', sortedPinned);
+                    final others = _inDragOrder('others', sortedOthers);
                     Widget label(IconData icon, String text, int count) =>
                         SliverPadding(
                           padding: EdgeInsets.fromLTRB(
@@ -499,6 +662,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           selectedNoteIds,
                           underLabel: true,
                           lazy: others.isEmpty,
+                          reorderGroup: canReorder ? 'pinned' : null,
+                          reorderNotes: sortedPinned,
                         ),
                       ],
                       if (others.isNotEmpty) ...[
@@ -514,6 +679,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           isSelectionMode,
                           selectedNoteIds,
                           underLabel: pinned.isNotEmpty,
+                          reorderGroup: canReorder ? 'others' : null,
+                          reorderNotes: sortedOthers,
                         ),
                       ],
                       if (archivedMatches.isNotEmpty) ...[

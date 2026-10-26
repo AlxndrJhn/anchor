@@ -159,4 +159,66 @@ void main() {
     expect(position.pixels, position.maxScrollExtent);
     expect(find.text('Old 5'), findsOneWidget);
   });
+
+  group('dragging notes', () {
+    setUp(() {
+      when(() => notesRepo.setPosition(any(), any())).thenAnswer((_) async {});
+    });
+
+    Offset centre(WidgetTester tester, String title) =>
+        tester.getCenter(find.text(title).first);
+
+    testWidgets('a held card follows the finger and the others make room', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final notes = notesNamed('Note', 4);
+      await pumpList(tester, notes);
+
+      // Note 3 (last) onto Note 0 (first).
+      final gesture = await tester.startGesture(centre(tester, 'Note 3'));
+      await tester.pump(const Duration(milliseconds: 700));
+      await gesture.moveTo(centre(tester, 'Note 0'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await gesture.moveBy(const Offset(1, 1));
+      await tester.pump();
+      await gesture.up();
+      await tester.pumpAndSettle();
+      // The order is held for a moment in case the list is slow to follow.
+      await tester.pump(const Duration(seconds: 3));
+
+      final captured = verify(
+        () => notesRepo.setPosition('Note3', captureAny()),
+      ).captured;
+      // Ahead of Note 0, the newest.
+      expect(captured.single as double, greaterThan(noteSortKey(notes[0])));
+    });
+
+    testWidgets('holding a card without moving selects it', (tester) async {
+      await pumpList(tester, notesNamed('Note', 3));
+
+      final gesture = await tester.startGesture(centre(tester, 'Note 1'));
+      await tester.pump(const Duration(milliseconds: 700));
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 note'), findsOneWidget);
+      verifyNever(() => notesRepo.setPosition(any(), any()));
+    });
+
+    testWidgets('Select notes starts selecting without a long press', (
+      tester,
+    ) async {
+      await pumpList(tester, notesNamed('Note', 3));
+
+      await tester.tap(find.byTooltip('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 2'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 note'), findsOneWidget);
+    });
+  });
 }
