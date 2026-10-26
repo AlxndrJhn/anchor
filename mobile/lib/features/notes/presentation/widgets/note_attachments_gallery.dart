@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:anchor/core/files/image_text.dart';
+import 'package:anchor/features/notes/presentation/widgets/image_text_view.dart';
 import 'package:anchor/core/files/save_to_device.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:flutter/services.dart';
@@ -590,7 +592,8 @@ class _ImageLightboxGallery extends ConsumerStatefulWidget {
   final NoteAttachmentsRepository repo;
   final bool isOnline;
 
-  /// Takes text read from a picture into the note; null hides the button.
+  /// Takes text read from a picture into the note; null when the note can't
+  /// be edited, which leaves copying it.
   final ValueChanged<String>? onGrabText;
 
   const _ImageLightboxGallery({
@@ -618,29 +621,63 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
   final Map<String, bool> _errors = {};
   bool _readingText = false;
 
-  /// Reads the picture's text and adds it to the note, as Google Keep does.
+  /// Finds the text in the picture and shows it marked on the picture, to
+  /// copy some or all of it, or put it in the note.
   Future<void> _grabText(String path) async {
     setState(() => _readingText = true);
+    final ImageText found;
+    final Size size;
     try {
-      final text = await readImageText(path);
-      if (!mounted) return;
-      if (text.isEmpty) {
-        AppSnackbar.showError(
-          context,
-          message: 'No text found in this picture',
-        );
-        return;
-      }
-      widget.onGrabText!(text);
-      AppSnackbar.showSuccess(context, message: 'Text added to the note');
-      context.pop();
-    } catch (e) {
+      found = await recognizeImageText(path);
+      size = await _imageSize(path);
+    } catch (_) {
       if (mounted) {
+        setState(() => _readingText = false);
         AppSnackbar.showError(context, message: 'Couldn’t read this picture');
       }
-    } finally {
-      if (mounted) setState(() => _readingText = false);
+      return;
     }
+    if (!mounted) return;
+    setState(() => _readingText = false);
+    if (found.isEmpty) {
+      AppSnackbar.showError(context, message: 'No text found in this picture');
+      return;
+    }
+    final onGrabText = widget.onGrabText;
+    final inserted = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (viewContext) => ImageTextView(
+          image: FileImage(File(path)),
+          imageSize: size,
+          text: found,
+          onInsert: onGrabText == null
+              ? null
+              : (text) => Navigator.of(viewContext).pop(text),
+        ),
+      ),
+    );
+    if (inserted == null || !mounted) return;
+    onGrabText!(inserted);
+    AppSnackbar.showSuccess(context, message: 'Text added to the note');
+    context.pop();
+  }
+
+  /// The picture's size in pixels, upright as it's shown.
+  static Future<Size> _imageSize(String path) async {
+    final buffer = await ui.ImmutableBuffer.fromFilePath(path);
+    final descriptor = await ui.ImageDescriptor.encoded(buffer);
+    final codec = await descriptor.instantiateCodec();
+    final frame = await codec.getNextFrame();
+    final size = Size(
+      frame.image.width.toDouble(),
+      frame.image.height.toDouble(),
+    );
+    frame.image.dispose();
+    codec.dispose();
+    descriptor.dispose();
+    buffer.dispose();
+    return size;
   }
 
   @override
@@ -907,28 +944,26 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
                         ],
                       ),
                     ),
-                    if (widget.onGrabText != null)
-                      IconButton(
-                        tooltip: 'Grab image text',
-                        onPressed:
-                            _imagePaths[currentAttachment.id] == null ||
-                                _readingText
-                            ? null
-                            : () =>
-                                  _grabText(_imagePaths[currentAttachment.id]!),
-                        icon: _readingText
-                            ? const SizedBox.square(
-                                dimension: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(
-                                LucideIcons.scanText,
+                    IconButton(
+                      tooltip: 'Grab image text',
+                      onPressed:
+                          _imagePaths[currentAttachment.id] == null ||
+                              _readingText
+                          ? null
+                          : () => _grabText(_imagePaths[currentAttachment.id]!),
+                      icon: _readingText
+                          ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
                                 color: Colors.white,
                               ),
-                      ),
+                            )
+                          : const Icon(
+                              LucideIcons.scanText,
+                              color: Colors.white,
+                            ),
+                    ),
                     IconButton(
                       tooltip: 'Download',
                       onPressed: _imagePaths[currentAttachment.id] == null
