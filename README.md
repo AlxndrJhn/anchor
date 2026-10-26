@@ -27,6 +27,7 @@ differences. "Web" and "Android" say where each one is available.
 |---|:---:|:---:|
 | **Notes and lists** | | |
 | Drag notes to arrange them, as in Google Keep: the others make room as you drag, and a moved note stays put until it is edited again | ✓ | |
+| The arranged order from the web is shown on Android too | | ✓ |
 | Make a copy of a note, with its pictures and attachments | ✓ | ✓ |
 | Send a note to other apps as text (checklists as ☐/☑) | ✓ | ✓ |
 | Change the colour of many selected notes at once | ✓ | ✓ |

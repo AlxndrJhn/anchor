@@ -135,6 +135,7 @@ abstract class Note with _$Note {
     DateTime? createdAt,
     // Where this person dragged the note on the web, kept for the sync.
     double? position,
+    DateTime? positionedAt,
     @Default([]) List<String> tagIds,
     @Default(NotePermission.owner) NotePermission permission,
     List<String>? shareIds,

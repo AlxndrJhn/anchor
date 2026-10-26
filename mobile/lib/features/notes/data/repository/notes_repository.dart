@@ -711,6 +711,7 @@ class NotesRepository {
       updatedAt: row.updatedAt,
       createdAt: row.createdAt,
       position: row.position,
+      positionedAt: row.positionedAt,
       tagIds: tagIds,
       permission: domain.NotePermission.fromString(row.permission),
       shareIds: row.shareIds?.isNotEmpty == true

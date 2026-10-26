@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -121,6 +121,14 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(notes, notes.position);
         }
         // A sync with no cursor resends every note, with when it was made.
+        await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
+          const SyncStateCompanion(cursor: Value(null)),
+        );
+      }
+      if (from < 13) {
+        await m.addColumn(notes, notes.positionedAt);
+        // Resent notes say when each was dragged, so the order matches the
+        // web's.
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
           const SyncStateCompanion(cursor: Value(null)),
         );

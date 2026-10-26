@@ -121,6 +121,17 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _positionedAtMeta = const VerificationMeta(
+    'positionedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> positionedAt = GeneratedColumn<DateTime>(
+    'positioned_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
   );
@@ -356,6 +367,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
     updatedAt,
     createdAt,
     position,
+    positionedAt,
     isSynced,
     version,
     localRev,
@@ -447,6 +459,15 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
       context.handle(
         _positionMeta,
         position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    }
+    if (data.containsKey('positioned_at')) {
+      context.handle(
+        _positionedAtMeta,
+        positionedAt.isAcceptableOrUnknown(
+          data['positioned_at']!,
+          _positionedAtMeta,
+        ),
       );
     }
     if (data.containsKey('is_synced')) {
@@ -651,6 +672,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
         DriftSqlType.double,
         data['${effectivePrefix}position'],
       ),
+      positionedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}positioned_at'],
+      ),
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_synced'],
@@ -747,6 +772,7 @@ class Note extends DataClass implements Insertable<Note> {
   final DateTime? updatedAt;
   final DateTime? createdAt;
   final double? position;
+  final DateTime? positionedAt;
   final bool isSynced;
   final int? version;
   final int localRev;
@@ -777,6 +803,7 @@ class Note extends DataClass implements Insertable<Note> {
     this.updatedAt,
     this.createdAt,
     this.position,
+    this.positionedAt,
     required this.isSynced,
     this.version,
     required this.localRev,
@@ -819,6 +846,9 @@ class Note extends DataClass implements Insertable<Note> {
     }
     if (!nullToAbsent || position != null) {
       map['position'] = Variable<double>(position);
+    }
+    if (!nullToAbsent || positionedAt != null) {
+      map['positioned_at'] = Variable<DateTime>(positionedAt);
     }
     map['is_synced'] = Variable<bool>(isSynced);
     if (!nullToAbsent || version != null) {
@@ -892,6 +922,9 @@ class Note extends DataClass implements Insertable<Note> {
       position: position == null && nullToAbsent
           ? const Value.absent()
           : Value(position),
+      positionedAt: positionedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(positionedAt),
       isSynced: Value(isSynced),
       version: version == null && nullToAbsent
           ? const Value.absent()
@@ -958,6 +991,7 @@ class Note extends DataClass implements Insertable<Note> {
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
       position: serializer.fromJson<double?>(json['position']),
+      positionedAt: serializer.fromJson<DateTime?>(json['positionedAt']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       version: serializer.fromJson<int?>(json['version']),
       localRev: serializer.fromJson<int>(json['localRev']),
@@ -997,6 +1031,7 @@ class Note extends DataClass implements Insertable<Note> {
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
       'position': serializer.toJson<double?>(position),
+      'positionedAt': serializer.toJson<DateTime?>(positionedAt),
       'isSynced': serializer.toJson<bool>(isSynced),
       'version': serializer.toJson<int?>(version),
       'localRev': serializer.toJson<int>(localRev),
@@ -1030,6 +1065,7 @@ class Note extends DataClass implements Insertable<Note> {
     Value<DateTime?> updatedAt = const Value.absent(),
     Value<DateTime?> createdAt = const Value.absent(),
     Value<double?> position = const Value.absent(),
+    Value<DateTime?> positionedAt = const Value.absent(),
     bool? isSynced,
     Value<int?> version = const Value.absent(),
     int? localRev,
@@ -1060,6 +1096,7 @@ class Note extends DataClass implements Insertable<Note> {
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     createdAt: createdAt.present ? createdAt.value : this.createdAt,
     position: position.present ? position.value : this.position,
+    positionedAt: positionedAt.present ? positionedAt.value : this.positionedAt,
     isSynced: isSynced ?? this.isSynced,
     version: version.present ? version.value : this.version,
     localRev: localRev ?? this.localRev,
@@ -1108,6 +1145,9 @@ class Note extends DataClass implements Insertable<Note> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       position: data.position.present ? data.position.value : this.position,
+      positionedAt: data.positionedAt.present
+          ? data.positionedAt.value
+          : this.positionedAt,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       version: data.version.present ? data.version.value : this.version,
       localRev: data.localRev.present ? data.localRev.value : this.localRev,
@@ -1173,6 +1213,7 @@ class Note extends DataClass implements Insertable<Note> {
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('position: $position, ')
+          ..write('positionedAt: $positionedAt, ')
           ..write('isSynced: $isSynced, ')
           ..write('version: $version, ')
           ..write('localRev: $localRev, ')
@@ -1208,6 +1249,7 @@ class Note extends DataClass implements Insertable<Note> {
     updatedAt,
     createdAt,
     position,
+    positionedAt,
     isSynced,
     version,
     localRev,
@@ -1242,6 +1284,7 @@ class Note extends DataClass implements Insertable<Note> {
           other.updatedAt == this.updatedAt &&
           other.createdAt == this.createdAt &&
           other.position == this.position &&
+          other.positionedAt == this.positionedAt &&
           other.isSynced == this.isSynced &&
           other.version == this.version &&
           other.localRev == this.localRev &&
@@ -1274,6 +1317,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
   final Value<DateTime?> updatedAt;
   final Value<DateTime?> createdAt;
   final Value<double?> position;
+  final Value<DateTime?> positionedAt;
   final Value<bool> isSynced;
   final Value<int?> version;
   final Value<int> localRev;
@@ -1305,6 +1349,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.position = const Value.absent(),
+    this.positionedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.version = const Value.absent(),
     this.localRev = const Value.absent(),
@@ -1337,6 +1382,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.position = const Value.absent(),
+    this.positionedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.version = const Value.absent(),
     this.localRev = const Value.absent(),
@@ -1370,6 +1416,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
     Expression<double>? position,
+    Expression<DateTime>? positionedAt,
     Expression<bool>? isSynced,
     Expression<int>? version,
     Expression<int>? localRev,
@@ -1402,6 +1449,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (position != null) 'position': position,
+      if (positionedAt != null) 'positioned_at': positionedAt,
       if (isSynced != null) 'is_synced': isSynced,
       if (version != null) 'version': version,
       if (localRev != null) 'local_rev': localRev,
@@ -1437,6 +1485,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     Value<DateTime?>? updatedAt,
     Value<DateTime?>? createdAt,
     Value<double?>? position,
+    Value<DateTime?>? positionedAt,
     Value<bool>? isSynced,
     Value<int?>? version,
     Value<int>? localRev,
@@ -1469,6 +1518,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
       position: position ?? this.position,
+      positionedAt: positionedAt ?? this.positionedAt,
       isSynced: isSynced ?? this.isSynced,
       version: version ?? this.version,
       localRev: localRev ?? this.localRev,
@@ -1524,6 +1574,9 @@ class NotesCompanion extends UpdateCompanion<Note> {
     }
     if (position.present) {
       map['position'] = Variable<double>(position.value);
+    }
+    if (positionedAt.present) {
+      map['positioned_at'] = Variable<DateTime>(positionedAt.value);
     }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
@@ -1603,6 +1656,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('position: $position, ')
+          ..write('positionedAt: $positionedAt, ')
           ..write('isSynced: $isSynced, ')
           ..write('version: $version, ')
           ..write('localRev: $localRev, ')
@@ -4523,6 +4577,7 @@ typedef $$NotesTableCreateCompanionBuilder =
       Value<DateTime?> updatedAt,
       Value<DateTime?> createdAt,
       Value<double?> position,
+      Value<DateTime?> positionedAt,
       Value<bool> isSynced,
       Value<int?> version,
       Value<int> localRev,
@@ -4556,6 +4611,7 @@ typedef $$NotesTableUpdateCompanionBuilder =
       Value<DateTime?> updatedAt,
       Value<DateTime?> createdAt,
       Value<double?> position,
+      Value<DateTime?> positionedAt,
       Value<bool> isSynced,
       Value<int?> version,
       Value<int> localRev,
@@ -4633,6 +4689,11 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<double> get position => $composableBuilder(
     column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get positionedAt => $composableBuilder(
+    column: $table.positionedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4791,6 +4852,11 @@ class $$NotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get positionedAt => $composableBuilder(
+    column: $table.positionedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
     builder: (column) => ColumnOrderings(column),
@@ -4930,6 +4996,11 @@ class $$NotesTableAnnotationComposer
   GeneratedColumn<double> get position =>
       $composableBuilder(column: $table.position, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get positionedAt => $composableBuilder(
+    column: $table.positionedAt,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
 
@@ -5056,6 +5127,7 @@ class $$NotesTableTableManager
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<double?> position = const Value.absent(),
+                Value<DateTime?> positionedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<int?> version = const Value.absent(),
                 Value<int> localRev = const Value.absent(),
@@ -5087,6 +5159,7 @@ class $$NotesTableTableManager
                 updatedAt: updatedAt,
                 createdAt: createdAt,
                 position: position,
+                positionedAt: positionedAt,
                 isSynced: isSynced,
                 version: version,
                 localRev: localRev,
@@ -5120,6 +5193,7 @@ class $$NotesTableTableManager
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<DateTime?> createdAt = const Value.absent(),
                 Value<double?> position = const Value.absent(),
+                Value<DateTime?> positionedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<int?> version = const Value.absent(),
                 Value<int> localRev = const Value.absent(),
@@ -5151,6 +5225,7 @@ class $$NotesTableTableManager
                 updatedAt: updatedAt,
                 createdAt: createdAt,
                 position: position,
+                positionedAt: positionedAt,
                 isSynced: isSynced,
                 version: version,
                 localRev: localRev,

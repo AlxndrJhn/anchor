@@ -598,6 +598,9 @@ class SyncService {
             position: note.hasPositionField
                 ? Value(note.position)
                 : const Value.absent(),
+            positionedAt: note.hasPositionField
+                ? Value(note.positionedAt)
+                : const Value.absent(),
             version: Value(note.version),
             isSynced: const Value(true),
             syncedTitle: Value(note.title),

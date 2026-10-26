@@ -14,6 +14,8 @@ class Notes extends Table {
   // Where this person dragged the note on the web; kept and sent back with
   // the note so it isn't lost.
   RealColumn get position => real().nullable()();
+  // When it was dragged there; an edit after that sorts by the edit again.
+  DateTimeColumn get positionedAt => dateTime().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   // The server version this note was written against; null until it exists there.
   IntColumn get version => integer().nullable()();
