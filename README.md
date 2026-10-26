@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/zhfahim/anchor/main/web/public/icons/anchor_icon.png" alt="Anchor" width="120" height="120">
+<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor/main/web/public/icons/anchor_icon.png" alt="Anchor" width="120" height="120">
 
 # Anchor
 
@@ -60,7 +60,7 @@ differences. "Web" and "Android" say where each one is available.
 | **Appearance** | | |
 | Colour schemes: Nord, Dracula, Solarized, Gruvbox, Catppuccin, Tokyo Night, One, Rosé Pine, Monokai, GitHub | ✓ | ✓ |
 | Styles: Skeuomorphism, Neo-Brutalism and Lo-fi | ✓ | ✓ |
-| A skeuomorphic app icon (adaptive and themed icon on Android) | ✓ | ✓ |
+| A skeuomorphic app icon everywhere: Android (adaptive and themed), iOS, the splash screens, the in-app logo, the web app and its home-screen icons | ✓ | ✓ |
 | **Getting around** | | |
 | Google Keep keyboard shortcuts ([#201](https://github.com/ZhFahim/anchor/issues/201)) | ✓ | |
 | Tab (web) or Next (Android) in the title goes to the note text | ✓ | ✓ |

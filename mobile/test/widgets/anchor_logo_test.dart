@@ -23,6 +23,13 @@ void main() {
         ),
       ),
     );
+    // Decode the picture for real, then draw it.
+    final logo = find.byType(Image);
+    await tester.runAsync(
+      () =>
+          precacheImage(tester.widget<Image>(logo).image, tester.element(logo)),
+    );
+    await tester.pump();
     final boundary = tester.renderObject<RenderRepaintBoundary>(
       find.byKey(key),
     );
@@ -45,25 +52,35 @@ void main() {
   int green(Color color) => (color.g * 255).round();
   int blue(Color color) => (color.b * 255).round();
 
-  testWidgets('the logo is the app icon: an orange top, the page and the '
-      'anchor on it', (tester) async {
+  testWidgets('the logo is the app icon: slate cloth, the orange top of the '
+      'pad and its page', (tester) async {
     final at = await drawLogo(tester, AppTheme.light());
 
-    final top = at(16, 4);
-    expect(red(top), greaterThan(230), reason: 'orange');
-    expect(blue(top), lessThan(120), reason: 'orange');
-    expect(red(at(6, 30)), greaterThan(225), reason: 'the light page');
-    expect(at(21, 22), const Color(0xFF2D3142), reason: 'the dark anchor');
+    expect(
+      tester.widget<Image>(find.byType(Image)).image,
+      isA<ResizeImage>().having(
+        (image) => (image.imageProvider as AssetImage).assetName,
+        'asset',
+        AnchorLogo.asset,
+      ),
+    );
+    final cloth = at(2, 16);
+    expect(blue(cloth), greaterThan(red(cloth)), reason: 'slate cloth');
+    expect(red(cloth), lessThan(90), reason: 'slate cloth');
+    final top = at(16, 7);
+    expect(red(top), greaterThan(200), reason: 'orange');
+    expect(blue(top), lessThan(110), reason: 'orange');
+    final page = at(18, 12);
+    expect(red(page), greaterThan(220), reason: 'the light page');
     expect(at(0, 0).a, 0, reason: 'round corners');
   });
 
-  testWidgets('in dark mode the page is dark and the anchor light', (
-    tester,
-  ) async {
-    final at = await drawLogo(tester, AppTheme.dark());
+  testWidgets('it is the same picture in dark mode', (tester) async {
+    final light = await drawLogo(tester, AppTheme.light());
+    final lightPixels = [for (var x = 0; x < 32; x += 3) light(x, 16)];
+    final dark = await drawLogo(tester, AppTheme.dark());
 
-    expect(red(at(6, 30)), lessThan(60), reason: 'the dark page');
-    expect(green(at(21, 22)), greaterThan(230), reason: 'the light anchor');
-    expect(red(at(16, 4)), greaterThan(200), reason: 'still orange');
+    expect([for (var x = 0; x < 32; x += 3) dark(x, 16)], lightPixels);
+    expect(green(dark(18, 12)), greaterThan(220), reason: 'still a light page');
   });
 }

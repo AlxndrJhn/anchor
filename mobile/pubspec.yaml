@@ -128,6 +128,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  assets:
+    - assets/icons/anchor_icon.png
+
   # Licenses (SIL OFL 1.1) sit next to the files.
   fonts:
     - family: DM Sans
