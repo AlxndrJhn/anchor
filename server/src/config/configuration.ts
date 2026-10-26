@@ -33,6 +33,16 @@ export const StorageConfig = registerAs('storage', () => {
   };
 });
 
+/**
+ * Finding pictures by what they show, for users who turn it on; the model
+ * (~380 MB) is downloaded then. PICTURE_SEARCH=off doesn't offer it.
+ */
+export const PictureSearchConfig = registerAs('pictureSearch', () => ({
+  enabled: process.env.PICTURE_SEARCH?.trim().toLowerCase() !== 'off',
+  /** Where to download the model from, e.g. a mirror; defaults to Hugging Face. */
+  modelUrl: process.env.PICTURE_SEARCH_MODEL_URL?.trim() || undefined,
+}));
+
 /** Reading the text in note pictures, for search; PICTURE_TEXT=off stops it. */
 export const PictureTextConfig = registerAs('pictureText', () => ({
   enabled: process.env.PICTURE_TEXT?.trim().toLowerCase() !== 'off',
@@ -44,4 +54,5 @@ export const configurations = [
   AuthConfig,
   StorageConfig,
   PictureTextConfig,
+  PictureSearchConfig,
 ];

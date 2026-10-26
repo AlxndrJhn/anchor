@@ -5,6 +5,7 @@ import {
   Archive,
   ArchiveRestore,
   Hash,
+  Images,
   Palette,
   Pin,
   PinOff,
@@ -54,6 +55,7 @@ import { matchesFilters } from "@/features/notes/note-filters";
 import { compareNotes, positionBetween } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
+import { usePictureMatches } from "@/features/picture-search/use-picture-matches";
 import { tagColorStyle, useTagMap } from "@/features/tags";
 import { eachLimited } from "@/lib/each";
 import { useShortcuts } from "@/lib/hooks/use-shortcuts";
@@ -124,6 +126,28 @@ function NotesView({ tagId }: { tagId: string | null }) {
       list.sortBy,
       list.sortOrder,
     ],
+  );
+
+  // Notes whose pictures look like the search, for those who turned
+  // picture search on: after the notes that match by their words.
+  const pictureCandidates = React.useMemo(
+    () =>
+      [
+        ...notes,
+        ...(withArchived && archivedNotes
+          ? archivedNotes.filter((n) => !tagId || n.tagIds?.includes(tagId))
+          : []),
+      ].filter((n) => matchesFilters(n, list.filters)),
+    [notes, withArchived, archivedNotes, tagId, list.filters],
+  );
+  const shownNotes = React.useMemo(
+    () => [...visible, ...archivedMatches],
+    [visible, archivedMatches],
+  );
+  const pictureMatches = usePictureMatches(
+    list.searching ? list.term : "",
+    pictureCandidates,
+    shownNotes,
   );
 
   const allPinned = chosen.length > 0 && chosen.every((n) => n.isPinned);
@@ -246,7 +270,10 @@ function NotesView({ tagId }: { tagId: string | null }) {
   const noNotes =
     !isLoading && !loadFailed && notes.length === 0 && !archivedMatches.length;
   const noResults =
-    notes.length > 0 && visible.length === 0 && !archivedMatches.length;
+    notes.length > 0 &&
+    visible.length === 0 &&
+    !archivedMatches.length &&
+    !pictureMatches.length;
   // A tag's count includes its archived notes, like the sidebar's.
   const count =
     isLoading || loadFailed
@@ -395,6 +422,22 @@ function NotesView({ tagId }: { tagId: string | null }) {
                 label: "Archived",
                 icon: <ArchiveRestore aria-hidden />,
                 notes: archivedMatches,
+              },
+            ]}
+          />
+        )}
+        {pictureMatches.length > 0 && !list.picking && (
+          <NotesBoard
+            layout={list.layout}
+            picking={false}
+            picked={NO_PICKS}
+            onShare={setSharingNote}
+            groups={[
+              {
+                key: "pictures",
+                label: "Pictures that may match",
+                icon: <Images aria-hidden />,
+                notes: pictureMatches,
               },
             ]}
           />
