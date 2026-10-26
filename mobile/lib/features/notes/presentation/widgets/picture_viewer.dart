@@ -28,6 +28,7 @@ import '../../data/repository/attachment_file_provider.dart';
 import '../../data/repository/note_attachments_repository.dart';
 import '../../data/repository/picture_aspect_ratios.dart';
 import '../../domain/note_attachment.dart';
+import 'image_text_view.dart';
 
 Future<void> showPictureViewer(
   BuildContext context, {
@@ -52,7 +53,8 @@ Future<void> showPictureViewer(
         initial: initial,
         canDelete: canDelete,
         onDelete: onDelete,
-        onGrabText: canReadImageText ? onGrabText : null,
+        canGrabText: canReadImageText,
+        onGrabText: onGrabText,
       ),
       transitionsBuilder: (_, animation, _, child) => child,
     ),
@@ -91,6 +93,7 @@ class _Viewer extends ConsumerStatefulWidget {
     required this.initial,
     required this.canDelete,
     required this.onDelete,
+    this.canGrabText = false,
     this.onGrabText,
   });
 
@@ -100,8 +103,12 @@ class _Viewer extends ConsumerStatefulWidget {
   final bool Function(NoteAttachment) canDelete;
   final ValueChanged<NoteAttachment> onDelete;
 
-  /// Takes the text read from a picture into the note ("Grab image text");
-  /// null hides the button, where the note can't be edited.
+  /// Whether "Grab image text" is offered: the text in a picture can be read
+  /// on this phone.
+  final bool canGrabText;
+
+  /// Takes the text picked from a picture into the note; null where the note
+  /// can't be edited, which leaves copying it.
   final ValueChanged<String>? onGrabText;
 
   @override
@@ -293,24 +300,16 @@ class _ViewerState extends ConsumerState<_Viewer>
     }
   }
 
-  /// Reads the picture's text and adds it to the note, as Google Keep does.
+  /// Finds the text in the picture and shows it marked on the picture, to
+  /// copy some or all of it, or put it in the note.
   Future<void> _grabText() async {
     final file = _files[_current.id];
-    final onText = widget.onGrabText;
-    if (file == null || onText == null || _isReadingText) return;
+    if (file == null || _isReadingText) return;
     final l10n = context.l10n;
     setState(() => _isReadingText = true);
+    final ImageText found;
     try {
-      final text = await readImageText(file);
-      if (!mounted) return;
-      if (text.isEmpty) {
-        AppSnackbar.show(context, l10n.pictureNoText, kind: SnackbarKind.info);
-        return;
-      }
-      onText(text);
-      Haptics.success();
-      _close();
-      AppSnackbar.show(context, l10n.pictureTextAdded);
+      found = await recognizeImageText(file);
     } catch (error, stack) {
       AppLogger.instance.warn(
         LogTags.notes,
@@ -319,15 +318,39 @@ class _ViewerState extends ConsumerState<_Viewer>
         stackTrace: stack,
       );
       if (mounted) {
+        setState(() => _isReadingText = false);
         AppSnackbar.show(
           context,
           l10n.pictureTextFailed,
           kind: SnackbarKind.error,
         );
       }
-    } finally {
-      if (mounted) setState(() => _isReadingText = false);
+      return;
     }
+    if (!mounted) return;
+    setState(() => _isReadingText = false);
+    if (found.isEmpty) {
+      AppSnackbar.show(context, l10n.pictureNoText, kind: SnackbarKind.info);
+      return;
+    }
+    final onText = widget.onGrabText;
+    final inserted = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (page) => ImageTextView(
+          image: FileImage(File(file)),
+          imageSize: found.imageSize,
+          text: found,
+          onInsert: onText == null
+              ? null
+              : (text) => Navigator.of(page).pop(text),
+        ),
+      ),
+    );
+    if (inserted == null || onText == null || !mounted) return;
+    onText(inserted);
+    _close();
+    AppSnackbar.show(context, l10n.pictureTextAdded);
   }
 
   void _delete() {
@@ -531,7 +554,7 @@ class _ViewerState extends ConsumerState<_Viewer>
                         color: ink,
                         onPressed: _save,
                       ),
-                      if (widget.onGrabText != null)
+                      if (widget.canGrabText)
                         _isReadingText
                             ? Semantics(
                                 label: context.l10n.pictureReadingText,

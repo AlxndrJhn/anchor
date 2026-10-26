@@ -3838,7 +3838,7 @@ abstract class AppLocalizations {
   /// **'Reading the picture’s text'**
   String get pictureReadingText;
 
-  /// Toast after Grab image text added the picture's text at the end of the note.
+  /// Toast after Grab image text put the picture's selected text at the end of the note.
   ///
   /// In en, this message translates to:
   /// **'Text added to the note'**
@@ -3855,6 +3855,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn’t read this picture'**
   String get pictureTextFailed;
+
+  /// Title of the Grab image text page while no words are selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select text'**
+  String get pictureSelectText;
+
+  /// Title of the Grab image text page: how many of the picture's words are selected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 word selected} other{{count} words selected}}'**
+  String pictureWordsSelected(int count);
+
+  /// Hint under the picture on the Grab image text page, until a word is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold a word and drag to select text'**
+  String get pictureSelectHint;
+
+  /// Button on the Grab image text page that puts the selected words at the end of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert in note'**
+  String get pictureInsertText;
+
+  /// Toast after Copy on the Grab image text page copied the selected words.
+  ///
+  /// In en, this message translates to:
+  /// **'Text copied'**
+  String get pictureTextCopied;
 
   /// Screen reader label of the download button in the picture viewer.
   ///

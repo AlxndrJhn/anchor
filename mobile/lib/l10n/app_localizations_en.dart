@@ -2572,6 +2572,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pictureTextFailed => 'Couldn’t read this picture';
 
   @override
+  String get pictureSelectText => 'Select text';
+
+  @override
+  String pictureWordsSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count words selected',
+      one: '1 word selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pictureSelectHint => 'Hold a word and drag to select text';
+
+  @override
+  String get pictureInsertText => 'Insert in note';
+
+  @override
+  String get pictureTextCopied => 'Text copied';
+
+  @override
   String get pictureSaveToPhotos => 'Save to Photos';
 
   @override

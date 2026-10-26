@@ -3405,7 +3405,7 @@
   },
   "pictureTextAdded": "Text added to the note",
   "@pictureTextAdded": {
-    "description": "Toast after Grab image text added the picture's text at the end of the note."
+    "description": "Toast after Grab image text put the picture's selected text at the end of the note."
   },
   "pictureNoText": "No text found in this picture",
   "@pictureNoText": {
@@ -3414,6 +3414,32 @@
   "pictureTextFailed": "Couldn’t read this picture",
   "@pictureTextFailed": {
     "description": "Error toast when Grab image text fails."
+  },
+  "pictureSelectText": "Select text",
+  "@pictureSelectText": {
+    "description": "Title of the Grab image text page while no words are selected."
+  },
+  "pictureWordsSelected": "{count, plural, =1{1 word selected} other{{count} words selected}}",
+  "@pictureWordsSelected": {
+    "description": "Title of the Grab image text page: how many of the picture's words are selected.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "pictureSelectHint": "Hold a word and drag to select text",
+  "@pictureSelectHint": {
+    "description": "Hint under the picture on the Grab image text page, until a word is selected."
+  },
+  "pictureInsertText": "Insert in note",
+  "@pictureInsertText": {
+    "description": "Button on the Grab image text page that puts the selected words at the end of the note."
+  },
+  "pictureTextCopied": "Text copied",
+  "@pictureTextCopied": {
+    "description": "Toast after Copy on the Grab image text page copied the selected words."
   },
   "pictureSaveToPhotos": "Save to Photos",
   "@pictureSaveToPhotos": {
