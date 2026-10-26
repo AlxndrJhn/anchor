@@ -105,6 +105,7 @@ class NoteAttachmentsRepository {
                 ),
                 serverAttachmentId: drift.Value(attachment.id),
                 uploadedByUserId: drift.Value(attachment.uploadedByUserId),
+                pictureText: drift.Value(attachment.text),
               ),
             );
       }
@@ -464,6 +465,7 @@ class NoteAttachmentsRepository {
                   ),
                   serverAttachmentId: drift.Value(attachment.id),
                   uploadedByUserId: drift.Value(attachment.uploadedByUserId),
+                  pictureText: drift.Value(attachment.text),
                 ),
               );
 

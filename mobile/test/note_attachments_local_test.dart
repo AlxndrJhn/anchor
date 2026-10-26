@@ -1,6 +1,6 @@
 import 'package:anchor/core/database/app_database.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
-import 'package:anchor/features/notes/domain/note_attachment.dart';
+import 'package:anchor/features/notes/domain/note_attachment.dart' as domain;
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
@@ -34,7 +34,7 @@ void main() {
   Future<void> insertAttachment(
     String id,
     String noteId, {
-    AttachmentSyncStatus status = AttachmentSyncStatus.synced,
+    domain.AttachmentSyncStatus status = domain.AttachmentSyncStatus.synced,
   }) => db
       .into(db.noteAttachments)
       .insert(
@@ -63,7 +63,7 @@ void main() {
       final row = await (db.select(
         db.noteAttachments,
       )..where((tbl) => tbl.id.equals('a1'))).getSingle();
-      expect(row.syncStatus, AttachmentSyncStatus.pendingDelete.dbValue);
+      expect(row.syncStatus, domain.AttachmentSyncStatus.pendingDelete.dbValue);
 
       final note = await readNote('n1');
       expect(note.updatedAt!.isAfter(past), isTrue);
@@ -78,7 +78,7 @@ void main() {
       await insertAttachment(
         'a1',
         'n1',
-        status: AttachmentSyncStatus.pendingUpload,
+        status: domain.AttachmentSyncStatus.pendingUpload,
       );
 
       await repo.deleteAttachment('n1', 'a1');
@@ -99,5 +99,25 @@ void main() {
     await repo.deleteAttachment('n1', 'missing');
 
     expect((await readNote('n1')).updatedAt!.isAtSameMomentAs(past), isTrue);
+  });
+
+  test('the server\'s attachments bring the text read from pictures', () async {
+    await insertNote('n1');
+
+    await repo.applyServerAttachments('n1', [
+      domain.NoteAttachment.fromJson({
+        'id': 'a1',
+        'noteId': 'n1',
+        'type': 'image',
+        'originalFilename': 'receipt.png',
+        'mimeType': 'image/png',
+        'fileSize': 10,
+        'position': 0,
+        'text': 'Kassenbon EUR 4,20',
+      }),
+    ]);
+
+    final row = await db.select(db.noteAttachments).getSingle();
+    expect(row.pictureText, 'Kassenbon EUR 4,20');
   });
 }

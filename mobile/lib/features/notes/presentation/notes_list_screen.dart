@@ -12,7 +12,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/notifications/reminder_permission_prompt.dart';
 import 'package:anchor/core/notifications/reminder_permissions.dart';
-import 'package:anchor/core/widgets/quill_preview.dart';
 import 'package:anchor/core/widgets/app_drawer.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';
@@ -29,6 +28,7 @@ import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
 import 'package:anchor/core/update/update_sheet.dart';
+import 'note_search.dart';
 import 'notes_controller.dart';
 import 'notes_view_options.dart';
 import 'widgets/view_options_sheet.dart';
@@ -633,15 +633,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                 ...notesAsync.when(
                   data: (notes) {
                     final q = searchQuery.trim().toLowerCase();
-                    bool matches(Note note) {
-                      if (!filters.matches(note)) return false;
-                      if (q.isEmpty) return true;
-                      final contentText = extractPlainTextFromQuillContent(
-                        note.content,
-                      ).toLowerCase();
-                      return note.title.toLowerCase().contains(q) ||
-                          contentText.contains(q);
-                    }
+                    bool matches(Note note) =>
+                        filters.matches(note) && noteMatchesSearch(note, q);
 
                     final filteredNotes = notes.where(matches).toList();
                     // A search, or a tag (whose count includes them), also

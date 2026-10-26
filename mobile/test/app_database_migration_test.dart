@@ -116,6 +116,39 @@ void main() {
     });
   });
 
+  test('a database from before picture text gains it and re-downloads the '
+      'feed', () async {
+    await withDatabase((db) async {
+      await db
+          .into(db.syncState)
+          .insert(const SyncStateCompanion(cursor: Value('cursor-13')));
+      await db.customStatement(
+        'ALTER TABLE note_attachments DROP COLUMN picture_text',
+      );
+      await db.customStatement('PRAGMA user_version = 13');
+    });
+
+    await withDatabase((db) async {
+      await db
+          .into(db.noteAttachments)
+          .insert(
+            NoteAttachmentsCompanion.insert(
+              id: 'a',
+              noteId: 'n',
+              type: 'image',
+              originalFilename: 'a.png',
+              mimeType: 'image/png',
+              fileSize: 1,
+              pictureText: const Value('Kassenbon'),
+            ),
+          );
+      final row = await db.select(db.noteAttachments).getSingle();
+      expect(row.pictureText, 'Kassenbon');
+      final state = await db.select(db.syncState).getSingle();
+      expect(state.cursor, isNull);
+    });
+  });
+
   test('a database from before the dragged-at time gains it and re-downloads '
       'the feed', () async {
     await withDatabase((db) async {

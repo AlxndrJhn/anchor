@@ -2511,6 +2511,17 @@ class $NoteAttachmentsTable extends NoteAttachments
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _pictureTextMeta = const VerificationMeta(
+    'pictureText',
+  );
+  @override
+  late final GeneratedColumn<String> pictureText = GeneratedColumn<String>(
+    'picture_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _uploadedByUserIdMeta = const VerificationMeta(
     'uploadedByUserId',
   );
@@ -2546,6 +2557,7 @@ class $NoteAttachmentsTable extends NoteAttachments
     localPath,
     syncStatus,
     serverAttachmentId,
+    pictureText,
     uploadedByUserId,
     createdAt,
   ];
@@ -2636,6 +2648,15 @@ class $NoteAttachmentsTable extends NoteAttachments
         ),
       );
     }
+    if (data.containsKey('picture_text')) {
+      context.handle(
+        _pictureTextMeta,
+        pictureText.isAcceptableOrUnknown(
+          data['picture_text']!,
+          _pictureTextMeta,
+        ),
+      );
+    }
     if (data.containsKey('uploaded_by_user_id')) {
       context.handle(
         _uploadedByUserIdMeta,
@@ -2700,6 +2721,10 @@ class $NoteAttachmentsTable extends NoteAttachments
         DriftSqlType.string,
         data['${effectivePrefix}server_attachment_id'],
       ),
+      pictureText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}picture_text'],
+      ),
       uploadedByUserId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}uploaded_by_user_id'],
@@ -2728,6 +2753,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
   final String? localPath;
   final String syncStatus;
   final String? serverAttachmentId;
+  final String? pictureText;
   final String? uploadedByUserId;
   final DateTime createdAt;
   const NoteAttachment({
@@ -2741,6 +2767,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     this.localPath,
     required this.syncStatus,
     this.serverAttachmentId,
+    this.pictureText,
     this.uploadedByUserId,
     required this.createdAt,
   });
@@ -2760,6 +2787,9 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     map['sync_status'] = Variable<String>(syncStatus);
     if (!nullToAbsent || serverAttachmentId != null) {
       map['server_attachment_id'] = Variable<String>(serverAttachmentId);
+    }
+    if (!nullToAbsent || pictureText != null) {
+      map['picture_text'] = Variable<String>(pictureText);
     }
     if (!nullToAbsent || uploadedByUserId != null) {
       map['uploaded_by_user_id'] = Variable<String>(uploadedByUserId);
@@ -2784,6 +2814,9 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
       serverAttachmentId: serverAttachmentId == null && nullToAbsent
           ? const Value.absent()
           : Value(serverAttachmentId),
+      pictureText: pictureText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pictureText),
       uploadedByUserId: uploadedByUserId == null && nullToAbsent
           ? const Value.absent()
           : Value(uploadedByUserId),
@@ -2809,6 +2842,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
       serverAttachmentId: serializer.fromJson<String?>(
         json['serverAttachmentId'],
       ),
+      pictureText: serializer.fromJson<String?>(json['pictureText']),
       uploadedByUserId: serializer.fromJson<String?>(json['uploadedByUserId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -2827,6 +2861,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
       'localPath': serializer.toJson<String?>(localPath),
       'syncStatus': serializer.toJson<String>(syncStatus),
       'serverAttachmentId': serializer.toJson<String?>(serverAttachmentId),
+      'pictureText': serializer.toJson<String?>(pictureText),
       'uploadedByUserId': serializer.toJson<String?>(uploadedByUserId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -2843,6 +2878,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     Value<String?> localPath = const Value.absent(),
     String? syncStatus,
     Value<String?> serverAttachmentId = const Value.absent(),
+    Value<String?> pictureText = const Value.absent(),
     Value<String?> uploadedByUserId = const Value.absent(),
     DateTime? createdAt,
   }) => NoteAttachment(
@@ -2858,6 +2894,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     serverAttachmentId: serverAttachmentId.present
         ? serverAttachmentId.value
         : this.serverAttachmentId,
+    pictureText: pictureText.present ? pictureText.value : this.pictureText,
     uploadedByUserId: uploadedByUserId.present
         ? uploadedByUserId.value
         : this.uploadedByUserId,
@@ -2881,6 +2918,9 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
       serverAttachmentId: data.serverAttachmentId.present
           ? data.serverAttachmentId.value
           : this.serverAttachmentId,
+      pictureText: data.pictureText.present
+          ? data.pictureText.value
+          : this.pictureText,
       uploadedByUserId: data.uploadedByUserId.present
           ? data.uploadedByUserId.value
           : this.uploadedByUserId,
@@ -2901,6 +2941,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
           ..write('localPath: $localPath, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('serverAttachmentId: $serverAttachmentId, ')
+          ..write('pictureText: $pictureText, ')
           ..write('uploadedByUserId: $uploadedByUserId, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -2919,6 +2960,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
     localPath,
     syncStatus,
     serverAttachmentId,
+    pictureText,
     uploadedByUserId,
     createdAt,
   );
@@ -2936,6 +2978,7 @@ class NoteAttachment extends DataClass implements Insertable<NoteAttachment> {
           other.localPath == this.localPath &&
           other.syncStatus == this.syncStatus &&
           other.serverAttachmentId == this.serverAttachmentId &&
+          other.pictureText == this.pictureText &&
           other.uploadedByUserId == this.uploadedByUserId &&
           other.createdAt == this.createdAt);
 }
@@ -2951,6 +2994,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
   final Value<String?> localPath;
   final Value<String> syncStatus;
   final Value<String?> serverAttachmentId;
+  final Value<String?> pictureText;
   final Value<String?> uploadedByUserId;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -2965,6 +3009,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
     this.localPath = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.serverAttachmentId = const Value.absent(),
+    this.pictureText = const Value.absent(),
     this.uploadedByUserId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2980,6 +3025,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
     this.localPath = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.serverAttachmentId = const Value.absent(),
+    this.pictureText = const Value.absent(),
     this.uploadedByUserId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3000,6 +3046,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
     Expression<String>? localPath,
     Expression<String>? syncStatus,
     Expression<String>? serverAttachmentId,
+    Expression<String>? pictureText,
     Expression<String>? uploadedByUserId,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -3016,6 +3063,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
       if (syncStatus != null) 'sync_status': syncStatus,
       if (serverAttachmentId != null)
         'server_attachment_id': serverAttachmentId,
+      if (pictureText != null) 'picture_text': pictureText,
       if (uploadedByUserId != null) 'uploaded_by_user_id': uploadedByUserId,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -3033,6 +3081,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
     Value<String?>? localPath,
     Value<String>? syncStatus,
     Value<String?>? serverAttachmentId,
+    Value<String?>? pictureText,
     Value<String?>? uploadedByUserId,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -3048,6 +3097,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
       localPath: localPath ?? this.localPath,
       syncStatus: syncStatus ?? this.syncStatus,
       serverAttachmentId: serverAttachmentId ?? this.serverAttachmentId,
+      pictureText: pictureText ?? this.pictureText,
       uploadedByUserId: uploadedByUserId ?? this.uploadedByUserId,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -3087,6 +3137,9 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
     if (serverAttachmentId.present) {
       map['server_attachment_id'] = Variable<String>(serverAttachmentId.value);
     }
+    if (pictureText.present) {
+      map['picture_text'] = Variable<String>(pictureText.value);
+    }
     if (uploadedByUserId.present) {
       map['uploaded_by_user_id'] = Variable<String>(uploadedByUserId.value);
     }
@@ -3112,6 +3165,7 @@ class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachment> {
           ..write('localPath: $localPath, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('serverAttachmentId: $serverAttachmentId, ')
+          ..write('pictureText: $pictureText, ')
           ..write('uploadedByUserId: $uploadedByUserId, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -5664,6 +5718,7 @@ typedef $$NoteAttachmentsTableCreateCompanionBuilder =
       Value<String?> localPath,
       Value<String> syncStatus,
       Value<String?> serverAttachmentId,
+      Value<String?> pictureText,
       Value<String?> uploadedByUserId,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -5680,6 +5735,7 @@ typedef $$NoteAttachmentsTableUpdateCompanionBuilder =
       Value<String?> localPath,
       Value<String> syncStatus,
       Value<String?> serverAttachmentId,
+      Value<String?> pictureText,
       Value<String?> uploadedByUserId,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -5741,6 +5797,11 @@ class $$NoteAttachmentsTableFilterComposer
 
   ColumnFilters<String> get serverAttachmentId => $composableBuilder(
     column: $table.serverAttachmentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pictureText => $composableBuilder(
+    column: $table.pictureText,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5814,6 +5875,11 @@ class $$NoteAttachmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get pictureText => $composableBuilder(
+    column: $table.pictureText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get uploadedByUserId => $composableBuilder(
     column: $table.uploadedByUserId,
     builder: (column) => ColumnOrderings(column),
@@ -5867,6 +5933,11 @@ class $$NoteAttachmentsTableAnnotationComposer
 
   GeneratedColumn<String> get serverAttachmentId => $composableBuilder(
     column: $table.serverAttachmentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get pictureText => $composableBuilder(
+    column: $table.pictureText,
     builder: (column) => column,
   );
 
@@ -5926,6 +5997,7 @@ class $$NoteAttachmentsTableTableManager
                 Value<String?> localPath = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
                 Value<String?> serverAttachmentId = const Value.absent(),
+                Value<String?> pictureText = const Value.absent(),
                 Value<String?> uploadedByUserId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -5940,6 +6012,7 @@ class $$NoteAttachmentsTableTableManager
                 localPath: localPath,
                 syncStatus: syncStatus,
                 serverAttachmentId: serverAttachmentId,
+                pictureText: pictureText,
                 uploadedByUserId: uploadedByUserId,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -5956,6 +6029,7 @@ class $$NoteAttachmentsTableTableManager
                 Value<String?> localPath = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
                 Value<String?> serverAttachmentId = const Value.absent(),
+                Value<String?> pictureText = const Value.absent(),
                 Value<String?> uploadedByUserId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -5970,6 +6044,7 @@ class $$NoteAttachmentsTableTableManager
                 localPath: localPath,
                 syncStatus: syncStatus,
                 serverAttachmentId: serverAttachmentId,
+                pictureText: pictureText,
                 uploadedByUserId: uploadedByUserId,
                 createdAt: createdAt,
                 rowid: rowid,

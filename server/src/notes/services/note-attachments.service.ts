@@ -23,6 +23,7 @@ import {
   writeAttachmentFile,
 } from '../utils/attachment-storage.util';
 import { toAttachmentResponse } from '../dto/attachment-response.dto';
+import { PictureTextService } from './picture-text.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createReadStream, existsSync } from 'fs';
@@ -35,6 +36,7 @@ export class NoteAttachmentsService {
     private prisma: PrismaService,
     private noteAccessService: NoteAccessService,
     private syncEmitter: SyncEmitterService,
+    private pictureText: PictureTextService,
     @Inject(StorageConfig.KEY)
     private storageConfig: ConfigType<typeof StorageConfig>,
   ) {}
@@ -108,6 +110,7 @@ export class NoteAttachmentsService {
         return created;
       });
 
+      if (attachmentType === 'image') this.pictureText.kick();
       return toAttachmentResponse(attachment);
     } catch {
       if (stored) {
@@ -150,6 +153,9 @@ export class NoteAttachmentsService {
           mimeType: attachment.mimeType,
           fileSize: attachment.fileSize,
           position: attachment.position,
+          // Same picture, same text: no need to read it again.
+          text: attachment.text,
+          textReadAt: attachment.textReadAt,
         });
       }
       await this.prisma.$transaction(async (tx) => {

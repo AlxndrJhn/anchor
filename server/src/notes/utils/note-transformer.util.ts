@@ -39,6 +39,8 @@ export interface TransformedNote {
   stateChangedAt?: string;
   attachmentCount?: number;
   imagePreviewIds?: string[];
+  /** The text read from the note's pictures, for search; absent if none. */
+  pictureText?: string;
   // Absent means "not loaded"; null means "this user has no reminder".
   reminder?: TransformedReminder | null;
   // Where this user dragged the note, and when; null when they never did.
@@ -76,7 +78,7 @@ interface NoteWithIncludes {
     sharedByUser: SharedByUser;
   }>;
   _count?: { attachments?: number };
-  attachments?: Array<{ id: string }>;
+  attachments?: Array<{ id: string; text?: string | null }>;
 }
 
 // Convert Date to ISO string
@@ -134,8 +136,14 @@ export function transformNote(
     updatedAt: toISOString(rest.updatedAt),
     permission,
     attachmentCount: _count?.attachments ?? 0,
-    imagePreviewIds: attachments?.map((a) => a.id) ?? [],
+    imagePreviewIds: attachments?.slice(0, 4).map((a) => a.id) ?? [],
   };
+
+  const pictureText = attachments
+    ?.map((a) => a.text)
+    .filter(Boolean)
+    .join('\n\n');
+  if (pictureText) transformed.pictureText = pictureText;
 
   if (orders) {
     transformed.position = orders[0]?.position ?? null;

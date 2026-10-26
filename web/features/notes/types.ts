@@ -65,6 +65,8 @@ export interface Note {
   };
   attachmentCount?: number;
   imagePreviewIds?: string[];
+  /** The text read from the note's pictures, which search also looks in. */
+  pictureText?: string;
   reminder?: NoteReminder | null;
   stateChangedAt?: string;
   /** Where this person dragged the note, and when (see `sortKey`). */

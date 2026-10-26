@@ -43,11 +43,12 @@ export const NOTE_INCLUDE_ATTACHMENT_COUNT = {
   _count: {
     select: { attachments: true },
   },
+  // Every picture: the first few show on the card, and the text read from
+  // all of them is searched.
   attachments: {
     where: { type: 'image' },
-    select: { id: true },
+    select: { id: true, text: true },
     orderBy: { position: 'asc' as const },
-    take: 4,
   },
 } as const;
 

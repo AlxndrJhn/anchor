@@ -151,6 +151,10 @@ abstract class Note with _$Note {
     @Default([])
     @JsonKey(includeFromJson: false, includeToJson: false)
     List<NoteImagePreview> imagePreviewData,
+    // Local only - the text read from the note's pictures, for search
+    @Default('')
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    String pictureText,
   }) = _Note;
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);

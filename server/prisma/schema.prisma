@@ -264,6 +264,10 @@ model NoteAttachment {
   mimeType         String
   fileSize         Int
   position         Int            @default(0)
+  /// The text read from a picture, for search; null until it's been read.
+  text             String?
+  /// When the picture was read (with or without finding text).
+  textReadAt       DateTime?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   note             Note           @relation(fields: [noteId], references: [id], onDelete: Cascade)
@@ -271,4 +275,5 @@ model NoteAttachment {
 
   @@index([noteId])
   @@index([uploadedByUserId])
+  @@index([type, textReadAt])
 }

@@ -45,6 +45,8 @@ abstract class NoteAttachment with _$NoteAttachment {
     required String mimeType,
     required int fileSize,
     @Default(0) int position,
+    // Text the server read from a picture, for search.
+    String? text,
     String? uploadedByUserId,
     // Local only - not from server
     @JsonKey(includeFromJson: false, includeToJson: false) String? localPath,

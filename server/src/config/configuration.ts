@@ -33,9 +33,15 @@ export const StorageConfig = registerAs('storage', () => {
   };
 });
 
+/** Reading the text in note pictures, for search; PICTURE_TEXT=off stops it. */
+export const PictureTextConfig = registerAs('pictureText', () => ({
+  enabled: process.env.PICTURE_TEXT?.trim().toLowerCase() !== 'off',
+}));
+
 export const configurations = [
   AppConfig,
   DatabaseConfig,
   AuthConfig,
   StorageConfig,
+  PictureTextConfig,
 ];

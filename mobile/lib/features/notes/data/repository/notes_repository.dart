@@ -102,6 +102,8 @@ class NotesRepository {
       final noteMap = <String, domain.Note>{};
       // Track up to 4 image attachment previews per note
       final imagePreviewsMap = <String, List<domain.NoteImagePreview>>{};
+      // The text read from each picture, by attachment (tags repeat rows).
+      final pictureTexts = <String, Map<String, String>>{};
 
       for (final row in rows) {
         final note = row.readTable(_db.notes);
@@ -126,6 +128,10 @@ class NotesRepository {
           final previews = imagePreviewsMap[note.id]!;
           final attachmentId =
               attachmentRow.serverAttachmentId ?? attachmentRow.id;
+          final pictureText = attachmentRow.pictureText;
+          if (pictureText != null && pictureText.isNotEmpty) {
+            (pictureTexts[note.id] ??= {})[attachmentId] = pictureText;
+          }
           if (previews.length < 4 &&
               !previews.any((p) => p.attachmentId == attachmentId)) {
             previews.add(
@@ -143,6 +149,7 @@ class NotesRepository {
       return noteMap.entries.map((entry) {
         return entry.value.copyWith(
           imagePreviewData: imagePreviewsMap[entry.key] ?? [],
+          pictureText: pictureTexts[entry.key]?.values.join('\n\n') ?? '',
         );
       }).toList();
     });
@@ -185,6 +192,8 @@ class NotesRepository {
     await for (final rows in query.watch()) {
       final noteMap = <String, domain.Note>{};
       final imagePreviewsMap = <String, List<domain.NoteImagePreview>>{};
+      // The text read from each picture, by attachment (tags repeat rows).
+      final pictureTexts = <String, Map<String, String>>{};
 
       for (final row in rows) {
         final note = row.readTable(_db.notes);
@@ -214,6 +223,10 @@ class NotesRepository {
           final previews = imagePreviewsMap[note.id]!;
           final attachmentId =
               attachmentRow.serverAttachmentId ?? attachmentRow.id;
+          final pictureText = attachmentRow.pictureText;
+          if (pictureText != null && pictureText.isNotEmpty) {
+            (pictureTexts[note.id] ??= {})[attachmentId] = pictureText;
+          }
           if (previews.length < 4 &&
               !previews.any((p) => p.attachmentId == attachmentId)) {
             previews.add(
@@ -232,6 +245,7 @@ class NotesRepository {
           .map(
             (e) => e.value.copyWith(
               imagePreviewData: imagePreviewsMap[e.key] ?? [],
+              pictureText: pictureTexts[e.key]?.values.join('\n\n') ?? '',
             ),
           )
           .toList();
@@ -275,6 +289,8 @@ class NotesRepository {
     return query.watch().map((rows) {
       final noteMap = <String, domain.Note>{};
       final imagePreviewsMap = <String, List<domain.NoteImagePreview>>{};
+      // The text read from each picture, by attachment (tags repeat rows).
+      final pictureTexts = <String, Map<String, String>>{};
 
       for (final row in rows) {
         final note = row.readTable(_db.notes);
@@ -299,6 +315,10 @@ class NotesRepository {
           final previews = imagePreviewsMap[note.id]!;
           final attachmentId =
               attachmentRow.serverAttachmentId ?? attachmentRow.id;
+          final pictureText = attachmentRow.pictureText;
+          if (pictureText != null && pictureText.isNotEmpty) {
+            (pictureTexts[note.id] ??= {})[attachmentId] = pictureText;
+          }
           if (previews.length < 4 &&
               !previews.any((p) => p.attachmentId == attachmentId)) {
             previews.add(
@@ -317,6 +337,7 @@ class NotesRepository {
           .map(
             (e) => e.value.copyWith(
               imagePreviewData: imagePreviewsMap[e.key] ?? [],
+              pictureText: pictureTexts[e.key]?.values.join('\n\n') ?? '',
             ),
           )
           .toList();

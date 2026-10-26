@@ -15,6 +15,7 @@ _NoteAttachment _$NoteAttachmentFromJson(Map<String, dynamic> json) =>
       mimeType: json['mimeType'] as String,
       fileSize: (json['fileSize'] as num).toInt(),
       position: (json['position'] as num?)?.toInt() ?? 0,
+      text: json['text'] as String?,
       uploadedByUserId: json['uploadedByUserId'] as String?,
       createdAt: json['createdAt'] as String?,
     );
@@ -28,6 +29,7 @@ Map<String, dynamic> _$NoteAttachmentToJson(_NoteAttachment instance) =>
       'mimeType': instance.mimeType,
       'fileSize': instance.fileSize,
       'position': instance.position,
+      'text': instance.text,
       'uploadedByUserId': instance.uploadedByUserId,
       'createdAt': instance.createdAt,
     };
