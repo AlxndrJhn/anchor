@@ -9,16 +9,17 @@ import '../../../../core/widgets/app_bottom_sheet.dart';
 
 class NoteOptionsSheet extends StatelessWidget {
   final bool isReadOnly;
-  final bool isNew;
-  final bool isOwner;
   final bool isTrashed;
-  final bool isArchived;
+
+  /// How many people the note is shared with.
+  final int shareCount;
   final VoidCallback onTagsTap;
   final VoidCallback onReminderTap;
   final VoidCallback onBackgroundTap;
   final VoidCallback onAttachmentTap;
-  final VoidCallback onArchiveTap;
-  final VoidCallback onDeleteTap;
+
+  /// Shares the note with other users; null when the user can't.
+  final VoidCallback? onShareTap;
 
   /// Null hides the option, for notes that have no history to read.
   final VoidCallback? onHistoryTap;
@@ -40,16 +41,13 @@ class NoteOptionsSheet extends StatelessWidget {
   const NoteOptionsSheet({
     super.key,
     required this.isReadOnly,
-    required this.isNew,
-    required this.isOwner,
     required this.isTrashed,
-    required this.isArchived,
+    this.shareCount = 0,
     required this.onTagsTap,
     required this.onReminderTap,
     required this.onBackgroundTap,
     required this.onAttachmentTap,
-    required this.onArchiveTap,
-    required this.onDeleteTap,
+    this.onShareTap,
     required this.onSendTap,
     this.onCopyTap,
     this.onHistoryTap,
@@ -69,10 +67,8 @@ class NoteOptionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final dims = context.dims;
 
-    final canManage = !isNew && !isTrashed;
     final options = <_OptionSpec>[
       if (!isTrashed)
         _OptionSpec(icon: LucideIcons.tags, label: 'Tags', onTap: onTagsTap),
@@ -118,6 +114,12 @@ class NoteOptionsSheet extends StatelessWidget {
           label: 'Delete ticked',
           onTap: onRemoveCheckedTap!,
         ),
+      if (onShareTap != null)
+        _OptionSpec(
+          icon: LucideIcons.userPlus,
+          label: shareCount > 0 ? 'Shared with $shareCount' : 'Share',
+          onTap: onShareTap!,
+        ),
       _OptionSpec(icon: LucideIcons.send, label: 'Send', onTap: onSendTap),
       if (onCopyTap != null)
         _OptionSpec(
@@ -131,19 +133,6 @@ class NoteOptionsSheet extends StatelessWidget {
           label: 'History',
           onTap: onHistoryTap!,
         ),
-      if (canManage) ...[
-        _OptionSpec(
-          icon: isArchived ? LucideIcons.archiveRestore : LucideIcons.archive,
-          label: isArchived ? 'Unarchive' : 'Archive',
-          onTap: onArchiveTap,
-        ),
-        _OptionSpec(
-          icon: LucideIcons.trash2,
-          label: isOwner ? 'Delete' : 'Remove',
-          onTap: onDeleteTap,
-          isDestructive: true,
-        ),
-      ],
     ];
 
     return AppBottomSheet(
@@ -176,12 +165,7 @@ class NoteOptionsSheet extends StatelessWidget {
                 for (final option in options)
                   SizedBox(
                     width: tileWidth,
-                    child: _GridOptionTile(
-                      option: option,
-                      color: option.isDestructive
-                          ? theme.colorScheme.error
-                          : null,
-                    ),
+                    child: _GridOptionTile(option: option),
                   ),
               ],
             );
@@ -209,22 +193,17 @@ class _OptionSpec {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.isDestructive = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool isDestructive;
 }
 
 class _GridOptionTile extends StatelessWidget {
-  const _GridOptionTile({required this.option, this.color});
+  const _GridOptionTile({required this.option});
 
   final _OptionSpec option;
-
-  /// Accent for a highlighted action; defaults to the neutral icon colour.
-  final Color? color;
 
   static const double _minCircle = 52;
   static const double _maxCircle = 64;
@@ -232,11 +211,9 @@ class _GridOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = color ?? theme.colorScheme.onSurfaceVariant;
-    final labelColor = color ?? theme.colorScheme.onSurface;
-    final background = color == null
-        ? theme.colorScheme.surfaceContainerHigh
-        : color!.withValues(alpha: AppOpacity.subtleFill);
+    final accent = theme.colorScheme.onSurfaceVariant;
+    final labelColor = theme.colorScheme.onSurface;
+    final background = theme.colorScheme.surfaceContainerHigh;
 
     return LayoutBuilder(
       builder: (context, constraints) {

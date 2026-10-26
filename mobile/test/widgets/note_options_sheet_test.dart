@@ -7,8 +7,9 @@ void main() {
   Future<void> pumpSheet(
     WidgetTester tester, {
     bool isReadOnly = false,
-    bool isOwner = true,
     bool isTrashed = false,
+    VoidCallback? onShareTap,
+    int shareCount = 0,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -16,16 +17,13 @@ void main() {
         home: Scaffold(
           body: NoteOptionsSheet(
             isReadOnly: isReadOnly,
-            isNew: false,
-            isOwner: isOwner,
             isTrashed: isTrashed,
-            isArchived: false,
+            shareCount: shareCount,
             onTagsTap: () {},
             onReminderTap: () {},
             onBackgroundTap: () {},
             onAttachmentTap: () {},
-            onArchiveTap: () {},
-            onDeleteTap: () {},
+            onShareTap: onShareTap,
             onSendTap: () {},
           ),
         ),
@@ -33,33 +31,34 @@ void main() {
     );
   }
 
-  testWidgets('the owner can tag, archive and delete', (tester) async {
-    await pumpSheet(tester);
+  testWidgets(
+    'the owner can tag and share; archive and delete are in the bar',
+    (tester) async {
+      await pumpSheet(tester, onShareTap: () {});
 
-    expect(find.text('Tags'), findsOneWidget);
-    expect(find.text('Archive'), findsOneWidget);
-    expect(find.text('Delete'), findsOneWidget);
-  });
+      expect(find.text('Tags'), findsOneWidget);
+      expect(find.text('Share'), findsOneWidget);
+      expect(find.text('Archive'), findsNothing);
+      expect(find.text('Delete'), findsNothing);
+    },
+  );
 
-  testWidgets('an editor can archive a shared note and remove it', (
+  testWidgets('Share says how many people the note is shared with', (
     tester,
   ) async {
-    await pumpSheet(tester, isOwner: false);
+    await pumpSheet(tester, onShareTap: () {}, shareCount: 2);
 
-    expect(find.text('Archive'), findsOneWidget);
-    expect(find.text('Remove'), findsOneWidget);
-    expect(find.text('Delete'), findsNothing);
+    expect(find.text('Shared with 2'), findsOneWidget);
   });
 
-  testWidgets('a viewer can tag, remind, archive and remove a shared note', (
+  testWidgets('someone the note is shared with cannot share it on', (
     tester,
   ) async {
-    await pumpSheet(tester, isOwner: false, isReadOnly: true);
+    await pumpSheet(tester, isReadOnly: true);
 
     expect(find.text('Tags'), findsOneWidget);
     expect(find.text('Reminder'), findsOneWidget);
-    expect(find.text('Archive'), findsOneWidget);
-    expect(find.text('Remove'), findsOneWidget);
+    expect(find.text('Share'), findsNothing);
     expect(find.text('Background'), findsNothing);
   });
 
@@ -68,7 +67,6 @@ void main() {
 
     expect(find.text('Tags'), findsNothing);
     expect(find.text('Reminder'), findsNothing);
-    expect(find.text('Archive'), findsNothing);
-    expect(find.text('Delete'), findsNothing);
+    expect(find.text('Share'), findsNothing);
   });
 }

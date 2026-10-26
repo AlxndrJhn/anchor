@@ -170,6 +170,26 @@ void main() {
     expect((captured.single as Note).title, 'My title');
   });
 
+  testWidgets('the bar has pin, archive and delete; share is in the menu', (
+    tester,
+  ) async {
+    const note = Note(
+      id: 'n1',
+      title: 'Mine',
+      content: '{"ops":[{"insert":"hi\\n"}]}',
+    );
+    await pumpScreen(tester, note: note);
+
+    expect(find.byTooltip('Pin Note'), findsOneWidget);
+    expect(find.byTooltip('Archive note'), findsOneWidget);
+    expect(find.byTooltip('Delete note'), findsOneWidget);
+    expect(find.byTooltip('Share Note'), findsNothing);
+
+    await tester.tap(find.byTooltip('More options'));
+    await tester.pumpAndSettle();
+    expect(find.text('Share'), findsOneWidget);
+  });
+
   testWidgets('deleting your note asks nothing and offers Undo', (
     tester,
   ) async {
@@ -182,9 +202,7 @@ void main() {
     );
     await pumpScreen(tester, note: note);
 
-    await tester.tap(find.byTooltip('More options'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(LucideIcons.trash2));
+    await tester.tap(find.byTooltip('Delete note'));
     await tester.pumpAndSettle();
 
     expect(find.byType(ConfirmDialog), findsNothing);

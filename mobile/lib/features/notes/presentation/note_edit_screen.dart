@@ -632,16 +632,18 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       context,
       builder: (context) => NoteOptionsSheet(
         isReadOnly: _isReadOnly,
-        isNew: _isNew,
-        isOwner: _existingNote?.isOwner ?? true,
         isTrashed: _existingNote?.isTrashed ?? false,
-        isArchived: _isArchived,
+        shareCount: _existingNote?.shareIds?.length ?? 0,
         onTagsTap: _showTagPicker,
         onBackgroundTap: _showColorPicker,
         onReminderTap: _showReminderPicker,
         onAttachmentTap: _showAttachmentSheet,
-        onArchiveTap: _toggleArchived,
-        onDeleteTap: _deleteNote,
+        onShareTap:
+            !_isNew &&
+                (_existingNote?.isActive ?? false) &&
+                (_existingNote?.isOwner ?? true)
+            ? _showShareSheet
+            : null,
         onHistoryTap: !_isNew && !_isReadOnly ? _openHistory : null,
         onSendTap: _sendNote,
         onCopyTap: !_isNew && !(_existingNote?.isTrashed ?? false)
@@ -1038,42 +1040,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     );
   }
 
-  Widget _buildShareButton(ThemeData theme) {
-    return IconButton(
-      icon: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          const Icon(LucideIcons.userPlus),
-          if (_existingNote?.hasShares ?? false)
-            Positioned(
-              right: -4,
-              top: -8,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                child: Center(
-                  child: Text(
-                    '${_existingNote!.shareIds!.length}',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-      onPressed: _isLoaded && !_isNew ? _showShareSheet : null,
-      tooltip: 'Share Note',
-    );
-  }
-
   Widget _buildReadOnlyBanner(ThemeData theme, bool isTrashed) {
     final dims = context.dims;
     return Container(
@@ -1241,7 +1207,24 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 if (_existingNote?.sharedBy != null)
                   _buildSharedByBadge(theme, serverUrl),
                 _buildPinButton(theme),
-                if (_existingNote?.isOwner ?? true) _buildShareButton(theme),
+                if (!_isNew) ...[
+                  IconButton(
+                    icon: Icon(
+                      _isArchived
+                          ? LucideIcons.archiveRestore
+                          : LucideIcons.archive,
+                    ),
+                    onPressed: _isLoaded ? _toggleArchived : null,
+                    tooltip: _isArchived ? 'Unarchive note' : 'Archive note',
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.trash2),
+                    onPressed: _isLoaded ? _deleteNote : null,
+                    tooltip: (_existingNote?.isOwner ?? true)
+                        ? 'Delete note'
+                        : 'Remove note',
+                  ),
+                ],
                 IconButton(
                   icon: const Icon(LucideIcons.moreVertical),
                   tooltip: 'More options',
