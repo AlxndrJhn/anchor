@@ -6,6 +6,7 @@ import {
   KeyRound,
   Lock,
   PencilLine,
+  Search,
   SunMoon,
   UserRound,
 } from "lucide-react";
@@ -17,6 +18,7 @@ const SECTIONS = [
   { id: "profile", label: "Profile", icon: UserRound },
   { id: "appearance", label: "Appearance", icon: SunMoon },
   { id: "editor", label: "Editor", icon: PencilLine },
+  { id: "search", label: "Search", icon: Search },
   { id: "token", label: "API token", icon: KeyRound },
   { id: "data", label: "Import and export", icon: HardDriveDownload },
   { id: "password", label: "Password", icon: Lock },

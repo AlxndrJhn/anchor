@@ -13,6 +13,7 @@ import { NoteRevisionsController } from './controllers/note-revisions.controller
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 import { SyncModule } from '../sync/sync.module';
+import { PictureSearchModule } from '../picture-search/picture-search.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SyncModule } from '../sync/sync.module';
     AuthModule,
     MulterModule.register({ dest: '/tmp' }),
     SyncModule,
+    PictureSearchModule,
   ],
   controllers: [
     NotesController,

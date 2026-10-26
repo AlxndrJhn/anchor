@@ -11,6 +11,7 @@ import {
   PasswordSection,
   ProfileSection,
   Row,
+  SearchSection,
   Section,
   SettingsNav,
 } from "@/features/settings";
@@ -31,6 +32,7 @@ export default function SettingsPage() {
           <ProfileSection />
           <AppearanceSection />
           <EditorSection />
+          <SearchSection />
           <ApiTokenSection />
           <ImportExportSection />
           <PasswordSection />

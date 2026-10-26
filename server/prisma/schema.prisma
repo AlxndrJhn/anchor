@@ -66,6 +66,8 @@ model User {
   isAdmin              Boolean          @default(false)
   status               UserStatus       @default(active)
   oidcSubject          String?          @unique
+  /// Opted in to finding notes by what their pictures show.
+  pictureSearch        Boolean          @default(false)
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   notes                Note[]
@@ -268,6 +270,7 @@ model NoteAttachment {
   text             String?
   /// When the picture was read (with or without finding text).
   textReadAt       DateTime?
+  embedding        PictureEmbedding?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   note             Note           @relation(fields: [noteId], references: [id], onDelete: Cascade)
@@ -276,4 +279,16 @@ model NoteAttachment {
   @@index([noteId])
   @@index([uploadedByUserId])
   @@index([type, textReadAt])
+}
+
+/// What a picture shows, as a vector from the picture search model, to find
+/// pictures by a description.
+model PictureEmbedding {
+  attachmentId String         @id
+  attachment   NoteAttachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  /// The model that made it; another model's vectors don't compare.
+  model        String
+  /// Float32 values, normalized to length 1.
+  vector       Bytes
+  createdAt    DateTime       @default(now())
 }

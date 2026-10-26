@@ -24,6 +24,7 @@ import {
 } from '../utils/attachment-storage.util';
 import { toAttachmentResponse } from '../dto/attachment-response.dto';
 import { PictureTextService } from './picture-text.service';
+import { PictureSearchService } from '../../picture-search/picture-search.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createReadStream, existsSync } from 'fs';
@@ -37,6 +38,7 @@ export class NoteAttachmentsService {
     private noteAccessService: NoteAccessService,
     private syncEmitter: SyncEmitterService,
     private pictureText: PictureTextService,
+    private pictureSearch: PictureSearchService,
     @Inject(StorageConfig.KEY)
     private storageConfig: ConfigType<typeof StorageConfig>,
   ) {}
@@ -110,7 +112,10 @@ export class NoteAttachmentsService {
         return created;
       });
 
-      if (attachmentType === 'image') this.pictureText.kick();
+      if (attachmentType === 'image') {
+        this.pictureText.kick();
+        this.pictureSearch.kick();
+      }
       return toAttachmentResponse(attachment);
     } catch {
       if (stored) {
