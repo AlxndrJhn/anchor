@@ -9,7 +9,15 @@ export interface DragPreview {
   group: string;
   draggedId: string;
   ids: string[];
+  /**
+   * Let go: the order stays shown until the list itself has it, so the cards
+   * don't flash back to the old order in between.
+   */
+  settling?: boolean;
 }
+
+/** How long a let-go order is held if the list never takes it up. */
+const SETTLE_TIMEOUT = 2000;
 
 interface Pressed {
   card: HTMLElement;
@@ -167,10 +175,22 @@ export function useCardDrag({
       0,
     );
 
-    remember(rectsBefore, drag.box);
-    if (drop && !sameOrder(drag.ids, drag.startIds))
+    if (drop && !sameOrder(drag.ids, drag.startIds)) {
       onDropRef.current(drag.draggedId, drag.ids);
-    setPreview(null);
+      setPreview({
+        group: drag.group,
+        draggedId: drag.draggedId,
+        ids: drag.ids,
+        settling: true,
+      });
+      window.setTimeout(
+        () => setPreview((shown) => (shown?.settling ? null : shown)),
+        SETTLE_TIMEOUT,
+      );
+    } else {
+      remember(rectsBefore, drag.box);
+      setPreview(null);
+    }
 
     // Once the order has settled, the lifted card lands in its place.
     const ghost = drag.ghost;
@@ -345,5 +365,14 @@ export function useCardDrag({
     };
   };
 
-  return { preview, onPointerDown, enabled };
+  /** The list now shows `ids` for `group`: a let-go order can stop being held. */
+  const settled = React.useCallback((group: string, ids: string[]) => {
+    setPreview((shown) =>
+      shown?.settling && shown.group === group && sameOrder(shown.ids, ids)
+        ? null
+        : shown,
+    );
+  }, []);
+
+  return { preview, onPointerDown, enabled, settled };
 }
