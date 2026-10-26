@@ -63,6 +63,17 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
       enabled: !!onReorder && !picking,
       onDrop: (draggedId, ids) => onReorder?.(draggedId, ids),
     });
+    // A let-go order is held until the notes arrive in it.
+    const { preview, settled } = drag;
+    React.useEffect(() => {
+      if (!preview?.settling) return;
+      const group = groups.find((g) => g.key === preview.group);
+      if (group)
+        settled(
+          group.key,
+          group.notes.map((n) => n.id),
+        );
+    }, [preview, groups, settled]);
     return (
       <div
         ref={boardRef}
