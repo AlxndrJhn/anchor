@@ -3680,6 +3680,36 @@
   "@pictureLoadFailed": {
     "description": "Shown in the picture viewer when a picture didn’t download while online, above a Try again button."
   },
+  "pictureShowTags": "Show detected tags",
+  "@pictureShowTags": {
+    "description": "Picture viewer button (with picture search on) that shows words for what the picture depicts, each one a search."
+  },
+  "pictureHideTags": "Hide detected tags",
+  "@pictureHideTags": {
+    "description": "The same button while the detected tags are shown."
+  },
+  "pictureFindingTags": "Finding tags",
+  "@pictureFindingTags": {
+    "description": "Accessibility label of the spinner while the server works out what a picture shows."
+  },
+  "pictureTagsFailed": "Couldn’t get the tags",
+  "@pictureTagsFailed": {
+    "description": "Message when the server couldn't say what a picture shows."
+  },
+  "pictureTagsNotYet": "This picture hasn’t been looked at yet. Try again soon.",
+  "@pictureTagsNotYet": {
+    "description": "Message when picture search hasn't processed this picture yet, so it has no detected tags."
+  },
+  "pictureSearchTag": "Search your notes for {tag}",
+  "@pictureSearchTag": {
+    "description": "Accessibility label of a detected tag in the picture viewer; tapping it searches the notes for the word.",
+    "placeholders": {
+      "tag": {
+        "type": "String",
+        "example": "cat"
+      }
+    }
+  },
   "pictureGrabText": "Grab image text",
   "@pictureGrabText": {
     "description": "Button in the picture viewer: reads the text in the picture and adds it at the end of the note."

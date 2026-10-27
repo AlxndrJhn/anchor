@@ -8,8 +8,11 @@ import 'package:anchor/features/notes/data/repository/picture_aspect_ratios.dart
 import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/widgets/image_text_view.dart';
 import 'package:anchor/features/notes/presentation/widgets/picture_viewer.dart';
+import 'package:anchor/features/picture_search/picture_search.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -30,6 +33,19 @@ class Online extends Notifier<bool> {
   bool build() => initial;
 }
 
+class FakePictureSearch extends PictureSearchRepository {
+  FakePictureSearch(this.found) : super(Dio());
+
+  final List<PictureLabel> found;
+  final asked = <String>[];
+
+  @override
+  Future<List<PictureLabel>> labels(String attachmentId) async {
+    asked.add(attachmentId);
+    return found;
+  }
+}
+
 const picture = NoteAttachment(
   id: 'a1',
   noteId: 'n1',
@@ -48,6 +64,8 @@ void main() {
     WidgetTester tester, {
     bool isOnline = true,
     ValueChanged<String>? onGrabText,
+    ValueChanged<String>? onSearch,
+    List<Override> overrides = const [],
   }) async {
     final online = NotifierProvider<Online, bool>(() => Online(isOnline));
     await tester.pumpWidget(
@@ -56,6 +74,7 @@ void main() {
           isOnlineProvider.overrideWith((ref) => ref.watch(online)),
           noteAttachmentsRepositoryProvider.overrideWithValue(repo),
           pictureAspectRatiosProvider.overrideWithValue(FixedAspectRatios()),
+          ...overrides,
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
@@ -70,6 +89,7 @@ void main() {
                   canDelete: (_) => false,
                   onDelete: (_) {},
                   onGrabText: onGrabText,
+                  onSearch: onSearch,
                 ),
                 child: const Text('Open'),
               ),
@@ -238,5 +258,80 @@ void main() {
 
       expect(find.bySemanticsLabel('Grab image text'), findsNothing);
     }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+  });
+
+  group('Detected tags', () {
+    List<Override> pictureSearch(FakePictureSearch fake, {bool on = true}) => [
+      pictureSearchRepositoryProvider.overrideWithValue(fake),
+      pictureSearchStatusProvider.overrideWith(
+        (ref) async => PictureSearchStatus(available: true, enabled: on),
+      ),
+    ];
+
+    testWidgets('show what the picture depicts; a tag searches the notes', (
+      tester,
+    ) async {
+      tester.platformDispatcher.localeTestValue = const Locale('de');
+      addTearDown(tester.platformDispatcher.clearLocaleTestValue);
+      download(() async => '/nowhere/harbor.jpg');
+      final fake = FakePictureSearch(const [
+        PictureLabel(en: 'harbor', de: 'Hafen'),
+        PictureLabel(en: 'boat', de: 'Boot'),
+      ]);
+      final searched = <String>[];
+      await openViewer(
+        tester,
+        onSearch: searched.add,
+        overrides: pictureSearch(fake),
+      );
+
+      await tester.tap(find.bySemanticsLabel('Show detected tags'));
+      await tester.pumpAndSettle();
+      expect(fake.asked, ['a1']);
+      // In the phone's language.
+      expect(find.text('Hafen'), findsOneWidget);
+      expect(find.text('Boot'), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel('Hide detected tags'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hafen'), findsNothing);
+      await tester.tap(find.bySemanticsLabel('Show detected tags'));
+      await tester.pumpAndSettle();
+      // Asked once per picture.
+      expect(fake.asked, ['a1']);
+
+      await tester.tap(find.text('Boot'));
+      await tester.pumpAndSettle();
+      expect(searched, ['Boot']);
+      expect(find.byType(PageView), findsNothing);
+    });
+
+    testWidgets('a picture not looked at yet says so', (tester) async {
+      download(() async => '/nowhere/harbor.jpg');
+      await openViewer(
+        tester,
+        onSearch: (_) {},
+        overrides: pictureSearch(FakePictureSearch(const [])),
+      );
+      await tester.tap(find.bySemanticsLabel('Show detected tags'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(
+        find.textContaining('hasn’t been looked at yet', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.byType(PageView), findsOneWidget);
+    });
+
+    testWidgets('not offered with picture search off', (tester) async {
+      download(() async => '/nowhere/harbor.jpg');
+      await openViewer(
+        tester,
+        onSearch: (_) {},
+        overrides: pictureSearch(FakePictureSearch(const []), on: false),
+      );
+      expect(find.bySemanticsLabel('Show detected tags'), findsNothing);
+    });
   });
 }

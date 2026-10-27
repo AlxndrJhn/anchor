@@ -51,6 +51,7 @@ import 'note_actions.dart';
 import 'note_editor_controller.dart';
 import 'note_labels.dart';
 import 'note_morph_route.dart';
+import 'notes_controller.dart';
 import 'widgets/add_sheet.dart';
 import 'widgets/background_sheet.dart';
 import 'widgets/card_registry.dart';
@@ -241,6 +242,25 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     } else {
       _leave();
     }
+  }
+
+  /// Closes the note (saving it, as Back does) to the list, searching it
+  /// for [word]: a tag detected in one of its pictures.
+  void _searchNotesFor(String word) {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      ref.read(searchQueryProvider.notifier).set(word);
+      navigator.maybePop();
+      return;
+    }
+    // Opened straight into the note (a widget or a reminder): the list
+    // comes up in its place and takes the search once it's there.
+    final container = ProviderScope.containerOf(context);
+    _draft.flushOnLeave();
+    context.go(AppRoutes.home);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => container.read(searchQueryProvider.notifier).set(word),
+    );
   }
 
   void _leave() {
@@ -844,6 +864,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             onGrabText: _isReadOnly
                 ? null
                 : (text) => _editorKey.currentState?.appendText(text),
+            onSearch: _searchNotesFor,
           ),
         ValueListenableBuilder(
           valueListenable: _showsEmptyNoteActions,

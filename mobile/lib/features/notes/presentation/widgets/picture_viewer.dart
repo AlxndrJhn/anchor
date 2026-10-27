@@ -24,12 +24,14 @@ import '../../../../core/widgets/global_rect_of.dart';
 import '../../../../core/widgets/page_bar.dart';
 import '../../../../core/widgets/pressable.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../picture_search/picture_search.dart';
 import '../../data/repository/attachment_file_provider.dart';
 import '../../data/repository/note_attachments_repository.dart';
 import '../../data/repository/notes_repository.dart';
 import '../../data/repository/picture_aspect_ratios.dart';
 import '../../domain/note_attachment.dart';
 import '../editor/append_text.dart';
+import '../notes_controller.dart';
 import 'image_text_view.dart';
 
 Future<void> showPictureViewer(
@@ -40,6 +42,7 @@ Future<void> showPictureViewer(
   required bool Function(NoteAttachment) canDelete,
   required ValueChanged<NoteAttachment> onDelete,
   ValueChanged<String>? onGrabText,
+  ValueChanged<String>? onSearch,
 }) {
   return Navigator.of(context, rootNavigator: true).push(
     PageRouteBuilder<void>(
@@ -57,6 +60,7 @@ Future<void> showPictureViewer(
         onDelete: onDelete,
         canGrabText: canReadImageText,
         onGrabText: onGrabText,
+        onSearch: onSearch,
       ),
       transitionsBuilder: (_, animation, _, child) => child,
     ),
@@ -66,7 +70,7 @@ Future<void> showPictureViewer(
 /// Opens a note's pictures from outside the note (a card's picture),
 /// starting at [attachmentId]. Nothing can be deleted from there; text
 /// grabbed from a picture goes at the end of the note, when the user may
-/// edit it.
+/// edit it; a detected tag searches the list it was opened from.
 Future<void> showNotePictures(
   BuildContext context,
   WidgetRef ref, {
@@ -99,6 +103,7 @@ Future<void> showNotePictures(
             ),
           )
         : null,
+    onSearch: (word) => ref.read(searchQueryProvider.notifier).set(word),
   );
 }
 
@@ -111,6 +116,7 @@ class _Viewer extends ConsumerStatefulWidget {
     required this.onDelete,
     this.canGrabText = false,
     this.onGrabText,
+    this.onSearch,
   });
 
   final String noteId;
@@ -126,6 +132,10 @@ class _Viewer extends ConsumerStatefulWidget {
   /// Takes the text picked from a picture into the note; null where the note
   /// can't be edited, which leaves copying it.
   final ValueChanged<String>? onGrabText;
+
+  /// Searches the notes for a tag detected in a picture; once the viewer
+  /// has closed. Null offers no detected tags.
+  final ValueChanged<String>? onSearch;
 
   @override
   ConsumerState<_Viewer> createState() => _ViewerState();
@@ -145,6 +155,11 @@ class _ViewerState extends ConsumerState<_Viewer>
   bool _isImmersive = false;
   bool _zoomed = false;
   bool _isReadingText = false;
+
+  /// What the picture search model sees in a picture, by attachment id.
+  final Map<String, List<PictureLabel>> _tags = {};
+  String? _tagsShownFor;
+  bool _isFindingTags = false;
 
   /// The pull down, in pixels.
   late final AnimationController _pull = AnimationController.unbounded(
@@ -369,6 +384,68 @@ class _ViewerState extends ConsumerState<_Viewer>
     AppSnackbar.show(context, l10n.pictureTextAdded);
   }
 
+  /// Shows or hides the words for what the picture shows, asking the server
+  /// the first time.
+  Future<void> _toggleTags() async {
+    final id = _current.id;
+    if (_tagsShownFor == id) {
+      setState(() => _tagsShownFor = null);
+      return;
+    }
+    if (_tags.containsKey(id)) {
+      setState(() => _tagsShownFor = id);
+      return;
+    }
+    if (_isFindingTags) return;
+    final l10n = context.l10n;
+    setState(() => _isFindingTags = true);
+    final List<PictureLabel> labels;
+    try {
+      labels = await ref.read(pictureSearchRepositoryProvider).labels(id);
+    } catch (error, stack) {
+      AppLogger.instance.warn(
+        LogTags.notes,
+        'Detected tags failed',
+        error: error,
+        stackTrace: stack,
+      );
+      if (mounted) {
+        setState(() => _isFindingTags = false);
+        AppSnackbar.show(
+          context,
+          l10n.pictureTagsFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _isFindingTags = false);
+    if (labels.isEmpty) {
+      AppSnackbar.show(
+        context,
+        l10n.pictureTagsNotYet,
+        kind: SnackbarKind.info,
+      );
+      return;
+    }
+    Haptics.selection();
+    setState(() {
+      _tags[id] = labels;
+      if (_current.id == id) _tagsShownFor = id;
+    });
+  }
+
+  /// A tag in the phone's language: the words come in German and English.
+  String _tagText(PictureLabel label) =>
+      label.textFor(View.of(context).platformDispatcher.locale.languageCode);
+
+  void _searchFor(String word) {
+    Haptics.light();
+    _close();
+    widget.onSearch?.call(word);
+  }
+
   void _delete() {
     final picture = _current;
     _close();
@@ -390,6 +467,15 @@ class _ViewerState extends ConsumerState<_Viewer>
     final count = widget.pictures.length;
     const ink = AnchorTokens.colorMediaText;
     final barsShown = !_isImmersive && pulled == 0;
+    // Detected tags need picture search on, a connection and an uploaded
+    // picture.
+    final canShowTags =
+        widget.onSearch != null &&
+        isOnline &&
+        !_current.isPendingUpload &&
+        !_current.isUploadFailed &&
+        (ref.watch(pictureSearchStatusProvider).value?.enabled ?? false);
+    final tags = _tagsShownFor == _current.id ? _tags[_current.id] : null;
     return Material(
       type: MaterialType.transparency,
       child: AnimatedBuilder(
@@ -536,6 +622,32 @@ class _ViewerState extends ConsumerState<_Viewer>
                 ),
               ),
             ),
+            if (tags != null)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom:
+                    media.padding.bottom +
+                    64 + // off-scale: above the buttons' scrim
+                    8,
+                child: _Fade(
+                  shown: barsShown,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final label in tags)
+                        _TagPill(
+                          text: _tagText(label),
+                          onPressed: widget.onSearch == null
+                              ? null
+                              : () => _searchFor(_tagText(label)),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             Positioned(
               left: 0,
               right: 0,
@@ -590,6 +702,30 @@ class _ViewerState extends ConsumerState<_Viewer>
                                 color: ink,
                                 onPressed: hasPicture ? _grabText : null,
                               ),
+                      if (canShowTags)
+                        _isFindingTags
+                            ? Semantics(
+                                label: context.l10n.pictureFindingTags,
+                                child: const SizedBox.square(
+                                  dimension: AnchorTokens.sizeControlMedium,
+                                  child: Center(
+                                    child: Spinner(
+                                      size: AnchorTokens.sizeIconLarge,
+                                      color: ink,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : BarButton(
+                                icon: LucideIcons.tags,
+                                label: tags == null
+                                    ? context.l10n.pictureShowTags
+                                    : context.l10n.pictureHideTags,
+                                color: tags == null
+                                    ? ink
+                                    : AnchorTokens.colorAccentFill,
+                                onPressed: hasPicture ? _toggleTags : null,
+                              ),
                       if (widget.canDelete(_current))
                         BarButton(
                           icon: LucideIcons.trash2,
@@ -603,6 +739,41 @@ class _ViewerState extends ConsumerState<_Viewer>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A detected tag: tapping it searches the notes for it.
+class _TagPill extends StatelessWidget {
+  const _TagPill({required this.text, required this.onPressed});
+
+  final String text;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      style: PressStyle.button,
+      onTap: onPressed,
+      semanticLabel: context.l10n.pictureSearchTag(text),
+      child: Container(
+        height: AnchorTokens.sizeControlSmall,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AnchorTokens.colorMediaShadeStrong,
+          borderRadius: BorderRadius.circular(AnchorTokens.radiusPill),
+        ),
+        child: ExcludeSemantics(
+          child: CapHeightText(
+            text,
+            style: AppTypography.secondary.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AnchorTokens.colorMediaText,
+            ),
+          ),
         ),
       ),
     );

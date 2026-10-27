@@ -33,6 +33,7 @@ class NoteAttachmentsStrip extends ConsumerStatefulWidget {
     required this.onAdd,
     this.currentUserId,
     this.onGrabText,
+    this.onSearch,
   });
 
   final String noteId;
@@ -45,6 +46,9 @@ class NoteAttachmentsStrip extends ConsumerStatefulWidget {
   /// Takes text read from a picture into the note; null where it can't be
   /// edited.
   final ValueChanged<String>? onGrabText;
+
+  /// Searches the notes for a tag detected in a picture.
+  final ValueChanged<String>? onSearch;
 
   @override
   ConsumerState<NoteAttachmentsStrip> createState() =>
@@ -107,6 +111,7 @@ class _NoteAttachmentsStripState extends ConsumerState<NoteAttachmentsStrip> {
       canDelete: _canDelete,
       onDelete: _delete,
       onGrabText: widget.canEdit ? widget.onGrabText : null,
+      onSearch: widget.onSearch,
     );
   }
 

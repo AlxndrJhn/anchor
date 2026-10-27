@@ -66,9 +66,13 @@ class _NotesBottomBarState extends State<NotesBottomBar> {
     super.didUpdateWidget(old);
     if (widget.searching && !old.searching) {
       _text.text = widget.query;
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _focus.requestFocus(),
-      );
+      // A search that arrives with its words (a picture's tag) shows the
+      // results instead of the keyboard.
+      if (widget.query.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _focus.requestFocus(),
+        );
+      }
     }
     if (!widget.searching && old.searching) {
       _text.clear();

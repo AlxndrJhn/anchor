@@ -443,6 +443,31 @@ void main() {
     expect(find.textContaining('PICTURES'), findsNothing);
   });
 
+  testWidgets('a search started from a picture tag shows its results', (
+    tester,
+  ) async {
+    await pumpList(tester, const [
+      Note(id: 'boats', title: 'Boot trip'),
+      Note(id: 'dog', title: 'Walks'),
+    ]);
+
+    ProviderScope.containerOf(
+      tester.element(find.byType(NotesListScreen)),
+    ).read(searchQueryProvider.notifier).set('Boot');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Walks'), findsNothing);
+    expect(find.text('Boot trip'), findsOneWidget);
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, 'Boot');
+    // The results, not the keyboard.
+    expect(field.focusNode!.hasFocus, isFalse);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Walks'), findsOneWidget);
+  });
+
   testWidgets('holding New note offers a new list', (tester) async {
     await pumpList(tester, notesNamed('Note', 2));
 

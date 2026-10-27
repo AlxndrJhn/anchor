@@ -2763,6 +2763,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pictureLoadFailed => 'Couldn’t load this picture';
 
   @override
+  String get pictureShowTags => 'Show detected tags';
+
+  @override
+  String get pictureHideTags => 'Hide detected tags';
+
+  @override
+  String get pictureFindingTags => 'Finding tags';
+
+  @override
+  String get pictureTagsFailed => 'Couldn’t get the tags';
+
+  @override
+  String get pictureTagsNotYet =>
+      'This picture hasn’t been looked at yet. Try again soon.';
+
+  @override
+  String pictureSearchTag(String tag) {
+    return 'Search your notes for $tag';
+  }
+
+  @override
   String get pictureGrabText => 'Grab image text';
 
   @override

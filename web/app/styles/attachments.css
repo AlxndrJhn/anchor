@@ -603,6 +603,29 @@
 .vw-hint .ph {
   display: none;
 }
+/* What the picture search model sees in the picture */
+.vw-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: --spacing(2);
+  margin: 0;
+  padding: --spacing(2.5) --spacing(4) --spacing(4);
+  list-style: none;
+}
+.vw-tags a {
+  display: inline-block;
+  padding: --spacing(1) --spacing(3);
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, white 14%, transparent);
+  color: var(--color-media-text);
+  font-size: var(--text-meta);
+  text-decoration: none;
+}
+.vw-tags a:hover,
+.vw-tags a:focus-visible {
+  background: color-mix(in srgb, white 26%, transparent);
+}
 /* Text found in a picture, marked on it to pick from */
 .itv {
   flex: 1;

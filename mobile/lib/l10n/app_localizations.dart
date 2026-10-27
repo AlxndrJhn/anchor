@@ -4126,6 +4126,42 @@ abstract class AppLocalizations {
   /// **'Couldn’t load this picture'**
   String get pictureLoadFailed;
 
+  /// Picture viewer button (with picture search on) that shows words for what the picture depicts, each one a search.
+  ///
+  /// In en, this message translates to:
+  /// **'Show detected tags'**
+  String get pictureShowTags;
+
+  /// The same button while the detected tags are shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide detected tags'**
+  String get pictureHideTags;
+
+  /// Accessibility label of the spinner while the server works out what a picture shows.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding tags'**
+  String get pictureFindingTags;
+
+  /// Message when the server couldn't say what a picture shows.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t get the tags'**
+  String get pictureTagsFailed;
+
+  /// Message when picture search hasn't processed this picture yet, so it has no detected tags.
+  ///
+  /// In en, this message translates to:
+  /// **'This picture hasn’t been looked at yet. Try again soon.'**
+  String get pictureTagsNotYet;
+
+  /// Accessibility label of a detected tag in the picture viewer; tapping it searches the notes for the word.
+  ///
+  /// In en, this message translates to:
+  /// **'Search your notes for {tag}'**
+  String pictureSearchTag(String tag);
+
   /// Button in the picture viewer: reads the text in the picture and adds it at the end of the note.
   ///
   /// In en, this message translates to:

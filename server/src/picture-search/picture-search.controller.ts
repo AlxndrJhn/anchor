@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { PictureSearchSettingsDto } from './dto/picture-search-settings.dto';
@@ -19,6 +28,15 @@ export class PictureSearchController {
   @Get('status')
   status(@CurrentUser('id') userId: string) {
     return this.pictureSearch.status(userId);
+  }
+
+  /** The words that best describe a picture ("Show detected tags"). */
+  @Get('attachments/:id/labels')
+  async labels(
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return { labels: await this.pictureSearch.labels(userId, id) };
   }
 
   @Put('settings')

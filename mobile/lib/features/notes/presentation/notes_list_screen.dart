@@ -436,6 +436,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     final options =
         ref.watch(notesViewOptionsProvider).value ?? const NotesViewOptions();
     final query = ref.watch(searchQueryProvider);
+    // A search started elsewhere (a picture's detected tag) shows the search.
+    ref.listen(searchQueryProvider, (_, query) {
+      if (query.isNotEmpty && !_searching) setState(() => _searching = true);
+    });
     final filters = ref.watch(noteFiltersControllerProvider);
     final selectedNotes = visible
         .where((n) => selectedIds.contains(n.id))
