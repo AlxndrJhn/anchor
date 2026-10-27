@@ -198,6 +198,54 @@ html.note-dragging * {
   margin-left: auto;
   white-space: nowrap;
 }
+/* Pin from the card, as in Google Keep; shown on hover */
+.nc-pin {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 4;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--note) 82%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--note-muted);
+  opacity: 0;
+  transform: scale(0.85);
+  transition:
+    opacity var(--duration-hover),
+    transform var(--duration-hover),
+    background-color var(--duration-hover),
+    color var(--duration-hover);
+}
+.nc-pin svg {
+  width: 16px;
+  height: 16px;
+}
+.nc-pin[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+.nc:hover .nc-pin,
+.nc:focus-within .nc-pin {
+  opacity: 1;
+  transform: none;
+}
+.nc-pin:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 10%, var(--note));
+}
+@media (hover: none) {
+  .nc-pin {
+    opacity: 1;
+    transform: none;
+  }
+}
 .nc-pick {
   position: absolute;
   top: 9px;

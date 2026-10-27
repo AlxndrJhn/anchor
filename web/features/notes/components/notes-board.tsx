@@ -25,6 +25,8 @@ interface NotesBoardProps {
   /** Leave out for cards that can't be picked. */
   onPick?: (noteId: string, range: boolean) => void;
   onShare?: (note: Note) => void;
+  /** Pins or unpins a note from its card. Keep it stable. */
+  onTogglePin?: (note: Note) => void;
   /** Keep it stable, or every card redraws. */
   renderActions?: (note: Note) => React.ReactNode;
   dateLabel?: (note: Note) => string;
@@ -46,6 +48,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
       picked,
       onPick,
       onShare,
+      onTogglePin,
       renderActions,
       dateLabel,
       searchTerm,
@@ -125,6 +128,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
                   picked={picked.has(note.id)}
                   onPick={onPick}
                   onShare={onShare}
+                  onTogglePin={onTogglePin}
                   renderActions={renderActions}
                   dateLabel={dateLabel?.(note)}
                   searchTerm={searchTerm}
