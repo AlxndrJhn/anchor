@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Check, CloudOff, ImageOff, Paperclip, Users } from "lucide-react";
+import { Check, CloudOff, ImageOff, Paperclip, Pin, Users } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { Avatar } from "@/components/ui/avatar";
@@ -45,6 +45,8 @@ interface NoteCardProps {
   picked?: boolean;
   onPick?: (noteId: string, range: boolean) => void;
   onShare?: (note: Note) => void;
+  /** Pins or unpins it from the card, as in Google Keep. */
+  onTogglePin?: (note: Note) => void;
   renderActions?: (note: Note) => React.ReactNode;
   dateLabel?: string;
   /** A search the card was found by, marked in the note when it opens. */
@@ -94,6 +96,7 @@ export const NoteCard = React.memo(function NoteCard({
   picking,
   picked,
   onPick,
+  onTogglePin,
   onShare,
   renderActions,
   dateLabel,
@@ -256,7 +259,27 @@ export const NoteCard = React.memo(function NoteCard({
           }
         }}
       />
-      {onPick && (
+      {/* Picking (after Select) shows the check; otherwise the pin. */}
+      {!picking &&
+        onTogglePin &&
+        note.state !== "trashed" &&
+        !note.isArchived && (
+          <Tip label={note.isPinned ? "Unpin" : "Pin"}>
+            <button
+              type="button"
+              className="nc-pin"
+              aria-label={note.isPinned ? `Unpin ${label}` : `Pin ${label}`}
+              aria-pressed={!!note.isPinned}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePin(note);
+              }}
+            >
+              <Pin aria-hidden />
+            </button>
+          </Tip>
+        )}
+      {onPick && picking && (
         <button
           type="button"
           className="nc-pick"

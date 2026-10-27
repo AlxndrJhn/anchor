@@ -157,6 +157,36 @@ function NotesView({ tagId }: { tagId: string | null }) {
    * A note let go at a new place, as in Google Keep: it goes between its new
    * neighbours, and stays there until it is next edited.
    */
+  // Pinned or unpinned from its card: it moves to its section at once.
+  const prepareCardMotion = list.prepareCardMotion;
+  const togglePin = React.useCallback(
+    (note: Note) => {
+      const isPinned = !note.isPinned;
+      const place = (pinned: boolean) =>
+        queryClient.setQueriesData<unknown>(
+          { queryKey: ["notes"] },
+          (data: unknown) =>
+            Array.isArray(data)
+              ? (data as Note[]).map((n) =>
+                  n.id === note.id ? { ...n, isPinned: pinned } : n,
+                )
+              : data,
+        );
+      prepareCardMotion();
+      place(isPinned);
+      bulkPinNotes([note.id], isPinned)
+        .catch(() => {
+          prepareCardMotion();
+          place(!isPinned);
+          toast.error(
+            isPinned ? "Couldn’t pin the note" : "Couldn’t unpin the note",
+          );
+        })
+        .finally(() => refresh());
+    },
+    [prepareCardMotion, queryClient, refresh],
+  );
+
   const reorderNote = (noteId: string, ids: string[]) => {
     const index = ids.indexOf(noteId);
     const byId = new Map(notes.map((n) => [n.id, n]));
@@ -397,6 +427,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             picked={list.picked}
             onPick={list.onPick}
             onShare={setSharingNote}
+            onTogglePin={togglePin}
             groups={[
               ...(pinned.length
                 ? [
@@ -427,6 +458,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             picking={false}
             picked={NO_PICKS}
             onShare={setSharingNote}
+            onTogglePin={togglePin}
             groups={[
               {
                 key: "archived",
@@ -443,6 +475,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             picking={false}
             picked={NO_PICKS}
             onShare={setSharingNote}
+            onTogglePin={togglePin}
             groups={[
               {
                 key: "pictures",
