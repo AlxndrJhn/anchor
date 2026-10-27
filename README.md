@@ -6,9 +6,9 @@
 
 **An offline first, self hostable note taking application**
 
-[![Version](https://img.shields.io/github/v/release/zhfahim/anchor?label=version&style=for-the-badge)](https://github.com/zhfahim/anchor/releases)
+[![Version](https://img.shields.io/github/v/release/AlxndrJhn/anchor?label=version&style=for-the-badge)](https://github.com/AlxndrJhn/anchor/releases)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/zhfahim/anchor)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/AlxndrJhn/anchor/pkgs/container/anchor)
 [![Discord](https://img.shields.io/discord/1487830114795257906?label=Discord&style=for-the-badge)](https://discord.gg/sAfqjy8EYK)
 
 <a href="https://trendshift.io/repositories/18646" target="_blank"><img src="https://trendshift.io/api/badge/repositories/18646" alt="ZhFahim%2Fanchor | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
@@ -128,7 +128,7 @@ differences. "Web" and "Android" say where each one is available.
    ```yaml
    services:
      anchor:
-       image: ghcr.io/zhfahim/anchor:latest
+       image: ghcr.io/alxndrjhn/anchor:fork-latest
        container_name: anchor
        restart: unless-stopped
        ports:
@@ -175,37 +175,26 @@ differences. "Web" and "Android" say where each one is available.
 4. **Access the app:**
    Open http://localhost:3000
 
-### This Fork's Image
+5. **Update later:**
 
-Every push to `main` of this fork makes a release named
-`fork-<version>.<build>` with the Android APKs attached
-([latest APK](https://github.com/AlxndrJhn/anchor/releases/latest/download/anchor-fork.apk)
-for 64-bit ARM phones; the release also has 32-bit ARM and x86_64 builds),
-and publishes a multi-arch image (amd64 and arm64, so it runs on a Raspberry
-Pi 5) under the same tag, plus `ghcr.io/alxndrjhn/anchor:fork-latest` and
-`:fork-<commit>`. Use it in place of `ghcr.io/zhfahim/anchor:latest` in the
-compose file above.
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
 
-### Pre-release (Beta) Image
+### Image Tags
 
-To test upcoming features before they are officially released, use the `next` tag:
+Every release of this fork is named `fork-<version>.<build>` and publishes a
+multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 
-```yaml
-services:
-  anchor:
-    image: ghcr.io/zhfahim/anchor:next
-    container_name: anchor
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    volumes:
-      - anchor_data:/data
+| Tag | What it is |
+|-----|------------|
+| `ghcr.io/alxndrjhn/anchor:fork-latest` | The newest release |
+| `ghcr.io/alxndrjhn/anchor:fork-<version>.<build>` | One release, e.g. `fork-0.17.2.36`, to stay on it |
+| `ghcr.io/alxndrjhn/anchor:fork-<commit>` | The build of one commit |
 
-volumes:
-  anchor_data:
-```
-
-> **Warning:** The `next` image is built from the `next` branch and may contain incomplete features or breaking changes. Do not use it in production. Back up your data before switching.
+The original project's image is `ghcr.io/zhfahim/anchor:latest`; it has none
+of this fork's changes. Switching between them keeps your data, but back it
+up first: this fork adds database columns the original doesn't know.
 
 ### Option 2: Building from Source
 
@@ -214,29 +203,36 @@ If you want to build from source or customize the image:
 1. **Clone the project:**
 
    ```bash
-   git clone https://github.com/zhfahim/anchor.git
+   git clone https://github.com/AlxndrJhn/anchor.git
    cd anchor
    ```
 
-2. **Start the container:**
+2. **Build and start the container:**
 
    ```bash
-   docker compose up -d
+   docker compose up -d --build
    ```
 
-   The `docker-compose.yml` file will build the image from source automatically.
+   `--build` builds the image from your checkout; without it, the
+   `docker-compose.yml` file pulls this fork's released image.
 
 ## Mobile App
 
 Download the Android mobile app.
 
 1. **Visit the releases page:**
-   Go to [GitHub Releases](https://github.com/zhfahim/anchor/releases).
+   Go to [GitHub Releases](https://github.com/AlxndrJhn/anchor/releases), or
+   download the [latest APK](https://github.com/AlxndrJhn/anchor/releases/latest/download/anchor-fork.apk)
+   directly.
 
 2. **Download the latest release:**
-   Multiple APK files are available:
-   - **Universal APK** (`anchor-{version}.apk`) - Recommended for most users, works on all devices
-   - **Architecture-specific APKs** - Smaller file sizes for specific CPU architectures
+   Each release has one APK per kind of phone:
+   - **`anchor-fork.apk`** - 64-bit ARM, for nearly every phone
+   - **`anchor-fork-armeabi-v7a.apk`** - older 32-bit ARM phones
+   - **`anchor-fork-x86_64.apk`** - emulators and x86 devices
+
+   Once installed, the app finds and installs new releases itself
+   (Settings › Updates).
 
 ## OIDC Authentication
 
@@ -282,7 +278,7 @@ Configure OIDC via environment variables in your `docker-compose.yml`. Pocket ID
 ```yaml
 services:
   anchor:
-    image: ghcr.io/zhfahim/anchor:latest
+    image: ghcr.io/alxndrjhn/anchor:fork-latest
     environment:
       - OIDC_ENABLED=true
       - OIDC_PROVIDER_NAME=Pocket ID
