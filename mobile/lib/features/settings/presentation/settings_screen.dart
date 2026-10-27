@@ -232,6 +232,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               )
                               .setSortChecklistItems(value),
                         ),
+                        SettingsSwitchRow(
+                          title: 'Burn deleted notes',
+                          subtitle:
+                              'A deleted note burns away where it stood. Off, '
+                              'it just goes',
+                          icon: LucideIcons.flame,
+                          value: editorPrefs.burnDeleted,
+                          onChanged: (value) => ref
+                              .read(
+                                editorPreferencesControllerProvider.notifier,
+                              )
+                              .setBurnDeleted(value),
+                        ),
                       ],
                     ),
 

@@ -1,3 +1,4 @@
+import { usePreferencesStore } from "@/features/preferences";
 import { prefersReducedMotion } from "./motion";
 
 /** How long a card takes to burn away, in ms. */
@@ -133,7 +134,11 @@ const NO_BURN: Burn = { done: Promise.resolve(), restore: () => {} };
  * invisible, for the caller to remove.
  */
 export function burnElement(el: HTMLElement): Burn {
-  if (prefersReducedMotion()) return NO_BURN;
+  if (
+    prefersReducedMotion() ||
+    usePreferencesStore.getState().editor.burnDeleted === false
+  )
+    return NO_BURN;
   const first = el.getBoundingClientRect();
   if (first.width === 0 || first.height === 0) return NO_BURN;
   const { width, height } = first;

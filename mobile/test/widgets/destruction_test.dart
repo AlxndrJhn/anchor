@@ -91,6 +91,21 @@ void main() {
     );
   });
 
+  testWidgets('with the burn turned off in Settings, the card just goes', (
+    tester,
+  ) async {
+    burnDeletedNotes = false;
+    addTearDown(() => burnDeletedNotes = true);
+    final shown = ValueNotifier(true);
+    await pumpCards(tester, shown: shown);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pump();
+
+    expect(burn(), findsNothing);
+    expect(find.byType(Destructible), findsNothing);
+  });
+
   testWidgets('with animations turned off, the card just goes', (tester) async {
     final shown = ValueNotifier(true);
     await pumpCards(tester, shown: shown, reduceMotion: true);

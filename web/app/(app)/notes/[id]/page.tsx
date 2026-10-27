@@ -232,17 +232,18 @@ function NoteEditor({
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.isComposing) return;
+      // Esc while typing closes the note at once, as it does elsewhere on
+      // the page; an open menu or dialog takes it first.
       if (
         e.key === "Escape" &&
         !overlayAtPress &&
         !e.ctrlKey &&
         !e.metaKey &&
         !e.altKey &&
-        isTypingTarget(e.target) &&
-        window.getSelection()?.isCollapsed !== false
+        isTypingTarget(e.target)
       ) {
         e.preventDefault();
-        (e.target as HTMLElement).blur();
+        leaveRef.current();
       }
     };
     window.addEventListener("keydown", capture, true);

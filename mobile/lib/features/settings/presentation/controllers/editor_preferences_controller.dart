@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../data/models/editor_preferences.dart';
 import '../../data/repository/preferences_repository.dart';
+import '../../../../core/widgets/destruction/destruction.dart';
 
 part 'editor_preferences_controller.g.dart';
 
@@ -23,6 +24,15 @@ class EditorPreferencesController extends _$EditorPreferencesController {
     final repository = ref.read(preferencesRepositoryProvider);
     final sortChecklistItems = await repository.getSortChecklistItems();
     state = state.copyWith(sortChecklistItems: sortChecklistItems);
+    final burnDeleted = await repository.getBurnDeleted();
+    burnDeletedNotes = burnDeleted;
+    state = state.copyWith(burnDeleted: burnDeleted);
+  }
+
+  Future<void> setBurnDeleted(bool value) async {
+    burnDeletedNotes = value;
+    state = state.copyWith(burnDeleted: value);
+    await ref.read(preferencesRepositoryProvider).setBurnDeleted(value);
   }
 
   Future<void> setSortChecklistItems(bool value) async {

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { Shortcut } from "@/features/notes/date-stamp";
 
 export type ViewMode = "masonry" | "grid" | "list";
 export type SortBy = "updatedAt" | "createdAt" | "title";
@@ -24,6 +25,12 @@ interface NotesPreferences {
 
 interface EditorPreferences {
   sortChecklistItems: boolean;
+  /** Deleted notes burn away. Unset (older saves) means on. */
+  burnDeleted?: boolean;
+  /** Inserts today's date; unset means the default (Ctrl+;). */
+  dateShortcut?: Shortcut;
+  /** Inserts the date and time; unset means Ctrl+Shift+;. */
+  dateTimeShortcut?: Shortcut;
 }
 
 interface PreferencesState {
@@ -57,6 +64,7 @@ const defaultNotesPreferences: NotesPreferences = {
 
 const defaultEditorPreferences: EditorPreferences = {
   sortChecklistItems: true,
+  burnDeleted: true,
 };
 
 const initialState = {

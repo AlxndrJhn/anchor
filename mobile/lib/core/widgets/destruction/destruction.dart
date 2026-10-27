@@ -9,6 +9,9 @@ import 'package:flutter/services.dart';
 /// How long a card takes to burn away.
 const destructionDuration = Duration(milliseconds: 1100);
 
+/// Whether deleted notes burn away at all; a setting on this device.
+bool burnDeletedNotes = true;
+
 /// The cards on screen that can be burnt, by note id.
 final _cards = <String, DestructibleState>{};
 
@@ -69,7 +72,7 @@ class DestructibleState extends State<Destructible>
   /// Burns it away; completes when it's gone. Straight away with
   /// animations turned off.
   Future<void> burn() async {
-    if (_controller != null) return;
+    if (_controller != null || !burnDeletedNotes) return;
     if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return;
     final boundary = _boundary.currentContext?.findRenderObject();
     if (boundary is! RenderRepaintBoundary ||

@@ -20,6 +20,7 @@ import { DURATION } from "@/lib/design/tokens";
 import { watchHighlights } from "@/lib/highlight-paint";
 import { hasShortcutKey } from "@/lib/platform";
 import { cn } from "@/lib/utils";
+import { stampFor } from "../../date-stamp";
 import type { LinkRange } from "../../link-utils";
 import {
   isFullUrl,
@@ -396,6 +397,28 @@ export const RichTextEditor = forwardRef<
         el.removeEventListener("mousedown", beforeSelecting, true);
       };
     }, [editorContainerEl, readOnly]);
+
+    // Today's date, or the date and time, at the caret (Ctrl+; and
+    // Ctrl+Shift+; unless changed in Settings).
+    useEffect(() => {
+      const el = editorContainerEl;
+      if (!el || readOnly) return;
+      const onKey = (e: KeyboardEvent) => {
+        if (e.isComposing) return;
+        const stamp = stampFor(e, usePreferencesStore.getState().editor);
+        if (!stamp) return;
+        const quill = getQuill();
+        const range = quill?.getSelection();
+        if (!quill || !range || !quill.root.contains(e.target as Node)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (range.length) quill.deleteText(range.index, range.length, "user");
+        quill.insertText(range.index, stamp, "user");
+        quill.setSelection(range.index + stamp.length, 0, "user");
+      };
+      el.addEventListener("keydown", onKey, true);
+      return () => el.removeEventListener("keydown", onKey, true);
+    }, [editorContainerEl, getQuill, readOnly]);
 
     // Ahead of Quill's Backspace bindings.
     useEffect(() => {

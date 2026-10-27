@@ -6,6 +6,7 @@ class PreferenceKeys {
   PreferenceKeys._();
 
   static const sortChecklistItems = 'editor_sort_checklist_items';
+  static const burnDeleted = 'editor_burn_deleted';
   static const themeMode = 'theme_mode';
   static const displayDensity = 'display_density';
   static const colorScheme = 'color_scheme';
@@ -30,6 +31,19 @@ class PreferencesRepository {
   Future<void> setSortChecklistItems(bool value) async {
     await _storage.write(
       key: PreferenceKeys.sortChecklistItems,
+      value: value.toString(),
+    );
+  }
+
+  /// Deleted notes burn away; on unless turned off.
+  Future<bool> getBurnDeleted() async {
+    final value = await _storage.read(key: PreferenceKeys.burnDeleted);
+    return value != 'false';
+  }
+
+  Future<void> setBurnDeleted(bool value) async {
+    await _storage.write(
+      key: PreferenceKeys.burnDeleted,
       value: value.toString(),
     );
   }

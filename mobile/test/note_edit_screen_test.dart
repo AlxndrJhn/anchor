@@ -73,6 +73,7 @@ void main() {
       () => attachmentsRepo.watchAttachments(any()),
     ).thenAnswer((_) => Stream.value(const []));
     when(() => prefsRepo.getSortChecklistItems()).thenAnswer((_) async => true);
+    when(() => prefsRepo.getBurnDeleted()).thenAnswer((_) async => true);
     when(() => prefsRepo.getExactAlarmsOffered()).thenAnswer((_) async => true);
   });
 

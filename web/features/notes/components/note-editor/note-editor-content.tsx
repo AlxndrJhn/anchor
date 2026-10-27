@@ -22,10 +22,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tip } from "@/components/ui/tooltip";
+import { usePreferencesStore } from "@/features/preferences";
 import { type Tag, TagChip, TagPicker } from "@/features/tags";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { useFlip } from "@/lib/use-flip";
 import { cn } from "@/lib/utils";
+import { stampFor } from "../../date-stamp";
 import { deltaToFullPlainText, isContentBlank } from "../../quill";
 import { isReminderPast, reminderLabel } from "../../reminder";
 import type { NoteReminder, ReminderRecurrence } from "../../types";
@@ -182,6 +184,22 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           spellCheck={false}
           onChange={(e) => props.onTitleChange(e.target.value)}
           onKeyDown={(e) => {
+            const stamp = stampFor(
+              e.nativeEvent,
+              usePreferencesStore.getState().editor,
+            );
+            if (stamp) {
+              e.preventDefault();
+              const input = e.currentTarget;
+              input.setRangeText(
+                stamp,
+                input.selectionStart ?? input.value.length,
+                input.selectionEnd ?? input.value.length,
+                "end",
+              );
+              props.onTitleChange(input.value);
+              return;
+            }
             // Tab skips the tag row, attachments and toolbar on the way.
             const toBody =
               e.key === "Enter" ||
