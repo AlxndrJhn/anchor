@@ -1,4 +1,5 @@
 import {
+  NoteLockKind,
   NoteSharePermission,
   ReminderRecurrence,
 } from 'src/generated/prisma/enums';
@@ -48,6 +49,9 @@ export interface TransformedNote {
   // the edit again, as in Google Keep.
   position?: number | null;
   positionedAt?: string | null;
+  // What this user locked the note with; null when it isn't locked.
+  // Absent means "not loaded".
+  lock?: NoteLockKind | null;
 }
 
 // Input type for notes from Prisma with includes
@@ -65,6 +69,7 @@ interface NoteWithIncludes {
   pins?: Array<{ userId: string }>;
   archives: Array<{ userId: string }>;
   orders?: Array<{ position: number; updatedAt: Date }>;
+  locks?: Array<{ kind: NoteLockKind }>;
   reminders?: Array<{
     remindAt: string;
     recurrence: ReminderRecurrence;
@@ -100,6 +105,7 @@ export function transformNote(
     pins,
     archives,
     orders,
+    locks,
     reminders,
     stateChangedAt,
     ...rest
@@ -150,6 +156,10 @@ export function transformNote(
     transformed.positionedAt = orders[0]
       ? toISOString(orders[0].updatedAt)
       : null;
+  }
+
+  if (locks) {
+    transformed.lock = locks[0]?.kind ?? null;
   }
 
   if (note.state === 'trashed' && stateChangedAt) {

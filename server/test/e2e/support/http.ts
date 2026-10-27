@@ -21,6 +21,10 @@ export class HttpClient {
     return request(this.server).post(path).set(this.headers);
   }
 
+  put(path: string) {
+    return request(this.server).put(path).set(this.headers);
+  }
+
   patch(path: string) {
     return request(this.server).patch(path).set(this.headers);
   }
