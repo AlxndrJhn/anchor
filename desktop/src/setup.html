@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' file:; img-src 'self' file:"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Anchor</title>
+    <link rel="stylesheet" href="setup.css" />
+  </head>
+  <body>
+    <main>
+      <img id="logo" alt="" width="88" height="88" />
+      <h1>Anchor</h1>
+      <p class="lead">Connect to your Anchor server.</p>
+
+      <div id="error" class="error" role="alert" hidden></div>
+      <button id="retry" type="button" class="secondary" hidden>Retry</button>
+
+      <form id="form" novalidate>
+        <label for="url">Server address</label>
+        <input
+          id="url"
+          name="url"
+          type="text"
+          inputmode="url"
+          autocomplete="url"
+          spellcheck="false"
+          placeholder="https://notes.example.com"
+          required
+        />
+        <button id="connect" type="submit">Connect</button>
+      </form>
+      <p class="hint">
+        The address you open Anchor at in your browser. The app checks that it
+        answers before saving it.
+      </p>
+      <p id="version" class="version"></p>
+    </main>
+    <script src="setup.js"></script>
+  </body>
+</html>

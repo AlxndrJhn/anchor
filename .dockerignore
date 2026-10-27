@@ -26,8 +26,9 @@
 **/ios/Pods
 **/*.tsbuildinfo
 
-# Mobile app
+# Mobile and desktop apps
 mobile
+desktop
 
 # Files not needed by the Dockerfile
 docker-compose*.yml

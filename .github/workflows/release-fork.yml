@@ -1,7 +1,8 @@
 name: Release (fork)
 
 # Every push to main releases this fork: a GitHub release tagged
-# fork-<app version>.<run>, with the APK attached, and the Docker image
+# fork-<app version>.<run>, with the APK and the desktop installers (Windows,
+# macOS) attached, and the Docker image
 # (amd64 + arm64) tagged with the same name plus :fork-latest and
 # :fork-<sha>. The newest APK (arm64, for nearly every phone) is always at:
 #   https://github.com/<owner>/<repo>/releases/latest/download/anchor-fork.apk
@@ -150,8 +151,70 @@ jobs:
           name: anchor-fork-apk
           path: mobile/build/app/outputs/flutter-apk/anchor-fork*.apk
 
+  build-desktop:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+            # -> Anchor-Setup-<version>.exe
+            targets: --win nsis --x64
+          - os: macos-latest
+            name: macos
+            # One .dmg for Apple silicon and Intel: Anchor-<version>-universal.dmg
+            targets: --mac dmg --universal
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: desktop
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: desktop/package.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: desktop/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check
+        run: pnpm run check
+
+      # Unsigned: no certificate is looked for, the macOS app is ad-hoc signed
+      # (see electron-builder.yml) and nothing is notarized or published.
+      - name: Build installer
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          pnpm exec electron-builder ${{ matrix.targets }} --publish never \
+            -c.extraMetadata.version="$VERSION"
+          ls -l dist
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchor-desktop-${{ matrix.name }}
+          path: |
+            desktop/dist/Anchor-*.exe
+            desktop/dist/Anchor-*.dmg
+          if-no-files-found: error
+
   release:
-    needs: [version, build-apk, docker]
+    needs: [version, build-apk, build-desktop, docker]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -166,6 +229,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: anchor-fork-apk
+
+      - name: Download desktop installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: anchor-desktop-*
+          merge-multiple: true
 
       - name: Create the release
         env:
@@ -183,6 +252,12 @@ jobs:
             echo 'Install `anchor-fork.apk`. It installs as "Anchor (fork)", next to the official app, and updates the previous fork build.'
             echo
             echo 'It is for 64-bit ARM, which nearly every phone since 2017 is. For an older 32-bit phone take `anchor-fork-armeabi-v7a.apk`; for an emulator or x86 tablet, `anchor-fork-x86_64.apk`.'
+            echo
+            echo "## Desktop (Windows, macOS)"
+            echo
+            echo "Windows: run \`$(ls Anchor-Setup-*.exe)\`. macOS (Apple silicon and Intel): open \`$(ls Anchor-*.dmg)\` and drag Anchor to Applications. On first launch it asks for your Anchor server's address."
+            echo
+            echo 'The installers are not signed. On Windows, if SmartScreen stops it, choose More info › Run anyway. On macOS, right-click the app and choose Open the first time, or allow it under System Settings › Privacy & Security.'
             echo
             echo "## Docker (amd64, arm64)"
             echo
@@ -202,7 +277,7 @@ jobs:
               git log --no-merges --format='- %s (%h)' -20
             fi
           } > notes.md
-          gh release create "$TAG" anchor-fork*.apk \
+          gh release create "$TAG" anchor-fork*.apk Anchor-*.exe Anchor-*.dmg \
             --target "$GITHUB_SHA" \
             --title "Anchor fork $TAG" \
             --notes-file notes.md \
