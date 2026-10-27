@@ -1,9 +1,12 @@
 services:
   anchor:
+    # This fork's image (amd64 and arm64), updated on every release. Pin a
+    # release instead with e.g. ghcr.io/alxndrjhn/anchor:fork-0.17.2.36.
+    image: ghcr.io/alxndrjhn/anchor:fork-latest
+    # `docker compose up -d --build` builds it from this checkout instead.
     build:
       context: .
       dockerfile: Dockerfile
-    image: anchor
     container_name: anchor
     restart: unless-stopped
     ports:
