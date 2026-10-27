@@ -277,6 +277,88 @@ void main() {
     },
   );
 
+  group('note locks', () {
+    Map<String, dynamic> applied(String id) => response(
+      results: [
+        {'type': 'note', 'id': id, 'status': 'applied', 'version': 2},
+      ],
+    );
+
+    Future<void> setLock(String id, String? lock) =>
+        (db.update(db.notes)..where((tbl) => tbl.id.equals(id))).write(
+          NotesCompanion(lock: Value(lock)),
+        );
+
+    test('a lock goes up with the note, and none says unlocked', () async {
+      await insertNote(id: 'locked', version: 1);
+      await setLock('locked', 'pin');
+      await insertNote(id: 'open', version: 1);
+      stub([
+        response(
+          results: [
+            {'type': 'note', 'id': 'locked', 'status': 'applied', 'version': 2},
+            {'type': 'note', 'id': 'open', 'status': 'applied', 'version': 2},
+          ],
+        ),
+      ]);
+
+      await service.run();
+
+      final sent = {for (final c in changesOf(0)) c['id']: c};
+      expect(sent['locked']!['lock'], 'pin');
+      expect(sent['open']!.containsKey('lock'), isTrue);
+      expect(sent['open']!['lock'], isNull);
+    });
+
+    test('a lock not known here yet is left to the server', () async {
+      await insertNote(id: 'n1', version: 1);
+      await setLock('n1', '');
+      stub([applied('n1')]);
+
+      await service.run();
+
+      expect(changesOf(0).single.containsKey('lock'), isFalse);
+    });
+
+    test('the feed brings the lock, and a server without locks keeps '
+        'what is here', () async {
+      await insertNote(id: 'kept', isSynced: true, version: 1);
+      await setLock('kept', 'tap');
+      stub([
+        response(
+          entries: [
+            noteEntry({...serverNoteJson('locked'), 'lock': 'biometric'}),
+            noteEntry(serverNoteJson('kept'), seq: '2'),
+          ],
+          nextCursor: 'cursor-1',
+        ),
+      ]);
+
+      await service.run();
+
+      expect((await note('locked'))!.lock, 'biometric');
+      expect((await note('kept'))!.lock, 'tap');
+    });
+
+    test('an edit waiting to go up takes a lock it didn\'t know', () async {
+      await insertNote(id: 'n1', version: 1);
+      await setLock('n1', '');
+      stub([
+        response(
+          entries: [
+            noteEntry({...serverNoteJson('n1'), 'lock': 'pattern'}),
+          ],
+          nextCursor: 'cursor-1',
+        ),
+        applied('n1'),
+      ]);
+
+      await service.run();
+
+      expect((await note('n1'))!.lock, 'pattern');
+    });
+  });
+
   Future<void> insertRevision({
     required String id,
     String noteId = 'n1',

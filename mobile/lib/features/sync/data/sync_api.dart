@@ -89,6 +89,8 @@ class SyncNoteChange extends SyncChange {
     required this.state,
     required this.tagIds,
     this.position,
+    this.lock,
+    this.sendsLock = true,
     this.placedAfterEdit = false,
     this.revisions = const [],
     this.isRevisionsOnly = false,
@@ -98,6 +100,13 @@ class SyncNoteChange extends SyncChange {
 
   /// Where this person dragged the note on the web, sent back unchanged.
   final double? position;
+
+  /// What this person locked the note with; null takes the lock off.
+  final String? lock;
+
+  /// False while this device doesn't know the note's lock yet, so the
+  /// server keeps whatever it has.
+  final bool sendsLock;
 
   /// Placed after its last edit (an item ticked from its card), so the
   /// server stamps the place after the edit and the note keeps it.
@@ -141,6 +150,7 @@ class SyncNoteChange extends SyncChange {
     if (state != null) 'state': state,
     'tagIds': tagIds,
     if (position != null) 'position': position,
+    if (sendsLock) 'lock': lock,
     if (placedAfterEdit) 'placedAfterEdit': true,
     if (revisions.isNotEmpty)
       'revisions': [for (final revision in revisions) revision.toJson()],
@@ -360,6 +370,8 @@ class SyncServerNote {
     this.hasPositionField = false,
     this.position,
     this.positionedAt,
+    this.hasLockField = false,
+    this.lock,
   });
 
   factory SyncServerNote.fromJson(Map<String, dynamic> json) {
@@ -381,6 +393,9 @@ class SyncServerNote {
       positionedAt: DateTime.tryParse(
         json['positionedAt'] as String? ?? '',
       )?.toUtc(),
+      // Servers without locks leave it out: keep what is here.
+      hasLockField: json.containsKey('lock'),
+      lock: json['lock'] as String?,
       tagIds: (json['tagIds'] as List?)?.cast<String>() ?? const [],
       permission: json['permission'] as String? ?? 'owner',
       shareIds: (json['shareIds'] as List?)?.cast<String>() ?? const [],
@@ -408,6 +423,8 @@ class SyncServerNote {
   final bool hasPositionField;
   final double? position;
   final DateTime? positionedAt;
+  final bool hasLockField;
+  final String? lock;
   final List<String> tagIds;
   final String permission;
   final List<String> shareIds;

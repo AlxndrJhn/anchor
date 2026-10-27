@@ -6,8 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
-import 'package:anchor/core/widgets/quill_preview.dart'
-    show extractPlainTextFromQuillContent;
+import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
+import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
+import '../note_search.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import '../notes_controller.dart';
@@ -245,19 +246,20 @@ class SelectionAppBarActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notes = ref.watch(notesControllerProvider);
     final query = ref.watch(searchQueryProvider);
+    final unlocked = ref.watch(noteLockSessionProvider);
     final theme = Theme.of(context);
 
     final filteredNotes = notes.maybeWhen(
       data: (notesList) {
-        return notesList.where((note) {
-          if (query.isEmpty) return true;
-          final q = query.toLowerCase();
-          final contentText = extractPlainTextFromQuillContent(
-            note.content,
-          ).toLowerCase();
-          return note.title.toLowerCase().contains(q) ||
-              contentText.contains(q);
-        }).toList();
+        return notesList
+            .where(
+              (note) => noteMatchesSearch(
+                note,
+                query,
+                titleOnly: isNoteHidden(note, unlocked),
+              ),
+            )
+            .toList();
       },
       orElse: () => <Note>[],
     );
@@ -311,6 +313,20 @@ class SelectionAppBarActions extends ConsumerWidget {
               !allSelectedPinned,
             ),
             tooltip: allSelectedPinned ? 'Unpin' : 'Pin',
+          ),
+        // Lock, with one choice for them all
+        if (selectedNoteIds.isNotEmpty)
+          IconButton(
+            icon: const Icon(LucideIcons.lock),
+            onPressed: () async {
+              final locked = await lockSelectedNotes(
+                context,
+                ref,
+                selectedNotes,
+              );
+              if (locked) onExitSelectionMode();
+            },
+            tooltip: 'Lock…',
           ),
         // Archive button
         if (selectedNoteIds.isNotEmpty)

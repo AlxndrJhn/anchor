@@ -409,6 +409,20 @@ void main() {
       expect(reminderRetryDelay(20), reminderRetryDelay(_retryDelayCount));
     });
   });
+
+  test('a locked note without a title rings without its text', () {
+    const note = Note(
+      id: 'n1',
+      title: '',
+      content: '{"ops":[{"insert":"my secret\\n"}]}',
+    );
+    expect(reminderHeading(note), 'my secret');
+    expect(reminderHeading(note.copyWith(lock: NoteLock.pin)), isNull);
+    expect(
+      reminderHeading(note.copyWith(title: 'Diary', lock: NoteLock.pin)),
+      'Diary',
+    );
+  });
 }
 
 /// How many steps the backoff has before it levels off.

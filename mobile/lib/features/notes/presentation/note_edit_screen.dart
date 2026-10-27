@@ -23,6 +23,7 @@ import 'package:anchor/features/notes/presentation/widgets/note_background.dart'
 import 'package:anchor/features/notes/presentation/widgets/note_background_picker.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_options_sheet.dart';
 import 'package:anchor/features/notes/presentation/widgets/share_note_sheet.dart';
+import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
 import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -636,6 +637,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   void _showOptionsSheet() {
     final editor = _editorKey.currentState;
     final checked = _isReadOnly ? 0 : (editor?.checkedItemCount ?? 0);
+    // Saved notes, not in the trash, can be locked.
+    final existing = _existingNote;
+    final lockable = !_isNew && existing != null && !existing.isTrashed
+        ? existing
+        : null;
     AppBottomSheet.show(
       context,
       builder: (context) => NoteOptionsSheet(
@@ -666,6 +672,13 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 !(editor?.canShowCheckboxes ?? true) &&
                 (editor?.isAllChecklist ?? false)
             ? () => editor?.hideCheckboxes()
+            : null,
+        onLockTap: lockable == null
+            ? null
+            : () => lockOpenNote(context, ref, lockable),
+        isLocked: lockable?.isLocked ?? false,
+        onRemoveLockTap: lockable?.isLocked ?? false
+            ? () => unlockOpenNote(context, ref, lockable!)
             : null,
         onUncheckAllTap: checked > 0 ? () => editor?.uncheckAll() : null,
         onRemoveCheckedTap: checked > 0

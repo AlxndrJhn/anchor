@@ -1,6 +1,9 @@
 package com.zhfahim.anchor
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.drawable.Icon
@@ -11,16 +14,35 @@ import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import com.zhfahim.anchor.widget.NotesWidgetProvider
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import java.io.File
 import java.util.UUID
 
-class MainActivity : FlutterActivity() {
+// A FragmentActivity so local_auth can show the fingerprint prompt.
+class MainActivity : FlutterFragmentActivity() {
 
     private var shareChannel: MethodChannel? = null
+
+    private var lockChannel: MethodChannel? = null
+
+    /**
+     * The screen went off since Flutter last asked: unlocked notes lock
+     * again. Kept for when the message to Flutter can't land (the engine
+     * paused or not attached yet); Flutter asks for it on resume.
+     */
+    private var screenWentOff = false
+
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != Intent.ACTION_SCREEN_OFF) return
+            screenWentOff = true
+            lockChannel?.invokeMethod("screenOff", null)
+        }
+    }
 
     /** What another app shared, until the Flutter side takes it. */
     private var pendingShare: Map<String, Any?>? = null
@@ -31,6 +53,23 @@ class MainActivity : FlutterActivity() {
         if (savedInstanceState == null) readShare(intent)
         super.onCreate(savedInstanceState)
         publishShortcuts()
+        // Only a registered receiver hears the screen go off; it can't be
+        // declared in the manifest.
+        ContextCompat.registerReceiver(
+            this,
+            screenOffReceiver,
+            IntentFilter(Intent.ACTION_SCREEN_OFF),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+    }
+
+    override fun onDestroy() {
+        try {
+            unregisterReceiver(screenOffReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Never registered.
+        }
+        super.onDestroy()
     }
 
     /**
@@ -79,6 +118,17 @@ class MainActivity : FlutterActivity() {
                     if (call.method == "takeShared") {
                         result.success(pendingShare)
                         pendingShare = null
+                    } else {
+                        result.notImplemented()
+                    }
+                }
+            }
+        lockChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, LOCK_CHANNEL)
+            .also { channel ->
+                channel.setMethodCallHandler { call, result ->
+                    if (call.method == "takeScreenOff") {
+                        result.success(screenWentOff)
+                        screenWentOff = false
                     } else {
                         result.notImplemented()
                     }
@@ -187,5 +237,6 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val SHARE_CHANNEL = "anchor/share"
         private const val UPDATE_CHANNEL = "anchor/update"
+        private const val LOCK_CHANNEL = "anchor/lock"
     }
 }

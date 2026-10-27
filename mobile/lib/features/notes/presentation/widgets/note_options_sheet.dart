@@ -38,6 +38,13 @@ class NoteOptionsSheet extends StatelessWidget {
   final VoidCallback? onUncheckAllTap;
   final VoidCallback? onRemoveCheckedTap;
 
+  /// Lock… (or Change lock… when [isLocked]); null hides it.
+  final VoidCallback? onLockTap;
+  final bool isLocked;
+
+  /// Remove lock; null hides it.
+  final VoidCallback? onRemoveLockTap;
+
   const NoteOptionsSheet({
     super.key,
     required this.isReadOnly,
@@ -55,6 +62,9 @@ class NoteOptionsSheet extends StatelessWidget {
     this.onHideCheckboxesTap,
     this.onUncheckAllTap,
     this.onRemoveCheckedTap,
+    this.onLockTap,
+    this.isLocked = false,
+    this.onRemoveLockTap,
   });
 
   static const double _maxTileWidth = 104;
@@ -132,6 +142,18 @@ class NoteOptionsSheet extends StatelessWidget {
           icon: LucideIcons.history,
           label: 'History',
           onTap: onHistoryTap!,
+        ),
+      if (onLockTap != null)
+        _OptionSpec(
+          icon: LucideIcons.lock,
+          label: isLocked ? 'Change lock…' : 'Lock…',
+          onTap: onLockTap!,
+        ),
+      if (onRemoveLockTap != null)
+        _OptionSpec(
+          icon: LucideIcons.lockOpen,
+          label: 'Remove lock',
+          onTap: onRemoveLockTap!,
         ),
     ];
 

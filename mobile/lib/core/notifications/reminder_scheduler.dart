@@ -263,9 +263,11 @@ class ReminderSyncReport {
   final int failed;
 }
 
-/// The note's title, or else the first line of its text.
+/// The note's title, or else the first line of its text (but never a
+/// locked note's: notifications show on the lock screen).
 String? reminderHeading(domain.Note note) {
   if (note.hasTitle) return note.title;
+  if (note.isLocked) return null;
   final firstLine = extractPlainTextFromQuillContent(
     note.content,
   ).split('\n').first;

@@ -607,6 +607,24 @@ class NotesRepository {
     return ids.length;
   }
 
+  /// Locks the notes with [lock], or unlocks them (null). The lock is this
+  /// person's own and goes up with each note.
+  Future<void> setLock(List<String> ids, domain.NoteLock? lock) async {
+    if (ids.isEmpty) return;
+    await (_db.update(_db.notes)..where((tbl) => tbl.id.isIn(ids))).write(
+      NotesCompanion.custom(
+        lock: drift.Constant(lock?.name),
+        isSynced: const drift.Constant(false),
+        localRev: _nextRev,
+      ),
+    );
+    AppLogger.instance.info(
+      'Notes',
+      'setLock count=${ids.length} lock=${lock?.name ?? 'none'}',
+    );
+    scheduleAppSync(trigger: 'NotesRepo.setLock');
+  }
+
   /// Puts a note where it was dragged among the notes; it stays there until it
   /// is next edited, and goes up with the note.
   Future<void> setPosition(String noteId, double position) async {
@@ -776,6 +794,7 @@ class NotesRepository {
               profileImage: row.sharedByProfileImage,
             )
           : null,
+      lock: domain.NoteLock.fromString(row.lock),
       isSynced: row.isSynced,
       reminderSlot: row.reminderSlot,
       reminder: row.reminderAt == null

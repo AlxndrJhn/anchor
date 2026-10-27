@@ -11,6 +11,8 @@ import 'core/notifications/reminder_tap_handler.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/update/app_updater.dart';
+import 'features/note_locks/data/note_lock_secrets.dart';
+import 'features/note_locks/presentation/note_lock_session.dart';
 import 'features/settings/presentation/controllers/theme_preferences_controller.dart';
 
 void main() async {
@@ -46,6 +48,12 @@ class AnchorApp extends ConsumerWidget {
     // Keep the OS's scheduled reminders in step and handle their taps
     ref.watch(reminderSchedulerProvider);
     ref.watch(reminderTapHandlerProvider);
+
+    // Unlocked notes lock again when the screen turns off. Listened to, not
+    // watched: unlocking a note mustn't rebuild the app.
+    ref.listen(noteLockSessionProvider, (_, _) {});
+    // Keep this device's copy of the PIN and pattern current.
+    ref.listen(noteLockSecretsControllerProvider, (_, _) {});
 
     return MaterialApp.router(
       title: 'Anchor Notes',

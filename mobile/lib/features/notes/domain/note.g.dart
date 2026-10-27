@@ -84,6 +84,7 @@ _Note _$NoteFromJson(Map<String, dynamic> json) => _Note(
   reminder: json['reminder'] == null
       ? null
       : NoteReminder.fromJson(json['reminder'] as Map<String, dynamic>),
+  lock: $enumDecodeNullable(_$NoteLockEnumMap, json['lock']),
 );
 
 Map<String, dynamic> _$NoteToJson(_Note instance) => <String, dynamic>{
@@ -103,6 +104,7 @@ Map<String, dynamic> _$NoteToJson(_Note instance) => <String, dynamic>{
   'shareIds': instance.shareIds,
   'sharedBy': instance.sharedBy,
   'reminder': instance.reminder,
+  'lock': _$NoteLockEnumMap[instance.lock],
 };
 
 const _$NoteStateEnumMap = {
@@ -115,4 +117,11 @@ const _$NotePermissionEnumMap = {
   NotePermission.owner: 'owner',
   NotePermission.viewer: 'viewer',
   NotePermission.editor: 'editor',
+};
+
+const _$NoteLockEnumMap = {
+  NoteLock.biometric: 'biometric',
+  NoteLock.pin: 'pin',
+  NoteLock.pattern: 'pattern',
+  NoteLock.tap: 'tap',
 };

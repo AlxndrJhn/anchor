@@ -28,6 +28,7 @@ import 'package:anchor/features/notes/presentation/widgets/reminder_chip.dart';
 import 'package:anchor/features/notes/presentation/widgets/share_note_sheet.dart';
 import 'package:anchor/core/widgets/app_bottom_sheet.dart';
 import 'package:anchor/core/theme/tokens/app_opacity.dart';
+import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
 
 /// Lines of body text shown under the title.
 const _previewMaxLines = 6;
@@ -67,31 +68,38 @@ class NoteCard extends ConsumerWidget {
     final dims = context.dims;
     final showPictures =
         ref.watch(notesViewOptionsProvider).value?.showPictures ?? true;
-    final hasImages = showPictures && note.imagePreviewData.isNotEmpty;
-    final hasContent = note.content != null && note.content!.isNotEmpty;
+    // Locked and not opened this session: the title only, no text or
+    // pictures.
+    final isHidden = isNoteHidden(note, ref.watch(noteLockSessionProvider));
+    final hasImages =
+        !isHidden && showPictures && note.imagePreviewData.isNotEmpty;
+    final hasContent =
+        isHidden || (note.content != null && note.content!.isNotEmpty);
     final showBadge = isSelectionMode && !hasImages;
     final showPin = !isSelectionMode && !hasImages && note.isPinned;
     final showTopRow = note.hasTitle || hasContent || showBadge || showPin;
     // Items can be ticked from the card, without opening the note.
     final canTick =
         !isSelectionMode && note.canEdit && note.isActive && !note.isArchived;
-    final preview = QuillPreview(
-      content: note.content,
-      maxLines: _previewMaxLines,
-      onToggleItem: canTick
-          ? (line) => ref
-                .read(notesRepositoryProvider)
-                .toggleChecklistItem(
-                  note.id,
-                  line,
-                  sort: ref
-                      .read(editorPreferencesControllerProvider)
-                      .sortChecklistItems,
-                  // So several items can be ticked in a row.
-                  keepAt: keptPlace(note),
-                )
-          : null,
-    );
+    final Widget preview = isHidden
+        ? const _LockedLine()
+        : QuillPreview(
+            content: note.content,
+            maxLines: _previewMaxLines,
+            onToggleItem: canTick
+                ? (line) => ref
+                      .read(notesRepositoryProvider)
+                      .toggleChecklistItem(
+                        note.id,
+                        line,
+                        sort: ref
+                            .read(editorPreferencesControllerProvider)
+                            .sortChecklistItems,
+                        // So several items can be ticked in a row.
+                        keepAt: keptPlace(note),
+                      )
+                : null,
+          );
 
     final cardColor = note.background != null
         ? NoteBackground.resolveColor(context, note.background)
@@ -196,6 +204,20 @@ class NoteCard extends ConsumerWidget {
                                       LucideIcons.pin,
                                       size: AppIconSizes.sm,
                                       color: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                  // Opened this session: shown, but still
+                                  // locked.
+                                  if (note.isLocked && !isHidden) ...[
+                                    SizedBox(width: dims.xs),
+                                    Icon(
+                                      LucideIcons.lockOpen,
+                                      key: const ValueKey('card-unlocked'),
+                                      size: AppIconSizes.sm,
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(
+                                            alpha: AppOpacity.secondary,
+                                          ),
                                     ),
                                   ],
                                 ],
@@ -346,6 +368,31 @@ class NoteCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// In place of a locked note's text.
+class _LockedLine extends StatelessWidget {
+  const _LockedLine();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurface.withValues(
+      alpha: AppOpacity.secondary,
+    );
+    return Row(
+      key: const ValueKey('card-locked'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(LucideIcons.lock, size: AppIconSizes.sm, color: color),
+        SizedBox(width: context.dims.xs),
+        Text(
+          'Locked',
+          style: theme.textTheme.bodyMedium?.copyWith(color: color),
+        ),
+      ],
     );
   }
 }

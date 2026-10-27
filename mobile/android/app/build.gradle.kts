@@ -79,4 +79,7 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     // FileProvider, to hand a downloaded update to Android's installer.
     implementation("androidx.core:core:1.17.0")
+    // An AppCompat theme, which the fingerprint prompt needs on Android 8
+    // and older (local_auth).
+    implementation("androidx.appcompat:appcompat:1.7.1")
 }

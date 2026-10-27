@@ -32,6 +32,8 @@ import '../../../core/update/app_updater.dart';
 import '../../../core/update/update_sheet.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../picture_search/picture_search.dart';
+import '../../note_locks/data/note_lock_secrets.dart';
+import '../../note_locks/presentation/lock_secret_setup_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -255,6 +257,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
 
                     const _PictureSearchSection(),
+
+                    const _NoteLocksSection(),
 
                     _Section(
                       title: 'Account',
@@ -598,6 +602,77 @@ class _PictureSearchSectionState extends ConsumerState<_PictureSearchSection> {
           onChanged: (on) {
             if (!_saving) _setEnabled(on);
           },
+        ),
+      ],
+    );
+  }
+}
+
+/// The one PIN and one pattern that open locked notes.
+class _NoteLocksSection extends ConsumerStatefulWidget {
+  const _NoteLocksSection();
+
+  @override
+  ConsumerState<_NoteLocksSection> createState() => _NoteLocksSectionState();
+}
+
+class _NoteLocksSectionState extends ConsumerState<_NoteLocksSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Maybe set or changed on another device.
+    Future.microtask(
+      () => ref.read(noteLockSecretsControllerProvider.notifier).refresh(),
+    );
+  }
+
+  Future<void> _set(LockSecretKind kind) async {
+    final controller = ref.read(noteLockSecretsControllerProvider.notifier);
+    final fresh = await controller.refresh();
+    if (!mounted) return;
+    if (fresh == null) {
+      AppSnackbar.showError(
+        context,
+        message: kind == LockSecretKind.pin
+            ? 'Changing the PIN needs a connection to the server'
+            : 'Changing the pattern needs a connection to the server',
+      );
+      return;
+    }
+    final saved = await LockSecretSetupScreen.open(
+      context,
+      kind: kind,
+      replacing: fresh.has(kind),
+    );
+    if (!saved || !mounted) return;
+    AppSnackbar.showSuccess(
+      context,
+      message: kind == LockSecretKind.pin ? 'PIN saved' : 'Pattern saved',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final secrets =
+        ref.watch(noteLockSecretsControllerProvider).value ??
+        NoteLockSecrets.none;
+    final hasPin = secrets.has(LockSecretKind.pin);
+    final hasPattern = secrets.has(LockSecretKind.pattern);
+    return _Section(
+      title: 'Note locks',
+      icon: LucideIcons.lock,
+      children: [
+        SettingsActionRow(
+          title: hasPin ? 'Change PIN' : 'Set PIN',
+          subtitle: 'Opens the notes you lock with a PIN',
+          icon: LucideIcons.rectangleEllipsis,
+          onTap: () => _set(LockSecretKind.pin),
+        ),
+        SettingsActionRow(
+          title: hasPattern ? 'Change pattern' : 'Set pattern',
+          subtitle: 'Opens the notes you lock with a pattern',
+          icon: LucideIcons.grip,
+          onTap: () => _set(LockSecretKind.pattern),
         ),
       ],
     );

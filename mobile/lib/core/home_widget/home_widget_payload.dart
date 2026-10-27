@@ -40,7 +40,11 @@ String buildHomeWidgetPayload(List<Note> notes, {required bool loggedIn}) {
     return {
       'id': note.id,
       'title': storedTitleOf(note.title),
-      'snippet': _truncate(extractPlainTextFromQuillContent(note.content)),
+      // The home screen shows without unlocking the app: a locked note's
+      // text never goes there.
+      'snippet': note.isLocked
+          ? 'Locked'
+          : _truncate(extractPlainTextFromQuillContent(note.content)),
       'pinned': note.isPinned,
     };
   }).toList();

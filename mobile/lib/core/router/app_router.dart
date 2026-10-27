@@ -12,6 +12,7 @@ import '../../features/notes/presentation/note_history_screen.dart';
 import '../../features/notes/presentation/note_revision_screen.dart';
 import '../../features/notes/presentation/trash_screen.dart';
 import '../../features/notes/presentation/archive_screen.dart';
+import '../../features/note_locks/presentation/note_lock_gate.dart';
 import '../app_initializer.dart';
 import '../presentation/server_config_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -98,25 +99,35 @@ GoRouter goRouter(Ref ref) {
               final note = state.extra as Note?;
               return MaterialPage(
                 key: ValueKey('note/$id'),
-                child: NoteEditScreen(
-                  noteId: id,
+                // A locked note opens only once unlocked.
+                child: NoteLockGate(
+                  noteId: id!,
                   note: note,
-                  // Set when opened from search results.
-                  highlightTerm: state.uri.queryParameters['hl'],
+                  child: NoteEditScreen(
+                    noteId: id,
+                    note: note,
+                    // Set when opened from search results.
+                    highlightTerm: state.uri.queryParameters['hl'],
+                  ),
                 ),
               );
             },
             routes: [
               GoRoute(
                 path: AppRoutes.noteHistory,
-                builder: (context, state) =>
-                    NoteHistoryScreen(noteId: state.pathParameters['id']!),
+                builder: (context, state) => NoteLockGate(
+                  noteId: state.pathParameters['id']!,
+                  child: NoteHistoryScreen(noteId: state.pathParameters['id']!),
+                ),
                 routes: [
                   GoRoute(
                     path: AppRoutes.noteRevision,
-                    builder: (context, state) => NoteRevisionScreen(
+                    builder: (context, state) => NoteLockGate(
                       noteId: state.pathParameters['id']!,
-                      revisionId: state.pathParameters['revisionId']!,
+                      child: NoteRevisionScreen(
+                        noteId: state.pathParameters['id']!,
+                        revisionId: state.pathParameters['revisionId']!,
+                      ),
                     ),
                   ),
                 ],
@@ -176,7 +187,10 @@ GoRouter goRouter(Ref ref) {
           final id = state.pathParameters['id'];
           return MaterialPage(
             key: ValueKey('widget-note/$id'),
-            child: NoteEditScreen(noteId: id),
+            child: NoteLockGate(
+              noteId: id!,
+              child: NoteEditScreen(noteId: id),
+            ),
           );
         },
       ),

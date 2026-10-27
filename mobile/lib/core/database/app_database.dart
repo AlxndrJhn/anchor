@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -153,6 +153,22 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(tags, tags.position);
         }
         // Resent tags bring where each was dragged.
+        await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
+          const SyncStateCompanion(cursor: Value(null)),
+        );
+      }
+      if (from < 16) {
+        final existing = await customSelect(
+          'PRAGMA table_info(notes)',
+        ).map((row) => row.read<String>('name')).get();
+        if (!existing.contains('lock')) {
+          await m.addColumn(notes, notes.lock);
+        }
+        // Not known until the feed resends the notes, so an edit waiting to
+        // go up doesn't take off a lock set elsewhere.
+        await update(
+          notes,
+        ).write(const NotesCompanion(lock: Value(unknownNoteLock)));
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
           const SyncStateCompanion(cursor: Value(null)),
         );

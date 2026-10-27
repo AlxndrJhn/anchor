@@ -39,6 +39,7 @@ import '../../../core/theme/tokens/app_radius.dart';
 import 'package:anchor/core/widgets/app_bottom_sheet.dart';
 import 'package:anchor/core/widgets/app_bar_scrim.dart';
 import 'package:anchor/core/widgets/large_title_app_bar.dart';
+import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
 
 class NotesListScreen extends ConsumerStatefulWidget {
   const NotesListScreen({super.key});
@@ -645,8 +646,14 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                 ...notesAsync.when(
                   data: (notes) {
                     final q = searchQuery.trim().toLowerCase();
+                    final unlocked = ref.watch(noteLockSessionProvider);
                     bool matches(Note note) =>
-                        filters.matches(note) && noteMatchesSearch(note, q);
+                        filters.matches(note) &&
+                        noteMatchesSearch(
+                          note,
+                          q,
+                          titleOnly: isNoteHidden(note, unlocked),
+                        );
 
                     final filteredNotes = notes.where(matches).toList();
                     // A search, or a tag (whose count includes them), also
@@ -674,7 +681,11 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                         : notesForMatches(
                             ref.watch(pictureMatchesProvider(q)).value ??
                                 const [],
-                            [...notes, ...archived].where(filters.matches),
+                            [...notes, ...archived].where(
+                              (note) =>
+                                  filters.matches(note) &&
+                                  !isNoteHidden(note, unlocked),
+                            ),
                             [...filteredNotes, ...archivedMatches],
                           );
 
