@@ -31,6 +31,7 @@ import {
   TRASH_RETENTION_DAYS,
 } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
+import { destroyNoteCards } from "@/lib/destroy";
 import { eachLimited } from "@/lib/each";
 import { plural } from "@/lib/utils";
 
@@ -92,7 +93,11 @@ export default function TrashPage() {
   const remove = useMutation({
     mutationFn: ({ ids }: { ids: string[]; all?: boolean }) =>
       eachLimited(ids, permanentDeleteNote),
-    onMutate: () => list.prepareCardMotion(),
+    onMutate: ({ ids }) => {
+      list.prepareCardMotion();
+      // Deleted cards burn away where they stand.
+      return { restoreCards: destroyNoteCards(ids) };
+    },
     onSuccess: async (_, { ids, all }) => {
       await refresh();
       list.stopPicking();
@@ -105,7 +110,8 @@ export default function TrashPage() {
             : `${plural(ids.length, "note")} permanently deleted`,
       );
     },
-    onError: (_, variables) => {
+    onError: (_, variables, context) => {
+      context?.restoreCards();
       refresh();
       toast.error(
         variables.all

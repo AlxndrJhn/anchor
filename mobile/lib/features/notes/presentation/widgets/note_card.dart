@@ -1,3 +1,4 @@
+import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,11 @@ class NoteCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) =>
+      // Deleted, the card burns away where it stands.
+      Destructible(id: note.id, child: _card(context, ref));
+
+  Widget _card(BuildContext context, WidgetRef ref) {
     final tagsAsync = ref.watch(tagsControllerProvider);
     final serverUrl = ref.watch(serverUrlProvider);
     final theme = Theme.of(context);

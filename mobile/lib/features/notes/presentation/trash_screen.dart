@@ -1,3 +1,4 @@
+import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -55,6 +56,7 @@ class TrashScreen extends ConsumerWidget {
         confirmColor: Theme.of(context).colorScheme.error,
         onConfirm: () async {
           try {
+            destroyNoteCards(context, [note.id]);
             await ref
                 .read(trashControllerProvider.notifier)
                 .permanentDelete(note.id);
@@ -88,6 +90,10 @@ class TrashScreen extends ConsumerWidget {
         confirmColor: Theme.of(context).colorScheme.error,
         onConfirm: () async {
           try {
+            destroyNoteCards(context, [
+              for (final note in ref.read(trashControllerProvider).value ?? [])
+                note.id,
+            ]);
             final deleted = await ref
                 .read(trashControllerProvider.notifier)
                 .emptyTrash();

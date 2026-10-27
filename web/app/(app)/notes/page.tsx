@@ -57,6 +57,7 @@ import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
 import { usePictureMatches } from "@/features/picture-search/use-picture-matches";
 import { tagColorStyle, useTagMap } from "@/features/tags";
+import { destroyNoteCards } from "@/lib/destroy";
 import { eachLimited } from "@/lib/each";
 import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { rememberNewNoteButton } from "@/lib/morph";
@@ -200,9 +201,11 @@ function NotesView({ tagId }: { tagId: string | null }) {
       else if (kind === "archive") await bulkArchiveNotes(ids);
       else await bulkDeleteNotes(ids);
     },
-    onMutate: ({ ids }) => {
+    onMutate: ({ kind, ids }) => {
       list.prepareCardMotion();
       return {
+        // Deleted cards burn away where they stand.
+        restoreCards: kind === "trash" ? destroyNoteCards(ids) : undefined,
         ownedIds: ids.filter(
           (id) => notes.find((n) => n.id === id)?.permission === "owner",
         ),
@@ -242,7 +245,8 @@ function NotesView({ tagId }: { tagId: string | null }) {
         );
       }
     },
-    onError: (_, { kind, ids }) => {
+    onError: (_, { kind, ids }, context) => {
+      context?.restoreCards?.();
       const verb = {
         pin: "pin",
         unpin: "unpin",

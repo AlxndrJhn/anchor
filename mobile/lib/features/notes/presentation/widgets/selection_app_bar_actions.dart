@@ -1,3 +1,4 @@
+import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_background_picker.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +90,7 @@ class SelectionAppBarActions extends ConsumerWidget {
         if (!sharedIds.contains(id)) id,
     ];
     try {
+      destroyNoteCards(context, ids);
       await ref.read(notesControllerProvider.notifier).bulkDeleteNotes(ids);
       onExitSelectionMode();
       if (context.mounted) {
