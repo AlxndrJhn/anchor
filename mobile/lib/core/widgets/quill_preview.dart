@@ -5,10 +5,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/context_extensions.dart';
 import '../theme/tokens/app_icon_sizes.dart';
+import 'editor/text_formats.dart';
 
 /// A single line in the preview with optional list/checklist state.
 class _PreviewLine {
   final String text;
+
+  /// The line's text runs with their inline attributes.
+  final List<_PreviewRun> runs;
   final String?
   listType; // 'checked' | 'unchecked' | 'ordered' | 'bullet' | null
 
@@ -21,6 +25,7 @@ class _PreviewLine {
   const _PreviewLine({
     required this.text,
     required this.index,
+    this.runs = const [],
     this.listType,
     this.indent = 0,
   });
@@ -29,6 +34,62 @@ class _PreviewLine {
   bool get isChecked => listType == 'checked';
   bool get isOrderedList => listType == 'ordered';
   bool get isBulletList => listType == 'bullet';
+
+  /// The runs with the line's outer whitespace trimmed, as [text] is shown.
+  List<_PreviewRun> get trimmedRuns {
+    final result = runs.where((r) => r.text.isNotEmpty).toList();
+    while (result.isNotEmpty) {
+      final first = result.first;
+      final t = first.text.trimLeft();
+      if (t.isNotEmpty) {
+        result[0] = _PreviewRun(t, first.attributes);
+        break;
+      }
+      result.removeAt(0);
+    }
+    while (result.isNotEmpty) {
+      final last = result.last;
+      final t = last.text.trimRight();
+      if (t.isNotEmpty) {
+        result[result.length - 1] = _PreviewRun(t, last.attributes);
+        break;
+      }
+      result.removeLast();
+    }
+    return result;
+  }
+}
+
+/// A piece of a line's text with its inline attributes.
+class _PreviewRun {
+  final String text;
+  final Map<String, dynamic>? attributes;
+
+  const _PreviewRun(this.text, this.attributes);
+}
+
+/// The line as a span: highlight, text colour and font show as in the
+/// editor, laid over [style].
+TextSpan _lineSpan(_PreviewLine line, TextStyle style) {
+  final runs = line.trimmedRuns;
+  final hasFormats = runs.any(
+    (r) =>
+        r.attributes != null &&
+        (r.attributes!.containsKey(TextFormats.highlightKey) ||
+            r.attributes!.containsKey(TextFormats.colorKey) ||
+            r.attributes!.containsKey(TextFormats.fontKey)),
+  );
+  if (!hasFormats) return TextSpan(text: line.text.trim(), style: style);
+  return TextSpan(
+    style: style,
+    children: [
+      for (final run in runs)
+        TextSpan(
+          text: run.text,
+          style: inlineFormatStyle(run.attributes, textColor: style.color),
+        ),
+    ],
+  );
 }
 
 /// A lightweight read-only preview of Quill content for list views.
@@ -85,7 +146,6 @@ class QuillPreview extends StatelessWidget {
     final children = <Widget>[];
 
     for (final line in displayLines) {
-      final lineText = line.text.trim();
       final marker = orderedMarkers.markerFor(
         listType: line.listType,
         indent: line.indent,
@@ -116,17 +176,19 @@ class QuillPreview extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    lineText,
-                    style: effectiveStyle.copyWith(
-                      decoration: line.isChecked
-                          ? TextDecoration.lineThrough
-                          : null,
-                      color: line.isChecked
-                          ? theme.textTheme.bodyMedium?.color?.withValues(
-                              alpha: 0.6,
-                            )
-                          : null,
+                  child: Text.rich(
+                    _lineSpan(
+                      line,
+                      effectiveStyle.copyWith(
+                        decoration: line.isChecked
+                            ? TextDecoration.lineThrough
+                            : null,
+                        color: line.isChecked
+                            ? theme.textTheme.bodyMedium?.color?.withValues(
+                                alpha: 0.6,
+                              )
+                            : null,
+                      ),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -154,9 +216,8 @@ class QuillPreview extends StatelessWidget {
                 ),
                 SizedBox(width: dims.xxs),
                 Expanded(
-                  child: Text(
-                    lineText,
-                    style: effectiveStyle,
+                  child: Text.rich(
+                    _lineSpan(line, effectiveStyle),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -177,9 +238,8 @@ class QuillPreview extends StatelessWidget {
                   child: Text('•', style: effectiveStyle),
                 ),
                 Expanded(
-                  child: Text(
-                    lineText,
-                    style: effectiveStyle,
+                  child: Text.rich(
+                    _lineSpan(line, effectiveStyle),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -192,9 +252,8 @@ class QuillPreview extends StatelessWidget {
         children.add(
           Padding(
             padding: EdgeInsets.only(bottom: 2, left: line.indent * 12.0),
-            child: Text(
-              lineText,
-              style: effectiveStyle,
+            child: Text.rich(
+              _lineSpan(line, effectiveStyle),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -299,11 +358,11 @@ List<_PreviewLine> _parseQuillContentToPreviewLines(String? content) {
     final document = Document.fromJson(json['ops'] as List);
     final ops = document.toDelta().toList();
     final result = <_PreviewLine>[];
-    var currentLineParts = <String>[];
+    var currentRuns = <_PreviewRun>[];
 
     for (final op in ops) {
       if (op.data is! String) {
-        currentLineParts.add('');
+        currentRuns.add(const _PreviewRun('', null));
         continue;
       }
       final text = op.data as String;
@@ -312,28 +371,33 @@ List<_PreviewLine> _parseQuillContentToPreviewLines(String? content) {
       for (var i = 0; i < parts.length; i++) {
         final part = parts[i];
         if (part.isNotEmpty) {
-          currentLineParts.add(part);
+          currentRuns.add(_PreviewRun(part, op.attributes));
         }
         if (i < parts.length - 1) {
-          final lineText = currentLineParts.join();
           final listType = op.attributes?['list'] as String?;
           final indent = op.attributes?['indent'] as int? ?? 0;
           result.add(
             _PreviewLine(
-              text: lineText,
+              text: currentRuns.map((r) => r.text).join(),
+              runs: currentRuns,
               index: result.length,
               listType: listType,
               indent: indent,
             ),
           );
-          currentLineParts = [];
+          currentRuns = [];
         }
       }
     }
 
-    if (currentLineParts.isNotEmpty) {
-      final lineText = currentLineParts.join();
-      result.add(_PreviewLine(text: lineText, index: result.length));
+    if (currentRuns.isNotEmpty) {
+      result.add(
+        _PreviewLine(
+          text: currentRuns.map((r) => r.text).join(),
+          runs: currentRuns,
+          index: result.length,
+        ),
+      );
     }
 
     return result;

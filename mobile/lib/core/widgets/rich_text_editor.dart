@@ -405,8 +405,38 @@ class RichTextEditorState extends State<RichTextEditor>
     AppSnackbar.showSuccess(context, message: 'Link copied');
   }
 
+  /// Keeps explicit text colours on highlights, then marks search matches.
+  InlineSpan _spanBuilder(
+    BuildContext context,
+    Node node,
+    int nodeOffset,
+    String text,
+    TextStyle? style,
+    GestureRecognizer? recognizer,
+  ) {
+    final styled = withExplicitTextColor(node, style);
+    return _highlight == null
+        ? defaultSpanBuilder(
+            context,
+            node,
+            nodeOffset,
+            text,
+            styled,
+            recognizer,
+          )
+        : _searchSpanBuilder(
+            context,
+            node,
+            nodeOffset,
+            text,
+            styled,
+            recognizer,
+          );
+  }
+
   /// Splits [text] so each match of the search term gets a marker colour.
-  InlineSpan _highlightSpanBuilder(
+  /// Matches inside a `highlight` keep the marker, so they still stand out.
+  InlineSpan _searchSpanBuilder(
     BuildContext context,
     Node node,
     int nodeOffset,
@@ -426,10 +456,10 @@ class RichTextEditorState extends State<RichTextEditor>
         recognizer,
       );
     }
+    final tint = Theme.of(context).colorScheme.primary.withValues(alpha: 0.3);
+    final fill = style?.backgroundColor;
     final mark = (style ?? const TextStyle()).copyWith(
-      backgroundColor: Theme.of(
-        context,
-      ).colorScheme.primary.withValues(alpha: 0.3),
+      backgroundColor: fill == null ? tint : Color.alphaBlend(tint, fill),
     );
     final spans = <TextSpan>[];
     var at = 0;
@@ -677,11 +707,9 @@ class RichTextEditorState extends State<RichTextEditor>
                     showCursor: _isEditing && widget.canEdit,
                     enableInteractiveSelection: true,
                     customStyles: getEditorStyles(context),
-                    textSpanBuilder: _highlight == null
-                        ? defaultSpanBuilder
-                        : _highlightSpanBuilder,
+                    textSpanBuilder: _spanBuilder,
                     customStyleBuilder: (attribute) =>
-                        getCheckedListStyle(attribute, context),
+                        getEditorCustomStyle(attribute, context),
                     // ignore: experimental_member_use
                     customLeadingBlockBuilder: _buildLeading,
                     editorKey: _editorKey,
