@@ -150,6 +150,7 @@ class SyncTagChange extends SyncChange {
     required this.name,
     required this.color,
     required this.isDeleted,
+    this.position,
   });
 
   final int localRev;
@@ -157,6 +158,10 @@ class SyncTagChange extends SyncChange {
   final String name;
   final String? color;
   final bool isDeleted;
+
+  /// Where it was dragged among the tags; the server takes it whatever else
+  /// conflicts.
+  final double? position;
 
   @override
   String get type => 'tag';
@@ -172,6 +177,7 @@ class SyncTagChange extends SyncChange {
     if (baseVersion != null) 'baseVersion': baseVersion,
     'name': name,
     'color': color,
+    if (position != null) 'position': position,
     'isDeleted': isDeleted,
   };
 }
@@ -416,12 +422,14 @@ class SyncServerTag {
     required this.color,
     required this.version,
     required this.updatedAt,
+    this.position,
   });
 
   factory SyncServerTag.fromJson(Map<String, dynamic> json) => SyncServerTag(
     id: json['id'] as String,
     name: json['name'] as String? ?? '',
     color: json['color'] as String?,
+    position: (json['position'] as num?)?.toDouble(),
     version: json['version'] as int? ?? 1,
     updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '')?.toUtc(),
   );
@@ -431,6 +439,7 @@ class SyncServerTag {
   final String? color;
   final int version;
   final DateTime? updatedAt;
+  final double? position;
 }
 
 class SyncEntry {

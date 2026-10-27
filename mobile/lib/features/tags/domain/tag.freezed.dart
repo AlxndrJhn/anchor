@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Tag {
 
- String get id; String get name; String? get color; DateTime? get updatedAt;@JsonKey(name: '_count') TagCount? get count;@JsonKey(includeFromJson: false, includeToJson: false) bool get isSynced;@JsonKey(includeFromJson: true, includeToJson: false) bool get isDeleted;
+ String get id; String get name; String? get color; double? get position; DateTime? get updatedAt;@JsonKey(name: '_count') TagCount? get count;@JsonKey(includeFromJson: false, includeToJson: false) bool get isSynced;@JsonKey(includeFromJson: true, includeToJson: false) bool get isDeleted;
 /// Create a copy of Tag
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $TagCopyWith<Tag> get copyWith => _$TagCopyWithImpl<Tag>(this as Tag, _$identity
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.color, color) || other.color == color)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.count, count) || other.count == count)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.color, color) || other.color == color)&&(identical(other.position, position) || other.position == position)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.count, count) || other.count == count)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,color,updatedAt,count,isSynced,isDeleted);
+int get hashCode => Object.hash(runtimeType,id,name,color,position,updatedAt,count,isSynced,isDeleted);
 
 @override
 String toString() {
-  return 'Tag(id: $id, name: $name, color: $color, updatedAt: $updatedAt, count: $count, isSynced: $isSynced, isDeleted: $isDeleted)';
+  return 'Tag(id: $id, name: $name, color: $color, position: $position, updatedAt: $updatedAt, count: $count, isSynced: $isSynced, isDeleted: $isDeleted)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $TagCopyWith<$Res>  {
   factory $TagCopyWith(Tag value, $Res Function(Tag) _then) = _$TagCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String? color, DateTime? updatedAt,@JsonKey(name: '_count') TagCount? count,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: true, includeToJson: false) bool isDeleted
+ String id, String name, String? color, double? position, DateTime? updatedAt,@JsonKey(name: '_count') TagCount? count,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: true, includeToJson: false) bool isDeleted
 });
 
 
@@ -66,12 +66,13 @@ class _$TagCopyWithImpl<$Res>
 
 /// Create a copy of Tag
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? color = freezed,Object? updatedAt = freezed,Object? count = freezed,Object? isSynced = null,Object? isDeleted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? color = freezed,Object? position = freezed,Object? updatedAt = freezed,Object? count = freezed,Object? isSynced = null,Object? isDeleted = null,}) {
   return _then(Tag(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
+as double?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,count: freezed == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
 as TagCount?,isSynced: null == isSynced ? _self.isSynced : isSynced // ignore: cast_nullable_to_non_nullable
 as bool,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable
@@ -172,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? color,  DateTime? updatedAt, @JsonKey(name: '_count')  TagCount? count, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: true, includeToJson: false)  bool isDeleted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String? color,  double? position,  DateTime? updatedAt, @JsonKey(name: '_count')  TagCount? count, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: true, includeToJson: false)  bool isDeleted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Tag() when $default != null:
-return $default(_that.id,_that.name,_that.color,_that.updatedAt,_that.count,_that.isSynced,_that.isDeleted);case _:
+return $default(_that.id,_that.name,_that.color,_that.position,_that.updatedAt,_that.count,_that.isSynced,_that.isDeleted);case _:
   return orElse();
 
 }
@@ -193,10 +194,10 @@ return $default(_that.id,_that.name,_that.color,_that.updatedAt,_that.count,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? color,  DateTime? updatedAt, @JsonKey(name: '_count')  TagCount? count, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: true, includeToJson: false)  bool isDeleted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String? color,  double? position,  DateTime? updatedAt, @JsonKey(name: '_count')  TagCount? count, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: true, includeToJson: false)  bool isDeleted)  $default,) {final _that = this;
 switch (_that) {
 case _Tag():
-return $default(_that.id,_that.name,_that.color,_that.updatedAt,_that.count,_that.isSynced,_that.isDeleted);case _:
+return $default(_that.id,_that.name,_that.color,_that.position,_that.updatedAt,_that.count,_that.isSynced,_that.isDeleted);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -213,10 +214,10 @@ return $default(_that.id,_that.name,_that.color,_that.updatedAt,_that.count,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? color,  DateTime? updatedAt, @JsonKey(name: '_count')  TagCount? count, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: true, includeToJson: false)  bool isDeleted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String? color,  double? position,  DateTime? updatedAt, @JsonKey(name: '_count')  TagCount? count, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: true, includeToJson: false)  bool isDeleted)?  $default,) {final _that = this;
 switch (_that) {
 case _Tag() when $default != null:
-return $default(_that.id,_that.name,_that.color,_that.updatedAt,_that.count,_that.isSynced,_that.isDeleted);case _:
+return $default(_that.id,_that.name,_that.color,_that.position,_that.updatedAt,_that.count,_that.isSynced,_that.isDeleted);case _:
   return null;
 
 }
@@ -228,12 +229,13 @@ return $default(_that.id,_that.name,_that.color,_that.updatedAt,_that.count,_tha
 @JsonSerializable()
 
 class _Tag extends Tag {
-  const _Tag({required this.id, required this.name, this.color, this.updatedAt, @JsonKey(name: '_count') this.count, @JsonKey(includeFromJson: false, includeToJson: false) this.isSynced = true, @JsonKey(includeFromJson: true, includeToJson: false) this.isDeleted = false}): super._();
+  const _Tag({required this.id, required this.name, this.color, this.position, this.updatedAt, @JsonKey(name: '_count') this.count, @JsonKey(includeFromJson: false, includeToJson: false) this.isSynced = true, @JsonKey(includeFromJson: true, includeToJson: false) this.isDeleted = false}): super._();
   factory _Tag.fromJson(Map<String, dynamic> json) => _$TagFromJson(json);
 
 @override final  String id;
 @override final  String name;
 @override final  String? color;
+@override final  double? position;
 @override final  DateTime? updatedAt;
 @override@JsonKey(name: '_count') final  TagCount? count;
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isSynced;
@@ -252,16 +254,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.color, color) || other.color == color)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.count, count) || other.count == count)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.color, color) || other.color == color)&&(identical(other.position, position) || other.position == position)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.count, count) || other.count == count)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,color,updatedAt,count,isSynced,isDeleted);
+int get hashCode => Object.hash(runtimeType,id,name,color,position,updatedAt,count,isSynced,isDeleted);
 
 @override
 String toString() {
-  return 'Tag(id: $id, name: $name, color: $color, updatedAt: $updatedAt, count: $count, isSynced: $isSynced, isDeleted: $isDeleted)';
+  return 'Tag(id: $id, name: $name, color: $color, position: $position, updatedAt: $updatedAt, count: $count, isSynced: $isSynced, isDeleted: $isDeleted)';
 }
 
 
@@ -272,7 +274,7 @@ abstract mixin class _$TagCopyWith<$Res> implements $TagCopyWith<$Res> {
   factory _$TagCopyWith(_Tag value, $Res Function(_Tag) _then) = __$TagCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String? color, DateTime? updatedAt,@JsonKey(name: '_count') TagCount? count,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: true, includeToJson: false) bool isDeleted
+ String id, String name, String? color, double? position, DateTime? updatedAt,@JsonKey(name: '_count') TagCount? count,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: true, includeToJson: false) bool isDeleted
 });
 
 
@@ -289,12 +291,13 @@ class __$TagCopyWithImpl<$Res>
 
 /// Create a copy of Tag
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? color = freezed,Object? updatedAt = freezed,Object? count = freezed,Object? isSynced = null,Object? isDeleted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? color = freezed,Object? position = freezed,Object? updatedAt = freezed,Object? count = freezed,Object? isSynced = null,Object? isDeleted = null,}) {
   return _then(_Tag(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
+as double?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,count: freezed == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
 as TagCount?,isSynced: null == isSynced ? _self.isSynced : isSynced // ignore: cast_nullable_to_non_nullable
 as bool,isDeleted: null == isDeleted ? _self.isDeleted : isDeleted // ignore: cast_nullable_to_non_nullable

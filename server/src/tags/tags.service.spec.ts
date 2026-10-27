@@ -17,6 +17,7 @@ describe('TagsService', () => {
     color: string | null;
     userId: string;
     isDeleted: boolean;
+    position?: number | null;
     updatedAt: Date;
   }
 
@@ -156,9 +157,16 @@ describe('TagsService', () => {
         userId: string;
         updatedAt?: DateWindow;
         OR?: Array<{ updatedAt?: DateWindow; id?: { in: string[] } }>;
+        id?: { in: string[] };
+        isDeleted?: boolean;
       };
     }) => {
       const matches = (t: TagRecord) => {
+        if (where.id) {
+          return where.id.in.includes(t.id) && t.isDeleted === where.isDeleted;
+        }
+        if (where.isDeleted !== undefined)
+          return t.isDeleted === where.isDeleted;
         if (where.updatedAt) return inWindow(t.updatedAt, where.updatedAt);
         return (where.OR ?? []).some((clause) =>
           clause.updatedAt
@@ -191,6 +199,23 @@ describe('TagsService', () => {
     tags = new Map();
     service = new TagsService(prisma, asSyncEmitter(createMockSyncEmitter()));
     vi.clearAllMocks();
+  });
+
+  describe('reorder', () => {
+    it('puts the tags in the dragged order, writing only the moved ones', async () => {
+      makeTag({ id: 'a', position: 0 });
+      makeTag({ id: 'b', position: 1 });
+      makeTag({ id: 'c', position: 2 });
+      makeTag({ id: 'theirs', userId: OTHER });
+
+      await service.reorder(USER, ['a', 'c', 'theirs', 'b']);
+
+      expect(tags.get('a')!.position).toBe(0);
+      expect(tags.get('c')!.position).toBe(1);
+      expect(tags.get('b')!.position).toBe(2);
+      expect(tags.get('theirs')!.position).toBeUndefined();
+      expect(tagUpdate).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('create / update / remove', () => {

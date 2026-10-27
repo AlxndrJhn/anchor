@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   CloudOff,
   Ellipsis,
+  GripVertical,
   Hash,
   LogOut,
   Monitor,
@@ -42,11 +43,14 @@ import { useAuth } from "@/features/auth";
 import { useSyncStatus, useUnsavedCount } from "@/features/sync";
 import {
   deleteTag,
+  orderTags,
+  reorderTags,
   type Tag,
   TagDialog,
   tagColorName,
   tagColorStyle,
   updateTag,
+  useTagReorder,
   useTags,
 } from "@/features/tags";
 import { TAG_COLORS } from "@/lib/design/tokens";
@@ -168,10 +172,7 @@ export function Sidebar({
   const tagsLoaded = tagsQuery.data !== undefined;
   // isError clears while Try again runs.
   const tagsFailed = !tagsLoaded && tagsQuery.errorUpdatedAt > 0;
-  const sortedTags = React.useMemo(
-    () => [...tags].sort((a, b) => a.name.localeCompare(b.name)),
-    [tags],
-  );
+  const orderedTags = React.useMemo(() => orderTags(tags), [tags]);
 
   const [tagDialog, setTagDialog] = React.useState<{ tag: Tag | null } | null>(
     null,
@@ -293,6 +294,27 @@ export function Sidebar({
   }, [folded]);
   React.useEffect(() => () => releaseHeld.current?.(), []);
 
+  const reorderMutation = useMutation({
+    mutationKey: ["tag-order"],
+    scope: { id: "tag-order" },
+    mutationFn: reorderTags,
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: ["tags"] });
+      queryClient.setQueryData<Tag[]>(["tags"], (list) =>
+        list?.map((t) => ({ ...t, position: ids.indexOf(t.id) })),
+      );
+    },
+    onError: () => toast.error("Couldn’t move the tag"),
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: ["tag-order"] }) <= 1)
+        queryClient.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+  const tagDrag = useTagReorder(orderedTags, (ids) =>
+    reorderMutation.mutate(ids),
+  );
+  const sortedTags = tagDrag.shown;
+
   const countNotes = (tag: Tag) => tag._count?.notes ?? 0;
 
   return (
@@ -393,6 +415,7 @@ export function Sidebar({
 
       <nav
         aria-label="Tags"
+        data-tag-list
         className="-mx-1 grid min-h-0 flex-1 content-start gap-px overflow-auto px-1 pb-2 scrollbar-none mask-[linear-gradient(#000_calc(100%-22px),transparent)]"
       >
         {tagsFailed && (
@@ -429,14 +452,30 @@ export function Sidebar({
             <div
               key={tag.id}
               data-row={key}
+              data-tag-row
               aria-current={isCurrent ? "page" : undefined}
               data-menu={menuTagId === tag.id || undefined}
               style={tagColorStyle(tag.color)}
               className={cn(
                 rowClass,
                 "tag-color group/tag h-8 p-0 text-control",
+                tagDrag.draggingId && "pointer-events-none",
+                tagDrag.draggingId === tag.id && "bg-card shadow-lift",
               )}
             >
+              <button
+                type="button"
+                aria-label={`Move ${tag.name}`}
+                title="Drag to move, or use the arrow keys"
+                {...tagDrag.handleProps(tag)}
+                className={cn(
+                  "pointer-events-auto absolute inset-y-0 left-0 z-1 grid w-3 cursor-grab touch-none place-items-center rounded-l-md text-muted-foreground opacity-0 hover:text-foreground focus-visible:opacity-100 group-hover/tag:opacity-100 data-dragging:cursor-grabbing data-dragging:opacity-100 [@media(hover:none)]:opacity-100 [&>svg]:size-3",
+                  hideClass,
+                  "group-data-narrow/sb:hidden",
+                )}
+              >
+                <GripVertical aria-hidden />
+              </button>
               <Tip
                 label={`#${tag.name} · ${noteCount} ${noteCount === 1 ? "note" : "notes"}`}
                 side="right"

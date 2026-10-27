@@ -405,12 +405,30 @@ export class SyncApplyService {
     change: SyncTagChangeDto,
   ): Promise<SyncApplyResult> {
     const base = { type: 'tag' as const, id: change.id };
-    const existing = await this.prisma.tag.findUnique({
+    let existing = await this.prisma.tag.findUnique({
       where: { id: change.id },
     });
 
     if (existing && existing.userId !== userId) {
       return { ...base, status: 'denied' };
+    }
+
+    // Where it was dragged lands whatever else conflicts, as note order does.
+    if (
+      existing &&
+      !existing.isDeleted &&
+      change.position !== undefined &&
+      change.position !== existing.position
+    ) {
+      const position = change.position;
+      existing = await this.prisma.$transaction(async (tx) => {
+        const tag = await tx.tag.update({
+          where: { id: change.id },
+          data: { position },
+        });
+        await this.syncEmitter.emit(tx, [tagEmission(userId, change.id)]);
+        return tag;
+      });
     }
 
     if (!existing) {
@@ -442,6 +460,7 @@ export class SyncApplyService {
             id: change.id,
             name: change.name,
             color: change.color,
+            position: change.position,
             userId,
           },
         });

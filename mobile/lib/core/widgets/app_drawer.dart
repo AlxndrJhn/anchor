@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../features/auth/presentation/auth_controller.dart';
+import '../../features/tags/data/repository/tags_repository.dart';
 import '../../features/tags/domain/tag.dart';
+import '../../features/tags/domain/tag_order.dart';
 import '../../features/tags/presentation/tags_controller.dart';
 import '../../features/tags/presentation/widgets/tag_delete_sheet.dart';
 import '../../features/tags/presentation/widgets/tag_edit_sheet.dart';
@@ -27,6 +30,9 @@ class AppDrawer extends ConsumerStatefulWidget {
 
 class _AppDrawerState extends ConsumerState<AppDrawer> {
   bool _tagsExpanded = true;
+
+  /// The order a tag was just dragged into, until the stored order has it.
+  List<String>? _droppedOrder;
 
   @override
   Widget build(BuildContext context) {
@@ -275,18 +281,36 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
               if (tags.isEmpty) {
                 return _buildEmptyTagsState(theme);
               }
-              return ListView.builder(
+              final dropped = _droppedOrder;
+              if (dropped != null &&
+                  listEquals([for (final t in tags) t.id], dropped)) {
+                _droppedOrder = null;
+              }
+              final shown = _droppedOrder == null
+                  ? tags
+                  : inIdOrder(tags, _droppedOrder!);
+              // Dragged by the handle on the left; holding the name still
+              // opens the tag's options.
+              return ReorderableListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: tags.length,
+                buildDefaultDragHandles: false,
+                itemCount: shown.length,
+                onReorderItem: (oldIndex, newIndex) {
+                  final ids = movedTagIds(shown, oldIndex, newIndex);
+                  setState(() => _droppedOrder = ids);
+                  ref.read(tagsRepositoryProvider).reorderTags(ids);
+                },
                 itemBuilder: (context, index) {
-                  final tag = tags[index];
+                  final tag = shown[index];
                   final isSelected = selectedTagId == tag.id;
                   final tagColor = parseTagColor(
                     tag.color,
                     fallback: theme.colorScheme.primary,
                   );
                   return _TagItemWidget(
+                    key: ValueKey(tag.id),
+                    index: index,
                     tag: tag,
                     isSelected: isSelected,
                     tagColor: tagColor,
@@ -513,6 +537,8 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
 }
 
 class _TagItemWidget extends StatelessWidget {
+  /// Its place in the list, for dragging it by its handle.
+  final int index;
   final Tag tag;
   final bool isSelected;
   final Color tagColor;
@@ -521,6 +547,8 @@ class _TagItemWidget extends StatelessWidget {
   final VoidCallback onLongPress;
 
   const _TagItemWidget({
+    super.key,
+    required this.index,
     required this.tag,
     required this.isSelected,
     required this.tagColor,
@@ -551,6 +579,22 @@ class _TagItemWidget extends StatelessWidget {
             ),
             child: Row(
               children: [
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Semantics(
+                    label: 'Move ${tag.name}',
+                    child: Padding(
+                      padding: EdgeInsets.only(right: dims.xs),
+                      child: Icon(
+                        LucideIcons.gripVertical,
+                        size: AppIconSizes.sm,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.35,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 Icon(LucideIcons.hash, size: AppIconSizes.sm, color: tagColor),
                 SizedBox(width: dims.sm),
                 Expanded(

@@ -67,6 +67,9 @@ describe('SyncApplyService', () => {
   const tagFindUnique = vi.fn(() => Promise.resolve(existingTag));
   const tagFindFirst = vi.fn(() => Promise.resolve(collidingTag));
   const tagCreate = vi.fn();
+  const tagUpdate = vi.fn((args: { data: Record<string, unknown> }) =>
+    Promise.resolve({ ...existingTag, ...args.data }),
+  );
   const tagUpdateMany = vi.fn(() =>
     Promise.resolve({ count: updateManyCount }),
   );
@@ -112,6 +115,7 @@ describe('SyncApplyService', () => {
       findUnique: tagFindUnique,
       findFirst: tagFindFirst,
       create: tagCreate,
+      update: tagUpdate,
       updateMany: tagUpdateMany,
       findMany: tagFindMany,
     },
@@ -778,6 +782,35 @@ describe('SyncApplyService', () => {
       expect(results).toEqual([
         { type: 'tag', id: 't1', status: 'applied', version: 1 },
       ]);
+      expect(emitter.emit).toHaveBeenCalledWith(prisma, [
+        expect.objectContaining({ entityType: 'tag', entityId: 't1' }),
+      ]);
+    });
+
+    it('moves a tag where it was dragged, even against a stale version', async () => {
+      existingTag = {
+        id: 't1',
+        name: 'server name',
+        color: null,
+        position: null,
+        userId: USER,
+        isDeleted: false,
+        version: 3,
+        createdAt: AT,
+        updatedAt: AT,
+      };
+
+      const results = await service.apply(USER, [
+        tagChange({ baseVersion: 2, position: 4 }),
+      ]);
+
+      expect(tagUpdate).toHaveBeenCalledWith({
+        where: { id: 't1' },
+        data: { position: 4 },
+      });
+      // The rename still conflicts, and the copy says where it is now.
+      expect(results[0].status).toBe('conflict');
+      expect(results[0].serverCopy).toMatchObject({ position: 4, version: 3 });
       expect(emitter.emit).toHaveBeenCalledWith(prisma, [
         expect.objectContaining({ entityType: 'tag', entityId: 't1' }),
       ]);

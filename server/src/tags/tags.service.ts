@@ -62,7 +62,7 @@ export class TagsService {
         userId,
         isDeleted: false,
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
       include: {
         _count: {
           select: {
@@ -160,6 +160,34 @@ export class TagsService {
     }
 
     return result.tag;
+  }
+
+  /**
+   * Puts the person's tags in the order of [ids], as they dragged them.
+   * Only the tags that moved change; the order never bumps a version.
+   */
+  async reorder(userId: string, ids: string[]) {
+    const tags = await this.prisma.tag.findMany({
+      where: { userId, isDeleted: false, id: { in: ids } },
+      select: { id: true, position: true },
+    });
+    const owned = new Map(tags.map((t) => [t.id, t.position]));
+    const moved = ids
+      .filter((id) => owned.has(id))
+      .map((id, position) => ({ id, position }))
+      .filter(({ id, position }) => owned.get(id) !== position);
+    if (moved.length > 0) {
+      await this.prisma.$transaction(async (tx) => {
+        for (const { id, position } of moved) {
+          await tx.tag.update({ where: { id }, data: { position } });
+        }
+        await this.syncEmitter.emit(
+          tx,
+          moved.map(({ id }) => tagEmission(userId, id)),
+        );
+      });
+    }
+    return this.findAll(userId);
   }
 
   async remove(userId: string, id: string) {

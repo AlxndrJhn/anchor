@@ -46,6 +46,7 @@ differences. "Web" and "Android" say where each one is available.
 | The searched words are marked in the note you open ([#134](https://github.com/ZhFahim/anchor/issues/134)) | ✓ | ✓ |
 | The search is kept when you come back from a note ([#206](https://github.com/ZhFahim/anchor/issues/206)) | ✓ | ✓ |
 | Tag counts include archived notes, and a tag lists them ([#114](https://github.com/ZhFahim/anchor/issues/114)) | ✓ | ✓ |
+| Tags can be put in any order by dragging their handle; the order syncs | ✓ | ✓ |
 | **Pictures, files and recordings** | | |
 | Grab image text (OCR): marks the text on a picture to select (drag over words or draw a box), copy or insert in the note | ✓ | ✓ |
 | Paste a picture to add it as an attachment | ✓ | ✓ |

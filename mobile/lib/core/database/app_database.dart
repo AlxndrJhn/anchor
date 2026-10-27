@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -141,6 +141,18 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(noteAttachments, noteAttachments.pictureText);
         }
         // Resent attachments bring the text read from each picture.
+        await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
+          const SyncStateCompanion(cursor: Value(null)),
+        );
+      }
+      if (from < 15) {
+        final existing = await customSelect(
+          'PRAGMA table_info(tags)',
+        ).map((row) => row.read<String>('name')).get();
+        if (!existing.contains('position')) {
+          await m.addColumn(tags, tags.position);
+        }
+        // Resent tags bring where each was dragged.
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
           const SyncStateCompanion(cursor: Value(null)),
         );

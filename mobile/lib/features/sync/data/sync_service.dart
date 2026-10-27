@@ -229,6 +229,7 @@ class SyncService {
     name: tag.name,
     color: tag.color,
     isDeleted: tag.isDeleted,
+    position: tag.position,
   );
 
   Future<List<SyncChange>> _applyResponse(
@@ -668,6 +669,7 @@ class SyncService {
             id: Value(tag.id),
             name: Value(tag.name),
             color: Value(tag.color),
+            position: Value(tag.position),
             updatedAt: Value(tag.updatedAt),
             version: Value(tag.version),
             isSynced: const Value(true),

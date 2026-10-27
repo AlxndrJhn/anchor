@@ -40,12 +40,7 @@ class TagsRepository {
             ),
           ])
           ..where(_db.tags.isDeleted.equals(false))
-          ..orderBy([
-            drift.OrderingTerm(
-              expression: _db.tags.name,
-              mode: drift.OrderingMode.asc,
-            ),
-          ]);
+          ..orderBy(_inOrder(_db.tags));
 
     return query.watch().map((rows) {
       final tagMap = <String, domain.Tag>{};
@@ -82,12 +77,7 @@ class TagsRepository {
   Future<List<domain.Tag>> getTags() async {
     final query = _db.select(_db.tags)
       ..where((tbl) => tbl.isDeleted.equals(false))
-      ..orderBy([
-        (t) => drift.OrderingTerm(
-          expression: t.name,
-          mode: drift.OrderingMode.asc,
-        ),
-      ]);
+      ..orderBy([for (final term in _inOrder(_db.tags)) (_) => term]);
     final rows = await query.get();
     return rows.map((row) => _mapToDomain(row)).toList();
   }
@@ -139,6 +129,34 @@ class TagsRepository {
     });
 
     scheduleAppSync(trigger: 'TagsRepo.updateTag');
+  }
+
+  /// Puts the tags in the order of [ids], as they were dragged. Only the
+  /// tags that moved change.
+  Future<void> reorderTags(List<String> ids) async {
+    var moved = false;
+    await _db.transaction(() async {
+      final rows = await (_db.select(
+        _db.tags,
+      )..where((tbl) => tbl.id.isIn(ids) & tbl.isDeleted.equals(false))).get();
+      final byId = {for (final row in rows) row.id: row};
+      final placed = ids.where(byId.containsKey).toList();
+      for (var i = 0; i < placed.length; i++) {
+        final row = byId[placed[i]]!;
+        if (row.position == i) continue;
+        moved = true;
+        await (_db.update(
+          _db.tags,
+        )..where((tbl) => tbl.id.equals(row.id))).write(
+          TagsCompanion(
+            position: drift.Value(i.toDouble()),
+            isSynced: const drift.Value(false),
+            localRev: drift.Value(row.localRev + 1),
+          ),
+        );
+      }
+    });
+    if (moved) scheduleAppSync(trigger: 'TagsRepo.reorderTags');
   }
 
   // Kept, marked deleted, until the server has been told.
@@ -216,6 +234,16 @@ class TagsRepository {
     });
   }
 
+  /// Dragged tags first, in their order; the rest after, by name.
+  static List<drift.OrderingTerm> _inOrder($TagsTable t) => [
+    drift.OrderingTerm(
+      expression: t.position,
+      mode: drift.OrderingMode.asc,
+      nulls: drift.NullsOrder.last,
+    ),
+    drift.OrderingTerm(expression: t.name, mode: drift.OrderingMode.asc),
+  ];
+
   Future<Tag?> _tagRow(String id) => (_db.select(
     _db.tags,
   )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
@@ -225,6 +253,7 @@ class TagsRepository {
       id: row.id,
       name: row.name,
       color: row.color,
+      position: row.position,
       updatedAt: row.updatedAt,
       isSynced: row.isSynced,
       isDeleted: row.isDeleted,
