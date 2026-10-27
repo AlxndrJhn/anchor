@@ -49,6 +49,7 @@ differences. "Web" and "Android" say where each one is available.
 | Tag counts include archived notes, and a tag lists them ([#114](https://github.com/ZhFahim/anchor/issues/114)) | ✓ | ✓ |
 | Tags can be put in any order by dragging their handle; the order syncs | ✓ | ✓ |
 | A tag's colour can be changed from its menu | ✓ | ✓ |
+| Text colour, font (serif, monospace) and highlights in any colour, picked or preset | ✓ | ✓ |
 | A deleted note burns away like a destroyed card in Balatro (off with reduced motion) | ✓ | ✓ |
 | **Pictures, files and recordings** | | |
 | Grab image text (OCR): marks the text on a picture to select (drag over words or draw a box), copy or insert in the note | ✓ | ✓ |
