@@ -72,6 +72,24 @@ class PictureSearchStatus {
   }
 }
 
+/// A word for what a picture shows, in English and German.
+class PictureLabel {
+  const PictureLabel({required this.en, required this.de, this.score = 0});
+
+  factory PictureLabel.fromJson(Map<String, dynamic> json) => PictureLabel(
+    en: json['en'] as String? ?? '',
+    de: json['de'] as String? ?? '',
+    score: (json['score'] as num?)?.toDouble() ?? 0,
+  );
+
+  final String en;
+  final String de;
+  final double score;
+
+  /// In the reader's language: German for German, else English.
+  String textFor(String languageCode) => languageCode == 'de' ? de : en;
+}
+
 @riverpod
 PictureSearchRepository pictureSearchRepository(Ref ref) =>
     PictureSearchRepository(ref.watch(dioProvider));
@@ -92,6 +110,18 @@ class PictureSearchRepository {
       data: {'enabled': enabled},
     );
     return PictureSearchStatus.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// What a picture shows, best first ("Show detected tags").
+  Future<List<PictureLabel>> labels(String attachmentId) async {
+    final response = await _dio.get(
+      '/api/picture-search/attachments/$attachmentId/labels',
+    );
+    final labels = (response.data as Map<String, dynamic>)['labels'] as List;
+    return [
+      for (final label in labels.cast<Map<String, dynamic>>())
+        PictureLabel.fromJson(label),
+    ];
   }
 
   /// The ids of notes whose pictures look like [query], best first.

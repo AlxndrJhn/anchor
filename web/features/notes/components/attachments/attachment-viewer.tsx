@@ -1,6 +1,7 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,11 +9,20 @@ import {
   Download,
   LoaderCircle,
   ScanText,
+  Tags,
   Trash2,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 import { toast, toastHostRef } from "@/components/ui/toast";
+import {
+  getPictureLabels,
+  getPictureSearchStatus,
+  labelText,
+  type PictureLabel,
+  pictureSearchStatusKey,
+} from "@/features/picture-search/api";
 import type { ImageText } from "@/lib/image-text";
 import { useAttachmentBlob } from "../../hooks/use-attachment-blob";
 import type { NoteAttachment } from "../../types";
@@ -90,6 +100,37 @@ export function Viewer({
     }
   };
 
+  // What the picture search model sees in the shown picture, as words.
+  const { data: pictureSearch } = useQuery({
+    queryKey: pictureSearchStatusKey,
+    queryFn: getPictureSearchStatus,
+    staleTime: 60_000,
+  });
+  const [tags, setTags] = React.useState<{
+    pictureId: string;
+    labels: PictureLabel[];
+  } | null>(null);
+  const [findingTags, setFindingTags] = React.useState(false);
+  if (tags && tags.pictureId !== picture?.id) setTags(null);
+
+  const showTags = async () => {
+    if (tags) return setTags(null);
+    if (!picture) return;
+    setFindingTags(true);
+    try {
+      const labels = await getPictureLabels(picture.id);
+      if (!labels.length) {
+        toast.error("This picture hasn’t been looked at yet. Try again soon.");
+        return;
+      }
+      setTags({ pictureId: picture.id, labels });
+    } catch {
+      toast.error("Couldn’t get this picture’s tags");
+    } finally {
+      setFindingTags(false);
+    }
+  };
+
   const download = () => {
     if (!blobUrl || !picture) return;
     const link = document.createElement("a");
@@ -151,6 +192,25 @@ export function Viewer({
                     {reading ? "Reading…" : "Grab text"}
                   </span>
                 </button>
+                {pictureSearch?.enabled && (
+                  <button
+                    type="button"
+                    aria-label={
+                      tags ? "Hide detected tags" : "Show detected tags"
+                    }
+                    aria-pressed={!!tags}
+                    onClick={showTags}
+                    disabled={findingTags}
+                    aria-busy={findingTags || undefined}
+                  >
+                    {findingTags ? (
+                      <LoaderCircle aria-hidden className="animate-spin" />
+                    ) : (
+                      <Tags aria-hidden />
+                    )}
+                    <span className="vw-lbl">Tags</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   aria-label="Download"
@@ -247,10 +307,29 @@ export function Viewer({
                     <ChevronRight aria-hidden />
                   </button>
                 </div>
-                <div className="vw-hint">
-                  <span className="dk">← → to move · Esc to close</span>
-                  <span className="ph">Swipe to move</span>
-                </div>
+                {tags ? (
+                  <ul className="vw-tags" aria-label="Detected tags">
+                    {tags.labels.map((label) => {
+                      const word = labelText(label, navigator.language);
+                      return (
+                        <li key={label.en}>
+                          <Link
+                            href={`/notes?q=${encodeURIComponent(word)}`}
+                            title={`Search for “${word}”`}
+                            onClick={() => onShow(null)}
+                          >
+                            {word}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className="vw-hint">
+                    <span className="dk">← → to move · Esc to close</span>
+                    <span className="ph">Swipe to move</span>
+                  </div>
+                )}
               </>
             )}
           </DialogPrimitive.Content>

@@ -43,3 +43,25 @@ export async function searchPictures(q: string): Promise<PictureMatch[]> {
     .json<{ results: PictureMatch[] }>();
   return results;
 }
+
+/** A word for what a picture shows, in English and German. */
+export interface PictureLabel {
+  en: string;
+  de: string;
+  score: number;
+}
+
+/** What a picture shows, best first ("Show detected tags"). */
+export async function getPictureLabels(
+  attachmentId: string,
+): Promise<PictureLabel[]> {
+  const { labels } = await api
+    .get(`api/picture-search/attachments/${attachmentId}/labels`)
+    .json<{ labels: PictureLabel[] }>();
+  return labels;
+}
+
+/** A label in the reader's language: German for German, else English. */
+export function labelText(label: PictureLabel, language: string): string {
+  return language.toLowerCase().startsWith("de") ? label.de : label.en;
+}

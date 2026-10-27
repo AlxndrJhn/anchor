@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:anchor/core/files/image_text.dart';
 import 'package:anchor/features/notes/presentation/widgets/image_text_view.dart';
@@ -22,6 +23,8 @@ import 'package:anchor/features/notes/data/repository/note_attachments_repositor
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/widgets/audio_player_row.dart';
+import 'package:anchor/features/notes/presentation/notes_controller.dart';
+import 'package:anchor/features/picture_search/picture_search.dart';
 
 /// Lets the pictures of a note hand text read from them back to its editor
 /// ("Grab image text"). Absent where the note can't be edited.
@@ -623,6 +626,57 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
   final Map<String, bool> _errors = {};
   bool _readingText = false;
 
+  /// What the picture search model sees in a picture, by attachment id.
+  final Map<String, List<PictureLabel>> _tags = {};
+  String? _tagsShownFor;
+  bool _findingTags = false;
+
+  Future<void> _toggleTags(String attachmentId) async {
+    if (_tagsShownFor == attachmentId) {
+      setState(() => _tagsShownFor = null);
+      return;
+    }
+    if (_tags.containsKey(attachmentId)) {
+      setState(() => _tagsShownFor = attachmentId);
+      return;
+    }
+    setState(() => _findingTags = true);
+    List<PictureLabel> labels;
+    try {
+      labels = await ref
+          .read(pictureSearchRepositoryProvider)
+          .labels(attachmentId);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _findingTags = false);
+        AppSnackbar.showError(context, message: 'Couldn’t get the tags');
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _findingTags = false);
+    if (labels.isEmpty) {
+      AppSnackbar.showError(
+        context,
+        message: 'This picture hasn’t been looked at yet. Try again soon.',
+      );
+      return;
+    }
+    setState(() {
+      _tags[attachmentId] = labels;
+      _tagsShownFor = attachmentId;
+    });
+  }
+
+  /// Searches the notes for a tag: closes the picture and the note (which
+  /// saves it, as Back does), back to the list showing the results.
+  void _searchFor(String word) {
+    ref.read(searchQueryProvider.notifier).set(word);
+    final navigator = Navigator.of(context);
+    navigator.pop();
+    navigator.maybePop();
+  }
+
   /// Finds the text in the picture and shows it marked on the picture, to
   /// copy some or all of it, or put it in the note.
   Future<void> _grabText(String path) async {
@@ -897,6 +951,44 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
                   _buildPageOptions(context, index, isOnline),
             ),
 
+            // What the picture shows, as words to search for.
+            if (_tagsShownFor == currentAttachment.id)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: EdgeInsets.all(dims.md),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: dims.xs,
+                      runSpacing: dims.xs,
+                      children: [
+                        for (final label in _tags[currentAttachment.id]!)
+                          ActionChip(
+                            label: Text(
+                              label.textFor(
+                                // The phone's language: the app's own is
+                                // English only.
+                                PlatformDispatcher.instance.locale.languageCode,
+                              ),
+                            ),
+                            tooltip: 'Search your notes',
+                            onPressed: () => _searchFor(
+                              label.textFor(
+                                // The phone's language: the app's own is
+                                // English only.
+                                PlatformDispatcher.instance.locale.languageCode,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             // Top bar
             Positioned(
               top: 0,
@@ -966,6 +1058,30 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
                               color: Colors.white,
                             ),
                     ),
+                    if (ref.watch(pictureSearchStatusProvider).value?.enabled ??
+                        false)
+                      IconButton(
+                        tooltip: _tagsShownFor == currentAttachment.id
+                            ? 'Hide detected tags'
+                            : 'Show detected tags',
+                        onPressed: _findingTags
+                            ? null
+                            : () => _toggleTags(currentAttachment.id),
+                        icon: _findingTags
+                            ? const SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Icon(
+                                LucideIcons.tags,
+                                color: _tagsShownFor == currentAttachment.id
+                                    ? theme.colorScheme.primary
+                                    : Colors.white,
+                              ),
+                      ),
                     IconButton(
                       tooltip: 'Download',
                       onPressed: _imagePaths[currentAttachment.id] == null

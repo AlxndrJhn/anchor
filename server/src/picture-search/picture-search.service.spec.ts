@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import sharp from 'sharp';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -7,8 +7,11 @@ import {
   BEST_WINDOW,
   MIN_SCORE,
   PictureSearchService,
+  bestLabels,
   bestMatches,
+  labelPrompt,
 } from './picture-search.service';
+import { LABELS } from './labels';
 import { imagePixels, tokenIds, type PictureModel } from './picture-model';
 import type { PrismaService } from '../prisma/prisma.service';
 
@@ -34,6 +37,26 @@ describe('bestMatches', () => {
     expect(
       bestMatches([{ noteId: 'n', attachmentId: 'a', score: 0.02 }]),
     ).toEqual([]);
+  });
+});
+
+describe('bestLabels', () => {
+  it('names the closest words, best first, only near the best', () => {
+    const at = (word: string) => LABELS.findIndex(([en]) => en === word);
+    const labels = LABELS.map(() => Float32Array.of(0, 0));
+    labels[at('tiger')] = Float32Array.of(0.14, 0);
+    labels[at('zoo')] = Float32Array.of(0.125, 0);
+    labels[at('cat')] = Float32Array.of(0.08, 0);
+
+    expect(bestLabels(Float32Array.of(1, 0), labels)).toEqual([
+      { en: 'tiger', de: 'Tiger', score: 0.14 },
+      { en: 'zoo', de: 'Zoo', score: 0.125 },
+    ]);
+  });
+
+  it('puts words to the model in a short sentence', () => {
+    expect(labelPrompt('cat')).toBe('a photo of a cat');
+    expect(labelPrompt('elephant')).toBe('a photo of an elephant');
   });
 });
 
@@ -100,16 +123,21 @@ describe('PictureSearchService', () => {
   let pictures: { id: string; noteId: string; storedFilename: string }[];
   let embeddings: Map<string, Uint8Array>;
   let service: PictureSearchService;
+  let root: string;
 
   const prisma = {
     user: {
       findUnique: vi.fn(() => Promise.resolve({ pictureSearch: optedIn })),
+      count: vi.fn(() => Promise.resolve(optedIn ? 1 : 0)),
       update: vi.fn(({ data }: { data: { pictureSearch: boolean } }) => {
         optedIn = data.pictureSearch;
         return Promise.resolve({});
       }),
     },
     noteAttachment: {
+      findFirst: vi.fn(({ where }: { where: { id: string } }) =>
+        Promise.resolve(pictures.find((p) => p.id === where.id) ?? null),
+      ),
       findMany: vi.fn(({ where }: { where: { embedding: unknown } }) =>
         Promise.resolve(
           pictures.filter((p) =>
@@ -149,7 +177,7 @@ describe('PictureSearchService', () => {
   function create(enabled = true) {
     return new PictureSearchService(
       prisma,
-      { root: '/data', attachmentsDir: '/data/uploads/attachments' } as never,
+      { root, attachmentsDir: '/data/uploads/attachments' } as never,
       { enabled, modelUrl: undefined },
       model as unknown as PictureModel,
     );
@@ -162,6 +190,7 @@ describe('PictureSearchService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'picture-search-'));
     optedIn = false;
     embeddings = new Map();
     pictures = [
@@ -210,5 +239,33 @@ describe('PictureSearchService', () => {
 
     expect(status).toMatchObject({ available: false, enabled: false });
     expect(optedIn).toBe(false);
+  });
+  it('names what a picture shows, working the words out only once', async () => {
+    const usual = model.embedText.getMockImplementation()!;
+    onTestFinished(() => {
+      model.embedText.mockImplementation(usual);
+    });
+    // The test model sees "cat" for words with "cat" in them.
+    model.embedText.mockImplementation((q: string) =>
+      Promise.resolve(q.endsWith(' cat') ? axis(0) : axis(3)),
+    );
+    await service.setEnabled('u1', true);
+    // Indexing done, the words are worked out ahead of the first picture.
+    await (service as unknown as { running: Promise<void> | null }).running;
+    const asked = model.embedText.mock.calls.length;
+    expect(asked).toBeGreaterThan(100);
+
+    const labels = await service.labels('u1', 'a1');
+    expect(labels[0]).toMatchObject({ en: 'cat', de: 'Katze' });
+    expect(model.embedText.mock.calls.length).toBe(asked);
+
+    // Kept next to the model: a new start reads them instead.
+    const again = create();
+    await again.labels('u1', 'a1');
+    expect(model.embedText.mock.calls.length).toBe(asked);
+  });
+
+  it('shows no tags to a user who has picture search off', async () => {
+    expect(await service.labels('u1', 'a1')).toEqual([]);
   });
 });
