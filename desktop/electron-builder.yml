@@ -1,0 +1,53 @@
+# Packaging for the desktop app. The release workflow sets the version
+# (-c.extraMetadata.version=...) and builds:
+#   Windows: electron-builder --win nsis --x64     -> Anchor-Setup-<version>.exe
+#   macOS:   electron-builder --mac dmg --universal -> Anchor-<version>-universal.dmg
+appId: io.github.alxndrjhn.anchor
+productName: Anchor
+copyright: Anchor contributors, AGPL-3.0
+directories:
+  output: dist
+files:
+  - package.json
+  - src/**/*
+  # The window and setup page icon.
+  - from: ../web/public
+    to: icons
+    filter:
+      - web-app-manifest-512x512.png
+# electron-builder makes the .ico and .icns from this.
+icon: ../web/public/icons/anchor_icon.png
+asar: true
+# Nothing to update itself with; installers come from the GitHub releases.
+publish: null
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  artifactName: Anchor-Setup-${version}.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Anchor
+  uninstallDisplayName: Anchor
+
+mac:
+  target:
+    - target: dmg
+      arch: [universal]
+  category: public.app-category.productivity
+  # Not signed with a certificate: ad-hoc signed, so it runs on Apple silicon
+  # once allowed (right-click > Open, or Privacy & Security).
+  identity: "-"
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  notarize: false
+dmg:
+  artifactName: Anchor-${version}-${arch}.${ext}
+
+linux:
+  target: dir
+  executableName: anchor
+  category: Office

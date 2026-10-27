@@ -1,0 +1,11 @@
+packages:
+  - .
+
+# Only install versions that are at least two weeks old.
+minimumReleaseAge: 20160
+
+allowBuilds:
+  # Downloads the Electron binary.
+  electron: true
+  # Only for Squirrel.Windows installers; the app ships an NSIS one.
+  electron-winstaller: false

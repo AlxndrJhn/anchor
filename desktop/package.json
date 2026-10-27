@@ -1,0 +1,23 @@
+{
+  "name": "anchor-desktop",
+  "productName": "Anchor",
+  "version": "0.17.2",
+  "description": "Anchor for Windows and macOS: your own Anchor server's web client in a window",
+  "license": "AGPL-3.0",
+  "author": "Anchor",
+  "homepage": "https://github.com/AlxndrJhn/anchor",
+  "private": true,
+  "main": "src/main.js",
+  "packageManager": "pnpm@11.23.0",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/setup.js",
+    "build": "pnpm run check && electron-builder --dir --publish never",
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "dist:mac": "electron-builder --mac dmg --universal --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.17.0"
+  }
+}
