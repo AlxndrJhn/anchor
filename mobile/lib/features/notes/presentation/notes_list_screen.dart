@@ -22,6 +22,7 @@ import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_scaffold.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bar_title.dart';
+import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/selection_bar.dart';
 import '../../../l10n/l10n.dart';
 import '../../reminders/data/reminder_permissions.dart';
@@ -294,6 +295,13 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       beforeChange: () async {
         _selection.end();
         if (leaving.isEmpty) return;
+        if (action.isDeleting) {
+          // Deleted cards burn away where they stand, without their checks.
+          await WidgetsBinding.instance.endOfFrame;
+          await burnNoteCards(leaving);
+          CardRegistry.leave(leaving);
+          return;
+        }
         CardRegistry.leave(leaving);
         await Future<void>.delayed(fadeOut);
       },

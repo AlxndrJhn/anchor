@@ -8,6 +8,7 @@ import '../../../core/motion/haptics.dart';
 import '../../../core/widgets/anchor_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/choice_sheet.dart';
+import '../../../core/widgets/destruction/destruction.dart';
 import '../../../l10n/l10n.dart';
 import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
@@ -38,6 +39,9 @@ enum NoteAction {
 
   bool get isDanger =>
       this == deleteChecked || this == trash || this == deleteForever;
+
+  /// Takes notes away for good, or to the trash: their cards burn away.
+  bool get isDeleting => this == trash || this == deleteForever;
 
   ({IconData icon, String label}) iconAndLabelFor(
     List<Note> notes,
@@ -398,9 +402,10 @@ class NoteActions {
       isDanger: true,
     );
     if (!ok) return;
-    await repo.deleteForever(
-      _idsOf(ref.read(trashedNotesProvider).value ?? const []),
-    );
+    final ids = _idsOf(ref.read(trashedNotesProvider).value ?? const []);
+    // The cards burn away where they stand, then the notes go.
+    await burnNoteCards(ids);
+    await repo.deleteForever(ids);
     if (context.mounted) AppSnackbar.show(context, l10n.trashEmptied);
   }
 

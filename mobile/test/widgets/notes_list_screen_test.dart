@@ -1,6 +1,7 @@
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/theme/app_theme.dart';
+import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
@@ -186,6 +187,62 @@ void main() {
 
     expect(find.text('1 selected'), findsOneWidget);
     verifyNever(() => repo.setPosition(any(), any()));
+  });
+
+  group('deleting', () {
+    Finder burning() => find.byWidgetPredicate(
+      (w) => w is CustomPaint && w.painter is BurnPainter,
+    );
+
+    Future<void> deleteSelected(WidgetTester tester, String title) async {
+      final gesture = await tester.startGesture(centre(tester, title));
+      await tester.pump(const Duration(milliseconds: 700));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Delete'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    testWidgets('a deleted card burns where it stands, then goes', (
+      tester,
+    ) async {
+      when(() => repo.trash(any())).thenAnswer((_) async {});
+      await pumpList(tester, notesNamed('Note', 3));
+      final nextBefore = tester.getTopLeft(find.text('Note 2'));
+
+      await deleteSelected(tester, 'Note 1');
+      await tester.pump(destructionDuration ~/ 2);
+      // Burning in place: the cards after it stay put meanwhile.
+      expect(burning(), findsOneWidget);
+      expect(tester.getTopLeft(find.text('Note 2')), nextBefore);
+      verifyNever(() => repo.trash(any()));
+
+      for (var i = 0; i < 8; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verify(() => repo.trash(['Note1'])).called(1);
+      await tester.pump(const Duration(seconds: 7));
+    });
+
+    testWidgets('with reduced motion nothing burns', (tester) async {
+      when(() => repo.trash(any())).thenAnswer((_) async {});
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      await pumpList(tester, notesNamed('Note', 3));
+
+      await deleteSelected(tester, 'Note 1');
+
+      expect(burning(), findsNothing);
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verify(() => repo.trash(['Note1'])).called(1);
+      await tester.pump(const Duration(seconds: 7));
+    });
   });
 
   testWidgets('sorted by title, a hold selects and nothing drags', (

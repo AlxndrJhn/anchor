@@ -24,6 +24,7 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bottom_bar_frame.dart';
+import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/page_bar.dart';
 import '../../../l10n/l10n.dart';
 import '../../reminders/presentation/reminder_permission_prompt.dart';
@@ -52,6 +53,7 @@ import 'note_labels.dart';
 import 'note_morph_route.dart';
 import 'widgets/add_sheet.dart';
 import 'widgets/background_sheet.dart';
+import 'widgets/card_registry.dart';
 import 'widgets/note_attachments_strip.dart';
 import 'widgets/note_bar.dart';
 import 'widgets/note_header.dart';
@@ -422,11 +424,42 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   Future<void> _trash() async {
     final note = _draft.note;
     if (note == null) return;
+    if (_burnsInList) {
+      await NoteActions(
+        _host,
+        ref,
+      ).trash([note], beforeChange: () => _closeThenBurn(note.id));
+      return;
+    }
     await NoteActions(context, ref).trash(
       [note],
       beforeChange: _draft.flushOnLeave,
       afterChange: _leaveDeleted,
     );
+  }
+
+  /// Whether a deleted note closes at once, for its card to burn away in the
+  /// list it goes back to; with nothing to go back to, it's deleted, then
+  /// the note closes.
+  bool get _burnsInList => context.canPop() && !context.isMotionReduced;
+
+  /// Outlives this page: deleting runs on, and its message shows, there.
+  BuildContext get _host => Navigator.of(context).context;
+
+  /// Closes the note, then burns its card where it stands in the list.
+  Future<void> _closeThenBurn(String noteId) async {
+    _draft.flushOnLeave();
+    _draft.markDeleted();
+    final closing =
+        ModalRoute.of(context)?.reverseTransitionDuration ?? Duration.zero;
+    context.pop();
+    await Future.wait([
+      Future<void>.delayed(closing),
+      // The card it closes into shows again only once the note is in.
+      CardRegistry.whenShown(noteId, timeout: const Duration(seconds: 2)),
+    ]);
+    await WidgetsBinding.instance.endOfFrame;
+    await burnNoteCards([noteId]);
   }
 
   /// Hands the note to another app as text, through the share sheet.
@@ -530,6 +563,13 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   Future<void> _deleteForever() async {
     final note = _draft.note;
     if (note == null) return;
+    if (_burnsInList) {
+      await NoteActions(
+        _host,
+        ref,
+      ).deleteForever([note], beforeChange: () => _closeThenBurn(note.id));
+      return;
+    }
     await NoteActions(
       context,
       ref,

@@ -6,6 +6,7 @@ import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/core/storage/preferences_repository.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/core/widgets/grouped_list.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_copies_repository.dart';
@@ -103,6 +104,8 @@ void main() {
     bool opensFromList = false,
     bool startAsChecklist = false,
     bool pasteClipboard = false,
+    // The list it goes back to holds the note's card.
+    bool withCard = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -139,7 +142,22 @@ void main() {
               ),
               GoRoute(
                 path: '/',
-                builder: (_, _) => const Scaffold(body: Text('Notes')),
+                builder: (_, _) => Scaffold(
+                  body: Column(
+                    children: [
+                      const Text('Notes'),
+                      if (withCard)
+                        Destructible(
+                          id: note!.id,
+                          child: const SizedBox(
+                            width: 160,
+                            height: 120,
+                            child: Text('The card'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
                 routes: [
                   GoRoute(
                     path: 'note/:id',
@@ -953,7 +971,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(barButton('Move to trash'));
-      for (var i = 0; i < 5; i++) {
+      // It closes first, then goes, and the message shows.
+      for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
@@ -961,6 +980,34 @@ void main() {
       expect(find.text('Notes'), findsOneWidget);
       await tester.tap(find.text('Undo'));
       verify(() => notesRepo.restore(['n1'])).called(1);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('a deleted note closes at once; its card burns, then it goes', (
+      tester,
+    ) async {
+      await pumpScreen(tester, note: mine, withCard: true);
+      await tester.pumpAndSettle();
+
+      await tester.tap(barButton('Move to trash'));
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      // Closed, back on the list, where the card burns in place.
+      expect(find.byType(NoteEditScreen), findsNothing);
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is CustomPaint && w.painter is BurnPainter,
+        ),
+        findsOneWidget,
+      );
+      verifyNever(() => notesRepo.trash(any()));
+
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verify(() => notesRepo.trash(['n1'])).called(1);
+      expect(find.text('Undo'), findsOneWidget);
       await drainSnackbar(tester);
     });
 

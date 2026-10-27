@@ -7,6 +7,8 @@ abstract final class Haptics {
 
   static void medium() => HapticFeedback.mediumImpact();
 
+  static void heavy() => HapticFeedback.heavyImpact();
+
   static void success() => HapticFeedback.successNotification();
 
   static void warning() => HapticFeedback.warningNotification();

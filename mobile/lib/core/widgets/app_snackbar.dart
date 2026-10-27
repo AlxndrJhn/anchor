@@ -26,7 +26,11 @@ abstract final class AppSnackbar {
     VoidCallback? onAction,
     ValueChanged<bool>? onClosed,
   }) {
-    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    // A navigator's own context, which outlives its pages, has its overlay
+    // below it.
+    final overlay =
+        Overlay.maybeOf(context, rootOverlay: true) ??
+        Navigator.maybeOf(context)?.overlay;
     if (overlay == null) return;
     if (kind == SnackbarKind.success) Haptics.success();
     if (kind == SnackbarKind.error) Haptics.warning();

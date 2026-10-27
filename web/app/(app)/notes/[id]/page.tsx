@@ -327,6 +327,8 @@ function NoteEditor({
       <article
         ref={articleRef}
         className={cn("note ed", readOnly && "ro")}
+        // Burnt away when the note is deleted.
+        data-note-page={noteId}
         data-note={
           (previewBackground === false
             ? editor.background

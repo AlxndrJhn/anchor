@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { canGoBackInApp } from "@/lib/app-history";
+import { destroyNotePage } from "@/lib/destroy";
 import {
   archiveNote,
   deleteNote,
@@ -94,6 +95,7 @@ export function useNoteActions({
 
   const trashMutation = useMutation({
     mutationFn: () => deleteNote(noteId),
+    onMutate: () => ({ restorePage: destroyNotePage(noteId) }),
     onSuccess: () => {
       refreshLists();
       setConfirmLeaveShare(false);
@@ -107,13 +109,15 @@ export function useNoteActions({
         });
       else toast.success("Note removed from your notes");
     },
-    onError: () =>
+    onError: (_, __, context) => {
+      context?.restorePage();
       toast.error(
         isOwner ? "Couldn’t move note to trash" : "Couldn’t remove note",
         {
           retry: () => trashMutation.mutate(),
         },
-      ),
+      );
+    },
   });
 
   const restoreMutation = useMutation({
@@ -140,16 +144,19 @@ export function useNoteActions({
 
   const permanentDeleteMutation = useMutation({
     mutationFn: () => permanentDeleteNote(noteId),
+    onMutate: () => ({ restorePage: destroyNotePage(noteId) }),
     onSuccess: () => {
       refreshLists();
       setConfirmPermanentDelete(false);
       goBack();
       toast.success("Note permanently deleted");
     },
-    onError: () =>
+    onError: (_, __, context) => {
+      context?.restorePage();
       toast.error("Couldn’t delete note", {
         retry: () => permanentDeleteMutation.mutate(),
-      }),
+      });
+    },
   });
 
   return {

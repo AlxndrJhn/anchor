@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/motion/springs.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/check_circle.dart';
+import '../../../../core/widgets/destruction/destruction.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../reminders/presentation/reminder_labels.dart';
 import '../../../tags/domain/tag.dart';
@@ -196,7 +197,8 @@ class _NoteCardState extends State<NoteCard>
           animation: _press,
           builder: (context, child) =>
               Transform.scale(scale: _press.value, child: child),
-          child: card,
+          // Deleted, the card burns away where it stands.
+          child: Destructible(id: note.id, child: card),
         ),
       ),
     );

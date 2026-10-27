@@ -30,6 +30,7 @@ import { useNoteList } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
+import { destroyNoteCards } from "@/lib/destroy";
 import { eachLimited } from "@/lib/each";
 import { plural } from "@/lib/utils";
 
@@ -71,9 +72,11 @@ export default function ArchivePage() {
       if (kind === "unarchive") await eachLimited(ids, unarchiveNote);
       else await bulkDeleteNotes(ids);
     },
-    onMutate: ({ ids }) => {
+    onMutate: ({ kind, ids }) => {
       list.prepareCardMotion();
       return {
+        // Deleted cards burn away where they stand.
+        restoreCards: kind === "trash" ? destroyNoteCards(ids) : undefined,
         ownedIds: ids.filter(
           (id) => notes.find((n) => n.id === id)?.permission === "owner",
         ),
@@ -102,11 +105,13 @@ export default function ArchivePage() {
           : undefined,
       );
     },
-    onError: (_, variables) =>
+    onError: (_, variables, context) => {
+      context?.restoreCards?.();
       toast.error(
         `Couldn’t ${variables.kind === "unarchive" ? "unarchive" : "delete"} ${variables.ids.length === 1 ? "note" : "notes"}`,
         { retry: () => noteAction.mutate(variables) },
-      ),
+      );
+    },
   });
 
   const mutateNotes = noteAction.mutate;

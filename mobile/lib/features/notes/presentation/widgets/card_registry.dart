@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import '../../../../core/widgets/global_rect_of.dart';
@@ -46,5 +48,22 @@ abstract final class CardRegistry {
     final count = (_hideCounts[noteId] ?? 0) - 1;
     count > 0 ? _hideCounts[noteId] = count : _hideCounts.remove(noteId);
     hidden.value = {..._hideCounts.keys};
+  }
+
+  /// Completes once [noteId]'s card shows again, as when an open note has
+  /// closed back into it; at the latest after [timeout].
+  static Future<void> whenShown(String noteId, {required Duration timeout}) {
+    if (!hidden.value.contains(noteId)) return Future.value();
+    final shown = Completer<void>();
+    void check() {
+      if (!hidden.value.contains(noteId) && !shown.isCompleted) {
+        shown.complete();
+      }
+    }
+
+    hidden.addListener(check);
+    return shown.future
+        .timeout(timeout, onTimeout: () {})
+        .whenComplete(() => hidden.removeListener(check));
   }
 }
