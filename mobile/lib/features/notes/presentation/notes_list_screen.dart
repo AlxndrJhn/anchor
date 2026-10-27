@@ -321,25 +321,36 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     Set<String> selectedNoteIds, {
     bool canDrag = false,
   }) {
-    return NoteCard(
-      note: note,
-      isSelectionMode: isSelectionMode,
-      isSelected: selectedNoteIds.contains(note.id),
-      // While notes can be dragged, the drag's own hold selects instead.
-      onLongPress: canDrag
-          ? null
-          : () {
-              if (!isSelectionMode) {
-                ref.read(selectionModeProvider.notifier).setEnabled(true);
-              }
-              ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
-            },
-      onTap: () {
-        if (isSelectionMode) {
+    // The card follows the selection itself, and a tap asks whether
+    // notes are being picked when it lands: a card the grid kept from
+    // before picking began must pick, not open the note or its picture.
+    return Consumer(
+      builder: (context, ref, _) {
+        final picking = ref.watch(selectionModeProvider);
+        final picked = ref.watch(
+          selectedNoteIdsProvider.select((ids) => ids.contains(note.id)),
+        );
+        void toggle() {
+          if (!ref.read(selectionModeProvider)) {
+            ref.read(selectionModeProvider.notifier).setEnabled(true);
+          }
           ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
-        } else {
-          context.go(_noteLocation(note), extra: note);
         }
+
+        return NoteCard(
+          note: note,
+          isSelectionMode: picking,
+          isSelected: picked,
+          // While notes can be dragged, the drag's own hold selects instead.
+          onLongPress: canDrag && !picking ? null : toggle,
+          onTap: () {
+            if (ref.read(selectionModeProvider)) {
+              ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
+            } else {
+              context.go(_noteLocation(note), extra: note);
+            }
+          },
+        );
       },
     );
   }

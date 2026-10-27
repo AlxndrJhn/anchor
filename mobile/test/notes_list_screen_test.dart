@@ -21,6 +21,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'reminder_permissions_test.dart' show FakeGateway;
@@ -72,6 +73,8 @@ void main() {
     List<Note> notes, {
     List<Note> archived = const [],
     PictureSearchRepository? pictureSearch,
+    // A card's picture shimmers while it loads, and never settles.
+    bool settle = true,
   }) async {
     when(
       () => notesRepo.watchNotes(tagId: any(named: 'tagId')),
@@ -121,7 +124,11 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
   }
 
   Future<void> scrollToEnd(WidgetTester tester) async {
@@ -275,6 +282,96 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('1 note'), findsOneWidget);
+    });
+  });
+
+  group('selecting after Select notes', () {
+    Finder ticks() => find.byIcon(LucideIcons.check);
+
+    testWidgets('a tap anywhere on a card picks it, in every section', (
+      tester,
+    ) async {
+      await pumpList(tester, notesNamed('Note', 4, pinned: 1));
+
+      await tester.tap(find.byTooltip('Select notes'));
+      await tester.pumpAndSettle();
+      // The pinned one, and another below, tapped on their text.
+      await tester.tap(find.text('item 0').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 2'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2 notes'), findsOneWidget);
+      expect(ticks(), findsNWidgets(2));
+    });
+
+    testWidgets('after scrolling a long list, a tap still picks', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await pumpList(tester, notesNamed('Note', 30, pinned: 2));
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -900),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Select notes'));
+      await tester.pumpAndSettle();
+      final visible = find.textContaining(RegExp(r'^Note \d+$')).hitTestable();
+      await tester.tap(visible.first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 note'), findsOneWidget);
+      await tester.tap(find.byTooltip('Select all'));
+      await tester.pumpAndSettle();
+      expect(find.text('30 notes'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.check).hitTestable(), findsWidgets);
+    });
+
+    testWidgets('a tap on a picked card\'s picture picks it, not opens it', (
+      tester,
+    ) async {
+      await pumpList(tester, [
+        const Note(
+          id: 'pic',
+          title: 'With a picture',
+          imagePreviewData: [
+            NoteImagePreview(
+              attachmentId: 'a1',
+              noteId: 'pic',
+              filename: 'a.jpg',
+            ),
+          ],
+        ),
+        ...notesNamed('Note', 2),
+      ], settle: false);
+
+      await tester.tap(find.byTooltip('Select notes'));
+      await tester.pump(const Duration(milliseconds: 500));
+      final card = find.ancestor(
+        of: find.text('With a picture'),
+        matching: find.byType(Card),
+      );
+      // The top of the card, where the picture is.
+      await tester.tapAt(tester.getTopLeft(card) + const Offset(40, 20));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('1 note'), findsOneWidget);
+    });
+
+    testWidgets('Select all marks every card', (tester) async {
+      await pumpList(tester, notesNamed('Note', 3, pinned: 1));
+
+      await tester.tap(find.byTooltip('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Select all'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('3 notes'), findsOneWidget);
+      expect(ticks(), findsNWidgets(3));
     });
   });
 
