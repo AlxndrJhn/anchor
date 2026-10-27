@@ -1,12 +1,13 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import { idbClear, idbDelete, idbEntries, idbGet, idbSet } from "./idb";
 
-// Keeps the notes lists, the notes opened and the tags on the device, so the
-// app shows them after a reload without a connection.
+// Keeps the notes lists, the notes opened, the tags and the note-lock hashes
+// on the device, so the app shows them (and opens locked notes) after a
+// reload without a connection.
 
 const PREFIX = "query:";
 const OWNER_KEY = "owner";
-const KEPT_ROOTS = new Set(["notes", "tags"]);
+const KEPT_ROOTS = new Set(["notes", "tags", "note-locks"]);
 
 interface StoredQuery {
   key: QueryKey;

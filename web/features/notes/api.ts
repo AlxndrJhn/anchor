@@ -8,6 +8,8 @@ import type {
   CreateNoteDto,
   Note,
   NoteAttachment,
+  NoteLockKind,
+  NoteLockSecrets,
   NoteRevision,
   NoteRevisionPage,
   NoteShare,
@@ -37,6 +39,41 @@ export async function setNotePosition(
   position: number | null,
 ): Promise<void> {
   await api.patch(`api/notes/${id}/position`, { json: { position } });
+}
+
+/** Locks the note for this person with `lock`, or takes the lock off. */
+export async function setNoteLock(
+  id: string,
+  lock: NoteLockKind | null,
+): Promise<void> {
+  await api.patch(`api/notes/${id}/lock`, { json: { lock } });
+}
+
+export async function getNoteLockSecrets(): Promise<NoteLockSecrets> {
+  return getJson<NoteLockSecrets>("api/note-locks");
+}
+
+/**
+ * Sets this person's PIN or pattern. Replacing one takes the old one
+ * (`current`) or the account password.
+ */
+export async function setNoteLockSecret(
+  kind: "pin" | "pattern",
+  body: { secret: string; current?: string; password?: string },
+): Promise<NoteLockSecrets> {
+  return api
+    .put(`api/note-locks/${kind}`, { json: body })
+    .json<NoteLockSecrets>();
+}
+
+export async function verifyNoteLock(
+  kind: "pin" | "pattern" | "password",
+  secret: string,
+): Promise<boolean> {
+  const { ok } = await api
+    .post("api/note-locks/verify", { json: { kind, secret } })
+    .json<{ ok: boolean }>();
+  return ok;
 }
 
 /** "Make a copy": the server copies the text, colour, tags and attachments. */
@@ -178,6 +215,17 @@ export async function bulkPinNotes(
   return inBulkBatches(noteIds, (batch) =>
     api
       .post("api/notes/bulk/pin", { json: { noteIds: batch, isPinned } })
+      .json<{ count: number }>(),
+  );
+}
+
+export async function bulkLockNotes(
+  noteIds: string[],
+  lock: NoteLockKind | null,
+): Promise<{ count: number }> {
+  return inBulkBatches(noteIds, (batch) =>
+    api
+      .post("api/notes/bulk/lock", { json: { noteIds: batch, lock } })
       .json<{ count: number }>(),
   );
 }

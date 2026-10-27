@@ -32,6 +32,13 @@ import {
 } from "@/features/notes";
 import { copyNote } from "@/features/notes/api";
 import type { RichTextEditorHandle } from "@/features/notes/components/editor";
+import { LockDialog } from "@/features/notes/components/lock/lock-dialog";
+import { LockGate } from "@/features/notes/components/lock/lock-gate";
+import {
+  useApplyLock,
+  useUnlockedIds,
+} from "@/features/notes/hooks/use-note-lock";
+import { isLockHidden, useUnlockedNotes } from "@/features/notes/note-lock";
 import { sendNote } from "@/features/notes/note-text";
 import { parseStoredContent } from "@/features/notes/quill";
 import {
@@ -112,9 +119,16 @@ function NoteEditor({
     setIsArchived: editor.setIsArchived,
   });
   const contentEditorRef = useRef<RichTextEditorHandle | null>(null);
+  // A locked note shows its lock screen until it is unlocked this session.
+  const unlockedIds = useUnlockedIds();
+  const lockedOut = !isNew && !!note && isLockHidden(note, unlockedIds);
+  const lock = note?.lock ?? null;
+  const applyLock = useApplyLock();
+  const [lockDialogOpen, setLockDialogOpen] = useState(false);
   const { articleRef, scrollRef } = useEditorChrome({
     noteId,
-    isLoading,
+    // The editor mounts once the note is unlocked.
+    isLoading: isLoading || lockedOut,
     isNew,
     contentEditorRef,
   });
@@ -199,15 +213,17 @@ function NoteEditor({
   const canEditNote = !isNew && !trashedNote && !editor.isReadOnly;
   // Google Keep's keys while no text field has focus.
   useShortcuts(
-    {
-      Escape: leave,
-      e: () =>
-        editor.isArchived
-          ? actions.unarchive()
-          : canEditNote && actions.archive(),
-      "#": () => !isNew && !trashedNote && actions.trash(),
-      f: () => canEditNote && editor.setIsPinned((was) => !was),
-    },
+    lockedOut
+      ? { Escape: leave }
+      : {
+          Escape: leave,
+          e: () =>
+            editor.isArchived
+              ? actions.unarchive()
+              : canEditNote && actions.archive(),
+          "#": () => !isNew && !trashedNote && actions.trash(),
+          f: () => canEditNote && editor.setIsPinned((was) => !was),
+        },
     !editor.historyOpen,
   );
   // Ctrl+Enter finishes from anywhere; Esc first leaves the text field.
@@ -258,7 +274,7 @@ function NoteEditor({
   // the L key, starts a checklist there).
   const searchParams = useSearchParams();
   // Opened from search results: mark the term in the note.
-  useSearchHits(articleRef, searchParams.get("hl"), !isLoading);
+  useSearchHits(articleRef, searchParams.get("hl"), !isLoading && !lockedOut);
   const startsList = searchParams.get("list") === "1";
   useEffect(() => {
     if (!isNew) return;
@@ -285,6 +301,35 @@ function NoteEditor({
     ) : (
       <NoteLoadFailed onRetry={() => editor.refetchNote()} />
     );
+
+  if (lockedOut && note?.lock)
+    return <LockGate note={{ ...note, lock: note.lock }} onBack={leave} />;
+
+  const lockNote = async (kind: NonNullable<Note["lock"]>) => {
+    // Locked by this person here, so it stays open.
+    useUnlockedNotes.getState().unlock(noteId);
+    await applyLock([{ id: noteId, lock }], kind);
+    toast.success(lock ? "Lock changed" : "Note locked");
+  };
+  const removeLock = () => {
+    const was = lock;
+    applyLock([{ id: noteId, lock: was }], null).then(
+      () =>
+        toast.success("Lock removed", {
+          undo: () =>
+            void applyLock([{ id: noteId, lock: null }], was).catch(() =>
+              toast.error("Couldn’t undo that"),
+            ),
+        }),
+      () =>
+        toast.error(
+          navigator.onLine
+            ? "Couldn’t remove the lock"
+            : "Removing the lock needs a connection",
+          { retry: removeLock },
+        ),
+    );
+  };
 
   const trashed = note?.state === "trashed";
   const saveRefused =
@@ -379,6 +424,9 @@ function NoteEditor({
             onReminder={editor.changeReminder}
             onShare={() => setShareDialogOpen(true)}
             onHistory={openHistory}
+            lock={lock}
+            onLock={() => setLockDialogOpen(true)}
+            onRemoveLock={removeLock}
             onSend={async () => {
               try {
                 const sent = await sendNote(editor.title, editor.content);
@@ -489,6 +537,14 @@ function NoteEditor({
         isPending={actions.isLeavingShare}
         onConfirm={actions.leaveShare}
       />
+      {!isNew && (
+        <LockDialog
+          open={lockDialogOpen}
+          onOpenChange={setLockDialogOpen}
+          current={lock}
+          onLock={lockNote}
+        />
+      )}
       {!isNew && (
         <ShareDialog
           open={shareDialogOpen}

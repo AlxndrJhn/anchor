@@ -72,6 +72,18 @@ export interface Note {
   /** Where this person dragged the note, and when (see `sortKey`). */
   position?: number | null;
   positionedAt?: string | null;
+  /** What opens the note for this person, if they locked it. */
+  lock?: NoteLockKind | null;
+}
+
+/** The ways a person can lock a note for themselves. */
+export type NoteLockKind = "biometric" | "pin" | "pattern" | "tap";
+
+/** This person's PIN and pattern, as hashes (see `lockSecretMatches`). */
+export interface NoteLockSecrets {
+  pin: string | null;
+  pattern: string | null;
+  hasPassword: boolean;
 }
 
 // "conflict" holds content the server turned down, which never reached the note.

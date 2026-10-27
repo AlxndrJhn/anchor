@@ -25,4 +25,16 @@ describe("matchesSearch", () => {
   it("matches everything without a term", () => {
     expect(matchesSearch(note({}), "")).toBe(true);
   });
+
+  it("finds a locked note by its title only, until it is unlocked", () => {
+    const locked = note({
+      id: "n1",
+      lock: "pin",
+      pictureText: "Dentist",
+    });
+    expect(matchesSearch(locked, "groceries", new Set())).toBe(true);
+    expect(matchesSearch(locked, "bread", new Set())).toBe(false);
+    expect(matchesSearch(locked, "dentist", new Set())).toBe(false);
+    expect(matchesSearch(locked, "bread", new Set(["n1"]))).toBe(true);
+  });
 });

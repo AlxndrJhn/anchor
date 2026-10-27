@@ -17,6 +17,8 @@ import {
   ListRestart,
   ListX,
   LoaderCircle,
+  Lock,
+  LockOpen,
   LogOut,
   Palette,
   Pin,
@@ -44,7 +46,11 @@ import { useSyncStatus } from "@/features/sync";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { cn } from "@/lib/utils";
 import { isReminderPast, reminderLabel } from "../../reminder";
-import type { NoteReminder, ReminderRecurrence } from "../../types";
+import type {
+  NoteLockKind,
+  NoteReminder,
+  ReminderRecurrence,
+} from "../../types";
 import { BackgroundPicker } from "../background-picker";
 import { ReminderPopoverContent } from "../reminder-picker";
 
@@ -73,6 +79,11 @@ interface NoteEditorHeaderProps {
   ) => void;
   onShare: () => void;
   onHistory: () => void;
+  /** How the note is locked for this person, if it is. */
+  lock: NoteLockKind | null;
+  /** Opens the lock choices (Lock… or Change lock…). */
+  onLock: () => void;
+  onRemoveLock: () => void;
   /** Hands the note to another app (or copies it as text). */
   onSend: () => void;
   /** Makes a copy of the note; absent for a note not yet saved. */
@@ -300,6 +311,21 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                   >
                     <History />
                     Version history
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => {
+                    afterMenu.current = props.onLock;
+                  }}
+                >
+                  <Lock />
+                  {props.lock ? "Change lock…" : "Lock…"}
+                </DropdownMenuItem>
+                {props.lock && (
+                  <DropdownMenuItem onSelect={props.onRemoveLock}>
+                    <LockOpen />
+                    Remove lock
                   </DropdownMenuItem>
                 )}
                 <div className="contents md:hidden">

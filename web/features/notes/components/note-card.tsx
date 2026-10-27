@@ -1,7 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Check, CloudOff, ImageOff, Paperclip, Pin, Users } from "lucide-react";
+import {
+  Check,
+  CloudOff,
+  ImageOff,
+  Lock,
+  LockOpen,
+  Paperclip,
+  Pin,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { Avatar } from "@/components/ui/avatar";
@@ -28,10 +37,13 @@ import {
   useCardAppendText,
   useCardChecklist,
 } from "../hooks/use-card-checklist";
+import { useUnlockedIds } from "../hooks/use-note-lock";
 import { deltaToBlocks, type NoteBlock } from "../note-blocks";
+import { isLockHidden } from "../note-lock";
 import { hasTitle } from "../title";
 import type { Note } from "../types";
 import { Viewer } from "./attachments/attachment-viewer";
+import { UnlockForm } from "./lock/unlock-form";
 import { NoteBody } from "./note-body";
 import { ReminderChip } from "./reminder-chip";
 
@@ -79,6 +91,7 @@ export function formatCardDate(iso: string, now = new Date()): string {
 }
 
 const blocksByNote = new WeakMap<Note, NoteBlock[]>();
+const NO_BLOCKS: NoteBlock[] = [];
 
 function cardBlocks(note: Note) {
   let blocks = blocksByNote.get(note);
@@ -102,7 +115,9 @@ export const NoteCard = React.memo(function NoteCard({
   dateLabel,
   searchTerm,
 }: NoteCardProps) {
-  const blocks = cardBlocks(note);
+  // A note locked and not opened this session shows only its title.
+  const lockHidden = isLockHidden(note, useUnlockedIds());
+  const blocks = lockHidden ? NO_BLOCKS : cardBlocks(note);
   const hasHighlights = blocks.some((block) =>
     block.runs.some((run) => run.highlight),
   );
@@ -120,7 +135,8 @@ export const NoteCard = React.memo(function NoteCard({
   const showPictures = usePreferencesStore(
     (s) => s.notes.showPictures !== false,
   );
-  const pictureIds = showPictures ? (note.imagePreviewIds ?? []) : [];
+  const pictureIds =
+    showPictures && !lockHidden ? (note.imagePreviewIds ?? []) : [];
   const attachmentCount = note.attachmentCount ?? 0;
   const loadPictures = useNearScreen(cardRef, pictureIds.length > 0);
   const tags = (note.tagIds ?? []).flatMap((id) => tagMap.get(id) ?? []);
@@ -179,6 +195,13 @@ export const NoteCard = React.memo(function NoteCard({
             {shareCount}
           </span>
         ))}
+      {note.lock && !lockHidden && (
+        // Locked, but opened this session.
+        <span className="nc-count" title="Locked, unlocked for now">
+          <LockOpen aria-hidden />
+          <span className="sr-only">Locked, unlocked for now</span>
+        </span>
+      )}
       {attachmentCount > 0 && !pictureIds.length && (
         <span
           className="nc-count"
@@ -312,17 +335,24 @@ export const NoteCard = React.memo(function NoteCard({
       )}
       <div className="nc-in">
         {title && <div className="nc-title">{title}</div>}
-        <NoteBody
-          ref={bodyRef}
-          blocks={blocks}
-          variant="card"
-          maxRows={ROW_LIMIT[layout]}
-          onToggle={
-            !picking && canTickFromCard(note)
-              ? (line) => void tickItem(note, line)
-              : undefined
-          }
-        />
+        {lockHidden ? (
+          <div className="nc-locked">
+            <Lock aria-hidden />
+            Locked
+          </div>
+        ) : (
+          <NoteBody
+            ref={bodyRef}
+            blocks={blocks}
+            variant="card"
+            maxRows={ROW_LIMIT[layout]}
+            onToggle={
+              !picking && canTickFromCard(note)
+                ? (line) => void tickItem(note, line)
+                : undefined
+            }
+          />
+        )}
         {isList ? (
           <div className="nc-row">
             {tagRow}
@@ -352,8 +382,9 @@ export const NoteCard = React.memo(function NoteCard({
       {readingOffline && (
         <OfflineNote
           note={note}
-          blocks={blocks}
+          blocks={cardBlocks(note)}
           tags={tags}
+          locked={lockHidden}
           onClose={() => setReadingOffline(false)}
         />
       )}
@@ -381,11 +412,13 @@ function OfflineNote({
   note,
   blocks,
   tags,
+  locked,
   onClose,
 }: {
   note: Note;
   blocks: NoteBlock[];
   tags: TagLabel[];
+  locked: boolean;
   onClose: () => void;
 }) {
   return (
@@ -400,14 +433,27 @@ function OfflineNote({
           you’re back online.
         </DialogDescription>
         <DialogBody className="grid gap-3">
-          {tags.length > 0 && (
-            <div className="nc-tags">
-              {tags.map((t) => (
-                <TagChip key={t.id} name={t.name} color={t.color} size="sm" />
-              ))}
+          {locked && note.lock ? (
+            <div className="grid justify-items-center py-4">
+              <UnlockForm noteId={note.id} kind={note.lock} />
             </div>
+          ) : (
+            <>
+              {tags.length > 0 && (
+                <div className="nc-tags">
+                  {tags.map((t) => (
+                    <TagChip
+                      key={t.id}
+                      name={t.name}
+                      color={t.color}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              )}
+              <NoteBody blocks={blocks} variant="full" />
+            </>
           )}
-          <NoteBody blocks={blocks} variant="full" />
         </DialogBody>
       </DialogContent>
     </Dialog>

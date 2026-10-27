@@ -6,6 +6,7 @@ import {
   ArchiveRestore,
   Hash,
   Images,
+  Lock,
   Palette,
   Pin,
   PinOff,
@@ -37,6 +38,7 @@ import {
 } from "@/features/notes/api";
 import { BulkColorPicker } from "@/features/notes/components/bulk-color-picker";
 import { BulkTagPicker } from "@/features/notes/components/bulk-tag-picker";
+import { BulkLockDialog } from "@/features/notes/components/lock/bulk-lock-dialog";
 import {
   NoSearchResults,
   NoteListActions,
@@ -50,8 +52,10 @@ import {
   matchesSearch,
   useNoteList,
 } from "@/features/notes/hooks/use-note-list";
+import { useUnlockedIds } from "@/features/notes/hooks/use-note-lock";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { matchesFilters } from "@/features/notes/note-filters";
+import { isLockHidden } from "@/features/notes/note-lock";
 import { compareNotes, positionBetween } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
@@ -84,6 +88,8 @@ function NotesView({ tagId }: { tagId: string | null }) {
     null,
   );
   const [sharingNote, setSharingNote] = React.useState<Note | null>(null);
+  const [locking, setLocking] = React.useState(false);
+  const unlocked = useUnlockedIds();
   const [confirmRemove, setConfirmRemove] = React.useState<{
     ids: string[];
     sharedCount: number;
@@ -113,7 +119,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             .filter(
               (n) =>
                 (!tagId || n.tagIds?.includes(tagId)) &&
-                matchesSearch(n, list.term) &&
+                matchesSearch(n, list.term, unlocked) &&
                 matchesFilters(n, list.filters),
             )
             .sort(compareNotes(list.sortBy, list.sortOrder))
@@ -126,11 +132,13 @@ function NotesView({ tagId }: { tagId: string | null }) {
       tagId,
       list.sortBy,
       list.sortOrder,
+      unlocked,
     ],
   );
 
   // Notes whose pictures look like the search, for those who turned
-  // picture search on: after the notes that match by their words.
+  // picture search on: after the notes that match by their words. A locked
+  // note's pictures stay out of it until it is unlocked.
   const pictureCandidates = React.useMemo(
     () =>
       [
@@ -138,8 +146,10 @@ function NotesView({ tagId }: { tagId: string | null }) {
         ...(withArchived && archivedNotes
           ? archivedNotes.filter((n) => !tagId || n.tagIds?.includes(tagId))
           : []),
-      ].filter((n) => matchesFilters(n, list.filters)),
-    [notes, withArchived, archivedNotes, tagId, list.filters],
+      ].filter(
+        (n) => matchesFilters(n, list.filters) && !isLockHidden(n, unlocked),
+      ),
+    [notes, withArchived, archivedNotes, tagId, list.filters, unlocked],
   );
   const shownNotes = React.useMemo(
     () => [...visible, ...archivedMatches],
@@ -543,6 +553,12 @@ function NotesView({ tagId }: { tagId: string | null }) {
                   }),
               },
           {
+            key: "lock",
+            label: "Lock…",
+            icon: <Lock aria-hidden />,
+            onClick: () => setLocking(true),
+          },
+          {
             key: "archive",
             label: "Archive",
             icon: <Archive aria-hidden />,
@@ -582,6 +598,12 @@ function NotesView({ tagId }: { tagId: string | null }) {
         anchor={colorAnchor}
         notes={chosen}
         onClose={() => setColorAnchor(null)}
+        onDone={list.stopPicking}
+      />
+      <BulkLockDialog
+        notes={chosen}
+        open={locking}
+        onOpenChange={setLocking}
         onDone={list.stopPicking}
       />
       <BulkTagPicker
