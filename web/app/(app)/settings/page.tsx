@@ -8,6 +8,7 @@ import {
   AppearanceSection,
   EditorSection,
   ImportExportSection,
+  NoteLocksSection,
   PasswordSection,
   ProfileSection,
   Row,
@@ -35,6 +36,7 @@ export default function SettingsPage() {
           <SearchSection />
           <ApiTokenSection />
           <ImportExportSection />
+          <NoteLocksSection />
           <PasswordSection />
           <Section id="about" title="About">
             <Row>

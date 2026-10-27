@@ -5,6 +5,7 @@ import {
   Info,
   KeyRound,
   Lock,
+  LockKeyhole,
   PencilLine,
   Search,
   SunMoon,
@@ -21,6 +22,7 @@ const SECTIONS = [
   { id: "search", label: "Search", icon: Search },
   { id: "token", label: "API token", icon: KeyRound },
   { id: "data", label: "Import and export", icon: HardDriveDownload },
+  { id: "locks", label: "Note locks", icon: LockKeyhole },
   { id: "password", label: "Password", icon: Lock },
   { id: "about", label: "About", icon: Info },
 ] as const;

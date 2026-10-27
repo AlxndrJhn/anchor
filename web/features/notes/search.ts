@@ -1,3 +1,4 @@
+import { isLockHidden } from "./note-lock";
 import { deltaToFullPlainText } from "./quill";
 import type { Note } from "./types";
 
@@ -13,7 +14,20 @@ function searchTextOf(note: Note) {
   return text;
 }
 
-/** Whether a note's title, text or pictures have the (lowercase, trimmed) term. */
-export function matchesSearch(note: Note, term: string) {
-  return !term || searchTextOf(note).includes(term);
+const NONE_UNLOCKED: ReadonlySet<string> = new Set();
+
+/**
+ * Whether a note's title, text or pictures have the (lowercase, trimmed)
+ * term. A note locked and not opened this session (see `unlocked`) is found
+ * by its title only, so a search can't tell what it says.
+ */
+export function matchesSearch(
+  note: Note,
+  term: string,
+  unlocked: ReadonlySet<string> = NONE_UNLOCKED,
+) {
+  if (!term) return true;
+  if (isLockHidden(note, unlocked))
+    return note.title.toLowerCase().includes(term);
+  return searchTextOf(note).includes(term);
 }

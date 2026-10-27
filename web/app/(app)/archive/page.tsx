@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArchiveRestore, Trash2 } from "lucide-react";
+import { ArchiveRestore, Lock, Trash2 } from "lucide-react";
 import * as React from "react";
 import { AppPage, PageTitle } from "@/components/layout/app-page";
 import { IconButton } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   restoreNote,
   unarchiveNote,
 } from "@/features/notes/api";
+import { BulkLockDialog } from "@/features/notes/components/lock/bulk-lock-dialog";
 import {
   NoSearchResults,
   NoteListActions,
@@ -43,6 +44,7 @@ export default function ArchivePage() {
     sharedCount: number;
   } | null>(null);
   const [sharingNote, setSharingNote] = React.useState<Note | null>(null);
+  const [locking, setLocking] = React.useState(false);
   const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["notes", "archived"],
     queryFn: getArchivedNotes,
@@ -216,6 +218,12 @@ export default function ArchivePage() {
               }),
           },
           {
+            key: "lock",
+            label: "Lock…",
+            icon: <Lock aria-hidden />,
+            onClick: () => setLocking(true),
+          },
+          {
             key: "delete",
             label: "Delete",
             icon: <Trash2 aria-hidden />,
@@ -239,6 +247,12 @@ export default function ArchivePage() {
           confirmRemove &&
           noteAction.mutate({ kind: "trash", ids: confirmRemove.ids })
         }
+      />
+      <BulkLockDialog
+        notes={list.chosen}
+        open={locking}
+        onOpenChange={setLocking}
+        onDone={list.stopPicking}
       />
       {sharingNote && (
         <ShareDialog

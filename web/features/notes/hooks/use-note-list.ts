@@ -22,6 +22,7 @@ import {
 import { matchesSearch } from "../search";
 import { compareNotes } from "../sort";
 import type { Note } from "../types";
+import { useUnlockedIds } from "./use-note-lock";
 
 export { matchesSearch };
 
@@ -74,16 +75,18 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const [picked, setPicked] = React.useState<Set<string>>(new Set());
   const lastPick = React.useRef<string | null>(null);
 
+  const unlocked = useUnlockedIds();
   const visible = React.useMemo(() => {
     const found =
       term || activeFilters
         ? notes.filter(
             (note) =>
-              matchesSearch(note, term) && matchesFilters(note, filters),
+              matchesSearch(note, term, unlocked) &&
+              matchesFilters(note, filters),
           )
         : notes;
     return [...found].sort(compareNotes(sortBy, sortOrder));
-  }, [notes, term, filters, activeFilters, sortBy, sortOrder]);
+  }, [notes, term, filters, activeFilters, sortBy, sortOrder, unlocked]);
   const pinned = React.useMemo(
     () => (pinnedFirst ? visible.filter((n) => n.isPinned) : []),
     [pinnedFirst, visible],

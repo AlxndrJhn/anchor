@@ -1,0 +1,79 @@
+/* Locked notes: the card's stand-in body, the lock screen and the pattern. */
+.nc-locked {
+  display: flex;
+  align-items: center;
+  gap: --spacing(1.5);
+  color: var(--note-muted);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
+}
+.nc-locked svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.lock-gate {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: --spacing(4);
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: --spacing(12) --spacing(5) --spacing(16);
+  text-align: center;
+}
+.lock-gate-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--note-muted) 14%, transparent);
+  color: var(--foreground);
+}
+.lock-gate-icon svg {
+  width: 26px;
+  height: 26px;
+}
+.lock-gate h1 {
+  margin: 0;
+  font-size: var(--text-heading);
+  overflow-wrap: anywhere;
+}
+.lock-gate .nudge,
+.nudge.unlock-box {
+  animation: nudge var(--duration-nudge) var(--ease-standard);
+}
+
+.pattern-pad {
+  cursor: pointer;
+  --dot: color-mix(in srgb, var(--foreground) 55%, transparent);
+  --on: var(--accent-strong);
+}
+.pattern-dot circle:last-child {
+  fill: var(--dot);
+  transition: fill var(--duration-hover);
+}
+.pattern-halo {
+  fill: transparent;
+  transition: fill var(--duration-hover);
+}
+.pattern-dot[data-on] circle:last-child {
+  fill: var(--on);
+}
+.pattern-dot[data-on] .pattern-halo {
+  fill: color-mix(in srgb, var(--on) 18%, transparent);
+}
+.pattern-line {
+  fill: none;
+  stroke: var(--on);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+.pattern-pad[data-wrong] {
+  --on: var(--destructive);
+}

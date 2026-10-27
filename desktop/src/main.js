@@ -8,6 +8,7 @@ const {
   Menu,
   ipcMain,
   net,
+  powerMonitor,
   screen,
   shell,
 } = require("electron");
@@ -366,6 +367,17 @@ if (!app.requestSingleInstanceLock()) {
     buildMenu();
     createWindow();
     start();
+
+    // Locking the computer ends the web client's unlock session: notes
+    // unlocked since lock again, as on a phone.
+    powerMonitor.on("lock-screen", () => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        if (window.webContents.getURL().startsWith("file:")) continue;
+        window.webContents
+          .executeJavaScript('window.dispatchEvent(new Event("anchor:screen-locked"))')
+          .catch(() => {});
+      }
+    });
 
     app.on("activate", () => {
       if (!mainWindow) {
