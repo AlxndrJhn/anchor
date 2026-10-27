@@ -5,6 +5,7 @@ import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/core/storage/preferences_repository.dart';
+import 'package:anchor/core/theme/app_typography.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/core/widgets/grouped_list.dart';
@@ -1702,6 +1703,122 @@ void main() {
       await tester.tap(tool('Highlight'));
       await settle(tester);
       expect(editor(tester).getContent(), contains('"highlight":"green"'));
+    });
+
+    testWidgets('Aa › Color and font colors the picked words, sets their '
+        'font and highlights them in any color', (tester) async {
+      await startWriting(tester);
+      select(tester, 0, 2);
+      await settle(tester);
+      await tester.tap(tool('Text styles'));
+      await settle(tester);
+      expect(toolsOnBar(tester), contains('Color and font'));
+      expect(toolsOnBar(tester), isNot(contains('Link')));
+
+      await tester.tap(tool('Color and font'));
+      await settle(tester);
+      await tester.tap(find.bySemanticsLabel('Red'));
+      await settle(tester);
+      expect(editor(tester).getContent(), contains('"color":"#e03131"'));
+      await tester.tap(find.text('Serif'));
+      await settle(tester);
+      expect(editor(tester).getContent(), contains('"font":"serif"'));
+
+      await tester.tap(find.bySemanticsLabel('Custom highlight'));
+      await settle(tester);
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('color-picker-hex')),
+          matching: find.byType(TextField),
+        ),
+        '#F0F',
+      );
+      await tester.pump();
+      await tester.tap(find.text('Apply'));
+      await settle(tester);
+      expect(editor(tester).getContent(), contains('"highlight":"#ff00ff"'));
+
+      await tester.tap(find.text('Done'));
+      await settle(tester);
+      final ops = (jsonDecode(editor(tester).getContent()) as Map)['ops'];
+      expect((ops as List).first, {
+        'insert': 'hi',
+        'attributes': {
+          'color': '#e03131',
+          'font': 'serif',
+          'highlight': '#ff00ff',
+        },
+      });
+
+      // Drawn in the bundled serif and its color, over the white ink a
+      // magenta mark would otherwise give it.
+      TextStyle? styleOfHi() {
+        TextStyle? found;
+        for (final rich in tester.widgetList<RichText>(find.byType(RichText))) {
+          rich.text.visitChildren((span) {
+            if (span is TextSpan && span.text == 'hi') {
+              found = span.style;
+              return false;
+            }
+            return true;
+          });
+        }
+        return found;
+      }
+
+      expect(styleOfHi()!.fontFamily, AppTypography.serif);
+      expect(styleOfHi()!.color, const Color(0xFFE03131));
+    });
+
+    testWidgets('a custom highlight is what Highlight paints next', (
+      tester,
+    ) async {
+      await startWriting(
+        tester,
+        note: const Note(
+          id: 'n1',
+          title: 'T',
+          content: '{"ops":[{"insert":"one two\\n"}]}',
+        ),
+      );
+      select(tester, 0, 3);
+      await settle(tester);
+      await tester.tap(tool('Text styles'));
+      await settle(tester);
+      await tester.tap(tool('Color and font'));
+      await settle(tester);
+      await tester.tap(find.bySemanticsLabel('Custom highlight'));
+      await settle(tester);
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('color-picker-hex')),
+          matching: find.byType(TextField),
+        ),
+        '#123456',
+      );
+      await tester.pump();
+      await tester.tap(find.text('Apply'));
+      await settle(tester);
+      await tester.tap(find.text('Done'));
+      await settle(tester);
+
+      select(tester, 4, 7);
+      await settle(tester);
+      await tester.tap(tool('Highlight'));
+      await settle(tester);
+      final ops = (jsonDecode(editor(tester).getContent()) as Map)['ops'];
+      expect(ops, [
+        {
+          'insert': 'one',
+          'attributes': {'highlight': '#123456'},
+        },
+        {'insert': ' '},
+        {
+          'insert': 'two',
+          'attributes': {'highlight': '#123456'},
+        },
+        {'insert': '\n'},
+      ]);
     });
 
     testWidgets('in the title, Aa rests and Checklist starts a line at the '

@@ -34,6 +34,7 @@ import 'list_markers.dart';
 import 'markdown_shortcuts.dart';
 import 'plain_insert_rule.dart';
 import 'slash_hint.dart';
+import 'text_formats.dart';
 
 /// Picture types the keyboard may insert, which upload as attachments.
 const insertableImageTypes = <String>[
@@ -836,6 +837,24 @@ class RichTextEditorState extends State<RichTextEditor>
     return offset >= dragged.start && offset <= dragged.end;
   }
 
+  /// Checked lines, the bundled fonts for `font`, and ink that reads on a
+  /// custom highlight. Quill lays these over its own styles.
+  TextStyle _customStyle(Attribute attribute) {
+    final value = attribute.value;
+    if (attribute.key == Attribute.font.key) {
+      final family = TextFont.of(value)?.family;
+      return family == null ? const TextStyle() : TextStyle(fontFamily: family);
+    }
+    if (attribute.key == highlightKey && isCustomHighlight(value)) {
+      final ink = customHighlightInk(
+        widget.palette.highlightFill(value as String),
+        context.anchor.appText,
+      );
+      return TextStyle(color: ink);
+    }
+    return checkedLineStyle(attribute, widget.palette.muted);
+  }
+
   InlineSpan _buildSpan(
     BuildContext context,
     Node node,
@@ -847,6 +866,14 @@ class RichTextEditorState extends State<RichTextEditor>
     final line = node.parent;
     if (line is Line && isFoldedLine(line)) {
       return TextSpan(text: text, style: foldedTextStyle);
+    }
+    // A run's own color wins over the ink a custom highlight gives it.
+    final attributes = node.style.attributes;
+    if (attributes.containsKey(highlightKey)) {
+      if (textColorOf(attributes[Attribute.color.key]?.value)
+          case final color?) {
+        style = (style ?? const TextStyle()).copyWith(color: color);
+      }
     }
     if (line is Line && _isDragged(line)) style = _draggedStyle(line, style);
     return defaultSpanBuilder(
@@ -1009,8 +1036,7 @@ class RichTextEditorState extends State<RichTextEditor>
               showCursor: _isEditing && widget.canEdit,
               enableInteractiveSelection: true,
               customStyles: styles,
-              customStyleBuilder: (attribute) =>
-                  checkedLineStyle(attribute, palette.muted),
+              customStyleBuilder: (attribute) => _customStyle(attribute),
               textSpanBuilder: _buildSpan,
               // ignore: experimental_member_use
               customLeadingBlockBuilder: _buildLeading,

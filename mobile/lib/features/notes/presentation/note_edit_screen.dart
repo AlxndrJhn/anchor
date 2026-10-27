@@ -47,6 +47,7 @@ import 'editor/editor_overlay_controller.dart';
 import 'editor/editor_palette.dart';
 import 'editor/line_kind.dart';
 import 'editor/rich_text_editor.dart';
+import 'editor/text_formats.dart';
 import 'note_actions.dart';
 import 'note_editor_controller.dart';
 import 'note_labels.dart';
@@ -753,7 +754,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       background: appearance.colors.bg,
       highlightFill: (name) => appearance.highlight(context, name),
       highlightInk: (name) =>
-          colors.highlights[name]?.ink ?? colors.accentStrong,
+          colors.highlights[name]?.ink ??
+          (isCustomHighlight(name)
+              ? appearance.highlight(context, name)
+              : colors.accentStrong),
     );
     final note = _draft.note;
     final isNew = _draft.isNew;

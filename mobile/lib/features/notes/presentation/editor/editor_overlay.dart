@@ -24,6 +24,8 @@ import 'link_bubble.dart';
 import 'link_edit_sheet.dart';
 import 'rich_text_editor.dart';
 import 'slash_menu.dart';
+import 'text_formats.dart';
+import 'text_style_sheet.dart';
 
 /// Fills the page and lets touches through where it draws nothing.
 class EditorOverlay extends StatelessWidget {
@@ -121,6 +123,7 @@ class EditorOverlay extends StatelessWidget {
           if (style.isOn(attribute)) tool,
       },
       highlight: hasWords ? style.highlight : null,
+      hasTextStyle: hasWords && (style.textColor != null || style.font != null),
       lastHighlight: this.controller.highlight,
       canUndo: isTitleFocused ? history.canUndo : controller.hasUndo,
       canRedo: isTitleFocused ? history.canRedo : controller.hasRedo,
@@ -164,6 +167,8 @@ class EditorOverlay extends StatelessWidget {
         this.controller.useHighlight();
       case EditorTool.link:
         _editLink(context);
+      case EditorTool.textStyle:
+        _editTextStyle(context);
       case EditorTool.yellow ||
           EditorTool.green ||
           EditorTool.blue ||
@@ -194,6 +199,30 @@ class EditorOverlay extends StatelessWidget {
     } else if (item.action == SlashAction.picture) {
       onAddAttachment();
     }
+  }
+
+  /// Aa › Color and font, for the words picked now.
+  void _editTextStyle(BuildContext context) {
+    final editor = controller.editor;
+    if (editor == null) return;
+    final range = editor.selection;
+    final text = editor.controller;
+    final style = text.getSelectionStyle();
+    showTextStyleSheet(
+      context,
+      current: TextLook(
+        highlight: style.highlight,
+        color: style.textColor,
+        font: style.font,
+      ),
+      highlightFill: palette.highlightFill,
+      onHighlight: (value) {
+        text.formatRange(range, highlightAttribute(value));
+        if (value != null) controller.rememberHighlight(value);
+      },
+      onColor: (hex) => text.formatRange(range, textColorAttribute(hex)),
+      onFont: (font) => text.formatRange(range, fontAttribute(font)),
+    );
   }
 
   void _editLink(BuildContext context, {EditorLink? link}) {

@@ -17,6 +17,8 @@ class InlineRun {
     this.code = false,
     this.link,
     this.highlight,
+    this.color,
+    this.font,
   });
 
   final String text;
@@ -27,8 +29,14 @@ class InlineRun {
   final bool code;
   final String? link;
 
-  /// A highlight's name, such as "yellow". Notes store the name, never a color.
+  /// A highlight's name, such as "yellow", or a custom `#rrggbb`.
   final String? highlight;
+
+  /// The text color, `#rrggbb`.
+  final String? color;
+
+  /// `serif` or `monospace`; null for the note's font.
+  final String? font;
 }
 
 class NoteBlock {
@@ -105,6 +113,8 @@ InlineRun _run(String text, Map<String, dynamic> attributes) => InlineRun(
   highlight: attributes['highlight'] is String
       ? attributes['highlight'] as String
       : null,
+  color: attributes['color'] is String ? attributes['color'] as String : null,
+  font: attributes['font'] is String ? attributes['font'] as String : null,
 );
 
 NoteBlock _block(List<InlineRun> runs, Map<String, dynamic> attributes) {

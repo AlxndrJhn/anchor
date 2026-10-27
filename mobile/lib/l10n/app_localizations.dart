@@ -3526,6 +3526,84 @@ abstract class AppLocalizations {
   /// **'Highlight'**
   String get toolHighlight;
 
+  /// Editor toolbar button (in Aa, with words picked) and the sheet it opens: the words' highlight, text color and font.
+  ///
+  /// In en, this message translates to:
+  /// **'Color and font'**
+  String get toolTextStyle;
+
+  /// In the Color and font sheet: no highlight.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get textStyleNone;
+
+  /// In the Color and font sheet: the note's own text color, or its own font.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get textStyleDefault;
+
+  /// Section of the Color and font sheet with colors for the words themselves.
+  ///
+  /// In en, this message translates to:
+  /// **'Text color'**
+  String get textStyleColor;
+
+  /// Section of the Color and font sheet that sets the words' font.
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get textStyleFont;
+
+  /// Swatch in the Color and font sheet that opens a color picker for the highlight, and that picker's title.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom highlight'**
+  String get textStyleCustomHighlight;
+
+  /// Swatch in the Color and font sheet that opens a color picker for the text, and that picker's title.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom text color'**
+  String get textStyleCustomColor;
+
+  /// Color name, for text.
+  ///
+  /// In en, this message translates to:
+  /// **'Gray'**
+  String get colorGray;
+
+  /// Slider in the color picker: which color it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Hue'**
+  String get colorPickerHue;
+
+  /// Slider in the color picker: how vivid the color is.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturation'**
+  String get colorPickerSaturation;
+
+  /// Slider in the color picker: how light the color is.
+  ///
+  /// In en, this message translates to:
+  /// **'Lightness'**
+  String get colorPickerLightness;
+
+  /// Under the hex field of the color picker when what's typed isn't a color. Keep #rgb and #rrggbb as they are.
+  ///
+  /// In en, this message translates to:
+  /// **'Use #rgb or #rrggbb'**
+  String get colorPickerBadHex;
+
+  /// Button of the color picker that uses the color.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get colorPickerApply;
+
   /// Screen reader label of the toolbar button that removes the color mark from text.
   ///
   /// In en, this message translates to:

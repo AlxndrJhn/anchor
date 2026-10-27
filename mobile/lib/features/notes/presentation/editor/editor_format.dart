@@ -155,6 +155,17 @@ extension EditorFormat on QuillController {
 
   void setHighlight(String? name) => formatSelection(highlightAttribute(name));
 
+  /// [attribute] on the words in [range] (their style for what's typed next
+  /// when it's empty).
+  void formatRange(TextSelection range, Attribute attribute) {
+    if (range.isCollapsed) {
+      updateSelection(range, ChangeSource.local);
+      formatSelection(attribute);
+    } else {
+      formatText(range.start, range.end - range.start, attribute);
+    }
+  }
+
   void indentBy(int delta) {
     if (delta == 0) return;
     final change = buildListIndentDelta(
@@ -188,4 +199,16 @@ extension StyleFormat on Style {
       attributes[attribute.key]?.value == attribute.value;
 
   String? get highlight => attributes[highlightKey]?.value as String?;
+
+  /// The text color, `#rrggbb`, when all of the selection has the same one.
+  String? get textColor => switch (attributes[Attribute.color.key]?.value) {
+    final String hex => hex,
+    _ => null,
+  };
+
+  /// `serif` or `monospace` when all of the selection has it.
+  String? get font => switch (attributes[Attribute.font.key]?.value) {
+    final String font => font,
+    _ => null,
+  };
 }

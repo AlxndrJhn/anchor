@@ -40,7 +40,10 @@ class _EditorToolbarState extends State<EditorToolbar> {
     switch (tool) {
       case EditorTool.undo || EditorTool.redo:
         Haptics.light();
-      case EditorTool.add || EditorTool.link || EditorTool.hideKeyboard:
+      case EditorTool.add ||
+          EditorTool.link ||
+          EditorTool.textStyle ||
+          EditorTool.hideKeyboard:
         break;
       default:
         Haptics.selection();
@@ -140,6 +143,7 @@ bool _isToggle(EditorTool tool) => switch (tool) {
   EditorTool.italic ||
   EditorTool.underline ||
   EditorTool.strikethrough ||
-  EditorTool.highlight => true,
+  EditorTool.highlight ||
+  EditorTool.textStyle => true,
   _ => tool.highlightName != null,
 };

@@ -37,6 +37,7 @@ enum EditorTool {
   strikethrough(LucideIcons.strikethrough),
   highlight(LucideIcons.highlighter),
   link(LucideIcons.link),
+  textStyle(LucideIcons.baseline),
   yellow(null, highlightName: 'yellow'),
   green(null, highlightName: 'green'),
   blue(null, highlightName: 'blue'),
@@ -67,6 +68,7 @@ enum EditorTool {
     EditorTool.strikethrough => l10n.toolStrikethrough,
     EditorTool.highlight => l10n.toolHighlight,
     EditorTool.link => l10n.editorLink,
+    EditorTool.textStyle => l10n.toolTextStyle,
     EditorTool.yellow => l10n.colorYellow,
     EditorTool.green => l10n.colorGreen,
     EditorTool.blue => l10n.colorBlue,
@@ -144,10 +146,14 @@ EditorToolbarMode toolbarModeOf({
       EditorTool.highlight,
       EditorTool.link,
     ],
+    // Aa trades Link (one tap back) for the text's color and font.
     EditorToolbarMode.styles => [
       EditorTool.styles,
       if (!isInCode) ...EditorTool.inline,
-      if (!isInCode && hasWords) ...[EditorTool.highlight, EditorTool.link],
+      if (!isInCode && hasWords) ...[
+        EditorTool.highlight,
+        EditorTool.textStyle,
+      ],
     ],
     EditorToolbarMode.colors => const [
       EditorTool.back,
@@ -185,6 +191,7 @@ class EditorToolbarModel {
     required EditorSubmenu submenu,
     Set<EditorTool> formats = const {},
     String? highlight,
+    bool hasTextStyle = false,
     required String lastHighlight,
     required bool canUndo,
     required bool canRedo,
@@ -212,6 +219,7 @@ class EditorToolbarModel {
         if (kind == LineKind.checklist) EditorTool.checklist,
         if (kind == LineKind.bullet) EditorTool.bullet,
         ...formats.where(EditorTool.inline.contains),
+        if (hasTextStyle) EditorTool.textStyle,
         if (highlight != null) ...[
           EditorTool.highlight,
           ?EditorTool.colors

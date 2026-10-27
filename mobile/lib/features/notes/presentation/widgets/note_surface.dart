@@ -7,6 +7,7 @@ import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_patterns.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/pill.dart';
+import '../editor/text_formats.dart';
 
 class NoteAppearance {
   const NoteAppearance({required this.background, required this.colors});
@@ -30,12 +31,19 @@ class NoteAppearance {
 
   PillColors get pillColors => (edge: colors.border, muted: colors.muted);
 
-  Color highlight(BuildContext context, String name) => context.anchor
-      .highlightOn(
-        palette,
-        AnchorTokens.highlightNames.contains(name) ? name : 'yellow',
-      )
-      .fill;
+  /// The fill for a highlight: a name, or a custom `#rrggbb` (grey in
+  /// Lo-fi, like the named ones).
+  Color highlight(BuildContext context, String name) {
+    if (isCustomHighlight(name) && !context.appStyle.plainNotes) {
+      return parseHexColor(name)!;
+    }
+    return context.anchor
+        .highlightOn(
+          palette,
+          AnchorTokens.highlightNames.contains(name) ? name : 'yellow',
+        )
+        .fill;
+  }
 }
 
 class NoteSurfacePainter extends CustomPainter {

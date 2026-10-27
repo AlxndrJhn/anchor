@@ -84,6 +84,13 @@ class EditorOverlayController extends ChangeNotifier {
     }
   }
 
+  /// The highlight Highlight paints next: the last one picked anywhere.
+  void rememberHighlight(String value) {
+    if (value == _highlight) return;
+    _highlight = value;
+    notifyListeners();
+  }
+
   void removeHighlight() {
     editor?.clearHighlight();
     closeSubmenu();

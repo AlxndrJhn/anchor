@@ -4,6 +4,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/widgets/highlighted_text.dart';
 import '../../domain/note_blocks.dart';
+import '../editor/text_formats.dart';
 import 'note_surface.dart';
 
 /// Runs of a line as one span, with their highlights as [HighlightRange]s.
@@ -18,7 +19,16 @@ import 'note_surface.dart';
   final children = <InlineSpan>[];
   final highlights = <HighlightRange>[];
   var offset = 0;
+  final text = style.color ?? colors.appText;
   for (final run in runs) {
+    // An explicit color wins; on a custom highlight, ink that reads on it.
+    final custom = run.highlight != null && isCustomHighlight(run.highlight)
+        ? appearance.highlight(context, run.highlight!)
+        : null;
+    final color =
+        textColorOf(run.color) ??
+        (custom == null ? null : customHighlightInk(custom, text));
+    final family = TextFont.of(run.font)?.family;
     final decorations = <TextDecoration>[
       if (run.underline || run.link != null) TextDecoration.underline,
       if (run.strike || isStrikethrough) TextDecoration.lineThrough,
@@ -35,8 +45,8 @@ import 'note_surface.dart';
           decorationColor: run.link != null
               ? colors.accentInk.withValues(alpha: 0.5)
               : null,
-          color: run.link != null ? colors.accentInk : null,
-          fontFamily: run.code ? AppTypography.mono : null,
+          color: run.link != null ? colors.accentInk : color,
+          fontFamily: run.code ? AppTypography.mono : family,
           fontSize: run.code ? (style.fontSize ?? 14) * 0.9 : null,
           backgroundColor: run.code ? appearance.colors.surface : null,
         ),

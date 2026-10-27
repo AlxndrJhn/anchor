@@ -626,10 +626,8 @@ class _ViewerState extends ConsumerState<_Viewer>
               Positioned(
                 left: 16,
                 right: 16,
-                bottom:
-                    media.padding.bottom +
-                    64 + // off-scale: above the buttons' scrim
-                    8,
+                // off-scale: just above the buttons' scrim
+                bottom: media.padding.bottom + 72,
                 child: _Fade(
                   shown: barsShown,
                   child: Wrap(

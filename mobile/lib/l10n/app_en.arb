@@ -3118,6 +3118,58 @@
   "@toolHighlight": {
     "description": "Screen reader label of the toolbar button that marks text with a color."
   },
+  "toolTextStyle": "Color and font",
+  "@toolTextStyle": {
+    "description": "Editor toolbar button (in Aa, with words picked) and the sheet it opens: the words' highlight, text color and font."
+  },
+  "textStyleNone": "None",
+  "@textStyleNone": {
+    "description": "In the Color and font sheet: no highlight."
+  },
+  "textStyleDefault": "Default",
+  "@textStyleDefault": {
+    "description": "In the Color and font sheet: the note's own text color, or its own font."
+  },
+  "textStyleColor": "Text color",
+  "@textStyleColor": {
+    "description": "Section of the Color and font sheet with colors for the words themselves."
+  },
+  "textStyleFont": "Font",
+  "@textStyleFont": {
+    "description": "Section of the Color and font sheet that sets the words' font."
+  },
+  "textStyleCustomHighlight": "Custom highlight",
+  "@textStyleCustomHighlight": {
+    "description": "Swatch in the Color and font sheet that opens a color picker for the highlight, and that picker's title."
+  },
+  "textStyleCustomColor": "Custom text color",
+  "@textStyleCustomColor": {
+    "description": "Swatch in the Color and font sheet that opens a color picker for the text, and that picker's title."
+  },
+  "colorGray": "Gray",
+  "@colorGray": {
+    "description": "Color name, for text."
+  },
+  "colorPickerHue": "Hue",
+  "@colorPickerHue": {
+    "description": "Slider in the color picker: which color it is."
+  },
+  "colorPickerSaturation": "Saturation",
+  "@colorPickerSaturation": {
+    "description": "Slider in the color picker: how vivid the color is."
+  },
+  "colorPickerLightness": "Lightness",
+  "@colorPickerLightness": {
+    "description": "Slider in the color picker: how light the color is."
+  },
+  "colorPickerBadHex": "Use #rgb or #rrggbb",
+  "@colorPickerBadHex": {
+    "description": "Under the hex field of the color picker when what's typed isn't a color. Keep #rgb and #rrggbb as they are."
+  },
+  "colorPickerApply": "Apply",
+  "@colorPickerApply": {
+    "description": "Button of the color picker that uses the color."
+  },
   "toolRemoveHighlight": "Remove highlight",
   "@toolRemoveHighlight": {
     "description": "Screen reader label of the toolbar button that removes the color mark from text."

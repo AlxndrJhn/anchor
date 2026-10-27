@@ -139,6 +139,7 @@ void main() {
         'space',
         'hideKeyboard',
       ]);
+      // Aa trades Link for Color and font.
       expect(keysOf(EditorToolbarMode.styles, hasWords: true), [
         'styles',
         'bold',
@@ -146,7 +147,7 @@ void main() {
         'underline',
         'strikethrough',
         'highlight',
-        'link',
+        'textStyle',
         'space',
         'hideKeyboard',
       ]);
@@ -216,6 +217,22 @@ void main() {
       expect(model.activeTools, {EditorTool.highlight, EditorTool.green});
       expect(model.highlightName, 'green');
       expect(modelOf(hasWords: true).highlightName, 'yellow');
+    });
+
+    test('a text color or font turns on Color and font', () {
+      expect(
+        EditorToolbarModel.of(
+          isInTitle: false,
+          hasWords: true,
+          lineKind: LineKind.text,
+          submenu: EditorSubmenu.styles,
+          hasTextStyle: true,
+          lastHighlight: 'yellow',
+          canUndo: false,
+          canRedo: false,
+        ).activeTools,
+        {EditorTool.styles, EditorTool.textStyle},
+      );
     });
 
     test('in the title, Aa rests and no line shows as on', () {

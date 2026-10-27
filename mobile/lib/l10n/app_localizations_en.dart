@@ -2360,6 +2360,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolHighlight => 'Highlight';
 
   @override
+  String get toolTextStyle => 'Color and font';
+
+  @override
+  String get textStyleNone => 'None';
+
+  @override
+  String get textStyleDefault => 'Default';
+
+  @override
+  String get textStyleColor => 'Text color';
+
+  @override
+  String get textStyleFont => 'Font';
+
+  @override
+  String get textStyleCustomHighlight => 'Custom highlight';
+
+  @override
+  String get textStyleCustomColor => 'Custom text color';
+
+  @override
+  String get colorGray => 'Gray';
+
+  @override
+  String get colorPickerHue => 'Hue';
+
+  @override
+  String get colorPickerSaturation => 'Saturation';
+
+  @override
+  String get colorPickerLightness => 'Lightness';
+
+  @override
+  String get colorPickerBadHex => 'Use #rgb or #rrggbb';
+
+  @override
+  String get colorPickerApply => 'Apply';
+
+  @override
   String get toolRemoveHighlight => 'Remove highlight';
 
   @override
