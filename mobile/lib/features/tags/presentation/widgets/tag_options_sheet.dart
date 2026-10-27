@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../../core/theme/tokens/app_radius.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../data/repository/tags_repository.dart';
 import '../../domain/tag.dart';
 
 enum TagSheetAction { rename, delete }
 
 /// Long-press menu for a tag. Pops with the chosen [TagSheetAction] so the
-/// caller can present the follow-up sheet.
-class TagOptionsSheet extends StatelessWidget {
+/// caller can present the follow-up sheet; a colour picked here is saved at
+/// once, and the sheet stays open.
+class TagOptionsSheet extends ConsumerStatefulWidget {
   const TagOptionsSheet({super.key, required this.tag});
 
   final Tag tag;
@@ -24,13 +28,26 @@ class TagOptionsSheet extends StatelessWidget {
   }
 
   @override
+  ConsumerState<TagOptionsSheet> createState() => _TagOptionsSheetState();
+}
+
+class _TagOptionsSheetState extends ConsumerState<TagOptionsSheet> {
+  late String? _color = widget.tag.color;
+
+  Tag get tag => widget.tag;
+
+  void _setColor(String color) {
+    if (color == _color) return;
+    HapticFeedback.selectionClick();
+    setState(() => _color = color);
+    ref.read(tagsRepositoryProvider).updateTag(tag.copyWith(color: color));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dims = context.dims;
-    final tagColor = parseTagColor(
-      tag.color,
-      fallback: theme.colorScheme.primary,
-    );
+    final tagColor = parseTagColor(_color, fallback: theme.colorScheme.primary);
 
     return AppBottomSheet(
       icon: LucideIcons.hash,
@@ -41,6 +58,8 @@ class TagOptionsSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          _ColorPicker(selected: _color, onSelected: _setColor),
+          SizedBox(height: dims.md),
           _SheetAction(
             icon: LucideIcons.pencil,
             label: 'Rename tag',
@@ -54,6 +73,80 @@ class TagOptionsSheet extends StatelessWidget {
             onTap: () => Navigator.pop(context, TagSheetAction.delete),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The tag colours as swatches; the tag's own has a check.
+class _ColorPicker extends StatelessWidget {
+  const _ColorPicker({required this.selected, required this.onSelected});
+
+  final String? selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          for (final (i, stored) in tagColors.indexed)
+            _Swatch(
+              name: tagColorNames[i],
+              color: parseTagColor(stored),
+              isSelected: selected?.toUpperCase() == stored,
+              ring: theme.colorScheme.onSurface,
+              onTap: () => onSelected(stored),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  const _Swatch({
+    required this.name,
+    required this.color,
+    required this.isSelected,
+    required this.ring,
+    required this.onTap,
+  });
+
+  final String name;
+  final Color color;
+  final bool isSelected;
+  final Color ring;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: name,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? ring : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: isSelected
+              ? const Icon(LucideIcons.check, size: 16, color: Colors.white)
+              : null,
+        ),
       ),
     );
   }

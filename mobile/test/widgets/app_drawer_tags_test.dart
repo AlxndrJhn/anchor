@@ -19,6 +19,8 @@ class _StubAuthController extends AuthController {
 }
 
 void main() {
+  setUpAll(() => registerFallbackValue(const domain.Tag(id: '', name: '')));
+
   late _MockTagsRepository repo;
 
   setUp(() {
@@ -30,6 +32,7 @@ void main() {
       ]),
     );
     when(() => repo.reorderTags(any())).thenAnswer((_) async {});
+    when(() => repo.updateTag(any())).thenAnswer((_) async {});
   });
 
   Future<void> pumpDrawer(WidgetTester tester) async {
@@ -75,6 +78,55 @@ void main() {
     // Shown in the new order before the stored one catches up.
     final after = rowsTop(tester);
     expect(after[2], lessThan(after[0]));
+  });
+
+  // It used to count as a long press on the tag, and open its options.
+  testWidgets('holding the handle still before moving drags the tag', (
+    tester,
+  ) async {
+    await pumpDrawer(tester);
+    final tops = rowsTop(tester);
+    final rowHeight = tops[1] - tops[0];
+
+    final handle = find.byIcon(LucideIcons.gripVertical).at(2);
+    final gesture = await tester.startGesture(tester.getCenter(handle));
+    await tester.pump(const Duration(milliseconds: 800));
+    for (var i = 0; i < 10; i++) {
+      await gesture.moveBy(Offset(0, -rowHeight * 2.4 / 10));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+    // In hand, the tag is lifted off the list.
+    final lifted = tester.widgetList<Material>(
+      find.ancestor(of: find.text('gamma'), matching: find.byType(Material)),
+    );
+    expect(lifted.any((m) => m.elevation > 0), isTrue);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rename tag'), findsNothing);
+    verify(() => repo.reorderTags(['gamma', 'alpha', 'beta'])).called(1);
+  });
+
+  testWidgets('a colour picked in the options is saved at once', (
+    tester,
+  ) async {
+    await pumpDrawer(tester);
+    await tester.longPress(find.text('beta'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.bySemanticsLabel('Teal'));
+    await tester.pumpAndSettle();
+
+    final saved =
+        verify(() => repo.updateTag(captureAny())).captured.single
+            as domain.Tag;
+    expect(saved.id, 'beta');
+    expect(saved.color, '#4DB6AC');
+    // The sheet stays open, with the new colour checked.
+    expect(find.text('Rename tag'), findsOneWidget);
+    expect(find.byIcon(LucideIcons.check), findsOneWidget);
   });
 
   testWidgets('holding a tag name still opens its options', (tester) async {

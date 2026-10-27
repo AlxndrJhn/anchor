@@ -295,6 +295,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 buildDefaultDragHandles: false,
+                proxyDecorator: _liftedTag,
                 itemCount: shown.length,
                 onReorderItem: (oldIndex, newIndex) {
                   final ids = movedTagIds(shown, oldIndex, newIndex);
@@ -522,6 +523,32 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     );
   }
 
+  /// The tag in hand: lifted off the list, a little larger, with a shadow.
+  Widget _liftedTag(Widget child, int index, Animation<double> animation) {
+    final theme = Theme.of(context);
+    return AnimatedBuilder(
+      animation: animation,
+      child: child,
+      builder: (context, child) {
+        final t = Curves.easeOut.transform(animation.value);
+        return Transform.scale(
+          scale: 1 + 0.04 * t,
+          child: Material(
+            elevation: 8 * t,
+            color: Color.lerp(
+              Colors.transparent,
+              theme.colorScheme.surfaceContainerHigh,
+              t,
+            ),
+            shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(10),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _showTagOptionsSheet(Tag tag) async {
     final action = await TagOptionsSheet.show(context, tag);
     if (!mounted) return;
@@ -560,67 +587,88 @@ class _TagItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dims = context.dims;
+    final padding = dims.drawerTagPadding;
+    final radius = BorderRadius.circular(10);
+    // The handle sits outside the tappable name: inside it, holding the
+    // handle before moving counted as a long press and opened the menu.
     return Container(
       margin: const EdgeInsets.only(bottom: 2),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            padding: dims.drawerTagPadding,
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? tagColor.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                ReorderableDragStartListener(
-                  index: index,
-                  child: Semantics(
-                    label: 'Move ${tag.name}',
-                    child: Padding(
-                      padding: EdgeInsets.only(right: dims.xs),
-                      child: Icon(
-                        LucideIcons.gripVertical,
-                        size: AppIconSizes.sm,
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.35,
-                        ),
-                      ),
-                    ),
-                  ),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? tagColor.withValues(alpha: 0.12)
+            : Colors.transparent,
+        borderRadius: radius,
+      ),
+      child: Row(
+        children: [
+          ReorderableDragStartListener(
+            index: index,
+            child: Semantics(
+              label: 'Move ${tag.name}',
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  padding.left,
+                  padding.top,
+                  dims.xs,
+                  padding.bottom,
                 ),
-                Icon(LucideIcons.hash, size: AppIconSizes.sm, color: tagColor),
-                SizedBox(width: dims.sm),
-                Expanded(
-                  child: Text(
-                    tag.name,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? tagColor
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
-                  ),
+                child: Icon(
+                  LucideIcons.gripVertical,
+                  size: AppIconSizes.sm,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
                 ),
-                Text(
-                  '${tag.noteCount}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          Expanded(
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: radius,
+              child: InkWell(
+                onTap: onTap,
+                onLongPress: onLongPress,
+                borderRadius: radius,
+                child: Padding(
+                  padding: padding.copyWith(left: 0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        LucideIcons.hash,
+                        size: AppIconSizes.sm,
+                        color: tagColor,
+                      ),
+                      SizedBox(width: dims.sm),
+                      Expanded(
+                        child: Text(
+                          tag.name,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? tagColor
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.8,
+                                  ),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${tag.noteCount}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.4,
+                          ),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

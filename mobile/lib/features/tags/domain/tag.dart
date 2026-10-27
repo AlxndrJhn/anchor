@@ -5,8 +5,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'tag.freezed.dart';
 part 'tag.g.dart';
 
-/// Curated list of pleasant tag colors (standard hex format for cross-platform)
-const List<String> _tagColors = [
+/// The tag colours, the same as the web's (standard hex, as stored).
+const List<String> tagColors = [
   '#E57373', // Red 300
   '#F06292', // Pink 300
   '#BA68C8', // Purple 300
@@ -26,10 +26,31 @@ const List<String> _tagColors = [
   '#90A4AE', // Blue Grey 300
 ];
 
+/// The names of [tagColors], in their order, for screen readers.
+const List<String> tagColorNames = [
+  'Red',
+  'Pink',
+  'Purple',
+  'Deep purple',
+  'Indigo',
+  'Blue',
+  'Light blue',
+  'Cyan',
+  'Teal',
+  'Green',
+  'Light green',
+  'Lime',
+  'Amber',
+  'Orange',
+  'Deep orange',
+  'Brown',
+  'Blue grey',
+];
+
 /// Generates a random tag color as a standard hex string (#RRGGBB)
 String generateRandomTagColor() {
   final random = Random();
-  return _tagColors[random.nextInt(_tagColors.length)];
+  return tagColors[random.nextInt(tagColors.length)];
 }
 
 /// Parses a hex color string to Flutter Color
