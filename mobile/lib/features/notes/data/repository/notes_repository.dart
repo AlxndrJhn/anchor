@@ -457,10 +457,14 @@ class NotesRepository {
 
   /// Ticks or unticks the checklist item on [lineIndex] without opening the
   /// note, re-sorting its list when [sort] is on.
+  /// Ticks or unticks an item from the note's card. Given [keepAt], the
+  /// note is placed there after the change, as a dragged note is, so it
+  /// keeps its place in the list rather than move up.
   Future<void> toggleChecklistItem(
     String noteId,
     int lineIndex, {
     required bool sort,
+    double? keepAt,
   }) async {
     final note = await getNote(noteId);
     if (note == null) return;
@@ -471,6 +475,7 @@ class NotesRepository {
     );
     if (content == null) return;
     await updateNote(note.copyWith(content: content));
+    if (keepAt != null) await setPosition(noteId, keepAt);
   }
 
   /// Adds lines of text at the end of a note that isn't open ("Grab image

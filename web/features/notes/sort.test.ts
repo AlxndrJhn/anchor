@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SortBy, SortOrder } from "@/features/preferences";
 import {
   compareNotes,
+  keptPlace,
   positionBetween,
   type SortableNote,
   sortKey,
@@ -159,6 +160,26 @@ describe("dragged notes in newest-first order", () => {
       "2026-01-04T00:00:00Z",
     );
     expect(order([a, b, editedLater])).toEqual(["c", "a", "b"]);
+  });
+
+  it("keeps a note ticked from its card where it was, tick after tick", () => {
+    // b, edited on the 2nd, is ticked on the 6th: still between a and c.
+    const once = {
+      ...b,
+      updatedAt: "2026-01-06T00:00:00Z",
+      position: keptPlace(b),
+      positionedAt: "2026-01-06T00:00:00Z",
+    };
+    expect(order([a, once, c])).toEqual(["a", "b", "c"]);
+    // Ticked again: a new place each time, so the server stamps it again.
+    const twice = {
+      ...once,
+      updatedAt: "2026-01-07T00:00:00Z",
+      position: keptPlace(once),
+      positionedAt: "2026-01-07T00:00:00Z",
+    };
+    expect(twice.position).not.toBe(once.position);
+    expect(order([a, twice, c])).toEqual(["a", "b", "c"]);
   });
 
   it("places a note between neighbours, or just past the ends", () => {

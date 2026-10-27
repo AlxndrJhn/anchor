@@ -1,3 +1,4 @@
+import 'package:anchor/features/notes/presentation/notes_view_options.dart';
 import 'package:anchor/core/database/app_database.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
@@ -308,6 +309,58 @@ void main() {
       await repo.updateNote((await stored('n1')).copyWith(content: 'milk'));
 
       expect((await stored('n1')).updatedAt?.toUtc(), isNot(edited));
+    });
+  });
+
+  group('ticking from the card', () {
+    const list =
+        '{"ops":[{"insert":"milk"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"eggs"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
+
+    Future<List<String>> order() async {
+      final notes = await repo.watchNotes().first;
+      notes.sort((a, b) => noteSortKey(b).compareTo(noteSortKey(a)));
+      return [for (final n in notes) n.id];
+    }
+
+    test('keeps the note where it was, tick after tick', () async {
+      await insertNote(id: 'newer', updatedAt: DateTime.utc(2026, 7, 3));
+      await insertNote(id: 'list', updatedAt: DateTime.utc(2026, 7, 2));
+      await (db.update(db.notes)..where((t) => t.id.equals('list'))).write(
+        const NotesCompanion(content: Value(list)),
+      );
+      await insertNote(id: 'older', updatedAt: DateTime.utc(2026, 7, 1));
+
+      for (final line in [0, 1]) {
+        final note = (await repo.watchNotes().first).firstWhere(
+          (n) => n.id == 'list',
+        );
+        await repo.toggleChecklistItem(
+          'list',
+          line,
+          sort: false,
+          keepAt: keptPlace(note),
+        );
+        expect(await order(), ['newer', 'list', 'older']);
+      }
+
+      final row = await (db.select(
+        db.notes,
+      )..where((t) => t.id.equals('list'))).getSingle();
+      expect(row.content, contains('"checked"'));
+      expect(row.isSynced, isFalse);
+    });
+
+    test('without a place to keep, a tick moves it up', () async {
+      await insertNote(id: 'newer', updatedAt: DateTime.utc(2026, 7, 3));
+      await insertNote(id: 'list', updatedAt: DateTime.utc(2026, 7, 2));
+      await (db.update(db.notes)..where((t) => t.id.equals('list'))).write(
+        const NotesCompanion(content: Value(list)),
+      );
+
+      await repo.toggleChecklistItem('list', 0, sort: false);
+
+      expect(await order(), ['list', 'newer']);
     });
   });
 

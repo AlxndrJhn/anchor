@@ -87,6 +87,8 @@ class NoteCard extends ConsumerWidget {
                   sort: ref
                       .read(editorPreferencesControllerProvider)
                       .sortChecklistItems,
+                  // So several items can be ticked in a row.
+                  keepAt: keptPlace(note),
                 )
           : null,
     );

@@ -513,6 +513,36 @@ void main() {
     expect((await note('n1'))!.version, 1);
   });
 
+  test(
+    'a note placed after its edit says so, so the server keeps its place',
+    () async {
+      await insertNote(id: 'kept', version: 1);
+      await insertNote(id: 'edited', version: 1);
+      final ticked = DateTime.utc(2026, 7, 2, 10);
+      await (db.update(db.notes)..where((t) => t.id.equals('kept'))).write(
+        NotesCompanion(
+          updatedAt: Value(ticked),
+          position: const Value(1000),
+          positionedAt: Value(ticked.add(const Duration(milliseconds: 1))),
+        ),
+      );
+      await (db.update(db.notes)..where((t) => t.id.equals('edited'))).write(
+        NotesCompanion(
+          updatedAt: Value(ticked),
+          position: const Value(2000),
+          positionedAt: Value(ticked.subtract(const Duration(days: 1))),
+        ),
+      );
+      stub([response()]);
+
+      await service.run();
+
+      final changes = {for (final c in changesOf(0)) c['id']: c};
+      expect(changes['kept']!['placedAfterEdit'], isTrue);
+      expect(changes['edited']!.containsKey('placedAfterEdit'), isFalse);
+    },
+  );
+
   test('a rejected push keeps the local text and goes again on the server '
       'version', () async {
     await insertNote(id: 'n1', title: 'Mine', version: 3);
