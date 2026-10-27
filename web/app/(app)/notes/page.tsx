@@ -57,7 +57,7 @@ import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
 import { usePictureMatches } from "@/features/picture-search/use-picture-matches";
 import { tagColorStyle, useTagMap } from "@/features/tags";
-import { destroyNoteCards } from "@/lib/destroy";
+import { burnNoteCards } from "@/lib/destroy";
 import { eachLimited } from "@/lib/each";
 import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { rememberNewNoteButton } from "@/lib/morph";
@@ -199,13 +199,21 @@ function NotesView({ tagId }: { tagId: string | null }) {
       if (kind === "pin" || kind === "unpin")
         await bulkPinNotes(ids, kind === "pin");
       else if (kind === "archive") await bulkArchiveNotes(ids);
-      else await bulkDeleteNotes(ids);
+      else {
+        // Deleted cards burn away in place; the others move up after.
+        const burn = burnNoteCards(ids);
+        await burn.done;
+        list.prepareCardMotion();
+        await bulkDeleteNotes(ids).catch((error: unknown) => {
+          burn.restore();
+          throw error;
+        });
+      }
     },
     onMutate: ({ kind, ids }) => {
-      list.prepareCardMotion();
+      if (kind === "trash") setConfirmRemove(null);
+      else list.prepareCardMotion();
       return {
-        // Deleted cards burn away where they stand.
-        restoreCards: kind === "trash" ? destroyNoteCards(ids) : undefined,
         ownedIds: ids.filter(
           (id) => notes.find((n) => n.id === id)?.permission === "owner",
         ),
@@ -245,8 +253,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
         );
       }
     },
-    onError: (_, { kind, ids }, context) => {
-      context?.restoreCards?.();
+    onError: (_, { kind, ids }) => {
       const verb = {
         pin: "pin",
         unpin: "unpin",

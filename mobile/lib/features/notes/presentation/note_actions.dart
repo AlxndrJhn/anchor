@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/motion/haptics.dart';
+import '../../../core/motion/springs.dart';
 import '../../../core/widgets/anchor_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/choice_sheet.dart';
@@ -317,6 +318,7 @@ class NoteActions {
         isDanger: true,
       );
       if (!ok || !context.mounted) return;
+      await _dialogClosed();
     }
     await beforeChange?.call();
     await repo.trash(_idsOf(notes));
@@ -366,6 +368,7 @@ class NoteActions {
       isDanger: true,
     );
     if (!ok || !context.mounted) return;
+    await _dialogClosed();
     await beforeChange?.call();
     await repo.deleteForever(_idsOf(notes));
     if (!context.mounted) return;
@@ -401,13 +404,19 @@ class NoteActions {
       icon: LucideIcons.trash2,
       isDanger: true,
     );
-    if (!ok) return;
+    if (!ok || !context.mounted) return;
     final ids = _idsOf(ref.read(trashedNotesProvider).value ?? const []);
+    await _dialogClosed();
     // The cards burn away where they stand, then the notes go.
     await burnNoteCards(ids);
     await repo.deleteForever(ids);
     if (context.mounted) AppSnackbar.show(context, l10n.trashEmptied);
   }
+
+  /// Waits for a confirm dialog to finish closing, so the burn that follows
+  /// can be seen.
+  Future<void> _dialogClosed() =>
+      Future<void>.delayed(context.motion(Spring.snappy.duration));
 
   static List<String> _idsOf(List<Note> notes) => [for (final n in notes) n.id];
 

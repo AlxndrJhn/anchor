@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { canGoBackInApp } from "@/lib/app-history";
-import { destroyNotePage } from "@/lib/destroy";
+import { burnNotePage } from "@/lib/destroy";
 import {
   archiveNote,
   deleteNote,
@@ -93,9 +93,19 @@ export function useNoteActions({
       }),
   });
 
+  /** The page burns away in place, then [remove] runs. */
+  const burnThen = async (remove: () => Promise<unknown>) => {
+    const burn = burnNotePage(noteId);
+    await burn.done;
+    await remove().catch((error: unknown) => {
+      burn.restore();
+      throw error;
+    });
+  };
+
   const trashMutation = useMutation({
-    mutationFn: () => deleteNote(noteId),
-    onMutate: () => ({ restorePage: destroyNotePage(noteId) }),
+    mutationFn: () => burnThen(() => deleteNote(noteId)),
+    onMutate: () => setConfirmLeaveShare(false),
     onSuccess: () => {
       refreshLists();
       setConfirmLeaveShare(false);
@@ -109,8 +119,7 @@ export function useNoteActions({
         });
       else toast.success("Note removed from your notes");
     },
-    onError: (_, __, context) => {
-      context?.restorePage();
+    onError: () => {
       toast.error(
         isOwner ? "Couldn’t move note to trash" : "Couldn’t remove note",
         {
@@ -143,16 +152,15 @@ export function useNoteActions({
   });
 
   const permanentDeleteMutation = useMutation({
-    mutationFn: () => permanentDeleteNote(noteId),
-    onMutate: () => ({ restorePage: destroyNotePage(noteId) }),
+    mutationFn: () => burnThen(() => permanentDeleteNote(noteId)),
+    onMutate: () => setConfirmPermanentDelete(false),
     onSuccess: () => {
       refreshLists();
       setConfirmPermanentDelete(false);
       goBack();
       toast.success("Note permanently deleted");
     },
-    onError: (_, __, context) => {
-      context?.restorePage();
+    onError: () => {
       toast.error("Couldn’t delete note", {
         retry: () => permanentDeleteMutation.mutate(),
       });

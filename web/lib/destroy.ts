@@ -117,106 +117,109 @@ export function wholeBlocksPath(
   return path || "M0 0Z";
 }
 
-/** A copy of [el] where it stands, typed-in values and all. */
-function copyOf(el: HTMLElement, rect: DOMRect, inBox: boolean) {
-  const copy = el.cloneNode(true) as HTMLElement;
-  copy.removeAttribute("data-flip");
-  for (const node of [copy, ...copy.querySelectorAll("[id]")])
-    node.removeAttribute("id");
-  const fields = el.querySelectorAll("input, textarea");
-  copy.querySelectorAll("input, textarea").forEach((field, i) => {
-    (field as HTMLInputElement).value = (fields[i] as HTMLInputElement).value;
-  });
-  Object.assign(copy.style, {
-    position: "relative",
-    left: "0",
-    top: "0",
-    width: "100%",
-    height: "100%",
-    margin: "0",
-  });
-  // A card sits in a box like the list's, so it keeps the card's layout.
-  const box = document.createElement("div");
-  if (inBox && el.parentElement) box.className = el.parentElement.className;
-  box.setAttribute("aria-hidden", "true");
-  Object.assign(box.style, {
-    position: "fixed",
-    left: `${rect.left}px`,
-    top: `${rect.top}px`,
-    width: `${rect.width}px`,
-    height: `${rect.height}px`,
-    margin: "0",
-    padding: "0",
-    zIndex: "var(--z-float, 50)",
-    pointerEvents: "none",
-  });
-  box.append(copy);
-  return box;
+export interface Burn {
+  /** Settles when the burn is over; the element is left invisible. */
+  done: Promise<void>;
+  /** Brings the element back, for when the delete fails. */
+  restore: () => void;
 }
 
-/**
- * Burns [el] away where it stands, as Balatro destroys a card: a jolt, then
- * it dissolves in glowing pixels and sparks. [el] is hidden at once and a
- * copy burns in its place, so the list can let it go whenever it likes.
- * Returns a function that brings [el] back, for when the delete fails.
- */
-export function destroyElement(
-  el: HTMLElement,
-  { inBox = false }: { inBox?: boolean } = {},
-): () => void {
-  const hidden = el.style.visibility;
-  const unhide = () => {
-    el.style.visibility = hidden;
-  };
-  if (prefersReducedMotion()) return unhide;
-  const rect = el.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) return unhide;
+const NO_BURN: Burn = { done: Promise.resolve(), restore: () => {} };
 
-  const box = copyOf(el, rect, inBox);
+/**
+ * Burns [el] away in place, as Balatro destroys a card: a jolt, then it
+ * dissolves in glowing pixels and sparks. It keeps its place in the page
+ * until the burn is over, so nothing moves into it meanwhile; it's left
+ * invisible, for the caller to remove.
+ */
+export function burnElement(el: HTMLElement): Burn {
+  if (prefersReducedMotion()) return NO_BURN;
+  const first = el.getBoundingClientRect();
+  if (first.width === 0 || first.height === 0) return NO_BURN;
+  const { width, height } = first;
+
+  const saved = {
+    transform: el.style.transform,
+    filter: el.style.filter,
+    clipPath: el.style.clipPath,
+    transition: el.style.transition,
+    pointerEvents: el.style.pointerEvents,
+  };
   const canvas = document.createElement("canvas");
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
-  const area = { w: rect.width + MARGIN * 2, h: rect.height + MARGIN * 2 };
+  const area = { w: width + MARGIN * 2, h: height + MARGIN * 2 };
   canvas.width = Math.ceil(area.w * ratio);
   canvas.height = Math.ceil(area.h * ratio);
   canvas.setAttribute("aria-hidden", "true");
   Object.assign(canvas.style, {
     position: "fixed",
-    left: `${rect.left - MARGIN}px`,
-    top: `${rect.top - MARGIN}px`,
     width: `${area.w}px`,
     height: `${area.h}px`,
     zIndex: "var(--z-float, 50)",
     pointerEvents: "none",
   });
-  document.body.append(box, canvas);
-  el.style.visibility = "hidden";
+  document.body.append(canvas);
+  el.style.transition = "none";
+  el.style.pointerEvents = "none";
 
-  const copy = box.firstElementChild as HTMLElement;
   const pattern = burnPattern(
-    rect.width,
-    rect.height,
-    Math.round(rect.left * 31 + rect.top * 17),
+    width,
+    height,
+    Math.round(first.left * 31 + first.top * 17),
   );
   const context = canvas.getContext("2d");
+  let frameId = 0;
+  let finish = () => {};
+  const done = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
   const start = performance.now();
   const frame = (now: number) => {
     const t = Math.min(1, (now - start) / DESTROY_MS);
     const front = burnFront(t);
     // The jolt: a shake that settles, a little bigger, a flash.
     const jolt = Math.max(0, 1 - t / JOLT_END);
-    const grow = 1 + 0.06 * Math.sin(Math.min(1, t / JOLT_END) * Math.PI);
-    box.style.transform = `translateX(${Math.sin(t * 130) * 4 * jolt}px) rotate(${Math.sin(t * 90) * 0.05 * jolt}rad) scale(${grow})`;
-    copy.style.filter = jolt > 0 ? `brightness(${1 + 0.6 * jolt})` : "";
-    copy.style.clipPath = `path("${wholeBlocksPath(pattern, front, rect.width, rect.height)}")`;
-    if (context) drawBurn(context, pattern, front, rect, ratio);
-    if (t < 1) requestAnimationFrame(frame);
+    if (jolt > 0) {
+      const grow = 1 + 0.06 * Math.sin((t / JOLT_END) * Math.PI);
+      el.style.transform = `translateX(${Math.sin(t * 130) * 4 * jolt}px) rotate(${Math.sin(t * 90) * 0.05 * jolt}rad) scale(${grow})`;
+      el.style.filter = `brightness(${1 + 0.6 * jolt})`;
+    } else {
+      el.style.transform = saved.transform;
+      el.style.filter = saved.filter;
+    }
+    el.style.clipPath = `path("${wholeBlocksPath(pattern, front, width, height)}")`;
+    // Follows the element, should the page scroll.
+    const rect = jolt > 0 ? first : el.getBoundingClientRect();
+    canvas.style.left = `${rect.left - MARGIN}px`;
+    canvas.style.top = `${rect.top - MARGIN}px`;
+    if (context) drawBurn(context, pattern, front, width, height, ratio);
+    if (t < 1) frameId = requestAnimationFrame(frame);
     else {
-      box.remove();
       canvas.remove();
+      finish();
     }
   };
-  requestAnimationFrame(frame);
-  return unhide;
+  frameId = requestAnimationFrame(frame);
+  return {
+    done,
+    restore: () => {
+      cancelAnimationFrame(frameId);
+      canvas.remove();
+      Object.assign(el.style, saved);
+      finish();
+    },
+  };
+}
+
+/** Burns several elements at once, as one. */
+function burnAll(elements: HTMLElement[]): Burn {
+  const burns = elements.map(burnElement);
+  return {
+    done: Promise.all(burns.map((b) => b.done)).then(() => {}),
+    restore: () => {
+      for (const burn of burns) burn.restore();
+    },
+  };
 }
 
 /** The glowing edge and the sparks, around the card's whole blocks. */
@@ -224,19 +227,20 @@ function drawBurn(
   context: CanvasRenderingContext2D,
   pattern: BurnPattern,
   front: number,
-  rect: DOMRect,
+  width: number,
+  height: number,
   ratio: number,
 ) {
   const { columns, rows, cell, thresholds } = pattern;
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
-  context.clearRect(0, 0, rect.width + MARGIN * 2, rect.height + MARGIN * 2);
+  context.clearRect(0, 0, width + MARGIN * 2, height + MARGIN * 2);
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < columns; x++) {
       const threshold = thresholds[y * columns + x];
       const left = MARGIN + x * cell;
       const top = MARGIN + y * cell;
-      const w = Math.min(cell, MARGIN + rect.width - left);
-      const h = Math.min(cell, MARGIN + rect.height - top);
+      const w = Math.min(cell, MARGIN + width - left);
+      const h = Math.min(cell, MARGIN + height - top);
       const state = blockState(threshold, front);
       if (state === "burning") {
         // Hottest at the very edge, cooling into the card.
@@ -264,29 +268,22 @@ function drawBurn(
   }
 }
 
-/**
- * Burns away the cards of notes [ids] on screen. Returns a function that
- * brings them back, for when the delete fails.
- */
-export function destroyNoteCards(ids: readonly string[]): () => void {
-  const restores = ids.flatMap((id) => {
-    const card = document.querySelector<HTMLElement>(
-      `article.nc[data-flip="${CSS.escape(id)}"]`,
-    );
-    return card ? [destroyElement(card, { inBox: true })] : [];
-  });
-  return () => {
-    for (const restore of restores) restore();
-  };
+/** Burns away, in place, the cards of notes [ids] on screen. */
+export function burnNoteCards(ids: readonly string[]): Burn {
+  return burnAll(
+    ids.flatMap((id) => {
+      const card = document.querySelector<HTMLElement>(
+        `article.nc[data-flip="${CSS.escape(id)}"]`,
+      );
+      return card ? [card] : [];
+    }),
+  );
 }
 
-/**
- * Burns away the open note [id]'s page. Returns a function that brings it
- * back, for when the delete fails.
- */
-export function destroyNotePage(id: string): () => void {
+/** Burns away, in place, the open note [id]'s page. */
+export function burnNotePage(id: string): Burn {
   const page = document.querySelector<HTMLElement>(
     `[data-note-page="${CSS.escape(id)}"]`,
   );
-  return page ? destroyElement(page) : () => {};
+  return page ? burnElement(page) : NO_BURN;
 }

@@ -6,6 +6,7 @@ import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/presentation/note_folder.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_list_screen.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
@@ -54,6 +55,7 @@ void main() {
     NotesViewOptions options = const NotesViewOptions(),
     bool routed = false,
     List<Note> archived = const [],
+    List<Note> trashed = const [],
     PictureSearchRepository? pictureSearch,
   }) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
@@ -67,7 +69,7 @@ void main() {
           notesRepositoryProvider.overrideWithValue(repo),
           notesProvider.overrideWith((ref) => Stream.value(notes)),
           archivedNotesProvider.overrideWith((ref) => Stream.value(archived)),
-          trashedNotesProvider.overrideWith((ref) => Stream.value([])),
+          trashedNotesProvider.overrideWith((ref) => Stream.value(trashed)),
           allActiveNotesProvider.overrideWith((ref) => Stream.value(notes)),
           tagsControllerProvider.overrideWith(_Tags.new),
           notesViewOptionsProvider.overrideWith(() => _ViewOptions(options)),
@@ -194,12 +196,16 @@ void main() {
       (w) => w is CustomPaint && w.painter is BurnPainter,
     );
 
-    Future<void> deleteSelected(WidgetTester tester, String title) async {
+    Future<void> deleteSelected(
+      WidgetTester tester,
+      String title, {
+      String action = 'Delete',
+    }) async {
       final gesture = await tester.startGesture(centre(tester, title));
       await tester.pump(const Duration(milliseconds: 700));
       await gesture.up();
       await tester.pumpAndSettle();
-      await tester.tap(find.bySemanticsLabel('Delete'));
+      await tester.tap(find.bySemanticsLabel(action));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
     }
@@ -222,6 +228,41 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       verify(() => repo.trash(['Note1'])).called(1);
+      await tester.pump(const Duration(seconds: 7));
+    });
+
+    testWidgets('deleting forever lets the dialog close, then burns', (
+      tester,
+    ) async {
+      when(() => repo.deleteForever(any())).thenAnswer((_) async {});
+      final trashed = [
+        for (final note in notesNamed('Note', 2))
+          note.copyWith(state: NoteState.trashed),
+      ];
+      await pumpList(tester, const [], trashed: trashed);
+      ProviderScope.containerOf(
+        tester.element(find.byType(NotesListScreen)),
+      ).read(noteFolderProvider.notifier).go(NoteFolder.trash);
+      await tester.pumpAndSettle();
+
+      await deleteSelected(tester, 'Note 1', action: 'Delete permanently');
+      await tester.pumpAndSettle();
+      expect(find.text('Permanently delete this note?'), findsOneWidget);
+      await tester.tap(find.text('Delete permanently').last);
+      await tester.pump();
+      // The dialog closes first.
+      expect(burning(), findsNothing);
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.text('Permanently delete this note?'), findsNothing);
+      expect(burning(), findsOneWidget);
+      verifyNever(() => repo.deleteForever(any()));
+
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verify(() => repo.deleteForever(['Note1'])).called(1);
       await tester.pump(const Duration(seconds: 7));
     });
 
