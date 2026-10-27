@@ -17,6 +17,10 @@ RUN pnpm install --frozen-lockfile
 # Production-only server deps (for smaller runtime image)
 FROM server_deps AS server_prod_deps
 RUN pnpm prune --prod
+# Drop what those packages ship but the server never loads (browser builds,
+# other databases' engines): about 200 MB unpacked.
+COPY server/scripts/prune-runtime.sh ./scripts/prune-runtime.sh
+RUN sh scripts/prune-runtime.sh
 
 FROM base AS server_builder
 WORKDIR /app/server
