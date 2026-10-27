@@ -56,7 +56,7 @@ class TrashScreen extends ConsumerWidget {
         confirmColor: Theme.of(context).colorScheme.error,
         onConfirm: () async {
           try {
-            destroyNoteCards(context, [note.id]);
+            await burnNoteCards([note.id]);
             await ref
                 .read(trashControllerProvider.notifier)
                 .permanentDelete(note.id);
@@ -90,7 +90,7 @@ class TrashScreen extends ConsumerWidget {
         confirmColor: Theme.of(context).colorScheme.error,
         onConfirm: () async {
           try {
-            destroyNoteCards(context, [
+            await burnNoteCards([
               for (final note in ref.read(trashControllerProvider).value ?? [])
                 note.id,
             ]);

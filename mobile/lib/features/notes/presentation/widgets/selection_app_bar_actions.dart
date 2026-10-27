@@ -90,7 +90,8 @@ class SelectionAppBarActions extends ConsumerWidget {
         if (!sharedIds.contains(id)) id,
     ];
     try {
-      destroyNoteCards(context, ids);
+      // The cards burn away in place, then go.
+      await burnNoteCards(ids);
       await ref.read(notesControllerProvider.notifier).bulkDeleteNotes(ids);
       onExitSelectionMode();
       if (context.mounted) {

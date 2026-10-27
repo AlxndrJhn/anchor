@@ -85,8 +85,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   final _titleFocusNode = FocusNode();
   final _editorKey = GlobalKey<RichTextEditorState>();
 
-  /// The whole page, burnt away when the note is deleted.
-  final _pageKey = GlobalKey();
+  /// The whole page, burnt away in place when the note is deleted.
+  final _pageKey = GlobalKey<DestructibleState>();
   bool _isNew = true;
   bool _isDeleted = false;
   bool _isLoaded = false;
@@ -911,10 +911,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     // Read now: Undo runs after this screen has closed.
     final repo = ref.read(notesRepositoryProvider);
     try {
+      await _pageKey.currentState?.burn();
       await repo.deleteNote(noteId);
       _isDeleted = true;
       if (!mounted) return;
-      destroyView(context, _pageKey);
       AppSnackbar.showSuccess(
         context,
         message: isOwner ? 'Note moved to trash' : 'Note removed',
@@ -980,11 +980,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
     if (confirm == true && mounted) {
       try {
+        await _pageKey.currentState?.burn();
         await ref.read(notesRepositoryProvider).permanentDelete(_noteId!);
         _isDeleted = true;
 
         if (mounted) {
-          destroyView(context, _pageKey);
           AppSnackbar.showSuccess(context, message: 'Note permanently deleted');
           _popOrExit();
         }
@@ -1202,7 +1202,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         if (didPop) return;
         await _saveAndPop(result);
       },
-      child: RepaintBoundary(
+      child: Destructible(
         key: _pageKey,
         child: NoteBackground(
           styleId: _selectedBackground,

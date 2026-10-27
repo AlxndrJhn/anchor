@@ -49,14 +49,13 @@ void main() {
                       child: ColoredBox(color: Colors.amber),
                     ),
                   ),
-                Builder(
-                  builder: (context) => TextButton(
-                    onPressed: () {
-                      destroyNoteCards(context, ['n1', 'not-on-screen']);
-                      shown.value = false;
-                    },
-                    child: const Text('Delete'),
-                  ),
+                const Text('Next card'),
+                TextButton(
+                  onPressed: () async {
+                    await burnNoteCards(['n1', 'not-on-screen']);
+                    shown.value = false;
+                  },
+                  child: const Text('Delete'),
                 ),
               ],
             ),
@@ -70,23 +69,26 @@ void main() {
     (w) => w is CustomPaint && w.painter is BurnPainter,
   );
 
-  testWidgets('a deleted card burns where it stood, then is gone', (
-    tester,
-  ) async {
+  testWidgets('a deleted card burns in place, then goes', (tester) async {
     final shown = ValueNotifier(true);
     await pumpCards(tester, shown: shown);
+    final nextBefore = tester.getTopLeft(find.text('Next card'));
 
     await tester.tap(find.text('Delete'));
     await tester.pump();
-    // The card left the list at once; its ghost burns on top.
-    expect(find.byType(Destructible), findsNothing);
-    expect(burn(), findsOneWidget);
-    expect(tester.getSize(burn()), const Size(120, 80) + const Offset(80, 80));
-
     await tester.pump(destructionDuration ~/ 2);
+    // Burning where it stood, keeping its place: the next card stays put.
     expect(burn(), findsOneWidget);
+    expect(tester.getSize(find.byType(Destructible)), const Size(120, 80));
+    expect(tester.getTopLeft(find.text('Next card')), nextBefore);
+
     await tester.pumpAndSettle();
-    expect(burn(), findsNothing);
+    // Burnt, it's deleted, and the next card moves up.
+    expect(find.byType(Destructible), findsNothing);
+    expect(
+      tester.getTopLeft(find.text('Next card')).dy,
+      lessThan(nextBefore.dy),
+    );
   });
 
   testWidgets('with animations turned off, the card just goes', (tester) async {
@@ -97,5 +99,6 @@ void main() {
     await tester.pump();
 
     expect(burn(), findsNothing);
+    expect(find.byType(Destructible), findsNothing);
   });
 }

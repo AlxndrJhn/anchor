@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -8,153 +9,135 @@ import 'package:flutter/services.dart';
 /// How long a card takes to burn away.
 const destructionDuration = Duration(milliseconds: 1100);
 
-/// The cards on screen that can be destroyed, by note id.
-final _cards = <String, GlobalKey>{};
+/// The cards on screen that can be burnt, by note id.
+final _cards = <String, DestructibleState>{};
 
-/// Marks [child] as the card of note [id], so deleting the note can burn
-/// it away where it stands; see [destroyNoteCards].
+/// Something that can burn away in place, as Balatro destroys a card: a
+/// jolt, then it dissolves in glowing pixels and sparks. It keeps its place
+/// meanwhile, so nothing moves into it; afterwards it stays invisible, for
+/// its owner to remove. Given an [id], it's the card of that note; see
+/// [burnNoteCards].
 class Destructible extends StatefulWidget {
-  const Destructible({super.key, required this.id, required this.child});
+  const Destructible({super.key, this.id, required this.child});
 
-  final String id;
+  final String? id;
   final Widget child;
 
   @override
-  State<Destructible> createState() => _DestructibleState();
+  State<Destructible> createState() => DestructibleState();
 }
 
-class _DestructibleState extends State<Destructible> {
-  final _key = GlobalKey();
+class DestructibleState extends State<Destructible>
+    with SingleTickerProviderStateMixin {
+  final _boundary = GlobalKey();
+  AnimationController? _controller;
+  ui.Image? _image;
+  BurnPattern? _pattern;
 
   @override
   void initState() {
     super.initState();
-    _cards[widget.id] = _key;
+    _register(widget.id);
   }
 
   @override
   void didUpdateWidget(Destructible oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.id != widget.id) {
-      if (_cards[oldWidget.id] == _key) _cards.remove(oldWidget.id);
-      _cards[widget.id] = _key;
+      _forget(oldWidget.id);
+      _register(widget.id);
+    }
+  }
+
+  void _register(String? id) {
+    if (id != null) _cards[id] = this;
+  }
+
+  // A card dragged in hand is a second copy: only forget our own.
+  void _forget(String? id) {
+    if (id != null && _cards[id] == this) _cards.remove(id);
+  }
+
+  @override
+  void dispose() {
+    _forget(widget.id);
+    _controller?.dispose();
+    _image?.dispose();
+    super.dispose();
+  }
+
+  /// Burns it away; completes when it's gone. Straight away with
+  /// animations turned off.
+  Future<void> burn() async {
+    if (_controller != null) return;
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return;
+    final boundary = _boundary.currentContext?.findRenderObject();
+    if (boundary is! RenderRepaintBoundary ||
+        !boundary.attached ||
+        !boundary.hasSize) {
+      return;
+    }
+    final ui.Image image;
+    try {
+      image = boundary.toImageSync(
+        pixelRatio: math.min(MediaQuery.devicePixelRatioOf(context), 2.0),
+      );
+    } catch (_) {
+      return;
+    }
+    HapticFeedback.heavyImpact();
+    final controller = AnimationController(
+      vsync: this,
+      duration: destructionDuration,
+    );
+    setState(() {
+      _image = image;
+      _pattern = BurnPattern.forSize(boundary.size, seed: widget.id.hashCode);
+      _controller = controller;
+    });
+    try {
+      await controller.forward().orCancel;
+    } on TickerCanceled {
+      // Gone before it finished burning.
     }
   }
 
   @override
-  void dispose() {
-    // A card dragged in hand is a second copy: only forget our own.
-    if (_cards[widget.id] == _key) _cards.remove(widget.id);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) =>
-      RepaintBoundary(key: _key, child: widget.child);
-}
-
-/// Burns away the cards of notes [ids] that are on screen, as Balatro
-/// destroys a card: a jolt, then it dissolves in glowing pixels and
-/// sparks. Returns once they're captured, so the notes can go at once; the
-/// effect plays over whatever takes their place.
-void destroyNoteCards(BuildContext context, Iterable<String> ids) {
-  for (final id in ids) {
-    final key = _cards[id];
-    if (key != null) destroyView(context, key);
-  }
-}
-
-/// Burns away what the [RepaintBoundary] with [key] shows, the same way;
-/// e.g. a note's page as it closes.
-void destroyView(BuildContext context, GlobalKey key) {
-  if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return;
-  final boundary = key.currentContext?.findRenderObject();
-  final overlay = Overlay.maybeOf(context, rootOverlay: true);
-  if (boundary is! RenderRepaintBoundary ||
-      !boundary.attached ||
-      !boundary.hasSize ||
-      overlay == null) {
-    return;
-  }
-  final overlayBox = overlay.context.findRenderObject() as RenderBox?;
-  if (overlayBox == null) return;
-  final pixelRatio = math.min(MediaQuery.devicePixelRatioOf(context), 2.0);
-  final ui.Image image;
-  try {
-    image = boundary.toImageSync(pixelRatio: pixelRatio);
-  } catch (_) {
-    return;
-  }
-  final topLeft = overlayBox.globalToLocal(boundary.localToGlobal(Offset.zero));
-  final rect = topLeft & boundary.size;
-  HapticFeedback.heavyImpact();
-
-  late final OverlayEntry entry;
-  entry = OverlayEntry(
-    builder: (_) => _Destruction(
-      image: image,
-      rect: rect,
-      onDone: () {
-        entry.remove();
-        image.dispose();
-      },
-    ),
-  );
-  overlay.insert(entry);
-}
-
-class _Destruction extends StatefulWidget {
-  const _Destruction({
-    required this.image,
-    required this.rect,
-    required this.onDone,
-  });
-
-  final ui.Image image;
-  final Rect rect;
-  final VoidCallback onDone;
-
-  @override
-  State<_Destruction> createState() => _DestructionState();
-}
-
-class _DestructionState extends State<_Destruction>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller =
-      AnimationController(vsync: this, duration: destructionDuration)
-        ..addStatusListener((status) {
-          if (status == AnimationStatus.completed) widget.onDone();
-        })
-        ..forward();
-  late final BurnPattern _pattern = BurnPattern.forSize(
-    widget.rect.size,
-    seed: widget.rect.hashCode,
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Sparks fly a little beyond the card.
-    final rect = widget.rect.inflate(BurnPainter.margin);
-    return Positioned.fromRect(
-      rect: rect,
-      child: IgnorePointer(
-        child: CustomPaint(
-          painter: BurnPainter(
-            image: widget.image,
-            pattern: _pattern,
-            progress: _controller,
+    final child = RepaintBoundary(key: _boundary, child: widget.child);
+    final controller = _controller;
+    if (controller == null) return child;
+    // Burning: the card keeps its place, drawn by the burn instead.
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IgnorePointer(child: Opacity(opacity: 0, child: child)),
+        Positioned(
+          left: -BurnPainter.margin,
+          top: -BurnPainter.margin,
+          right: -BurnPainter.margin,
+          bottom: -BurnPainter.margin,
+          child: IgnorePointer(
+            child: CustomPaint(
+              painter: BurnPainter(
+                image: _image!,
+                pattern: _pattern!,
+                progress: controller,
+              ),
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
+
+/// Burns away, in place, the cards of notes [ids] that are on screen;
+/// completes when they're gone, for the notes to be deleted then.
+Future<void> burnNoteCards(Iterable<String> ids) => Future.wait([
+  for (final id in ids)
+    if (_cards[id] case final card?) card.burn(),
+]);
 
 /// Where a card burns first: one threshold per block, from 0 (first) to 1
 /// (last), in smooth patches like Balatro's dissolve.
