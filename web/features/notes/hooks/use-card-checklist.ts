@@ -4,9 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "@/components/ui/toast";
 import { usePreferencesStore } from "@/features/preferences";
-import { saveNote } from "../api";
+import { saveNote, setNotePosition } from "../api";
 import { appendTextToContent } from "../quill";
 import { toggleChecklistItem } from "../quill-checklist";
+import { keptPlace } from "../sort";
 import type { Note } from "../types";
 
 /** Whether this person may tick a note's items from its card. */
@@ -43,9 +44,11 @@ function useCardContentChange() {
       note: Note,
       change: (content: string | null | undefined) => string | null,
       failure: string,
+      { keepPlace = false }: { keepPlace?: boolean } = {},
     ) => {
       const content = change(note.content);
       if (content === null) return;
+      const place = keptPlace(note);
       putInLists({ ...note, content });
 
       let outcome = await saveNote(note.id, {
@@ -61,7 +64,16 @@ function useCardContentChange() {
             })
           : outcome;
       }
-      if (outcome.status === "saved") putInLists(outcome.note);
+      if (outcome.status === "saved" && keepPlace) {
+        // Placed where it was, as a dragged note is: still there until it's
+        // next edited in the note itself.
+        putInLists({
+          ...outcome.note,
+          position: place,
+          positionedAt: outcome.note.updatedAt,
+        });
+        await setNotePosition(note.id, place).catch(() => undefined);
+      } else if (outcome.status === "saved") putInLists(outcome.note);
       else {
         putInLists(note);
         toast.error(failure);
@@ -72,7 +84,10 @@ function useCardContentChange() {
   );
 }
 
-/** Ticks or unticks a checklist item from a note's card. */
+/**
+ * Ticks or unticks a checklist item from a note's card. The note stays
+ * where it is in the list, so several items can be ticked in a row.
+ */
 export function useCardChecklist() {
   const changeContent = useCardContentChange();
   const sort = usePreferencesStore((s) => s.editor.sortChecklistItems);
@@ -82,6 +97,7 @@ export function useCardChecklist() {
         note,
         (content) => toggleChecklistItem(content, line, sort),
         "Couldn’t save that tick. Open the note to try again.",
+        { keepPlace: true },
       ),
     [changeContent, sort],
   );

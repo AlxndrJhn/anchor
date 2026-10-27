@@ -97,6 +97,13 @@ export class SyncNoteChangeDto extends SyncChangeBaseDto {
   @IsOptional()
   position?: number;
 
+  // The note was placed after its last edit (an item ticked from its card
+  // keeps its place): the place is stamped after the edit, not before, so
+  // it holds.
+  @IsBoolean()
+  @IsOptional()
+  placedAfterEdit?: boolean;
+
   @IsString()
   @IsOptional()
   background?: string;

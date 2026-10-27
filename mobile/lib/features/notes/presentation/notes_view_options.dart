@@ -54,6 +54,12 @@ double noteSortKey(Note note) {
   return positionedAt.millisecondsSinceEpoch >= edited ? position : edited;
 }
 
+/// Where [note] sorts now, to keep it there rather than move it up when
+/// it's changed from its card. A hair off its current place, so the server,
+/// which only stamps a place that changed, records it as placed after the
+/// change.
+double keptPlace(Note note) => noteSortKey(note) - 0.01;
+
 /// The place for a note dropped between [above] and [below] (either may be
 /// missing at the ends), in [noteSortKey] terms.
 double positionBetween(Note? above, Note? below) {

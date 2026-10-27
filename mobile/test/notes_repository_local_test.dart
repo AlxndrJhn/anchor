@@ -6,6 +6,8 @@ import 'package:anchor/features/notes/data/repository/note_revisions_store.dart'
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_revision.dart';
+import 'package:anchor/features/notes/presentation/editor/checklist_lines.dart';
+import 'package:anchor/features/notes/presentation/notes_view_options.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -475,6 +477,62 @@ void main() {
 
       final row = await db.noteRow('own');
       expect(row!.background, isNull);
+    });
+  });
+
+  group('ticking from the card', () {
+    const list =
+        '{"ops":[{"insert":"milk"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"eggs"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
+
+    Future<List<String>> order() async {
+      final notes = await repo.watchNotes().first;
+      notes.sort((a, b) => noteSortKey(b).compareTo(noteSortKey(a)));
+      return [for (final n in notes) n.id];
+    }
+
+    Future<void> tick(int line, String text, {required bool keep}) async {
+      final note = (await repo.watchNotes().first).firstWhere(
+        (n) => n.id == 'list',
+      );
+      await repo.changeContent(
+        'list',
+        (content) =>
+            toggleChecklistItemContent(content, line, text: text, sort: false),
+        keepAt: keep ? keptPlace(note) : null,
+      );
+    }
+
+    Future<void> insertList() async {
+      await insertNote(id: 'newer', updatedAt: DateTime.utc(2026, 7, 3));
+      await insertNote(id: 'list', updatedAt: DateTime.utc(2026, 7, 2));
+      await (db.update(db.notes)..where((t) => t.id.equals('list'))).write(
+        const NotesCompanion(content: Value(list)),
+      );
+      await insertNote(id: 'older', updatedAt: DateTime.utc(2026, 7, 1));
+    }
+
+    test('keeps the note where it was, tick after tick', () async {
+      await insertList();
+
+      for (final (line, text) in [(0, 'milk'), (1, 'eggs')]) {
+        await tick(line, text, keep: true);
+        expect(await order(), ['newer', 'list', 'older']);
+      }
+
+      final row = await (db.select(
+        db.notes,
+      )..where((t) => t.id.equals('list'))).getSingle();
+      expect(row.content, contains('"checked"'));
+      expect(row.isSynced, isFalse);
+    });
+
+    test('without a place to keep, a tick moves it up', () async {
+      await insertList();
+
+      await tick(0, 'milk', keep: false);
+
+      expect(await order(), ['list', 'newer', 'older']);
     });
   });
 

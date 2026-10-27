@@ -191,6 +191,37 @@ void main() {
     verifyNever(() => repo.setPosition(any(), any()));
   });
 
+  testWidgets('an item ticked from a card keeps the note in its place', (
+    tester,
+  ) async {
+    when(
+      () => repo.changeContent(any(), any(), keepAt: any(named: 'keepAt')),
+    ).thenAnswer((_) async {});
+    final note = Note(
+      id: 'list',
+      title: 'Shopping',
+      content:
+          '{"ops":[{"insert":"milk"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}',
+      updatedAt: DateTime.utc(2026, 8, 18),
+    );
+    await pumpList(tester, [...notesNamed('Note', 1), note]);
+
+    final item = find.text('milk', findRichText: true);
+    await tester.tapAt(
+      tester.getCenter(item) - Offset(tester.getSize(item).width / 2 + 10, 0),
+    );
+    await tester.pump();
+
+    final kept = verify(
+      () => repo.changeContent(
+        'list',
+        any(),
+        keepAt: captureAny(named: 'keepAt'),
+      ),
+    ).captured.single;
+    expect(kept, keptPlace(note));
+  });
+
   group('deleting', () {
     Finder burning() => find.byWidgetPredicate(
       (w) => w is CustomPaint && w.painter is BurnPainter,

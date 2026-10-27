@@ -18,6 +18,7 @@ import '../domain/note.dart';
 import '../domain/note_dates.dart';
 import 'editor/checklist_lines.dart';
 import 'notes_controller.dart';
+import 'notes_view_options.dart';
 import 'widgets/background_sheet.dart';
 import 'widgets/card_registry.dart';
 
@@ -165,6 +166,8 @@ class NoteActions {
       note.id,
       (content) =>
           toggleChecklistItemContent(content, line, text: text, sort: sort),
+      // Kept in its place, so several items can be ticked in a row.
+      keepAt: keptPlace(note),
     );
   }
 

@@ -55,6 +55,44 @@ describe('sync push', () => {
     ).toMatchObject({ title: 'original', content: 'one', cause: 'edit' });
   });
 
+  // An item ticked from the card: the note keeps its place in the list.
+  it('a note placed after its edit keeps its place; otherwise the edit moves it up', async () => {
+    const placedAt = async (id: string) => {
+      const [note, order] = await Promise.all([
+        ctx.prisma.note.findUniqueOrThrow({ where: { id } }),
+        ctx.prisma.noteOrder.findUniqueOrThrow({
+          where: { userId_noteId: { userId: user.id, noteId: id } },
+        }),
+      ]);
+      return order.updatedAt.getTime() - note.updatedAt.getTime();
+    };
+    const kept = await user.notes.create({ title: 'list', content: 'one' });
+    const moved = await user.notes.create({ title: 'list', content: 'one' });
+
+    await user.sync.push([
+      {
+        type: 'note',
+        id: kept.id,
+        baseVersion: 1,
+        title: 'list',
+        content: 'ticked',
+        position: 1000,
+        placedAfterEdit: true,
+      },
+      {
+        type: 'note',
+        id: moved.id,
+        baseVersion: 1,
+        title: 'list',
+        content: 'edited',
+        position: 2000,
+      },
+    ]);
+
+    expect(await placedAt(kept.id)).toBeGreaterThanOrEqual(0);
+    expect(await placedAt(moved.id)).toBeLessThanOrEqual(0);
+  });
+
   it('a stale or absent baseVersion conflicts, preserving the payload as a conflict revision', async () => {
     const note = await user.notes.create({ title: 'original' });
     await user.notes.update(note.id, { title: 'edited' });

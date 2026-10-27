@@ -294,13 +294,17 @@ class NotesRepository {
   /// happens when [change] gives null.
   Future<void> changeContent(
     String noteId,
-    String? Function(String? content) change,
-  ) async {
+    String? Function(String? content) change, {
+    double? keepAt,
+  }) async {
     final note = await getNote(noteId);
     if (note == null) return;
     final content = change(note.content);
     if (content == null || content == note.content) return;
     await updateNote(note.copyWith(content: content));
+    // Placed there after the change, as a dragged note is, so it keeps its
+    // place in the list rather than move up.
+    if (keepAt != null) await setPosition(noteId, keepAt);
   }
 
   /// What the note says now is kept as a version of its own.

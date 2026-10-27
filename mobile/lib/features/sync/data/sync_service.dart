@@ -215,6 +215,11 @@ class SyncService {
       content: note.content,
       isArchived: note.isArchived,
       position: note.position,
+      placedAfterEdit:
+          note.position != null &&
+          note.positionedAt != null &&
+          note.updatedAt != null &&
+          !note.positionedAt!.isBefore(note.updatedAt!),
       background: note.background,
       state:
           note.permission == NotePermission.owner.name ||

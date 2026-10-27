@@ -81,6 +81,7 @@ class SyncNoteChange extends SyncChange {
     required this.state,
     required this.tagIds,
     this.position,
+    this.placedAfterEdit = false,
     this.revisions = const [],
     this.isRevisionsOnly = false,
   });
@@ -89,6 +90,10 @@ class SyncNoteChange extends SyncChange {
 
   /// Where this person dragged the note on the web, sent back unchanged.
   final double? position;
+
+  /// Placed after its last edit (an item ticked from its card), so the
+  /// server stamps the place after the edit and the note keeps it.
+  final bool placedAfterEdit;
   final int? baseVersion;
   final String title;
   final String? content;
@@ -128,6 +133,7 @@ class SyncNoteChange extends SyncChange {
     if (state != null) 'state': state,
     'tagIds': tagIds,
     if (position != null) 'position': position,
+    if (placedAfterEdit) 'placedAfterEdit': true,
     if (revisions.isNotEmpty)
       'revisions': [for (final revision in revisions) revision.toJson()],
     if (isRevisionsOnly) 'revisionsOnly': true,

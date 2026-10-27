@@ -23,6 +23,17 @@ export function sortKey(
 }
 
 /**
+ * Where a note sorts now, to keep it there rather than move it up when it's
+ * changed from its card. A hair off its current place, so the server, which
+ * only stamps a place that changed, records it as placed after the change.
+ */
+export function keptPlace(
+  note: Pick<Note, "updatedAt" | "position" | "positionedAt">,
+): number {
+  return sortKey(note) - 0.01;
+}
+
+/**
  * The place for a note dropped between `above` and `below` (either may be
  * missing at the ends), in `sortKey` terms.
  */

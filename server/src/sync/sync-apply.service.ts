@@ -145,9 +145,14 @@ export class SyncApplyService {
       return { ...base, status: 'denied' };
     }
 
-    if (access.state !== NoteState.deleted) {
-      await this.applyPersonal(userId, change);
-    }
+    // Usually before the content, so a later edit moves the note up; after
+    // it when the note was placed after its last edit.
+    const personalLast = !!change.placedAfterEdit && !isViewer;
+    const applyPersonal = () =>
+      access.state !== NoteState.deleted
+        ? this.applyPersonal(userId, change)
+        : Promise.resolve();
+    if (!personalLast) await applyPersonal();
 
     // Viewers can't win content writes; preserve what they typed anyway.
     if (isViewer) {
@@ -231,6 +236,7 @@ export class SyncApplyService {
     if (outcome.kind === 'missing') {
       return { ...base, status: 'denied' };
     }
+    if (personalLast) await applyPersonal();
     if (outcome.kind === 'conflict') {
       return this.noteConflict(userId, change, { canWriteHistory: true });
     }
