@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
 import '../../theme/app_typography.dart';
+import 'text_formats.dart';
 
 /// Creates custom styles for the Quill editor matching the app theme
 DefaultStyles getEditorStyles(BuildContext context) {
@@ -136,6 +137,29 @@ DefaultStyles getEditorStyles(BuildContext context) {
       ),
     ),
   );
+}
+
+/// The editor's custom style hook: strikes through checked list items and
+/// paints `highlight` (which flutter_quill passes through as an unknown,
+/// ignore-scope attribute) behind the text, with a readable ink on it.
+TextStyle getEditorCustomStyle(Attribute attribute, BuildContext context) {
+  if (attribute.key == TextFormats.highlightKey) {
+    return highlightTextStyle(
+      attribute.value,
+      textColor: Theme.of(context).colorScheme.onSurface,
+    );
+  }
+  return getCheckedListStyle(attribute, context);
+}
+
+/// Restores a run's explicit `color` over the ink [getEditorCustomStyle]
+/// gives highlighted text: flutter_quill applies custom styles last.
+TextStyle? withExplicitTextColor(Node node, TextStyle? style) {
+  final attrs = node.style.attributes;
+  if (!attrs.containsKey(TextFormats.highlightKey)) return style;
+  final color = textColorValue(attrs[TextFormats.colorKey]?.value);
+  if (color == null) return style;
+  return (style ?? const TextStyle()).copyWith(color: color);
 }
 
 /// Custom style builder that adds strikethrough for checked list items

@@ -4,6 +4,9 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'checklist_lines.dart';
+import 'color_picker_sheet.dart';
+import 'format_palette_sheet.dart';
+import 'text_formats.dart';
 import 'link_utils.dart';
 import '../../theme/context_extensions.dart';
 import '../../theme/tokens/app_durations.dart';
@@ -29,6 +32,11 @@ class EditorFormattingState {
   final int linkStart;
   final int linkLength;
 
+  /// The selection's `highlight`, `color` and `font` values, if any.
+  final String? highlight;
+  final String? textColor;
+  final String? font;
+
   const EditorFormattingState({
     this.isBold = false,
     this.isItalic = false,
@@ -46,6 +54,9 @@ class EditorFormattingState {
     this.linkUrl,
     this.linkStart = 0,
     this.linkLength = 0,
+    this.highlight,
+    this.textColor,
+    this.font,
   });
 
   bool get isList => isBulletList || isNumberedList || isChecklist;
@@ -84,9 +95,21 @@ class EditorFormattingState {
       linkUrl: link?.url,
       linkStart: link?.start ?? 0,
       linkLength: link?.length ?? 0,
+      highlight: _stringValue(style, TextFormats.highlightKey),
+      textColor: _stringValue(style, TextFormats.colorKey),
+      font: _stringValue(style, TextFormats.fontKey),
     );
   }
+
+  static String? _stringValue(Style style, String key) {
+    final value = style.attributes[key]?.value;
+    return value is String ? value : null;
+  }
 }
+
+/// The highlight last applied from the toolbar, which the highlighter button
+/// reapplies in one tap. Shared by every editor for the app's lifetime.
+final lastHighlight = ValueNotifier<String>(highlightPresets.first.name);
 
 /// Custom toolbar for the rich text editor
 class EditorToolbar extends StatelessWidget {
@@ -183,6 +206,46 @@ class EditorToolbar extends StatelessWidget {
                   isActive: state.isStrikethrough,
                   onTap: () => _toggleFormat(Attribute.strikeThrough),
                   tooltip: 'Strikethrough',
+                ),
+              ],
+            ),
+            _buildDivider(context, theme),
+
+            // Highlight, text colour and font
+            _ToolbarGroup(
+              buttons: [
+                _ToolbarButtonData(
+                  icon: LucideIcons.highlighter,
+                  isActive: state.highlight != null,
+                  indicatorColor: highlightFill(
+                    state.highlight ?? lastHighlight.value,
+                  ),
+                  onTap: _toggleHighlight,
+                  tooltip: state.highlight != null
+                      ? 'Remove highlight'
+                      : 'Highlight',
+                ),
+                _ToolbarButtonData(
+                  icon: LucideIcons.chevronDown,
+                  width: 22,
+                  iconSize: AppIconSizes.xs,
+                  onTap: () => _pickHighlight(context),
+                  tooltip: 'Highlight colour',
+                ),
+                _ToolbarButtonData(
+                  icon: LucideIcons.baseline,
+                  isActive: state.textColor != null,
+                  indicatorColor:
+                      textColorValue(state.textColor) ??
+                      theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  onTap: () => _pickTextColor(context),
+                  tooltip: 'Text colour',
+                ),
+                _ToolbarButtonData(
+                  icon: LucideIcons.type,
+                  isActive: state.font != null,
+                  onTap: () => _pickFont(context),
+                  tooltip: 'Font',
                 ),
               ],
             ),
@@ -308,6 +371,99 @@ class EditorToolbar extends StatelessWidget {
     );
   }
 
+  /// The one-tap highlighter: removes the selection's highlight, or paints
+  /// it with the last used colour.
+  void _toggleHighlight() {
+    final current = controller
+        .getSelectionStyle()
+        .attributes[TextFormats.highlightKey]
+        ?.value;
+    controller.formatSelection(
+      TextFormats.highlight(current != null ? null : lastHighlight.value),
+    );
+  }
+
+  Future<void> _pickHighlight(BuildContext context) async {
+    // The toolbar leaves the tree while a sheet has focus; later sheets
+    // open from the navigator.
+    final host = Navigator.of(context).context;
+    final choice = await FormatPaletteSheet.show(
+      host,
+      title: 'Highlight',
+      icon: LucideIcons.highlighter,
+      swatches: [
+        for (final p in highlightPresets)
+          PaletteSwatch(p.name, p.label, p.color),
+      ],
+      clearLabel: 'None',
+      current: state.highlight,
+      asHighlight: true,
+    );
+    if (choice == null || !host.mounted) return;
+    final value = await _resolve(host, choice, 'Custom highlight', () {
+      final fill = highlightFill(state.highlight ?? lastHighlight.value);
+      return fill == null ? null : colorToHex(fill);
+    });
+    if (value == null) return;
+    final (chosen,) = value;
+    if (chosen != null) lastHighlight.value = chosen;
+    controller.formatSelection(TextFormats.highlight(chosen));
+  }
+
+  Future<void> _pickTextColor(BuildContext context) async {
+    final host = Navigator.of(context).context;
+    final choice = await FormatPaletteSheet.show(
+      host,
+      title: 'Text colour',
+      icon: LucideIcons.baseline,
+      swatches: [
+        for (final p in textColorPresets)
+          PaletteSwatch(p.hex, p.label, p.color),
+      ],
+      clearLabel: 'Default',
+      current: state.textColor == null ? null : normalizeHex(state.textColor),
+    );
+    if (choice == null || !host.mounted) return;
+    final value = await _resolve(
+      host,
+      choice,
+      'Custom text colour',
+      () => normalizeHex(state.textColor) ?? textColorPresets.first.hex,
+    );
+    if (value == null) return;
+    controller.formatSelection(TextFormats.color(value.$1));
+  }
+
+  Future<void> _pickFont(BuildContext context) async {
+    final host = Navigator.of(context).context;
+    final choice = await FontPickerSheet.show(host, current: state.font);
+    if (choice == null) return;
+    controller.formatSelection(TextFormats.font(choice.$1));
+  }
+
+  /// The value a palette [choice] stands for, asking the colour picker for
+  /// "Custom…"; wrapped so null (remove) differs from cancelled (no record).
+  Future<(String?,)?> _resolve(
+    BuildContext host,
+    PaletteChoice choice,
+    String customTitle,
+    String? Function() customStart,
+  ) async {
+    switch (choice) {
+      case PresetChoice(:final value):
+        return (value,);
+      case ClearChoice():
+        return (null,);
+      case CustomChoice():
+        final hex = await ColorPickerSheet.show(
+          host,
+          title: customTitle,
+          initialHex: customStart(),
+        );
+        return hex == null ? null : (hex,);
+    }
+  }
+
   void _toggleHeader(int level) {
     final style = controller.getSelectionStyle();
     final currentHeader = style.attributes[Attribute.header.key];
@@ -376,12 +532,20 @@ class _ToolbarButtonData {
   final VoidCallback onTap;
   final String tooltip;
 
+  /// A colour bar under the icon (the highlight or text colour it applies).
+  final Color? indicatorColor;
+  final double width;
+  final double iconSize;
+
   const _ToolbarButtonData({
     required this.icon,
     this.isActive = false,
     this.isEnabled,
     required this.onTap,
     required this.tooltip,
+    this.indicatorColor,
+    this.width = 36,
+    this.iconSize = AppIconSizes.md,
   });
 }
 
@@ -441,7 +605,7 @@ class _ToolbarButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: AppDurations.fast,
           curve: Curves.easeOut,
-          width: 36,
+          width: data.width,
           height: 36,
           decoration: BoxDecoration(
             color: hasEnabledState
@@ -451,14 +615,30 @@ class _ToolbarButton extends StatelessWidget {
                       : Colors.transparent),
             borderRadius: AppRadius.xsBorder,
           ),
-          child: Center(
-            child: Icon(
-              data.icon,
-              size: AppIconSizes.md,
-              color: hasEnabledState
-                  ? (isEnabled ? inactiveColor : disabledColor)
-                  : (data.isActive ? activeColor : inactiveColor),
-            ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                data.icon,
+                size: data.iconSize,
+                color: hasEnabledState
+                    ? (isEnabled ? inactiveColor : disabledColor)
+                    : (data.isActive ? activeColor : inactiveColor),
+              ),
+              if (data.indicatorColor != null)
+                Positioned(
+                  bottom: 4,
+                  child: Container(
+                    key: Key('${data.tooltip}-indicator'),
+                    width: 18,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: data.indicatorColor,
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
