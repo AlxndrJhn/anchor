@@ -27,6 +27,7 @@ import '../../../core/widgets/selection_bar.dart';
 import '../../../l10n/l10n.dart';
 import '../../reminders/data/reminder_permissions.dart';
 import '../../reminders/presentation/reminder_permission_prompt.dart';
+import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../sync/data/sync_manager.dart';
 import '../../sync/presentation/sync_warning.dart';
 import '../../tags/domain/tag.dart';
@@ -295,7 +296,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       beforeChange: () async {
         _selection.end();
         if (leaving.isEmpty) return;
-        if (action.isDeleting) {
+        if (action.isDeleting &&
+            ref.read(editorPreferencesControllerProvider).burnDeleted) {
           // Deleted cards burn away where they stand, without their checks.
           await WidgetsBinding.instance.endOfFrame;
           await burnNoteCards(leaving);

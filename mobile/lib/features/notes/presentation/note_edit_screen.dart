@@ -441,7 +441,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   /// Whether a deleted note closes at once, for its card to burn away in the
   /// list it goes back to; with nothing to go back to, it's deleted, then
   /// the note closes.
-  bool get _burnsInList => context.canPop() && !context.isMotionReduced;
+  bool get _burnsInList =>
+      context.canPop() &&
+      !context.isMotionReduced &&
+      ref.read(editorPreferencesControllerProvider).burnDeleted;
 
   /// Outlives this page: deleting runs on, and its message shows, there.
   BuildContext get _host => Navigator.of(context).context;

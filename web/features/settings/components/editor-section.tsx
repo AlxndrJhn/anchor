@@ -1,6 +1,14 @@
 "use client";
 
+import * as React from "react";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  DEFAULT_DATE_SHORTCUT,
+  DEFAULT_DATE_TIME_SHORTCUT,
+  type Shortcut,
+  shortcutFromEvent,
+} from "@/features/notes/date-stamp";
 import { usePreferencesStore } from "@/features/preferences";
 import {
   Row,
@@ -34,6 +42,106 @@ export function EditorSection() {
           }}
         />
       </Row>
+      <Row>
+        <RowText
+          title={<label htmlFor="burn-deleted">Burn deleted notes</label>}
+          text="A deleted note burns away where it stood. Off, it just goes. On this device only."
+        />
+        <Switch
+          id="burn-deleted"
+          checked={editor.burnDeleted !== false}
+          onCheckedChange={(on) => {
+            setEditorPreference("burnDeleted", on);
+            setSaveStatus("saved");
+          }}
+        />
+      </Row>
+      <Row>
+        <RowText
+          title="Insert today’s date"
+          text="In a note, types the date, e.g. 2026-10-27."
+        />
+        <ShortcutRecorder
+          id="date-shortcut"
+          value={editor.dateShortcut ?? DEFAULT_DATE_SHORTCUT}
+          isDefault={!editor.dateShortcut}
+          onChange={(shortcut) => {
+            setEditorPreference("dateShortcut", shortcut);
+            setSaveStatus("saved");
+          }}
+        />
+      </Row>
+      <Row>
+        <RowText
+          title="Insert the date and time"
+          text="In a note, types the time with its offset from UTC, e.g. 2026-10-27T11:23:49+01:00."
+        />
+        <ShortcutRecorder
+          id="date-time-shortcut"
+          value={editor.dateTimeShortcut ?? DEFAULT_DATE_TIME_SHORTCUT}
+          isDefault={!editor.dateTimeShortcut}
+          onChange={(shortcut) => {
+            setEditorPreference("dateTimeShortcut", shortcut);
+            setSaveStatus("saved");
+          }}
+        />
+      </Row>
     </Section>
+  );
+}
+
+/**
+ * Shows a shortcut; clicked, it records the next key combination pressed
+ * (Esc cancels). Reset brings back the default.
+ */
+function ShortcutRecorder({
+  id,
+  value,
+  isDefault,
+  onChange,
+}: {
+  id: string;
+  value: Shortcut;
+  isDefault: boolean;
+  onChange: (shortcut: Shortcut | undefined) => void;
+}) {
+  const [recording, setRecording] = React.useState(false);
+  return (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <Button
+        id={id}
+        variant="secondary"
+        size="sm"
+        aria-label={
+          recording
+            ? "Press the new shortcut"
+            : `Shortcut ${value.label}, change`
+        }
+        onClick={() => setRecording(true)}
+        onBlur={() => setRecording(false)}
+        onKeyDown={(e) => {
+          if (!recording) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.key === "Escape") {
+            setRecording(false);
+            return;
+          }
+          const shortcut = shortcutFromEvent(e.nativeEvent);
+          if (!shortcut) return;
+          onChange(shortcut);
+          setRecording(false);
+        }}
+      >
+        <kbd className="font-sans">
+          {recording ? "Press keys…" : value.label}
+        </kbd>
+      </Button>
+      {!isDefault && !recording && (
+        <Button variant="quiet" size="sm" onClick={() => onChange(undefined)}>
+          Reset
+        </Button>
+      )}
+    </div>
   );
 }

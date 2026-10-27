@@ -580,6 +580,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Checked items move below the unchecked ones.';
 
   @override
+  String get settingsBurnDeleted => 'Burn deleted notes';
+
+  @override
+  String get settingsBurnDeletedHelp =>
+      'A deleted note burns away where it stood. Off, it just goes.';
+
+  @override
   String get settingsPreviewTitle => 'Weekend in Lisbon';
 
   @override

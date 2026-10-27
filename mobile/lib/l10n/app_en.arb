@@ -796,6 +796,14 @@
   "@settingsMoveCheckedHelp": {
     "description": "Under the switch that moves checked checklist items to the bottom."
   },
+  "settingsBurnDeleted": "Burn deleted notes",
+  "@settingsBurnDeleted": {
+    "description": "Switch in Settings › Editor: a deleted note's card burns away (a short fiery dissolve) where it stood. A setting on this device."
+  },
+  "settingsBurnDeletedHelp": "A deleted note burns away where it stood. Off, it just goes.",
+  "@settingsBurnDeletedHelp": {
+    "description": "Help under the Burn deleted notes switch."
+  },
   "settingsPreviewTitle": "Weekend in Lisbon",
   "@settingsPreviewTitle": {
     "description": "Title of a sample note that previews the font and text size."

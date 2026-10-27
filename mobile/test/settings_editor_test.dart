@@ -136,7 +136,7 @@ void main() {
       'Pack light. The hills are steep, and the trams fill up by '
       'nine.';
 
-  testWidgets('Editor shows a preview, Font, Text size, then the switch', (
+  testWidgets('Editor shows a preview, Font, Text size, then the switches', (
     tester,
   ) async {
     await pumpSettings(tester);
@@ -148,6 +148,7 @@ void main() {
         'Font',
         'Text size',
         'Move checked items to the bottom',
+        'Burn deleted notes',
       ])
         tester.getTopLeft(find.text(text)).dy,
     ];
@@ -202,7 +203,7 @@ void main() {
         (w) => w is Container && w.constraints?.maxHeight == 1,
       ),
     );
-    expect(dividersIn('Font'), findsNWidgets(2));
+    expect(dividersIn('Font'), findsNWidgets(3));
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
     await tester.pumpAndSettle();
     // Lines only between Color scheme, Style and Density; none under the
@@ -241,6 +242,29 @@ void main() {
       AppTypography.noteSerif,
     );
     expect(styleOf(tester, preview).fontSize, closeTo(16.5 * 1.12, 0.001));
+  });
+
+  testWidgets('Burn deleted notes is on until turned off on this phone', (
+    tester,
+  ) async {
+    final container = await pumpSettings(tester);
+    expect(
+      container.read(editorPreferencesControllerProvider).burnDeleted,
+      isTrue,
+    );
+
+    await tester.scrollUntilVisible(find.text('Burn deleted notes'), 100);
+    await tester.tap(find.text('Burn deleted notes'));
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(editorPreferencesControllerProvider).burnDeleted,
+      isFalse,
+    );
+    expect(
+      await container.read(preferencesRepositoryProvider).getBurnDeleted(),
+      isFalse,
+    );
   });
 
   testWidgets('the preview grows over the fade and the face changes at once', (

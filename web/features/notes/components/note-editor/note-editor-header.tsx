@@ -97,6 +97,9 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
   // Runs once the menu has closed and let go of focus.
   const afterMenu = React.useRef<(() => void) | null>(null);
   const late = !!props.reminder && isReminderPast(props.reminder);
+  const checkboxesLabel =
+    props.checkboxes === "show" ? "Show checkboxes" : "Hide checkboxes";
+  const trashLabel = props.isOwner ? "Move to trash" : "Remove from my notes";
   const bellLabel = props.reminder
     ? `${late ? "Late reminder" : "Reminder"}: ${reminderLabel(props.reminder)}`
     : "Add a reminder";
@@ -187,14 +190,37 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
               </IconButton>
             </Tip>
           )}
-          {props.saved && props.isOwner && (
-            <Tip label={props.sharedWithCount ? "Sharing" : "Share"}>
+          {/* On wide screens these sit in the bar; narrow, in the menu. */}
+          {!props.readOnly && props.checkboxes && (
+            <Tip label={checkboxesLabel}>
               <IconButton
-                label={props.sharedWithCount ? "Sharing" : "Share"}
-                onClick={props.onShare}
+                label={checkboxesLabel}
+                onClick={props.onCheckboxes}
+                className="max-md:hidden"
+              >
+                {props.checkboxes === "show" ? <ListChecks /> : <List />}
+              </IconButton>
+            </Tip>
+          )}
+          {props.saved && (
+            <Tip label={props.isArchived ? "Unarchive" : "Archive"}>
+              <IconButton
+                label={props.isArchived ? "Unarchive" : "Archive"}
+                onClick={props.isArchived ? props.onUnarchive : props.onArchive}
                 className={cn("max-md:hidden", afterSave)}
               >
-                <UserPlus />
+                {props.isArchived ? <ArchiveRestore /> : <Archive />}
+              </IconButton>
+            </Tip>
+          )}
+          {props.saved && (
+            <Tip label={trashLabel}>
+              <IconButton
+                label={trashLabel}
+                onClick={props.onTrash}
+                className={cn("max-md:hidden", afterSave)}
+              >
+                {props.isOwner ? <Trash2 /> : <LogOut />}
               </IconButton>
             </Tip>
           )}
@@ -223,21 +249,21 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                     {props.isPinned ? <PinOff /> : <Pin />}
                     {props.isPinned ? "Unpin" : "Pin"}
                   </DropdownMenuItem>
-                  {props.isOwner && (
-                    <DropdownMenuItem onSelect={props.onShare}>
-                      <UserPlus />
-                      Share
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                 </div>
-                {!props.readOnly && props.checkboxes && (
-                  <DropdownMenuItem onSelect={props.onCheckboxes}>
-                    {props.checkboxes === "show" ? <ListChecks /> : <List />}
-                    {props.checkboxes === "show"
-                      ? "Show checkboxes"
-                      : "Hide checkboxes"}
+                {props.isOwner && (
+                  <DropdownMenuItem onSelect={props.onShare}>
+                    <UserPlus />
+                    {props.sharedWithCount ? "Sharing" : "Share"}
                   </DropdownMenuItem>
+                )}
+                {!props.readOnly && props.checkboxes && (
+                  <div className="contents md:hidden">
+                    <DropdownMenuItem onSelect={props.onCheckboxes}>
+                      {props.checkboxes === "show" ? <ListChecks /> : <List />}
+                      {checkboxesLabel}
+                    </DropdownMenuItem>
+                  </div>
                 )}
                 {!props.readOnly && props.checkedCount > 0 && (
                   <>
@@ -276,22 +302,24 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                     Version history
                   </DropdownMenuItem>
                 )}
-                {props.isArchived ? (
-                  <DropdownMenuItem onSelect={props.onUnarchive}>
-                    <ArchiveRestore />
-                    Unarchive
+                <div className="contents md:hidden">
+                  {props.isArchived ? (
+                    <DropdownMenuItem onSelect={props.onUnarchive}>
+                      <ArchiveRestore />
+                      Unarchive
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onSelect={props.onArchive}>
+                      <Archive />
+                      Archive
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem tone="danger" onSelect={props.onTrash}>
+                    {props.isOwner ? <Trash2 /> : <LogOut />}
+                    {trashLabel}
                   </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onSelect={props.onArchive}>
-                    <Archive />
-                    Archive
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem tone="danger" onSelect={props.onTrash}>
-                  {props.isOwner ? <Trash2 /> : <LogOut />}
-                  {props.isOwner ? "Move to trash" : "Remove from my notes"}
-                </DropdownMenuItem>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

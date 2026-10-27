@@ -30,6 +30,16 @@ class PreferencesRepository {
     );
   }
 
+  /// Deleted notes burn away; on unless turned off.
+  Future<bool> getBurnDeleted() async {
+    final value = await _storage.read(key: StorageKeys.burnDeleted);
+    return value != 'false';
+  }
+
+  Future<void> setBurnDeleted(bool value) async {
+    await _storage.write(key: StorageKeys.burnDeleted, value: value.toString());
+  }
+
   /// Most recent last.
   Future<List<String>> getFoldedChecklistNotes() =>
       _readIds(StorageKeys.foldedChecklistNotes);

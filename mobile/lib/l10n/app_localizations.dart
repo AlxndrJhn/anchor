@@ -1084,6 +1084,18 @@ abstract class AppLocalizations {
   /// **'Checked items move below the unchecked ones.'**
   String get settingsMoveCheckedHelp;
 
+  /// Switch in Settings › Editor: a deleted note's card burns away (a short fiery dissolve) where it stood. A setting on this device.
+  ///
+  /// In en, this message translates to:
+  /// **'Burn deleted notes'**
+  String get settingsBurnDeleted;
+
+  /// Help under the Burn deleted notes switch.
+  ///
+  /// In en, this message translates to:
+  /// **'A deleted note burns away where it stood. Off, it just goes.'**
+  String get settingsBurnDeletedHelp;
+
   /// Title of a sample note that previews the font and text size.
   ///
   /// In en, this message translates to:

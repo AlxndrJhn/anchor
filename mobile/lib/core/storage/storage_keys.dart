@@ -11,6 +11,7 @@ class StorageKeys {
   static const colorScheme = 'color_scheme';
   static const appStyle = 'app_style';
   static const sortChecklistItems = 'editor_sort_checklist_items';
+  static const burnDeleted = 'editor_burn_deleted';
   static const foldedChecklistNotes = 'editor_folded_checklist_notes';
   static const noteFont = 'editor_note_face';
   static const noteTextSize = 'editor_note_text_size';

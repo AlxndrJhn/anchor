@@ -19,6 +19,12 @@ class EditorPreferencesController extends _$EditorPreferencesController {
     await repository.setSortChecklistItems(value);
   }
 
+  Future<void> setBurnDeleted(bool value) async {
+    state = state.copyWith(burnDeleted: value);
+    final repository = ref.read(preferencesRepositoryProvider);
+    await repository.setBurnDeleted(value);
+  }
+
   Future<void> setNoteFont(NoteFont font) async {
     state = state.copyWith(noteFont: font);
     final repository = ref.read(preferencesRepositoryProvider);

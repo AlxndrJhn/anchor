@@ -412,7 +412,9 @@ class NoteActions {
     final ids = _idsOf(ref.read(trashedNotesProvider).value ?? const []);
     await _dialogClosed();
     // The cards burn away where they stand, then the notes go.
-    await burnNoteCards(ids);
+    if (ref.read(editorPreferencesControllerProvider).burnDeleted) {
+      await burnNoteCards(ids);
+    }
     if (!await _orBringBack(ids, repo.deleteForever)) return;
     if (context.mounted) AppSnackbar.show(context, l10n.trashEmptied);
   }

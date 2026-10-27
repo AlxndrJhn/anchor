@@ -96,6 +96,7 @@ Future<AppBootstrap> initializeApp({
   final savedTextSize = await preferences.getNoteTextSize();
   final editorPreferences = EditorPreferences(
     sortChecklistItems: await preferences.getSortChecklistItems(),
+    burnDeleted: await preferences.getBurnDeleted(),
     noteFont: NoteFont.values.firstWhere(
       (font) => font.name == savedFont,
       orElse: () => NoteFont.sans,

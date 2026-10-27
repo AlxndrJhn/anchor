@@ -1,3 +1,4 @@
+import 'package:anchor/app/app_bootstrap.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ import 'package:anchor/features/notes/presentation/notes_list_screen.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
 import 'package:anchor/features/picture_search/picture_search.dart';
 import 'package:anchor/features/reminders/data/reminder_permissions.dart';
+import 'package:anchor/features/settings/domain/editor_preferences.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:anchor/features/sync/data/sync_manager.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
@@ -57,6 +59,7 @@ void main() {
     List<Note> archived = const [],
     List<Note> trashed = const [],
     PictureSearchRepository? pictureSearch,
+    bool burnDeleted = true,
   }) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
@@ -80,6 +83,11 @@ void main() {
           ),
           isOnlineProvider.overrideWith((ref) => true),
           firstDownloadProvider.overrideWithValue(FirstDownload.done),
+          appBootstrapProvider.overrideWithValue(
+            AppBootstrap(
+              editorPreferences: EditorPreferences(burnDeleted: burnDeleted),
+            ),
+          ),
           if (pictureSearch != null)
             pictureSearchRepositoryProvider.overrideWithValue(pictureSearch),
           pictureSearchStatusProvider.overrideWith(
@@ -321,6 +329,22 @@ void main() {
         findsOneWidget,
       );
       await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('with Burn deleted notes off, the card just goes', (
+      tester,
+    ) async {
+      when(() => repo.trash(any())).thenAnswer((_) async {});
+      await pumpList(tester, notesNamed('Note', 3), burnDeleted: false);
+
+      await deleteSelected(tester, 'Note 1');
+
+      expect(burning(), findsNothing);
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verify(() => repo.trash(['Note1'])).called(1);
+      await tester.pump(const Duration(seconds: 7));
     });
 
     testWidgets('with reduced motion nothing burns', (tester) async {

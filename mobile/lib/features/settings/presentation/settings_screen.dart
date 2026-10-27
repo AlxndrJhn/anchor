@@ -483,6 +483,12 @@ class _EditorSection extends ConsumerWidget {
             value: editor.sortChecklistItems,
             onChanged: controller.setSortChecklistItems,
           ),
+          SwitchRow(
+            label: l10n.settingsBurnDeleted,
+            subtitle: l10n.settingsBurnDeletedHelp,
+            value: editor.burnDeleted,
+            onChanged: controller.setBurnDeleted,
+          ),
         ],
       ),
     );
