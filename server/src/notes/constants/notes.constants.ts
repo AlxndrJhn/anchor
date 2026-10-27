@@ -70,6 +70,15 @@ export const noteOrderInclude = (userId: string) =>
     },
   }) as const;
 
+// Include whether the requesting user locked the note, and with what.
+export const noteLockInclude = (userId: string) =>
+  ({
+    locks: {
+      where: { userId },
+      select: { kind: true },
+    },
+  }) as const;
+
 // Include the requesting user's archive state.
 export const noteArchiveInclude = (userId: string) =>
   ({

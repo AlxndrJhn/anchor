@@ -15,6 +15,7 @@ import { CreateNoteDto } from '../dto/create-note.dto';
 import { UpdateNoteDto } from '../dto/update-note.dto';
 import { BulkActionDto } from '../dto/bulk-action.dto';
 import { BulkPinDto } from '../dto/bulk-pin.dto';
+import { BulkLockDto, NoteLockDto } from '../dto/note-lock.dto';
 import { BulkTagsDto } from '../dto/bulk-tags.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../../auth/auth.guard';
@@ -64,6 +65,15 @@ export class NotesController {
     @Body() dto: NotePositionDto,
   ) {
     return this.notesService.setPosition(userId, id, dto.position);
+  }
+
+  @Patch(':id/lock')
+  setLock(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: NoteLockDto,
+  ) {
+    return this.notesService.setLock(userId, id, dto.lock);
   }
 
   @Post(':id/copy')
@@ -122,6 +132,11 @@ export class NotesController {
       bulkPinDto.noteIds,
       bulkPinDto.isPinned,
     );
+  }
+
+  @Post('bulk/lock')
+  bulkLock(@CurrentUser('id') userId: string, @Body() dto: BulkLockDto) {
+    return this.notesService.bulkSetLock(userId, dto.noteIds, dto.lock);
   }
 
   @Post('bulk/tags')

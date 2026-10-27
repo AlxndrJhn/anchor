@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  NoteLockKind,
   NoteSharePermission,
   NoteState,
   ReminderRecurrence,
@@ -17,6 +18,7 @@ import {
   NOTE_INCLUDE_SHARES,
   NOTE_INCLUDE_ATTACHMENT_COUNT,
   noteArchiveInclude,
+  noteLockInclude,
   noteOrderInclude,
   notePinInclude,
   noteReminderInclude,
@@ -44,6 +46,7 @@ interface NoteRow {
   pins: Array<{ userId: string }>;
   archives: Array<{ userId: string }>;
   orders: Array<{ position: number; updatedAt: Date }>;
+  locks: Array<{ kind: NoteLockKind }>;
   reminders: Array<{
     remindAt: string;
     recurrence: ReminderRecurrence;
@@ -184,6 +187,7 @@ export class SyncHydratorService {
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
+        ...noteLockInclude(userId),
         ...noteReminderInclude(userId),
       },
     });

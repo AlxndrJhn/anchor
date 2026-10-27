@@ -18,6 +18,8 @@ import { NoteSharesService } from './note-shares.service';
 import { transformNote } from '../utils/note-transformer.util';
 import { ownedTagIds, reconcileUserTags } from '../utils/note-tags.util';
 import { setNotePosition } from '../utils/note-order.util';
+import { setNoteLock } from '../utils/note-lock.util';
+import type { NoteLockKind } from '../../generated/prisma/enums';
 import { setNoteArchive } from '../utils/note-archive.util';
 import {
   guardedNoteFieldsChanged,
@@ -38,6 +40,7 @@ import {
   NOTE_LIST_ORDER,
   noteAccessibleBy,
   noteArchiveInclude,
+  noteLockInclude,
   noteOrderInclude,
   notePinInclude,
   noteReminderInclude,
@@ -153,8 +156,8 @@ export class NotesService {
 
   /**
    * "Make a copy": a new note of this person's with the same title, text,
-   * colour, their tags and copies of the attachments. Reminders, pins and
-   * sharing stay with the original.
+   * colour, their tags, its lock and copies of the attachments. Reminders,
+   * pins and sharing stay with the original.
    */
   async copy(userId: string, id: string) {
     const original = await this.findOne(userId, id);
@@ -165,6 +168,7 @@ export class NotesService {
       tagIds: original.tagIds,
     });
     await this.noteAttachmentsService.copyAll(userId, id, copy.id);
+    if (original.lock) await this.setLock(userId, copy.id, original.lock);
     return this.findOne(userId, copy.id);
   }
 
@@ -230,6 +234,7 @@ export class NotesService {
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
+        ...noteLockInclude(userId),
         ...noteReminderInclude(userId),
       },
       orderBy: NOTE_LIST_ORDER,
@@ -255,6 +260,7 @@ export class NotesService {
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
+        ...noteLockInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -354,6 +360,7 @@ export class NotesService {
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
+          ...noteLockInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -386,6 +393,7 @@ export class NotesService {
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
+        ...noteLockInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -444,6 +452,7 @@ export class NotesService {
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
+          ...noteLockInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -480,6 +489,7 @@ export class NotesService {
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
+          ...noteLockInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -512,6 +522,7 @@ export class NotesService {
           ...notePinInclude(userId),
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
+          ...noteLockInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -536,6 +547,7 @@ export class NotesService {
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
+        ...noteLockInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -559,6 +571,7 @@ export class NotesService {
         ...notePinInclude(userId),
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
+        ...noteLockInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -729,6 +742,40 @@ export class NotesService {
       );
     });
 
+    return { count: accessibleIds.length };
+  }
+
+  /** Locks a note for this person, or takes the lock off (null). */
+  async setLock(userId: string, id: string, lock: NoteLockKind | null) {
+    const access = await this.noteAccessService.hasNoteAccess(userId, id);
+    if (!access.hasAccess) {
+      throw new NotFoundException(ERROR_MESSAGES.NOTE_NOT_FOUND);
+    }
+    await this.prisma.$transaction(async (tx) => {
+      if (await setNoteLock(tx, userId, id, lock)) {
+        await this.syncEmitter.emit(tx, noteEmissions([userId], id));
+      }
+    });
+    return { id, lock };
+  }
+
+  // Bulk lock/unlock - per-user, works for owned and shared notes
+  async bulkSetLock(
+    userId: string,
+    noteIds: string[],
+    lock: NoteLockKind | null,
+  ) {
+    const accessibleIds = await this.accessibleNoteIds(userId, noteIds);
+    await this.prisma.$transaction(async (tx) => {
+      const changed: string[] = [];
+      for (const noteId of accessibleIds) {
+        if (await setNoteLock(tx, userId, noteId, lock)) changed.push(noteId);
+      }
+      await this.syncEmitter.emit(
+        tx,
+        changed.flatMap((noteId) => noteEmissions([userId], noteId)),
+      );
+    });
     return { count: accessibleIds.length };
   }
 

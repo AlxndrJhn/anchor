@@ -18,6 +18,7 @@ export interface NoteOnWire {
   createdAt: string;
   updatedAt: string;
   reminder?: ReminderOnWire | null;
+  lock?: 'tap' | 'pin' | 'pattern' | 'biometric' | null;
   shareIds?: string[];
   sharedBy?: {
     id: string;

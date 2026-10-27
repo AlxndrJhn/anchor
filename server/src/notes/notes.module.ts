@@ -10,6 +10,8 @@ import { NoteAttachmentsController } from './controllers/note-attachments.contro
 import { NoteHistoryService } from './services/note-history.service';
 import { PictureTextService } from './services/picture-text.service';
 import { NoteRevisionsController } from './controllers/note-revisions.controller';
+import { NoteLocksController } from './controllers/note-locks.controller';
+import { NoteLocksService } from './services/note-locks.service';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 import { SyncModule } from '../sync/sync.module';
@@ -28,6 +30,7 @@ import { PictureSearchModule } from '../picture-search/picture-search.module';
     NoteSharesController,
     NoteAttachmentsController,
     NoteRevisionsController,
+    NoteLocksController,
   ],
   providers: [
     NotesService,
@@ -36,6 +39,7 @@ import { PictureSearchModule } from '../picture-search/picture-search.module';
     NoteAttachmentsService,
     NoteHistoryService,
     PictureTextService,
+    NoteLocksService,
   ],
   exports: [
     NotesService,

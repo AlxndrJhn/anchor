@@ -1,3 +1,5 @@
+import { NOTE_LOCK_KINDS } from '../../notes/utils/note-lock.util';
+import type { NoteLockKind } from 'src/generated/prisma/enums';
 import {
   ArrayMaxSize,
   IsArray,
@@ -96,6 +98,11 @@ export class SyncNoteChangeDto extends SyncChangeBaseDto {
   @IsNumber({ allowNaN: false, allowInfinity: false })
   @IsOptional()
   position?: number;
+
+  // Per-user too: what this person locked the note with; null unlocks it.
+  @IsIn(NOTE_LOCK_KINDS)
+  @IsOptional()
+  lock?: NoteLockKind | null;
 
   // The note was placed after its last edit (an item ticked from its card
   // keeps its place): the place is stamped after the edit, not before, so

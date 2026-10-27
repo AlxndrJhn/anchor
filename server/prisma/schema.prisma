@@ -68,6 +68,10 @@ model User {
   oidcSubject          String?          @unique
   /// Opted in to finding notes by what their pictures show.
   pictureSearch        Boolean          @default(false)
+  /// The PIN and the pattern that open notes locked with them, hashed
+  /// ("pbkdf2-sha256$iterations$salt$hash"); one of each for all notes.
+  lockPin              String?
+  lockPattern          String?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   notes                Note[]
@@ -79,6 +83,7 @@ model User {
   notePins             NotePin[]
   noteArchives         NoteArchive[]
   noteOrders           NoteOrder[]
+  noteLocks            NoteLock[]
   syncState            SyncState?
   changeLog            ChangeLog[]
   noteRevisions        NoteRevision[]
@@ -111,6 +116,7 @@ model Note {
   pins        NotePin[]
   archives    NoteArchive[]
   orders      NoteOrder[]
+  locks       NoteLock[]
   reminders   NoteReminder[]
   revisions   NoteRevision[]
 
@@ -143,6 +149,27 @@ model NoteOrder {
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@id([userId, noteId])
+  @@index([noteId])
+}
+
+enum NoteLockKind {
+  tap
+  pin
+  pattern
+  biometric
+}
+
+// A note this person locked, and what opens it. Like pins, each person's
+// own; the note itself is unchanged (not encrypted), so exports show it.
+model NoteLock {
+  userId    String
+  noteId    String
+  kind      NoteLockKind
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note      Note         @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@id([userId, noteId])
   @@index([noteId])
