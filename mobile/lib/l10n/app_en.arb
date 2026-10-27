@@ -1611,6 +1611,11 @@
   "@tagNew": {
     "description": "Title of the new tag sheet, and spoken name of the plus button that opens it."
   },
+  "tagMove": "Move {name}",
+  "@tagMove": {
+    "description": "Screen reader label of the grip beside a tag in the drawer, dragged to put the tag elsewhere in the list.",
+    "placeholders": {"name": {"type": "String", "example": "Work"}}
+  },
   "tagNamePreview": "tag name",
   "@tagNamePreview": {
     "description": "Placeholder in the tag preview while the name field is empty. Lowercase, like a tag."

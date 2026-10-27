@@ -1,5 +1,6 @@
 import type * as React from "react";
 import { TAG_COLORS } from "@/lib/design/tokens";
+import type { Tag } from "./types";
 
 type TagColor = (typeof TAG_COLORS)[number];
 
@@ -32,4 +33,28 @@ export function tagColorName(stored: string | null | undefined): string {
 
 export function nextTagColor(tagCount: number): string {
   return TAG_COLORS[tagCount % TAG_COLORS.length].stored;
+}
+
+/** The tags in the order they were dragged; unplaced ones after, by name. */
+export function orderTags<T extends Pick<Tag, "name" | "position">>(
+  tags: readonly T[],
+): T[] {
+  return [...tags].sort(
+    (a, b) =>
+      (a.position ?? Number.POSITIVE_INFINITY) -
+        (b.position ?? Number.POSITIVE_INFINITY) ||
+      a.name.localeCompare(b.name),
+  );
+}
+
+/** [items] with the one at [from] moved to [to]. */
+export function moveItem<T>(
+  items: readonly T[],
+  from: number,
+  to: number,
+): T[] {
+  const moved = [...items];
+  const [item] = moved.splice(from, 1);
+  moved.splice(to, 0, item);
+  return moved;
 }

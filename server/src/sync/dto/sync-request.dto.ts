@@ -138,6 +138,12 @@ export class SyncTagChangeDto extends SyncChangeBaseDto {
   @IsOptional()
   color?: string;
 
+  // Where it was dragged among the tags: conflict-free, it never bumps the
+  // version.
+  @IsNumber({ allowNaN: false, allowInfinity: false })
+  @IsOptional()
+  position?: number;
+
   @IsBoolean()
   @IsOptional()
   isDeleted?: boolean;

@@ -1714,6 +1714,17 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<double> position = GeneratedColumn<double>(
+    'position',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -1783,6 +1794,7 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
     id,
     name,
     color,
+    position,
     updatedAt,
     isSynced,
     isDeleted,
@@ -1818,6 +1830,12 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
       context.handle(
         _colorMeta,
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
       );
     }
     if (data.containsKey('updated_at')) {
@@ -1871,6 +1889,10 @@ class $TagsTable extends Tags with TableInfo<$TagsTable, TagRow> {
         DriftSqlType.string,
         data['${effectivePrefix}color'],
       ),
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}position'],
+      ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -1904,6 +1926,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
   final String id;
   final String name;
   final String? color;
+  final double? position;
   final DateTime? updatedAt;
   final bool isSynced;
   final bool isDeleted;
@@ -1913,6 +1936,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
     required this.id,
     required this.name,
     this.color,
+    this.position,
     this.updatedAt,
     required this.isSynced,
     required this.isDeleted,
@@ -1926,6 +1950,9 @@ class TagRow extends DataClass implements Insertable<TagRow> {
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || color != null) {
       map['color'] = Variable<String>(color);
+    }
+    if (!nullToAbsent || position != null) {
+      map['position'] = Variable<double>(position);
     }
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -1946,6 +1973,9 @@ class TagRow extends DataClass implements Insertable<TagRow> {
       color: color == null && nullToAbsent
           ? const Value.absent()
           : Value(color),
+      position: position == null && nullToAbsent
+          ? const Value.absent()
+          : Value(position),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
@@ -1967,6 +1997,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       color: serializer.fromJson<String?>(json['color']),
+      position: serializer.fromJson<double?>(json['position']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
@@ -1981,6 +2012,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'color': serializer.toJson<String?>(color),
+      'position': serializer.toJson<double?>(position),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'isSynced': serializer.toJson<bool>(isSynced),
       'isDeleted': serializer.toJson<bool>(isDeleted),
@@ -1993,6 +2025,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
     String? id,
     String? name,
     Value<String?> color = const Value.absent(),
+    Value<double?> position = const Value.absent(),
     Value<DateTime?> updatedAt = const Value.absent(),
     bool? isSynced,
     bool? isDeleted,
@@ -2002,6 +2035,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
     id: id ?? this.id,
     name: name ?? this.name,
     color: color.present ? color.value : this.color,
+    position: position.present ? position.value : this.position,
     updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
     isSynced: isSynced ?? this.isSynced,
     isDeleted: isDeleted ?? this.isDeleted,
@@ -2013,6 +2047,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       color: data.color.present ? data.color.value : this.color,
+      position: data.position.present ? data.position.value : this.position,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
@@ -2027,6 +2062,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('color: $color, ')
+          ..write('position: $position, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced, ')
           ..write('isDeleted: $isDeleted, ')
@@ -2041,6 +2077,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
     id,
     name,
     color,
+    position,
     updatedAt,
     isSynced,
     isDeleted,
@@ -2054,6 +2091,7 @@ class TagRow extends DataClass implements Insertable<TagRow> {
           other.id == this.id &&
           other.name == this.name &&
           other.color == this.color &&
+          other.position == this.position &&
           other.updatedAt == this.updatedAt &&
           other.isSynced == this.isSynced &&
           other.isDeleted == this.isDeleted &&
@@ -2065,6 +2103,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String?> color;
+  final Value<double?> position;
   final Value<DateTime?> updatedAt;
   final Value<bool> isSynced;
   final Value<bool> isDeleted;
@@ -2075,6 +2114,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.color = const Value.absent(),
+    this.position = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.isDeleted = const Value.absent(),
@@ -2086,6 +2126,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
     required String id,
     required String name,
     this.color = const Value.absent(),
+    this.position = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.isDeleted = const Value.absent(),
@@ -2098,6 +2139,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? color,
+    Expression<double>? position,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isSynced,
     Expression<bool>? isDeleted,
@@ -2109,6 +2151,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (color != null) 'color': color,
+      if (position != null) 'position': position,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isSynced != null) 'is_synced': isSynced,
       if (isDeleted != null) 'is_deleted': isDeleted,
@@ -2122,6 +2165,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
     Value<String>? id,
     Value<String>? name,
     Value<String?>? color,
+    Value<double?>? position,
     Value<DateTime?>? updatedAt,
     Value<bool>? isSynced,
     Value<bool>? isDeleted,
@@ -2133,6 +2177,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
       id: id ?? this.id,
       name: name ?? this.name,
       color: color ?? this.color,
+      position: position ?? this.position,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
       isDeleted: isDeleted ?? this.isDeleted,
@@ -2153,6 +2198,9 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
     }
     if (color.present) {
       map['color'] = Variable<String>(color.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<double>(position.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -2181,6 +2229,7 @@ class TagsCompanion extends UpdateCompanion<TagRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('color: $color, ')
+          ..write('position: $position, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced, ')
           ..write('isDeleted: $isDeleted, ')
@@ -5328,6 +5377,7 @@ typedef $$TagsTableCreateCompanionBuilder =
       required String id,
       required String name,
       Value<String?> color,
+      Value<double?> position,
       Value<DateTime?> updatedAt,
       Value<bool> isSynced,
       Value<bool> isDeleted,
@@ -5340,6 +5390,7 @@ typedef $$TagsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String?> color,
+      Value<double?> position,
       Value<DateTime?> updatedAt,
       Value<bool> isSynced,
       Value<bool> isDeleted,
@@ -5368,6 +5419,11 @@ class $$TagsTableFilterComposer extends Composer<_$AppDatabase, $TagsTable> {
 
   ColumnFilters<String> get color => $composableBuilder(
     column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get position => $composableBuilder(
+    column: $table.position,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5420,6 +5476,11 @@ class $$TagsTableOrderingComposer extends Composer<_$AppDatabase, $TagsTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -5463,6 +5524,9 @@ class $$TagsTableAnnotationComposer
 
   GeneratedColumn<String> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<double> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -5511,6 +5575,7 @@ class $$TagsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> color = const Value.absent(),
+                Value<double?> position = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
@@ -5521,6 +5586,7 @@ class $$TagsTableTableManager
                 id: id,
                 name: name,
                 color: color,
+                position: position,
                 updatedAt: updatedAt,
                 isSynced: isSynced,
                 isDeleted: isDeleted,
@@ -5533,6 +5599,7 @@ class $$TagsTableTableManager
                 required String id,
                 required String name,
                 Value<String?> color = const Value.absent(),
+                Value<double?> position = const Value.absent(),
                 Value<DateTime?> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
@@ -5543,6 +5610,7 @@ class $$TagsTableTableManager
                 id: id,
                 name: name,
                 color: color,
+                position: position,
                 updatedAt: updatedAt,
                 isSynced: isSynced,
                 isDeleted: isDeleted,

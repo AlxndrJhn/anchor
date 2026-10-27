@@ -73,6 +73,33 @@ class TagsRepository {
     scheduleAppSync(trigger: 'TagsRepo.updateTag');
   }
 
+  /// Puts the tags in the order of [ids], as they were dragged. Only the
+  /// tags that moved change; their version doesn't.
+  Future<void> reorderTags(List<String> ids) async {
+    var moved = false;
+    await _db.transaction(() async {
+      final rows = await (_db.select(
+        _db.tags,
+      )..where((tbl) => tbl.id.isIn(ids) & tbl.isDeleted.equals(false))).get();
+      final byId = {for (final row in rows) row.id: row};
+      final placed = ids.where(byId.containsKey).toList();
+      for (var i = 0; i < placed.length; i++) {
+        final row = byId[placed[i]]!;
+        if (row.position == i) continue;
+        moved = true;
+        await _db.writeTag(
+          row.id,
+          TagsCompanion(
+            position: drift.Value(i.toDouble()),
+            isSynced: const drift.Value(false),
+            localRev: drift.Value(row.localRev + 1),
+          ),
+        );
+      }
+    });
+    if (moved) scheduleAppSync(trigger: 'TagsRepo.reorderTags');
+  }
+
   // Kept, marked deleted, until the server has been told.
   Future<void> deleteTag(String id) async {
     await _db.transaction(() async {
@@ -99,7 +126,14 @@ class TagsRepository {
   drift.SimpleSelectStatement<$TagsTable, TagRow> _liveTags() {
     return _db.select(_db.tags)
       ..where((tbl) => tbl.isDeleted.equals(false))
-      ..orderBy([(tbl) => drift.OrderingTerm(expression: tbl.name)]);
+      // Dragged tags first, in their order; the rest after, by name.
+      ..orderBy([
+        (tbl) => drift.OrderingTerm(
+          expression: tbl.position,
+          nulls: drift.NullsOrder.last,
+        ),
+        (tbl) => drift.OrderingTerm(expression: tbl.name),
+      ]);
   }
 
   Tag _mapToDomain(TagRow row) {
@@ -107,6 +141,7 @@ class TagsRepository {
       id: row.id,
       name: row.name,
       color: row.color,
+      position: row.position,
       updatedAt: row.updatedAt,
       isSynced: row.isSynced,
       isDeleted: row.isDeleted,

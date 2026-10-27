@@ -1972,6 +1972,12 @@ abstract class AppLocalizations {
   /// **'New tag'**
   String get tagNew;
 
+  /// Screen reader label of the grip beside a tag in the drawer, dragged to put the tag elsewhere in the list.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {name}'**
+  String tagMove(String name);
+
   /// Placeholder in the tag preview while the name field is empty. Lowercase, like a tag.
   ///
   /// In en, this message translates to:

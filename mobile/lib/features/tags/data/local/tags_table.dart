@@ -5,6 +5,8 @@ class Tags extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get color => text().nullable()();
+  // Where it was dragged among the tags; unplaced ones come after, by name.
+  RealColumn get position => real().nullable()();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();

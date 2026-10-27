@@ -188,12 +188,14 @@ class SyncServerTag {
     required this.color,
     required this.version,
     required this.updatedAt,
+    this.position,
   });
 
   factory SyncServerTag.fromJson(Map<String, dynamic> json) => SyncServerTag(
     id: json['id'] as String,
     name: json['name'] as String? ?? '',
     color: json['color'] as String?,
+    position: (json['position'] as num?)?.toDouble(),
     version: json['version'] as int? ?? 1,
     updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '')?.toUtc(),
   );
@@ -203,6 +205,9 @@ class SyncServerTag {
   final String? color;
   final int version;
   final DateTime? updatedAt;
+
+  /// Where it was dragged among the tags; null when never dragged.
+  final double? position;
 }
 
 class SyncEntry {

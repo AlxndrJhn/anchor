@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { ReorderTagsDto } from './dto/reorder-tags.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -30,6 +32,11 @@ export class TagsController {
   @Get()
   findAll(@CurrentUser('id') userId: string) {
     return this.tagsService.findAll(userId);
+  }
+
+  @Put('order')
+  reorder(@CurrentUser('id') userId: string, @Body() dto: ReorderTagsDto) {
+    return this.tagsService.reorder(userId, dto.ids);
   }
 
   @Get(':id')

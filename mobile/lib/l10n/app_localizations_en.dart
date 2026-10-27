@@ -1169,6 +1169,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagNew => 'New tag';
 
   @override
+  String tagMove(String name) {
+    return 'Move $name';
+  }
+
+  @override
   String get tagNamePreview => 'tag name';
 
   @override

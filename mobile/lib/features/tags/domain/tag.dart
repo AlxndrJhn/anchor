@@ -83,6 +83,8 @@ abstract class Tag with _$Tag {
     required String id,
     required String name,
     String? color,
+    // Where it was dragged among the tags; unplaced ones come after, by name.
+    double? position,
     DateTime? updatedAt,
     @Default(true) bool isSynced,
     @Default(false) bool isDeleted,

@@ -142,6 +142,7 @@ class SyncTagChange extends SyncChange {
     required this.name,
     required this.color,
     required this.isDeleted,
+    this.position,
   });
 
   final int localRev;
@@ -149,6 +150,10 @@ class SyncTagChange extends SyncChange {
   final String name;
   final String? color;
   final bool isDeleted;
+
+  /// Where it was dragged among the tags; the server takes it whatever else
+  /// conflicts.
+  final double? position;
 
   @override
   String get type => 'tag';
@@ -164,6 +169,7 @@ class SyncTagChange extends SyncChange {
     if (baseVersion != null) 'baseVersion': baseVersion,
     'name': name,
     'color': color,
+    if (position != null) 'position': position,
     'isDeleted': isDeleted,
   };
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals, setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -15,7 +16,9 @@ import '../../../../core/widgets/person_avatar.dart';
 import '../../../../core/widgets/pressable.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../tags/data/repository/tags_repository.dart';
 import '../../../tags/domain/tag.dart';
+import '../../../tags/domain/tag_order.dart';
 import '../../../tags/presentation/tag_colors.dart';
 import '../../../tags/presentation/tags_controller.dart';
 import '../../../tags/presentation/widgets/tag_sheets.dart';
@@ -46,6 +49,9 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
   final Map<String, GlobalKey> _rowKeys = {};
   final GlobalKey _listKey = GlobalKey();
   Rect? _pill;
+
+  /// The order a tag was just dragged into, until the stored order has it.
+  List<String>? _droppedOrder;
 
   GlobalKey _key(String id) => _rowKeys.putIfAbsent(id, GlobalKey.new);
 
@@ -85,9 +91,19 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     final density = context.density;
     final folder = ref.watch(noteFolderProvider);
     final tagId = ref.watch(selectedTagFilterProvider);
-    final tags = sortTagsByName(
+    var tags = sortTagsByPlace(
       ref.watch(tagsControllerProvider).value ?? const <Tag>[],
     );
+    if (_droppedOrder case final dropped?) {
+      final ids = [for (final t in tags) t.id];
+      // Stored, or the tags changed meanwhile: the stored order it is.
+      if (listEquals(ids, dropped) ||
+          !setEquals(ids.toSet(), dropped.toSet())) {
+        _droppedOrder = null;
+      } else {
+        tags = inIdOrder(tags, dropped);
+      }
+    }
     final notes = ref.watch(allActiveNotesProvider).value ?? const <Note>[];
     final counts = ref.watch(tagNoteCountsProvider);
     final current = folder == NoteFolder.notes
@@ -186,27 +202,81 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                           onTap: () => _openFolder(NoteFolder.trash),
                         ),
                         const _TagsHeading(),
-                        for (final t in tags)
-                          _Item(
-                            key: _key(t.id),
-                            leading: SizedBox(
-                              width: AnchorTokens.sizeIconMedium,
-                              child: Icon(
-                                LucideIcons.hash600,
-                                size: AnchorTokens.sizeIconSmall,
-                                color: tagColorsOf(context, t.color).hash,
+                        // Dragged by the grip on the right; holding the
+                        // name still opens the tag's options.
+                        ReorderableList(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemCount: tags.length,
+                          onReorderStart: (_) => Haptics.medium(),
+                          onReorderItem: (oldIndex, newIndex) {
+                            Haptics.selection();
+                            final ids = movedTagIds(tags, oldIndex, newIndex);
+                            setState(() => _droppedOrder = ids);
+                            ref.read(tagsRepositoryProvider).reorderTags(ids);
+                          },
+                          proxyDecorator: (child, index, animation) =>
+                              _LiftedTag(animation: animation, child: child),
+                          itemBuilder: (context, index) {
+                            final t = tags[index];
+                            return Padding(
+                              key: ValueKey(t.id),
+                              padding: EdgeInsets.only(top: index == 0 ? 0 : 4),
+                              // Measured whole, so the current tag's pill is
+                              // as wide as the folders'.
+                              child: Row(
+                                key: _key(t.id),
+                                children: [
+                                  Expanded(
+                                    child: _Item(
+                                      leading: SizedBox(
+                                        width: AnchorTokens.sizeIconMedium,
+                                        child: Icon(
+                                          LucideIcons.hash600,
+                                          size: AnchorTokens.sizeIconSmall,
+                                          color: tagColorsOf(
+                                            context,
+                                            t.color,
+                                          ).hash,
+                                        ),
+                                      ),
+                                      label: t.name,
+                                      count: counts[t.id] ?? 0,
+                                      isCurrent: current == t.id,
+                                      onTap: () => _openFolder(
+                                        NoteFolder.notes,
+                                        tagId: t.id,
+                                      ),
+                                      onLongPress: () {
+                                        Haptics.medium();
+                                        showTagMenu(context, t);
+                                      },
+                                    ),
+                                  ),
+                                  ReorderableDragStartListener(
+                                    index: index,
+                                    child: Semantics(
+                                      label: context.l10n.tagMove(t.name),
+                                      child: SizedBox(
+                                        width: 32,
+                                        height: AnchorTokens.sizeControlMedium,
+                                        child: Align(
+                                          alignment: Alignment.centerRight,
+                                          child: Icon(
+                                            LucideIcons.gripVertical,
+                                            size: AnchorTokens.sizeIconSmall,
+                                            color: context.anchor.appMuted,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            label: t.name,
-                            count: counts[t.id] ?? 0,
-                            isCurrent: current == t.id,
-                            onTap: () =>
-                                _openFolder(NoteFolder.notes, tagId: t.id),
-                            onLongPress: () {
-                              Haptics.medium();
-                              showTagMenu(context, t);
-                            },
-                          ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ],
@@ -336,6 +406,38 @@ class _Item extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A tag row while it's dragged: raised over the others on the drawer.
+class _LiftedTag extends StatelessWidget {
+  const _LiftedTag({required this.animation, required this.child});
+
+  final Animation<double> animation;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.anchor;
+    final radius = context.appStyle.corners(AnchorTokens.radiusLg);
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: Color.lerp(
+            colors.appSidebar,
+            colors.appSurface,
+            animation.value,
+          ),
+          borderRadius: radius,
+          boxShadow: animation.value > 0.5
+              ? colors.shadowLift
+              : colors.shadowXs,
+        ),
+        child: child,
+      ),
+      child: Material(type: MaterialType.transparency, child: child),
     );
   }
 }

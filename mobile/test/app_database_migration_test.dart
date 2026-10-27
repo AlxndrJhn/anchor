@@ -114,6 +114,33 @@ void main() {
     });
   });
 
+  test('a database from before tag order gains it and re-downloads the '
+      'feed', () async {
+    await withDatabase((db) async {
+      await db
+          .into(db.syncState)
+          .insert(const SyncStateCompanion(cursor: Value('cursor-14')));
+      await db.customStatement('ALTER TABLE tags DROP COLUMN position');
+      await db.customStatement('PRAGMA user_version = 14');
+    });
+
+    await withDatabase((db) async {
+      await db
+          .into(db.tags)
+          .insert(
+            TagsCompanion.insert(
+              id: 't',
+              name: 'work',
+              position: const Value(2),
+            ),
+          );
+      final row = await db.select(db.tags).getSingle();
+      expect(row.position, 2);
+      final state = await db.select(db.syncState).getSingle();
+      expect(state.cursor, isNull);
+    });
+  });
+
   test('a database from before picture text gains it and re-downloads the '
       'feed', () async {
     await withDatabase((db) async {
