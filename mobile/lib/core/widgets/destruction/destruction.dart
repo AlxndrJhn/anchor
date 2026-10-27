@@ -102,6 +102,19 @@ class DestructibleState extends State<Destructible>
     }
   }
 
+  /// Shows it again, as it was; for when the delete failed.
+  void restore() {
+    final controller = _controller;
+    if (controller == null) return;
+    controller.dispose();
+    _image?.dispose();
+    setState(() {
+      _controller = null;
+      _image = null;
+      _pattern = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final child = RepaintBoundary(key: _boundary, child: widget.child);
@@ -129,6 +142,13 @@ class DestructibleState extends State<Destructible>
         ),
       ],
     );
+  }
+}
+
+/// Shows the cards of notes [ids] again, for when the delete failed.
+void restoreNoteCards(Iterable<String> ids) {
+  for (final id in ids) {
+    _cards[id]?.restore();
   }
 }
 

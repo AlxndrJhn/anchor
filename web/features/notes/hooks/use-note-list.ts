@@ -8,6 +8,7 @@ import {
   usePreferencesStore,
   type ViewMode,
 } from "@/features/preferences";
+import { NOTES_WILL_CHANGE } from "@/lib/destroy";
 import { hasOverlay, isTypingTarget } from "@/lib/hooks/use-shortcuts";
 import { hasShortcutKey } from "@/lib/platform";
 import { useFlip } from "@/lib/use-flip";
@@ -41,6 +42,11 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const boardRef = React.useRef<HTMLDivElement>(null);
   const searchRef = React.useRef<HTMLInputElement>(null);
   const flip = useFlip(boardRef);
+  // A note deleted while open burns in this list, then goes: its cards glide.
+  React.useEffect(() => {
+    window.addEventListener(NOTES_WILL_CHANGE, flip.prepare);
+    return () => window.removeEventListener(NOTES_WILL_CHANGE, flip.prepare);
+  }, [flip.prepare]);
   const searchParams = useSearchParams();
   // Kept in the address, so Back from an opened note finds the same results.
   const [query, setQueryValue] = React.useState(

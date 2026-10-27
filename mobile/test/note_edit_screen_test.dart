@@ -1,3 +1,4 @@
+import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'dart:async';
 
 import 'package:anchor/core/network/connectivity_provider.dart';
@@ -79,6 +80,8 @@ void main() {
     WidgetTester tester, {
     Note? note,
     bool pasteClipboard = false,
+    // Opened from a list holding the note's card, as from the notes list.
+    bool fromList = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -103,14 +106,33 @@ void main() {
           ],
           // ConfirmDialog pops through GoRouter.
           routerConfig: GoRouter(
+            initialLocation: fromList ? '/note' : '/',
             routes: [
               GoRoute(
                 path: '/',
-                builder: (_, _) => NoteEditScreen(
-                  note: note,
-                  noteId: note?.id,
-                  pasteClipboard: pasteClipboard,
-                ),
+                builder: (_, _) => fromList
+                    ? Scaffold(
+                        body: Destructible(
+                          id: note!.id,
+                          child: const SizedBox(
+                            width: 160,
+                            height: 120,
+                            child: Text('The card'),
+                          ),
+                        ),
+                      )
+                    : NoteEditScreen(
+                        note: note,
+                        noteId: note?.id,
+                        pasteClipboard: pasteClipboard,
+                      ),
+                routes: [
+                  GoRoute(
+                    path: 'note',
+                    builder: (_, _) =>
+                        NoteEditScreen(note: note, noteId: note?.id),
+                  ),
+                ],
               ),
             ],
           ),
@@ -248,6 +270,38 @@ void main() {
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
     verify(() => notesRepo.restoreNote('n1')).called(1);
+  });
+
+  testWidgets('a deleted note closes at once; its card burns, then it goes', (
+    tester,
+  ) async {
+    when(() => notesRepo.deleteNote(any())).thenAnswer((_) async {});
+    const note = Note(
+      id: 'n1',
+      title: 'Mine',
+      content: '{"ops":[{"insert":"hi\\n"}]}',
+    );
+    await pumpScreen(tester, note: note, fromList: true);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Delete note'));
+    await tester.pump();
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    // Closed, back on the list, where the card burns in place.
+    expect(find.byType(NoteEditScreen), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is CustomPaint && w.painter is BurnPainter,
+      ),
+      findsOneWidget,
+    );
+    verifyNever(() => notesRepo.deleteNote(any()));
+
+    await tester.pumpAndSettle();
+    verify(() => notesRepo.deleteNote('n1')).called(1);
+    expect(find.text('Note moved to trash'), findsOneWidget);
   });
 
   testWidgets('Show checkboxes turns every line into an unchecked item', (

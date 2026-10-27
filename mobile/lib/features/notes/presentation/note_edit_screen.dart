@@ -85,8 +85,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   final _titleFocusNode = FocusNode();
   final _editorKey = GlobalKey<RichTextEditorState>();
 
-  /// The whole page, burnt away in place when the note is deleted.
-  final _pageKey = GlobalKey<DestructibleState>();
   bool _isNew = true;
   bool _isDeleted = false;
   bool _isLoaded = false;
@@ -908,23 +906,59 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     }
 
     final noteId = _noteId!;
-    // Read now: Undo runs after this screen has closed.
+    // Read now: the delete and Undo run after this screen has closed.
     final repo = ref.read(notesRepositoryProvider);
-    try {
-      await _pageKey.currentState?.burn();
-      await repo.deleteNote(noteId);
-      _isDeleted = true;
-      if (!mounted) return;
-      AppSnackbar.showSuccess(
-        context,
-        message: isOwner ? 'Note moved to trash' : 'Note removed',
-        onUndo: isOwner ? () => repo.restoreNote(noteId) : null,
-      );
-      _popOrExit();
-    } catch (e) {
-      if (mounted) {
-        AppSnackbar.showError(context, message: 'Failed to delete note');
+    await _closeThenBurn(
+      remove: () => repo.deleteNote(noteId),
+      message: isOwner ? 'Note moved to trash' : 'Note removed',
+      onUndo: isOwner ? () => repo.restoreNote(noteId) : null,
+    );
+  }
+
+  /// Closes the note at once; its card burns away in the list it goes back
+  /// to, then [remove] deletes it and a message says so. With nothing to go
+  /// back to, the app closes, so it's deleted first.
+  Future<void> _closeThenBurn({
+    required Future<void> Function() remove,
+    required String message,
+    VoidCallback? onUndo,
+  }) async {
+    final noteId = _noteId!;
+    _isDeleted = true;
+    if (!context.canPop()) {
+      try {
+        await remove();
+      } catch (_) {
+        _isDeleted = false;
+        if (mounted) {
+          AppSnackbar.showError(context, message: 'Failed to delete note');
+        }
+        return;
       }
+      if (mounted) {
+        AppSnackbar.showSuccess(context, message: message, onUndo: onUndo);
+      }
+      SystemNavigator.pop();
+      return;
+    }
+    // Outlives this page, for the message once the note is gone.
+    final host = Navigator.of(context).context;
+    final closing =
+        ModalRoute.of(context)?.reverseTransitionDuration ?? Duration.zero;
+    context.pop();
+    await Future<void>.delayed(closing);
+    await burnNoteCards([noteId]);
+    try {
+      await remove();
+    } catch (_) {
+      restoreNoteCards([noteId]);
+      if (host.mounted) {
+        AppSnackbar.showError(host, message: 'Failed to delete note');
+      }
+      return;
+    }
+    if (host.mounted) {
+      AppSnackbar.showSuccess(host, message: message, onUndo: onUndo);
     }
   }
 
@@ -979,20 +1013,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     );
 
     if (confirm == true && mounted) {
-      try {
-        await _pageKey.currentState?.burn();
-        await ref.read(notesRepositoryProvider).permanentDelete(_noteId!);
-        _isDeleted = true;
-
-        if (mounted) {
-          AppSnackbar.showSuccess(context, message: 'Note permanently deleted');
-          _popOrExit();
-        }
-      } catch (e) {
-        if (mounted) {
-          AppSnackbar.showError(context, message: 'Failed to delete note');
-        }
-      }
+      final noteId = _noteId!;
+      final repo = ref.read(notesRepositoryProvider);
+      await _closeThenBurn(
+        remove: () => repo.permanentDelete(noteId),
+        message: 'Note permanently deleted',
+      );
     }
   }
 
@@ -1202,93 +1228,88 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         if (didPop) return;
         await _saveAndPop(result);
       },
-      child: Destructible(
-        key: _pageKey,
-        child: NoteBackground(
-          styleId: _selectedBackground,
-          borderRadius: BorderRadius.zero,
-          child: Scaffold(
+      child: NoteBackground(
+        styleId: _selectedBackground,
+        borderRadius: BorderRadius.zero,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
             backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              leading: IconButton(
-                icon: const Icon(LucideIcons.chevronLeft),
-                onPressed: _saveAndPop,
-              ),
-              actions: [
-                if (isTrashed) ...[
+            leading: IconButton(
+              icon: const Icon(LucideIcons.chevronLeft),
+              onPressed: _saveAndPop,
+            ),
+            actions: [
+              if (isTrashed) ...[
+                IconButton(
+                  icon: const Icon(LucideIcons.rotateCcw),
+                  onPressed: _isLoaded && !_isNew ? _restoreNote : null,
+                  tooltip: 'Restore note',
+                ),
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2),
+                  onPressed: _isLoaded && !_isNew ? _permanentDeleteNote : null,
+                  tooltip: 'Delete permanently',
+                ),
+              ] else ...[
+                if (_existingNote?.sharedBy != null)
+                  _buildSharedByBadge(theme, serverUrl),
+                _buildPinButton(theme),
+                if (!_isNew) ...[
                   IconButton(
-                    icon: const Icon(LucideIcons.rotateCcw),
-                    onPressed: _isLoaded && !_isNew ? _restoreNote : null,
-                    tooltip: 'Restore note',
+                    icon: Icon(
+                      _isArchived
+                          ? LucideIcons.archiveRestore
+                          : LucideIcons.archive,
+                    ),
+                    onPressed: _isLoaded ? _toggleArchived : null,
+                    tooltip: _isArchived ? 'Unarchive note' : 'Archive note',
                   ),
                   IconButton(
                     icon: const Icon(LucideIcons.trash2),
-                    onPressed: _isLoaded && !_isNew
-                        ? _permanentDeleteNote
-                        : null,
-                    tooltip: 'Delete permanently',
-                  ),
-                ] else ...[
-                  if (_existingNote?.sharedBy != null)
-                    _buildSharedByBadge(theme, serverUrl),
-                  _buildPinButton(theme),
-                  if (!_isNew) ...[
-                    IconButton(
-                      icon: Icon(
-                        _isArchived
-                            ? LucideIcons.archiveRestore
-                            : LucideIcons.archive,
-                      ),
-                      onPressed: _isLoaded ? _toggleArchived : null,
-                      tooltip: _isArchived ? 'Unarchive note' : 'Archive note',
-                    ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.trash2),
-                      onPressed: _isLoaded ? _deleteNote : null,
-                      tooltip: (_existingNote?.isOwner ?? true)
-                          ? 'Delete note'
-                          : 'Remove note',
-                    ),
-                  ],
-                  IconButton(
-                    icon: const Icon(LucideIcons.moreVertical),
-                    tooltip: 'More options',
-                    onPressed: _showOptionsSheet,
+                    onPressed: _isLoaded ? _deleteNote : null,
+                    tooltip: (_existingNote?.isOwner ?? true)
+                        ? 'Delete note'
+                        : 'Remove note',
                   ),
                 ],
-                SizedBox(width: context.dims.xs),
-              ],
-            ),
-            body: Hero(
-              tag: 'note_${widget.noteId ?? 'new'}',
-              child: Material(
-                color: Colors.transparent,
-                child: Column(
-                  children: [
-                    if (isReadOnly) _buildReadOnlyBanner(theme, isTrashed),
-                    Expanded(
-                      child: _isLoaded
-                          ? RichTextEditor(
-                              key: _editorKey,
-                              initialContent: _initialContent,
-                              hintText: 'Start typing...',
-                              showToolbar: !isReadOnly,
-                              canEdit: !isReadOnly,
-                              onEditingChanged: (_) => _updateEditingState(),
-                              onChanged: _onContentChanged,
-                              sortChecklistItems: ref
-                                  .watch(editorPreferencesControllerProvider)
-                                  .sortChecklistItems,
-                              contentPadding: context.dims.editorPadding,
-                              header: _buildEditorHeader(theme),
-                              onImageInserted: _onImageInserted,
-                              highlightTerm: widget.highlightTerm,
-                            )
-                          : const Center(child: CircularProgressIndicator()),
-                    ),
-                  ],
+                IconButton(
+                  icon: const Icon(LucideIcons.moreVertical),
+                  tooltip: 'More options',
+                  onPressed: _showOptionsSheet,
                 ),
+              ],
+              SizedBox(width: context.dims.xs),
+            ],
+          ),
+          body: Hero(
+            tag: 'note_${widget.noteId ?? 'new'}',
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                children: [
+                  if (isReadOnly) _buildReadOnlyBanner(theme, isTrashed),
+                  Expanded(
+                    child: _isLoaded
+                        ? RichTextEditor(
+                            key: _editorKey,
+                            initialContent: _initialContent,
+                            hintText: 'Start typing...',
+                            showToolbar: !isReadOnly,
+                            canEdit: !isReadOnly,
+                            onEditingChanged: (_) => _updateEditingState(),
+                            onChanged: _onContentChanged,
+                            sortChecklistItems: ref
+                                .watch(editorPreferencesControllerProvider)
+                                .sortChecklistItems,
+                            contentPadding: context.dims.editorPadding,
+                            header: _buildEditorHeader(theme),
+                            onImageInserted: _onImageInserted,
+                            highlightTerm: widget.highlightTerm,
+                          )
+                        : const Center(child: CircularProgressIndicator()),
+                  ),
+                ],
               ),
             ),
           ),
