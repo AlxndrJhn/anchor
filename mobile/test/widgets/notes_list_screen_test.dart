@@ -11,6 +11,7 @@ import 'package:anchor/features/notes/presentation/note_folder.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_list_screen.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
+import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
 import 'package:anchor/features/picture_search/picture_search.dart';
 import 'package:anchor/features/reminders/data/reminder_permissions.dart';
 import 'package:anchor/features/settings/domain/editor_preferences.dart';
@@ -392,6 +393,103 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('1 selected'), findsOneWidget);
+  });
+
+  group('picking after Select notes', () {
+    List<String> picked(WidgetTester tester) => [
+      for (final card in tester.widgetList<NoteCard>(find.byType(NoteCard)))
+        if (card.isSelected) card.note.title,
+    ];
+
+    testWidgets('a tap picks a card in every section', (tester) async {
+      await pumpList(tester, [
+        const Note(id: 'p', title: 'Pinned one', isPinned: true),
+        ...notesNamed('Note', 3),
+      ]);
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pinned one'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 2'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2 selected'), findsOneWidget);
+      expect(picked(tester), ['Pinned one', 'Note 2']);
+    });
+
+    testWidgets('after scrolling a long list a tap still picks, and Select '
+        'all marks every card', (tester) async {
+      await pumpList(tester, notesNamed('Note', 30));
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -900),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      final shown = find
+          .textContaining(RegExp(r'^Note \d+$'))
+          .hitTestable()
+          .first;
+      final title = tester.widget<Text>(shown).data;
+      await tester.tap(shown);
+      await tester.pumpAndSettle();
+      expect(find.text('1 selected'), findsOneWidget);
+      expect(picked(tester), [title]);
+
+      await tester.tap(find.bySemanticsLabel('Select all'));
+      await tester.pumpAndSettle();
+      expect(find.text('30 selected'), findsOneWidget);
+      final cards = tester.widgetList<NoteCard>(find.byType(NoteCard));
+      expect(cards, isNotEmpty);
+      expect(cards.every((card) => card.isSelected), isTrue);
+    });
+
+    testWidgets('a tap on a card\'s picture picks the card', (tester) async {
+      await pumpList(tester, [
+        const Note(
+          id: 'pic',
+          title: 'With a picture',
+          attachmentCount: 1,
+          imagePreviewData: [
+            NoteImagePreview(
+              attachmentId: 'a1',
+              noteId: 'pic',
+              filename: 'a.jpg',
+            ),
+          ],
+        ),
+        ...notesNamed('Note', 2),
+      ]);
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pump(const Duration(milliseconds: 500));
+      final card = find.ancestor(
+        of: find.text('With a picture'),
+        matching: find.byType(NoteCard),
+      );
+      // The top of the card, where the picture is.
+      final spot = tester.getTopLeft(card) + const Offset(40, 20);
+      expect(
+        tester
+            .getRect(
+              find
+                  .descendant(
+                    of: card,
+                    matching: find.byWidgetPredicate(
+                      (w) => '${w.runtimeType}' == '_Thumbnail',
+                    ),
+                  )
+                  .first,
+            )
+            .contains(spot),
+        isTrue,
+      );
+      await tester.tapAt(spot);
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('1 selected'), findsOneWidget);
+      expect(find.byType(PageView), findsNothing);
+    });
   });
 
   testWidgets('a search also lists notes whose pictures look like it', (
