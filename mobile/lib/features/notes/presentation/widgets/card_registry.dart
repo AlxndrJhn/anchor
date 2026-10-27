@@ -14,6 +14,12 @@ abstract final class CardRegistry {
   static void leave(Iterable<String> noteIds) =>
       leaving.value = {...leaving.value, ...noteIds};
 
+  /// Keeps [noteIds]' cards after all, as when taking them away failed.
+  static void stay(Iterable<String> noteIds) {
+    final kept = leaving.value.difference(noteIds.toSet());
+    if (kept.length != leaving.value.length) leaving.value = kept;
+  }
+
   static void forgetLeavingExcept(Set<String> shownIds) {
     final kept = leaving.value.where(shownIds.contains).toSet();
     if (kept.length != leaving.value.length) leaving.value = kept;

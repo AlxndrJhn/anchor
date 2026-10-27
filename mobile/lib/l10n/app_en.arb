@@ -2510,6 +2510,11 @@
   "@notesDeleteForeverOneTitle": {
     "description": "Title of the dialog that confirms permanently deleting the open note."
   },
+  "notesDeleteFailed": "{count, plural, =1{Couldn’t delete the note} other{Couldn’t delete the notes}}",
+  "@notesDeleteFailed": {
+    "description": "Error message when moving notes to the trash or deleting them failed; their cards come back on the list.",
+    "placeholders": {"count": {"type": "int", "example": "3"}}
+  },
   "notesDeleteForeverTitle": "{count, plural, =1{Permanently delete 1 note?} other{Permanently delete {count} notes?}}",
   "@notesDeleteForeverTitle": {
     "description": "Title of the dialog that confirms permanently deleting the selected notes.",

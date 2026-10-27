@@ -266,6 +266,32 @@ void main() {
       await tester.pump(const Duration(seconds: 7));
     });
 
+    testWidgets('if deleting fails, the card comes back', (tester) async {
+      when(() => repo.trash(any())).thenThrow(Exception('disk full'));
+      await pumpList(tester, notesNamed('Note', 3));
+
+      await deleteSelected(tester, 'Note 1');
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(burning(), findsNothing);
+      final fade = tester.widget<AnimatedOpacity>(
+        find
+            .ancestor(
+              of: find.text('Note 1'),
+              matching: find.byType(AnimatedOpacity),
+            )
+            .first,
+      );
+      expect(fade.opacity, 1);
+      expect(
+        find.textContaining('Couldn’t delete the note', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 11));
+    });
+
     testWidgets('with reduced motion nothing burns', (tester) async {
       when(() => repo.trash(any())).thenAnswer((_) async {});
       tester.platformDispatcher.accessibilityFeaturesTestValue =

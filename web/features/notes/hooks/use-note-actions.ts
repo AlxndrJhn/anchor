@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { canGoBackInApp } from "@/lib/app-history";
-import { burnNotePage } from "@/lib/destroy";
+import { announceNotesWillChange, burnNoteCardWhenShown } from "@/lib/destroy";
 import {
   archiveNote,
   deleteNote,
@@ -93,10 +93,18 @@ export function useNoteActions({
       }),
   });
 
-  /** The page burns away in place, then [remove] runs. */
-  const burnThen = async (remove: () => Promise<unknown>) => {
-    const burn = burnNotePage(noteId);
+  /**
+   * The note closes at once; its card burns away in the list it went back
+   * to, then [remove] runs and the cards after it move up.
+   */
+  const closeBurnThen = async (
+    close: () => void,
+    remove: () => Promise<unknown>,
+  ) => {
+    close();
+    const burn = await burnNoteCardWhenShown(noteId);
     await burn.done;
+    announceNotesWillChange();
     await remove().catch((error: unknown) => {
       burn.restore();
       throw error;
@@ -104,12 +112,10 @@ export function useNoteActions({
   };
 
   const trashMutation = useMutation({
-    mutationFn: () => burnThen(() => deleteNote(noteId)),
+    mutationFn: () => closeBurnThen(leave, () => deleteNote(noteId)),
     onMutate: () => setConfirmLeaveShare(false),
     onSuccess: () => {
       refreshLists();
-      setConfirmLeaveShare(false);
-      leave();
       if (isOwner)
         toast.success("Note moved to trash", {
           undo: () =>
@@ -152,12 +158,10 @@ export function useNoteActions({
   });
 
   const permanentDeleteMutation = useMutation({
-    mutationFn: () => burnThen(() => permanentDeleteNote(noteId)),
+    mutationFn: () => closeBurnThen(goBack, () => permanentDeleteNote(noteId)),
     onMutate: () => setConfirmPermanentDelete(false),
     onSuccess: () => {
       refreshLists();
-      setConfirmPermanentDelete(false);
-      goBack();
       toast.success("Note permanently deleted");
     },
     onError: () => {

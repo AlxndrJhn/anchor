@@ -280,10 +280,34 @@ export function burnNoteCards(ids: readonly string[]): Burn {
   );
 }
 
-/** Burns away, in place, the open note [id]'s page. */
-export function burnNotePage(id: string): Burn {
-  const page = document.querySelector<HTMLElement>(
-    `[data-note-page="${CSS.escape(id)}"]`,
-  );
-  return page ? burnElement(page) : NO_BURN;
+/** Lists glide their cards to new places when this is announced. */
+export const NOTES_WILL_CHANGE = "anchor:notes-will-change";
+
+/** Tells the lists on screen that cards are about to go or move. */
+export function announceNotesWillChange() {
+  window.dispatchEvent(new Event(NOTES_WILL_CHANGE));
+}
+
+/**
+ * Burns note [id]'s card in place once it's on screen: for a note deleted
+ * while open, whose list shows as the note closes. Gives up after [wait]
+ * ms, e.g. when the list it went back to doesn't show it.
+ */
+export async function burnNoteCardWhenShown(
+  id: string,
+  wait = 1500,
+): Promise<Burn> {
+  const until = performance.now() + wait;
+  while (performance.now() < until) {
+    const card = document.querySelector<HTMLElement>(
+      `article.nc[data-flip="${CSS.escape(id)}"]`,
+    );
+    if (card && card.getBoundingClientRect().width > 0) {
+      // Let the list settle after the note closes.
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return burnElement(card);
+    }
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+  return NO_BURN;
 }

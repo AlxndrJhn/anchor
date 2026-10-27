@@ -1905,6 +1905,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notesDeleteForeverOneTitle => 'Permanently delete this note?';
 
   @override
+  String notesDeleteFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Couldn’t delete the notes',
+      one: 'Couldn’t delete the note',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String notesDeleteForeverTitle(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

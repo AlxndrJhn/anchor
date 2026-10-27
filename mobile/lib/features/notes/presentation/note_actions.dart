@@ -19,6 +19,7 @@ import '../domain/note_dates.dart';
 import 'editor/checklist_lines.dart';
 import 'notes_controller.dart';
 import 'widgets/background_sheet.dart';
+import 'widgets/card_registry.dart';
 
 enum NoteAction {
   tag,
@@ -321,7 +322,7 @@ class NoteActions {
       await _dialogClosed();
     }
     await beforeChange?.call();
-    await repo.trash(_idsOf(notes));
+    if (!await _orBringBack(_idsOf(notes), repo.trash)) return;
     if (!context.mounted) return;
     afterChange?.call();
     final ownIds = _idsOf(own);
@@ -370,7 +371,7 @@ class NoteActions {
     if (!ok || !context.mounted) return;
     await _dialogClosed();
     await beforeChange?.call();
-    await repo.deleteForever(_idsOf(notes));
+    if (!await _orBringBack(_idsOf(notes), repo.deleteForever)) return;
     if (!context.mounted) return;
     afterChange?.call();
     AppSnackbar.show(context, l10n.notesDeletedForever(notes.length));
@@ -409,8 +410,31 @@ class NoteActions {
     await _dialogClosed();
     // The cards burn away where they stand, then the notes go.
     await burnNoteCards(ids);
-    await repo.deleteForever(ids);
+    if (!await _orBringBack(ids, repo.deleteForever)) return;
     if (context.mounted) AppSnackbar.show(context, l10n.trashEmptied);
+  }
+
+  /// Takes the notes [ids] away with [remove]; if that fails, their cards,
+  /// burnt or faded, come back and a message says so.
+  Future<bool> _orBringBack(
+    List<String> ids,
+    Future<void> Function(List<String> ids) remove,
+  ) async {
+    try {
+      await remove(ids);
+      return true;
+    } catch (_) {
+      restoreNoteCards(ids);
+      CardRegistry.stay(ids);
+      if (context.mounted) {
+        AppSnackbar.show(
+          context,
+          context.l10n.notesDeleteFailed(ids.length),
+          kind: SnackbarKind.error,
+        );
+      }
+      return false;
+    }
   }
 
   /// Waits for a confirm dialog to finish closing, so the burn that follows

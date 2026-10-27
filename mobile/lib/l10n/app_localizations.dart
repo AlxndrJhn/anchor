@@ -2800,6 +2800,12 @@ abstract class AppLocalizations {
   /// **'Permanently delete this note?'**
   String get notesDeleteForeverOneTitle;
 
+  /// Error message when moving notes to the trash or deleting them failed; their cards come back on the list.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Couldn’t delete the note} other{Couldn’t delete the notes}}'**
+  String notesDeleteFailed(int count);
+
   /// Title of the dialog that confirms permanently deleting the selected notes.
   ///
   /// In en, this message translates to:
