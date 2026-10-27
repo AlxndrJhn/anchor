@@ -22,9 +22,13 @@ class _SignedIn extends AuthController {
 void main() {
   late _MockTagsRepository repo;
 
+  setUpAll(() => registerFallbackValue(const Tag(id: '', name: '')));
+
   setUp(() {
     repo = _MockTagsRepository();
     when(() => repo.reorderTags(any())).thenAnswer((_) async {});
+    when(() => repo.updateTag(any())).thenAnswer((_) async {});
+    when(() => repo.getTags()).thenAnswer((_) async => const []);
   });
 
   Future<void> pumpDrawer(WidgetTester tester, List<Tag> tags) async {
@@ -86,6 +90,34 @@ void main() {
     expect(after[2], lessThan(after[0]));
   });
 
+  // It used to count as a long press on the tag, and open its options.
+  testWidgets('holding the grip still before moving drags the tag', (
+    tester,
+  ) async {
+    await pumpDrawer(tester, named(['alpha', 'beta', 'gamma']));
+    final tops = topsOf(tester, ['alpha', 'beta', 'gamma']);
+    final rowHeight = tops[1] - tops[0];
+    final restingWidth = tester.getSize(find.text('gamma')).width;
+
+    final grip = find.byIcon(LucideIcons.gripVertical).at(2);
+    final gesture = await tester.startGesture(tester.getCenter(grip));
+    await tester.pump(const Duration(milliseconds: 800));
+    for (var i = 0; i < 10; i++) {
+      await gesture.moveBy(Offset(0, -rowHeight * 2.4 / 10));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+    // In hand, the tag is lifted off the list, a little larger.
+    final scaled = tester.getRect(find.text('gamma'));
+    expect(scaled.width, greaterThan(restingWidth));
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('#gamma'), findsNothing);
+    verify(() => repo.reorderTags(['gamma', 'alpha', 'beta'])).called(1);
+  });
+
   testWidgets('dragged tags come first, the others after by name', (
     tester,
   ) async {
@@ -114,5 +146,22 @@ void main() {
 
     expect(find.text('#beta'), findsOneWidget);
     verifyNever(() => repo.reorderTags(any()));
+  });
+
+  testWidgets('a colour picked in the options is saved at once', (
+    tester,
+  ) async {
+    await pumpDrawer(tester, named(['alpha', 'beta']));
+    await tester.longPress(find.text('beta'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.bySemanticsLabel('Teal'));
+    await tester.pumpAndSettle();
+
+    final saved = verify(() => repo.updateTag(captureAny())).captured.single;
+    expect((saved as Tag).id, 'beta');
+    expect(saved.color, isNotNull);
+    // The sheet stays open.
+    expect(find.text('#beta'), findsOneWidget);
   });
 }

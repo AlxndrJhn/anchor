@@ -410,7 +410,8 @@ class _Item extends StatelessWidget {
   }
 }
 
-/// A tag row while it's dragged: raised over the others on the drawer.
+/// A tag row while it's dragged: lifted off the list, a little larger, with
+/// the style's lift shadow.
 class _LiftedTag extends StatelessWidget {
   const _LiftedTag({required this.animation, required this.child});
 
@@ -421,22 +422,23 @@ class _LiftedTag extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final radius = context.appStyle.corners(AnchorTokens.radiusLg);
+    final isReduced = context.isMotionReduced;
     return AnimatedBuilder(
       animation: animation,
-      builder: (context, child) => DecoratedBox(
-        decoration: BoxDecoration(
-          color: Color.lerp(
-            colors.appSidebar,
-            colors.appSurface,
-            animation.value,
+      builder: (context, child) {
+        final t = Curves.easeOut.transform(animation.value);
+        return Transform.scale(
+          scale: isReduced ? 1 : 1 + 0.04 * t,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Color.lerp(colors.appSidebar, colors.appSurface, t),
+              borderRadius: radius,
+              boxShadow: t > 0.5 ? colors.shadowLift : colors.shadowXs,
+            ),
+            child: child,
           ),
-          borderRadius: radius,
-          boxShadow: animation.value > 0.5
-              ? colors.shadowLift
-              : colors.shadowXs,
-        ),
-        child: child,
-      ),
+        );
+      },
       child: Material(type: MaterialType.transparency, child: child),
     );
   }
