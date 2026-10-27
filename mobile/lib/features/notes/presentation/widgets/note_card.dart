@@ -2,12 +2,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/motion/springs.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/check_circle.dart';
 import '../../../../core/widgets/destruction/destruction.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../note_locks/presentation/note_lock_session.dart';
 import '../../../reminders/presentation/reminder_labels.dart';
 import '../../../tags/domain/tag.dart';
 import '../../domain/note.dart';
@@ -18,7 +20,7 @@ import 'card_registry.dart';
 import 'note_card_content.dart';
 import 'note_surface.dart';
 
-class NoteCard extends StatefulWidget {
+class NoteCard extends ConsumerStatefulWidget {
   const NoteCard({
     super.key,
     required this.note,
@@ -65,10 +67,10 @@ class NoteCard extends StatefulWidget {
   final void Function(int line, String text)? onToggleItem;
 
   @override
-  State<NoteCard> createState() => _NoteCardState();
+  ConsumerState<NoteCard> createState() => _NoteCardState();
 }
 
-class _NoteCardState extends State<NoteCard>
+class _NoteCardState extends ConsumerState<NoteCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _press = AnimationController(
     vsync: this,
@@ -95,7 +97,10 @@ class _NoteCardState extends State<NoteCard>
   Widget build(BuildContext context) {
     final note = widget.note;
     final appearance = NoteAppearance.of(context, note.background);
-    final snippet = snippetTextOf(note.content);
+    // Locked and not opened since the phone was last locked: the title only,
+    // nothing of its text or pictures, here or read out.
+    final isHidden = isNoteHidden(note, ref.watch(noteLockSessionProvider));
+    final snippet = isHidden ? '' : snippetTextOf(note.content);
     final l10n = context.l10n;
     final reminder = note.reminder;
     final date =
@@ -107,7 +112,9 @@ class _NoteCardState extends State<NoteCard>
       displayTitleOf(note.title, l10n),
       if (snippet.isNotEmpty)
         snippet.length > 120 ? '${snippet.substring(0, 120)}…' : snippet,
-      if (note.imagePreviewData.isNotEmpty)
+      if (isHidden) l10n.cardLocked,
+      if (note.isLocked && !isHidden) l10n.cardUnlocked,
+      if (note.imagePreviewData.isNotEmpty && !isHidden)
         l10n.cardPictures(note.imagePreviewData.length),
       for (final tag in widget.tags) l10n.tagSheetLabel(tag.name),
       if (reminder != null) reminderSpokenLabel(reminder, l10n),
@@ -138,9 +145,14 @@ class _NoteCardState extends State<NoteCard>
             layout: widget.layout,
             status: widget.status,
             isSelected: widget.isSelected,
+            isHidden: isHidden,
             showPictures: widget.showPictures,
-            onToggleItem: widget.isSelecting ? null : widget.onToggleItem,
-            onOpenPicture: widget.isSelecting ? null : widget.onOpenPicture,
+            onToggleItem: widget.isSelecting || isHidden
+                ? null
+                : widget.onToggleItem,
+            onOpenPicture: widget.isSelecting || isHidden
+                ? null
+                : widget.onOpenPicture,
             check: widget.isSelecting
                 ? _SelectionCheck(
                     isSelected: widget.isSelected,

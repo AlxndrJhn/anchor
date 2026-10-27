@@ -42,6 +42,8 @@ import '../../../l10n/l10n.dart';
 import '../../auth/domain/user.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/oidc_config_provider.dart';
+import '../../note_locks/data/note_lock_secrets.dart';
+import '../../note_locks/presentation/lock_secret_setup_screen.dart';
 import '../../notes/presentation/notes_controller.dart';
 import '../../picture_search/picture_search.dart';
 import '../../server/data/server_info_provider.dart';
@@ -88,6 +90,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _EditorSection(),
               gap,
               const _PictureSearchSection(),
+              const _NoteLocksSection(),
+              gap,
               _AccountSection(user: user),
               gap,
               if (canSelfUpdate) ...[const _UpdatesSection(), gap],
@@ -758,6 +762,78 @@ class _PictureSearchSectionState extends ConsumerState<_PictureSearchSection> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The one PIN and one pattern that open locked notes.
+class _NoteLocksSection extends ConsumerStatefulWidget {
+  const _NoteLocksSection();
+
+  @override
+  ConsumerState<_NoteLocksSection> createState() => _NoteLocksSectionState();
+}
+
+class _NoteLocksSectionState extends ConsumerState<_NoteLocksSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Maybe set or changed on another device.
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(noteLockSecretsControllerProvider.notifier).refresh();
+      }
+    });
+  }
+
+  Future<void> _set(LockSecretKind kind) async {
+    final l10n = context.l10n;
+    final controller = ref.read(noteLockSecretsControllerProvider.notifier);
+    final fresh = await controller.refresh();
+    if (!mounted) return;
+    if (fresh == null) {
+      AppSnackbar.show(
+        context,
+        l10n.lockChangeNeedsServer(kind.name),
+        kind: SnackbarKind.error,
+      );
+      return;
+    }
+    final saved = await LockSecretSetupScreen.open(
+      context,
+      kind: kind,
+      replacing: fresh.has(kind),
+    );
+    if (!saved || !mounted) return;
+    AppSnackbar.show(context, l10n.lockSaved(kind.name));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final secrets =
+        ref.watch(noteLockSecretsControllerProvider).value ??
+        NoteLockSecrets.none;
+    return Section(
+      label: l10n.settingsNoteLocks,
+      child: GroupedList(
+        children: [
+          for (final (kind, icon) in const [
+            (LockSecretKind.pin, LucideIcons.rectangleEllipsis),
+            (LockSecretKind.pattern, LucideIcons.grip),
+          ])
+            GroupedListTile(
+              key: ValueKey('settings-lock-${kind.name}'),
+              icon: icon,
+              label: secrets.has(kind)
+                  ? l10n.settingsLockChange(kind.name)
+                  : l10n.settingsLockSet(kind.name),
+              subtitle: l10n.settingsLockHelp(kind.name),
+              showChevron: true,
+              onTap: () => _set(kind),
+            ),
+        ],
       ),
     );
   }

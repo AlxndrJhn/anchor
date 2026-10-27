@@ -6,6 +6,7 @@ import '../../../app/app_bootstrap.dart';
 import '../../../core/motion/haptics.dart';
 import '../../../core/storage/preferences_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../note_locks/presentation/note_lock_session.dart';
 import '../../picture_search/picture_search.dart';
 import '../../reminders/data/reminder_permissions.dart';
 import '../../tags/presentation/tags_controller.dart';
@@ -96,11 +97,19 @@ VisibleNotes visibleNotes(Ref ref) {
   final words = query.trim().toLowerCase();
   final searchText = ref.watch(noteSearchTextProvider);
   final filters = ref.watch(noteFiltersControllerProvider);
-  bool matches(Note note) =>
-      filters.matches(note) &&
-      (words.isEmpty ||
-          note.title.toLowerCase().contains(words) ||
-          searchText.of(note).contains(words));
+  // A locked note not opened since the phone was last locked is found by its
+  // title alone, so a match gives nothing of its text away.
+  final unlocked = ref.watch(noteLockSessionProvider);
+  bool matches(Note note) {
+    final isHidden = isNoteHidden(note, unlocked);
+    // Nor do filters on what's in it (pictures, a checklist) find it.
+    if (isHidden && (filters.picture || filters.checklist)) return false;
+    return filters.matches(note) &&
+        (words.isEmpty ||
+            note.title.toLowerCase().contains(words) ||
+            (!isHidden && searchText.of(note).contains(words)));
+  }
+
   final comparator = noteComparator(options);
   final visible = [
     for (final note in notes)
@@ -138,7 +147,9 @@ VisibleNotes visibleNotes(Ref ref) {
             ...notes,
             for (final note in archivedSource.value ?? const <Note>[])
               if (tagId == null || note.tagIds.contains(tagId)) note,
-          ].where(filters.matches),
+          ].where(
+            (note) => filters.matches(note) && !isNoteHidden(note, unlocked),
+          ),
           [...visible, ...archived],
         );
   final isOpen =

@@ -2764,6 +2764,70 @@ void main() {
       expect(calls.haptics, ['HapticFeedbackType.selectionClick']);
     });
   });
+
+  group('note lock', () {
+    setUp(() {
+      registerFallbackValue(NoteLock.tap);
+      when(() => notesRepo.setLock(any(), any())).thenAnswer((_) async {});
+    });
+
+    testWidgets('More › Lock locks the open note, which stays open', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        note: const Note(
+          id: 'n1',
+          title: 'Diary',
+          content: '{"ops":[{"insert":"dear diary\\n"}]}',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await pickFromMore(tester, 'Lock');
+      // Biometric first, as the web offers them.
+      expect(find.text('Fingerprint or face'), findsOneWidget);
+      expect(find.text('PIN'), findsOneWidget);
+      expect(find.text('Pattern'), findsOneWidget);
+      await tester.tap(find.text('Just a tap'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verify(() => notesRepo.setLock(['n1'], NoteLock.tap)).called(1);
+      expect(
+        find.textContaining('Locked with a tap', findRichText: true),
+        findsOneWidget,
+      );
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('a locked note offers Change lock and Remove lock', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        note: const Note(id: 'n1', title: 'Diary', lock: NoteLock.pattern),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Change lock'), findsOneWidget);
+      expect(find.text('Pattern'), findsOneWidget);
+      await tester.tap(find.text('Remove lock'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verify(() => notesRepo.setLock(['n1'], null)).called(1);
+      expect(
+        find.textContaining('Lock removed', findRichText: true),
+        findsOneWidget,
+      );
+      await drainSnackbar(tester);
+    });
+  });
 }
 
 class PlatformCalls {

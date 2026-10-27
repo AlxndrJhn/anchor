@@ -1,3 +1,4 @@
+import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_filters.dart';
 import 'package:anchor/features/notes/presentation/note_folder.dart';
@@ -386,4 +387,54 @@ void main() {
       expect(await shouldAsk(container), isFalse);
     });
   });
+
+  test('a locked note not opened since the phone was locked is found by '
+      'its title only', () async {
+    final locked = [
+      for (final n in notes) n.id == 'n2' ? n.copyWith(lock: NoteLock.pin) : n,
+    ];
+    final container = containerWith(active: locked);
+    container.read(searchQueryProvider.notifier).set('lisbon');
+    var shown = await visibleIn(container);
+    expect(shown.notes, isEmpty);
+
+    container.read(searchQueryProvider.notifier).set('trip');
+    shown = container.read(visibleNotesProvider);
+    expect(shown.notes.map((n) => n.id), ['n2']);
+
+    // Opened, its text is searched again.
+    container.read(noteLockSessionProvider.notifier).unlock('n2');
+    container.read(searchQueryProvider.notifier).set('lisbon');
+    shown = container.read(visibleNotesProvider);
+    expect(shown.notes.map((n) => n.id), ['n2']);
+  });
+
+  test(
+    'filters on what is in a note leave out locked notes not opened',
+    () async {
+      final locked = [
+        Note(
+          id: 'l1',
+          title: 'Locked list',
+          content:
+              '{"ops":[{"insert":"milk"},'
+              '{"insert":"\\n","attributes":{"list":"unchecked"}}]}',
+          lock: NoteLock.tap,
+        ),
+        Note(
+          id: 'o1',
+          title: 'Open list',
+          content:
+              '{"ops":[{"insert":"eggs"},'
+              '{"insert":"\\n","attributes":{"list":"unchecked"}}]}',
+        ),
+      ];
+      final container = containerWith(active: locked);
+      container
+          .read(noteFiltersControllerProvider.notifier)
+          .set(const NoteFilters(checklist: true));
+      final shown = await visibleIn(container);
+      expect(shown.notes.map((n) => n.id), ['o1']);
+    },
+  );
 }

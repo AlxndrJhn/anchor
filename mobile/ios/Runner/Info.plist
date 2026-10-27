@@ -45,6 +45,8 @@
 		<string>Anchor uses your music library to add audio files to notes.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Anchor uses the camera to take pictures for your notes and your profile photo.</string>
+		<key>NSFaceIDUsageDescription</key>
+		<string>Anchor uses Face ID to open the notes you lock with it.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Anchor uses the microphone to record voice notes.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>

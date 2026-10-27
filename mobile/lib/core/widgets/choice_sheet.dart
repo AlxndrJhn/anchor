@@ -14,6 +14,7 @@ class SheetChoice<T> {
     this.showChevron = false,
     this.isDanger = false,
     this.enabled = true,
+    this.checked,
   });
 
   final T value;
@@ -26,6 +27,9 @@ class SheetChoice<T> {
   final bool showChevron;
   final bool isDanger;
   final bool enabled;
+
+  /// Marks the choice in use with a check; null shows no check.
+  final bool? checked;
 }
 
 /// A null in [choices] starts a new group.
@@ -77,6 +81,7 @@ Future<T?> showChoiceSheet<T>(
                             showChevron: choice.showChevron,
                             isDanger: choice.isDanger,
                             enabled: choice.enabled,
+                            checked: choice.checked,
                             onTap: () => Navigator.of(sheet).pop(choice.value),
                           ),
                       ],

@@ -25,11 +25,13 @@ enum NoteFolder {
       NoteAction.tag,
       NoteAction.pin,
       NoteAction.background,
+      NoteAction.lock,
       NoteAction.archive,
       NoteAction.trash,
     ],
     NoteFolder.archive => const [
       NoteAction.background,
+      NoteAction.lock,
       NoteAction.unarchive,
       NoteAction.trash,
     ],

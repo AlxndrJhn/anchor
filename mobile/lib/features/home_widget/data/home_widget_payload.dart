@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../../app/router/app_routes.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../l10n/l10n.dart';
 import '../../notes/domain/note.dart';
 import '../../notes/domain/note_blocks.dart';
 
@@ -30,7 +31,14 @@ const _maxSnippetChars = 160;
 
 /// Notes are expected in display order (pinned first, then most recent).
 /// Titles are passed through as stored; the native side hides blank ones.
-String buildHomeWidgetPayload(List<Note> notes, {required bool loggedIn}) {
+/// The home screen shows without unlocking the app: a locked note's text
+/// never goes there, [lockedText] ("Locked") stands in for it.
+String buildHomeWidgetPayload(
+  List<Note> notes, {
+  required bool loggedIn,
+  String? lockedText,
+}) {
+  final locked = lockedText ?? deviceL10n().cardLocked;
   final items = notes.take(homeWidgetMaxNotes).map((note) {
     final palette = AnchorBackgrounds.of(note.background).palette;
     final light = AnchorColors.light.notes[palette]!;
@@ -38,7 +46,9 @@ String buildHomeWidgetPayload(List<Note> notes, {required bool loggedIn}) {
     return {
       'id': note.id,
       'title': storedTitleOf(note.title),
-      'snippet': _truncate(snippetTextOf(note.content)),
+      'snippet': note.isLocked
+          ? locked
+          : _truncate(snippetTextOf(note.content)),
       'pinned': note.isPinned,
       'fill': light.bg.toARGB32(),
       'edge': light.border.toARGB32(),

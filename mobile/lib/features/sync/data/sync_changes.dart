@@ -81,6 +81,8 @@ class SyncNoteChange extends SyncChange {
     required this.state,
     required this.tagIds,
     this.position,
+    this.lock,
+    this.sendsLock = true,
     this.placedAfterEdit = false,
     this.revisions = const [],
     this.isRevisionsOnly = false,
@@ -90,6 +92,13 @@ class SyncNoteChange extends SyncChange {
 
   /// Where this person dragged the note on the web, sent back unchanged.
   final double? position;
+
+  /// What this person locked the note with; null takes the lock off.
+  final String? lock;
+
+  /// False while this device doesn't know the note's lock yet, so the
+  /// server keeps whatever it has.
+  final bool sendsLock;
 
   /// Placed after its last edit (an item ticked from its card), so the
   /// server stamps the place after the edit and the note keeps it.
@@ -133,6 +142,7 @@ class SyncNoteChange extends SyncChange {
     if (state != null) 'state': state,
     'tagIds': tagIds,
     if (position != null) 'position': position,
+    if (sendsLock) 'lock': lock,
     if (placedAfterEdit) 'placedAfterEdit': true,
     if (revisions.isNotEmpty)
       'revisions': [for (final revision in revisions) revision.toJson()],

@@ -11,6 +11,7 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/choice_sheet.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../l10n/l10n.dart';
+import '../../note_locks/presentation/note_lock_actions.dart';
 import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
 import '../data/repository/notes_repository.dart';
@@ -30,6 +31,8 @@ enum NoteAction {
   history,
   send,
   copy,
+  lock,
+  removeLock,
   showCheckboxes,
   hideCheckboxes,
   uncheckAll,
@@ -63,6 +66,15 @@ enum NoteAction {
     NoteAction.share => (icon: LucideIcons.userPlus, label: l10n.actionShare),
     NoteAction.send => (icon: LucideIcons.send, label: l10n.actionSend),
     NoteAction.copy => (icon: LucideIcons.copy, label: l10n.actionMakeCopy),
+    NoteAction.lock when notes.isNotEmpty && notes.every((n) => n.isLocked) => (
+      icon: LucideIcons.lock,
+      label: l10n.actionChangeLock,
+    ),
+    NoteAction.lock => (icon: LucideIcons.lock, label: l10n.actionLock),
+    NoteAction.removeLock => (
+      icon: LucideIcons.lockOpen,
+      label: l10n.actionRemoveLock,
+    ),
     NoteAction.history => (
       icon: LucideIcons.history,
       label: l10n.actionHistory,
@@ -131,6 +143,13 @@ class NoteActions {
         await pin(notes);
       case NoteAction.background:
         await setBackground(notes, beforeChange: beforeChange);
+      case NoteAction.lock:
+        await lockSelectedNotes(
+          context,
+          ref,
+          notes,
+          beforeChange: beforeChange,
+        );
       case NoteAction.archive:
         await archive(notes, beforeChange: beforeChange);
       case NoteAction.unarchive:
@@ -147,6 +166,7 @@ class NoteActions {
           NoteAction.history ||
           NoteAction.send ||
           NoteAction.copy ||
+          NoteAction.removeLock ||
           NoteAction.showCheckboxes ||
           NoteAction.hideCheckboxes ||
           NoteAction.uncheckAll ||

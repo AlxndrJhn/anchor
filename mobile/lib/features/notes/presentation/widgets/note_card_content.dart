@@ -31,6 +31,7 @@ class NoteCardContent extends StatelessWidget {
     required this.layout,
     required this.status,
     required this.isSelected,
+    this.isHidden = false,
     this.check,
     this.onOpenPicture,
     this.showPictures = true,
@@ -43,6 +44,10 @@ class NoteCardContent extends StatelessWidget {
   final CardLayout layout;
   final String? status;
   final bool isSelected;
+
+  /// A locked note not opened since the phone was last locked: its title
+  /// and a lock, nothing of its text or pictures.
+  final bool isHidden;
 
   final Widget? check;
 
@@ -60,7 +65,7 @@ class NoteCardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final list = layout == CardLayout.list;
-    final previews = showPictures
+    final previews = showPictures && !isHidden
         ? note.imagePreviewData
         : const <NoteImagePreview>[];
     final radius = context.appStyle.corners(AnchorTokens.radiusCard);
@@ -89,16 +94,23 @@ class NoteCardContent extends StatelessWidget {
                     .copyWith(color: colors.appText, height: 1.3),
               ),
             ),
-          CardBody(
-            content: note.content,
-            appearance: appearance,
-            layout: layout,
-            firstLineEndInset: note.hasTitle ? 0 : checkInset,
-            onToggleItem: onToggleItem,
-          ),
+          if (isHidden)
+            _LockedLine(
+              appearance: appearance,
+              endInset: note.hasTitle ? 0 : checkInset,
+            )
+          else
+            CardBody(
+              content: note.content,
+              appearance: appearance,
+              layout: layout,
+              firstLineEndInset: note.hasTitle ? 0 : checkInset,
+              onToggleItem: onToggleItem,
+            ),
           if (list)
             _Footer(
               note: note,
+              isHidden: isHidden,
               appearance: appearance,
               status: status,
               showDate: true,
@@ -108,6 +120,7 @@ class NoteCardContent extends StatelessWidget {
             if (tags.isNotEmpty) _Tags(tags: tags, appearance: appearance),
             _Footer(
               note: note,
+              isHidden: isHidden,
               appearance: appearance,
               status: status,
               showDate: false,
@@ -237,6 +250,42 @@ class NoteCardContent extends StatelessWidget {
   }
 }
 
+/// In place of a locked note's text.
+class _LockedLine extends StatelessWidget {
+  const _LockedLine({required this.appearance, required this.endInset});
+
+  final NoteAppearance appearance;
+  final double endInset;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = appearance.colors.muted;
+    return Padding(
+      key: const ValueKey('card-locked'),
+      padding: EdgeInsets.only(right: endInset),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: AnchorTokens.space4,
+        children: [
+          Icon(
+            LucideIcons.lock,
+            size: AnchorTokens.sizeIconSmall,
+            color: muted,
+          ),
+          Flexible(
+            child: Text(
+              context.l10n.cardLocked,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.secondary.copyWith(color: muted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Tags extends StatelessWidget {
   const _Tags({required this.tags, required this.appearance});
 
@@ -264,6 +313,7 @@ class _Footer extends StatelessWidget {
     required this.appearance,
     required this.status,
     required this.showDate,
+    required this.isHidden,
     this.tags = const [],
   });
 
@@ -271,6 +321,7 @@ class _Footer extends StatelessWidget {
   final NoteAppearance appearance;
   final String? status;
   final bool showDate;
+  final bool isHidden;
   final List<Tag> tags;
 
   @override
@@ -282,6 +333,17 @@ class _Footer extends StatelessWidget {
         Padding(
           padding: const EdgeInsetsDirectional.only(end: AnchorTokens.space4),
           child: _Tags(tags: tags, appearance: appearance),
+        ),
+      // Opened since the phone was last locked: shown, but still locked.
+      if (note.isLocked && !isHidden)
+        Tooltip(
+          key: const ValueKey('card-unlocked'),
+          message: context.l10n.cardUnlocked,
+          child: Icon(
+            LucideIcons.lockOpen,
+            size: 13, // off-scale: card footer
+            color: muted,
+          ),
         ),
       if (!note.isSynced)
         Tooltip(

@@ -4126,5 +4126,387 @@
         "example": "IMG_2041.jpg"
       }
     }
+  },
+  "actionLock": "Lock",
+  "@actionLock": {
+    "description": "Note menu and selection bar action: locks the note so it opens only with a fingerprint, PIN, pattern or a tap. Opens a sheet to choose how."
+  },
+  "actionChangeLock": "Change lock",
+  "@actionChangeLock": {
+    "description": "Note menu action on a locked note: chooses another way to open it (fingerprint, PIN, pattern or a tap)."
+  },
+  "actionRemoveLock": "Remove lock",
+  "@actionRemoveLock": {
+    "description": "Note menu action on a locked note: the note no longer needs unlocking."
+  },
+  "lockSheetTitle": "Lock",
+  "@lockSheetTitle": {
+    "description": "Title of the sheet that asks how a note opens once locked."
+  },
+  "lockSheetChangeTitle": "Change lock",
+  "@lockSheetChangeTitle": {
+    "description": "Title of the same sheet on a note that is locked already."
+  },
+  "lockSheetSubtitle": "What opens the note",
+  "@lockSheetSubtitle": {
+    "description": "Under the title of the lock sheet."
+  },
+  "lockKindBiometric": "Fingerprint or face",
+  "@lockKindBiometric": {
+    "description": "Lock choice: the note opens with the phone's fingerprint or face unlock."
+  },
+  "lockKindBiometricHelp": "Or your phone’s own screen lock",
+  "@lockKindBiometricHelp": {
+    "description": "Under the Fingerprint or face lock choice: the phone's PIN, pattern or password also works."
+  },
+  "lockKindPin": "PIN",
+  "@lockKindPin": {
+    "description": "Lock choice: the note opens with the account's note PIN (the same for every note, and on the web)."
+  },
+  "lockKindPinHelp": "One PIN for all your locked notes",
+  "@lockKindPinHelp": {
+    "description": "Under the PIN lock choice."
+  },
+  "lockKindPattern": "Pattern",
+  "@lockKindPattern": {
+    "description": "Lock choice: the note opens with the account's note pattern, drawn across 9 dots."
+  },
+  "lockKindPatternHelp": "One pattern for all your locked notes",
+  "@lockKindPatternHelp": {
+    "description": "Under the Pattern lock choice."
+  },
+  "lockKindTap": "Just a tap",
+  "@lockKindTap": {
+    "description": "Lock choice: the note's text stays hidden until a tap on Tap to unlock."
+  },
+  "lockKindTapHelp": "Hides the note until you tap",
+  "@lockKindTapHelp": {
+    "description": "Under the Just a tap lock choice."
+  },
+  "noteLockedWith": "{kind, select, biometric{Locked with your fingerprint or face} pin{Locked with your PIN} pattern{Locked with your pattern} other{Locked with a tap}}",
+  "@noteLockedWith": {
+    "description": "Toast after a note was locked; kind is biometric, pin, pattern or tap.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "biometric"
+      }
+    }
+  },
+  "noteLockChanged": "{kind, select, biometric{Now locked with your fingerprint or face} pin{Now locked with your PIN} pattern{Now locked with your pattern} other{Now locked with a tap}}",
+  "@noteLockChanged": {
+    "description": "Toast after a locked note was given another lock; kind is biometric, pin, pattern or tap.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pattern"
+      }
+    }
+  },
+  "noteLockRemoved": "Lock removed",
+  "@noteLockRemoved": {
+    "description": "Toast after Remove lock on a note."
+  },
+  "notesLocked": "{count, plural, =1{Note locked} other{{count} notes locked}}",
+  "@notesLocked": {
+    "description": "Toast after selected notes were locked.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesLockedSome": "{count, plural, =1{Locked 1 note. Locked notes you haven’t opened keep their lock.} other{Locked {count} notes. Locked notes you haven’t opened keep their lock.}}",
+  "@notesLockedSome": {
+    "description": "Toast after selected notes were locked, when some of them were locked already and not opened since the phone was last locked: their lock wasn't changed.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesLockOpenFirst": "{count, plural, =1{Open this note to change its lock} other{Open these notes to change their locks}}",
+  "@notesLockOpenFirst": {
+    "description": "Toast when Lock is chosen for selected notes that are all locked and not opened since the phone was last locked.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "lockNeedsServer": "{kind, select, pin{Setting a PIN needs a connection to the server} other{Setting a pattern needs a connection to the server}}",
+  "@lockNeedsServer": {
+    "description": "Toast when the first PIN or pattern can't be set without the server; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockChangeNeedsServer": "{kind, select, pin{Changing the PIN needs a connection to the server} other{Changing the pattern needs a connection to the server}}",
+  "@lockChangeNeedsServer": {
+    "description": "Toast in Settings when the PIN or pattern can't be changed without the server; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockUntitled": "Locked note",
+  "@lockUntitled": {
+    "description": "Heading of a locked note's unlock page when the note has no title."
+  },
+  "lockTapToUnlock": "Tap to unlock",
+  "@lockTapToUnlock": {
+    "description": "Button on a note locked with a tap: shows the note."
+  },
+  "lockUnlock": "Unlock",
+  "@lockUnlock": {
+    "description": "Button on a note locked with a fingerprint or face: asks for it again."
+  },
+  "lockEnterPin": "Enter your PIN",
+  "@lockEnterPin": {
+    "description": "Hint on a note locked with the PIN, and the first step when changing the PIN."
+  },
+  "lockDrawPattern": "Draw your pattern",
+  "@lockDrawPattern": {
+    "description": "Hint on a note locked with the pattern, and the first step when changing the pattern."
+  },
+  "lockUseBiometric": "Use your fingerprint, face or screen lock",
+  "@lockUseBiometric": {
+    "description": "Hint on a note locked with a fingerprint or face."
+  },
+  "lockBiometricReason": "Unlock “{title}”",
+  "@lockBiometricReason": {
+    "description": "Shown in the system's fingerprint or face prompt.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Bank details"
+      }
+    }
+  },
+  "lockTooManyTries": "Too many tries. Unlock your phone, then try again.",
+  "@lockTooManyTries": {
+    "description": "Shown on a locked note after too many failed fingerprint or face tries."
+  },
+  "lockCantCheck": "Can’t check it on this phone yet. Connect to the internet and try again.",
+  "@lockCantCheck": {
+    "description": "Shown under the PIN pad or pattern when this phone has no copy of the PIN or pattern yet and the server can't be reached."
+  },
+  "lockWrong": "{kind, select, pin{Wrong PIN} other{Wrong pattern}}",
+  "@lockWrong": {
+    "description": "Shown under the PIN pad or pattern after a wrong PIN or pattern; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockPatternGrid": "Pattern grid. Drag across at least 4 dots.",
+  "@lockPatternGrid": {
+    "description": "Read by screen readers on the 3 by 3 grid of dots to draw a pattern on."
+  },
+  "lockPinErase": "Delete digit",
+  "@lockPinErase": {
+    "description": "Read by screen readers on the PIN pad's backspace key."
+  },
+  "lockPinDigits": "{count, plural, =0{No digits} =1{1 digit} other{{count} digits}}",
+  "@lockPinDigits": {
+    "description": "Read by screen readers on the dots above the PIN pad: how many digits are typed.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "lockSetupTitle": "{kind, select, pin{PIN} other{Pattern}}",
+  "@lockSetupTitle": {
+    "description": "Title of the page that sets or changes the PIN or the pattern; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupChoose": "{kind, select, pin{Choose a PIN} other{Draw a pattern}}",
+  "@lockSetupChoose": {
+    "description": "Step when setting the first PIN or pattern; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupChooseNew": "{kind, select, pin{Choose a new PIN} other{Draw a new pattern}}",
+  "@lockSetupChooseNew": {
+    "description": "Step when changing the PIN or pattern; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupConfirm": "{kind, select, pin{Enter the PIN again} other{Draw the pattern again}}",
+  "@lockSetupConfirm": {
+    "description": "Last step when setting the PIN or pattern; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupCurrentHelp": "The one you use now",
+  "@lockSetupCurrentHelp": {
+    "description": "Under Enter your PIN or Draw your pattern, when changing it."
+  },
+  "lockSetupChooseHelp": "{kind, select, pin{4 to 12 digits. It opens every note you lock with a PIN.} other{Join at least 4 dots. It opens every note you lock with a pattern.}}",
+  "@lockSetupChooseHelp": {
+    "description": "Under Choose a PIN or Draw a pattern; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupConfirmHelp": "To be sure",
+  "@lockSetupConfirmHelp": {
+    "description": "Under Enter the PIN again or Draw the pattern again."
+  },
+  "lockSetupNotYours": "{kind, select, pin{That’s not your PIN} other{That’s not your pattern}}",
+  "@lockSetupNotYours": {
+    "description": "Shown when the current PIN or pattern given before changing it is wrong; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupBadShape": "{kind, select, pin{Use 4 to 12 digits} other{Join at least 4 dots, each once}}",
+  "@lockSetupBadShape": {
+    "description": "Shown when a new PIN or pattern is too short or too long; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupMismatch": "{kind, select, pin{The PINs didn’t match. Try again.} other{The patterns didn’t match. Try again.}}",
+  "@lockSetupMismatch": {
+    "description": "Shown when the PIN or pattern given twice differs; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSetupForgot": "Forgot? Use your password",
+  "@lockSetupForgot": {
+    "description": "Button when changing the PIN or pattern: the account password stands in for the forgotten one."
+  },
+  "lockSetupPasswordTitle": "Your account password",
+  "@lockSetupPasswordTitle": {
+    "description": "Title of the sheet asking for the account password in place of a forgotten PIN or pattern."
+  },
+  "lockErrorWrongProof": "{kind, select, pin{Wrong PIN or password} other{Wrong pattern or password}}",
+  "@lockErrorWrongProof": {
+    "description": "Shown when the server refuses the old PIN, pattern or password while changing it; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockErrorInvalid": "{kind, select, pin{A PIN is 4 to 12 digits} other{A pattern joins at least 4 dots}}",
+  "@lockErrorInvalid": {
+    "description": "Shown when the server refuses a new PIN or pattern's shape; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockErrorUnsupported": "Your server doesn’t support note locks yet",
+  "@lockErrorUnsupported": {
+    "description": "Shown when the server is too old for note locks."
+  },
+  "lockErrorOffline": "{kind, select, pin{Couldn’t save the PIN. It needs a connection to the server.} other{Couldn’t save the pattern. It needs a connection to the server.}}",
+  "@lockErrorOffline": {
+    "description": "Shown when saving a PIN or pattern failed; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "lockSaved": "{kind, select, pin{PIN saved} other{Pattern saved}}",
+  "@lockSaved": {
+    "description": "Toast after the PIN or pattern was set or changed in Settings; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "settingsNoteLocks": "Note locks",
+  "@settingsNoteLocks": {
+    "description": "Settings section with the PIN and the pattern that open locked notes."
+  },
+  "settingsLockSet": "{kind, select, pin{Set PIN} other{Set pattern}}",
+  "@settingsLockSet": {
+    "description": "Settings row when no PIN or pattern is set yet; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "settingsLockChange": "{kind, select, pin{Change PIN} other{Change pattern}}",
+  "@settingsLockChange": {
+    "description": "Settings row when the PIN or pattern is set; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "settingsLockHelp": "{kind, select, pin{Opens the notes you lock with a PIN} other{Opens the notes you lock with a pattern}}",
+  "@settingsLockHelp": {
+    "description": "Under the Set or Change PIN or pattern row in Settings; kind is pin or pattern.",
+    "placeholders": {
+      "kind": {
+        "type": "String",
+        "example": "pin"
+      }
+    }
+  },
+  "cardLocked": "Locked",
+  "@cardLocked": {
+    "description": "On a locked note's card (and the home screen widget) in place of its text, until it's opened."
+  },
+  "cardUnlocked": "Locked, open until the screen turns off",
+  "@cardUnlocked": {
+    "description": "Tooltip of the open lock on a locked note's card after it was opened; screen readers read it with the card."
   }
 }

@@ -121,6 +121,8 @@ class SyncServerNote {
     this.hasPositionField = false,
     this.position,
     this.positionedAt,
+    this.hasLockField = false,
+    this.lock,
   });
 
   factory SyncServerNote.fromJson(Map<String, dynamic> json) {
@@ -142,6 +144,9 @@ class SyncServerNote {
       positionedAt: DateTime.tryParse(
         json['positionedAt'] as String? ?? '',
       )?.toUtc(),
+      // Servers without locks leave it out: keep what is here.
+      hasLockField: json.containsKey('lock'),
+      lock: json['lock'] as String?,
       tagIds: (json['tagIds'] as List?)?.cast<String>() ?? const [],
       permission: json['permission'] as String? ?? NotePermission.owner.name,
       shareIds: (json['shareIds'] as List?)?.cast<String>() ?? const [],
@@ -167,6 +172,11 @@ class SyncServerNote {
   final bool hasPositionField;
   final double? position;
   final DateTime? positionedAt;
+
+  /// What this person locked the note with ('biometric', 'pin', 'pattern',
+  /// 'tap'), or null; only meaningful when [hasLockField].
+  final bool hasLockField;
+  final String? lock;
   final List<String> tagIds;
   final String permission;
   final List<String> shareIds;

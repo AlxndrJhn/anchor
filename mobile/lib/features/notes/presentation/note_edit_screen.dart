@@ -27,6 +27,7 @@ import '../../../core/widgets/bottom_bar_frame.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/page_bar.dart';
 import '../../../l10n/l10n.dart';
+import '../../note_locks/presentation/note_lock_actions.dart';
 import '../../reminders/presentation/reminder_permission_prompt.dart';
 import '../../reminders/presentation/reminder_sheet.dart';
 import '../../settings/presentation/editor_preferences_controller.dart';
@@ -382,6 +383,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       isOwner: note.isOwner,
       canSeeHistory: !_draft.isViewOnly,
       canCopy: !note.isTrashed,
+      // Saved notes, not in the trash, can be locked.
+      canLock: !note.isTrashed,
+      lock: note.lock,
       shareCount: note.shareIds?.length ?? 0,
       hasChecklist: (checklist?.items ?? 0) > 0,
       hasCheckedItems: (checklist?.checked ?? 0) > 0,
@@ -404,6 +408,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         await _send();
       case NoteAction.copy:
         await _makeCopy(note.id);
+      case NoteAction.lock:
+        await lockOpenNote(context, ref, note);
+      case NoteAction.removeLock:
+        await unlockOpenNote(context, ref, note);
       case NoteAction.showCheckboxes:
         _offerUndo(_editor?.showCheckboxes(), l10n.checkboxesShown);
       case NoteAction.hideCheckboxes:

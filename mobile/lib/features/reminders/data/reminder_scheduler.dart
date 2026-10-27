@@ -254,13 +254,18 @@ class ReminderSyncReport {
   final int failed;
 }
 
+/// The note's title, or else the first line of its text (but never a
+/// locked note's: notifications show on the lock screen).
 String? reminderHeading(Note note) {
   if (note.hasTitle) return note.title;
+  if (note.isLocked) return null;
   final firstLine = snippetTextOf(note.content).split('\n').first;
   return firstLine.isEmpty ? null : firstLine;
 }
 
+/// The line under the heading; nothing of a locked note's text.
 String reminderBody(Note note) {
+  if (note.isLocked) return '';
   final lines = snippetTextOf(
     note.content,
   ).split('\n').where((l) => l.trim().isNotEmpty).toList();

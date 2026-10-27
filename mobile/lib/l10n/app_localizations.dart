@@ -4701,6 +4701,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove {name}'**
   String shareRemoveItem(String name);
+
+  /// Note menu and selection bar action: locks the note so it opens only with a fingerprint, PIN, pattern or a tap. Opens a sheet to choose how.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get actionLock;
+
+  /// Note menu action on a locked note: chooses another way to open it (fingerprint, PIN, pattern or a tap).
+  ///
+  /// In en, this message translates to:
+  /// **'Change lock'**
+  String get actionChangeLock;
+
+  /// Note menu action on a locked note: the note no longer needs unlocking.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove lock'**
+  String get actionRemoveLock;
+
+  /// Title of the sheet that asks how a note opens once locked.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get lockSheetTitle;
+
+  /// Title of the same sheet on a note that is locked already.
+  ///
+  /// In en, this message translates to:
+  /// **'Change lock'**
+  String get lockSheetChangeTitle;
+
+  /// Under the title of the lock sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'What opens the note'**
+  String get lockSheetSubtitle;
+
+  /// Lock choice: the note opens with the phone's fingerprint or face unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint or face'**
+  String get lockKindBiometric;
+
+  /// Under the Fingerprint or face lock choice: the phone's PIN, pattern or password also works.
+  ///
+  /// In en, this message translates to:
+  /// **'Or your phone’s own screen lock'**
+  String get lockKindBiometricHelp;
+
+  /// Lock choice: the note opens with the account's note PIN (the same for every note, and on the web).
+  ///
+  /// In en, this message translates to:
+  /// **'PIN'**
+  String get lockKindPin;
+
+  /// Under the PIN lock choice.
+  ///
+  /// In en, this message translates to:
+  /// **'One PIN for all your locked notes'**
+  String get lockKindPinHelp;
+
+  /// Lock choice: the note opens with the account's note pattern, drawn across 9 dots.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern'**
+  String get lockKindPattern;
+
+  /// Under the Pattern lock choice.
+  ///
+  /// In en, this message translates to:
+  /// **'One pattern for all your locked notes'**
+  String get lockKindPatternHelp;
+
+  /// Lock choice: the note's text stays hidden until a tap on Tap to unlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Just a tap'**
+  String get lockKindTap;
+
+  /// Under the Just a tap lock choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Hides the note until you tap'**
+  String get lockKindTapHelp;
+
+  /// Toast after a note was locked; kind is biometric, pin, pattern or tap.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, biometric{Locked with your fingerprint or face} pin{Locked with your PIN} pattern{Locked with your pattern} other{Locked with a tap}}'**
+  String noteLockedWith(String kind);
+
+  /// Toast after a locked note was given another lock; kind is biometric, pin, pattern or tap.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, biometric{Now locked with your fingerprint or face} pin{Now locked with your PIN} pattern{Now locked with your pattern} other{Now locked with a tap}}'**
+  String noteLockChanged(String kind);
+
+  /// Toast after Remove lock on a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock removed'**
+  String get noteLockRemoved;
+
+  /// Toast after selected notes were locked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note locked} other{{count} notes locked}}'**
+  String notesLocked(int count);
+
+  /// Toast after selected notes were locked, when some of them were locked already and not opened since the phone was last locked: their lock wasn't changed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Locked 1 note. Locked notes you haven’t opened keep their lock.} other{Locked {count} notes. Locked notes you haven’t opened keep their lock.}}'**
+  String notesLockedSome(int count);
+
+  /// Toast when Lock is chosen for selected notes that are all locked and not opened since the phone was last locked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Open this note to change its lock} other{Open these notes to change their locks}}'**
+  String notesLockOpenFirst(int count);
+
+  /// Toast when the first PIN or pattern can't be set without the server; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Setting a PIN needs a connection to the server} other{Setting a pattern needs a connection to the server}}'**
+  String lockNeedsServer(String kind);
+
+  /// Toast in Settings when the PIN or pattern can't be changed without the server; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Changing the PIN needs a connection to the server} other{Changing the pattern needs a connection to the server}}'**
+  String lockChangeNeedsServer(String kind);
+
+  /// Heading of a locked note's unlock page when the note has no title.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked note'**
+  String get lockUntitled;
+
+  /// Button on a note locked with a tap: shows the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to unlock'**
+  String get lockTapToUnlock;
+
+  /// Button on a note locked with a fingerprint or face: asks for it again.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get lockUnlock;
+
+  /// Hint on a note locked with the PIN, and the first step when changing the PIN.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your PIN'**
+  String get lockEnterPin;
+
+  /// Hint on a note locked with the pattern, and the first step when changing the pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw your pattern'**
+  String get lockDrawPattern;
+
+  /// Hint on a note locked with a fingerprint or face.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your fingerprint, face or screen lock'**
+  String get lockUseBiometric;
+
+  /// Shown in the system's fingerprint or face prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock “{title}”'**
+  String lockBiometricReason(String title);
+
+  /// Shown on a locked note after too many failed fingerprint or face tries.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many tries. Unlock your phone, then try again.'**
+  String get lockTooManyTries;
+
+  /// Shown under the PIN pad or pattern when this phone has no copy of the PIN or pattern yet and the server can't be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Can’t check it on this phone yet. Connect to the internet and try again.'**
+  String get lockCantCheck;
+
+  /// Shown under the PIN pad or pattern after a wrong PIN or pattern; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Wrong PIN} other{Wrong pattern}}'**
+  String lockWrong(String kind);
+
+  /// Read by screen readers on the 3 by 3 grid of dots to draw a pattern on.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern grid. Drag across at least 4 dots.'**
+  String get lockPatternGrid;
+
+  /// Read by screen readers on the PIN pad's backspace key.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete digit'**
+  String get lockPinErase;
+
+  /// Read by screen readers on the dots above the PIN pad: how many digits are typed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No digits} =1{1 digit} other{{count} digits}}'**
+  String lockPinDigits(int count);
+
+  /// Title of the page that sets or changes the PIN or the pattern; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{PIN} other{Pattern}}'**
+  String lockSetupTitle(String kind);
+
+  /// Step when setting the first PIN or pattern; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Choose a PIN} other{Draw a pattern}}'**
+  String lockSetupChoose(String kind);
+
+  /// Step when changing the PIN or pattern; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Choose a new PIN} other{Draw a new pattern}}'**
+  String lockSetupChooseNew(String kind);
+
+  /// Last step when setting the PIN or pattern; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Enter the PIN again} other{Draw the pattern again}}'**
+  String lockSetupConfirm(String kind);
+
+  /// Under Enter your PIN or Draw your pattern, when changing it.
+  ///
+  /// In en, this message translates to:
+  /// **'The one you use now'**
+  String get lockSetupCurrentHelp;
+
+  /// Under Choose a PIN or Draw a pattern; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{4 to 12 digits. It opens every note you lock with a PIN.} other{Join at least 4 dots. It opens every note you lock with a pattern.}}'**
+  String lockSetupChooseHelp(String kind);
+
+  /// Under Enter the PIN again or Draw the pattern again.
+  ///
+  /// In en, this message translates to:
+  /// **'To be sure'**
+  String get lockSetupConfirmHelp;
+
+  /// Shown when the current PIN or pattern given before changing it is wrong; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{That’s not your PIN} other{That’s not your pattern}}'**
+  String lockSetupNotYours(String kind);
+
+  /// Shown when a new PIN or pattern is too short or too long; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Use 4 to 12 digits} other{Join at least 4 dots, each once}}'**
+  String lockSetupBadShape(String kind);
+
+  /// Shown when the PIN or pattern given twice differs; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{The PINs didn’t match. Try again.} other{The patterns didn’t match. Try again.}}'**
+  String lockSetupMismatch(String kind);
+
+  /// Button when changing the PIN or pattern: the account password stands in for the forgotten one.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot? Use your password'**
+  String get lockSetupForgot;
+
+  /// Title of the sheet asking for the account password in place of a forgotten PIN or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account password'**
+  String get lockSetupPasswordTitle;
+
+  /// Shown when the server refuses the old PIN, pattern or password while changing it; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Wrong PIN or password} other{Wrong pattern or password}}'**
+  String lockErrorWrongProof(String kind);
+
+  /// Shown when the server refuses a new PIN or pattern's shape; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{A PIN is 4 to 12 digits} other{A pattern joins at least 4 dots}}'**
+  String lockErrorInvalid(String kind);
+
+  /// Shown when the server is too old for note locks.
+  ///
+  /// In en, this message translates to:
+  /// **'Your server doesn’t support note locks yet'**
+  String get lockErrorUnsupported;
+
+  /// Shown when saving a PIN or pattern failed; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Couldn’t save the PIN. It needs a connection to the server.} other{Couldn’t save the pattern. It needs a connection to the server.}}'**
+  String lockErrorOffline(String kind);
+
+  /// Toast after the PIN or pattern was set or changed in Settings; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{PIN saved} other{Pattern saved}}'**
+  String lockSaved(String kind);
+
+  /// Settings section with the PIN and the pattern that open locked notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Note locks'**
+  String get settingsNoteLocks;
+
+  /// Settings row when no PIN or pattern is set yet; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Set PIN} other{Set pattern}}'**
+  String settingsLockSet(String kind);
+
+  /// Settings row when the PIN or pattern is set; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Change PIN} other{Change pattern}}'**
+  String settingsLockChange(String kind);
+
+  /// Under the Set or Change PIN or pattern row in Settings; kind is pin or pattern.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind, select, pin{Opens the notes you lock with a PIN} other{Opens the notes you lock with a pattern}}'**
+  String settingsLockHelp(String kind);
+
+  /// On a locked note's card (and the home screen widget) in place of its text, until it's opened.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get cardLocked;
+
+  /// Tooltip of the open lock on a locked note's card after it was opened; screen readers read it with the card.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked, open until the screen turns off'**
+  String get cardUnlocked;
 }
 
 class _AppLocalizationsDelegate

@@ -3113,4 +3113,343 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareRemoveItem(String name) {
     return 'Remove $name';
   }
+
+  @override
+  String get actionLock => 'Lock';
+
+  @override
+  String get actionChangeLock => 'Change lock';
+
+  @override
+  String get actionRemoveLock => 'Remove lock';
+
+  @override
+  String get lockSheetTitle => 'Lock';
+
+  @override
+  String get lockSheetChangeTitle => 'Change lock';
+
+  @override
+  String get lockSheetSubtitle => 'What opens the note';
+
+  @override
+  String get lockKindBiometric => 'Fingerprint or face';
+
+  @override
+  String get lockKindBiometricHelp => 'Or your phone’s own screen lock';
+
+  @override
+  String get lockKindPin => 'PIN';
+
+  @override
+  String get lockKindPinHelp => 'One PIN for all your locked notes';
+
+  @override
+  String get lockKindPattern => 'Pattern';
+
+  @override
+  String get lockKindPatternHelp => 'One pattern for all your locked notes';
+
+  @override
+  String get lockKindTap => 'Just a tap';
+
+  @override
+  String get lockKindTapHelp => 'Hides the note until you tap';
+
+  @override
+  String noteLockedWith(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'biometric': 'Locked with your fingerprint or face',
+      'pin': 'Locked with your PIN',
+      'pattern': 'Locked with your pattern',
+      'other': 'Locked with a tap',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String noteLockChanged(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'biometric': 'Now locked with your fingerprint or face',
+      'pin': 'Now locked with your PIN',
+      'pattern': 'Now locked with your pattern',
+      'other': 'Now locked with a tap',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get noteLockRemoved => 'Lock removed';
+
+  @override
+  String notesLocked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes locked',
+      one: 'Note locked',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesLockedSome(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Locked $count notes. Locked notes you haven’t opened keep their lock.',
+      one: 'Locked 1 note. Locked notes you haven’t opened keep their lock.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesLockOpenFirst(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Open these notes to change their locks',
+      one: 'Open this note to change its lock',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lockNeedsServer(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Setting a PIN needs a connection to the server',
+      'other': 'Setting a pattern needs a connection to the server',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockChangeNeedsServer(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Changing the PIN needs a connection to the server',
+      'other': 'Changing the pattern needs a connection to the server',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get lockUntitled => 'Locked note';
+
+  @override
+  String get lockTapToUnlock => 'Tap to unlock';
+
+  @override
+  String get lockUnlock => 'Unlock';
+
+  @override
+  String get lockEnterPin => 'Enter your PIN';
+
+  @override
+  String get lockDrawPattern => 'Draw your pattern';
+
+  @override
+  String get lockUseBiometric => 'Use your fingerprint, face or screen lock';
+
+  @override
+  String lockBiometricReason(String title) {
+    return 'Unlock “$title”';
+  }
+
+  @override
+  String get lockTooManyTries =>
+      'Too many tries. Unlock your phone, then try again.';
+
+  @override
+  String get lockCantCheck =>
+      'Can’t check it on this phone yet. Connect to the internet and try again.';
+
+  @override
+  String lockWrong(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Wrong PIN',
+      'other': 'Wrong pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get lockPatternGrid => 'Pattern grid. Drag across at least 4 dots.';
+
+  @override
+  String get lockPinErase => 'Delete digit';
+
+  @override
+  String lockPinDigits(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count digits',
+      one: '1 digit',
+      zero: 'No digits',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lockSetupTitle(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'PIN',
+      'other': 'Pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockSetupChoose(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Choose a PIN',
+      'other': 'Draw a pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockSetupChooseNew(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Choose a new PIN',
+      'other': 'Draw a new pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockSetupConfirm(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Enter the PIN again',
+      'other': 'Draw the pattern again',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get lockSetupCurrentHelp => 'The one you use now';
+
+  @override
+  String lockSetupChooseHelp(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': '4 to 12 digits. It opens every note you lock with a PIN.',
+      'other':
+          'Join at least 4 dots. It opens every note you lock with a pattern.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get lockSetupConfirmHelp => 'To be sure';
+
+  @override
+  String lockSetupNotYours(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'That’s not your PIN',
+      'other': 'That’s not your pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockSetupBadShape(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Use 4 to 12 digits',
+      'other': 'Join at least 4 dots, each once',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockSetupMismatch(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'The PINs didn’t match. Try again.',
+      'other': 'The patterns didn’t match. Try again.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get lockSetupForgot => 'Forgot? Use your password';
+
+  @override
+  String get lockSetupPasswordTitle => 'Your account password';
+
+  @override
+  String lockErrorWrongProof(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Wrong PIN or password',
+      'other': 'Wrong pattern or password',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockErrorInvalid(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'A PIN is 4 to 12 digits',
+      'other': 'A pattern joins at least 4 dots',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get lockErrorUnsupported =>
+      'Your server doesn’t support note locks yet';
+
+  @override
+  String lockErrorOffline(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Couldn’t save the PIN. It needs a connection to the server.',
+      'other':
+          'Couldn’t save the pattern. It needs a connection to the server.',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String lockSaved(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'PIN saved',
+      'other': 'Pattern saved',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsNoteLocks => 'Note locks';
+
+  @override
+  String settingsLockSet(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Set PIN',
+      'other': 'Set pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String settingsLockChange(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Change PIN',
+      'other': 'Change pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String settingsLockHelp(String kind) {
+    String _temp0 = intl.Intl.selectLogic(kind, {
+      'pin': 'Opens the notes you lock with a PIN',
+      'other': 'Opens the notes you lock with a pattern',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get cardLocked => 'Locked';
+
+  @override
+  String get cardUnlocked => 'Locked, open until the screen turns off';
 }

@@ -1,5 +1,8 @@
 import 'package:drift/drift.dart';
 
+/// The stored lock of a note whose lock isn't known yet; see [Notes.lock].
+const unknownNoteLock = '';
+
 @DataClassName('NoteRow')
 class Notes extends Table {
   TextColumn get id => text()();
@@ -17,6 +20,11 @@ class Notes extends Table {
   RealColumn get position => real().nullable()();
   // When it was dragged there; an edit after that sorts by the edit again.
   DateTimeColumn get positionedAt => dateTime().nullable()();
+  // What this person locked the note with ('biometric', 'pin', 'pattern',
+  // 'tap'), or null. Personal like a pin, and goes up with the note. ''
+  // means not known yet (a database from before locks, until the feed
+  // brings the note again): nothing is sent for it.
+  TextColumn get lock => text().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   // The server version this note was written against; null until it exists there.
   IntColumn get version => integer().nullable()();

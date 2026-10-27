@@ -9,6 +9,7 @@ class LogTags {
   static const sync = 'Sync';
   static const syncEvents = 'SyncEvents';
   static const notes = 'Notes';
+  static const noteLocks = 'NoteLocks';
   static const noteEdit = 'NoteEdit';
   static const attachments = 'Attachments';
   static const sharing = 'Sharing';

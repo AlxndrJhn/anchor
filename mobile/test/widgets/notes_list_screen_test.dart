@@ -630,6 +630,89 @@ void main() {
       expect(find.text('Opened /note/new'), findsOneWidget);
     });
   });
+
+  group('note locks', () {
+    testWidgets('a locked card shows its title, not its text, and a search '
+        'finds it by its title only', (tester) async {
+      await pumpList(tester, [
+        Note(
+          id: 'l',
+          title: 'Diary',
+          content: delta('the secret text'),
+          lock: NoteLock.tap,
+          updatedAt: DateTime.utc(2026, 8, 21),
+        ),
+        ...notesNamed('Note', 2),
+      ]);
+
+      expect(find.text('Diary'), findsOneWidget);
+      expect(find.text('Locked'), findsOneWidget);
+      expect(find.textContaining('secret'), findsNothing);
+
+      await tester.tap(find.bySemanticsLabel('Search notes'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).first, 'secret');
+      await tester.pumpAndSettle();
+      expect(find.text('Diary'), findsNothing);
+
+      await tester.enterText(find.byType(EditableText).first, 'diary');
+      await tester.pumpAndSettle();
+      expect(find.text('Diary'), findsOneWidget);
+      expect(find.textContaining('secret'), findsNothing);
+    });
+
+    testWidgets('Lock in the selection bar locks the picked notes', (
+      tester,
+    ) async {
+      registerFallbackValue(NoteLock.tap);
+      when(() => repo.setLock(any(), any())).thenAnswer((_) async {});
+      await pumpList(tester, notesNamed('Note', 3));
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 0'));
+      await tester.tap(find.text('Note 2'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Lock'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Just a tap'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verify(() => repo.setLock(['Note0', 'Note2'], NoteLock.tap)).called(1);
+      expect(find.text('2 selected'), findsNothing);
+      expect(
+        find.textContaining('2 notes locked', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('locked notes not opened keep their lock', (tester) async {
+      when(() => repo.setLock(any(), any())).thenAnswer((_) async {});
+      await pumpList(tester, [
+        const Note(id: 'l', title: 'Diary', lock: NoteLock.pin),
+      ]);
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Diary'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Change lock'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(find.text('Just a tap'), findsNothing);
+      expect(
+        find.textContaining('Open this note', findRichText: true),
+        findsOneWidget,
+      );
+      verifyNever(() => repo.setLock(any(), any()));
+      await tester.pump(const Duration(seconds: 11));
+    });
+  });
 }
 
 class _SignedIn extends AuthController {

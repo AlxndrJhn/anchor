@@ -3,6 +3,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/widgets/choice_sheet.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../note_locks/presentation/note_lock_actions.dart';
+import '../../domain/note.dart';
 import '../note_actions.dart';
 
 Future<NoteAction?> showNoteMoreSheet(
@@ -12,6 +14,8 @@ Future<NoteAction?> showNoteMoreSheet(
   required bool canSeeHistory,
   required int shareCount,
   bool canCopy = true,
+  bool canLock = false,
+  NoteLock? lock,
   bool hasChecklist = false,
   bool hasCheckedItems = false,
   bool canShowCheckboxes = false,
@@ -53,6 +57,21 @@ Future<NoteAction?> showNoteMoreSheet(
           icon: LucideIcons.copy,
           label: l10n.actionMakeCopy,
         ),
+      if (canLock) ...[
+        SheetChoice(
+          value: NoteAction.lock,
+          icon: LucideIcons.lock,
+          label: lock == null ? l10n.actionLock : l10n.actionChangeLock,
+          detail: lock == null ? null : noteLockLabel(lock, l10n),
+          showChevron: true,
+        ),
+        if (lock != null)
+          SheetChoice(
+            value: NoteAction.removeLock,
+            icon: LucideIcons.lockOpen,
+            label: l10n.actionRemoveLock,
+          ),
+      ],
       null,
       if (canShowCheckboxes)
         SheetChoice(

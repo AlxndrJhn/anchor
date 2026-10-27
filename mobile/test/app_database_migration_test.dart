@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:anchor/core/database/app_database.dart';
+import 'package:anchor/features/notes/data/local/notes_table.dart'
+    show unknownNoteLock;
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -233,6 +235,47 @@ void main() {
       );
       final state = await db.select(db.syncState).getSingle();
       expect(state.cursor, isNull);
+    });
+  });
+
+  test('a database from before note locks gains the lock column, marks it '
+      'unknown and re-downloads the feed', () async {
+    await withDatabase((db) async {
+      await db
+          .into(db.syncState)
+          .insert(const SyncStateCompanion(cursor: Value('cursor-15')));
+      await db
+          .into(db.notes)
+          .insert(
+            NotesCompanion.insert(
+              id: 'waiting',
+              title: 'Edited offline',
+              isSynced: const Value(false),
+            ),
+          );
+      await dropColumns(db, ['lock']);
+      await db.customStatement('PRAGMA user_version = 15');
+    });
+
+    await withDatabase((db) async {
+      final row = await db.select(db.notes).getSingle();
+      expect(row.lock, unknownNoteLock);
+      final state = await db.select(db.syncState).getSingle();
+      expect(state.cursor, isNull);
+
+      await db
+          .into(db.notes)
+          .insert(
+            NotesCompanion.insert(
+              id: 'new',
+              title: 'Locked',
+              lock: const Value('pin'),
+            ),
+          );
+      final locked = await (db.select(
+        db.notes,
+      )..where((tbl) => tbl.id.equals('new'))).getSingle();
+      expect(locked.lock, 'pin');
     });
   });
 

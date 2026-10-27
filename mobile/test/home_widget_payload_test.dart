@@ -91,6 +91,16 @@ void main() {
       expect(notes[2], containsPair('fill', _colors('none')['fill']));
     });
 
+    test('never shows a locked note’s text', () {
+      final payload = buildHomeWidgetPayload([
+        _note(content: _quill('my secret')).copyWith(lock: NoteLock.tap),
+      ], loggedIn: true);
+
+      final item = (_decode(payload)['notes'] as List).single as Map;
+      expect(item['title'], 'Title');
+      expect(item['snippet'], 'Locked');
+    });
+
     test('preserves the given note order', () {
       final payload = buildHomeWidgetPayload([
         _note(id: 'pinned', isPinned: true),

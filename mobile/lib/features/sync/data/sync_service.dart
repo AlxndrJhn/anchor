@@ -6,6 +6,7 @@ import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../notes/data/local/note_rows.dart';
+import '../../notes/data/local/notes_table.dart' show unknownNoteLock;
 import '../../notes/data/repository/note_attachments_repository.dart';
 import '../../notes/data/repository/note_revisions_store.dart';
 import '../../notes/domain/note.dart';
@@ -215,6 +216,8 @@ class SyncService {
       content: note.content,
       isArchived: note.isArchived,
       position: note.position,
+      lock: note.lock,
+      sendsLock: note.lock != unknownNoteLock,
       placedAfterEdit:
           note.position != null &&
           note.positionedAt != null &&
@@ -588,6 +591,8 @@ class SyncService {
           reminderVersion: serverReminder.reminderVersion,
           isReminderSynced: serverReminder.isReminderSynced,
           reminderSlot: serverReminder.reminderSlot,
+          // A lock not known here yet is taken; a local change waits to go up.
+          lock: _unknownLockOf(row, note),
         ),
       );
       return;
@@ -617,6 +622,7 @@ class SyncService {
             positionedAt: note.hasPositionField
                 ? Value(note.positionedAt)
                 : const Value.absent(),
+            lock: note.hasLockField ? Value(note.lock) : const Value.absent(),
             version: Value(note.version),
             isSynced: const Value(true),
             syncedTitle: Value(note.title),
@@ -664,8 +670,16 @@ class SyncService {
       syncedContent: Value(server.content),
       syncedBackground: Value(server.background),
       syncedState: Value(server.state),
+      lock: _unknownLockOf(row, server),
     );
   }
+
+  /// The server's lock for a note whose lock this device doesn't know yet
+  /// (a database from before locks); otherwise the local one stays.
+  Value<String?> _unknownLockOf(NoteRow row, SyncServerNote server) =>
+      row.lock == unknownNoteLock && server.hasLockField
+      ? Value(server.lock)
+      : const Value.absent();
 
   NotesCompanion _sharingOf(SyncServerNote note) => NotesCompanion(
     permission: Value(note.permission),

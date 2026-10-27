@@ -10,6 +10,8 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/style_typography.dart';
 import 'core/update/app_updater.dart';
 import 'features/home_widget/data/home_widget_service.dart';
+import 'features/note_locks/data/note_lock_secrets.dart';
+import 'features/note_locks/presentation/note_lock_session.dart';
 import 'features/reminders/data/reminder_scheduler.dart';
 import 'features/reminders/presentation/reminder_tap_handler.dart';
 import 'features/settings/presentation/editor_preferences_controller.dart';
@@ -80,6 +82,11 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     ref.watch(reminderTapHandlerProvider);
     ref.watch(shareImportProvider);
     ref.watch(shareContextSyncProvider);
+    // Unlocked notes lock again when the screen turns off. Listened to, not
+    // watched: unlocking a note mustn't rebuild the app.
+    ref.listen(noteLockSessionProvider, (_, _) {});
+    // Keep this device's copy of the PIN and pattern current.
+    ref.listen(noteLockSecretsControllerProvider, (_, _) {});
 
     return MaterialApp.router(
       onGenerateTitle: (context) => context.l10n.appName,

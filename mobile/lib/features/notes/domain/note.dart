@@ -78,6 +78,23 @@ enum ReminderRecurrence {
   bool get repeats => this != ReminderRecurrence.none;
 }
 
+/// What opens a locked note, in the order they are offered: biometric
+/// first. Personal, like a pin.
+enum NoteLock {
+  biometric,
+  pin,
+  pattern,
+  tap;
+
+  /// Null for no lock, or one this app doesn't know.
+  static NoteLock? fromString(String? value) {
+    for (final lock in values) {
+      if (lock.name == value) return lock;
+    }
+    return null;
+  }
+}
+
 /// [remindAt] is a local wall clock ("YYYY-MM-DDTHH:mm") with no zone.
 @freezed
 abstract class NoteReminder with _$NoteReminder {
@@ -122,6 +139,8 @@ abstract class Note with _$Note {
     List<String>? shareIds,
     UserSummary? sharedBy,
     NoteReminder? reminder,
+    // What this person locked the note with; null when it isn't locked.
+    NoteLock? lock,
     @Default(true) bool isSynced,
     // The OS notification id this note's reminder occupies.
     int? reminderSlot,
@@ -141,4 +160,5 @@ abstract class Note with _$Note {
   bool get isShared => sharedBy != null;
   bool get hasShares => shareIds != null && shareIds!.isNotEmpty;
   bool get hasReminder => reminder != null;
+  bool get isLocked => lock != null;
 }

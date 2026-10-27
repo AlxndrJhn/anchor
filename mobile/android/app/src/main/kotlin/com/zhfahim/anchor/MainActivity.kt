@@ -7,15 +7,22 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import com.zhfahim.anchor.lock.ScreenOffPlugin
 import com.zhfahim.anchor.photos.PhotoConverterPlugin
 import com.zhfahim.anchor.share.ShareFolderPlugin
 import com.zhfahim.anchor.update.UpdateInstallerPlugin
 import com.zhfahim.anchor.widget.NotesWidgetProvider
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragment
+import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.android.RenderMode
+import io.flutter.embedding.android.TransparencyMode
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterShellArgs
 
-class MainActivity : FlutterActivity() {
+// A FragmentActivity so local_auth can show the fingerprint prompt (locked
+// notes).
+class MainActivity : FlutterFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         attachWidgetNoteUri(intent)
@@ -61,14 +68,34 @@ class MainActivity : FlutterActivity() {
         super.onNewIntent(intent)
     }
 
-    // SystemNavigator.pop moves the app to the background.
-    override fun popSystemNavigator(): Boolean = moveTaskToBack(true)
+    /**
+     * FlutterFragmentActivity's own fragment, built the same way (this app
+     * never uses a cached engine), but one whose SystemNavigator.pop moves
+     * the app to the background, as FlutterActivity's popSystemNavigator did.
+     */
+    override fun createFlutterFragment(): FlutterFragment {
+        val builder = FlutterFragment.NewEngineFragmentBuilder(BackgroundingFlutterFragment::class.java)
+            .dartEntrypoint(dartEntrypointFunctionName)
+            .dartEntrypointArgs(dartEntrypointArgs ?: emptyList())
+            .appBundlePath(appBundlePath)
+            .flutterShellArgs(FlutterShellArgs.fromIntent(intent))
+            .handleDeeplinking(shouldHandleDeeplinking())
+            .renderMode(renderMode)
+            .transparencyMode(TransparencyMode.opaque)
+            .shouldAttachEngineToActivity(shouldAttachEngineToActivity())
+            .shouldDelayFirstAndroidViewDraw(renderMode == RenderMode.surface)
+            .shouldAutomaticallyHandleOnBackPressed(true)
+        dartEntrypointLibraryUri?.let { builder.dartLibraryUri(it) }
+        getInitialRoute()?.let { builder.initialRoute(it) }
+        return builder.build()
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         flutterEngine.plugins.add(PhotoConverterPlugin())
         flutterEngine.plugins.add(ShareFolderPlugin(listens = true))
         flutterEngine.plugins.add(UpdateInstallerPlugin())
+        flutterEngine.plugins.add(ScreenOffPlugin())
     }
 
     private fun preferFastestRefreshRate() {
@@ -90,4 +117,9 @@ class MainActivity : FlutterActivity() {
         val noteId = intent.getStringExtra(NotesWidgetProvider.EXTRA_NOTE_ID) ?: return
         intent.data = Uri.parse("${NotesWidgetProvider.URI_SCHEME}://note/$noteId")
     }
+}
+
+/** SystemNavigator.pop moves the app to the background instead of closing it. */
+class BackgroundingFlutterFragment : FlutterFragment() {
+    override fun popSystemNavigator(): Boolean = activity?.moveTaskToBack(true) ?: false
 }
