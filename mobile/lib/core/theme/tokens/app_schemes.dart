@@ -33,6 +33,57 @@ class SchemePalette {
   final Color divider;
   final Color input;
   final Color destructive;
+
+  /// The field names, as in schemes.json and custom theme JSON.
+  static const fields = <String>[
+    'background',
+    'card',
+    'sidebar',
+    'muted',
+    'foreground',
+    'mutedForeground',
+    'accent',
+    'accentStrong',
+    'accentInk',
+    'border',
+    'divider',
+    'input',
+    'destructive',
+  ];
+
+  /// The colours by field name.
+  Map<String, Color> toMap() => {
+    'background': background,
+    'card': card,
+    'sidebar': sidebar,
+    'muted': muted,
+    'foreground': foreground,
+    'mutedForeground': mutedForeground,
+    'accent': accent,
+    'accentStrong': accentStrong,
+    'accentInk': accentInk,
+    'border': border,
+    'divider': divider,
+    'input': input,
+    'destructive': destructive,
+  };
+
+  /// This palette with [colors], keyed by field name, in place of its own.
+  SchemePalette withColors(Map<String, Color> colors) => SchemePalette(
+    background: colors['background'] ?? background,
+    card: colors['card'] ?? card,
+    sidebar: colors['sidebar'] ?? sidebar,
+    muted: colors['muted'] ?? muted,
+    foreground: colors['foreground'] ?? foreground,
+    mutedForeground: colors['mutedForeground'] ?? mutedForeground,
+    accent: colors['accent'] ?? accent,
+    accentStrong: colors['accentStrong'] ?? accentStrong,
+    accentInk: colors['accentInk'] ?? accentInk,
+    border: colors['border'] ?? border,
+    divider: colors['divider'] ?? divider,
+    input: colors['input'] ?? input,
+    destructive: colors['destructive'] ?? destructive,
+  );
 }
 
 /// A colour scheme offered in Settings, with its light and dark palettes.
@@ -393,6 +444,40 @@ const appSchemes = <AppScheme>[
       divider: Color(0xFF262C36),
       input: Color(0xFF656C76),
       destructive: Color(0xFFF85149),
+    ),
+  ),
+  AppScheme(
+    id: 'oled',
+    name: 'OLED',
+    light: SchemePalette(
+      background: Color(0xFFF0F4F8),
+      card: Color(0xFFFFFFFF),
+      sidebar: Color(0xFFE9EEF3),
+      muted: Color(0xFFE8ECF1),
+      foreground: Color(0xFF2D3142),
+      mutedForeground: Color(0xFF4F5D75),
+      accent: Color(0xFFEF8354),
+      accentStrong: Color(0xFFCC5F2D),
+      accentInk: Color(0xFFA44004),
+      border: Color(0xFFD8DEE6),
+      divider: Color(0xFFE6EBF1),
+      input: Color(0xFF788497),
+      destructive: Color(0xFFC0392B),
+    ),
+    dark: SchemePalette(
+      background: Color(0xFF000000),
+      card: Color(0xFF0E0E0E),
+      sidebar: Color(0xFF000000),
+      muted: Color(0xFF1A1A1A),
+      foreground: Color(0xFFFFFFFF),
+      mutedForeground: Color(0xFFB3B3B3),
+      accent: Color(0xFFEF8354),
+      accentStrong: Color(0xFFEF8354),
+      accentInk: Color(0xFFFE976C),
+      border: Color(0xFF2E2E2E),
+      divider: Color(0xFF1C1C1C),
+      input: Color(0xFF6B6B6B),
+      destructive: Color(0xFFFF8A80),
     ),
   ),
 ];

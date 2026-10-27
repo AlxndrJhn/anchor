@@ -12,6 +12,7 @@ import 'home_widget/home_widget_payload.dart';
 import 'logging/app_logger.dart';
 import 'notifications/notification_launch.dart';
 import 'router/app_routes.dart';
+import 'theme/custom_theme.dart';
 import 'theme/tokens/app_dimensions.dart';
 import 'theme/tokens/app_style.dart';
 
@@ -30,6 +31,9 @@ DisplayDensity initialDisplayDensity = DisplayDensity.standard;
 /// The colour scheme and style loaded before the app starts.
 String initialColorScheme = anchorSchemeId;
 AppStyle initialAppStyle = AppStyle.standard;
+
+/// The custom theme loaded before the app starts, if one is saved.
+CustomTheme? initialCustomTheme;
 
 /// Holds the initial user ID loaded before the app starts
 /// This is set by [initializeApp] and read by [ActiveUserId] provider
@@ -89,6 +93,10 @@ Future<void> initializeApp() async {
   initialAppStyle = AppStyle.fromId(
     await _storage.read(key: PreferenceKeys.appStyle),
   );
+  final savedCustomTheme = await _storage.read(key: PreferenceKeys.customTheme);
+  if (savedCustomTheme != null) {
+    initialCustomTheme = parseCustomTheme(savedCustomTheme).theme;
+  }
 
   // User id for per-user database selection, read from the persisted user json.
   final userData = await _storage.read(key: 'user_data');

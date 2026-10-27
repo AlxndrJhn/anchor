@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_typography.dart';
+import 'custom_theme.dart';
 import 'tokens/app_color_tokens.dart';
 import 'tokens/app_dimensions.dart';
 import 'tokens/app_opacity.dart';
@@ -16,43 +17,64 @@ import 'tokens/app_style.dart';
 class AppTheme {
   AppTheme._();
 
-  static final Map<(Brightness, DisplayDensity, String, AppStyle), ThemeData>
+  static final Map<
+    (Brightness, DisplayDensity, String, AppStyle, String?),
+    ThemeData
+  >
   _cache = {};
 
   static ThemeData light([
     DisplayDensity density = DisplayDensity.standard,
     String scheme = anchorSchemeId,
     AppStyle style = AppStyle.standard,
-  ]) => _cache.putIfAbsent((
-    Brightness.light,
-    density,
-    scheme,
-    style,
-  ), () => _build(Brightness.light, density, scheme, style));
+    CustomTheme? custom,
+  ]) => _cached(Brightness.light, density, scheme, style, custom);
 
   static ThemeData dark([
     DisplayDensity density = DisplayDensity.standard,
     String scheme = anchorSchemeId,
     AppStyle style = AppStyle.standard,
-  ]) => _cache.putIfAbsent((
-    Brightness.dark,
+    CustomTheme? custom,
+  ]) => _cached(Brightness.dark, density, scheme, style, custom);
+
+  static ThemeData _cached(
+    Brightness brightness,
+    DisplayDensity density,
+    String scheme,
+    AppStyle style,
+    CustomTheme? custom,
+  ) => _cache.putIfAbsent((
+    brightness,
     density,
     scheme,
     style,
-  ), () => _build(Brightness.dark, density, scheme, style));
+    custom?.encode(),
+  ), () => _build(brightness, density, scheme, style, custom));
+
+  /// The colours for [brightness]: Lo-fi's greys, else the scheme with the
+  /// custom theme over it. Null keeps Anchor's hand-tuned palette.
+  static SchemePalette? paletteFor(
+    Brightness brightness,
+    String schemeId,
+    AppStyle style, [
+    CustomTheme? custom,
+  ]) {
+    if (style == AppStyle.lofi) return lofiScheme.of(brightness);
+    final scheme = schemeById(schemeId);
+    if (custom?.of(brightness) == null) return scheme?.of(brightness);
+    return custom!.merge((scheme ?? anchorScheme).of(brightness), brightness);
+  }
 
   static ThemeData _build(
     Brightness brightness,
     DisplayDensity density,
     String schemeId,
     AppStyle style,
+    CustomTheme? custom,
   ) {
     final isDark = brightness == Brightness.dark;
     final base = isDark ? ThemeData.dark() : ThemeData.light();
-    // Lo-fi draws in its own greys; null keeps Anchor's hand-tuned palette.
-    final palette = style == AppStyle.lofi
-        ? lofiScheme.of(brightness)
-        : schemeById(schemeId)?.of(brightness);
+    final palette = paletteFor(brightness, schemeId, style, custom);
     final primary =
         palette?.foreground ??
         (isDark ? AppPalette.offWhite : AppPalette.slate);
@@ -65,12 +87,21 @@ class AppTheme {
         palette?.card ??
         (isDark ? AppPalette.surfaceDark : AppPalette.surfaceLight);
     final dims = AppDimensions.of(density);
-    final styleTokens = AppStyleTokens.of(
+    var styleTokens = AppStyleTokens.of(
       style,
       primary,
       brightness,
       noteFill: palette?.card,
     );
+    // On a pure-black page (OLED) cards get a hairline, as on the web, or a
+    // near-black card would vanish into it.
+    if (style == AppStyle.standard &&
+        palette != null &&
+        isTrueBlack(palette.background)) {
+      styleTokens = styleTokens.copyWith(
+        cardSide: BorderSide(color: palette.border),
+      );
+    }
     final tokens = _colorTokens(brightness, palette, style, primary);
     final brutal = style == AppStyle.neoBrutalism;
     final lofi = style == AppStyle.lofi;
@@ -244,6 +275,9 @@ class AppTheme {
       extensions: [dims, tokens, styleTokens],
     );
   }
+
+  /// Black, or so close to it that an OLED screen leaves the pixel off.
+  static bool isTrueBlack(Color color) => color.computeLuminance() < 0.001;
 
   /// White or near-black, whichever reads on [color].
   static Color _onColor(Color color) =>

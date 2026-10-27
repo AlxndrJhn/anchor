@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_palette.dart';
 import 'app_radius.dart';
 import 'app_schemes.dart';
 
@@ -29,6 +30,43 @@ enum AppStyle {
 
 /// Anchor's own colour scheme, which uses the hand-tuned palette.
 const anchorSchemeId = 'anchor';
+
+/// Anchor's own colours as a scheme: its swatch in Settings, and what a
+/// custom theme falls back to over Anchor.
+const anchorScheme = AppScheme(
+  id: anchorSchemeId,
+  name: 'Anchor',
+  light: SchemePalette(
+    background: AppPalette.bgLight,
+    card: AppPalette.surfaceLight,
+    sidebar: AppPalette.gradientLightBottom,
+    muted: AppPalette.shimmerBaseLight,
+    foreground: AppPalette.slate,
+    mutedForeground: AppPalette.slateBlue,
+    accent: AppPalette.burntOrange,
+    accentStrong: AppPalette.burntOrange,
+    accentInk: AppPalette.burntOrange,
+    border: AppPalette.shimmerBaseLight,
+    divider: AppPalette.shimmerBaseLight,
+    input: AppPalette.slateBlue,
+    destructive: Color(0xFFD32F2F),
+  ),
+  dark: SchemePalette(
+    background: AppPalette.bgDark,
+    card: AppPalette.surfaceDark,
+    sidebar: AppPalette.bgDark,
+    muted: AppPalette.shimmerBaseDark,
+    foreground: AppPalette.offWhite,
+    mutedForeground: AppPalette.slateBlue,
+    accent: AppPalette.burntOrange,
+    accentStrong: AppPalette.burntOrange,
+    accentInk: AppPalette.burntOrange,
+    border: AppPalette.shimmerBaseDark,
+    divider: AppPalette.shimmerBaseDark,
+    input: AppPalette.slateBlue,
+    destructive: Color(0xFFEF5350),
+  ),
+);
 
 AppScheme? schemeById(String id) {
   for (final scheme in appSchemes) {

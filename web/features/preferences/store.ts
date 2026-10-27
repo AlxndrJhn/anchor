@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { CustomTheme } from "@/lib/design/custom-theme";
 
 export type ViewMode = "masonry" | "grid" | "list";
 export type SortBy = "updatedAt" | "createdAt" | "title";
@@ -12,6 +13,8 @@ interface UIPreferences {
   /** A colour scheme id from lib/design/schemes, or "anchor". */
   colorScheme?: string;
   style?: AppStyle;
+  /** Colours pasted as JSON in Settings, over the colour scheme. */
+  customTheme?: CustomTheme;
 }
 
 interface NotesPreferences {

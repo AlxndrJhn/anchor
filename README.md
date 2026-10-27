@@ -64,6 +64,8 @@ differences. "Web" and "Android" say where each one is available.
 | Done button on the reminder notification | | ✓ |
 | **Appearance** | | |
 | Colour schemes: Nord, Dracula, Solarized, Gruvbox, Catppuccin, Tokyo Night, One, Rosé Pine, Monokai, GitHub | ✓ | ✓ |
+| OLED colour scheme: pure black in dark mode, near-black outlined cards, white text | ✓ | ✓ |
+| Custom theme from JSON (Settings › Appearance), kept on the device; the same JSON works on both ([how](#custom-themes)) | ✓ | ✓ |
 | Styles: Skeuomorphism, Neo-Brutalism and Lo-fi | ✓ | ✓ |
 | A skeuomorphic app icon everywhere: Android (adaptive and themed), iOS, the splash screens, the in-app logo, the web app and its home-screen icons | ✓ | ✓ |
 | **Getting around** | | |
@@ -82,6 +84,72 @@ differences. "Web" and "Android" say where each one is available.
 | Next.js upgraded to 16.4.3 for security fixes | ✓ | |
 | **Releases** | | |
 | Every push to `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
+
+### Custom themes
+
+Settings › Appearance › Custom theme takes a theme as JSON. Paste it and
+press Apply; Reset removes it; "Copy current theme as JSON" puts the colours
+you see now (scheme and custom theme together) in the box and on the
+clipboard, to start from. The theme is kept on that device only, like the
+other appearance settings, and the same JSON works on the web and on
+Android.
+
+A custom theme sits on top of the chosen colour scheme: any colour it leaves
+out is the scheme's. Lo-fi keeps its own pencil greys, so a custom theme
+waits until another style is picked.
+
+```json
+{
+  "name": "Ink",
+  "light": {
+    "background": "#f4f1ea",
+    "card": "#fffdf8",
+    "sidebar": "#ebe6db",
+    "muted": "#e6e0d3",
+    "foreground": "#1f1d1a",
+    "mutedForeground": "#5c574e",
+    "accent": "#2f6fdd",
+    "accentStrong": "#2459b8",
+    "accentInk": "#1d4a99",
+    "border": "#d6cfc1",
+    "divider": "#e3ddd0",
+    "input": "#8a8375",
+    "destructive": "#b3261e"
+  },
+  "dark": {
+    "background": "#000",
+    "card": "#111111",
+    "accent": "#7aa2f7",
+    "border": "#ffffff26"
+  }
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `name` | Optional. Shown in Settings and used by "Copy current theme as JSON" |
+| `light`, `dark` | The colours for light and dark mode. At least one is needed; a mode left out is the scheme's own |
+| `background` | The page behind everything |
+| `card` | Note cards, menus, dialogs and settings cards; also a plain note's colour |
+| `sidebar` | The sidebar on the web; the far end of the page gradient on Android |
+| `muted` | Quiet fills: inputs, chips, loading placeholders |
+| `foreground` | Text and icons |
+| `mutedForeground` | Secondary text: dates, hints, captions |
+| `accent` | Highlights: the selection, links on dark panels, Android's accent colour |
+| `accentStrong` | Focus rings, the new-note button on Android |
+| `accentInk` | Links and accent-coloured text, where it has to read as text |
+| `border` | Card and control outlines |
+| `divider` | Lines between rows |
+| `input` | Text field outlines on the web |
+| `destructive` | Delete buttons and error messages |
+
+Colours are `#rgb`, `#rrggbb` or `#rrggbbaa` (the last two hex digits are
+opacity), in upper or lower case. Any other key, or anything else as a
+colour, is refused with a message naming the key and what is wrong with it
+(`dark.backgroud: unknown key (did you mean "background"?)`), and nothing
+changes until the JSON is fixed. The keys are the fields of the built-in
+schemes in `design/schemes/schemes.json`; the parsers are
+`web/lib/design/custom-theme.ts` and `mobile/lib/core/theme/custom_theme.dart`.
 
 ## Features
 
