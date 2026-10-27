@@ -19,6 +19,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # A cold arm64 build under QEMU takes ~25 minutes; a crashed emulated
+    # process can leave it hanging for hours instead.
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
