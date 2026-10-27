@@ -286,3 +286,98 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--foreground) 8%, transparent);
 }
+
+/* Text colour, font, and a highlight in any colour */
+.ts-pop {
+  z-index: var(--z-popover);
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px 10px;
+  max-width: 300px;
+}
+.ts-head {
+  padding: 2px 2px 0;
+  font-size: var(--text-meta);
+  font-weight: 600;
+  color: var(--note-muted);
+}
+.ts-row {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ts-dot {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--foreground) 18%, transparent);
+  cursor: pointer;
+}
+.ts-dot[aria-pressed="true"] {
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 3.5px var(--accent-strong);
+}
+.ts-none {
+  background:
+    linear-gradient(
+      135deg,
+      transparent 46%,
+      var(--late) 46% 54%,
+      transparent 54%
+    ),
+    var(--card);
+}
+.ts-pick {
+  background: var(--card);
+  color: var(--note-muted);
+}
+.ts-pick svg {
+  width: 13px;
+  height: 13px;
+}
+.ts-pick input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.ts-wide {
+  width: auto;
+  display: flex;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 8px;
+  height: 26px;
+  font-size: var(--text-meta);
+}
+.ts-font {
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: var(--text-control);
+  cursor: pointer;
+}
+.ts-font:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.ts-font[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  font-weight: 600;
+}

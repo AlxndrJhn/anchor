@@ -106,7 +106,15 @@ function pasteAsLink(
   }
 }
 
-const TEXT_FORMATS = ["bold", "italic", "underline", "strike", "highlight"];
+const TEXT_FORMATS = [
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "highlight",
+  "color",
+  "font",
+];
 
 const CARET_GAP = 12;
 

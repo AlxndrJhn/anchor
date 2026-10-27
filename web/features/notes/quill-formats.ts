@@ -2,6 +2,7 @@ import { HIGHLIGHTS } from "@/lib/design/tokens";
 import { LINK_PROTOCOLS } from "./link-utils";
 import { deleteWholeLines, isWholeLines, type QuillInstance } from "./quill";
 import { MAX_LIST_INDENT } from "./quill-lines";
+import { FONTS, inkFor, isHexColor } from "./text-style";
 
 type QuillStatic = {
   import: (path: string) => unknown;
@@ -35,15 +36,32 @@ export function registerNoteFormats(Quill: QuillStatic) {
     static create(value: unknown) {
       // biome-ignore lint/complexity/noThisInStatic: Parchment's create reads this.tagName
       const node = super.create(value);
-      node.setAttribute("data-hl", isHighlight(value) ? value : "yellow");
+      if (isHexColor(value)) {
+        // A picked colour, rather than one of the named ones.
+        node.setAttribute("data-hl", "custom");
+        node.style.setProperty("--hl-custom", value);
+        node.style.setProperty("--hl-custom-ink", inkFor(value));
+      } else
+        node.setAttribute("data-hl", isHighlight(value) ? value : "yellow");
       return node;
     }
     static formats(node: HTMLElement) {
       const name = node.getAttribute("data-hl");
+      if (name === "custom") {
+        const color = node.style.getPropertyValue("--hl-custom").trim();
+        return isHexColor(color) ? color : undefined;
+      }
       return isHighlight(name) ? name : undefined;
     }
   }
   Quill.register(Highlight, true);
+
+  // A font for the selected text, written as its font-family.
+  const FontStyle = Quill.import("attributors/style/font") as {
+    whitelist: string[] | null;
+  };
+  FontStyle.whitelist = FONTS.map((font) => font.value);
+  Quill.register(FontStyle, true);
 
   const Delta = Quill.import("delta") as DeltaStatic;
   const Clipboard = Quill.import("modules/clipboard") as {

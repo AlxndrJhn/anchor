@@ -1,5 +1,6 @@
 import { orderedPreviewMarker, parseStoredContent } from "./quill";
 import { deltaToLines, indentOf } from "./quill-lines";
+import { isFont, isHexColor } from "./text-style";
 
 export interface InlineRun {
   text: string;
@@ -9,8 +10,12 @@ export interface InlineRun {
   strike?: boolean;
   code?: boolean;
   link?: string;
-  /** A highlight name: yellow, green, blue, pink or purple. */
+  /** A highlight name (yellow, green, blue, pink, purple) or "#rrggbb". */
   highlight?: string;
+  /** A text colour, "#rrggbb". */
+  color?: string;
+  /** "serif" or "monospace". */
+  font?: string;
 }
 
 type BlockType =
@@ -54,6 +59,8 @@ function runsOf(
       link: typeof attrs.link === "string" ? attrs.link : undefined,
       highlight:
         typeof attrs.highlight === "string" ? attrs.highlight : undefined,
+      color: isHexColor(attrs.color) ? attrs.color : undefined,
+      font: isFont(attrs.font) ? attrs.font : undefined,
     });
   }
   return runs;

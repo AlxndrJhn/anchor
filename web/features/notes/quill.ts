@@ -122,6 +122,8 @@ export const QUILL_FORMATS = [
   "code-block",
   "link",
   "highlight",
+  "color",
+  "font",
 ] as const;
 
 /**

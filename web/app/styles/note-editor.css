@@ -19,6 +19,11 @@
   --hlc: var(--hl-purple);
   --hli: var(--hl-purple-ink);
 }
+/* A picked colour; the mark carries it, and an ink that reads on it. */
+[data-hl="custom"] {
+  --hlc: var(--hl-custom);
+  --hli: var(--hl-custom-ink);
+}
 mark.hl {
   color: inherit;
   background: none;

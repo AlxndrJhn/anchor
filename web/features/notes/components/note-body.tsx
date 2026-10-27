@@ -7,6 +7,7 @@ import {
   type InlineRun,
   type NoteBlock,
 } from "../note-blocks";
+import { inkFor, isHexColor } from "../text-style";
 
 type ListKind = "check" | "bullet" | "ordered";
 type Row = NoteBlock | DoneRow;
@@ -161,8 +162,25 @@ export function TextRuns({ runs, card }: { runs: InlineRun[]; card: boolean }) {
     if (run.underline) node = <u>{node}</u>;
     if (run.italic) node = <em>{node}</em>;
     if (run.bold) node = <strong>{node}</strong>;
-    if (run.highlight)
+    if (run.color || run.font)
       node = (
+        <span style={{ color: run.color, fontFamily: run.font }}>{node}</span>
+      );
+    if (run.highlight)
+      node = isHexColor(run.highlight) ? (
+        <mark
+          className="hl"
+          data-hl="custom"
+          style={
+            {
+              "--hl-custom": run.highlight,
+              "--hl-custom-ink": inkFor(run.highlight),
+            } as React.CSSProperties
+          }
+        >
+          {node}
+        </mark>
+      ) : (
         <mark className="hl" data-hl={run.highlight}>
           {node}
         </mark>

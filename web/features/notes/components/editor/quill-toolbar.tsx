@@ -39,6 +39,7 @@ import {
   hasHighlight,
   PhoneHighlightRow,
 } from "./highlight-tools";
+import { TextStyleButton } from "./text-style-tools";
 
 /**
  * Formats at the selection without argument-less getFormat()'s
@@ -279,6 +280,7 @@ export function QuillToolbar({
         disabled={isInCode}
         onPhoneColors={() => switchColors(true)}
       />
+      <TextStyleButton getQuill={getQuill} disabled={isInCode} />
       {divider}
       {toolButton(
         "Heading 1",

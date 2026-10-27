@@ -123,7 +123,12 @@ function measureHighlights(host: HTMLElement, root: HTMLElement) {
   let html = "";
   for (const mark of marks) {
     const name = mark.dataset.hl ?? "yellow";
-    const color = style.getPropertyValue(`--hl-${name}`).trim() || "#feea74";
+    // A picked colour rides on the mark itself.
+    const color =
+      (name === "custom"
+        ? mark.style.getPropertyValue("--hl-custom")
+        : style.getPropertyValue(`--hl-${name}`)
+      ).trim() || "#feea74";
     const painting = !reduceMotion && mark.classList.contains("sweep");
     if (painting && !drawStart.has(mark))
       drawStart.set(mark, performance.now());
@@ -131,7 +136,7 @@ function measureHighlights(host: HTMLElement, root: HTMLElement) {
       ? (performance.now() - (drawStart.get(mark) ?? 0)) / 1000
       : 0;
     const fontSize = Number.parseFloat(getComputedStyle(mark).fontSize) || 16;
-    const key = `${name}|${mark.textContent?.slice(0, 14)}`;
+    const key = `${name === "custom" ? color : name}|${mark.textContent?.slice(0, 14)}`;
     const area = visibleArea(mark, root, rootBox, clips);
     let line = 0;
     for (const rect of mark.getClientRects()) {
