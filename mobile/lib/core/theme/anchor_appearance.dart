@@ -8,16 +8,20 @@ import 'tokens/app_style.dart';
 /// as Settings › Appearance chooses them. The web does the same in
 /// `web/app/styles/appearance.css`.
 abstract final class AnchorAppearance {
-  /// [palette] null keeps Anchor's own colours.
+  /// [palette] null keeps Anchor's own colours. [custom] is a custom
+  /// theme's colours for this mode, by `SchemePalette` field, over the rest;
+  /// what it leaves out stays as Anchor's or the scheme's.
   static AnchorColors colors(
     Brightness brightness,
     SchemePalette? palette,
-    AppStyle style,
-  ) {
+    AppStyle style, {
+    Map<String, Color>? custom,
+  }) {
     final isDark = brightness == Brightness.dark;
     var colors = isDark ? AnchorColors.dark : AnchorColors.light;
-    if (palette != null) colors = _recolor(colors, palette);
-    if (palette != null || style != AppStyle.standard) {
+    if (palette != null) colors = _recolor(colors, palette.toMap());
+    if (custom != null) colors = _recolor(colors, custom);
+    if (palette != null || custom != null || style != AppStyle.standard) {
       // A plain note takes the scheme's card colour.
       colors = colors.copyWith(
         notes: {
@@ -35,35 +39,51 @@ abstract final class AnchorAppearance {
         },
       );
     }
-    return _reshape(colors, style, isDark);
+    colors = _reshape(colors, style, isDark);
+    if (style == AppStyle.standard && isTrueBlack(colors.appPage)) {
+      // Shadows vanish on a black page (OLED): outline what they'd lift
+      // instead, as the web does.
+      colors = colors.copyWith(
+        shadowXs: [BoxShadow(color: colors.appBorder, spreadRadius: 1)],
+      );
+    }
+    return colors;
   }
+
+  /// Black, or so close to it that an OLED screen leaves the pixel off.
+  static bool isTrueBlack(Color color) => color.computeLuminance() < 0.001;
 
   /// White or near-black, whichever reads on [color].
   static Color onColor(Color color) => color.computeLuminance() > 0.45
       ? const Color(0xFF1B1B1B)
       : const Color(0xFFFFFFFF);
 
-  static AnchorColors _recolor(AnchorColors colors, SchemePalette p) =>
-      colors.copyWith(
-        appPage: p.background,
-        appSurface: p.card,
-        appSidebar: p.sidebar,
-        appSubtle: p.muted,
-        appText: p.foreground,
-        appMuted: p.mutedForeground,
-        appBorder: p.border,
-        appDivider: p.divider,
-        appFieldLine: p.input,
-        accentStrong: p.accentStrong,
-        accentInk: p.accentInk,
-        statusDanger: p.destructive,
-        statusOnDanger: onColor(p.destructive),
-        checkMark: onColor(p.accentStrong),
-        appInverse: p.foreground,
-        appOnInverse: p.background,
-        appInverseLink: p.accent,
-        appInverseDanger: p.destructive,
-      );
+  /// [colors] with the palette colours in [fields] (by `SchemePalette`
+  /// field name) and what's drawn from them; the others stay.
+  static AnchorColors _recolor(AnchorColors colors, Map<String, Color> fields) {
+    final destructive = fields['destructive'];
+    final accentStrong = fields['accentStrong'];
+    return colors.copyWith(
+      appPage: fields['background'],
+      appSurface: fields['card'],
+      appSidebar: fields['sidebar'],
+      appSubtle: fields['muted'],
+      appText: fields['foreground'],
+      appMuted: fields['mutedForeground'],
+      appBorder: fields['border'],
+      appDivider: fields['divider'],
+      appFieldLine: fields['input'],
+      accentStrong: accentStrong,
+      accentInk: fields['accentInk'],
+      statusDanger: destructive,
+      statusOnDanger: destructive == null ? null : onColor(destructive),
+      checkMark: accentStrong == null ? null : onColor(accentStrong),
+      appInverse: fields['foreground'],
+      appOnInverse: fields['background'],
+      appInverseLink: fields['accent'],
+      appInverseDanger: destructive,
+    );
+  }
 
   static AnchorColors _reshape(
     AnchorColors colors,

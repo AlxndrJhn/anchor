@@ -17,6 +17,7 @@ import '../core/logging/log_tags.dart';
 import '../core/storage/clear_storage_on_new_install.dart';
 import '../core/storage/preferences_repository.dart';
 import '../core/storage/storage_keys.dart';
+import '../core/theme/custom_theme.dart';
 import '../core/theme/display_density.dart';
 import '../core/theme/note_typography.dart';
 import '../core/theme/tokens/app_style.dart';
@@ -91,6 +92,7 @@ Future<AppBootstrap> initializeApp({
       ? anchorSchemeId
       : savedScheme!;
   final appStyle = AppStyle.fromId(await preferences.getAppStyle());
+  final customTheme = CustomTheme.decode(await preferences.getCustomTheme());
 
   final savedFont = await preferences.getNoteFont();
   final savedTextSize = await preferences.getNoteTextSize();
@@ -137,6 +139,7 @@ Future<AppBootstrap> initializeApp({
     displayDensity: displayDensity,
     colorScheme: colorScheme,
     appStyle: appStyle,
+    customTheme: customTheme,
     editorPreferences: editorPreferences,
     foldedChecklistNotes: await preferences.getFoldedChecklistNotes(),
     openArchivedTags: await preferences.getOpenArchivedTags(),

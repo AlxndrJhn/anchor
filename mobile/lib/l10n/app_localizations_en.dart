@@ -525,6 +525,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorSchemeAnchor => 'Anchor';
 
   @override
+  String get settingsCustomTheme => 'Custom theme';
+
+  @override
+  String get settingsCustomThemeOff => 'None';
+
+  @override
+  String get settingsCustomThemeOn => 'On';
+
+  @override
+  String get settingsCustomThemeLofi =>
+      'Lo-fi keeps its pencil grays, so the custom theme waits for another style.';
+
+  @override
+  String get customThemeHelp =>
+      'Paste a theme as JSON: colors for light, dark or both. Anything left out keeps the color scheme\'s color. Kept on this device; the same JSON works on the web.';
+
+  @override
+  String get customThemeJsonLabel => 'Theme JSON';
+
+  @override
+  String get customThemeApply => 'Apply';
+
+  @override
+  String get customThemeReset => 'Reset';
+
+  @override
+  String get customThemeCopy => 'Copy current theme as JSON';
+
+  @override
+  String get customThemeApplied => 'Custom theme applied';
+
+  @override
+  String customThemeAppliedNamed(String name) {
+    return 'Custom theme “$name” applied';
+  }
+
+  @override
+  String get customThemeRemoved => 'Custom theme removed';
+
+  @override
+  String get customThemeCopied => 'Current theme copied as JSON';
+
+  @override
+  String customThemeNotJson(String detail) {
+    return 'Not valid JSON: $detail';
+  }
+
+  @override
+  String get customThemeNotObject =>
+      'The theme must be a JSON object with \"light\" or \"dark\" colors';
+
+  @override
+  String customThemeUnknownKey(String key, String expected) {
+    return '$key: unknown key; expected one of $expected';
+  }
+
+  @override
+  String customThemeUnknownKeyGuess(String key, String guess, String expected) {
+    return '$key: unknown key (did you mean \"$guess\"?); expected one of $expected';
+  }
+
+  @override
+  String get customThemeNameNotText => 'name: must be a string';
+
+  @override
+  String customThemeModeNotObject(String mode) {
+    return '$mode: must be an object of colors';
+  }
+
+  @override
+  String customThemeNotAColor(String key, String value) {
+    return '$key: $value is not a color; use #rgb, #rrggbb or #rrggbbaa';
+  }
+
+  @override
+  String get customThemeNoMode => 'Give at least one of \"light\" or \"dark\"';
+
+  @override
   String get settingsStyle => 'Style';
 
   @override

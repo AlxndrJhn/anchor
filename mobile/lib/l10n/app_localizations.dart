@@ -976,6 +976,132 @@ abstract class AppLocalizations {
   /// **'Anchor'**
   String get colorSchemeAnchor;
 
+  /// Label of the Appearance setting where colors pasted as JSON override the color scheme's.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom theme'**
+  String get settingsCustomTheme;
+
+  /// Value of the Custom theme setting while no custom theme is applied.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get settingsCustomThemeOff;
+
+  /// Value of the Custom theme setting while an unnamed custom theme is applied.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get settingsCustomThemeOn;
+
+  /// Under the Custom theme setting while the Lo-fi style is on, which ignores custom colors. Lo-fi is the style's name.
+  ///
+  /// In en, this message translates to:
+  /// **'Lo-fi keeps its pencil grays, so the custom theme waits for another style.'**
+  String get settingsCustomThemeLofi;
+
+  /// Explains the Custom theme sheet. JSON is a text format; light and dark are the app's two modes.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a theme as JSON: colors for light, dark or both. Anything left out keeps the color scheme\'s color. Kept on this device; the same JSON works on the web.'**
+  String get customThemeHelp;
+
+  /// Accessibility label of the text box where a custom theme is pasted as JSON.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme JSON'**
+  String get customThemeJsonLabel;
+
+  /// Button that applies the pasted custom theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get customThemeApply;
+
+  /// Button that removes the custom theme and goes back to the color scheme's colors.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get customThemeReset;
+
+  /// Button that puts the colors in use now, as JSON, in the text box and on the clipboard, to start a custom theme from.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy current theme as JSON'**
+  String get customThemeCopy;
+
+  /// Message after a custom theme is applied.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom theme applied'**
+  String get customThemeApplied;
+
+  /// Message after a custom theme with a name is applied.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom theme “{name}” applied'**
+  String customThemeAppliedNamed(String name);
+
+  /// Message after the custom theme is reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom theme removed'**
+  String get customThemeRemoved;
+
+  /// The Copy current theme as JSON button once it has put the colors in use on the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Current theme copied as JSON'**
+  String get customThemeCopied;
+
+  /// A pasted custom theme isn't JSON. detail is the parser's own (English) explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Not valid JSON: {detail}'**
+  String customThemeNotJson(String detail);
+
+  /// A pasted custom theme is JSON but not an object. Keep "light" and "dark" as they are: they are JSON keys.
+  ///
+  /// In en, this message translates to:
+  /// **'The theme must be a JSON object with \"light\" or \"dark\" colors'**
+  String get customThemeNotObject;
+
+  /// A key in a pasted custom theme isn't one the app knows. key and expected are JSON keys, keep them as they are.
+  ///
+  /// In en, this message translates to:
+  /// **'{key}: unknown key; expected one of {expected}'**
+  String customThemeUnknownKey(String key, String expected);
+
+  /// Like customThemeUnknownKey, with the key that was likely meant.
+  ///
+  /// In en, this message translates to:
+  /// **'{key}: unknown key (did you mean \"{guess}\"?); expected one of {expected}'**
+  String customThemeUnknownKeyGuess(String key, String guess, String expected);
+
+  /// The "name" of a pasted custom theme isn't text. Keep "name" as it is: it's a JSON key.
+  ///
+  /// In en, this message translates to:
+  /// **'name: must be a string'**
+  String get customThemeNameNotText;
+
+  /// A pasted custom theme's light or dark part isn't a JSON object. mode is the JSON key, light or dark.
+  ///
+  /// In en, this message translates to:
+  /// **'{mode}: must be an object of colors'**
+  String customThemeModeNotObject(String mode);
+
+  /// A color in a pasted custom theme can't be read. key is the JSON key; value is what was given. Keep #rgb, #rrggbb and #rrggbbaa as they are.
+  ///
+  /// In en, this message translates to:
+  /// **'{key}: {value} is not a color; use #rgb, #rrggbb or #rrggbbaa'**
+  String customThemeNotAColor(String key, String value);
+
+  /// A pasted custom theme has neither light nor dark colors. Keep "light" and "dark" as they are: they are JSON keys.
+  ///
+  /// In en, this message translates to:
+  /// **'Give at least one of \"light\" or \"dark\"'**
+  String get customThemeNoMode;
+
   /// Label of the Appearance setting that changes the app's look: corners, outlines, shadows and font.
   ///
   /// In en, this message translates to:

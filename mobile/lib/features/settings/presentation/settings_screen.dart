@@ -47,6 +47,7 @@ import '../../picture_search/picture_search.dart';
 import '../../server/data/server_info_provider.dart';
 import '../../sync/data/sync_compatibility.dart';
 import '../../sync/presentation/compatibility_messages.dart';
+import 'custom_theme_sheet.dart';
 import 'editor_preferences_controller.dart';
 import 'theme_preferences_controller.dart';
 
@@ -173,6 +174,7 @@ class _AppearanceSection extends ConsumerWidget {
     final density = ref.watch(displayDensityControllerProvider);
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
+    final customTheme = ref.watch(customThemeControllerProvider);
     final l10n = context.l10n;
     return Section(
       label: l10n.settingsAppearance,
@@ -189,6 +191,19 @@ class _AppearanceSection extends ConsumerWidget {
             value: _SchemeChoice.nameOf(scheme, l10n),
             showChevron: true,
             onTap: () => _showSchemePicker(context),
+          ),
+          GroupedListTile(
+            icon: LucideIcons.braces,
+            label: l10n.settingsCustomTheme,
+            // Lo-fi draws in its own greys.
+            subtitle: style == AppStyle.lofi && customTheme != null
+                ? l10n.settingsCustomThemeLofi
+                : null,
+            value: customTheme == null
+                ? l10n.settingsCustomThemeOff
+                : customTheme.name ?? l10n.settingsCustomThemeOn,
+            showChevron: true,
+            onTap: () => showCustomThemeSheet(context),
           ),
           GroupedListTile(
             icon: LucideIcons.brush,

@@ -481,6 +481,54 @@ html[data-scheme="github"].dark {
   --inverse-danger: #f85149;
 }
 
+html[data-scheme="oled"].light {
+  --background: #f0f4f8;
+  --foreground: #2d3142;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --primary: #2d3142;
+  --muted: #e8ecf1;
+  --muted-foreground: #4f5d75;
+  --accent: #ef8354;
+  --accent-strong: #cc5f2d;
+  --accent-ink: #a44004;
+  --destructive: #c0392b;
+  --border: #d8dee6;
+  --divider: #e6ebf1;
+  --input: #788497;
+  --ring: #cc5f2d;
+  --sidebar: #e9eef3;
+  --sidebar-accent: #ffffff;
+  --inverse: #2d3142;
+  --inverse-foreground: #f0f4f8;
+  --inverse-link: #ef8354;
+  --inverse-danger: #c0392b;
+}
+
+html[data-scheme="oled"].dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0e0e0e;
+  --popover: #0e0e0e;
+  --primary: #ffffff;
+  --muted: #1a1a1a;
+  --muted-foreground: #b3b3b3;
+  --accent: #ef8354;
+  --accent-strong: #ef8354;
+  --accent-ink: #fe976c;
+  --destructive: #ff8a80;
+  --border: #2e2e2e;
+  --divider: #1c1c1c;
+  --input: #6b6b6b;
+  --ring: #ef8354;
+  --sidebar: #000000;
+  --sidebar-accent: #0e0e0e;
+  --inverse: #ffffff;
+  --inverse-foreground: #000000;
+  --inverse-link: #ef8354;
+  --inverse-danger: #ff8a80;
+}
+
 /* Lo-fi draws in its own greys, whatever the scheme. */
 
 html[data-style="lofi"].light {

@@ -5,6 +5,7 @@ import '../motion/page_transitions.dart';
 import 'anchor_appearance.dart';
 import 'anchor_density.dart';
 import 'app_typography.dart';
+import 'custom_theme.dart';
 import 'display_density.dart';
 import 'note_typography.dart';
 import 'tokens/anchor_tokens.dart';
@@ -13,26 +14,30 @@ import 'tokens/app_style.dart';
 
 abstract final class AppTheme {
   static final Map<
-    (Brightness, DisplayDensity, NoteFont, NoteTextSize, String, AppStyle),
+    (
+      Brightness,
+      DisplayDensity,
+      NoteFont,
+      NoteTextSize,
+      String,
+      AppStyle,
+      String?,
+    ),
     ThemeData
   >
   _cache = {};
 
-  /// [scheme] is a colour scheme id (Anchor's own or one of [appSchemes]).
+  /// [scheme] is a colour scheme id (Anchor's own or one of [appSchemes]);
+  /// [custom] is the custom theme over it, if any.
   static ThemeData light([
     DisplayDensity density = DisplayDensity.standard,
     NoteFont font = NoteFont.sans,
     NoteTextSize textSize = NoteTextSize.standard,
     String scheme = anchorSchemeId,
     AppStyle style = AppStyle.standard,
-  ]) => _cache.putIfAbsent((
-    Brightness.light,
-    density,
-    font,
-    textSize,
-    scheme,
-    style,
-  ), () => _build(Brightness.light, density, font, textSize, scheme, style));
+    CustomTheme? custom,
+  ]) =>
+      _cached(Brightness.light, density, font, textSize, scheme, style, custom);
 
   static ThemeData dark([
     DisplayDensity density = DisplayDensity.standard,
@@ -40,14 +45,27 @@ abstract final class AppTheme {
     NoteTextSize textSize = NoteTextSize.standard,
     String scheme = anchorSchemeId,
     AppStyle style = AppStyle.standard,
-  ]) => _cache.putIfAbsent((
-    Brightness.dark,
+    CustomTheme? custom,
+  ]) =>
+      _cached(Brightness.dark, density, font, textSize, scheme, style, custom);
+
+  static ThemeData _cached(
+    Brightness brightness,
+    DisplayDensity density,
+    NoteFont font,
+    NoteTextSize textSize,
+    String scheme,
+    AppStyle style,
+    CustomTheme? custom,
+  ) => _cache.putIfAbsent((
+    brightness,
     density,
     font,
     textSize,
     scheme,
     style,
-  ), () => _build(Brightness.dark, density, font, textSize, scheme, style));
+    custom?.encode(),
+  ), () => _build(brightness, density, font, textSize, scheme, style, custom));
 
   static ThemeData _build(
     Brightness brightness,
@@ -56,16 +74,26 @@ abstract final class AppTheme {
     NoteTextSize textSize,
     String schemeId,
     AppStyle style,
+    CustomTheme? customTheme,
   ) {
     final spacing = AnchorDensity.of(density);
-    // Lo-fi draws in its own greys; null keeps Anchor's own palette.
-    final palette = style == AppStyle.lofi
+    // Lo-fi draws in its own greys, whatever the scheme or custom theme; null
+    // keeps Anchor's own palette.
+    final lofi = style == AppStyle.lofi;
+    final palette = lofi
         ? lofiScheme.of(brightness)
         : schemeById(schemeId)?.of(brightness);
-    final colors = AnchorAppearance.colors(brightness, palette, style);
-    final accentFill = palette == null
-        ? AnchorTokens.colorAccentFill
-        : colors.accentStrong;
+    final custom = lofi ? null : customTheme?.of(brightness);
+    final colors = AnchorAppearance.colors(
+      brightness,
+      palette,
+      style,
+      custom: custom,
+    );
+    final recolored = palette != null || custom != null;
+    final accentFill = recolored
+        ? colors.accentStrong
+        : AnchorTokens.colorAccentFill;
     Color mix(Color a, Color b, double t) => Color.lerp(a, b, t)!;
 
     final scheme = ColorScheme(
@@ -79,9 +107,9 @@ abstract final class AppTheme {
       secondaryContainer: colors.appSubtle,
       onSecondaryContainer: colors.appText,
       tertiary: colors.accentStrong,
-      onTertiary: palette == null
-          ? AnchorTokens.colorBrandWhite
-          : AnchorAppearance.onColor(colors.accentStrong),
+      onTertiary: recolored
+          ? AnchorAppearance.onColor(colors.accentStrong)
+          : AnchorTokens.colorBrandWhite,
       tertiaryContainer: mix(colors.appSurface, accentFill, 0.16),
       onTertiaryContainer: colors.accentInk,
       error: colors.statusDanger,

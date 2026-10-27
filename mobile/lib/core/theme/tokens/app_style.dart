@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import 'anchor_tokens.dart';
 import 'app_schemes.dart';
 
 /// The look chosen in Settings › Appearance › Style, on top of the colour
@@ -37,6 +38,31 @@ enum AppStyle {
 
 /// Anchor's own colour scheme: the palette in `anchor_tokens.dart`.
 const anchorSchemeId = 'anchor';
+
+/// Anchor's own colours as a scheme: what "Copy current theme as JSON" gives
+/// and a custom theme falls back to over Anchor.
+final anchorScheme = AppScheme(
+  id: anchorSchemeId,
+  name: 'Anchor',
+  light: _anchorPalette(AnchorColors.light),
+  dark: _anchorPalette(AnchorColors.dark),
+);
+
+SchemePalette _anchorPalette(AnchorColors colors) => SchemePalette(
+  background: colors.appPage,
+  card: colors.appSurface,
+  sidebar: colors.appSidebar,
+  muted: colors.appSubtle,
+  foreground: colors.appText,
+  mutedForeground: colors.appMuted,
+  accent: AnchorTokens.colorAccentFill,
+  accentStrong: colors.accentStrong,
+  accentInk: colors.accentInk,
+  border: colors.appBorder,
+  divider: colors.appDivider,
+  input: colors.appFieldLine,
+  destructive: colors.statusDanger,
+);
 
 /// The generated scheme with [id]; null for Anchor's own or an unknown id.
 AppScheme? schemeById(String? id) {

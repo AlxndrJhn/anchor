@@ -37,32 +37,35 @@ for (const scheme of [
       if (!/^#[0-9A-Fa-f]{6}$/.test(scheme[mode]?.[field] ?? ""))
         throw new Error(`${scheme.id}.${mode}.${field} must be #RRGGBB`);
 
+/** Which palette field each of the web's colour variables takes. */
+const CSS_VARS = {
+  background: "background",
+  foreground: "foreground",
+  card: "card",
+  popover: "card",
+  primary: "foreground",
+  muted: "muted",
+  "muted-foreground": "mutedForeground",
+  accent: "accent",
+  "accent-strong": "accentStrong",
+  "accent-ink": "accentInk",
+  destructive: "destructive",
+  border: "border",
+  divider: "divider",
+  input: "input",
+  ring: "accentStrong",
+  sidebar: "sidebar",
+  "sidebar-accent": "card",
+  inverse: "foreground",
+  "inverse-foreground": "background",
+  "inverse-link": "accent",
+  "inverse-danger": "destructive",
+};
+
 /** The palette as the web's colour variables. */
 const cssVars = (p) =>
-  Object.entries({
-    background: p.background,
-    foreground: p.foreground,
-    card: p.card,
-    popover: p.card,
-    primary: p.foreground,
-    muted: p.muted,
-    "muted-foreground": p.mutedForeground,
-    accent: p.accent,
-    "accent-strong": p.accentStrong,
-    "accent-ink": p.accentInk,
-    destructive: p.destructive,
-    border: p.border,
-    divider: p.divider,
-    input: p.input,
-    ring: p.accentStrong,
-    sidebar: p.sidebar,
-    "sidebar-accent": p.card,
-    inverse: p.foreground,
-    "inverse-foreground": p.background,
-    "inverse-link": p.accent,
-    "inverse-danger": p.destructive,
-  })
-    .map(([name, value]) => `  --${name}: ${value.toLowerCase()};`)
+  Object.entries(CSS_VARS)
+    .map(([name, field]) => `  --${name}: ${p[field].toLowerCase()};`)
     .join("\n");
 
 const css = [
@@ -77,9 +80,11 @@ const css = [
   "",
 ].join("\n\n");
 
-const swatch = (p) =>
-  `{ background: "${p.background}", card: "${p.card}", foreground: "${p.foreground}", accent: "${p.accent}" }`;
+const SWATCH = ["background", "card", "foreground", "accent"];
+const tsPalette = (p) =>
+  `{\n${FIELDS.map((f) => `      ${f}: "${p[f]}",`).join("\n")}\n    }`;
 const ts = `${header("//")}
+/** The colours a scheme's card shows in Settings. */
 export interface SchemeSwatch {
   background: string;
   card: string;
@@ -87,18 +92,37 @@ export interface SchemeSwatch {
   accent: string;
 }
 
+/** One mode of a colour scheme: every colour the app takes from it. */
+export interface SchemePalette extends SchemeSwatch {
+${FIELDS.filter((f) => !SWATCH.includes(f))
+  .map((f) => `  ${f}: string;`)
+  .join("\n")}
+}
+
 export interface ColorScheme {
   id: string;
   name: string;
-  light: SchemeSwatch;
-  dark: SchemeSwatch;
+  light: SchemePalette;
+  dark: SchemePalette;
 }
+
+/** The palette's fields, in a fixed order. */
+export const PALETTE_FIELDS = [
+${FIELDS.map((f) => `  "${f}",`).join("\n")}
+] as const;
+
+/** Which palette field each CSS colour variable takes, as in schemes.css. */
+export const PALETTE_CSS_VARS: Record<string, keyof SchemePalette> = {
+${Object.entries(CSS_VARS)
+  .map(([name, field]) => `  ${name.includes("-") ? `"${name}"` : name}: "${field}",`)
+  .join("\n")}
+};
 
 export const COLOR_SCHEMES: ColorScheme[] = [
 ${source.schemes
   .map(
     (s) =>
-      `  {\n    id: "${s.id}",\n    name: "${s.name}",\n    light: ${swatch(s.light)},\n    dark: ${swatch(s.dark)},\n  },`,
+      `  {\n    id: "${s.id}",\n    name: "${s.name}",\n    light: ${tsPalette(s.light)},\n    dark: ${tsPalette(s.dark)},\n  },`,
   )
   .join("\n")}
 ];
@@ -117,6 +141,21 @@ ${FIELDS.map((f) => `    required this.${f},`).join("\n")}
   });
 
 ${FIELDS.map((f) => `  final Color ${f};`).join("\n")}
+
+  /// The field names, as in schemes.json and custom theme JSON.
+  static const fields = <String>[
+${FIELDS.map((f) => `    '${f}',`).join("\n")}
+  ];
+
+  /// The colours by field name.
+  Map<String, Color> toMap() => {
+${FIELDS.map((f) => `    '${f}': ${f},`).join("\n")}
+  };
+
+  /// This palette with [colors], keyed by field name, in place of its own.
+  SchemePalette withColors(Map<String, Color> colors) => SchemePalette(
+${FIELDS.map((f) => `    ${f}: colors['${f}'] ?? ${f},`).join("\n")}
+  );
 }
 
 /// A colour scheme offered in Settings, with its light and dark palettes.

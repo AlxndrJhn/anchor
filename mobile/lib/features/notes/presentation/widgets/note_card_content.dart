@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/springs.dart';
+import '../../../../core/theme/anchor_appearance.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
@@ -195,7 +196,10 @@ class NoteCardContent extends StatelessWidget {
         duration: context.motion(AnchorTokens.motionDurationFade),
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: isSelected ? const [] : colors.shadowXs,
+          // On a black page (OLED) the card's own border outlines it.
+          boxShadow: isSelected || AnchorAppearance.isTrueBlack(colors.appPage)
+              ? const []
+              : colors.shadowXs,
         ),
         child: ClipRRect(
           borderRadius: radius,

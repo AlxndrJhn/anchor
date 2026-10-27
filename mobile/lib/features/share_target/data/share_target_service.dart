@@ -87,6 +87,7 @@ class ShareContextSync extends _$ShareContextSync {
       density: ref.watch(displayDensityControllerProvider),
       colorScheme: ref.watch(colorSchemeControllerProvider),
       style: ref.watch(appStyleControllerProvider),
+      customTheme: ref.watch(customThemeControllerProvider),
       tags: sortTagsByName(tags.where((tag) => !tag.isDeleted)),
     );
     _throttle?.cancel();

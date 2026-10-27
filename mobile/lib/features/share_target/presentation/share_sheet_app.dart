@@ -52,7 +52,8 @@ class ShareSheetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ShareContext(:density, :colorScheme, :style) = shareContext;
+    final ShareContext(:density, :colorScheme, :style, :customTheme) =
+        shareContext;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => context.l10n.appName,
@@ -63,6 +64,7 @@ class ShareSheetApp extends StatelessWidget {
         NoteTextSize.standard,
         colorScheme,
         style,
+        customTheme,
       ),
       darkTheme: AppTheme.dark(
         density,
@@ -70,6 +72,7 @@ class ShareSheetApp extends StatelessWidget {
         NoteTextSize.standard,
         colorScheme,
         style,
+        customTheme,
       ),
       themeMode: shareContext.themeMode,
       themeAnimationStyle: AnimationStyle.noAnimation,

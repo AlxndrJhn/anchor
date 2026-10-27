@@ -226,3 +226,62 @@ abstract class _$AppStyleController extends $Notifier<AppStyle> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// The custom theme pasted in Settings, over the colour scheme; null for none.
+
+@ProviderFor(CustomThemeController)
+final customThemeControllerProvider = CustomThemeControllerProvider._();
+
+/// The custom theme pasted in Settings, over the colour scheme; null for none.
+final class CustomThemeControllerProvider
+    extends $NotifierProvider<CustomThemeController, CustomTheme?> {
+  /// The custom theme pasted in Settings, over the colour scheme; null for none.
+  CustomThemeControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'customThemeControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$customThemeControllerHash();
+
+  @$internal
+  @override
+  CustomThemeController create() => CustomThemeController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CustomTheme? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CustomTheme?>(value),
+    );
+  }
+}
+
+String _$customThemeControllerHash() =>
+    r'aa193b11e2d05d62d12c532bf2997187524d0e8f';
+
+/// The custom theme pasted in Settings, over the colour scheme; null for none.
+
+abstract class _$CustomThemeController extends $Notifier<CustomTheme?> {
+  CustomTheme? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<CustomTheme?, CustomTheme?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<CustomTheme?, CustomTheme?>,
+              CustomTheme?,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

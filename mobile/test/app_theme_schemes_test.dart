@@ -6,6 +6,7 @@ import 'package:anchor/core/storage/storage_keys.dart';
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/theme/app_typography.dart';
 import 'package:anchor/core/theme/context_extensions.dart';
+import 'package:anchor/core/theme/custom_theme.dart';
 import 'package:anchor/core/theme/display_density.dart';
 import 'package:anchor/core/theme/note_typography.dart';
 import 'package:anchor/core/theme/style_typography.dart';
@@ -24,6 +25,7 @@ import 'package:anchor/features/settings/presentation/theme_preferences_controll
 import 'package:anchor/features/share_target/domain/share_context.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -91,8 +93,16 @@ class _SettingsApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
+    final custom = ref.watch(customThemeControllerProvider);
     return MaterialApp(
-      theme: _light(scheme, style),
+      theme: AppTheme.light(
+        DisplayDensity.standard,
+        NoteFont.sans,
+        NoteTextSize.standard,
+        scheme,
+        style,
+        custom,
+      ),
       themeAnimationStyle: AnimationStyle.noAnimation,
       builder: (context, child) => StyleTypography(style: style, child: child!),
       home: const SettingsScreen(),
@@ -294,6 +304,70 @@ void main() {
     );
   });
 
+  test('OLED is pure black in dark mode, and its cards keep an outline', () {
+    final oled = schemeById('oled')!;
+    expect(oled.name, 'OLED');
+    expect(oled.dark.background, const Color(0xFF000000));
+    expect(oled.dark.sidebar, const Color(0xFF000000));
+    expect(oled.dark.card, isNot(oled.dark.background));
+
+    final dark = _dark('oled');
+    final colors = dark.extension<AnchorColors>()!;
+    expect(dark.scaffoldBackgroundColor, const Color(0xFF000000));
+    expect(dark.colorScheme.onSurface, const Color(0xFFFFFFFF));
+    // Shadows can't show on black: what they lift gets a hairline instead.
+    expect(colors.shadowXs.single.color, oled.dark.border);
+    expect(colors.shadowXs.single.blurRadius, 0);
+    expect(colors.notes['none']!.bg, oled.dark.card);
+    // High contrast: white on black, and the muted text well past AA.
+    expect(
+      _contrast(oled.dark.mutedForeground, oled.dark.background),
+      greaterThan(7),
+    );
+
+    // Its light side is Anchor's light, and keeps Anchor's soft shadows.
+    final light = _light('oled').extension<AnchorColors>()!;
+    expect(light.appPage, AnchorColors.light.appPage);
+    expect(light.shadowXs, AnchorColors.light.shadowXs);
+  });
+
+  testWidgets(
+    'on OLED a plain note is a near-black card; coloured notes keep theirs',
+    (tester) async {
+      final oled = schemeById('oled')!;
+      late NoteAppearance plain, red;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _dark('oled'),
+          home: Builder(
+            builder: (context) {
+              plain = NoteAppearance.of(context, null);
+              red = NoteAppearance.of(context, 'color_red');
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      expect(plain.colors.bg, oled.dark.card);
+      expect(red.colors.bg, AnchorColors.dark.notes['red']!.bg);
+      // Both stand off the black page.
+      expect(_contrast(red.colors.bg, oled.dark.background), greaterThan(1.2));
+    },
+  );
+
+  test("Gruvbox's dark side is true Gruvbox dark", () {
+    final dark = schemeById('gruvbox')!.dark;
+    expect(dark.background, const Color(0xFF282828)); // bg
+    expect(dark.card, const Color(0xFF3C3836)); // bg1
+    expect(dark.sidebar, const Color(0xFF1D2021)); // bg0_h
+    expect(dark.muted, const Color(0xFF504945)); // bg2
+    expect(dark.foreground, const Color(0xFFEBDBB2)); // fg
+    expect(dark.mutedForeground, const Color(0xFFBDAE93)); // fg3
+    expect(dark.accent, const Color(0xFFFE8019)); // bright orange
+    expect(dark.accentInk, const Color(0xFFFABD2F)); // bright yellow
+    expect(dark.destructive, const Color(0xFFFB4934)); // bright red
+  });
+
   testWidgets('Lo-fi draws every note plain', (tester) async {
     late NoteAppearance yellow;
     late NoteAppearance plain;
@@ -408,5 +482,101 @@ void main() {
       );
       expect(_familyOf(tester, 'Color scheme'), AppTypography.patrickHand);
     });
+
+    testWidgets('applies, checks, copies and resets a custom theme', (
+      tester,
+    ) async {
+      String? clipboard;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipboard = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      final container = await pumpSettings(tester);
+      final appearance = find.ancestor(
+        of: find.text('Custom theme'),
+        matching: find.byType(GroupedList),
+      );
+      Future<void> open() async {
+        await tester.ensureVisible(find.text('Custom theme'));
+        await tester.tap(find.text('Custom theme'));
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> press(String label) async {
+        await tester.pump();
+        await tester.ensureVisible(find.text(label).last);
+        await tester.tap(find.text(label).last);
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
+      expect(
+        find.descendant(of: appearance, matching: find.text('None')),
+        findsOneWidget,
+      );
+      await open();
+      final field = find.byKey(const Key('custom-theme-json'));
+      await tester.enterText(field, '{"light": {"bakground": "#000"}}');
+      await press('Apply');
+      expect(
+        find.textContaining('light.bakground: unknown key'),
+        findsOneWidget,
+      );
+      expect(container.read(customThemeControllerProvider), isNull);
+
+      await tester.enterText(
+        field,
+        '{"name": "Ink", "light": {"background": "#102030"}}',
+      );
+      await press('Apply');
+      expect(find.byKey(const Key('custom-theme-json')), findsNothing);
+      expect(container.read(customThemeControllerProvider)?.name, 'Ink');
+      expect(
+        find.textContaining('Custom theme “Ink” applied', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: appearance, matching: find.text('Ink')),
+        findsOneWidget,
+      );
+      expect(
+        Theme.of(tester.element(appearance)).scaffoldBackgroundColor,
+        const Color(0xFF102030),
+      );
+      const storage = FlutterSecureStorage();
+      expect(
+        await storage.read(key: StorageKeys.customTheme),
+        '{"name":"Ink","light":{"background":"#102030"}}',
+      );
+
+      await open();
+      expect(find.textContaining('"#102030"'), findsOneWidget);
+      await press('Copy current theme as JSON');
+      expect(find.text('Current theme copied as JSON'), findsOneWidget);
+      final copied = parseCustomTheme(clipboard!).theme!;
+      expect(copied.name, 'Ink');
+      expect(copied.light!['background'], const Color(0xFF102030));
+      expect(copied.dark!['background'], AnchorColors.dark.appPage);
+
+      await press('Reset');
+      expect(container.read(customThemeControllerProvider), isNull);
+      expect(await storage.read(key: StorageKeys.customTheme), isNull);
+      expect(
+        find.descendant(of: appearance, matching: find.text('None')),
+        findsOneWidget,
+      );
+    });
   });
+}
+
+double _contrast(Color a, Color b) {
+  final la = a.computeLuminance(), lb = b.computeLuminance();
+  final hi = la > lb ? la : lb, lo = la > lb ? lb : la;
+  return (hi + 0.05) / (lo + 0.05);
 }

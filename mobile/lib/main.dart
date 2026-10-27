@@ -64,6 +64,7 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     final density = ref.watch(displayDensityControllerProvider);
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
+    final customTheme = ref.watch(customThemeControllerProvider);
     final (font, textSize) = ref.watch(
       editorPreferencesControllerProvider.select(
         (editor) => (editor.noteFont, editor.noteTextSize),
@@ -82,8 +83,22 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
 
     return MaterialApp.router(
       onGenerateTitle: (context) => context.l10n.appName,
-      theme: AppTheme.light(density, font, textSize, scheme, style),
-      darkTheme: AppTheme.dark(density, font, textSize, scheme, style),
+      theme: AppTheme.light(
+        density,
+        font,
+        textSize,
+        scheme,
+        style,
+        customTheme,
+      ),
+      darkTheme: AppTheme.dark(
+        density,
+        font,
+        textSize,
+        scheme,
+        style,
+        customTheme,
+      ),
       themeMode: themeMode,
       themeAnimationStyle: isSystemMotionReduced
           ? AnimationStyle.noAnimation

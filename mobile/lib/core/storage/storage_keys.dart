@@ -10,6 +10,7 @@ class StorageKeys {
   static const displayDensity = 'display_density';
   static const colorScheme = 'color_scheme';
   static const appStyle = 'app_style';
+  static const customTheme = 'custom_theme';
   static const sortChecklistItems = 'editor_sort_checklist_items';
   static const burnDeleted = 'editor_burn_deleted';
   static const foldedChecklistNotes = 'editor_folded_checklist_notes';

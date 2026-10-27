@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/custom_theme.dart';
 import '../../../core/theme/display_density.dart';
 import '../../../core/theme/tokens/app_style.dart';
 import '../../tags/domain/tag.dart';
@@ -12,6 +13,7 @@ class ShareContext {
     this.density = DisplayDensity.standard,
     this.colorScheme = anchorSchemeId,
     this.style = AppStyle.standard,
+    this.customTheme,
     this.tags = const [],
   });
 
@@ -23,6 +25,7 @@ class ShareContext {
   final DisplayDensity density;
   final String colorScheme;
   final AppStyle style;
+  final CustomTheme? customTheme;
 
   /// In name order.
   final List<Tag> tags;
@@ -34,6 +37,7 @@ class ShareContext {
     'density': density.name,
     'scheme': colorScheme,
     'style': style.id,
+    'customTheme': customTheme?.encode(),
     'tags': [
       for (final tag in tags)
         {'id': tag.id, 'name': tag.name, 'color': tag.color},
@@ -59,6 +63,10 @@ class ShareContext {
         final String id => id,
         _ => null,
       }),
+      customTheme: switch (json['customTheme']) {
+        final String stored => CustomTheme.decode(stored),
+        _ => null,
+      },
       tags: [
         if (tags is List)
           for (final tag in tags)

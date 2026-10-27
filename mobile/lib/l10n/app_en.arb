@@ -724,6 +724,142 @@
   "@colorSchemeAnchor": {
     "description": "Name of the app's own color scheme, listed with Nord, Dracula and others. The app's name."
   },
+  "settingsCustomTheme": "Custom theme",
+  "@settingsCustomTheme": {
+    "description": "Label of the Appearance setting where colors pasted as JSON override the color scheme's."
+  },
+  "settingsCustomThemeOff": "None",
+  "@settingsCustomThemeOff": {
+    "description": "Value of the Custom theme setting while no custom theme is applied."
+  },
+  "settingsCustomThemeOn": "On",
+  "@settingsCustomThemeOn": {
+    "description": "Value of the Custom theme setting while an unnamed custom theme is applied."
+  },
+  "settingsCustomThemeLofi": "Lo-fi keeps its pencil grays, so the custom theme waits for another style.",
+  "@settingsCustomThemeLofi": {
+    "description": "Under the Custom theme setting while the Lo-fi style is on, which ignores custom colors. Lo-fi is the style's name."
+  },
+  "customThemeHelp": "Paste a theme as JSON: colors for light, dark or both. Anything left out keeps the color scheme's color. Kept on this device; the same JSON works on the web.",
+  "@customThemeHelp": {
+    "description": "Explains the Custom theme sheet. JSON is a text format; light and dark are the app's two modes."
+  },
+  "customThemeJsonLabel": "Theme JSON",
+  "@customThemeJsonLabel": {
+    "description": "Accessibility label of the text box where a custom theme is pasted as JSON."
+  },
+  "customThemeApply": "Apply",
+  "@customThemeApply": {
+    "description": "Button that applies the pasted custom theme."
+  },
+  "customThemeReset": "Reset",
+  "@customThemeReset": {
+    "description": "Button that removes the custom theme and goes back to the color scheme's colors."
+  },
+  "customThemeCopy": "Copy current theme as JSON",
+  "@customThemeCopy": {
+    "description": "Button that puts the colors in use now, as JSON, in the text box and on the clipboard, to start a custom theme from."
+  },
+  "customThemeApplied": "Custom theme applied",
+  "@customThemeApplied": {
+    "description": "Message after a custom theme is applied."
+  },
+  "customThemeAppliedNamed": "Custom theme “{name}” applied",
+  "@customThemeAppliedNamed": {
+    "description": "Message after a custom theme with a name is applied.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ink"
+      }
+    }
+  },
+  "customThemeRemoved": "Custom theme removed",
+  "@customThemeRemoved": {
+    "description": "Message after the custom theme is reset."
+  },
+  "customThemeCopied": "Current theme copied as JSON",
+  "@customThemeCopied": {
+    "description": "The Copy current theme as JSON button once it has put the colors in use on the clipboard."
+  },
+  "customThemeNotJson": "Not valid JSON: {detail}",
+  "@customThemeNotJson": {
+    "description": "A pasted custom theme isn't JSON. detail is the parser's own (English) explanation.",
+    "placeholders": {
+      "detail": {
+        "type": "String",
+        "example": "Unexpected end of input"
+      }
+    }
+  },
+  "customThemeNotObject": "The theme must be a JSON object with \"light\" or \"dark\" colors",
+  "@customThemeNotObject": {
+    "description": "A pasted custom theme is JSON but not an object. Keep \"light\" and \"dark\" as they are: they are JSON keys."
+  },
+  "customThemeUnknownKey": "{key}: unknown key; expected one of {expected}",
+  "@customThemeUnknownKey": {
+    "description": "A key in a pasted custom theme isn't one the app knows. key and expected are JSON keys, keep them as they are.",
+    "placeholders": {
+      "key": {
+        "type": "String",
+        "example": "dark.text"
+      },
+      "expected": {
+        "type": "String",
+        "example": "background, card, foreground"
+      }
+    }
+  },
+  "customThemeUnknownKeyGuess": "{key}: unknown key (did you mean \"{guess}\"?); expected one of {expected}",
+  "@customThemeUnknownKeyGuess": {
+    "description": "Like customThemeUnknownKey, with the key that was likely meant.",
+    "placeholders": {
+      "key": {
+        "type": "String",
+        "example": "dark.backgroud"
+      },
+      "guess": {
+        "type": "String",
+        "example": "background"
+      },
+      "expected": {
+        "type": "String",
+        "example": "background, card, foreground"
+      }
+    }
+  },
+  "customThemeNameNotText": "name: must be a string",
+  "@customThemeNameNotText": {
+    "description": "The \"name\" of a pasted custom theme isn't text. Keep \"name\" as it is: it's a JSON key."
+  },
+  "customThemeModeNotObject": "{mode}: must be an object of colors",
+  "@customThemeModeNotObject": {
+    "description": "A pasted custom theme's light or dark part isn't a JSON object. mode is the JSON key, light or dark.",
+    "placeholders": {
+      "mode": {
+        "type": "String",
+        "example": "dark"
+      }
+    }
+  },
+  "customThemeNotAColor": "{key}: {value} is not a color; use #rgb, #rrggbb or #rrggbbaa",
+  "@customThemeNotAColor": {
+    "description": "A color in a pasted custom theme can't be read. key is the JSON key; value is what was given. Keep #rgb, #rrggbb and #rrggbbaa as they are.",
+    "placeholders": {
+      "key": {
+        "type": "String",
+        "example": "light.card"
+      },
+      "value": {
+        "type": "String",
+        "example": "\"#12\""
+      }
+    }
+  },
+  "customThemeNoMode": "Give at least one of \"light\" or \"dark\"",
+  "@customThemeNoMode": {
+    "description": "A pasted custom theme has neither light nor dark colors. Keep \"light\" and \"dark\" as they are: they are JSON keys."
+  },
   "settingsStyle": "Style",
   "@settingsStyle": {
     "description": "Label of the Appearance setting that changes the app's look: corners, outlines, shadows and font."

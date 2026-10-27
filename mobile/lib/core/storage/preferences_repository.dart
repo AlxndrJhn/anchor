@@ -154,6 +154,19 @@ class PreferencesRepository {
     await _storage.write(key: StorageKeys.appStyle, value: style);
   }
 
+  /// The custom theme's JSON, as `CustomTheme.encode` writes it.
+  Future<String?> getCustomTheme() =>
+      _storage.read(key: StorageKeys.customTheme);
+
+  /// Null removes the custom theme.
+  Future<void> setCustomTheme(String? json) async {
+    if (json == null) {
+      await _storage.delete(key: StorageKeys.customTheme);
+    } else {
+      await _storage.write(key: StorageKeys.customTheme, value: json);
+    }
+  }
+
   Future<bool> getAllowSelfSignedCert() async {
     final value = await _storage.read(key: StorageKeys.allowSelfSignedCert);
     return value == 'true';

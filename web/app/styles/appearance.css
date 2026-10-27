@@ -1,12 +1,16 @@
 /*
  * Settings › Appearance. The colour schemes themselves are generated into
  * schemes.css; this file holds what they share and the three styles.
+ * A custom theme (lib/design/custom-theme) puts data-custom-theme on <html>
+ * and its colours in a <style id="custom-theme">.
  * <html> carries data-scheme (any but Anchor's own) and data-style (any but
  * Default).
  */
 
-/* A plain note takes the scheme's card colour instead of Anchor's white. */
+/* A plain note takes the scheme's (or custom theme's) card colour instead of
+   Anchor's white. */
 html[data-scheme] [data-note=""],
+html[data-custom-theme] [data-note=""],
 html[data-style] [data-note=""] {
   --note: var(--card);
   --note-surface: color-mix(in srgb, var(--foreground) 7%, var(--card));
