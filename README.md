@@ -82,6 +82,7 @@ differences. "Web" and "Android" say where each one is available.
 | Next.js upgraded to 16.4.3 for security fixes | ✓ | |
 | **Releases** | | |
 | Every push to `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
+| A desktop app for Windows and macOS: your server's web client in its own window, in every release (see [Desktop App](#desktop-app)) | ✓ | |
 
 ## Features
 
@@ -233,6 +234,34 @@ Download the Android mobile app.
 
    Once installed, the app finds and installs new releases itself
    (Settings › Updates).
+
+## Desktop App
+
+A Windows and macOS app that opens the web client of your own Anchor server in
+its own window, with everything the web app has (offline use, keyboard
+shortcuts). It does not store notes itself; it connects to your server.
+
+1. **Download it** from this fork's
+   [releases page](https://github.com/AlxndrJhn/anchor/releases):
+   - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
+   - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
+     open it and drag Anchor to Applications
+
+2. **Connect:** on first launch, enter the address you open Anchor at in your
+   browser, such as `https://notes.example.com`. The app checks that the server
+   answers, then remembers it. **Change server…** (File menu on Windows, the
+   Anchor menu on macOS) switches to another one.
+
+The builds are not signed, so the system warns the first time:
+
+- **macOS:** right-click Anchor in Applications and choose **Open**, then
+  **Open** again; or try to open it once, then allow it under **System
+  Settings › Privacy & Security** (**Open Anyway**).
+- **Windows:** if SmartScreen says it protected your PC, choose
+  **More info › Run anyway**.
+
+Links to other websites open in your browser. To build it yourself:
+`cd desktop && pnpm install && pnpm run dist:win` (or `dist:mac`).
 
 ## OIDC Authentication
 
