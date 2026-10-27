@@ -28,6 +28,7 @@ class AnchorApp extends ConsumerWidget {
     final density = ref.watch(displayDensityControllerProvider);
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
+    final customTheme = ref.watch(customThemeControllerProvider);
 
     // Initialize sync manager to listen for connectivity changes
     ref.watch(syncManagerProvider);
@@ -48,8 +49,8 @@ class AnchorApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Anchor Notes',
-      theme: AppTheme.light(density, scheme, style),
-      darkTheme: AppTheme.dark(density, scheme, style),
+      theme: AppTheme.light(density, scheme, style, customTheme),
+      darkTheme: AppTheme.dark(density, scheme, style, customTheme),
       themeMode: themeMode,
       routerConfig: router,
       localizationsDelegates: const [

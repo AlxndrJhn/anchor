@@ -9,7 +9,6 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/app_dimensions.dart';
 import '../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../core/theme/tokens/app_opacity.dart';
-import '../../../core/theme/tokens/app_palette.dart';
 import '../../../core/theme/tokens/app_radius.dart';
 import '../../../core/theme/tokens/app_schemes.dart';
 import '../../../core/theme/tokens/app_style.dart';
@@ -26,6 +25,7 @@ import '../../auth/presentation/auth_controller.dart';
 import '../data/server_info_provider.dart';
 import 'controllers/editor_preferences_controller.dart';
 import 'controllers/theme_preferences_controller.dart';
+import 'custom_theme_editor.dart';
 import '../../sync/data/sync_compatibility.dart';
 import '../../../core/update/app_release.dart';
 import '../../../core/update/app_updater.dart';
@@ -180,6 +180,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               .setScheme(id),
                         ),
                       ],
+                    ),
+
+                    const _Section(
+                      title: 'Custom theme',
+                      icon: LucideIcons.braces,
+                      children: [CustomThemeEditor()],
                     ),
 
                     _Section(
@@ -348,42 +354,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-/// Anchor's own scheme, as a swatch beside the generated ones.
-const _anchorScheme = AppScheme(
-  id: anchorSchemeId,
-  name: 'Anchor',
-  light: SchemePalette(
-    background: AppPalette.bgLight,
-    card: AppPalette.surfaceLight,
-    sidebar: AppPalette.gradientLightBottom,
-    muted: AppPalette.shimmerBaseLight,
-    foreground: AppPalette.slate,
-    mutedForeground: AppPalette.slateBlue,
-    accent: AppPalette.burntOrange,
-    accentStrong: AppPalette.burntOrange,
-    accentInk: AppPalette.burntOrange,
-    border: AppPalette.shimmerBaseLight,
-    divider: AppPalette.shimmerBaseLight,
-    input: AppPalette.slateBlue,
-    destructive: Color(0xFFD32F2F),
-  ),
-  dark: SchemePalette(
-    background: AppPalette.bgDark,
-    card: AppPalette.surfaceDark,
-    sidebar: AppPalette.bgDark,
-    muted: AppPalette.shimmerBaseDark,
-    foreground: AppPalette.offWhite,
-    mutedForeground: AppPalette.slateBlue,
-    accent: AppPalette.burntOrange,
-    accentStrong: AppPalette.burntOrange,
-    accentInk: AppPalette.burntOrange,
-    border: AppPalette.shimmerBaseDark,
-    divider: AppPalette.shimmerBaseDark,
-    input: AppPalette.slateBlue,
-    destructive: Color(0xFFEF5350),
-  ),
-);
-
 /// A grid of colour scheme swatches, each in the current brightness.
 class _SchemePicker extends StatelessWidget {
   const _SchemePicker({
@@ -415,7 +385,7 @@ class _SchemePicker extends StatelessWidget {
                 spacing: gap,
                 runSpacing: gap,
                 children: [
-                  for (final scheme in [_anchorScheme, ...appSchemes])
+                  for (final scheme in [anchorScheme, ...appSchemes])
                     SizedBox(
                       width: width,
                       child: _SchemeTile(

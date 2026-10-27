@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/app_initializer.dart' as app_init;
+import '../../../../core/theme/custom_theme.dart';
 import '../../../../core/theme/tokens/app_dimensions.dart';
 import '../../../../core/theme/tokens/app_style.dart';
 import 'editor_preferences_controller.dart';
@@ -58,5 +59,29 @@ class AppStyleController extends _$AppStyleController {
     state = style;
     final repository = ref.read(preferencesRepositoryProvider);
     await repository.setAppStyle(style.id);
+  }
+}
+
+/// The custom theme pasted in Settings, over the colour scheme; null for none.
+@Riverpod(keepAlive: true)
+class CustomThemeController extends _$CustomThemeController {
+  @override
+  CustomTheme? build() => app_init.initialCustomTheme;
+
+  /// Applies the theme in [json] and returns nothing, or returns what's
+  /// wrong with it and changes nothing.
+  Future<List<String>> apply(String json) async {
+    final result = parseCustomTheme(json);
+    if (!result.isOk) return result.errors;
+    state = result.theme;
+    await ref
+        .read(preferencesRepositoryProvider)
+        .setCustomTheme(result.theme!.encode());
+    return const [];
+  }
+
+  Future<void> reset() async {
+    state = null;
+    await ref.read(preferencesRepositoryProvider).setCustomTheme(null);
   }
 }

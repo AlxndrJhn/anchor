@@ -7,6 +7,7 @@ import { type AppStyle, usePreferencesStore } from "@/features/preferences";
 import { COLOR_SCHEMES, type SchemeSwatch } from "@/lib/design/schemes";
 import { switchTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { CustomThemeEditor } from "./custom-theme-editor";
 import { Row, RowText, Section } from "./settings-blocks";
 
 function ThemeThumb({ theme }: { theme: "light" | "dark" }) {
@@ -190,6 +191,7 @@ function SchemeAndStyle() {
           }))}
         />
       </Row>
+      <CustomThemeEditor />
       <Row className="grid items-start gap-3.5">
         <RowText title="Style" text="Shapes, shadows and type." />
         <RadioCards

@@ -60,6 +60,12 @@
       "name": "GitHub",
       "light": { "background": "#F6F8FA", "card": "#FFFFFF", "sidebar": "#EFF2F5", "muted": "#EAEEF2", "foreground": "#1F2328", "mutedForeground": "#59636E", "accent": "#0969DA", "accentStrong": "#0969DA", "accentInk": "#0550AE", "border": "#D1D9E0", "divider": "#E6EAEF", "input": "#818B98", "destructive": "#CF222E" },
       "dark": { "background": "#0D1117", "card": "#151B23", "sidebar": "#010409", "muted": "#212830", "foreground": "#F0F6FC", "mutedForeground": "#9198A1", "accent": "#4493F8", "accentStrong": "#4493F8", "accentInk": "#79C0FF", "border": "#3D444D", "divider": "#262C36", "input": "#656C76", "destructive": "#F85149" }
+    },
+    {
+      "id": "oled",
+      "name": "OLED",
+      "light": { "background": "#F0F4F8", "card": "#FFFFFF", "sidebar": "#E9EEF3", "muted": "#E8ECF1", "foreground": "#2D3142", "mutedForeground": "#4F5D75", "accent": "#EF8354", "accentStrong": "#CC5F2D", "accentInk": "#A44004", "border": "#D8DEE6", "divider": "#E6EBF1", "input": "#788497", "destructive": "#C0392B" },
+      "dark": { "background": "#000000", "card": "#0E0E0E", "sidebar": "#000000", "muted": "#1A1A1A", "foreground": "#FFFFFF", "mutedForeground": "#B3B3B3", "accent": "#EF8354", "accentStrong": "#EF8354", "accentInk": "#FE976C", "border": "#2E2E2E", "divider": "#1C1C1C", "input": "#6B6B6B", "destructive": "#FF8A80" }
     }
   ],
   "lofi": {

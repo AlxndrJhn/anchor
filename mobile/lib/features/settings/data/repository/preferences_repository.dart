@@ -11,6 +11,7 @@ class PreferenceKeys {
   static const displayDensity = 'display_density';
   static const colorScheme = 'color_scheme';
   static const appStyle = 'app_style';
+  static const customTheme = 'custom_theme';
   static const exactAlarmsOffered = 'reminders_exact_alarms_offered';
   static const checkForUpdates = 'updates_check_automatically';
   static const dismissedUpdate = 'updates_dismissed_build';
@@ -100,5 +101,14 @@ class PreferencesRepository {
 
   Future<void> setAppStyle(String style) async {
     await _storage.write(key: PreferenceKeys.appStyle, value: style);
+  }
+
+  /// The custom theme's JSON; null removes it.
+  Future<void> setCustomTheme(String? json) async {
+    if (json == null) {
+      await _storage.delete(key: PreferenceKeys.customTheme);
+    } else {
+      await _storage.write(key: PreferenceKeys.customTheme, value: json);
+    }
   }
 }
