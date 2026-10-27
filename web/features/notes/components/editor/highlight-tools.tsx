@@ -27,6 +27,8 @@ import {
   rememberConversion,
   toggleTextFormat,
 } from "../../quill";
+import { useColorsMenu } from "./colors-menu";
+import { TextStyleButton } from "./text-style-tools";
 
 export type HighlightColor = (typeof HIGHLIGHTS)[number];
 
@@ -62,8 +64,6 @@ const useLastHighlightColor = create<{
 }));
 
 const highlightKeys = () => (isMac() ? "⇧⌘H" : "Ctrl+Shift+H");
-
-const useColorsMenu = create<{ isOpen: boolean }>(() => ({ isOpen: false }));
 
 function applyHighlight(quill: QuillInstance, color: HighlightColor) {
   const selection = quill.getSelection();
@@ -578,6 +578,7 @@ export function SelectionToolbar({
           </button>
         </Tip>
       ))}
+      <TextStyleButton getQuill={getQuill} className="fb" inBubble />
       <span className="dv" aria-hidden />
       <Tip label="Remove highlight">
         <button
