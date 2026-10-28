@@ -2,7 +2,7 @@ type NoteState = "active" | "trashed" | "deleted";
 export type NoteSharePermission = "viewer" | "editor";
 type NotePermission = "owner" | NoteSharePermission;
 
-type AttachmentType = "image" | "audio";
+type AttachmentType = "image" | "audio" | "file";
 
 export interface NoteAttachment {
   id: string;

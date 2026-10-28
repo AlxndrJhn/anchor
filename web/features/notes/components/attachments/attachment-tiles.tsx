@@ -1,12 +1,20 @@
 "use client";
 
-import { CircleAlert, Pause, Play, X } from "lucide-react";
+import {
+  CircleAlert,
+  Download,
+  File as FileIcon,
+  Pause,
+  Play,
+  X,
+} from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { fetchAttachmentBlob } from "../../api";
 import { useAttachmentBlob } from "../../hooks/use-attachment-blob";
 import type { NoteAttachment } from "../../types";
 
-export type Kind = "image" | "audio";
+export type Kind = "image" | "audio" | "file";
 
 export interface Upload {
   key: string;
@@ -257,6 +265,98 @@ export function VoiceCard({
   );
 }
 
+/** “820 KB”, “3.4 MB”. */
+export function fileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/** Any other file: its name and size, and a button that downloads it. */
+export function FileCard({
+  noteId,
+  attachment,
+  moving,
+  onPointerDown,
+  onKeyDown,
+  onDelete,
+}: TileProps) {
+  const [state, setState] = React.useState<"ready" | "loading" | "failed">(
+    "ready",
+  );
+  const name = attachment.originalFilename;
+
+  const download = async () => {
+    setState("loading");
+    try {
+      const blob = await fetchAttachmentBlob(noteId, attachment.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setState("ready");
+    } catch {
+      setState("failed");
+    }
+  };
+
+  return (
+    <div
+      className={cn("att-audio att-file", `st-${state}`)}
+      data-flip={attachment.id}
+      data-id={attachment.id}
+      data-group="file"
+      data-moving={moving || undefined}
+      onPointerDown={onPointerDown}
+    >
+      <div className="aa-top">
+        <button
+          type="button"
+          className="play"
+          aria-label={`Download ${name}`}
+          disabled={state === "loading"}
+          onClick={() => void download()}
+          onKeyDown={onKeyDown}
+        >
+          {state === "loading" ? (
+            <FileIcon aria-hidden />
+          ) : (
+            <Download aria-hidden />
+          )}
+        </button>
+        <div className="aa-meta">
+          <span className="aa-name" title={name}>
+            {name}
+          </span>
+          <span className="a-time">{fileSize(attachment.fileSize)}</span>
+          <span className="a-fail">
+            Couldn’t download
+            <button
+              type="button"
+              onClick={() => void download()}
+              aria-label={`Try again, ${name}`}
+            >
+              Try again
+            </button>
+          </span>
+        </div>
+      </div>
+      {onDelete && (
+        <button
+          type="button"
+          className="t-x"
+          aria-label={`Delete ${name}`}
+          onClick={onDelete}
+        >
+          <X aria-hidden />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function UploadTile({
   upload,
   onRetry,
@@ -277,15 +377,16 @@ export function UploadTile({
       <X aria-hidden />
     </button>
   );
-  if (upload.kind === "audio")
+  if (upload.kind !== "image")
     return (
       <div
         className={cn(
           "att-audio",
+          upload.kind === "file" && "att-file",
           upload.failed ? "st-failed" : "st-uploading",
         )}
         data-flip={upload.key}
-        data-group="audio"
+        data-group={upload.kind}
         data-upload
         style={
           { "--p": `${(upload.progress ?? 0) * 100}%` } as React.CSSProperties
@@ -293,7 +394,7 @@ export function UploadTile({
       >
         <div className="aa-top">
           <span className="play" aria-hidden>
-            <Play />
+            {upload.kind === "file" ? <FileIcon /> : <Play />}
           </span>
           <div className="aa-meta">
             <span className="aa-name">{name}</span>

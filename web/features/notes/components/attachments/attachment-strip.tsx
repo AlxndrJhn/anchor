@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mic, Plus } from "lucide-react";
+import { File as FileIcon, Mic, Plus } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { create } from "zustand";
@@ -15,14 +15,11 @@ import {
   reorderAttachments,
   uploadAttachment,
 } from "../../api";
-import {
-  ACCEPTED_TYPES_STRING,
-  isAcceptedAttachmentType,
-  MAX_ATTACHMENT_SIZE,
-} from "../../constants";
+import { attachmentKindOf, MAX_ATTACHMENT_SIZE } from "../../constants";
 import { blobUrlFor, releaseBlobUrl } from "../../hooks/use-attachment-blob";
 import type { NoteAttachment } from "../../types";
 import {
+  FileCard,
   type Kind,
   PictureTile,
   type Upload,
@@ -93,6 +90,7 @@ export function moveAttachment(
     list: [
       ...(moving.type === "image" ? group : shownOf("image")),
       ...(moving.type === "audio" ? group : shownOf("audio")),
+      ...(moving.type === "file" ? group : shownOf("file")),
       ...list.filter((a) => hidden.has(a.id)),
     ],
     place,
@@ -187,6 +185,7 @@ export function AttachmentStrip({
   const shown = attachments.filter((a) => !pending.has(a.id));
   const pictures = shown.filter((a) => a.type === "image");
   const voice = shown.filter((a) => a.type === "audio");
+  const files = shown.filter((a) => a.type === "file");
   const hasFiles = shown.length + uploads.length > 0;
   React.useEffect(() => onHasFiles?.(hasFiles), [hasFiles, onHasFiles]);
   const canDelete = (a: NoteAttachment) =>
@@ -250,18 +249,14 @@ export function AttachmentStrip({
 
   const add = async (files: File[]) => {
     if (!canEdit || !files.length) return;
-    const rejected = files.filter(
-      (f) => !isAcceptedAttachmentType(f) || f.size > MAX_ATTACHMENT_SIZE,
-    );
+    const rejected = files.filter((f) => f.size > MAX_ATTACHMENT_SIZE);
     const accepted = files.filter((f) => !rejected.includes(f));
     if (rejected.length)
-      toast.error(
-        `Can’t add ${names(rejected)}. Pick pictures or audio up to 50 MB.`,
-      );
+      toast.error(`Can’t add ${names(rejected)}. Files can be up to 50 MB.`);
     if (!accepted.length) return;
 
     const fresh: Upload[] = accepted.map((file) => {
-      const kind: Kind = file.type.startsWith("image/") ? "image" : "audio";
+      const kind: Kind = attachmentKindOf(file.type);
       return {
         key: `u${++uploadSerial}`,
         file,
@@ -401,7 +396,7 @@ export function AttachmentStrip({
     const add =
       strip.current?.querySelector<HTMLElement>(".att-add") ??
       document.querySelector<HTMLElement>(
-        'button[aria-label="Add a picture or audio"]',
+        'button[aria-label="Add a picture, recording or file"]',
       );
     add?.focus();
     return !!add && document.activeElement === add;
@@ -625,6 +620,7 @@ export function AttachmentStrip({
 
   const imageUploads = uploads.filter((u) => u.kind === "image");
   const audioUploads = uploads.filter((u) => u.kind === "audio");
+  const fileUploads = uploads.filter((u) => u.kind === "file");
   const visible = shown.length + uploads.length > 0;
 
   return (
@@ -634,7 +630,6 @@ export function AttachmentStrip({
         type="file"
         multiple
         hidden
-        accept={ACCEPTED_TYPES_STRING}
         onChange={(e) => {
           const files = [...(e.target.files ?? [])];
           e.target.value = "";
@@ -706,6 +701,32 @@ export function AttachmentStrip({
               </React.Fragment>
             ))}
             {line("audio", voice.length)}
+            {fileUploads.map((upload) => (
+              <UploadTile
+                key={upload.key}
+                upload={upload}
+                onRetry={() => void retryUpload(upload)}
+                onCancel={() => cancelUpload(upload)}
+              />
+            ))}
+            {files.map((attachment, i) => (
+              <React.Fragment key={attachment.id}>
+                {line("file", i)}
+                <FileCard
+                  noteId={noteId as string}
+                  attachment={attachment}
+                  moving={drag?.id === attachment.id}
+                  onPointerDown={(e) => startDrag(e, attachment, "file", i)}
+                  onKeyDown={(e) => nudge(e, "file", attachment.id)}
+                  onDelete={
+                    canDelete(attachment)
+                      ? () => deleteTile(attachment)
+                      : undefined
+                  }
+                />
+              </React.Fragment>
+            ))}
+            {line("file", files.length)}
             {canEdit && (
               <button
                 type="button"
@@ -735,6 +756,8 @@ export function AttachmentStrip({
           >
             {drag.picture ? (
               <img src={drag.picture} alt="" />
+            ) : drag.kind === "file" ? (
+              <FileIcon aria-hidden />
             ) : (
               <Mic aria-hidden />
             )}

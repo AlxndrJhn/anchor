@@ -450,3 +450,36 @@
     --indent: 22px;
   }
 }
+
+/* A picture placed in the text (Android), at the width it was given there. */
+.ql-editor .note-image {
+  display: block;
+  width: var(--note-image-width, 100%);
+  max-width: 100%;
+  margin: 0.5em 0;
+}
+.ql-editor .note-image > span {
+  display: block;
+}
+.ql-editor .note-image img {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  border-radius: var(--radius-tile, 12px);
+  background: color-mix(
+    in srgb,
+    var(--note-border, currentColor) 30%,
+    transparent
+  );
+}
+.ql-editor .note-image img[src] {
+  min-height: 0;
+  background: none;
+}
+.ql-editor .note-image-caption {
+  display: block;
+  margin-top: 0.35em;
+  font-size: 0.875em;
+  text-align: center;
+  color: var(--note-muted, inherit);
+}

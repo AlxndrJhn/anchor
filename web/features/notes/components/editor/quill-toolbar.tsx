@@ -364,7 +364,11 @@ export function QuillToolbar({
         },
       )}
       {onAddAttachment &&
-        toolButton("Add a picture or audio", <ImagePlus />, onAddAttachment)}
+        toolButton(
+          "Add a picture, recording or file",
+          <ImagePlus />,
+          onAddAttachment,
+        )}
       {onRecordAudio && toolButton("Record audio", <Mic />, onRecordAudio)}
     </div>
   );

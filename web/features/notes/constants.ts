@@ -15,17 +15,14 @@ const ACCEPTED_AUDIO_TYPES = [
   "audio/webm",
 ] as const;
 
-const ACCEPTED_ATTACHMENT_TYPES = [
-  ...ACCEPTED_IMAGE_TYPES,
-  ...ACCEPTED_AUDIO_TYPES,
-] as const;
-
 export const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024;
 
-export const ACCEPTED_TYPES_STRING = ACCEPTED_ATTACHMENT_TYPES.join(",");
+const IMAGE_MIME_SET = new Set<string>(ACCEPTED_IMAGE_TYPES);
+const AUDIO_MIME_SET = new Set<string>(ACCEPTED_AUDIO_TYPES);
 
-const ACCEPTED_MIME_SET = new Set<string>(ACCEPTED_ATTACHMENT_TYPES);
-
-export function isAcceptedAttachmentType(file: File): boolean {
-  return ACCEPTED_MIME_SET.has(file.type);
+/** How an attachment of this type shows: any other file is kept as a file. */
+export function attachmentKindOf(mimeType: string): "image" | "audio" | "file" {
+  if (IMAGE_MIME_SET.has(mimeType)) return "image";
+  if (AUDIO_MIME_SET.has(mimeType)) return "audio";
+  return "file";
 }

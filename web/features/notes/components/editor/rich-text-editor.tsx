@@ -21,6 +21,7 @@ import { watchHighlights } from "@/lib/highlight-paint";
 import { hasShortcutKey } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { stampFor } from "../../date-stamp";
+import { showInlineImages } from "../../inline-images";
 import type { LinkRange } from "../../link-utils";
 import {
   isFullUrl,
@@ -158,6 +159,8 @@ interface RichTextEditorProps {
   onAddAttachment?: () => void;
   onRecordAudio?: () => void;
   below?: React.ReactNode;
+  /** Loads the pictures placed in the text; none show without it. */
+  noteId?: string;
 }
 
 export interface RichTextEditorHandle {
@@ -192,6 +195,7 @@ export const RichTextEditor = forwardRef<
       onAddAttachment,
       onRecordAudio,
       below,
+      noteId,
     },
     ref,
   ) => {
@@ -272,6 +276,19 @@ export const RichTextEditor = forwardRef<
         stop?.();
       };
     }, [editorContainerEl]);
+
+    useEffect(() => {
+      const host = editorContainerEl;
+      if (!host || !noteId) return;
+      const show = () => {
+        const root = host.querySelector<HTMLElement>(".ql-editor");
+        if (root) showInlineImages(root, noteId);
+      };
+      show();
+      const observer = new MutationObserver(show);
+      observer.observe(host, { childList: true, subtree: true });
+      return () => observer.disconnect();
+    }, [editorContainerEl, noteId]);
 
     const [longContent, setLongContent] = useState<QuillDelta | null>(() => {
       const content = parseStoredContent(value);
