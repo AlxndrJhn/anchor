@@ -9,6 +9,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { hasShortcutKey, isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
+import { DesktopUpdateButton } from "./desktop-update";
 import { useShellStore } from "./shell-store";
 
 const scrollMemory = new Map<string, number>();
@@ -59,6 +60,7 @@ export function AppPage({
             {actions}
           </div>
         )}
+        <DesktopUpdateButton className={actions ? undefined : "ml-auto"} />
       </header>
       <div
         className={cn(

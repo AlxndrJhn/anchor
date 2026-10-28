@@ -47,6 +47,21 @@
     }
   });
 
+  const update = document.getElementById("update");
+  api.onUpdate(({ version }) => {
+    update.title = `Restart Anchor to update to ${version}`;
+    update.hidden = false;
+  });
+  update.addEventListener("click", () => {
+    update.disabled = true;
+    update.textContent = "Restarting…";
+    api.installUpdate().then((started) => {
+      if (started) return;
+      update.disabled = false;
+      update.textContent = "Update";
+    });
+  });
+
   retry.addEventListener("click", async () => {
     showError(null);
     busy(true, "Connect");
