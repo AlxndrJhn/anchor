@@ -3,10 +3,15 @@
 import * as React from "react";
 import { DURATION, EASE } from "@/lib/design/tokens";
 import { prefersReducedMotion } from "@/lib/motion";
+import { strikeIntoPlace } from "@/lib/strike";
+
+/** Cards glide to their new places, or strike there, as after a delete. */
+export type FlipMotion = "glide" | "strike";
 
 interface Snapshot {
   rects: Map<string, DOMRect>;
   clones: Map<string, HTMLElement>;
+  motion: FlipMotion;
   at: number;
 }
 
@@ -15,32 +20,35 @@ const NEAR_SCREEN = 200;
 const isNearScreen = (rect: DOMRect) =>
   rect.bottom > -NEAR_SCREEN && rect.top < window.innerHeight + NEAR_SCREEN;
 
-/** Call `prepare()` just before a list change. */
+/** Call `prepare()` just before a list change; `prepare("strike")` before cards are deleted from it. */
 export function useFlip<T extends HTMLElement>(
   container: React.RefObject<T | null>,
   options: { pop?: boolean } = {},
 ) {
   const snapshotRef = React.useRef<Snapshot | null>(null);
 
-  const prepare = React.useCallback(() => {
-    const el = container.current;
-    if (!el || prefersReducedMotion()) return;
-    const rects = new Map<string, DOMRect>();
-    const clones = new Map<string, HTMLElement>();
-    for (const item of el.querySelectorAll<HTMLElement>("[data-flip]")) {
-      const key = item.dataset.flip;
-      if (!key) continue;
-      const rect = item.getBoundingClientRect();
-      rects.set(key, rect);
-      if (!isNearScreen(rect)) continue;
-      const copy = item.cloneNode(true) as HTMLElement;
-      copy.removeAttribute("id");
-      for (const child of copy.querySelectorAll("[id]"))
-        child.removeAttribute("id");
-      clones.set(key, copy);
-    }
-    snapshotRef.current = { rects, clones, at: performance.now() };
-  }, [container]);
+  const prepare = React.useCallback(
+    (motion: FlipMotion = "glide") => {
+      const el = container.current;
+      if (!el || prefersReducedMotion()) return;
+      const rects = new Map<string, DOMRect>();
+      const clones = new Map<string, HTMLElement>();
+      for (const item of el.querySelectorAll<HTMLElement>("[data-flip]")) {
+        const key = item.dataset.flip;
+        if (!key) continue;
+        const rect = item.getBoundingClientRect();
+        rects.set(key, rect);
+        if (!isNearScreen(rect)) continue;
+        const copy = item.cloneNode(true) as HTMLElement;
+        copy.removeAttribute("id");
+        for (const child of copy.querySelectorAll("[id]"))
+          child.removeAttribute("id");
+        clones.set(key, copy);
+      }
+      snapshotRef.current = { rects, clones, motion, at: performance.now() };
+    },
+    [container],
+  );
 
   React.useLayoutEffect(() => {
     const snapshot = snapshotRef.current;
@@ -80,7 +88,15 @@ export function useFlip<T extends HTMLElement>(
       if (oldRect && isNearScreen(oldRect)) {
         const dx = oldRect.left - rect.left;
         const dy = oldRect.top - rect.top;
-        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)
+        if (Math.abs(dx) <= 0.5 && Math.abs(dy) <= 0.5) continue;
+        if (snapshot.motion === "strike")
+          strikeIntoPlace(item, dx, dy, rect, el, {
+            left: box.left,
+            top: box.top,
+            scrollLeft,
+            scrollTop,
+          });
+        else
           item.animate(
             [
               { transform: `translate(${dx}px, ${dy}px)` },

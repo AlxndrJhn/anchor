@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/destruction/strike.dart';
 import 'springs.dart';
 
 class ReorderAnimationScope extends InheritedWidget {
@@ -66,9 +67,23 @@ class _ReorderAnimatedBoxState extends State<ReorderAnimatedBox>
   bool _isNew = false;
   Object? _seen;
 
+  /// Set while the box strikes into its place after a delete, instead of
+  /// sliding there; see [armCardStrike].
+  StrikeImpact? _impact;
+  bool _knocked = false;
+
+  Duration get _strikeTime => strikeDuration * _progress.value;
+
+  void _strikeTick() {
+    if (_impact == null || _knocked || _strikeTime < strikeTravel) return;
+    _knocked = true;
+    knockOnLanding();
+  }
+
   @override
   void initState() {
     super.initState();
+    _progress.addListener(_strikeTick);
     _isNew =
         widget.memory.positions.isNotEmpty &&
         !widget.memory.positions.containsKey(widget.id);
@@ -122,7 +137,15 @@ class _ReorderAnimatedBoxState extends State<ReorderAnimatedBox>
             !context.isMotionReduced) {
           _from = previous - now;
           _progress.value = 0;
-          _progress.springTo(1, spring: Spring.snappy);
+          final size = (context.findRenderObject() as RenderBox?)?.size;
+          if (isCardStrikeArmed && size != null) {
+            _impact = StrikeImpact(_from, size);
+            _knocked = false;
+            _progress.animateTo(1, duration: strikeDuration);
+          } else {
+            _impact = null;
+            _progress.springTo(1, spring: Spring.snappy);
+          }
           setState(() {});
         }
         _seen = generation;
@@ -138,6 +161,17 @@ class _ReorderAnimatedBoxState extends State<ReorderAnimatedBox>
           return Opacity(
             opacity: progress.clamp(0.0, 1.0),
             child: Transform.scale(scale: 0.96 + 0.04 * progress, child: child),
+          );
+        }
+        if (_impact case final impact?) {
+          if (progress >= 1) return child!;
+          final t = _strikeTime;
+          return CustomPaint(
+            foregroundPainter: StrikeSparksPainter(impact, t),
+            child: Transform.translate(
+              offset: impact.offsetAt(t),
+              child: child,
+            ),
           );
         }
         return Transform.translate(
