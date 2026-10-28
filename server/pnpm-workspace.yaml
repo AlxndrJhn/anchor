@@ -11,3 +11,14 @@ allowBuilds:
   ssh2: false
   '@swc/core': false
   tesseract.js: false
+
+# Patched versions of transitive dependencies whose parents pin a vulnerable
+# one (pnpm audit runs in CI). Drop an entry once its parent catches up.
+overrides:
+  # @nestjs/platform-express pins 2.2.0
+  multer: ^2.5.0
+  # prisma pins these
+  mysql2: ^3.22.0
+  deepmerge-ts: ^8.0.0
+  fast-uri: ^3.1.7
+  source-map-js: ^1.2.2
