@@ -1958,6 +1958,10 @@
       }
     }
   },
+  "notesBackToTop": "Back to top",
+  "@notesBackToTop": {
+    "description": "Round button that shows two screens down the notes list; it scrolls back to the top."
+  },
   "notesSelectTitle": "Select notes",
   "@notesSelectTitle": {
     "description": "Page title while selecting notes and none is selected yet."

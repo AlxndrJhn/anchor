@@ -1399,6 +1399,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notesBackToTop => 'Back to top';
+
+  @override
   String get notesSelectTitle => 'Select notes';
 
   @override

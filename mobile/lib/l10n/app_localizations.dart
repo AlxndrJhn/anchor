@@ -2350,6 +2350,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 word} other{{count} words}}'**
   String wordsCount(int count);
 
+  /// Round button that shows two screens down the notes list; it scrolls back to the top.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to top'**
+  String get notesBackToTop;
+
   /// Page title while selecting notes and none is selected yet.
   ///
   /// In en, this message translates to:

@@ -4,6 +4,7 @@ import 'package:anchor/core/storage/preferences_repository.dart';
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/theme/display_density.dart';
 import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
+import 'package:anchor/core/widgets/frosted_glass.dart';
 import 'package:anchor/core/widgets/pressable.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
@@ -288,6 +289,36 @@ void main() {
     final position = listPosition(tester);
     expect(position.pixels, closeTo(position.maxScrollExtent, 0.5));
     expect(find.text('Note 14'), findsOneWidget);
+  });
+
+  testWidgets('two screens down, a button goes back to the top', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await pumpList(tester, notes: notesNamed('Note', 40));
+    final toTop = find.bySemanticsLabel('Back to top');
+    double shown() => tester
+        .widget<AnimatedScale>(
+          find
+              .ancestor(
+                of: find.byType(FrostedGlass),
+                matching: find.byType(AnimatedScale),
+              )
+              .last,
+        )
+        .scale;
+    expect(shown(), 0);
+    expect(toTop, findsNothing);
+
+    await scrollToEnd(tester);
+    expect(listPosition(tester).pixels, greaterThan(844 * 2));
+    expect(shown(), 1);
+
+    await tester.tap(toTop);
+    await settle(tester);
+    expect(listPosition(tester).pixels, 0);
+    expect(shown(), 0);
+    semantics.dispose();
   });
 
   testWidgets('scrolls to the last archived search result', (tester) async {

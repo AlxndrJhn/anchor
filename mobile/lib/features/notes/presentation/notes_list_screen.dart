@@ -23,6 +23,8 @@ import '../../../core/widgets/app_scaffold.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bar_title.dart';
 import '../../../core/widgets/destruction/destruction.dart';
+import '../../../core/widgets/frosted_glass.dart';
+import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/selection_bar.dart';
 import '../../../l10n/l10n.dart';
 import '../../reminders/data/reminder_permissions.dart';
@@ -71,6 +73,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   final _drawerKey = GlobalKey<DrawerHostState>();
   final _reorderPositions = ReorderPositions();
   final _isBottomBarCompact = ValueNotifier(false);
+
+  /// Whether the list is two screens or more down, which offers a way back
+  /// to the top.
+  final _isFarDown = ValueNotifier(false);
   double _scrollDistance = 0;
   bool _searching = false;
 
@@ -218,14 +224,15 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     _newNoteTap?.cancel();
     _scroll.dispose();
     _isBottomBarCompact.dispose();
+    _isFarDown.dispose();
     super.dispose();
   }
 
   bool _onScroll(ScrollUpdateNotification update) {
     final metrics = update.metrics;
-    if (update.depth != 0 || metrics.axis != Axis.vertical || _searching) {
-      return false;
-    }
+    if (update.depth != 0 || metrics.axis != Axis.vertical) return false;
+    _isFarDown.value = metrics.pixels >= metrics.viewportDimension * 2;
+    if (_searching) return false;
     if (metrics.pixels < 40) {
       _scrollDistance = 0;
       _isBottomBarCompact.value = false;
@@ -242,6 +249,22 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       _isBottomBarCompact.value = false;
     }
     return false;
+  }
+
+  /// Back to the top of the list; from far down it jumps most of the way
+  /// first, so it doesn't take ages.
+  void _scrollToTop() {
+    if (!_scroll.hasClients) return;
+    Haptics.light();
+    final position = _scroll.position;
+    if (context.isMotionReduced) return position.jumpTo(0);
+    final near = position.viewportDimension;
+    if (position.pixels > near) position.jumpTo(near);
+    position.animateTo(
+      0,
+      duration: AnchorTokens.motionDurationSlow,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _askForReminderPermissions(bool shouldAsk) {
@@ -739,7 +762,28 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         ),
         child: NotificationListener<ScrollUpdateNotification>(
           onNotification: _onScroll,
-          child: page,
+          child: Stack(
+            children: [
+              page,
+              // Far down the list, a way back to the top, over the New note
+              // button.
+              Positioned(
+                right: 14, // off-scale: lines up with the bottom bar's edge
+                bottom:
+                    context.safeBottom +
+                    8 + // off-scale: the bottom bar's offset
+                    context.density.control +
+                    12,
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: _isFarDown,
+                  builder: (context, isFarDown, _) => _BackToTop(
+                    isShown: isFarDown && !isSelecting && !_searching,
+                    onPressed: _scrollToTop,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -839,4 +883,44 @@ class _NoteDrag {
     start: start,
     from: from,
   );
+}
+
+/// A round frosted button that takes the list back to its top; it pops in
+/// and out with [isShown].
+class _BackToTop extends StatelessWidget {
+  const _BackToTop({required this.isShown, required this.onPressed});
+
+  final bool isShown;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final control = context.density.control;
+    return IgnorePointer(
+      ignoring: !isShown,
+      child: AnimatedScale(
+        scale: isShown ? 1 : 0,
+        duration: context.motion(Spring.pop.duration),
+        curve: Spring.pop.curve,
+        child: ExcludeSemantics(
+          excluding: !isShown,
+          child: Pressable(
+            style: PressStyle.button,
+            onTap: onPressed,
+            semanticLabel: context.l10n.notesBackToTop,
+            child: FrostedGlass(
+              child: SizedBox.square(
+                dimension: control,
+                child: Icon(
+                  LucideIcons.chevronUp,
+                  size: AnchorTokens.sizeIconMedium,
+                  color: context.anchor.appText,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
