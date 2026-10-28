@@ -2456,6 +2456,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get slashWordsText => 'paragraph plain normal body';
 
   @override
+  String get slashDate => 'Today’s date';
+
+  @override
+  String get slashWordsDate => 'date today now day';
+
+  @override
   String get slashWordsLink => 'url web address';
 
   @override

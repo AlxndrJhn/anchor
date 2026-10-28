@@ -3670,6 +3670,18 @@ abstract class AppLocalizations {
   /// **'paragraph plain normal body'**
   String get slashWordsText;
 
+  /// Slash menu item that types today’s date at the caret, like “Oct 28th 2026”. Typing /date and a space does the same.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s date'**
+  String get slashDate;
+
+  /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
+  ///
+  /// In en, this message translates to:
+  /// **'date today now day'**
+  String get slashWordsDate;
+
   /// Search words for the slash menu, separated by spaces. Keep the English words and add your own.
   ///
   /// In en, this message translates to:

@@ -37,6 +37,12 @@ void main() {
       ]);
     });
 
+    test('date, today or now find Today’s date', () {
+      for (final query in ['date', 'today', 'now']) {
+        expect(labels(query).first, 'Today’s date', reason: query);
+      }
+    });
+
     test('every typed word has to match', () {
       expect(labels('head 2'), ['Heading 2']);
       expect(labels('head 4'), isEmpty);

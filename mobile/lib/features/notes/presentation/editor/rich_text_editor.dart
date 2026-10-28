@@ -28,6 +28,7 @@ import 'checklist_drag_overlay.dart';
 import 'checklist_fold.dart';
 import 'checklist_lines.dart';
 import 'checklist_sorter.dart';
+import 'date_command.dart';
 import 'document_lines.dart';
 import 'editor_format.dart';
 import 'editor_link.dart';
@@ -252,10 +253,55 @@ class RichTextEditorState extends State<RichTextEditor>
       _repaintMarks();
       _sorter.handleChange(change);
       _checkBlank();
+      _checkDateCommand(change);
     });
     _controller
       ..addListener(_checkSlash)
       ..addListener(_checkSelection);
+  }
+
+  /// `/date` and a space or Enter, typed, become today's date.
+  void _checkDateCommand(DocChange change) {
+    if (change.source != ChangeSource.local || !widget.canEdit) return;
+    final start = finishedDateCommandAt(_controller.document, change.change);
+    if (start == null) return;
+    // After the keyboard's own change has settled, like checklist sorting.
+    scheduleMicrotask(() => _expandDateCommand(start));
+  }
+
+  /// Puts today's date where `/date` was typed.
+  void _expandDateCommand(int start) {
+    if (!mounted) return;
+    final typed = _controller.document.getPlainText(start, dateCommand.length);
+    if (typed.toLowerCase() != dateCommand) return;
+    final date = formatLongDate(DateTime.now());
+    final shift = date.length - dateCommand.length;
+    final selection = _controller.selection;
+    int moved(int offset) => offset > start ? offset + shift : offset;
+    _controller.replaceText(
+      start,
+      dateCommand.length,
+      date,
+      selection.copyWith(
+        baseOffset: moved(selection.baseOffset),
+        extentOffset: moved(selection.extentOffset),
+      ),
+    );
+  }
+
+  /// Today's date at the caret ("Oct 28th 2026"), as the slash menu's Date.
+  void insertDate() {
+    if (!widget.canEdit) return;
+    final at = caretOffset;
+    final selection = _controller.selection;
+    final length = selection.isValid ? selection.end - at : 0;
+    final date = formatLongDate(DateTime.now());
+    _controller.replaceText(
+      at,
+      length < 0 ? 0 : length,
+      date,
+      TextSelection.collapsed(offset: at + date.length),
+    );
   }
 
   void _unlisten() {

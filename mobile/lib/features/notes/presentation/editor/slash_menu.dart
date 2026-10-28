@@ -12,7 +12,7 @@ import '../../../../core/widgets/anchor_menu.dart';
 import '../../../../l10n/l10n.dart';
 import 'line_kind.dart';
 
-enum SlashAction { link, picture }
+enum SlashAction { link, picture, date }
 
 class SlashItem {
   const SlashItem.line(LineKind this.kind, {this.isCommon = false})
@@ -32,6 +32,7 @@ class SlashItem {
       switch (action!) {
         SlashAction.link => LucideIcons.link,
         SlashAction.picture => LucideIcons.imagePlus,
+        SlashAction.date => LucideIcons.calendarDays,
       };
 
   String labelIn(AppLocalizations l10n) =>
@@ -39,6 +40,7 @@ class SlashItem {
       switch (action!) {
         SlashAction.link => l10n.editorLink,
         SlashAction.picture => l10n.starterAttachment,
+        SlashAction.date => l10n.slashDate,
       };
 
   /// More words that find this item, besides its label.
@@ -54,6 +56,7 @@ class SlashItem {
     (LineKind.text, _) => l10n.slashWordsText,
     (_, SlashAction.link) => l10n.slashWordsLink,
     (_, SlashAction.picture) => l10n.slashWordsAttachment,
+    (_, SlashAction.date) => l10n.slashWordsDate,
     _ => '',
   };
 }
@@ -70,6 +73,7 @@ const List<SlashItem> slashItems = [
   SlashItem.line(LineKind.text),
   SlashItem.action(SlashAction.link),
   SlashItem.action(SlashAction.picture, isCommon: true),
+  SlashItem.action(SlashAction.date),
 ];
 
 /// Labels starting with the query first, then labels whose words start with

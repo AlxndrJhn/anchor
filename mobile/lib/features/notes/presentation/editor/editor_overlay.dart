@@ -205,6 +205,8 @@ class EditorOverlay extends StatelessWidget {
       _editLink(context);
     } else if (item.action == SlashAction.picture) {
       onAddAttachment();
+    } else if (item.action == SlashAction.date) {
+      editor.insertDate();
     }
   }
 

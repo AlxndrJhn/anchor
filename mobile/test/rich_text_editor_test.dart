@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:anchor/core/search/search_pattern.dart';
 import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
+import 'package:anchor/features/notes/presentation/editor/date_command.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_format.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_link.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_palette.dart';
@@ -1669,6 +1670,55 @@ void main() {
       await tester.pump();
       expect(blank, [false, true, false]);
       expect(state.isBlank, isFalse);
+    });
+  });
+
+  group('/date', () {
+    testWidgets('typed with a space, becomes today\'s date', (tester) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"\\n"}]}',
+      );
+      final controller = state.controller;
+      for (final char in 'Due /date '.split('')) {
+        final at = controller.selection.baseOffset;
+        controller.replaceText(
+          at,
+          0,
+          char,
+          TextSelection.collapsed(offset: at + 1),
+        );
+        await tester.pump();
+      }
+
+      final date = formatLongDate(DateTime.now());
+      expect(controller.document.toPlainText(), 'Due $date \n');
+      expect(controller.selection.baseOffset, 'Due $date '.length);
+    });
+
+    testWidgets('in a note that reads only, stays as typed', (tester) async {
+      final (state, _) = await pumpEditor(tester, canEdit: false);
+      final before = state.controller.document.toPlainText();
+      state.insertDate();
+      await tester.pump();
+      expect(state.controller.document.toPlainText(), before);
+    });
+
+    testWidgets('the slash menu\'s Date puts it at the caret', (tester) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content: '{"ops":[{"insert":"On \\n"}]}',
+      );
+      state.controller.updateSelection(
+        const TextSelection.collapsed(offset: 3),
+        ChangeSource.local,
+      );
+      state.insertDate();
+      await tester.pump();
+      expect(
+        state.controller.document.toPlainText(),
+        'On ${formatLongDate(DateTime.now())}\n',
+      );
     });
   });
 

@@ -85,6 +85,7 @@ differences. "Web" and "Android" say where each one is available.
 | **Getting around** | | |
 | Google Keep keyboard shortcuts ([#201](https://github.com/ZhFahim/anchor/issues/201)) | ✓ | |
 | Tab (web) or Next (Android) in the title goes to the note text | ✓ | ✓ |
+| Insert today's date ("Oct 28th 2026"): type /date (then Enter on the web, a space or Enter on Android); on the web also Ctrl+; (or a shortcut of your own), Ctrl+Shift+; for the date and time, and a choice of "2026-10-28" instead (Settings › Editor) | ✓ | ✓ |
 | Long-press the app icon: New note, New checklist | | ✓ |
 | Hold the New Note button for New list | | ✓ |
 | Double-tap the New Note button to paste the clipboard into a new note | | ✓ |
