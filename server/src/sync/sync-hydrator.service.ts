@@ -18,6 +18,7 @@ import {
   NOTE_INCLUDE_SHARES,
   NOTE_INCLUDE_ATTACHMENT_COUNT,
   noteArchiveInclude,
+  noteInvisibleInclude,
   noteLockInclude,
   noteOrderInclude,
   notePinInclude,
@@ -48,6 +49,7 @@ interface NoteRow {
   archives: Array<{ userId: string }>;
   orders: Array<{ position: number; updatedAt: Date }>;
   locks: Array<{ kind: NoteLockKind }>;
+  invisibles: Array<{ userId: string }>;
   reminders: Array<{
     remindAt: string;
     recurrence: ReminderRecurrence;
@@ -189,6 +191,7 @@ export class SyncHydratorService {
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
         ...noteLockInclude(userId),
+        ...noteInvisibleInclude(userId),
         ...noteReminderInclude(userId),
       },
     });

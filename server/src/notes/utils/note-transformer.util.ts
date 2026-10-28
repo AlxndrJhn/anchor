@@ -54,6 +54,9 @@ export interface TransformedNote {
   // What this user locked the note with; null when it isn't locked.
   // Absent means "not loaded".
   lock?: NoteLockKind | null;
+  // This user made the note invisible: it's left out of their lists and
+  // only search finds it. Absent means "not loaded".
+  isInvisible?: boolean;
 }
 
 // Input type for notes from Prisma with includes
@@ -73,6 +76,7 @@ interface NoteWithIncludes {
   archives: Array<{ userId: string }>;
   orders?: Array<{ position: number; updatedAt: Date }>;
   locks?: Array<{ kind: NoteLockKind }>;
+  invisibles?: Array<{ userId: string }>;
   reminders?: Array<{
     remindAt: string;
     recurrence: ReminderRecurrence;
@@ -109,6 +113,7 @@ export function transformNote(
     archives,
     orders,
     locks,
+    invisibles,
     reminders,
     stateChangedAt,
     ...rest
@@ -163,6 +168,10 @@ export function transformNote(
 
   if (locks) {
     transformed.lock = locks[0]?.kind ?? null;
+  }
+
+  if (invisibles) {
+    transformed.isInvisible = invisibles.length > 0;
   }
 
   if (note.state === 'trashed' && stateChangedAt) {
