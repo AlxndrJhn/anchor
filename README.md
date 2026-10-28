@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor/main/web/public/icons/anchor_icon.png" alt="Anchor" width="120" height="120">
+<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor/main/web/public/icons/anchor_icon.png" alt="Anchor+" width="120" height="120">
 
-# Anchor
+# Anchor+
 
 **An offline first, self hostable note taking application**
 
@@ -36,11 +36,12 @@ Actions"; the workflow is `.github/workflows/pages.yml`, and
 `BASE_PATH=/anchor pnpm build:pages` (in `web/`) builds the same site into
 `web/out`.
 
-## Anchor vs this fork
+## Anchor+ vs Anchor
 
-This is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
-to date with it. Everything upstream does, this fork does too; these are the
-differences. "Web" and "Android" say where each one is available.
+Anchor+ is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
+to date with it, and works with any Anchor server. Everything upstream does,
+Anchor+ does too; these are the differences. "Web" and "Android" say where
+each one is available.
 
 | | Web | Android |
 |---|:---:|:---:|
@@ -123,7 +124,7 @@ differences. "Web" and "Android" say where each one is available.
 | The notes list can scroll to the end with pinned notes and pictures | | ✓ |
 | Next.js upgraded to 16.4.3 for security fixes | ✓ | |
 | **Releases** | | |
-| Running the "Release (fork)" workflow on `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
+| Running the "Release (fork)" workflow on `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor+" next to the official app | ✓ | ✓ |
 | A desktop app for Windows and macOS: your server's web client in its own window, in every release, that updates itself (see [Desktop App](#desktop-app)) | ✓ | |
 
 ### Custom themes
@@ -353,16 +354,16 @@ shortcuts). It does not store notes itself; it connects to your server.
    [releases page](https://github.com/AlxndrJhn/anchor/releases):
    - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
-     open it and drag Anchor to Applications
+     open it and drag Anchor+ to Applications
 
-2. **Connect:** on first launch, enter the address you open Anchor at in your
+2. **Connect:** on first launch, enter the address you open Anchor+ at in your
    browser, such as `https://notes.example.com`. The app checks that the server
    answers, then remembers it. **Change server…** (File menu on Windows, the
-   Anchor menu on macOS) switches to another one.
+   Anchor+ menu on macOS) switches to another one.
 
 The builds are not signed, so the system warns the first time:
 
-- **macOS:** right-click Anchor in Applications and choose **Open**, then
+- **macOS:** right-click Anchor+ in Applications and choose **Open**, then
   **Open** again; or try to open it once, then allow it under **System
   Settings › Privacy & Security** (**Open Anyway**).
 - **Windows:** if SmartScreen says it protected your PC, choose
@@ -370,9 +371,9 @@ The builds are not signed, so the system warns the first time:
 
 The app keeps itself up to date: it looks for a newer release now and then,
 downloads it in the background, and then shows a small **Update** button in
-the top right (also **Restart to Update** in the File menu, or the Anchor menu
-on macOS). Clicking it restarts Anchor on the new version. On macOS this needs
-Anchor in a folder you can write to, such as Applications; run from the disk
+the top right (also **Restart to Update** in the File menu, or the Anchor+ menu
+on macOS). Clicking it restarts Anchor+ on the new version. On macOS this needs
+Anchor+ in a folder you can write to, such as Applications; run from the disk
 image, the button opens the release page instead.
 
 Links to other websites open in your browser. To build it yourself:

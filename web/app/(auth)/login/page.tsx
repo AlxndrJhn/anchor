@@ -114,7 +114,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <AuthHeading title="Welcome back" sub="Sign in to continue to Anchor." />
+      <AuthHeading title="Welcome back" sub="Sign in to continue to Anchor+." />
       {oidc.data?.enabled && (
         <>
           <Button
@@ -204,7 +204,7 @@ export default function LoginPage() {
       )}
       {!isProviderOnly && registrationMode.data?.mode !== "disabled" && (
         <p className="m-0 text-center text-muted-foreground text-ui">
-          New to Anchor?{" "}
+          New to Anchor+?{" "}
           <Link href="/register" className={linkButtonClass}>
             Create an account
           </Link>

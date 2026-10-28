@@ -198,7 +198,7 @@ export function themeAsJson(
   const name =
     theme?.name ??
     COLOR_SCHEMES.find((s) => s.id === schemeId)?.name ??
-    "Anchor";
+    "Anchor+";
   const out: Record<string, unknown> = { name };
   for (const mode of THEME_MODES) {
     const palette = mergePalette(schemePalette(schemeId, mode), theme, mode);

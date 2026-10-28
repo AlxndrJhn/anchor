@@ -9,7 +9,7 @@ export function SplashScreen({ checking }: { checking: boolean }) {
   return (
     <div
       role="status"
-      aria-label="Loading Anchor"
+      aria-label="Loading Anchor+"
       className="grid min-h-dvh place-items-center bg-background"
     >
       <div className="relative grid place-items-center">

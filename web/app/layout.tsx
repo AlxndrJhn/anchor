@@ -47,10 +47,10 @@ const patrickHand = Patrick_Hand({
 });
 
 export const metadata: Metadata = {
-  title: "Anchor",
+  title: "Anchor+",
   description: "Your thoughts, secured",
   other: {
-    "apple-mobile-web-app-title": "Anchor",
+    "apple-mobile-web-app-title": "Anchor+",
   },
 };
 

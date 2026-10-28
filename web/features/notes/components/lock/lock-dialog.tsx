@@ -111,8 +111,8 @@ export function LockDialog({
             <DialogDescription>
               Choose what opens {what}.{" "}
               {count === 1
-                ? "Until then it shows only its title. Once opened, it stays open until you reload or close Anchor."
-                : "Until then they show only their titles. Once opened, each stays open until you reload or close Anchor."}
+                ? "Until then it shows only its title. Once opened, it stays open until you reload or close Anchor+."
+                : "Until then they show only their titles. Once opened, each stays open until you reload or close Anchor+."}
             </DialogDescription>
           </DialogHeader>
           <DialogBody>

@@ -17,12 +17,14 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { startUpdater } = require("./updater");
 
-const APP_NAME = "Anchor";
+// The name the window, menu and About panel show. app.setName keeps "Anchor":
+// it names the settings folder, and changing it would lose the saved server.
+const APP_NAME = "Anchor+";
 const SETUP_PAGE = path.join(__dirname, "setup.html");
 const SETUP_URL = pathToFileURL(SETUP_PAGE).toString();
 const HEALTH_TIMEOUT_MS = 10_000;
 
-app.setName(APP_NAME);
+app.setName("Anchor");
 if (process.platform === "win32") app.setAppUserModelId("io.github.alxndrjhn.anchor");
 
 // --- Settings (userData/settings.json) -------------------------------------
@@ -190,7 +192,7 @@ function createWindow() {
   if (saved?.maximized) mainWindow.maximize();
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
-  // The window is always "Anchor", whatever the page calls itself.
+  // The window is always "Anchor+", whatever the page calls itself.
   mainWindow.on("page-title-updated", (event) => event.preventDefault());
 
   let saveTimer = null;

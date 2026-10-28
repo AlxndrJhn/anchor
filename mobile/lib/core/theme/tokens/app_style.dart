@@ -35,7 +35,7 @@ const anchorSchemeId = 'anchor';
 /// custom theme falls back to over Anchor.
 const anchorScheme = AppScheme(
   id: anchorSchemeId,
-  name: 'Anchor',
+  name: 'Anchor+',
   light: SchemePalette(
     background: AppPalette.bgLight,
     card: AppPalette.surfaceLight,

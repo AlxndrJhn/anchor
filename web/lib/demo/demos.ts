@@ -79,7 +79,7 @@ export const welcome: Seed = {
   notes: [
     {
       id: "n-welcome",
-      title: "Welcome to the Anchor demo",
+      title: "Welcome to the Anchor+ demo",
       pinned: true,
       background: "color_teal",
       lines: [

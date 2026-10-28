@@ -30,7 +30,7 @@ export default function AppError({
 
   const details = () =>
     [
-      `Anchor ${process.env.NEXT_PUBLIC_APP_VERSION}`,
+      `Anchor+ ${process.env.NEXT_PUBLIC_APP_VERSION}`,
       `Error ${id}`,
       window.location.pathname,
       new Date().toLocaleString("en-US", {
