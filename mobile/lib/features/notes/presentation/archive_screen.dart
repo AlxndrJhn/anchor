@@ -167,6 +167,7 @@ class ArchiveScreen extends ConsumerWidget {
       emptyIcon: LucideIcons.archive,
       emptyMessage: 'Archive is empty',
       datePrefix: 'Edited',
+      hidesInvisible: true,
       trailingActions: (note) => [
         IconButton(
           icon: const Icon(LucideIcons.archiveRestore),

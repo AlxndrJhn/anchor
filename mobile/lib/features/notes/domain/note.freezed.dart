@@ -557,7 +557,7 @@ as String?,
 /// @nodoc
 mixin _$Note {
 
- String get id; String get title; String? get content; bool get isPinned; bool get isArchived; String? get background; NoteState get state; DateTime? get updatedAt; DateTime? get createdAt; double? get position; DateTime? get positionedAt; List<String> get tagIds; NotePermission get permission; List<String>? get shareIds; SharedByUser? get sharedBy; NoteReminder? get reminder; NoteLock? get lock; bool get isFrozen;@JsonKey(includeFromJson: false, includeToJson: false) bool get isSynced;@JsonKey(includeFromJson: false, includeToJson: false) int? get reminderSlot;@JsonKey(includeFromJson: false, includeToJson: false) List<NoteImagePreview> get imagePreviewData;@JsonKey(includeFromJson: false, includeToJson: false) String get pictureText;
+ String get id; String get title; String? get content; bool get isPinned; bool get isArchived; String? get background; NoteState get state; DateTime? get updatedAt; DateTime? get createdAt; double? get position; DateTime? get positionedAt; List<String> get tagIds; NotePermission get permission; List<String>? get shareIds; SharedByUser? get sharedBy; NoteReminder? get reminder; NoteLock? get lock; bool get isFrozen; bool get isInvisible;@JsonKey(includeFromJson: false, includeToJson: false) bool get isSynced;@JsonKey(includeFromJson: false, includeToJson: false) int? get reminderSlot;@JsonKey(includeFromJson: false, includeToJson: false) List<NoteImagePreview> get imagePreviewData;@JsonKey(includeFromJson: false, includeToJson: false) String get pictureText;
 /// Create a copy of Note
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -570,16 +570,16 @@ $NoteCopyWith<Note> get copyWith => _$NoteCopyWithImpl<Note>(this as Note, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Note&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.background, background) || other.background == background)&&(identical(other.state, state) || other.state == state)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.position, position) || other.position == position)&&(identical(other.positionedAt, positionedAt) || other.positionedAt == positionedAt)&&const DeepCollectionEquality().equals(other.tagIds, tagIds)&&(identical(other.permission, permission) || other.permission == permission)&&const DeepCollectionEquality().equals(other.shareIds, shareIds)&&(identical(other.sharedBy, sharedBy) || other.sharedBy == sharedBy)&&(identical(other.reminder, reminder) || other.reminder == reminder)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.reminderSlot, reminderSlot) || other.reminderSlot == reminderSlot)&&const DeepCollectionEquality().equals(other.imagePreviewData, imagePreviewData)&&(identical(other.pictureText, pictureText) || other.pictureText == pictureText));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Note&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.background, background) || other.background == background)&&(identical(other.state, state) || other.state == state)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.position, position) || other.position == position)&&(identical(other.positionedAt, positionedAt) || other.positionedAt == positionedAt)&&const DeepCollectionEquality().equals(other.tagIds, tagIds)&&(identical(other.permission, permission) || other.permission == permission)&&const DeepCollectionEquality().equals(other.shareIds, shareIds)&&(identical(other.sharedBy, sharedBy) || other.sharedBy == sharedBy)&&(identical(other.reminder, reminder) || other.reminder == reminder)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.isInvisible, isInvisible) || other.isInvisible == isInvisible)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.reminderSlot, reminderSlot) || other.reminderSlot == reminderSlot)&&const DeepCollectionEquality().equals(other.imagePreviewData, imagePreviewData)&&(identical(other.pictureText, pictureText) || other.pictureText == pictureText));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,title,content,isPinned,isArchived,background,state,updatedAt,createdAt,position,positionedAt,const DeepCollectionEquality().hash(tagIds),permission,const DeepCollectionEquality().hash(shareIds),sharedBy,reminder,lock,isFrozen,isSynced,reminderSlot,const DeepCollectionEquality().hash(imagePreviewData),pictureText]);
+int get hashCode => Object.hashAll([runtimeType,id,title,content,isPinned,isArchived,background,state,updatedAt,createdAt,position,positionedAt,const DeepCollectionEquality().hash(tagIds),permission,const DeepCollectionEquality().hash(shareIds),sharedBy,reminder,lock,isFrozen,isInvisible,isSynced,reminderSlot,const DeepCollectionEquality().hash(imagePreviewData),pictureText]);
 
 @override
 String toString() {
-  return 'Note(id: $id, title: $title, content: $content, isPinned: $isPinned, isArchived: $isArchived, background: $background, state: $state, updatedAt: $updatedAt, createdAt: $createdAt, position: $position, positionedAt: $positionedAt, tagIds: $tagIds, permission: $permission, shareIds: $shareIds, sharedBy: $sharedBy, reminder: $reminder, lock: $lock, isFrozen: $isFrozen, isSynced: $isSynced, reminderSlot: $reminderSlot, imagePreviewData: $imagePreviewData, pictureText: $pictureText)';
+  return 'Note(id: $id, title: $title, content: $content, isPinned: $isPinned, isArchived: $isArchived, background: $background, state: $state, updatedAt: $updatedAt, createdAt: $createdAt, position: $position, positionedAt: $positionedAt, tagIds: $tagIds, permission: $permission, shareIds: $shareIds, sharedBy: $sharedBy, reminder: $reminder, lock: $lock, isFrozen: $isFrozen, isInvisible: $isInvisible, isSynced: $isSynced, reminderSlot: $reminderSlot, imagePreviewData: $imagePreviewData, pictureText: $pictureText)';
 }
 
 
@@ -590,7 +590,7 @@ abstract mixin class $NoteCopyWith<$Res>  {
   factory $NoteCopyWith(Note value, $Res Function(Note) _then) = _$NoteCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String? content, bool isPinned, bool isArchived, String? background, NoteState state, DateTime? updatedAt, DateTime? createdAt, double? position, DateTime? positionedAt, List<String> tagIds, NotePermission permission, List<String>? shareIds, SharedByUser? sharedBy, NoteReminder? reminder, NoteLock? lock, bool isFrozen,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: false, includeToJson: false) int? reminderSlot,@JsonKey(includeFromJson: false, includeToJson: false) List<NoteImagePreview> imagePreviewData,@JsonKey(includeFromJson: false, includeToJson: false) String pictureText
+ String id, String title, String? content, bool isPinned, bool isArchived, String? background, NoteState state, DateTime? updatedAt, DateTime? createdAt, double? position, DateTime? positionedAt, List<String> tagIds, NotePermission permission, List<String>? shareIds, SharedByUser? sharedBy, NoteReminder? reminder, NoteLock? lock, bool isFrozen, bool isInvisible,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: false, includeToJson: false) int? reminderSlot,@JsonKey(includeFromJson: false, includeToJson: false) List<NoteImagePreview> imagePreviewData,@JsonKey(includeFromJson: false, includeToJson: false) String pictureText
 });
 
 
@@ -607,7 +607,7 @@ class _$NoteCopyWithImpl<$Res>
 
 /// Create a copy of Note
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? content = freezed,Object? isPinned = null,Object? isArchived = null,Object? background = freezed,Object? state = null,Object? updatedAt = freezed,Object? createdAt = freezed,Object? position = freezed,Object? positionedAt = freezed,Object? tagIds = null,Object? permission = null,Object? shareIds = freezed,Object? sharedBy = freezed,Object? reminder = freezed,Object? lock = freezed,Object? isFrozen = null,Object? isSynced = null,Object? reminderSlot = freezed,Object? imagePreviewData = null,Object? pictureText = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? content = freezed,Object? isPinned = null,Object? isArchived = null,Object? background = freezed,Object? state = null,Object? updatedAt = freezed,Object? createdAt = freezed,Object? position = freezed,Object? positionedAt = freezed,Object? tagIds = null,Object? permission = null,Object? shareIds = freezed,Object? sharedBy = freezed,Object? reminder = freezed,Object? lock = freezed,Object? isFrozen = null,Object? isInvisible = null,Object? isSynced = null,Object? reminderSlot = freezed,Object? imagePreviewData = null,Object? pictureText = null,}) {
   return _then(Note(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -627,6 +627,7 @@ as List<String>?,sharedBy: freezed == sharedBy ? _self.sharedBy : sharedBy // ig
 as SharedByUser?,reminder: freezed == reminder ? _self.reminder : reminder // ignore: cast_nullable_to_non_nullable
 as NoteReminder?,lock: freezed == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
 as NoteLock?,isFrozen: null == isFrozen ? _self.isFrozen : isFrozen // ignore: cast_nullable_to_non_nullable
+as bool,isInvisible: null == isInvisible ? _self.isInvisible : isInvisible // ignore: cast_nullable_to_non_nullable
 as bool,isSynced: null == isSynced ? _self.isSynced : isSynced // ignore: cast_nullable_to_non_nullable
 as bool,reminderSlot: freezed == reminderSlot ? _self.reminderSlot : reminderSlot // ignore: cast_nullable_to_non_nullable
 as int?,imagePreviewData: null == imagePreviewData ? _self.imagePreviewData : imagePreviewData // ignore: cast_nullable_to_non_nullable
@@ -740,10 +741,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? content,  bool isPinned,  bool isArchived,  String? background,  NoteState state,  DateTime? updatedAt,  DateTime? createdAt,  double? position,  DateTime? positionedAt,  List<String> tagIds,  NotePermission permission,  List<String>? shareIds,  SharedByUser? sharedBy,  NoteReminder? reminder,  NoteLock? lock,  bool isFrozen, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: false, includeToJson: false)  int? reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData, @JsonKey(includeFromJson: false, includeToJson: false)  String pictureText)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? content,  bool isPinned,  bool isArchived,  String? background,  NoteState state,  DateTime? updatedAt,  DateTime? createdAt,  double? position,  DateTime? positionedAt,  List<String> tagIds,  NotePermission permission,  List<String>? shareIds,  SharedByUser? sharedBy,  NoteReminder? reminder,  NoteLock? lock,  bool isFrozen,  bool isInvisible, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: false, includeToJson: false)  int? reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData, @JsonKey(includeFromJson: false, includeToJson: false)  String pictureText)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Note() when $default != null:
-return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchived,_that.background,_that.state,_that.updatedAt,_that.createdAt,_that.position,_that.positionedAt,_that.tagIds,_that.permission,_that.shareIds,_that.sharedBy,_that.reminder,_that.lock,_that.isFrozen,_that.isSynced,_that.reminderSlot,_that.imagePreviewData,_that.pictureText);case _:
+return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchived,_that.background,_that.state,_that.updatedAt,_that.createdAt,_that.position,_that.positionedAt,_that.tagIds,_that.permission,_that.shareIds,_that.sharedBy,_that.reminder,_that.lock,_that.isFrozen,_that.isInvisible,_that.isSynced,_that.reminderSlot,_that.imagePreviewData,_that.pictureText);case _:
   return orElse();
 
 }
@@ -761,10 +762,10 @@ return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchiv
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? content,  bool isPinned,  bool isArchived,  String? background,  NoteState state,  DateTime? updatedAt,  DateTime? createdAt,  double? position,  DateTime? positionedAt,  List<String> tagIds,  NotePermission permission,  List<String>? shareIds,  SharedByUser? sharedBy,  NoteReminder? reminder,  NoteLock? lock,  bool isFrozen, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: false, includeToJson: false)  int? reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData, @JsonKey(includeFromJson: false, includeToJson: false)  String pictureText)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? content,  bool isPinned,  bool isArchived,  String? background,  NoteState state,  DateTime? updatedAt,  DateTime? createdAt,  double? position,  DateTime? positionedAt,  List<String> tagIds,  NotePermission permission,  List<String>? shareIds,  SharedByUser? sharedBy,  NoteReminder? reminder,  NoteLock? lock,  bool isFrozen,  bool isInvisible, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: false, includeToJson: false)  int? reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData, @JsonKey(includeFromJson: false, includeToJson: false)  String pictureText)  $default,) {final _that = this;
 switch (_that) {
 case _Note():
-return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchived,_that.background,_that.state,_that.updatedAt,_that.createdAt,_that.position,_that.positionedAt,_that.tagIds,_that.permission,_that.shareIds,_that.sharedBy,_that.reminder,_that.lock,_that.isFrozen,_that.isSynced,_that.reminderSlot,_that.imagePreviewData,_that.pictureText);case _:
+return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchived,_that.background,_that.state,_that.updatedAt,_that.createdAt,_that.position,_that.positionedAt,_that.tagIds,_that.permission,_that.shareIds,_that.sharedBy,_that.reminder,_that.lock,_that.isFrozen,_that.isInvisible,_that.isSynced,_that.reminderSlot,_that.imagePreviewData,_that.pictureText);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -781,10 +782,10 @@ return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchiv
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? content,  bool isPinned,  bool isArchived,  String? background,  NoteState state,  DateTime? updatedAt,  DateTime? createdAt,  double? position,  DateTime? positionedAt,  List<String> tagIds,  NotePermission permission,  List<String>? shareIds,  SharedByUser? sharedBy,  NoteReminder? reminder,  NoteLock? lock,  bool isFrozen, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: false, includeToJson: false)  int? reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData, @JsonKey(includeFromJson: false, includeToJson: false)  String pictureText)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? content,  bool isPinned,  bool isArchived,  String? background,  NoteState state,  DateTime? updatedAt,  DateTime? createdAt,  double? position,  DateTime? positionedAt,  List<String> tagIds,  NotePermission permission,  List<String>? shareIds,  SharedByUser? sharedBy,  NoteReminder? reminder,  NoteLock? lock,  bool isFrozen,  bool isInvisible, @JsonKey(includeFromJson: false, includeToJson: false)  bool isSynced, @JsonKey(includeFromJson: false, includeToJson: false)  int? reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData, @JsonKey(includeFromJson: false, includeToJson: false)  String pictureText)?  $default,) {final _that = this;
 switch (_that) {
 case _Note() when $default != null:
-return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchived,_that.background,_that.state,_that.updatedAt,_that.createdAt,_that.position,_that.positionedAt,_that.tagIds,_that.permission,_that.shareIds,_that.sharedBy,_that.reminder,_that.lock,_that.isFrozen,_that.isSynced,_that.reminderSlot,_that.imagePreviewData,_that.pictureText);case _:
+return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchived,_that.background,_that.state,_that.updatedAt,_that.createdAt,_that.position,_that.positionedAt,_that.tagIds,_that.permission,_that.shareIds,_that.sharedBy,_that.reminder,_that.lock,_that.isFrozen,_that.isInvisible,_that.isSynced,_that.reminderSlot,_that.imagePreviewData,_that.pictureText);case _:
   return null;
 
 }
@@ -796,7 +797,7 @@ return $default(_that.id,_that.title,_that.content,_that.isPinned,_that.isArchiv
 @JsonSerializable()
 
 class _Note extends Note {
-  const _Note({required this.id, required this.title, this.content, this.isPinned = false, this.isArchived = false, this.background, this.state = NoteState.active, this.updatedAt, this.createdAt, this.position, this.positionedAt,  List<String> tagIds = const [], this.permission = NotePermission.owner,  List<String>? shareIds, this.sharedBy, this.reminder, this.lock, this.isFrozen = false, @JsonKey(includeFromJson: false, includeToJson: false) this.isSynced = true, @JsonKey(includeFromJson: false, includeToJson: false) this.reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData = const [], @JsonKey(includeFromJson: false, includeToJson: false) this.pictureText = ''}): _tagIds = tagIds,_shareIds = shareIds,_imagePreviewData = imagePreviewData,super._();
+  const _Note({required this.id, required this.title, this.content, this.isPinned = false, this.isArchived = false, this.background, this.state = NoteState.active, this.updatedAt, this.createdAt, this.position, this.positionedAt,  List<String> tagIds = const [], this.permission = NotePermission.owner,  List<String>? shareIds, this.sharedBy, this.reminder, this.lock, this.isFrozen = false, this.isInvisible = false, @JsonKey(includeFromJson: false, includeToJson: false) this.isSynced = true, @JsonKey(includeFromJson: false, includeToJson: false) this.reminderSlot, @JsonKey(includeFromJson: false, includeToJson: false)  List<NoteImagePreview> imagePreviewData = const [], @JsonKey(includeFromJson: false, includeToJson: false) this.pictureText = ''}): _tagIds = tagIds,_shareIds = shareIds,_imagePreviewData = imagePreviewData,super._();
   factory _Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);
 
 @override final  String id;
@@ -831,6 +832,7 @@ class _Note extends Note {
 @override final  NoteReminder? reminder;
 @override final  NoteLock? lock;
 @override@JsonKey() final  bool isFrozen;
+@override@JsonKey() final  bool isInvisible;
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isSynced;
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  int? reminderSlot;
  final  List<NoteImagePreview> _imagePreviewData;
@@ -855,16 +857,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Note&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.background, background) || other.background == background)&&(identical(other.state, state) || other.state == state)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.position, position) || other.position == position)&&(identical(other.positionedAt, positionedAt) || other.positionedAt == positionedAt)&&const DeepCollectionEquality().equals(other._tagIds, _tagIds)&&(identical(other.permission, permission) || other.permission == permission)&&const DeepCollectionEquality().equals(other._shareIds, _shareIds)&&(identical(other.sharedBy, sharedBy) || other.sharedBy == sharedBy)&&(identical(other.reminder, reminder) || other.reminder == reminder)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.reminderSlot, reminderSlot) || other.reminderSlot == reminderSlot)&&const DeepCollectionEquality().equals(other._imagePreviewData, _imagePreviewData)&&(identical(other.pictureText, pictureText) || other.pictureText == pictureText));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Note&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isArchived, isArchived) || other.isArchived == isArchived)&&(identical(other.background, background) || other.background == background)&&(identical(other.state, state) || other.state == state)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.position, position) || other.position == position)&&(identical(other.positionedAt, positionedAt) || other.positionedAt == positionedAt)&&const DeepCollectionEquality().equals(other._tagIds, _tagIds)&&(identical(other.permission, permission) || other.permission == permission)&&const DeepCollectionEquality().equals(other._shareIds, _shareIds)&&(identical(other.sharedBy, sharedBy) || other.sharedBy == sharedBy)&&(identical(other.reminder, reminder) || other.reminder == reminder)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.isInvisible, isInvisible) || other.isInvisible == isInvisible)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.reminderSlot, reminderSlot) || other.reminderSlot == reminderSlot)&&const DeepCollectionEquality().equals(other._imagePreviewData, _imagePreviewData)&&(identical(other.pictureText, pictureText) || other.pictureText == pictureText));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,title,content,isPinned,isArchived,background,state,updatedAt,createdAt,position,positionedAt,const DeepCollectionEquality().hash(_tagIds),permission,const DeepCollectionEquality().hash(_shareIds),sharedBy,reminder,lock,isFrozen,isSynced,reminderSlot,const DeepCollectionEquality().hash(_imagePreviewData),pictureText]);
+int get hashCode => Object.hashAll([runtimeType,id,title,content,isPinned,isArchived,background,state,updatedAt,createdAt,position,positionedAt,const DeepCollectionEquality().hash(_tagIds),permission,const DeepCollectionEquality().hash(_shareIds),sharedBy,reminder,lock,isFrozen,isInvisible,isSynced,reminderSlot,const DeepCollectionEquality().hash(_imagePreviewData),pictureText]);
 
 @override
 String toString() {
-  return 'Note(id: $id, title: $title, content: $content, isPinned: $isPinned, isArchived: $isArchived, background: $background, state: $state, updatedAt: $updatedAt, createdAt: $createdAt, position: $position, positionedAt: $positionedAt, tagIds: $tagIds, permission: $permission, shareIds: $shareIds, sharedBy: $sharedBy, reminder: $reminder, lock: $lock, isFrozen: $isFrozen, isSynced: $isSynced, reminderSlot: $reminderSlot, imagePreviewData: $imagePreviewData, pictureText: $pictureText)';
+  return 'Note(id: $id, title: $title, content: $content, isPinned: $isPinned, isArchived: $isArchived, background: $background, state: $state, updatedAt: $updatedAt, createdAt: $createdAt, position: $position, positionedAt: $positionedAt, tagIds: $tagIds, permission: $permission, shareIds: $shareIds, sharedBy: $sharedBy, reminder: $reminder, lock: $lock, isFrozen: $isFrozen, isInvisible: $isInvisible, isSynced: $isSynced, reminderSlot: $reminderSlot, imagePreviewData: $imagePreviewData, pictureText: $pictureText)';
 }
 
 
@@ -875,7 +877,7 @@ abstract mixin class _$NoteCopyWith<$Res> implements $NoteCopyWith<$Res> {
   factory _$NoteCopyWith(_Note value, $Res Function(_Note) _then) = __$NoteCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String? content, bool isPinned, bool isArchived, String? background, NoteState state, DateTime? updatedAt, DateTime? createdAt, double? position, DateTime? positionedAt, List<String> tagIds, NotePermission permission, List<String>? shareIds, SharedByUser? sharedBy, NoteReminder? reminder, NoteLock? lock, bool isFrozen,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: false, includeToJson: false) int? reminderSlot,@JsonKey(includeFromJson: false, includeToJson: false) List<NoteImagePreview> imagePreviewData,@JsonKey(includeFromJson: false, includeToJson: false) String pictureText
+ String id, String title, String? content, bool isPinned, bool isArchived, String? background, NoteState state, DateTime? updatedAt, DateTime? createdAt, double? position, DateTime? positionedAt, List<String> tagIds, NotePermission permission, List<String>? shareIds, SharedByUser? sharedBy, NoteReminder? reminder, NoteLock? lock, bool isFrozen, bool isInvisible,@JsonKey(includeFromJson: false, includeToJson: false) bool isSynced,@JsonKey(includeFromJson: false, includeToJson: false) int? reminderSlot,@JsonKey(includeFromJson: false, includeToJson: false) List<NoteImagePreview> imagePreviewData,@JsonKey(includeFromJson: false, includeToJson: false) String pictureText
 });
 
 
@@ -892,7 +894,7 @@ class __$NoteCopyWithImpl<$Res>
 
 /// Create a copy of Note
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? content = freezed,Object? isPinned = null,Object? isArchived = null,Object? background = freezed,Object? state = null,Object? updatedAt = freezed,Object? createdAt = freezed,Object? position = freezed,Object? positionedAt = freezed,Object? tagIds = null,Object? permission = null,Object? shareIds = freezed,Object? sharedBy = freezed,Object? reminder = freezed,Object? lock = freezed,Object? isFrozen = null,Object? isSynced = null,Object? reminderSlot = freezed,Object? imagePreviewData = null,Object? pictureText = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? content = freezed,Object? isPinned = null,Object? isArchived = null,Object? background = freezed,Object? state = null,Object? updatedAt = freezed,Object? createdAt = freezed,Object? position = freezed,Object? positionedAt = freezed,Object? tagIds = null,Object? permission = null,Object? shareIds = freezed,Object? sharedBy = freezed,Object? reminder = freezed,Object? lock = freezed,Object? isFrozen = null,Object? isInvisible = null,Object? isSynced = null,Object? reminderSlot = freezed,Object? imagePreviewData = null,Object? pictureText = null,}) {
   return _then(_Note(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -912,6 +914,7 @@ as List<String>?,sharedBy: freezed == sharedBy ? _self.sharedBy : sharedBy // ig
 as SharedByUser?,reminder: freezed == reminder ? _self.reminder : reminder // ignore: cast_nullable_to_non_nullable
 as NoteReminder?,lock: freezed == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
 as NoteLock?,isFrozen: null == isFrozen ? _self.isFrozen : isFrozen // ignore: cast_nullable_to_non_nullable
+as bool,isInvisible: null == isInvisible ? _self.isInvisible : isInvisible // ignore: cast_nullable_to_non_nullable
 as bool,isSynced: null == isSynced ? _self.isSynced : isSynced // ignore: cast_nullable_to_non_nullable
 as bool,reminderSlot: freezed == reminderSlot ? _self.reminderSlot : reminderSlot // ignore: cast_nullable_to_non_nullable
 as int?,imagePreviewData: null == imagePreviewData ? _self._imagePreviewData : imagePreviewData // ignore: cast_nullable_to_non_nullable

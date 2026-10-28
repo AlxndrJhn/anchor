@@ -21,6 +21,7 @@ import { transformNote } from '../utils/note-transformer.util';
 import { ownedTagIds, reconcileUserTags } from '../utils/note-tags.util';
 import { setNotePosition } from '../utils/note-order.util';
 import { setNoteLock } from '../utils/note-lock.util';
+import { setNoteInvisible } from '../utils/note-invisible.util';
 import type { NoteLockKind } from '../../generated/prisma/enums';
 import { setNoteArchive } from '../utils/note-archive.util';
 import {
@@ -42,6 +43,7 @@ import {
   NOTE_LIST_ORDER,
   noteAccessibleBy,
   noteArchiveInclude,
+  noteInvisibleInclude,
   noteLockInclude,
   noteOrderInclude,
   notePinInclude,
@@ -237,6 +239,7 @@ export class NotesService {
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
         ...noteLockInclude(userId),
+        ...noteInvisibleInclude(userId),
         ...noteReminderInclude(userId),
       },
       orderBy: NOTE_LIST_ORDER,
@@ -263,6 +266,7 @@ export class NotesService {
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
         ...noteLockInclude(userId),
+        ...noteInvisibleInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -367,6 +371,7 @@ export class NotesService {
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
           ...noteLockInclude(userId),
+          ...noteInvisibleInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -403,6 +408,7 @@ export class NotesService {
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
         ...noteLockInclude(userId),
+        ...noteInvisibleInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -465,6 +471,7 @@ export class NotesService {
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
           ...noteLockInclude(userId),
+          ...noteInvisibleInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -502,6 +509,7 @@ export class NotesService {
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
           ...noteLockInclude(userId),
+          ...noteInvisibleInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -538,6 +546,7 @@ export class NotesService {
           ...noteArchiveInclude(userId),
           ...noteOrderInclude(userId),
           ...noteLockInclude(userId),
+          ...noteInvisibleInclude(userId),
           ...noteReminderInclude(userId),
         },
       });
@@ -563,6 +572,7 @@ export class NotesService {
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
         ...noteLockInclude(userId),
+        ...noteInvisibleInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -587,6 +597,7 @@ export class NotesService {
         ...noteArchiveInclude(userId),
         ...noteOrderInclude(userId),
         ...noteLockInclude(userId),
+        ...noteInvisibleInclude(userId),
         ...noteReminderInclude(userId),
       },
     });
@@ -851,6 +862,45 @@ export class NotesService {
       const changed: string[] = [];
       for (const noteId of accessibleIds) {
         if (await setNoteLock(tx, userId, noteId, lock)) changed.push(noteId);
+      }
+      await this.syncEmitter.emit(
+        tx,
+        changed.flatMap((noteId) => noteEmissions([userId], noteId)),
+      );
+    });
+    return { count: accessibleIds.length };
+  }
+
+  /**
+   * Makes a note invisible for this person (it stays out of their lists and
+   * only search finds it), or shows it again.
+   */
+  async setInvisible(userId: string, id: string, isInvisible: boolean) {
+    const access = await this.noteAccessService.hasNoteAccess(userId, id);
+    if (!access.hasAccess) {
+      throw new NotFoundException(ERROR_MESSAGES.NOTE_NOT_FOUND);
+    }
+    await this.prisma.$transaction(async (tx) => {
+      if (await setNoteInvisible(tx, userId, id, isInvisible)) {
+        await this.syncEmitter.emit(tx, noteEmissions([userId], id));
+      }
+    });
+    return { id, isInvisible };
+  }
+
+  // Bulk invisible/visible - per-user, works for owned and shared notes
+  async bulkSetInvisible(
+    userId: string,
+    noteIds: string[],
+    isInvisible: boolean,
+  ) {
+    const accessibleIds = await this.accessibleNoteIds(userId, noteIds);
+    await this.prisma.$transaction(async (tx) => {
+      const changed: string[] = [];
+      for (const noteId of accessibleIds) {
+        if (await setNoteInvisible(tx, userId, noteId, isInvisible)) {
+          changed.push(noteId);
+        }
       }
       await this.syncEmitter.emit(
         tx,

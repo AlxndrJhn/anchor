@@ -43,7 +43,9 @@ class HomeWidgetSync extends _$HomeWidgetSync {
 
     final subscription = ref.watch(notesRepositoryProvider).watchNotes().listen(
       (notes) {
-        _schedule(buildHomeWidgetPayload(notes, loggedIn: true));
+        // Invisible notes stay off the home screen too.
+        final shown = notes.where((note) => !note.isInvisible).toList();
+        _schedule(buildHomeWidgetPayload(shown, loggedIn: true));
       },
     );
 

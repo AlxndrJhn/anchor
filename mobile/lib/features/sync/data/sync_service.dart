@@ -212,6 +212,7 @@ class SyncService {
       position: note.position,
       lock: note.lock,
       sendsLock: note.lock != unknownNoteLock,
+      isInvisible: note.isInvisible,
       placedAfterEdit:
           note.position != null &&
           note.positionedAt != null &&
@@ -590,6 +591,9 @@ class SyncService {
           lock: row.lock == unknownNoteLock && note.hasLockField
               ? Value(note.lock)
               : const Value.absent(),
+          isInvisible: row.isInvisible == null && note.hasInvisibleField
+              ? Value(note.isInvisible)
+              : const Value.absent(),
         ),
       );
       return;
@@ -620,6 +624,9 @@ class SyncService {
                 ? Value(note.positionedAt)
                 : const Value.absent(),
             lock: note.hasLockField ? Value(note.lock) : const Value.absent(),
+            isInvisible: note.hasInvisibleField
+                ? Value(note.isInvisible)
+                : const Value.absent(),
             version: Value(note.version),
             isSynced: const Value(true),
             syncedTitle: Value(note.title),

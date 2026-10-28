@@ -86,6 +86,7 @@ _Note _$NoteFromJson(Map<String, dynamic> json) => _Note(
       : NoteReminder.fromJson(json['reminder'] as Map<String, dynamic>),
   lock: $enumDecodeNullable(_$NoteLockEnumMap, json['lock']),
   isFrozen: json['isFrozen'] as bool? ?? false,
+  isInvisible: json['isInvisible'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$NoteToJson(_Note instance) => <String, dynamic>{
@@ -107,6 +108,7 @@ Map<String, dynamic> _$NoteToJson(_Note instance) => <String, dynamic>{
   'reminder': instance.reminder,
   'lock': _$NoteLockEnumMap[instance.lock],
   'isFrozen': instance.isFrozen,
+  'isInvisible': instance.isInvisible,
 };
 
 const _$NoteStateEnumMap = {

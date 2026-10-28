@@ -26,6 +26,7 @@ class NoteListPage extends StatefulWidget {
     required this.trailingActions,
     this.actions,
     this.selectionActions,
+    this.hidesInvisible = false,
   });
 
   final String title;
@@ -46,6 +47,9 @@ class NoteListPage extends StatefulWidget {
   /// has done its work. Without it, notes can't be picked.
   final List<Widget> Function(List<Note> selected, VoidCallback done)?
   selectionActions;
+
+  /// Leaves out invisible notes until something is searched for.
+  final bool hidesInvisible;
 
   @override
   State<NoteListPage> createState() => _NoteListPageState();
@@ -101,7 +105,7 @@ class _NoteListPageState extends State<NoteListPage> {
 
   bool _matches(Note note) {
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return true;
+    if (q.isEmpty) return !(widget.hidesInvisible && note.isInvisible);
     return note.title.toLowerCase().contains(q) ||
         extractPlainTextFromQuillContent(
           note.content,

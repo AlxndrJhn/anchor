@@ -386,6 +386,7 @@ class NotesRepository {
               content: drift.Value(note.content),
               isPinned: drift.Value(note.isPinned),
               isArchived: drift.Value(note.isArchived),
+              isInvisible: drift.Value(note.isInvisible),
               background: drift.Value(note.background),
               state: drift.Value(domain.NoteState.active.name),
               updatedAt: drift.Value(DateTime.now().toUtc()),
@@ -646,6 +647,25 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.setLock');
   }
 
+  /// Makes the notes invisible for this person (left out of the lists,
+  /// found by search), or shows them again. Their own, like a lock, and
+  /// goes up with each note.
+  Future<void> setInvisible(List<String> ids, bool isInvisible) async {
+    if (ids.isEmpty) return;
+    await (_db.update(_db.notes)..where((tbl) => tbl.id.isIn(ids))).write(
+      NotesCompanion.custom(
+        isInvisible: drift.Constant(isInvisible),
+        isSynced: const drift.Constant(false),
+        localRev: _nextRev,
+      ),
+    );
+    AppLogger.instance.info(
+      'Notes',
+      'setInvisible count=${ids.length} invisible=$isInvisible',
+    );
+    scheduleAppSync(trigger: 'NotesRepo.setInvisible');
+  }
+
   /// Shows the notes frozen (or not) at once, once the server has taken
   /// it; the feed brings the rest. Nothing goes up for it.
   Future<void> markFrozen(List<String> ids, bool isFrozen) async {
@@ -840,6 +860,7 @@ class NotesRepository {
           : null,
       lock: domain.NoteLock.fromString(row.lock),
       isFrozen: row.isFrozen,
+      isInvisible: row.isInvisible ?? false,
       isSynced: row.isSynced,
       reminderSlot: row.reminderSlot,
       reminder: row.reminderAt == null

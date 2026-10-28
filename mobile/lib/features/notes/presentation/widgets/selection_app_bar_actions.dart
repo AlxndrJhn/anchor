@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_filters.dart';
 import 'package:anchor/features/notes/domain/note_merge.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
 import 'package:anchor/features/notes/presentation/note_freeze_actions.dart';
+import 'package:anchor/features/notes/presentation/note_invisible_actions.dart';
 import '../note_search.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/tags/presentation/tags_controller.dart';
@@ -335,17 +337,21 @@ class SelectionAppBarActions extends ConsumerWidget {
     final query = ref.watch(searchQueryProvider);
     final unlocked = ref.watch(noteLockSessionProvider);
     final theme = Theme.of(context);
+    final filters = ref.watch(noteFiltersControllerProvider);
+    final searching = query.trim().isNotEmpty || !filters.isEmpty;
 
     final filteredNotes = notes.maybeWhen(
       data: (notesList) {
         return notesList
             .where(
-              (note) => noteMatchesSearch(
-                note,
-                query,
-                options: ref.watch(searchOptionsProvider),
-                titleOnly: isNoteHidden(note, unlocked),
-              ),
+              (note) =>
+                  showsInList(note, searching: searching) &&
+                  noteMatchesSearch(
+                    note,
+                    query,
+                    options: ref.watch(searchOptionsProvider),
+                    titleOnly: isNoteHidden(note, unlocked),
+                  ),
             )
             .toList();
       },
@@ -354,7 +360,6 @@ class SelectionAppBarActions extends ConsumerWidget {
 
     // Archived notes the list shows after the others (a search, a tag or a
     // filter) can be picked too, as in the list.
-    final filters = ref.watch(noteFiltersControllerProvider);
     final selectedTagId = ref.watch(selectedTagFilterProvider);
     final withArchived =
         query.trim().isNotEmpty || selectedTagId != null || !filters.isEmpty;
@@ -365,6 +370,7 @@ class SelectionAppBarActions extends ConsumerWidget {
                 (note) =>
                     (selectedTagId == null ||
                         note.tagIds.contains(selectedTagId)) &&
+                    showsInList(note, searching: searching) &&
                     filters.matches(note) &&
                     noteMatchesSearch(
                       note,
@@ -389,6 +395,8 @@ class SelectionAppBarActions extends ConsumerWidget {
     final ownSelected = selectedNotes.where((n) => n.isOwner).toList();
     final allOwnFrozen =
         ownSelected.isNotEmpty && ownSelected.every((n) => n.isFrozen);
+    final allInvisible =
+        selectedNotes.isNotEmpty && selectedNotes.every((n) => n.isInvisible);
     final selectedFrozenIds = {
       for (final n in ownSelected)
         if (n.isFrozen) n.id,
@@ -434,7 +442,7 @@ class SelectionAppBarActions extends ConsumerWidget {
             tooltip: allSelectedPinned ? 'Unpin' : 'Pin',
           ),
         // Lock (one choice for them all), freeze / unfreeze the ones this
-        // person owns, and merge, under More
+        // person owns, make them invisible or visible, and merge, under More
         if (selectedNoteIds.isNotEmpty)
           PopupMenuButton<_MoreAction>(
             icon: const Icon(LucideIcons.ellipsisVertical),
@@ -451,6 +459,12 @@ class SelectionAppBarActions extends ConsumerWidget {
                       if (n.isFrozen == allOwnFrozen) n.id,
                   ], !allOwnFrozen);
                   if (done) onExitSelectionMode();
+                case _MoreAction.invisible:
+                  await setNotesInvisible(context, ref, [
+                    for (final n in selectedNotes)
+                      if (n.isInvisible == allInvisible) n.id,
+                  ], !allInvisible);
+                  onExitSelectionMode();
                 case _MoreAction.merge:
                   // In the order they were picked: the first one stays.
                   final byId = {for (final n in selectedNotes) n.id: n};
@@ -475,6 +489,15 @@ class SelectionAppBarActions extends ConsumerWidget {
                     title: Text(allOwnFrozen ? 'Unfreeze' : 'Freeze'),
                   ),
                 ),
+              PopupMenuItem(
+                value: _MoreAction.invisible,
+                child: ListTile(
+                  leading: Icon(
+                    allInvisible ? LucideIcons.eye : LucideIcons.eyeOff,
+                  ),
+                  title: Text(allInvisible ? 'Make visible' : 'Make invisible'),
+                ),
+              ),
               PopupMenuItem(
                 value: _MoreAction.merge,
                 enabled: selectedNotes.length >= 2,
@@ -536,4 +559,4 @@ class SelectionAppBarActions extends ConsumerWidget {
   }
 }
 
-enum _MoreAction { lock, freeze, merge }
+enum _MoreAction { lock, freeze, invisible, merge }

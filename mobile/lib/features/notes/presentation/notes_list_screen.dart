@@ -26,6 +26,7 @@ import 'package:anchor/core/widgets/app_empty_state.dart';
 import 'package:anchor/core/widgets/masonry/reorderable_masonry_grid.dart';
 import 'package:anchor/core/widgets/gradient_background.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_filters.dart';
 import 'package:anchor/features/sync/presentation/sync_warning.dart';
 import 'package:anchor/core/update/update_sheet.dart';
 import 'package:anchor/features/picture_search/picture_search.dart';
@@ -712,7 +713,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                         options: searchOptions,
                       );
                       final unlocked = ref.watch(noteLockSessionProvider);
+                      final searching = q.isNotEmpty || !filters.isEmpty;
                       bool matches(Note note) =>
+                          showsInList(note, searching: searching) &&
                           filters.matches(note) &&
                           noteMatchesPattern(
                             note,
