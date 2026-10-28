@@ -40,6 +40,7 @@ interface NoteRow {
   version: number;
   background: string | null;
   state: NoteState;
+  isFrozen: boolean;
   createdAt: Date;
   updatedAt: Date;
   userId: string;

@@ -24,6 +24,7 @@ import {
   Pin,
   PinOff,
   Send,
+  Snowflake,
   Trash2,
   UserPlus,
 } from "lucide-react";
@@ -84,6 +85,10 @@ interface NoteEditorHeaderProps {
   /** Opens the lock choices (Lock… or Change lock…). */
   onLock: () => void;
   onRemoveLock: () => void;
+  /** Frozen: it can't be changed, trashed or deleted. */
+  frozen: boolean;
+  /** Freezes or unfreezes it; absent for those who don't own it. */
+  onToggleFreeze?: () => void;
   /** Hands the note to another app (or copies it as text). */
   onSend: () => void;
   /** Makes a copy of the note; absent for a note not yet saved. */
@@ -224,7 +229,7 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
               </IconButton>
             </Tip>
           )}
-          {props.saved && (
+          {props.saved && !(props.frozen && props.isOwner) && (
             <Tip label={trashLabel}>
               <IconButton
                 label={trashLabel}
@@ -328,6 +333,12 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                     Remove lock
                   </DropdownMenuItem>
                 )}
+                {props.onToggleFreeze && (
+                  <DropdownMenuItem onSelect={props.onToggleFreeze}>
+                    <Snowflake />
+                    {props.frozen ? "Unfreeze" : "Freeze"}
+                  </DropdownMenuItem>
+                )}
                 <div className="contents md:hidden">
                   {props.isArchived ? (
                     <DropdownMenuItem onSelect={props.onUnarchive}>
@@ -340,11 +351,15 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                       Archive
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem tone="danger" onSelect={props.onTrash}>
-                    {props.isOwner ? <Trash2 /> : <LogOut />}
-                    {trashLabel}
-                  </DropdownMenuItem>
+                  {!(props.frozen && props.isOwner) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem tone="danger" onSelect={props.onTrash}>
+                        {props.isOwner ? <Trash2 /> : <LogOut />}
+                        {trashLabel}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>

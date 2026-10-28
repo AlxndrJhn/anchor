@@ -167,6 +167,8 @@ abstract class Note with _$Note {
     NoteReminder? reminder,
     // What this person locked the note with; null when it isn't locked.
     NoteLock? lock,
+    // Frozen by its owner: nobody can change, trash or delete it.
+    @Default(false) bool isFrozen,
     // Local only - not serialized
     @Default(true)
     @JsonKey(includeFromJson: false, includeToJson: false)
@@ -191,7 +193,12 @@ abstract class Note with _$Note {
   bool get isTrashed => state == NoteState.trashed;
   bool get isDeleted => state == NoteState.deleted;
   bool get isOwner => permission.isOwner;
-  bool get canEdit => permission.canEdit;
+
+  /// Whether its title, text and colour can change: not when it's frozen.
+  bool get canEdit => permission.canEdit && !isFrozen;
+
+  /// Frozen by this person: they can unfreeze it, and it can't be trashed.
+  bool get isOwnFrozen => isFrozen && isOwner;
   bool get isShared => sharedBy != null;
   bool get hasShares => shareIds != null && shareIds!.isNotEmpty;
   bool get hasReminder => reminder != null;

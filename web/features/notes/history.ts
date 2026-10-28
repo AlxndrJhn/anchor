@@ -64,7 +64,9 @@ export function historyHasMultipleAuthors(
 
 export function canRestoreRevisions(note: Note | null): boolean {
   if (!note) return false;
-  return note.state === "active" && note.permission !== "viewer";
+  return (
+    note.state === "active" && note.permission !== "viewer" && !note.isFrozen
+  );
 }
 
 export function revisionsFromPages(

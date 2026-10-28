@@ -13,7 +13,10 @@ import type { Note } from "../types";
 /** Whether this person may tick a note's items from its card. */
 export function canTickFromCard(note: Note) {
   return (
-    note.permission !== "viewer" && note.state !== "trashed" && !note.isArchived
+    note.permission !== "viewer" &&
+    note.state !== "trashed" &&
+    !note.isArchived &&
+    !note.isFrozen
   );
 }
 

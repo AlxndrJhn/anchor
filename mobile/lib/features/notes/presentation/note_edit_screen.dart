@@ -28,6 +28,7 @@ import 'package:anchor/features/notes/presentation/widgets/note_background_picke
 import 'package:anchor/features/notes/presentation/widgets/note_options_sheet.dart';
 import 'package:anchor/features/notes/presentation/widgets/share_note_sheet.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
+import 'package:anchor/features/notes/presentation/note_freeze_actions.dart';
 import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -119,8 +120,13 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
   bool get _isActive => _existingNote?.isActive ?? true;
 
-  bool get _isReadOnly =>
-      !_isActive || _existingNote?.permission == NotePermission.viewer;
+  // Frozen notes read like a viewer's: only what is this person's changes.
+  bool get _isReadOnly => !_isActive || !(_existingNote?.canEdit ?? true);
+
+  bool get _isFrozen => _existingNote?.isFrozen ?? false;
+
+  /// Frozen by this person: it can't be trashed until they unfreeze it.
+  bool get _isOwnFrozen => _existingNote?.isOwnFrozen ?? false;
 
   bool get _savesOnlyPersonal => !(_existingNote?.canEdit ?? true);
 
@@ -842,7 +848,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 (_existingNote?.isOwner ?? true)
             ? _showShareSheet
             : null,
-        onHistoryTap: !_isNew && !_isReadOnly ? _openHistory : null,
+        onHistoryTap: !_isNew && (!_isReadOnly || _isFrozen)
+            ? _openHistory
+            : null,
         onSendTap: _sendNote,
         onCopyTap: !_isNew && !(_existingNote?.isTrashed ?? false)
             ? _copyNote
@@ -864,6 +872,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         onRemoveLockTap: lockable?.isLocked ?? false
             ? () => unlockOpenNote(context, ref, lockable!)
             : null,
+        onFreezeTap: lockable != null && lockable.isOwner
+            ? () => _setFrozen(!lockable.isFrozen)
+            : null,
+        isFrozen: _isFrozen,
         onUncheckAllTap: checked > 0 ? () => editor?.uncheckAll() : null,
         onRemoveCheckedTap: checked > 0
             ? () {
@@ -931,6 +943,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         message: 'Couldn’t make a copy. It needs a connection to the server.',
       );
     }
+  }
+
+  /// Freezes or unfreezes the note; what is typed so far goes up first.
+  Future<void> _setFrozen(bool isFrozen) async {
+    final noteId = _noteId;
+    if (noteId == null) return;
+    _autoSaveTimer?.cancel();
+    await _savePendingChanges();
+    if (!mounted) return;
+    await setNotesFrozen(context, ref, [noteId], isFrozen);
   }
 
   /// Sends what is typed so far before showing the versions.
@@ -1082,6 +1104,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       _popOrExit();
       return;
     }
+    if (_isOwnFrozen) return;
 
     final isOwner = _existingNote?.isOwner ?? true;
     // Your own note goes to trash at once, with Undo. A shared note asks
@@ -1297,6 +1320,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   }
 
   Widget _buildReadOnlyBanner(ThemeData theme, bool isTrashed) {
+    final frozen = !isTrashed && _isFrozen;
     final dims = context.dims;
     return Container(
       width: double.infinity,
@@ -1308,7 +1332,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       child: Row(
         children: [
           Icon(
-            LucideIcons.lock,
+            frozen ? LucideIcons.snowflake : LucideIcons.lock,
             size: AppIconSizes.sm,
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -1317,12 +1341,22 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             child: Text(
               isTrashed
                   ? 'This note is in trash and cannot be edited. Restore it to make changes.'
+                  : frozen
+                  ? (_isOwnFrozen
+                        ? 'Frozen. It can’t be changed or deleted until you unfreeze it.'
+                        : 'Frozen by its owner. It can’t be changed.')
                   : 'You have viewer access. Only the owner can edit this note.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ),
+          if (frozen && _isOwnFrozen)
+            TextButton.icon(
+              onPressed: () => _setFrozen(false),
+              icon: const Icon(LucideIcons.snowflake, size: AppIconSizes.sm),
+              label: const Text('Unfreeze'),
+            ),
         ],
       ),
     );
@@ -1474,13 +1508,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                     onPressed: _isLoaded ? _toggleArchived : null,
                     tooltip: _isArchived ? 'Unarchive note' : 'Archive note',
                   ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.trash2),
-                    onPressed: _isLoaded ? _deleteNote : null,
-                    tooltip: (_existingNote?.isOwner ?? true)
-                        ? 'Delete note'
-                        : 'Remove note',
-                  ),
+                  if (!_isOwnFrozen)
+                    IconButton(
+                      icon: const Icon(LucideIcons.trash2),
+                      onPressed: _isLoaded ? _deleteNote : null,
+                      tooltip: (_existingNote?.isOwner ?? true)
+                          ? 'Delete note'
+                          : 'Remove note',
+                    ),
                 ],
                 IconButton(
                   icon: const Icon(LucideIcons.moreVertical),
