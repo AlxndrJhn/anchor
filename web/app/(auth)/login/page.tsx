@@ -114,7 +114,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <AuthHeading title="Welcome back" sub="Sign in to continue to Anchor." />
+      <AuthHeading title="Welcome back" sub="Sign in to continue to Anchor+." />
       {oidc.data?.enabled && (
         <>
           <Button

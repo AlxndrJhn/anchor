@@ -39,7 +39,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["appAuthRedirectScheme"] = "anchor"
-        manifestPlaceholders["appLabel"] = if (isForkBuild) "Anchor (fork)" else "Anchor Notes"
+        manifestPlaceholders["appLabel"] = if (isForkBuild) "Anchor+" else "Anchor Notes"
     }
 
     signingConfigs {

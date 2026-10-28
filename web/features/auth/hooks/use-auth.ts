@@ -115,7 +115,7 @@ export function useRegister() {
       // A pending account gets no tokens.
       if (data.access_token && data.refresh_token) {
         setAuth(data.user, data.access_token, data.refresh_token);
-        toast.success(`Welcome to Anchor, ${firstName(data.user.name)}`);
+        toast.success(`Welcome to Anchor+, ${firstName(data.user.name)}`);
       }
     },
   });

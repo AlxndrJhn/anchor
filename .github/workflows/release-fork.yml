@@ -57,7 +57,7 @@ jobs:
       run:
         working-directory: mobile
     env:
-      # Installs as "Anchor (fork)" next to the official app.
+      # Installs as "Anchor+" next to the official app.
       ORG_GRADLE_PROJECT_anchorFork: "true"
       HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
@@ -255,7 +255,7 @@ jobs:
             echo
             echo "## Android"
             echo
-            echo 'Install `anchor-fork.apk`. It installs as "Anchor (fork)", next to the official app, and updates the previous fork build.'
+            echo 'Install `anchor-fork.apk`. It installs as "Anchor+", next to the official app, and updates the previous fork build.'
             echo
             echo 'It is for 64-bit ARM, which nearly every phone since 2017 is. For an older 32-bit phone take `anchor-fork-armeabi-v7a.apk`; for an emulator or x86 tablet, `anchor-fork-x86_64.apk`.'
             echo
@@ -288,7 +288,7 @@ jobs:
           shopt -s nullglob
           gh release create "$TAG" anchor-fork*.apk Anchor-*.exe Anchor-*.dmg \
             --target "$GITHUB_SHA" \
-            --title "Anchor fork $TAG" \
+            --title "Anchor+ $TAG" \
             --notes-file notes.md \
             --latest
           # Superseded by the per-commit releases above.

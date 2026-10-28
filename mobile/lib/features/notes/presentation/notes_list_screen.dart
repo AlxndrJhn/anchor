@@ -596,7 +596,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                               bottom: dims.sm,
                             ),
                             title: Text(
-                              'Anchor (fork)',
+                              'Anchor+',
                               style: theme.textTheme.headlineMedium?.copyWith(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,

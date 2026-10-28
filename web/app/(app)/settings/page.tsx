@@ -44,7 +44,7 @@ export default function SettingsPage() {
                 <AnchorLogo className="size-10 rounded-md shadow-edge" />
                 <div className="grid">
                   <b className="font-semibold text-ui">
-                    Anchor {process.env.NEXT_PUBLIC_APP_VERSION}
+                    Anchor+ {process.env.NEXT_PUBLIC_APP_VERSION}
                   </b>
                   <span className="text-meta text-muted-foreground">
                     Your thoughts, secured.
