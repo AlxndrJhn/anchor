@@ -46,7 +46,6 @@ class _TagSelectorState extends ConsumerState<TagSelector> {
   @override
   Widget build(BuildContext context) {
     final tagsAsync = ref.watch(tagsControllerProvider);
-    final theme = Theme.of(context);
     final dims = context.dims;
     final inset = dims.editorPadding.left;
 
@@ -60,56 +59,29 @@ class _TagSelectorState extends ConsumerState<TagSelector> {
 
     return Padding(
       padding: EdgeInsets.only(top: dims.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!widget.readOnly) ...[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: inset),
-              child: Row(
-                children: [
-                  Icon(
-                    LucideIcons.tags,
-                    size: AppIconSizes.sm,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  SizedBox(width: dims.xs),
-                  Text(
-                    'Tags',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+      child: SizedBox(
+        height: _stripHeight,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: inset),
+          children: [
+            for (final tag in selectedTags)
+              Padding(
+                padding: EdgeInsets.only(right: dims.xs),
+                child: TagChip(
+                  tag: tag,
+                  selected: !widget.readOnly,
+                  showDelete: !widget.readOnly,
+                  onDelete: () {
+                    final newIds = List<String>.from(widget.selectedTagIds)
+                      ..remove(tag.id);
+                    widget.onTagsChanged(newIds);
+                  },
+                ),
               ),
-            ),
-            SizedBox(height: dims.xs),
+            if (!widget.readOnly) _AddTagButton(onTap: _showTagPickerSheet),
           ],
-          SizedBox(
-            height: _stripHeight,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: inset),
-              children: [
-                for (final tag in selectedTags)
-                  Padding(
-                    padding: EdgeInsets.only(right: dims.xs),
-                    child: TagChip(
-                      tag: tag,
-                      selected: !widget.readOnly,
-                      showDelete: !widget.readOnly,
-                      onDelete: () {
-                        final newIds = List<String>.from(widget.selectedTagIds)
-                          ..remove(tag.id);
-                        widget.onTagsChanged(newIds);
-                      },
-                    ),
-                  ),
-                if (!widget.readOnly) _AddTagButton(onTap: _showTagPickerSheet),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -183,6 +155,12 @@ class _TagPickerSheetState extends ConsumerState<TagPickerSheet> {
   final _newTagController = TextEditingController();
   bool _isCreatingTag = false;
   String? _errorMessage;
+  final _listController = ScrollController();
+  final _tagKeys = <String, GlobalKey>{};
+
+  /// A tag just created here, to scroll to once the list shows it.
+  String? _revealTagId;
+  bool _isRevealing = false;
 
   @override
   void initState() {
@@ -195,6 +173,7 @@ class _TagPickerSheetState extends ConsumerState<TagPickerSheet> {
   void dispose() {
     _newTagController.removeListener(_onTextChanged);
     _newTagController.dispose();
+    _listController.dispose();
     super.dispose();
   }
 
@@ -232,6 +211,7 @@ class _TagPickerSheetState extends ConsumerState<TagPickerSheet> {
       _newTagController.clear();
       setState(() {
         _selectedIds.add(tag.id);
+        _revealTagId = tag.id;
         _isCreatingTag = false;
         _errorMessage = null;
       });
@@ -242,6 +222,38 @@ class _TagPickerSheetState extends ConsumerState<TagPickerSheet> {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  /// Scrolls the list to the tag at [index] of [count]. The list builds
+  /// lazily, so an off-screen row is first brought near by estimate.
+  void _revealTag(String id, int index, int count, [int attempt = 0]) {
+    _isRevealing = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _revealTagId != id) {
+        _isRevealing = false;
+        return;
+      }
+      final row = _tagKeys[id]?.currentContext;
+      if (row != null || attempt >= 3 || !_listController.hasClients) {
+        _revealTagId = null;
+        _isRevealing = false;
+        if (row != null) {
+          Scrollable.ensureVisible(
+            row,
+            alignment: 0.5,
+            duration: AppDurations.medium,
+            curve: Curves.easeOutCubic,
+          );
+        }
+        return;
+      }
+      final position = _listController.position;
+      final extent = position.maxScrollExtent + position.viewportDimension;
+      _listController.jumpTo(
+        (extent * index / count).clamp(0.0, position.maxScrollExtent),
+      );
+      _revealTag(id, index, count, attempt + 1);
+    });
   }
 
   @override
@@ -448,7 +460,15 @@ class _TagPickerSheetState extends ConsumerState<TagPickerSheet> {
                   );
                 }
 
+                final revealIndex = _revealTagId == null
+                    ? -1
+                    : tags.indexWhere((t) => t.id == _revealTagId);
+                if (revealIndex >= 0 && !_isRevealing) {
+                  _revealTag(_revealTagId!, revealIndex, tags.length);
+                }
+
                 return ListView.builder(
+                  controller: _listController,
                   shrinkWrap: true,
                   padding: EdgeInsets.fromLTRB(dims.md, 0, dims.md, dims.xxl),
                   itemCount: tags.length,
@@ -461,6 +481,7 @@ class _TagPickerSheetState extends ConsumerState<TagPickerSheet> {
                     );
 
                     return Padding(
+                      key: _tagKeys.putIfAbsent(tag.id, GlobalKey.new),
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Material(
                         color: Colors.transparent,
