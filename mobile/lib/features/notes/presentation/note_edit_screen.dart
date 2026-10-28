@@ -880,7 +880,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             : null,
         onLockTap: lockable == null
             ? null
-            : () => lockOpenNote(context, ref, lockable),
+            : () => lockOpenNote(context, ref, lockable, close: _saveAndPop),
         isLocked: lockable?.isLocked ?? false,
         onRemoveLockTap: lockable?.isLocked ?? false
             ? () => unlockOpenNote(context, ref, lockable!)

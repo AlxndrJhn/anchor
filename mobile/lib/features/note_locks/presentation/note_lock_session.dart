@@ -52,6 +52,12 @@ class NoteLockSession extends _$NoteLockSession {
     state = {...state, noteId};
   }
 
+  /// This note locks again, the others stay as they are.
+  void relock(String noteId) {
+    if (!state.contains(noteId)) return;
+    state = {...state}..remove(noteId);
+  }
+
   /// Every note locks again.
   void end() {
     if (state.isEmpty) return;
