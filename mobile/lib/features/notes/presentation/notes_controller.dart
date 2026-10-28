@@ -42,6 +42,10 @@ class NotesController extends _$NotesController {
     return await ref.read(notesRepositoryProvider).bulkArchiveNotes(ids);
   }
 
+  Future<int> bulkUnarchiveNotes(List<String> ids) async {
+    return await ref.read(notesRepositoryProvider).bulkUnarchiveNotes(ids);
+  }
+
   Future<int> bulkSetPinned(List<String> ids, bool isPinned) async {
     return await ref.read(notesRepositoryProvider).bulkSetPinned(ids, isPinned);
   }
