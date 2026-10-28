@@ -11,13 +11,17 @@ import 'core/notifications/reminder_tap_handler.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/update/app_updater.dart';
+import 'features/debug_recorder/data/debug_state_observer.dart';
+import 'features/debug_recorder/presentation/debug_recorder_host.dart';
 import 'features/note_locks/data/note_lock_secrets.dart';
 import 'features/note_locks/presentation/note_lock_session.dart';
 import 'features/settings/presentation/controllers/theme_preferences_controller.dart';
 
 void main() async {
   await initializeApp();
-  runApp(const ProviderScope(child: AnchorApp()));
+  runApp(
+    const ProviderScope(observers: [DebugStateObserver()], child: AnchorApp()),
+  );
 }
 
 class AnchorApp extends ConsumerWidget {
@@ -61,6 +65,8 @@ class AnchorApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(density, scheme, style, customTheme),
       themeMode: themeMode,
       routerConfig: router,
+      // Debug mode: hold two fingers still for 3 s to film the app.
+      builder: (context, child) => DebugRecorderHost(child: child),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
