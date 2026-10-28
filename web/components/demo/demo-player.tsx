@@ -60,14 +60,16 @@ export function DemoPlayer() {
       y: window.innerHeight * 0.6,
     };
     setCursor({ ...position, pressed: false });
-    let lastTarget: Element | null = null;
+    // What the pointer was over: left when it moves on, as a mouse would.
+    let touchedTargets: Element[] = [];
     const play: PlayContext = {
       check,
       pause,
       find: (target, timeout) => findTarget(target, check, timeout),
       moveTo: async (element) => {
-        if (lastTarget && lastTarget !== element) leaveElement(lastTarget);
-        lastTarget = element;
+        for (const touched of touchedTargets)
+          if (touched !== element) leaveElement(touched);
+        touchedTargets = [element];
         element.scrollIntoView({ block: "nearest", inline: "nearest" });
         position = center(element);
         setCursor({ ...position, pressed: false });
@@ -122,7 +124,7 @@ export function DemoPlayer() {
       } else if ("wait" in step) {
         await pause(step.wait);
       } else if ("waitFor" in step) {
-        await play.find(step.waitFor, 10_000);
+        await play.find(step.waitFor, step.timeout ?? 10_000);
       } else if ("run" in step) {
         await step.run(play);
         await pause(500);
@@ -142,7 +144,7 @@ export function DemoPlayer() {
         console.warn("Demo stopped:", error);
         set({ status: "done", caption: playing.outro });
       } finally {
-        if (lastTarget) leaveElement(lastTarget);
+        for (const touched of touchedTargets) leaveElement(touched);
         if (!stopped) setCursor(null);
       }
     })();
@@ -153,12 +155,36 @@ export function DemoPlayer() {
 
   const isPlaying = status === "playing" || status === "loading";
 
+  // Holds the person's own clicks and keys while the demo plays; the
+  // demo's events are not trusted, so they pass.
+  React.useEffect(() => {
+    if (!isPlaying) return;
+    const hold = (e: Event) => {
+      const target = e.target as Element | null;
+      if (!e.isTrusted || target?.closest?.("[data-demo-player]")) return;
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    const types = [
+      "pointerdown",
+      "pointerup",
+      "mousedown",
+      "mouseup",
+      "click",
+      "dblclick",
+      "keydown",
+      "touchstart",
+    ];
+    for (const type of types)
+      window.addEventListener(type, hold, { capture: true });
+    return () => {
+      for (const type of types)
+        window.removeEventListener(type, hold, { capture: true });
+    };
+  }, [isPlaying]);
+
   return (
     <div data-demo-player>
-      {isPlaying && (
-        // Holds the person's clicks while the demo plays.
-        <div className="pointer-events-auto fixed inset-0 z-[2147483000]" />
-      )}
       {cursor && isPlaying && (
         <div
           aria-hidden

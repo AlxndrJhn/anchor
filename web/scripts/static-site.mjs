@@ -7,6 +7,8 @@
 //   and any page of the demo (a reload starts it over), go to a page that is
 //   there.
 import {
+  copyFileSync,
+  existsSync,
   readdirSync,
   readFileSync,
   rmSync,
@@ -39,6 +41,16 @@ for (const icon of manifest.icons ?? []) icon.src = `${base}${icon.src}`;
 manifest.start_url = `${base}/`;
 manifest.scope = `${base}/`;
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+
+// Next.js writes /notes as notes.html beside a notes/ folder of its parts.
+// Should GitHub Pages take the folder for the address, it finds the page in
+// it too.
+for (const file of walk(out)) {
+  if (!file.endsWith(".html")) continue;
+  const folder = file.slice(0, -".html".length);
+  if (existsSync(folder) && statSync(folder).isDirectory())
+    copyFileSync(file, join(folder, "index.html"));
+}
 
 // The service worker serves a server's pages; these builds don't use it.
 rmSync(join(out, "sw.js"), { force: true });

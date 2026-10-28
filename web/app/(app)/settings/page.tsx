@@ -60,7 +60,10 @@ export default function SettingsPage() {
                   {appMode === "local" && (
                     <span className="text-meta text-muted-foreground">
                       Your notes are kept in this browser only.{" "}
-                      <a href={`${basePath}/demo/settings#set-demos`}>
+                      <a
+                        href={`${basePath}/demo/settings#set-demos`}
+                        className="font-semibold text-accent-ink underline decoration-current/35 underline-offset-3 hover:decoration-current"
+                      >
                         Watch the feature demos
                       </a>
                     </span>
