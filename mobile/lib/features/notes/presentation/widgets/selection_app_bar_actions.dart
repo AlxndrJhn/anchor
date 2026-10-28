@@ -256,6 +256,7 @@ class SelectionAppBarActions extends ConsumerWidget {
               (note) => noteMatchesSearch(
                 note,
                 query,
+                options: ref.watch(searchOptionsProvider),
                 titleOnly: isNoteHidden(note, unlocked),
               ),
             )

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../search/search_pattern.dart';
 import '../theme/context_extensions.dart';
 import '../theme/tokens/app_durations.dart';
 import '../theme/tokens/app_icon_sizes.dart';
@@ -73,6 +74,9 @@ class RichTextEditor extends StatefulWidget {
   /// first is scrolled into view, until the text is edited.
   final String? highlightTerm;
 
+  /// How [highlightTerm] is read: as a regular expression, matching case.
+  final SearchOptions highlightOptions;
+
   /// Draw the embeds the content may hold (pictures placed in the text).
   final Iterable<EmbedBuilder>? embedBuilders;
 
@@ -96,6 +100,7 @@ class RichTextEditor extends StatefulWidget {
     this.header,
     this.onImageInserted,
     this.highlightTerm,
+    this.highlightOptions = const SearchOptions(),
     this.embedBuilders,
     this.onTakePicture,
     this.onPickImages,
@@ -127,7 +132,7 @@ class RichTextEditorState extends State<RichTextEditor>
   @override
   RenderEditor? get renderEditor => _editorKey.currentState?.renderEditor;
 
-  String? _highlight;
+  SearchPattern? _highlight;
   StreamSubscription<DocChange>? _highlightSub;
 
   @override
@@ -143,8 +148,11 @@ class RichTextEditorState extends State<RichTextEditor>
     _controller = _createController(widget.initialContent);
     _controller.readOnly = !widget.canEdit;
     _scrollController = ScrollController();
-    _highlight = widget.highlightTerm?.trim().toLowerCase();
-    if (_highlight?.isEmpty ?? true) _highlight = null;
+    _highlight = SearchPattern(
+      widget.highlightTerm ?? '',
+      options: widget.highlightOptions,
+    );
+    if (_highlight!.isEmpty) _highlight = null;
     if (_highlight != null) {
       _highlightSub = _controller.changes.listen((change) {
         if (change.source != ChangeSource.local) return;
@@ -456,9 +464,8 @@ class RichTextEditorState extends State<RichTextEditor>
     TextStyle? style,
     GestureRecognizer? recognizer,
   ) {
-    final term = _highlight;
-    final lower = text.toLowerCase();
-    if (term == null || !lower.contains(term)) {
+    final hits = _highlight?.allMatches(text).toList() ?? const <Match>[];
+    if (hits.isEmpty) {
       return defaultSpanBuilder(
         context,
         node,
@@ -475,11 +482,11 @@ class RichTextEditorState extends State<RichTextEditor>
     );
     final spans = <TextSpan>[];
     var at = 0;
-    for (var hit = lower.indexOf(term); hit != -1;) {
-      if (hit > at) {
+    for (final hit in hits) {
+      if (hit.start > at) {
         spans.add(
           TextSpan(
-            text: text.substring(at, hit),
+            text: text.substring(at, hit.start),
             style: style,
             recognizer: recognizer,
           ),
@@ -487,13 +494,12 @@ class RichTextEditorState extends State<RichTextEditor>
       }
       spans.add(
         TextSpan(
-          text: text.substring(hit, hit + term.length),
+          text: text.substring(hit.start, hit.end),
           style: mark,
           recognizer: recognizer,
         ),
       );
-      at = hit + term.length;
-      hit = lower.indexOf(term, at);
+      at = hit.end;
     }
     if (at < text.length) {
       spans.add(
@@ -511,8 +517,11 @@ class RichTextEditorState extends State<RichTextEditor>
     final term = _highlight;
     final editor = renderEditor;
     if (!mounted || term == null || editor == null) return;
-    final at = _controller.document.toPlainText().toLowerCase().indexOf(term);
-    if (at < 0) return;
+    final first = term
+        .allMatches(_controller.document.toPlainText())
+        .firstOrNull;
+    if (first == null) return;
+    final at = first.start;
     final rect = editor.getLocalRectForCaret(TextPosition(offset: at));
     editor.showOnScreen(
       rect: rect.inflate(80),

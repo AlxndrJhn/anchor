@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:anchor/core/theme/context_extensions.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
+import 'package:anchor/features/notes/presentation/note_search.dart';
 
 /// Search field at the top of the notes list.
 class NotesSearchBar extends StatelessWidget {
@@ -14,6 +15,7 @@ class NotesSearchBar extends StatelessWidget {
     required this.onClear,
     this.filterCount = 0,
     this.onFilter,
+    this.options = const SearchOptions(),
   });
 
   final TextEditingController controller;
@@ -25,6 +27,10 @@ class NotesSearchBar extends StatelessWidget {
   final int filterCount;
   final VoidCallback? onFilter;
 
+  /// Set in the filter sheet; named in the hint, and a regular expression
+  /// that can't be read is pointed out.
+  final SearchOptions options;
+
   /// Tap target of the clear button. Material's default 48 would set the
   /// floor for the whole bar, so this matches a `VisualDensity.compact` one.
   static const double _clearButtonSize = 40;
@@ -35,7 +41,12 @@ class NotesSearchBar extends StatelessWidget {
 
     return SearchBar(
       controller: controller,
-      hintText: 'Search your thoughts...',
+      hintText: switch ((options.regex, options.matchCase)) {
+        (true, true) => 'Regex, match case…',
+        (true, false) => 'Search with a regex…',
+        (false, true) => 'Search, match case…',
+        _ => 'Search your thoughts...',
+      },
       elevation: const WidgetStatePropertyAll(0),
       backgroundColor: WidgetStatePropertyAll(
         theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
@@ -44,7 +55,20 @@ class NotesSearchBar extends StatelessWidget {
       shape: const WidgetStatePropertyAll(
         RoundedRectangleBorder(borderRadius: AppRadius.mdBorder),
       ),
-      leading: const Icon(LucideIcons.search),
+      leading: options.regex
+          ? Tooltip(
+              message: SearchPattern(query, options: options).isValid
+                  ? 'Regular expression'
+                  : 'Not a complete regular expression yet: looking for '
+                        'the text as typed',
+              child: Icon(
+                LucideIcons.regex,
+                color: SearchPattern(query, options: options).isValid
+                    ? null
+                    : theme.colorScheme.error,
+              ),
+            )
+          : const Icon(LucideIcons.search),
       trailing: [
         if (query.isNotEmpty)
           IconButton(

@@ -309,7 +309,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     final query = ref.read(searchQueryProvider).trim();
     return Uri(
       path: '/note/${note.id}',
-      queryParameters: query.isEmpty ? null : {'hl': query},
+      queryParameters: query.isEmpty
+          ? null
+          : {'hl': query, ...ref.read(searchOptionsProvider).queryParameters},
     ).toString();
   }
 
@@ -496,6 +498,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   Widget build(BuildContext context) {
     final notesAsync = ref.watch(notesControllerProvider);
     final searchQuery = ref.watch(searchQueryProvider);
+    final searchOptions = ref.watch(searchOptionsProvider);
     final filters = ref.watch(noteFiltersControllerProvider);
     ref.watch(reminderPermissionsControllerProvider);
     final notes = notesAsync.value;
@@ -655,6 +658,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           NotesSearchBar(
                             controller: _searchController,
                             query: searchQuery,
+                            options: searchOptions,
                             onChanged: (value) => ref
                                 .read(searchQueryProvider.notifier)
                                 .set(value),
@@ -690,12 +694,16 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                   ...notesAsync.when(
                     data: (notes) {
                       final q = searchQuery.trim().toLowerCase();
+                      final pattern = SearchPattern(
+                        searchQuery,
+                        options: searchOptions,
+                      );
                       final unlocked = ref.watch(noteLockSessionProvider);
                       bool matches(Note note) =>
                           filters.matches(note) &&
-                          noteMatchesSearch(
+                          noteMatchesPattern(
                             note,
-                            q,
+                            pattern,
                             titleOnly: isNoteHidden(note, unlocked),
                           );
 

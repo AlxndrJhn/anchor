@@ -31,6 +31,7 @@ import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
 import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:anchor/core/search/search_pattern.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' show BlockEmbed;
@@ -71,6 +72,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
   /// A search the note was opened from, marked in its text.
   final String? highlightTerm;
 
+  /// How [highlightTerm] is read, as the search that found the note.
+  final SearchOptions highlightOptions;
+
   /// What another app shared, which a new note starts with.
   final SharedContent? shared;
 
@@ -88,6 +92,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.note,
     this.initialTagId,
     this.highlightTerm,
+    this.highlightOptions = const SearchOptions(),
     this.shared,
     this.startAsChecklist = false,
     this.pasteClipboard = false,
@@ -1515,6 +1520,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                             header: _buildEditorHeader(theme),
                             onImageInserted: _onImageInserted,
                             highlightTerm: widget.highlightTerm,
+                            highlightOptions: widget.highlightOptions,
                             embedBuilders: _embedBuilders,
                             onTakePicture: isReadOnly
                                 ? null

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../search/search_pattern.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -110,6 +112,9 @@ GoRouter goRouter(Ref ref) {
                     note: note,
                     // Set when opened from search results.
                     highlightTerm: state.uri.queryParameters['hl'],
+                    highlightOptions: SearchOptions.fromQueryParameters(
+                      state.uri.queryParameters,
+                    ),
                     caret: extra is NoteCaret ? extra : null,
                   ),
                 ),

@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_section_header.dart';
 import '../../../tags/presentation/tags_controller.dart';
 import '../../domain/note_filters.dart';
+import '../note_search.dart';
 import '../notes_controller.dart';
 import 'note_background.dart';
 
@@ -22,6 +23,7 @@ class NoteFiltersSheet extends ConsumerWidget {
     final notifier = ref.read(noteFiltersControllerProvider.notifier);
     final tagId = ref.watch(selectedTagFilterProvider);
     final tags = ref.watch(tagsControllerProvider).value ?? const [];
+    final search = ref.watch(searchOptionsProvider);
     final active = filters.count + (tagId != null ? 1 : 0);
 
     Widget section(String title) => Padding(
@@ -91,6 +93,40 @@ class NoteFiltersSheet extends ConsumerWidget {
                     LucideIcons.bell,
                     filters.reminder,
                     filters.copyWith(reminder: !filters.reminder),
+                  ),
+                  kind(
+                    'Contains secret',
+                    LucideIcons.keyRound,
+                    filters.secret,
+                    filters.copyWith(secret: !filters.secret),
+                  ),
+                ],
+              ),
+            ),
+            section('Search'),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: dims.xl),
+              child: Wrap(
+                spacing: dims.sm,
+                runSpacing: dims.sm,
+                children: [
+                  FilterChip(
+                    avatar: const Icon(LucideIcons.regex, size: 16),
+                    label: const Text('Regular expression'),
+                    selected: search.regex,
+                    showCheckmark: false,
+                    onSelected: (on) => ref
+                        .read(searchOptionsProvider.notifier)
+                        .set(search.copyWith(regex: on)),
+                  ),
+                  FilterChip(
+                    avatar: const Icon(LucideIcons.caseSensitive, size: 16),
+                    label: const Text('Match case'),
+                    selected: search.matchCase,
+                    showCheckmark: false,
+                    onSelected: (on) => ref
+                        .read(searchOptionsProvider.notifier)
+                        .set(search.copyWith(matchCase: on)),
                   ),
                 ],
               ),
