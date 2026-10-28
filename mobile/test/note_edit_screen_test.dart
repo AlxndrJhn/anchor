@@ -107,6 +107,8 @@ void main() {
     bool pasteClipboard = false,
     // The list it goes back to holds the note's card.
     bool withCard = false,
+    // A note opened again from the list is a real note page.
+    bool reopens = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -162,8 +164,12 @@ void main() {
                 routes: [
                   GoRoute(
                     path: 'note/:id',
-                    builder: (_, state) =>
-                        Text('Opened ${state.pathParameters['id']}'),
+                    builder: (_, state) => reopens
+                        ? NoteEditScreen(
+                            noteId: state.pathParameters['id'],
+                            caret: state.extra as NoteCaret?,
+                          )
+                        : Text('Opened ${state.pathParameters['id']}'),
                   ),
                   GoRoute(
                     path: 'note',
@@ -2825,6 +2831,75 @@ void main() {
         find.textContaining('Lock removed', findRichText: true),
         findsOneWidget,
       );
+      await drainSnackbar(tester);
+    });
+  });
+
+  group('undoing a trash opens the note again', () {
+    const note = Note(
+      id: 'n1',
+      title: 'My title',
+      content: '{"ops":[{"insert":"hello world\\n"}]}',
+    );
+
+    setUp(() {
+      when(() => notesRepo.trash(any())).thenAnswer((_) async {});
+      when(() => notesRepo.restore(any())).thenAnswer((_) async {});
+      when(
+        () => notesRepo.watchNote('n1'),
+      ).thenAnswer((_) => Stream.value(note));
+      when(() => notesRepo.getNote('n1')).thenAnswer((_) async => note);
+    });
+
+    Future<void> trashThenUndo(WidgetTester tester) async {
+      await tester.tap(barButton('Move to trash'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.byType(NoteEditScreen), findsNothing);
+      await tester.tap(find.text('Undo'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verify(() => notesRepo.restore(['n1'])).called(1);
+      expect(find.byType(NoteEditScreen), findsOneWidget);
+    }
+
+    testWidgets('with the caret where it was in the text', (tester) async {
+      await pumpScreen(tester, note: note, reopens: true);
+      await tester.pumpAndSettle();
+      tester
+          .state<RichTextEditorState>(find.byType(RichTextEditor))
+          .focusAt(const TextSelection(baseOffset: 3, extentOffset: 7));
+      await tester.pump();
+
+      await trashThenUndo(tester);
+
+      expect(
+        editorController(tester).selection,
+        const TextSelection(baseOffset: 3, extentOffset: 7),
+      );
+      final editor = tester.state<RichTextEditorState>(
+        find.byType(RichTextEditor),
+      );
+      expect(editor.widget.focusNode.hasFocus, isTrue);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('with the caret where it was in the title', (tester) async {
+      await pumpScreen(tester, note: note, reopens: true);
+      await tester.pumpAndSettle();
+      await tester.tap(titleField);
+      await tester.pump();
+      tester.widget<TextField>(titleField).controller!.selection =
+          const TextSelection.collapsed(offset: 2);
+      await tester.pump();
+
+      await trashThenUndo(tester);
+
+      final title = tester.widget<TextField>(titleField);
+      expect(title.focusNode!.hasFocus, isTrue);
+      expect(title.controller!.selection.baseOffset, 2);
       await drainSnackbar(tester);
     });
   });

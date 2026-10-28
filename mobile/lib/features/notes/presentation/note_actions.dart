@@ -320,6 +320,7 @@ class NoteActions {
     List<Note> notes, {
     FutureOr<void> Function()? beforeChange,
     VoidCallback? afterChange,
+    VoidCallback? afterUndo,
   }) async {
     if (notes.isEmpty) return;
     final l10n = context.l10n;
@@ -353,7 +354,12 @@ class NoteActions {
       context,
       _trashedMessage(own: own.length, shared: shared.length, l10n: l10n),
       actionLabel: ownIds.isEmpty ? null : l10n.commonUndo,
-      onAction: ownIds.isEmpty ? null : () => repo.restore(ownIds),
+      onAction: ownIds.isEmpty
+          ? null
+          : () async {
+              await repo.restore(ownIds);
+              afterUndo?.call();
+            },
     );
   }
 

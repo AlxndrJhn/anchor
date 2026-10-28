@@ -66,6 +66,14 @@ import 'widgets/read_only_bottom_bar.dart';
 import 'widgets/share_sheet.dart';
 import 'widgets/title_input_formatter.dart';
 
+/// Where the caret was in a note, to open it there again.
+class NoteCaret {
+  const NoteCaret({required this.inTitle, required this.selection});
+
+  final bool inTitle;
+  final TextSelection selection;
+}
+
 class NoteEditScreen extends ConsumerStatefulWidget {
   const NoteEditScreen({
     super.key,
@@ -74,6 +82,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.searchTerm,
     this.startAsChecklist = false,
     this.pasteClipboard = false,
+    this.caret,
   });
 
   final String? noteId;
@@ -90,6 +99,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
   /// A new note starts with the clipboard's text, the caret after it (New
   /// note double-tapped).
   final bool pasteClipboard;
+
+  /// The note opens with the caret here (its trash undone).
+  final NoteCaret? caret;
 
   @override
   ConsumerState<NoteEditScreen> createState() => _NoteEditScreenState();
@@ -215,6 +227,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   void _draftChanged() {
     if (!mounted) return;
     setState(() {});
+    if (widget.caret != null && !_caretPlaced && _draft.isLoaded) {
+      _caretPlaced = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _placeCaret());
+    }
     final route = NoteMorphRoute.of(context);
     if (route == null) return;
     route.backgroundId = _draft.background;
@@ -223,6 +239,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   }
 
   void _focusChanged() {
+    if (_titleFocus.hasFocus || _editorFocus.hasFocus) {
+      _caretInTitle = _titleFocus.hasFocus;
+    }
     if (_editorFocus.hasFocus || _titleFocus.hasFocus) {
       _editorOverlay.closeLink();
     }
@@ -453,18 +472,59 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   Future<void> _trash() async {
     final note = _draft.note;
     if (note == null) return;
+    // Undo opens the note again, the caret where it was; with nothing to go
+    // back to, the app closed instead.
+    final router = GoRouter.of(context);
+    final caret = _readCaret();
+    final reopens = context.canPop();
+    void reopen() {
+      if (reopens) router.go(AppRoutes.note(note.id), extra: caret);
+    }
+
     if (_burnsInList) {
-      await NoteActions(
-        _host,
-        ref,
-      ).trash([note], beforeChange: () => _closeThenBurn(note.id));
+      await NoteActions(_host, ref).trash(
+        [note],
+        beforeChange: () => _closeThenBurn(note.id),
+        afterUndo: reopen,
+      );
       return;
     }
     await NoteActions(context, ref).trash(
       [note],
       beforeChange: _draft.flushOnLeave,
       afterChange: _leaveDeleted,
+      afterUndo: reopen,
     );
+  }
+
+  /// Whether the caret was last in the title or the text; null until either
+  /// has had focus.
+  bool? _caretInTitle;
+  bool _caretPlaced = false;
+
+  /// Where the caret is in the note, if it has been in it.
+  NoteCaret? _readCaret() {
+    final inTitle = _caretInTitle;
+    if (inTitle == null) return null;
+    final selection = inTitle ? _draft.title.selection : _editor?.selection;
+    if (selection == null || !selection.isValid) return null;
+    return NoteCaret(inTitle: inTitle, selection: selection);
+  }
+
+  /// Back from an undone trash: the caret goes where it was.
+  void _placeCaret() {
+    final caret = widget.caret;
+    if (caret == null || !mounted || _isReadOnly) return;
+    if (!caret.inTitle) {
+      _editor?.focusAt(caret.selection);
+      return;
+    }
+    final end = _draft.title.text.length;
+    _draft.title.selection = TextSelection(
+      baseOffset: caret.selection.baseOffset.clamp(0, end),
+      extentOffset: caret.selection.extentOffset.clamp(0, end),
+    );
+    _titleFocus.requestFocus();
   }
 
   /// Whether a deleted note closes at once, for its card to burn away in the

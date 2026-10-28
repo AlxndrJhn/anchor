@@ -105,7 +105,9 @@ GoRouter goRouter(Ref ref) {
             path: _notePath,
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'];
-              final note = state.extra as Note?;
+              // The list passes the note; Undo of its trash, the caret.
+              final extra = state.extra;
+              final note = extra is Note ? extra : null;
               return NoteMorphPage(
                 key: ValueKey('note/$id'),
                 noteId: id,
@@ -119,6 +121,7 @@ GoRouter goRouter(Ref ref) {
                     note: note,
                     searchTerm:
                         state.uri.queryParameters[AppRoutes.searchParameter],
+                    caret: extra is NoteCaret ? extra : null,
                   ),
                 ),
               );

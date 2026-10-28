@@ -523,6 +523,20 @@ class RichTextEditorState extends State<RichTextEditor>
 
   bool get hasSelection => !_controller.selection.isCollapsed;
 
+  /// Puts the caret back at [selection], as far as the text still reaches.
+  void focusAt(TextSelection selection) {
+    if (!widget.canEdit) return;
+    final end = _controller.document.length - 1;
+    _controller.updateSelection(
+      TextSelection(
+        baseOffset: selection.baseOffset.clamp(0, end),
+        extentOffset: selection.extentOffset.clamp(0, end),
+      ),
+      ChangeSource.local,
+    );
+    widget.focusNode.requestFocus();
+  }
+
   String textIn(TextRange range) => range.isCollapsed
       ? ''
       : _controller.document.toPlainText().substring(range.start, range.end);
