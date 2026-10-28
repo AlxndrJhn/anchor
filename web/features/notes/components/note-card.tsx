@@ -9,6 +9,7 @@ import {
   LockOpen,
   Paperclip,
   Pin,
+  Snowflake,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -195,6 +196,12 @@ export const NoteCard = React.memo(function NoteCard({
             {shareCount}
           </span>
         ))}
+      {note.isFrozen && (
+        <span className="nc-count" title="Frozen">
+          <Snowflake aria-hidden />
+          <span className="sr-only">Frozen</span>
+        </span>
+      )}
       {note.lock && !lockHidden && (
         // Locked, but opened this session.
         <span className="nc-count" title="Locked, unlocked for now">

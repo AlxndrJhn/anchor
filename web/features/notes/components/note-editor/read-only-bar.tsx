@@ -6,6 +6,7 @@ import {
   CloudOff,
   Lock,
   RotateCcw,
+  Snowflake,
   Trash2,
 } from "lucide-react";
 import * as React from "react";
@@ -25,6 +26,7 @@ type ReadOnlyBarProps =
     }
   | { kind: "view"; sharedBy: Person }
   | { kind: "archived"; onUnarchive: () => void }
+  | { kind: "frozen"; onUnfreeze?: () => void }
   | { kind: "refused" }
   | { kind: "offline" };
 
@@ -120,6 +122,23 @@ export function ReadOnlyBar(props: ReadOnlyBarProps & { nudge?: number }) {
             <b>You’re offline.</b> Your changes are kept on this device and sync
             when you’re back online.
           </span>
+        </>
+      )}
+      {props.kind === "frozen" && (
+        <>
+          {icon(<Snowflake />)}
+          <span className="ro-msg">
+            <b>Frozen.</b> It can’t be changed or deleted
+            {props.onUnfreeze ? " until you unfreeze it" : ""}.
+          </span>
+          {props.onUnfreeze && (
+            <span className="ro-acts">
+              <Button variant="quiet" onClick={props.onUnfreeze}>
+                <Snowflake aria-hidden />
+                Unfreeze
+              </Button>
+            </span>
+          )}
         </>
       )}
       {props.kind === "refused" && (
