@@ -152,7 +152,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(noteFiltersControllerProvider), NoteFilters.none);
-    expect(find.text('Clear filters'), findsNothing);
+    // It stays at the top, off, so the sheet doesn't move.
+    expect(find.text('Clear filters'), findsOneWidget);
+    final clear = tester.getRect(find.text('Clear filters'));
+    expect(
+      clear.top,
+      lessThan(tester.getRect(find.bySemanticsLabel('Pictures').first).top),
+    );
+    await tester.tap(find.bySemanticsLabel('Pictures').first);
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.text('Clear filters')), clear);
   });
 }
 

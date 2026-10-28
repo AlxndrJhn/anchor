@@ -113,6 +113,24 @@ class _NoteFiltersSheet extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: Section.gapOf(context),
               children: [
+                // Always shown, off while no filter is on, so turning the
+                // first one on doesn't move the rest of the sheet.
+                AppButton(
+                  label: l10n.filterClear,
+                  icon: LucideIcons.x,
+                  kind: AppButtonKind.secondary,
+                  onPressed: active == 0
+                      ? null
+                      : () {
+                          Haptics.selection();
+                          notifier.clear();
+                          if (tagId != null) {
+                            ref
+                                .read(selectedTagFilterProvider.notifier)
+                                .clear();
+                          }
+                        },
+                ),
                 Section(
                   label: l10n.filterHas,
                   child: GroupedList(
@@ -165,19 +183,6 @@ class _NoteFiltersSheet extends ConsumerWidget {
                           ),
                       ],
                     ),
-                  ),
-                if (active > 0)
-                  AppButton(
-                    label: l10n.filterClear,
-                    icon: LucideIcons.x,
-                    kind: AppButtonKind.secondary,
-                    onPressed: () {
-                      Haptics.selection();
-                      notifier.clear();
-                      if (tagId != null) {
-                        ref.read(selectedTagFilterProvider.notifier).clear();
-                      }
-                    },
                   ),
                 const SheetBottomSpace(),
               ],
