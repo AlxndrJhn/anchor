@@ -181,7 +181,10 @@ export function useNoteEditor({
   const isViewer = note ? note.permission === "viewer" : false;
   const isEditor = note ? note.permission === "editor" : false;
 
-  const isReadOnly = note ? note.state === "trashed" || isViewer : false;
+  const isFrozen = !!note?.isFrozen;
+  const isReadOnly = note
+    ? note.state === "trashed" || isViewer || isFrozen
+    : false;
   const canSaveDraft = note ? note.state !== "trashed" : true;
   const canUpload = isOwner || isEditor;
 
@@ -735,6 +738,7 @@ export function useNoteEditor({
     isOwner,
     isViewer,
     isReadOnly,
+    isFrozen,
     isOfflineCopy,
     canUpload,
     title,

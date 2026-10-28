@@ -34,6 +34,7 @@ import { copyNote } from "@/features/notes/api";
 import type { RichTextEditorHandle } from "@/features/notes/components/editor";
 import { LockDialog } from "@/features/notes/components/lock/lock-dialog";
 import { LockGate } from "@/features/notes/components/lock/lock-gate";
+import { useApplyFreeze } from "@/features/notes/hooks/use-note-freeze";
 import {
   useApplyLock,
   useUnlockedIds,
@@ -148,6 +149,7 @@ function NoteEditor({
   const lockedOut = !isNew && !!note && isLockHidden(note, unlockedIds);
   const lock = note?.lock ?? null;
   const applyLock = useApplyLock();
+  const applyFreeze = useApplyFreeze();
   const [lockDialogOpen, setLockDialogOpen] = useState(false);
   const { articleRef, scrollRef } = useEditorChrome({
     noteId,
@@ -234,7 +236,10 @@ function NoteEditor({
   const leaveRef = useRef(leave);
   leaveRef.current = leave;
   const trashedNote = note?.state === "trashed";
-  const canEditNote = !isNew && !trashedNote && !editor.isReadOnly;
+  // A frozen note still pins and archives; it can't be trashed.
+  const canEditNote =
+    !isNew && !trashedNote && (!editor.isReadOnly || editor.isFrozen);
+  const canTrash = !isNew && !trashedNote && !(editor.isFrozen && isOwner);
   // Google Keep's keys while no text field has focus.
   useShortcuts(
     lockedOut
@@ -245,7 +250,7 @@ function NoteEditor({
             editor.isArchived
               ? actions.unarchive()
               : canEditNote && actions.archive(),
-          "#": () => !isNew && !trashedNote && actions.trash(),
+          "#": () => canTrash && actions.trash(),
           f: () => canEditNote && editor.setIsPinned((was) => !was),
         },
     !editor.historyOpen,
@@ -383,6 +388,26 @@ function NoteEditor({
     );
   };
 
+  const freeze = (isFrozen: boolean) =>
+    (isFrozen ? editor.flushEdits() : Promise.resolve())
+      .then(() => applyFreeze([noteId], isFrozen))
+      .then(
+        () =>
+          toast.success(isFrozen ? "Note frozen" : "Note unfrozen", {
+            undo: () =>
+              void applyFreeze([noteId], !isFrozen).catch(() =>
+                toast.error("Couldn’t undo that"),
+              ),
+          }),
+        () =>
+          toast.error(
+            navigator.onLine
+              ? `Couldn’t ${isFrozen ? "freeze" : "unfreeze"} the note`
+              : `${isFrozen ? "Freezing" : "Unfreezing"} needs a connection`,
+            { retry: () => freeze(isFrozen) },
+          ),
+      );
+
   const trashed = note?.state === "trashed";
   const saveRefused =
     saveFailure?.httpStatus === 403 || saveFailure?.httpStatus === 404;
@@ -414,6 +439,12 @@ function NoteEditor({
     />
   ) : saveRefused ? (
     <ReadOnlyBar kind="refused" nudge={nudge} />
+  ) : editor.isFrozen ? (
+    <ReadOnlyBar
+      kind="frozen"
+      nudge={nudge}
+      onUnfreeze={isOwner ? () => freeze(false) : undefined}
+    />
   ) : isViewer && note?.sharedBy ? (
     <ReadOnlyBar kind="view" nudge={nudge} sharedBy={note.sharedBy} />
   ) : editor.isArchived ? (
@@ -485,6 +516,12 @@ function NoteEditor({
             lock={lock}
             onLock={() => setLockDialogOpen(true)}
             onRemoveLock={removeLock}
+            frozen={editor.isFrozen}
+            onToggleFreeze={
+              isOwner && !trashed && !editor.isOfflineCopy
+                ? () => freeze(!editor.isFrozen)
+                : undefined
+            }
             onSend={async () => {
               try {
                 const sent = await sendNote(editor.title, editor.content);

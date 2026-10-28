@@ -11,6 +11,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  Snowflake,
   Tag as TagIcon,
   Trash2,
   X,
@@ -48,6 +49,10 @@ import {
   NotesBoardSkeleton,
 } from "@/features/notes/components/notes-board";
 import { ShareDialog } from "@/features/notes/components/share-dialog";
+import {
+  isOwnFrozen,
+  useApplyFreeze,
+} from "@/features/notes/hooks/use-note-freeze";
 import {
   matchesSearch,
   useNoteList,
@@ -307,10 +312,45 @@ function NotesView({ tagId }: { tagId: string | null }) {
   });
 
   const deleteChosen = () => {
-    const ids = chosen.map((n) => n.id);
-    const sharedCount = chosen.filter((n) => n.permission !== "owner").length;
+    // Frozen notes stay where they are.
+    const deletable = chosen.filter((n) => !isOwnFrozen(n));
+    if (!deletable.length) {
+      toast.info("Frozen notes can’t be deleted; unfreeze them first");
+      return;
+    }
+    const ids = deletable.map((n) => n.id);
+    const sharedCount = deletable.filter(
+      (n) => n.permission !== "owner",
+    ).length;
     if (sharedCount) setConfirmRemove({ ids, sharedCount });
     else noteAction.mutate({ kind: "trash", ids });
+  };
+
+  const applyFreeze = useApplyFreeze();
+  const ownChosen = chosen.filter((n) => n.permission === "owner");
+  const allFrozen = ownChosen.length > 0 && ownChosen.every((n) => n.isFrozen);
+  const freezeChosen = () => {
+    const isFrozen = !allFrozen;
+    const ids = ownChosen
+      .filter((n) => !!n.isFrozen !== isFrozen)
+      .map((n) => n.id);
+    list.stopPicking();
+    applyFreeze(ids, isFrozen).then(
+      () =>
+        toast.success(
+          `${plural(ids.length, "note")} ${isFrozen ? "frozen" : "unfrozen"}`,
+          {
+            undo: () =>
+              void applyFreeze(ids, !isFrozen).catch(() =>
+                toast.error("Couldn’t undo that"),
+              ),
+          },
+        ),
+      () =>
+        toast.error(
+          `Couldn’t ${isFrozen ? "freeze" : "unfreeze"} ${ids.length === 1 ? "note" : "notes"}`,
+        ),
+    );
   };
 
   const newNote = newNoteHref("/notes", tagId);
@@ -558,6 +598,16 @@ function NotesView({ tagId }: { tagId: string | null }) {
             icon: <Lock aria-hidden />,
             onClick: () => setLocking(true),
           },
+          ...(ownChosen.length
+            ? [
+                {
+                  key: "freeze",
+                  label: allFrozen ? "Unfreeze" : "Freeze",
+                  icon: <Snowflake aria-hidden />,
+                  onClick: freezeChosen,
+                },
+              ]
+            : []),
           {
             key: "archive",
             label: "Archive",
