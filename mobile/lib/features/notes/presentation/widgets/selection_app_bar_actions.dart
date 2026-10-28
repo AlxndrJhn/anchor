@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_merge.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
@@ -111,6 +112,60 @@ class SelectionAppBarActions extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         AppSnackbar.showError(context, message: 'Failed to delete notes');
+      }
+    }
+  }
+
+  /// Merges the selected notes into the first: its text gets theirs, its
+  /// tags theirs, and they go to the trash. Undo puts all of it back.
+  Future<void> _handleMerge(
+    BuildContext context,
+    WidgetRef ref,
+    List<Note> selected,
+  ) async {
+    if (selected.length < 2) return;
+    final unlocked = ref.read(noteLockSessionProvider);
+    final String? refusal;
+    if (selected.any((n) => !n.isOwner)) {
+      refusal = 'Only your own notes can be merged';
+    } else if (selected.any((n) => isNoteHidden(n, unlocked))) {
+      refusal = 'Open the locked notes first, then merge them';
+    } else {
+      refusal = null;
+    }
+    if (refusal != null) {
+      AppSnackbar.showError(context, message: refusal);
+      return;
+    }
+    final repo = ref.read(notesRepositoryProvider);
+    final target = selected.first;
+    final others = [for (final note in selected.skip(1)) note.id];
+    final keptPictures = selected
+        .skip(1)
+        .any((n) => n.imagePreviewData.isNotEmpty);
+    try {
+      await repo.updateNote(mergeNotes(selected));
+      await ref.read(notesControllerProvider.notifier).bulkDeleteNotes(others);
+      onExitSelectionMode();
+      if (context.mounted) {
+        AppSnackbar.showSuccess(
+          context,
+          message: keptPictures
+              ? 'Merged ${_notes(selected.length)}; pictures stay with '
+                    'their notes in the trash'
+              : 'Merged ${_notes(selected.length)}',
+          icon: LucideIcons.merge,
+          onUndo: () async {
+            await repo.updateNote(target);
+            for (final id in others) {
+              await repo.restoreNote(id);
+            }
+          },
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppSnackbar.showError(context, message: 'Failed to merge the notes');
       }
     }
   }
@@ -315,19 +370,47 @@ class SelectionAppBarActions extends ConsumerWidget {
             ),
             tooltip: allSelectedPinned ? 'Unpin' : 'Pin',
           ),
-        // Lock, with one choice for them all
+        // Lock (one choice for them all) and merge, under More
         if (selectedNoteIds.isNotEmpty)
-          IconButton(
-            icon: const Icon(LucideIcons.lock),
-            onPressed: () async {
-              final locked = await lockSelectedNotes(
-                context,
-                ref,
-                selectedNotes,
-              );
-              if (locked) onExitSelectionMode();
+          PopupMenuButton<String>(
+            icon: const Icon(LucideIcons.ellipsisVertical),
+            tooltip: 'More',
+            onSelected: (choice) async {
+              switch (choice) {
+                case 'lock':
+                  final locked = await lockSelectedNotes(
+                    context,
+                    ref,
+                    selectedNotes,
+                  );
+                  if (locked) onExitSelectionMode();
+                case 'merge':
+                  // In the order they were picked: the first one stays.
+                  final byId = {for (final n in selectedNotes) n.id: n};
+                  await _handleMerge(context, ref, [
+                    for (final id in selectedNoteIds) ?byId[id],
+                  ]);
+              }
             },
-            tooltip: 'Lock…',
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'lock',
+                child: ListTile(
+                  leading: Icon(LucideIcons.lock),
+                  title: Text('Lock…'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'merge',
+                enabled: selectedNotes.length >= 2,
+                child: const ListTile(
+                  leading: Icon(LucideIcons.merge),
+                  title: Text('Merge notes'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         // Archive button
         if (selectedNoteIds.isNotEmpty)

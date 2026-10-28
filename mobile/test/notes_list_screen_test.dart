@@ -58,6 +58,8 @@ void main() {
   late MockTagsRepository tagsRepo;
   late MockPreferencesRepository prefsRepo;
 
+  setUpAll(() => registerFallbackValue(const Note(id: 'fallback', title: '')));
+
   setUp(() {
     notesRepo = MockNotesRepository();
     tagsRepo = MockTagsRepository();
@@ -385,6 +387,39 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text('1 note'), findsOneWidget);
+    });
+
+    testWidgets('More › Merge notes merges into the first picked, with Undo', (
+      tester,
+    ) async {
+      final notes = notesNamed('Note', 3);
+      when(() => notesRepo.updateNote(any())).thenAnswer((_) async {});
+      when(() => notesRepo.bulkDeleteNotes(any())).thenAnswer((_) async => 1);
+      when(() => notesRepo.restoreNote(any())).thenAnswer((_) async {});
+      await pumpList(tester, notes);
+
+      await tester.tap(find.byTooltip('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 2'));
+      await tester.tap(find.text('Note 0'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Merge notes'));
+      await tester.pumpAndSettle();
+
+      final merged =
+          verify(() => notesRepo.updateNote(captureAny())).captured.single
+              as Note;
+      expect(merged.id, 'Note2');
+      expect(merged.content, contains('Note 0'));
+      verify(() => notesRepo.bulkDeleteNotes(['Note0'])).called(1);
+      expect(find.text('Merged 2 notes'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      verify(() => notesRepo.updateNote(notes[2])).called(1);
+      verify(() => notesRepo.restoreNote('Note0')).called(1);
     });
 
     testWidgets('Select all marks every card', (tester) async {
