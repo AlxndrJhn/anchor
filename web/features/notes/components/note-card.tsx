@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Check,
   CloudOff,
+  EyeOff,
   ImageOff,
   Lock,
   LockOpen,
@@ -196,6 +197,13 @@ export const NoteCard = React.memo(function NoteCard({
             {shareCount}
           </span>
         ))}
+      {note.isInvisible && (
+        // Found by a search; it stays out of the lists.
+        <span className="nc-count" title="Invisible">
+          <EyeOff aria-hidden />
+          <span className="sr-only">Invisible</span>
+        </span>
+      )}
       {note.isFrozen && (
         <span className="nc-count" title="Frozen">
           <Snowflake aria-hidden />

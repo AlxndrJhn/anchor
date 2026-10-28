@@ -17,6 +17,7 @@ import {
   filtersFromParams,
   matchesFilters,
   type NoteFilters,
+  showsInList,
   writeFilterParams,
 } from "../note-filters";
 import { matchesSearch } from "../search";
@@ -28,7 +29,14 @@ export { matchesSearch };
 
 const SEARCH_PARAM = "q";
 
-export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
+export function useNoteList(
+  notes: Note[],
+  {
+    pinnedFirst = false,
+    // The trash lists invisible notes too, so they can be put back.
+    withInvisible = false,
+  } = {},
+) {
   const {
     viewMode,
     sortBy: storedSortBy,
@@ -87,9 +95,20 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
               matchesSearch(note, term, unlocked) &&
               matchesFilters(note, filters),
           )
-        : notes;
+        : withInvisible
+          ? notes
+          : notes.filter((note) => showsInList(note, false));
     return [...found].sort(compareNotes(sortBy, sortOrder));
-  }, [notes, term, filters, activeFilters, sortBy, sortOrder, unlocked]);
+  }, [
+    notes,
+    term,
+    filters,
+    activeFilters,
+    sortBy,
+    sortOrder,
+    unlocked,
+    withInvisible,
+  ]);
   const pinned = React.useMemo(
     () => (pinnedFirst ? visible.filter((n) => n.isPinned) : []),
     [pinnedFirst, visible],

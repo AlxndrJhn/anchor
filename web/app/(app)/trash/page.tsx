@@ -52,7 +52,7 @@ export default function TrashPage() {
   });
   const notes = data ?? NO_NOTES;
   const loadFailed = isError && !data;
-  const list = useNoteList(notes);
+  const list = useNoteList(notes, { withInvisible: true });
 
   const restore = useMutation({
     mutationFn: (ids: string[]) => eachLimited(ids, restoreNote),

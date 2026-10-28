@@ -11,6 +11,8 @@ import {
   CloudOff,
   Copy,
   Ellipsis,
+  Eye,
+  EyeOff,
   History,
   List,
   ListChecks,
@@ -89,6 +91,10 @@ interface NoteEditorHeaderProps {
   frozen: boolean;
   /** Freezes or unfreezes it; absent for those who don't own it. */
   onToggleFreeze?: () => void;
+  /** Invisible to this person: only search finds it. */
+  invisible: boolean;
+  /** Makes it invisible or visible again; absent while that can't be done. */
+  onToggleInvisible?: () => void;
   /** Hands the note to another app (or copies it as text). */
   onSend: () => void;
   /** Makes a copy of the note; absent for a note not yet saved. */
@@ -337,6 +343,12 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                   <DropdownMenuItem onSelect={props.onToggleFreeze}>
                     <Snowflake />
                     {props.frozen ? "Unfreeze" : "Freeze"}
+                  </DropdownMenuItem>
+                )}
+                {props.onToggleInvisible && (
+                  <DropdownMenuItem onSelect={props.onToggleInvisible}>
+                    {props.invisible ? <Eye /> : <EyeOff />}
+                    {props.invisible ? "Make visible" : "Make invisible"}
                   </DropdownMenuItem>
                 )}
                 <div className="contents md:hidden">
