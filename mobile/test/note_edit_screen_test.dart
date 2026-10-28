@@ -968,12 +968,58 @@ void main() {
       expect(find.text('Move to trash'), findsNothing);
     });
 
-    testWidgets('a new note has neither', (tester) async {
+    testWidgets('a new note has Archive, not Move to trash', (tester) async {
       await pumpScreen(tester);
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(barButton('Archive'), findsNothing);
+      expect(barButton('Archive'), findsOneWidget);
       expect(barButton('Move to trash'), findsNothing);
+    });
+
+    testWidgets('a new note can be pinned, or archived, before writing', (
+      tester,
+    ) async {
+      await pumpScreen(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      // Only Pin: the rest needs a saved note.
+      expect(find.text('Send'), findsNothing);
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+
+      // Archiving unpins it.
+      await tester.tap(barButton('Archive'));
+      await tester.pump();
+      expect(barButton('Unarchive'), findsOneWidget);
+
+      await tester.enterText(titleField, 'Later');
+      await tester.pump(const Duration(seconds: 3));
+
+      final saved =
+          verify(() => notesRepo.createNote(captureAny())).captured.single
+              as Note;
+      expect(saved.isArchived, isTrue);
+      expect(saved.isPinned, isFalse);
+      verifyNever(() => notesRepo.archive(any()));
+    });
+
+    testWidgets('a new note pinned before writing is created pinned, even '
+        'with nothing in it', (tester) async {
+      await pumpScreen(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pin'));
+      await tester.pump(const Duration(seconds: 3));
+
+      final saved =
+          verify(() => notesRepo.createNote(captureAny())).captured.single
+              as Note;
+      expect(saved.isPinned, isTrue);
+      expect(saved.isArchived, isFalse);
     });
 
     testWidgets('Move to trash asks nothing, leaves the note and offers Undo', (
@@ -1023,8 +1069,10 @@ void main() {
       await drainSnackbar(tester);
     });
 
-    testWidgets('Archive archives the note and leaves it', (tester) async {
-      await pumpScreen(tester, note: mine);
+    testWidgets('Archive asks nothing, archives the note in place and '
+        'unpins it', (tester) async {
+      when(() => notesRepo.setPinned(any(), any())).thenAnswer((_) async {});
+      await pumpScreen(tester, note: mine.copyWith(isPinned: true));
       await tester.pumpAndSettle();
 
       await tester.tap(barButton('Archive'));
@@ -1032,8 +1080,9 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
+      verify(() => notesRepo.setPinned(['n1'], false)).called(1);
       verify(() => notesRepo.archive(['n1'])).called(1);
-      expect(find.text('Notes'), findsOneWidget);
+      expect(find.text('Notes'), findsNothing);
       await drainSnackbar(tester);
     });
 

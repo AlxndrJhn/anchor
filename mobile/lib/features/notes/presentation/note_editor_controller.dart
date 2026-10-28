@@ -77,6 +77,9 @@ class NoteEditorController extends ChangeNotifier {
   String? _contentBeforeReload;
   List<UserSummary>? _sharedWith;
   bool _isNew = true;
+  // Pinned or archived before the new note was written: it's created so.
+  bool _newPinned = false;
+  bool _newArchived = false;
   bool _isLoaded = false;
   bool _isDeleted = false;
   bool _isDisposed = false;
@@ -105,11 +108,36 @@ class NoteEditorController extends ChangeNotifier {
 
   bool get isNew => _isNew;
 
+  /// Whether the new note, not created yet, will be pinned / archived.
+  bool get newPinned => _newPinned;
+  bool get newArchived => _newArchived;
+
+  /// Pins (or unpins) a new note before anything is written in it; it is
+  /// then created pinned.
+  void setNewPinned(bool isPinned) {
+    if (!_isNew) return;
+    _newPinned = isPinned;
+    _notify();
+    contentChanged();
+  }
+
+  /// Archives (or unarchives) a new note before anything is written in it;
+  /// archiving unpins it, as it does a saved note.
+  void setNewArchived(bool isArchived) {
+    if (!_isNew) return;
+    _newArchived = isArchived;
+    if (isArchived) _newPinned = false;
+    _notify();
+    contentChanged();
+  }
+
   bool get isBlankNew =>
       _isNew &&
       storedTitleOf(title.text).isEmpty &&
       (editor.plainText ?? '').isEmpty &&
-      _background == null;
+      _background == null &&
+      !_newPinned &&
+      !_newArchived;
   bool get isLoaded => _isLoaded;
   bool get isActive => _note?.isActive ?? true;
   bool get isTrashed => _note?.isTrashed ?? false;
@@ -306,6 +334,8 @@ class NoteEditorController extends ChangeNotifier {
     final isBlank =
         stored != null &&
         stored.tagIds.isEmpty &&
+        !stored.isPinned &&
+        !stored.isArchived &&
         storedTitleOf(title.text).isEmpty &&
         (editor.plainText ?? '').isEmpty &&
         _background == null;
@@ -325,6 +355,8 @@ class NoteEditorController extends ChangeNotifier {
       content: editor.content ?? '',
       tagIds: [?newNoteTagId()],
       background: _background,
+      isPinned: _newPinned,
+      isArchived: _newArchived,
       isSynced: false,
     );
     AppLogger.instance.info(

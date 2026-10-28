@@ -553,20 +553,45 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     await setNotesFrozen(context, ref, [id], isFrozen: isFrozen);
   }
 
-  /// The bar's Archive: archiving leaves the note, unarchiving stays.
+  /// The bar's Archive: toggles at once and stays, the button marked while
+  /// archived. Archiving unpins the note. A new note, not written yet, is
+  /// then created archived.
   Future<void> _toggleArchived() async {
+    if (_draft.isNew) {
+      Haptics.selection();
+      _draft.setNewArchived(!_draft.newArchived);
+      return;
+    }
     final note = _draft.note;
     if (note == null) return;
     final actions = NoteActions(context, ref);
     if (note.isArchived) {
       await actions.unarchive([note]);
     } else {
+      final repo = ref.read(notesRepositoryProvider);
       await actions.archive(
         [note],
-        beforeChange: _draft.flushOnLeave,
-        afterChange: _leave,
+        beforeChange: () async {
+          if (note.isPinned) await repo.setPinned([note.id], false);
+        },
       );
     }
+  }
+
+  /// Pin in More for a new note, not written yet: it is then created
+  /// pinned.
+  Future<void> _showNewNoteMore() async {
+    final action = await showNoteMoreSheet(
+      context,
+      isPinned: _draft.newPinned,
+      isOwner: true,
+      canSeeHistory: false,
+      shareCount: 0,
+      isNewNote: true,
+    );
+    if (action != NoteAction.pin || !mounted) return;
+    Haptics.selection();
+    _draft.setNewPinned(!_draft.newPinned);
   }
 
   /// The bar's Delete: moves your note to the trash, or takes a note shared
@@ -1118,16 +1143,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       isUnsynced: note != null && !note.isSynced && !_isReadOnly,
       isTrashed: isTrashed,
       isReadOnly: _isReadOnly,
-      isArchived: note?.isArchived ?? false,
+      isArchived: note?.isArchived ?? _draft.newArchived,
       isOwner: note?.isOwner ?? true,
       onBack: _back,
       onHistory: _openHistory,
       onBackground: _showBackground,
       onReminder: _showReminder,
-      onArchive: isNew || note == null ? null : _toggleArchived,
+      onArchive: isNew || note != null ? _toggleArchived : null,
       // A note this person froze can't be deleted until it's unfrozen.
       onTrash: isNew || note == null || note.isOwnFrozen ? null : _trash,
-      onMore: isNew ? null : _showMore,
+      onMore: isNew ? _showNewNoteMore : _showMore,
     );
 
     final content = Column(

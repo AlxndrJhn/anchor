@@ -37,6 +37,8 @@ differences. "Web" and "Android" say where each one is available.
 | Show checkboxes / Hide checkboxes, Untick all, Delete ticked items | ✓ | ✓ |
 | A new note opens with the cursor in its text | ✓ | ✓ |
 | Delete without a confirmation, with Undo instead | (upstream) | ✓ |
+| Archive a note without a confirmation: the archive button gets a dot, as the pin does, and archiving unpins | | ✓ |
+| A new note can be pinned or archived before anything is written in it | | ✓ |
 | Pinned and Others headings in the notes list | (upstream) | ✓ |
 | Option to hide pictures on note cards ([#177](https://github.com/ZhFahim/anchor/issues/177)) | ✓ | ✓ |
 | Empty the trash in one go | (upstream) | ✓ |

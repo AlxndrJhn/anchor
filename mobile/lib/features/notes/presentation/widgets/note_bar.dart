@@ -78,9 +78,11 @@ class NoteBar extends StatelessWidget {
           ),
         _ReminderButton(reminder: reminder, onPressed: onReminder),
         if (onArchive case final onArchive?)
+          // Toggles in place, marked while archived, as a tool is.
           BarButton(
-            icon: isArchived ? LucideIcons.archiveRestore : LucideIcons.archive,
+            icon: LucideIcons.archive,
             label: isArchived ? l10n.actionUnarchive : l10n.actionArchive,
+            isOn: isArchived,
             onPressed: onArchive,
           ),
         if (onTrash case final onTrash?)
