@@ -180,12 +180,16 @@ export class SyncApplyService {
       };
       if (access.isOwner) {
         noteData.state = change.state;
+        noteData.isFrozen = change.isFrozen;
       }
       const finalState = noteData.state ?? prior.state;
       const guardedChanged = guardedNoteFieldsChanged(prior, {
         ...noteData,
         state: finalState,
       });
+      if (frozenWriteRefused(prior, noteData, finalState)) {
+        return { kind: 'conflict' as const };
+      }
 
       if (guardedChanged) {
         // A writer that slipped in since the read above makes count 0.
@@ -324,6 +328,10 @@ export class SyncApplyService {
           content: change.content,
           background: change.background,
           state: (change.state as NoteState | undefined) ?? NoteState.active,
+          isFrozen:
+            !!change.isFrozen &&
+            (change.state === undefined ||
+              change.state === SyncNoteState.active),
           userId,
           tags: validTagIds.length
             ? { connect: validTagIds.map((id) => ({ id })) }
@@ -724,6 +732,22 @@ function leavesShare(
   );
 }
 
+// A frozen note takes no edit, trash or delete unless the same push unfreezes
+// it, and only an active note can be frozen.
+function frozenWriteRefused(
+  prior: Note,
+  data: GuardedNoteFields,
+  finalState: NoteState,
+): boolean {
+  const frozen = data.isFrozen ?? prior.isFrozen;
+  if (!frozen) return false;
+  if (finalState !== NoteState.active) return true;
+  return (
+    prior.isFrozen &&
+    guardedNoteFieldsChanged(prior, { ...data, isFrozen: undefined })
+  );
+}
+
 // Whether the push would write nothing: every field it carries already holds
 // the value it is asking for.
 function noteAlreadyMatches(
@@ -736,7 +760,7 @@ function noteAlreadyMatches(
     title: change.title,
     content: change.content,
     background: change.background,
-    ...(isOwner ? { state: change.state } : {}),
+    ...(isOwner ? { state: change.state, isFrozen: change.isFrozen } : {}),
   };
   if (guardedNoteFieldsChanged(note, guarded)) {
     return false;

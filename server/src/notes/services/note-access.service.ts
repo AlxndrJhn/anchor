@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NoteSharePermission, NoteState } from 'src/generated/prisma/enums';
+import { ERROR_MESSAGES } from '../constants/notes.constants';
 
 export interface NoteAccessResult {
   hasAccess: boolean;
@@ -123,17 +124,21 @@ export class NoteAccessService {
   }
 
   /**
-   * Ensure the note is in active state (not trashed, deleted, etc.).
+   * Ensure the note is in active state (not trashed, deleted, etc.) and not
+   * frozen.
    */
   async ensureNoteIsActive(noteId: string): Promise<void> {
     const note = await this.prisma.note.findUnique({
       where: { id: noteId },
-      select: { state: true },
+      select: { state: true, isFrozen: true },
     });
     if (!note || note.state !== NoteState.active) {
       throw new BadRequestException(
         'Cannot modify this note. Only active notes can be edited.',
       );
+    }
+    if (note.isFrozen) {
+      throw new ForbiddenException(ERROR_MESSAGES.NOTE_FROZEN);
     }
   }
 }

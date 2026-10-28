@@ -19,6 +19,7 @@ export interface NoteOnWire {
   updatedAt: string;
   reminder?: ReminderOnWire | null;
   lock?: 'tap' | 'pin' | 'pattern' | 'biometric' | null;
+  isFrozen: boolean;
   shareIds?: string[];
   sharedBy?: {
     id: string;
