@@ -746,6 +746,71 @@ void main() {
     verifyNever(() => notesRepo.updateNote(any()));
   });
 
+  testWidgets('archiving asks nothing, marks the button and unpins', (
+    tester,
+  ) async {
+    when(
+      () => notesRepo.bulkSetPinned(any(), any()),
+    ).thenAnswer((_) async => 1);
+    when(() => notesRepo.archiveNote(any())).thenAnswer((_) async {});
+
+    await pumpScreen(
+      tester,
+      note: const Note(id: 'n1', title: 'Groceries', isPinned: true),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Archive note'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ConfirmDialog), findsNothing);
+    verify(() => notesRepo.archiveNote('n1')).called(1);
+    verify(() => notesRepo.bulkSetPinned(['n1'], false)).called(1);
+    expect(find.byTooltip('Unarchive note'), findsOneWidget);
+    expect(find.byTooltip('Pin Note'), findsOneWidget);
+  });
+
+  testWidgets('a new note can be pinned, or archived, before writing', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await tester.tap(find.byTooltip('Pin Note'));
+    await tester.pump();
+    expect(find.byTooltip('Unpin Note'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Archive note'));
+    await tester.pump();
+    expect(find.byTooltip('Unarchive note'), findsOneWidget);
+    expect(find.byTooltip('Pin Note'), findsOneWidget);
+
+    await tester.enterText(titleField, 'Later');
+    await tester.pump(const Duration(seconds: 3));
+
+    final saved =
+        verify(() => notesRepo.createNote(captureAny())).captured.single
+            as Note;
+    expect(saved.isArchived, isTrue);
+    expect(saved.isPinned, isFalse);
+    verifyNever(() => notesRepo.archiveNote(any()));
+  });
+
+  testWidgets('a new note pinned before writing is created pinned', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await tester.tap(find.byTooltip('Pin Note'));
+    await tester.enterText(titleField, 'Top');
+    await tester.pump(const Duration(seconds: 3));
+
+    final saved =
+        verify(() => notesRepo.createNote(captureAny())).captured.single
+            as Note;
+    expect(saved.isPinned, isTrue);
+    expect(saved.isArchived, isFalse);
+  });
+
   group('a note shared for viewing', () {
     const note = Note(
       id: 'n1',

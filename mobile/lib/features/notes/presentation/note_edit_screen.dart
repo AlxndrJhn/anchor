@@ -457,6 +457,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   }
 
   Future<void> _togglePinned() async {
+    // A new note keeps the pin until it is created with it.
+    if (_isNew) {
+      setState(() => _isPinned = !_isPinned);
+      return;
+    }
     final note = _existingNote;
     if (note == null || !note.isActive) {
       return;
@@ -467,53 +472,32 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     await ref.read(notesRepositoryProvider).bulkSetPinned([note.id], _isPinned);
   }
 
+  /// Archives at once, marked by a dot as the pin is. An archived note is
+  /// no longer pinned.
   Future<void> _toggleArchived() async {
-    if (_isNew) return;
-
     final wasArchived = _isArchived;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.archive,
-        iconColor: Theme.of(context).colorScheme.primary,
-        title: wasArchived ? 'Unarchive note?' : 'Archive note?',
-        message: wasArchived
-            ? 'This note will be moved back to your notes.'
-            : 'This note will be moved to archive.',
-        cancelText: 'Cancel',
-        confirmText: wasArchived ? 'Unarchive' : 'Archive',
-        onConfirm: () {},
-      ),
-    );
-
-    if (confirm != true || !mounted) return;
+    final unpin = !wasArchived && _isPinned;
+    setState(() {
+      _isArchived = !wasArchived;
+      if (unpin) _isPinned = false;
+    });
+    // A new note is created archived or pinned as set here.
+    if (_isNew) return;
 
     final repository = ref.read(notesRepositoryProvider);
     try {
+      if (unpin) await repository.bulkSetPinned([_noteId!], false);
       if (wasArchived) {
         await repository.unarchiveNote(_noteId!);
       } else {
         await repository.archiveNote(_noteId!);
       }
-
-      await _loadNote();
-
-      if (mounted) {
-        AppSnackbar.showSuccess(
-          context,
-          message: wasArchived ? 'Note unarchived' : 'Note archived',
-        );
-
-        if (!wasArchived) {
-          // Small delay to ensure snackbar is visible
-          await Future.delayed(const Duration(milliseconds: 300));
-          if (mounted) {
-            _popOrExit();
-          }
-        }
-      }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isArchived = wasArchived;
+          if (unpin) _isPinned = true;
+        });
         AppSnackbar.showError(
           context,
           message: wasArchived
@@ -1014,6 +998,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       title: title,
       content: content,
       isPinned: _isPinned,
+      isArchived: _isArchived,
       tagIds: _selectedTagIds,
       background: _selectedBackground,
       isSynced: false,
@@ -1053,7 +1038,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         title.isEmpty &&
         plainText.isEmpty &&
         _selectedBackground == null &&
-        !_isPinned) {
+        !_isPinned &&
+        !_isArchived) {
       AppLogger.instance.debug(
         'NoteEdit',
         '_saveNote: skipping empty new note',
@@ -1303,32 +1289,43 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
   Widget _buildPinButton(ThemeData theme) {
     return IconButton(
-      icon: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(
-            LucideIcons.pin,
-            color: _isPinned
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface,
-          ),
-          if (_isPinned)
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.tertiary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
+      icon: _dottedIcon(theme, LucideIcons.pin, _isPinned),
       onPressed: _isLoaded ? _togglePinned : null,
       tooltip: _isPinned ? 'Unpin Note' : 'Pin Note',
+    );
+  }
+
+  Widget _buildArchiveButton(ThemeData theme) {
+    return IconButton(
+      icon: _dottedIcon(theme, LucideIcons.archive, _isArchived),
+      onPressed: _isLoaded ? _toggleArchived : null,
+      tooltip: _isArchived ? 'Unarchive note' : 'Archive note',
+    );
+  }
+
+  /// [icon] in the primary colour with a dot while [on].
+  Widget _dottedIcon(ThemeData theme, IconData icon, bool on) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(
+          icon,
+          color: on ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+        ),
+        if (on)
+          Positioned(
+            right: -2,
+            top: -2,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.tertiary,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -1511,16 +1508,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 if (_existingNote?.sharedBy != null)
                   _buildSharedByBadge(theme, serverUrl),
                 _buildPinButton(theme),
+                _buildArchiveButton(theme),
                 if (!_isNew) ...[
-                  IconButton(
-                    icon: Icon(
-                      _isArchived
-                          ? LucideIcons.archiveRestore
-                          : LucideIcons.archive,
-                    ),
-                    onPressed: _isLoaded ? _toggleArchived : null,
-                    tooltip: _isArchived ? 'Unarchive note' : 'Archive note',
-                  ),
                   if (!_isOwnFrozen)
                     IconButton(
                       icon: const Icon(LucideIcons.trash2),
