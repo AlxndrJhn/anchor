@@ -12,11 +12,13 @@ import '../../../core/widgets/choice_sheet.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../l10n/l10n.dart';
 import '../../note_locks/presentation/note_lock_actions.dart';
+import '../../note_locks/presentation/note_lock_session.dart';
 import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_dates.dart';
+import '../domain/note_merge.dart';
 import 'editor/checklist_lines.dart';
 import 'note_freeze_actions.dart';
 import 'notes_controller.dart';
@@ -35,6 +37,7 @@ enum NoteAction {
   lock,
   removeLock,
   freeze,
+  merge,
   addImage,
   takePicture,
   takeSeveral,
@@ -88,6 +91,7 @@ enum NoteAction {
       icon: LucideIcons.snowflake,
       label: l10n.actionFreeze,
     ),
+    NoteAction.merge => (icon: LucideIcons.merge, label: l10n.actionMerge),
     NoteAction.addImage => (
       icon: LucideIcons.imagePlus,
       label: l10n.actionAddImage,
@@ -216,6 +220,8 @@ class NoteActions {
         await beforeChange?.call();
         if (!context.mounted) return;
         await setNotesFrozen(context, ref, ids, isFrozen: isFreezing);
+      case NoteAction.merge:
+        await merge(notes, beforeChange: beforeChange);
       case NoteAction.archive:
         await archive(notes, beforeChange: beforeChange);
       case NoteAction.unarchive:
@@ -436,6 +442,69 @@ class NoteActions {
               await repo.restore(ownIds);
               afterUndo?.call();
             },
+    );
+  }
+
+  /// Merges [notes] into the first (the first picked): it gets their text,
+  /// each under its title, and their tags; they go to the trash. Undo puts
+  /// it back as it was and brings them back. Pictures stay with their notes.
+  Future<void> merge(
+    List<Note> notes, {
+    FutureOr<void> Function()? beforeChange,
+  }) async {
+    final l10n = context.l10n;
+    final unlocked = ref.read(noteLockSessionProvider);
+    final String? refusal;
+    if (notes.length < 2) {
+      refusal = l10n.notesMergePickTwo;
+    } else if (notes.any((n) => !n.isOwner)) {
+      refusal = l10n.notesMergeOwnOnly;
+    } else if (notes.any((n) => n.isFrozen)) {
+      refusal = l10n.notesMergeFrozen;
+    } else if (notes.any((n) => isNoteHidden(n, unlocked))) {
+      // Its text isn't shown until it's opened: nor is it merged unseen.
+      refusal = l10n.notesMergeLocked;
+    } else {
+      refusal = null;
+    }
+    if (refusal != null) {
+      Haptics.warning();
+      AppSnackbar.show(context, refusal, kind: SnackbarKind.error);
+      return;
+    }
+    final repo = _repo;
+    final target = notes.first;
+    final others = _idsOf(notes.skip(1).toList());
+    final keptPictures = notes
+        .skip(1)
+        .any((n) => n.imagePreviewData.isNotEmpty);
+    await beforeChange?.call();
+    try {
+      await repo.updateNote(mergeNotes(notes));
+      await repo.trash(others);
+    } catch (_) {
+      CardRegistry.stay(others);
+      if (context.mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.notesMergeFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+      return;
+    }
+    Haptics.success();
+    if (!context.mounted) return;
+    AppSnackbar.show(
+      context,
+      keptPictures
+          ? l10n.notesMergedKeptPictures(notes.length)
+          : l10n.notesMerged(notes.length),
+      actionLabel: l10n.commonUndo,
+      onAction: () async {
+        await repo.updateNote(target);
+        await repo.restore(others);
+      },
     );
   }
 

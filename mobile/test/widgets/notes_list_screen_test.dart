@@ -711,6 +711,66 @@ void main() {
       await tester.pump(const Duration(seconds: 11));
     });
 
+    testWidgets('Merge merges into the first picked note, with Undo', (
+      tester,
+    ) async {
+      registerFallbackValue(const Note(id: 'fallback', title: ''));
+      final notes = notesNamed('Note', 3);
+      when(() => repo.updateNote(any())).thenAnswer((_) async {});
+      when(() => repo.trash(any())).thenAnswer((_) async => 1);
+      when(() => repo.restore(any())).thenAnswer((_) async {});
+      await pumpList(tester, notes);
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 2'));
+      await tester.tap(find.text('Note 0'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Merge'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      final merged =
+          verify(() => repo.updateNote(captureAny())).captured.single as Note;
+      expect(merged.id, 'Note2');
+      expect(merged.content, contains('Note 0'));
+      verify(() => repo.trash(['Note0'])).called(1);
+      final toast = find.textContaining('Merged 2 notes', findRichText: true);
+      expect(toast, findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verify(() => repo.updateNote(notes[2])).called(1);
+      verify(() => repo.restore(['Note0'])).called(1);
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('Merge leaves locked notes not opened alone', (tester) async {
+      await pumpList(tester, [
+        ...notesNamed('Note', 1),
+        const Note(id: 'l', title: 'Diary', lock: NoteLock.pin),
+      ]);
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 0'));
+      await tester.tap(find.text('Diary'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Merge'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      verifyNever(() => repo.updateNote(any()));
+      expect(
+        find.textContaining('Open the locked notes first', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 11));
+    });
+
     testWidgets('locked notes not opened keep their lock', (tester) async {
       when(() => repo.setLock(any(), any())).thenAnswer((_) async {});
       await pumpList(tester, [

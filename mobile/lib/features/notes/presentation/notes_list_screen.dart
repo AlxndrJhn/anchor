@@ -311,6 +311,13 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       _selection.end();
       return;
     }
+    if (action == NoteAction.merge) {
+      // In the order they were picked: the first one stays.
+      final byId = {for (final note in selectedNotes) note.id: note};
+      selectedNotes = [
+        for (final id in ref.read(selectedNoteIdsProvider)) ?byId[id],
+      ];
+    }
     final fadeOut = context.motion(AnchorTokens.motionDurationExit);
     final leaving = _leavingAfter(action, selectedNotes, shown);
     await NoteActions(context, ref).run(
@@ -344,6 +351,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         action == NoteAction.lock ||
         action == NoteAction.freeze) {
       return const [];
+    }
+    if (action == NoteAction.merge) {
+      // Merged into the first, the others go to the trash.
+      return [for (final note in selectedNotes.skip(1)) note.id];
     }
     if (action.isDeleting) {
       // Frozen notes of this person's own aren't deleted.

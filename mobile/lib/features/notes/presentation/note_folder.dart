@@ -26,6 +26,7 @@ enum NoteFolder {
       NoteAction.pin,
       NoteAction.background,
       NoteAction.lock,
+      NoteAction.merge,
       NoteAction.archive,
       NoteAction.trash,
     ],

@@ -2312,6 +2312,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debugBuildFailed => 'Couldn’t build the report';
 
   @override
+  String get actionMerge => 'Merge';
+
+  @override
+  String notesMerged(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Merged $count notes',
+      one: 'Merged 1 note',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesMergedKeptPictures(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Merged $count notes; pictures stay with their notes in the trash',
+      one: 'Merged 1 note; pictures stay with their notes in the trash',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notesMergePickTwo => 'Pick two notes or more to merge';
+
+  @override
+  String get notesMergeOwnOnly => 'Only your own notes can be merged';
+
+  @override
+  String get notesMergeFrozen =>
+      'Unfreeze the frozen notes first, then merge them';
+
+  @override
+  String get notesMergeLocked => 'Open the locked notes first, then merge them';
+
+  @override
+  String get notesMergeFailed => 'Couldn’t merge the notes';
+
+  @override
   String get filterSecrets => 'Secrets';
 
   @override

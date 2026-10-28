@@ -3418,6 +3418,54 @@ abstract class AppLocalizations {
   /// **'Couldn’t build the report'**
   String get debugBuildFailed;
 
+  /// Selection bar action: merges the picked notes into the first one picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get actionMerge;
+
+  /// Toast after merging notes, with Undo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Merged 1 note} other{Merged {count} notes}}'**
+  String notesMerged(int count);
+
+  /// Toast after merging notes when some of the merged-in notes had pictures, which stay with them in the trash.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Merged 1 note; pictures stay with their notes in the trash} other{Merged {count} notes; pictures stay with their notes in the trash}}'**
+  String notesMergedKeptPictures(int count);
+
+  /// Toast when Merge is tapped with only one note picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick two notes or more to merge'**
+  String get notesMergePickTwo;
+
+  /// Toast when a picked note is shared with the person rather than theirs.
+  ///
+  /// In en, this message translates to:
+  /// **'Only your own notes can be merged'**
+  String get notesMergeOwnOnly;
+
+  /// Toast when a picked note is frozen (it can’t be changed or deleted).
+  ///
+  /// In en, this message translates to:
+  /// **'Unfreeze the frozen notes first, then merge them'**
+  String get notesMergeFrozen;
+
+  /// Toast when a picked note is locked and hasn’t been opened since the phone was locked.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the locked notes first, then merge them'**
+  String get notesMergeLocked;
+
+  /// Toast when merging failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t merge the notes'**
+  String get notesMergeFailed;
+
   /// Filter choice in the filter sheet's Has section: only notes holding something that looks like a secret (a key, token, id or password).
   ///
   /// In en, this message translates to:

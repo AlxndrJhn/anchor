@@ -530,6 +530,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       case NoteAction.tag ||
           NoteAction.background ||
           NoteAction.restore ||
+          NoteAction.merge ||
           NoteAction.deleteForever:
         break;
     }

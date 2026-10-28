@@ -3087,6 +3087,50 @@
   "@debugBuildFailed": {
     "description": "Toast when the debug report file could not be built or saved."
   },
+  "actionMerge": "Merge",
+  "@actionMerge": {
+    "description": "Selection bar action: merges the picked notes into the first one picked."
+  },
+  "notesMerged": "{count, plural, =1{Merged 1 note} other{Merged {count} notes}}",
+  "@notesMerged": {
+    "description": "Toast after merging notes, with Undo.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesMergedKeptPictures": "{count, plural, =1{Merged 1 note; pictures stay with their notes in the trash} other{Merged {count} notes; pictures stay with their notes in the trash}}",
+  "@notesMergedKeptPictures": {
+    "description": "Toast after merging notes when some of the merged-in notes had pictures, which stay with them in the trash.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesMergePickTwo": "Pick two notes or more to merge",
+  "@notesMergePickTwo": {
+    "description": "Toast when Merge is tapped with only one note picked."
+  },
+  "notesMergeOwnOnly": "Only your own notes can be merged",
+  "@notesMergeOwnOnly": {
+    "description": "Toast when a picked note is shared with the person rather than theirs."
+  },
+  "notesMergeFrozen": "Unfreeze the frozen notes first, then merge them",
+  "@notesMergeFrozen": {
+    "description": "Toast when a picked note is frozen (it can’t be changed or deleted)."
+  },
+  "notesMergeLocked": "Open the locked notes first, then merge them",
+  "@notesMergeLocked": {
+    "description": "Toast when a picked note is locked and hasn’t been opened since the phone was locked."
+  },
+  "notesMergeFailed": "Couldn’t merge the notes",
+  "@notesMergeFailed": {
+    "description": "Toast when merging failed."
+  },
   "filterSecrets": "Secrets",
   "@filterSecrets": {
     "description": "Filter choice in the filter sheet's Has section: only notes holding something that looks like a secret (a key, token, id or password)."
