@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { useSyncStatus } from "@/features/sync";
 import { newId } from "@/lib/id";
+import { basePath } from "@/lib/local-backend/mode";
 import {
   createNote,
   flushNoteUpdate,
@@ -425,7 +426,7 @@ export function useNoteEditor({
       setLastSaved(noteToDraft(newNote));
       setCreatedId(newNote.id);
       onCreated(newNote.id);
-      window.history.replaceState(null, "", `/notes/${newNote.id}`);
+      window.history.replaceState(null, "", `${basePath}/notes/${newNote.id}`);
     },
     onError: (error) => {
       if (isRetryableError(error)) {
