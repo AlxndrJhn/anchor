@@ -61,7 +61,8 @@ class MainActivity : FlutterFragmentActivity() {
         // A recreated activity (rotation, theme change) must not share again.
         if (savedInstanceState == null) readShare(intent)
         super.onCreate(savedInstanceState)
-        publishShortcuts()
+        // Talks to the launcher, which takes a moment: not while starting up.
+        Thread(::publishShortcuts).start()
         // Only a registered receiver hears the screen go off; it can't be
         // declared in the manifest.
         ContextCompat.registerReceiver(

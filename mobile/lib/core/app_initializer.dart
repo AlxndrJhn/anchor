@@ -48,8 +48,15 @@ String initialRoute = AppRoutes.home;
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await AppLogger.instance.init();
-  await _logSessionHeader();
+  // Everything here keeps the splash screen up, so the independent steps run
+  // side by side, and the settings come out of secure storage in one read
+  // rather than one round trip (and decryption) each.
+  final logging = AppLogger.instance.init().then((_) => _logSessionHeader());
+  final storage = _readStorage();
+  // Registered on every launch, whatever route the app opens on.
+  final notificationRoute = _notificationLaunchRoute();
+  final widgetRoute = _widgetLaunchRoute();
+  await logging;
   FlutterError.onError = (details) {
     AppLogger.instance.error(
       'FlutterError',
@@ -69,8 +76,10 @@ Future<void> initializeApp() async {
     return false;
   };
 
+  final saved = startupStorage = await storage;
+
   // Load saved appearance preferences
-  final savedTheme = await _storage.read(key: PreferenceKeys.themeMode);
+  final savedTheme = saved[PreferenceKeys.themeMode];
   if (savedTheme != null) {
     initialThemeMode = ThemeMode.values.firstWhere(
       (mode) => mode.name == savedTheme,
@@ -78,7 +87,7 @@ Future<void> initializeApp() async {
     );
   }
 
-  final savedDensity = await _storage.read(key: PreferenceKeys.displayDensity);
+  final savedDensity = saved[PreferenceKeys.displayDensity];
   if (savedDensity != null) {
     initialDisplayDensity = DisplayDensity.values.firstWhere(
       (density) => density.name == savedDensity,
@@ -86,20 +95,18 @@ Future<void> initializeApp() async {
     );
   }
 
-  final savedScheme = await _storage.read(key: PreferenceKeys.colorScheme);
+  final savedScheme = saved[PreferenceKeys.colorScheme];
   if (savedScheme != null && schemeById(savedScheme) != null) {
     initialColorScheme = savedScheme;
   }
-  initialAppStyle = AppStyle.fromId(
-    await _storage.read(key: PreferenceKeys.appStyle),
-  );
-  final savedCustomTheme = await _storage.read(key: PreferenceKeys.customTheme);
+  initialAppStyle = AppStyle.fromId(saved[PreferenceKeys.appStyle]);
+  final savedCustomTheme = saved[PreferenceKeys.customTheme];
   if (savedCustomTheme != null) {
     initialCustomTheme = parseCustomTheme(savedCustomTheme).theme;
   }
 
   // User id for per-user database selection, read from the persisted user json.
-  final userData = await _storage.read(key: 'user_data');
+  final userData = saved['user_data'];
   if (userData != null) {
     try {
       initialUserId =
@@ -109,18 +116,48 @@ Future<void> initializeApp() async {
     }
   }
 
-  // Registered on every launch, whatever route the app opens on.
-  final notificationRoute = await _notificationLaunchRoute();
-
-  final serverUrl = await _storage.read(key: _serverUrlKey);
-  final accessToken = await _storage.read(key: _accessTokenKey);
+  final serverUrl = saved[_serverUrlKey];
+  final accessToken = saved[_accessTokenKey];
   if (serverUrl == null || serverUrl.isEmpty) {
     initialRoute = AppRoutes.serverConfig;
   } else if (accessToken == null) {
     initialRoute = AppRoutes.login;
   } else {
     initialRoute =
-        notificationRoute ?? await _widgetLaunchRoute() ?? AppRoutes.home;
+        await notificationRoute ?? await widgetRoute ?? AppRoutes.home;
+  }
+}
+
+/// Secure storage as it was at launch, for settings read while the app
+/// starts; empty when it couldn't be read. Later changes aren't in it.
+Map<String, String> startupStorage = const {};
+
+/// Every stored value at once. Falls back to reading key by key if reading
+/// them all fails (a value that can't be decrypted).
+Future<Map<String, String>> _readStorage() async {
+  try {
+    return await _storage.readAll();
+  } catch (error) {
+    AppLogger.instance.warn('App', 'Reading all settings failed: $error');
+    final values = <String, String>{};
+    for (final key in [
+      PreferenceKeys.themeMode,
+      PreferenceKeys.displayDensity,
+      PreferenceKeys.colorScheme,
+      PreferenceKeys.appStyle,
+      PreferenceKeys.customTheme,
+      'user_data',
+      _serverUrlKey,
+      _accessTokenKey,
+    ]) {
+      try {
+        final value = await _storage.read(key: key);
+        if (value != null) values[key] = value;
+      } catch (_) {
+        // Left out, as if never set.
+      }
+    }
+    return values;
   }
 }
 

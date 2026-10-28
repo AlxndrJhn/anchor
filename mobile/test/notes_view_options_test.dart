@@ -1,5 +1,7 @@
+import 'package:anchor/core/app_initializer.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Ordering of the notes list under each view option.
@@ -75,5 +77,22 @@ void main() {
       expect(order(tied, options), expected);
       expect(order(tied.reversed.toList(), options), expected);
     }
+  });
+
+  test('the first build takes the options read at launch, at once', () {
+    startupStorage = {
+      'notes_view_type': 'list',
+      'notes_sort_option': 'title',
+      'notes_show_pictures': 'false',
+    };
+    addTearDown(() => startupStorage = const {});
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    // Ready with the first frame: no loading state to wait through.
+    final options = container.read(notesViewOptionsProvider).value;
+    expect(options?.viewType, ViewType.list);
+    expect(options?.sortOption, SortOption.title);
+    expect(options?.showPictures, isFalse);
   });
 }

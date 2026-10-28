@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'package:anchor/core/app_initializer.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 
 enum ViewType { grid, list }
@@ -99,35 +100,58 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
   static const _keyIsAscending = 'notes_is_ascending';
   static const _keyShowPictures = 'notes_show_pictures';
 
+  /// Whether the options read at launch were used already; later builds
+  /// read storage, which has any changes since.
+  static bool _tookStartupValues = false;
+
   @override
-  Future<NotesViewOptions> build() async {
+  FutureOr<NotesViewOptions> build() {
+    // The first time, straight from what was read at launch, so the list
+    // shows with the app's first frame instead of after four more reads.
+    if (!_tookStartupValues && startupStorage.isNotEmpty) {
+      _tookStartupValues = true;
+      return _optionsFrom((key) => startupStorage[key]);
+    }
     return _loadOptions();
   }
 
   Future<NotesViewOptions> _loadOptions() async {
     try {
-      final viewTypeStr = await _storage.read(key: _keyViewType);
-      final sortOptionStr = await _storage.read(key: _keySortOption);
-      final isAscendingStr = await _storage.read(key: _keyIsAscending);
-      final showPicturesStr = await _storage.read(key: _keyShowPictures);
-
-      final viewType = viewTypeStr == 'list' ? ViewType.list : ViewType.grid;
-
-      final sortOption = sortOptionStr == 'title'
-          ? SortOption.title
-          : SortOption.dateModified;
-
-      final isAscending = isAscendingStr == 'true';
-
-      return NotesViewOptions(
-        viewType: viewType,
-        sortOption: sortOption,
-        isAscending: isAscending,
-        showPictures: showPicturesStr != 'false',
-      );
+      final values = <String, String?>{
+        for (final key in [
+          _keyViewType,
+          _keySortOption,
+          _keyIsAscending,
+          _keyShowPictures,
+        ])
+          key: await _storage.read(key: key),
+      };
+      return _optionsFrom((key) => values[key]);
     } catch (e) {
       return const NotesViewOptions();
     }
+  }
+
+  NotesViewOptions _optionsFrom(String? Function(String key) read) {
+    final viewTypeStr = read(_keyViewType);
+    final sortOptionStr = read(_keySortOption);
+    final isAscendingStr = read(_keyIsAscending);
+    final showPicturesStr = read(_keyShowPictures);
+
+    final viewType = viewTypeStr == 'list' ? ViewType.list : ViewType.grid;
+
+    final sortOption = sortOptionStr == 'title'
+        ? SortOption.title
+        : SortOption.dateModified;
+
+    final isAscending = isAscendingStr == 'true';
+
+    return NotesViewOptions(
+      viewType: viewType,
+      sortOption: sortOption,
+      isAscending: isAscending,
+      showPictures: showPicturesStr != 'false',
+    );
   }
 
   Future<void> _saveOptions(NotesViewOptions options) async {
