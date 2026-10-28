@@ -39,8 +39,12 @@ differences. "Web" and "Android" say where each one is available.
 | Pinned and Others headings in the notes list | (upstream) | ✓ |
 | Option to hide pictures on note cards ([#177](https://github.com/ZhFahim/anchor/issues/177)) | ✓ | ✓ |
 | Empty the trash in one go | (upstream) | ✓ |
+| Merge selected notes into the first one picked (Select notes › More), with Undo | | ✓ |
+| Cards say Today and Yesterday, and add the year to dates from other years | | ✓ |
+| Larger checkboxes on cards; ticking one no longer jolts the list | | ✓ |
 | **Search** | | |
 | Filters for colour, tag, pictures, checklists and reminders | ✓ | ✓ |
+| Search with a regular expression, or matching case; a filter for notes that contain a secret (ids, keys and tokens, passwords) | | ✓ |
 | Search finds the text in pictures (screenshots, receipts), read on the server | ✓ | ✓ |
 | Opt-in: find notes by what their pictures show ("Katzen", "receipt"), in most languages, on your server | ✓ | ✓ |
 | With that on, an opened picture can show what it depicts as tags (English or German); a tag searches for it | ✓ | ✓ |
@@ -50,12 +54,15 @@ differences. "Web" and "Android" say where each one is available.
 | Tag counts include archived notes, and a tag lists them ([#114](https://github.com/ZhFahim/anchor/issues/114)) | ✓ | ✓ |
 | Tags can be put in any order by dragging their handle; the order syncs | ✓ | ✓ |
 | A tag's colour can be changed from its menu | ✓ | ✓ |
-| Text colour, font (serif, monospace) and highlights in any colour, picked or preset | ✓ | ✓ |
-| A deleted note burns away like a destroyed card in Balatro (off with reduced motion) | ✓ | ✓ |
+| Text colour, font (serif, monospace, Comic Sans, handwriting, typewriter, rounded, slab, marker) and highlights in any colour, picked or preset | ✓ | ✓ |
+| A deleted note burns away like a destroyed card in Balatro, its last sparks fading out (off with reduced motion) | ✓ | ✓ |
 | **Pictures, files and recordings** | | |
 | Grab image text (OCR): marks the text on a picture to select (drag over words or draw a box), copy or insert in the note | ✓ | ✓ |
 | Paste a picture to add it as an attachment | ✓ | ✓ |
 | Click a card's picture to view it full size | ✓ | ✓ |
+| Share a picture you're viewing, or copy it to the clipboard | | ✓ |
+| Every picture is downloaded to the phone, so none waits for a connection | | ✓ |
+| A picture pasted from the keyboard or with Paste picture goes into the text at the caret | | ✓ |
 | Record audio straight into a note | ✓ | |
 | Attach any kind of file; Android can also attach a whole folder, zipped | ✓ | ✓ |
 | Add image, Take picture and Take several (one picture after another, without going back to the note) in an opened note's menu | | ✓ |
@@ -83,7 +90,10 @@ differences. "Web" and "Android" say where each one is available.
 | Double-tap the New Note button to paste the clipboard into a new note | | ✓ |
 | Updates itself from this fork's GitHub releases (Settings › Updates) | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |
-| Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)) | | ✓ |
+| Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)); with a tag or filter on, it first shows all notes again | | ✓ |
+| A chevron back to the top, two screens down the notes list | | ✓ |
+| Starts faster: settings are read in one go while the splash shows | | ✓ |
+| Debug mode: hold two fingers still for 3 s to film the app and its state, mark problems on a timeline and file them as a GitHub issue (see [mobile/README.md](mobile/README.md#debug-reports)) | | ✓ |
 | The server's version in Settings › About | ✓ | |
 | **Fixes** | | |
 | Copying and saving the logs on Android ([#187](https://github.com/ZhFahim/anchor/issues/187), [#188](https://github.com/ZhFahim/anchor/issues/188)) | | ✓ |
