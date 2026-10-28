@@ -49,6 +49,24 @@ class NoteFiltersSheet extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Always shown (disabled when idle) so toggling the first filter
+            // doesn't shift the rest of the sheet down.
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: dims.xl),
+              child: TextButton.icon(
+                icon: const Icon(LucideIcons.x, size: 16),
+                label: const Text('Clear filters'),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onSurface,
+                ),
+                onPressed: active == 0
+                    ? null
+                    : () {
+                        notifier.clear();
+                        ref.read(selectedTagFilterProvider.notifier).clear();
+                      },
+              ),
+            ),
             section('Has'),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: dims.xl),
@@ -120,21 +138,6 @@ class NoteFiltersSheet extends ConsumerWidget {
                 ),
               ),
             ],
-            if (active > 0)
-              Padding(
-                padding: EdgeInsets.fromLTRB(dims.xl, dims.lg, dims.xl, 0),
-                child: TextButton.icon(
-                  icon: const Icon(LucideIcons.x, size: 16),
-                  label: const Text('Clear filters'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.onSurface,
-                  ),
-                  onPressed: () {
-                    notifier.clear();
-                    ref.read(selectedTagFilterProvider.notifier).clear();
-                  },
-                ),
-              ),
             SizedBox(height: dims.lg),
           ],
         ),
