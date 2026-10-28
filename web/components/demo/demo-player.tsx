@@ -1,10 +1,19 @@
 "use client";
 
-import { MousePointer2, Play, RotateCcw, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MousePointer2,
+  Pause,
+  Play,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { demoBySlug } from "@/lib/demo/demos";
 import {
   caretToEnd,
@@ -19,14 +28,17 @@ import {
   Stopped,
   typeCharacter,
 } from "@/lib/demo/runner";
-import { useDemo } from "@/lib/demo/store";
+import { startDemo, useDemo } from "@/lib/demo/store";
 import { cn } from "@/lib/utils";
+import { CopyDemoLink } from "./copy-demo-link";
 
 const MOVE_MS = 650;
 /** Room between the panel and the edge of the window, as in bottom-4. */
 const EDGE_PX = 16;
 /** How close the pointer may come to the panel before it moves away. */
 const CLEARANCE_PX = 12;
+/** The longest wait while hurrying through steps to go back to one. */
+const HURRY_MS = 120;
 
 /**
  * Plays the feature demos over the app (see lib/demo): a pointer clicks
@@ -35,13 +47,15 @@ const CLEARANCE_PX = 12;
  */
 export function DemoPlayer() {
   const router = useRouter();
-  const { slug, status, caption, run, set } = useDemo();
+  const queryClient = useQueryClient();
+  const { slug, status, caption, run, step, paused, waiting, set } = useDemo();
   const [cursor, setCursor] = React.useState<{
     x: number;
     y: number;
     pressed: boolean;
   } | null>(null);
   const [isHidden, setIsHidden] = React.useState(false);
+  const [isHurrying, setIsHurrying] = React.useState(false);
   // The panel moves to the top of the window while what the pointer goes
   // to is behind it at the bottom, and back down when that is behind it.
   const panel = React.useRef<HTMLElement>(null);
@@ -60,9 +74,25 @@ export function DemoPlayer() {
       if (stopped || state.run !== run || state.status !== "playing")
         throw new Stopped();
     };
+    // Going back replays the steps before the one gone back to, quickly.
+    let hurry = false;
     const pause = async (ms: number) => {
-      await new Promise((resolve) => setTimeout(resolve, ms));
+      await new Promise((resolve) =>
+        setTimeout(resolve, hurry ? Math.min(ms, HURRY_MS) : ms),
+      );
       check();
+    };
+    /** Holds before step `i` while paused, until played on or stepped. */
+    const gate = async (i: number) => {
+      set({ step: i });
+      for (;;) {
+        const state = useDemo.getState();
+        if (state.advance) break;
+        if (!state.paused) break;
+        if (!state.waiting) set({ waiting: true });
+        await pause(80);
+      }
+      set({ advance: false, waiting: false });
     };
     let position = {
       x: window.innerWidth / 2,
@@ -182,9 +212,20 @@ export function DemoPlayer() {
 
     void (async () => {
       try {
+        const { skipTo } = useDemo.getState();
+        hurry = skipTo > 0;
+        setIsHurrying(hurry);
         router.replace(playing.start);
         await pause(1600);
-        for (const step of playing.steps) await perform(step);
+        for (const [i, step] of playing.steps.entries()) {
+          if (hurry && i >= skipTo) {
+            hurry = false;
+            setIsHurrying(false);
+          }
+          if (hurry) set({ step: i });
+          else await gate(i);
+          await perform(step);
+        }
         set({ status: "done", caption: playing.outro });
       } catch (error) {
         if (error instanceof Stopped) return;
@@ -192,7 +233,10 @@ export function DemoPlayer() {
         set({ status: "done", caption: playing.outro });
       } finally {
         for (const touched of touchedTargets) leaveElement(touched);
-        if (!stopped) setCursor(null);
+        if (!stopped) {
+          setCursor(null);
+          setIsHurrying(false);
+        }
       }
     })();
     return () => {
@@ -201,6 +245,16 @@ export function DemoPlayer() {
   }, [run, slug, router, set]);
 
   const isPlaying = status === "playing" || status === "loading";
+  const steps = demo?.steps.length ?? 0;
+
+  /** Back to before the step playing, or the one before while paused. */
+  const stepBack = () => {
+    if (!slug) return;
+    const at =
+      status === "done" ? steps - 1 : Math.max(0, waiting ? step - 1 : step);
+    void startDemo(slug, queryClient, at);
+  };
+  const stepOn = () => set({ paused: true, advance: true });
 
   // Back at the bottom for the person's turn, however the demo ended.
   React.useEffect(() => {
@@ -239,7 +293,7 @@ export function DemoPlayer() {
 
   return (
     <div data-demo-player>
-      {cursor && isPlaying && (
+      {cursor && isPlaying && !isHurrying && (
         <div
           aria-hidden
           className="pointer-events-none fixed top-0 left-0 z-[2147483002] transition-transform ease-[cubic-bezier(.3,.7,.3,1)]"
@@ -262,6 +316,18 @@ export function DemoPlayer() {
       {demo && status !== "idle" && !isHidden && (
         <section
           ref={panel}
+          // While it plays, pressing a control here must leave the app as
+          // the demo left it: an open menu would close on a press outside
+          // it, or on losing focus.
+          onPointerDownCapture={(e) => {
+            if (!isPlaying) return;
+            e.stopPropagation();
+          }}
+          onMouseDownCapture={(e) => {
+            if (!isPlaying) return;
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           aria-live="polite"
           aria-label="Feature demo"
           className="pointer-events-auto fixed bottom-4 left-1/2 z-[2147483001] grid w-[min(560px,calc(100vw-32px))] -translate-x-1/2 gap-2.5 transition-transform duration-300 ease-[cubic-bezier(.3,.7,.3,1)] motion-reduce:transition-none rounded-xl bg-popover p-4 text-popover-foreground shadow-[0_0_0_1px_var(--border),var(--sh-lg,0_12px_32px_rgb(0_0_0/.25))]"
@@ -279,6 +345,7 @@ export function DemoPlayer() {
             <b className="min-w-0 flex-1 truncate font-semibold text-ui">
               {demo.title}
             </b>
+            <CopyDemoLink slug={demo.slug} />
             {!isPlaying && (
               <button
                 type="button"
@@ -290,8 +357,52 @@ export function DemoPlayer() {
               </button>
             )}
           </div>
-          <p className="text-ui leading-snug">{caption}</p>
+          <p className="text-ui leading-snug">
+            {isHurrying ? "Going back…" : caption}
+          </p>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              <IconButton
+                size="sm"
+                label="Previous step"
+                title="Previous step"
+                disabled={
+                  status === "loading" ||
+                  isHurrying ||
+                  (status === "playing" && step === 0 && waiting)
+                }
+                onClick={stepBack}
+              >
+                <ChevronLeft />
+              </IconButton>
+              {isPlaying && (
+                <IconButton
+                  size="sm"
+                  label={paused ? "Play" : "Pause"}
+                  title={paused ? "Play" : "Pause"}
+                  disabled={isHurrying}
+                  onClick={() => set({ paused: !paused })}
+                >
+                  {paused ? <Play /> : <Pause />}
+                </IconButton>
+              )}
+              {isPlaying && (
+                <IconButton
+                  size="sm"
+                  label="Next step"
+                  title="Next step"
+                  disabled={isHurrying}
+                  onClick={stepOn}
+                >
+                  <ChevronRight />
+                </IconButton>
+              )}
+              {isPlaying && (
+                <span className="px-1.5 text-meta text-muted-foreground tabular-nums">
+                  {Math.min(step + 1, steps)} / {steps}
+                </span>
+              )}
+            </div>
             {isPlaying ? (
               <Button
                 variant="secondary"
