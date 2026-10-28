@@ -5,3 +5,10 @@ allowBuilds:
   sharp: true
   # Only a donation message after install.
   tesseract.js: false
+
+# Patched versions of transitive dependencies whose parents pin a vulnerable
+# one (pnpm audit runs in CI). Drop an entry once its parent catches up.
+overrides:
+  # solid-js (under @tanstack/react-query-devtools) pins ~1.5
+  seroval: ^1.6.3
+  source-map-js: ^1.2.2
