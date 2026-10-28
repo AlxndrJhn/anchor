@@ -1,4 +1,4 @@
-FROM node:24-alpine
+FROM node:26-alpine
 
 # Install pnpm and curl
 RUN corepack enable && corepack prepare pnpm@latest --activate && \

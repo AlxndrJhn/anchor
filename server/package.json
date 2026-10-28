@@ -2,7 +2,7 @@
   "name": "anchor",
   "version": "0.17.2",
   "private": true,
-  "packageManager": "pnpm@11.23.0",
+  "packageManager": "pnpm@12.16.1",
   "scripts": {
     "build": "nest build",
     "start": "nest start",
