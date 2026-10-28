@@ -2786,7 +2786,7 @@ void main() {
       when(() => notesRepo.setLock(any(), any())).thenAnswer((_) async {});
     });
 
-    testWidgets('More › Lock locks the open note, which stays open', (
+    testWidgets('More › Lock locks the open note and closes it', (
       tester,
     ) async {
       await pumpScreen(
@@ -2810,6 +2810,9 @@ void main() {
       }
 
       verify(() => notesRepo.setLock(['n1'], NoteLock.tap)).called(1);
+      // Back in the list, where it shows locked from now on.
+      expect(find.byType(NoteEditScreen), findsNothing);
+      expect(find.text('Notes'), findsOneWidget);
       expect(
         find.textContaining('Locked with a tap', findRichText: true),
         findsOneWidget,

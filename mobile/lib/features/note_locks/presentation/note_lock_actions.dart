@@ -89,23 +89,33 @@ Future<bool> _ensureSecret(
   return LockSecretSetupScreen.open(context, kind: kind, replacing: false);
 }
 
-/// Lock / Change lock on an open note. It stays open (unlocked for this
-/// session).
+/// Lock… / Change lock… on an open note. [close] leaves the note (saving
+/// it); once it has gone, the note is locked again, so it shows locked in the
+/// list and asks for its lock when next opened.
 Future<void> lockOpenNote(
   BuildContext context,
   WidgetRef ref,
-  Note note,
-) async {
+  Note note, {
+  required Future<void> Function() close,
+}) async {
   final l10n = context.l10n;
   final lock = await pickNoteLock(context, current: note.lock);
   if (lock == null || lock == note.lock || !context.mounted) return;
   if (!await _ensureSecret(context, ref, lock) || !context.mounted) return;
-  ref.read(noteLockSessionProvider.notifier).unlock(note.id);
+  // Both outlive the note's page.
+  final session = ref.read(noteLockSessionProvider.notifier);
+  final host = Navigator.of(context).context;
+  final closing =
+      ModalRoute.of(context)?.reverseTransitionDuration ?? Duration.zero;
   await ref.read(notesRepositoryProvider).setLock([note.id], lock);
   Haptics.success();
-  if (!context.mounted) return;
+  await close();
+  // Locked once out of sight, so the lock screen doesn't flash up on the way.
+  await Future<void>.delayed(closing);
+  session.relock(note.id);
+  if (!host.mounted) return;
   AppSnackbar.show(
-    context,
+    host,
     note.lock == null
         ? l10n.noteLockedWith(lock.name)
         : l10n.noteLockChanged(lock.name),
@@ -170,6 +180,11 @@ Future<bool> lockSelectedNotes(
   // Their cards hide at once: locking from the list puts them away.
   final ids = [for (final note in changeable) note.id];
   await ref.read(notesRepositoryProvider).setLock(ids, lock);
+  // Opened ones lock again too: they show locked straight away.
+  final session = ref.read(noteLockSessionProvider.notifier);
+  for (final id in ids) {
+    session.relock(id);
+  }
   Haptics.success();
   if (!context.mounted) return true;
   AppSnackbar.show(

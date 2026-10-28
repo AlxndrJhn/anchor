@@ -504,7 +504,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       case NoteAction.copy:
         await _makeCopy(note.id);
       case NoteAction.lock:
-        await lockOpenNote(context, ref, note);
+        await lockOpenNote(context, ref, note, close: _closeToLock);
       case NoteAction.removeLock:
         await unlockOpenNote(context, ref, note);
       case NoteAction.freeze:
@@ -631,6 +631,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
   /// Outlives this page: deleting runs on, and its message shows, there.
   BuildContext get _host => Navigator.of(context).context;
+
+  /// Leaves the note (saving it) before it locks again.
+  Future<void> _closeToLock() async {
+    _draft.flushOnLeave();
+    _leave();
+  }
 
   /// Closes the note, then burns its card where it stands in the list.
   Future<void> _closeThenBurn(String noteId) async {
