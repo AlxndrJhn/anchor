@@ -4,10 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import { type ReactNode, useEffect, useState } from "react";
+import { DemoPlayer } from "@/components/demo/demo-player";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAppearance } from "@/lib/appearance";
 import { trackInputModality } from "@/lib/input-modality";
 import { installLocalBackend } from "@/lib/local-backend/install";
+import { isDemo } from "@/lib/local-backend/mode";
 
 installLocalBackend();
 
@@ -44,7 +46,10 @@ export function Providers({ children }: ProvidersProps) {
         enableSystem
         disableTransitionOnChange
       >
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          {children}
+          {isDemo && <DemoPlayer />}
+        </TooltipProvider>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

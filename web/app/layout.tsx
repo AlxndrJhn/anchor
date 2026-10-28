@@ -7,6 +7,8 @@ import {
   Space_Grotesk,
 } from "next/font/google";
 import { appearanceScript } from "@/lib/appearance-script";
+import { memoryStorageScript } from "@/lib/demo/memory-storage-script";
+import { isDemo } from "@/lib/local-backend/mode";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -68,6 +70,12 @@ export default function RootLayout({
       className={`${dmSans.variable} ${playfair.variable} ${jetBrainsMono.variable} ${spaceGrotesk.variable} ${patrickHand.variable}`}
     >
       <head>
+        {isDemo && (
+          <script
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed script, run before any other
+            dangerouslySetInnerHTML={{ __html: memoryStorageScript }}
+          />
+        )}
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed script, set before paint
           dangerouslySetInnerHTML={{ __html: appearanceScript }}

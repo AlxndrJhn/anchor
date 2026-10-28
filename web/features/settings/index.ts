@@ -1,5 +1,6 @@
 export { ApiTokenSection } from "./components/api-token-section";
 export { AppearanceSection } from "./components/appearance-section";
+export { DemosSection } from "./components/demos-section";
 export { EditorSection } from "./components/editor-section";
 export { ImportExportSection } from "./components/import-export-section";
 export { NoteLocksSection } from "./components/note-locks-section";
