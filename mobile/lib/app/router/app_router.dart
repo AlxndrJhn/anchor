@@ -98,6 +98,9 @@ GoRouter goRouter(Ref ref) {
                 // Double-tapping New note pastes the clipboard into it.
                 pasteClipboard:
                     state.uri.queryParameters[AppRoutes.pasteParameter] == '1',
+                // "Camera note", from holding the New note button.
+                takePicture:
+                    state.uri.queryParameters[AppRoutes.cameraParameter] == '1',
               ),
             ),
           ),

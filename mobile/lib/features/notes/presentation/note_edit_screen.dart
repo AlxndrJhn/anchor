@@ -91,6 +91,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.searchTerm,
     this.startAsChecklist = false,
     this.pasteClipboard = false,
+    this.takePicture = false,
     this.caret,
   });
 
@@ -108,6 +109,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
   /// A new note starts with the clipboard's text, the caret after it (New
   /// note double-tapped).
   final bool pasteClipboard;
+
+  /// Starts the new note by taking a picture into its text (Camera note).
+  final bool takePicture;
 
   /// The note opens with the caret here (its trash undone).
   final NoteCaret? caret;
@@ -192,6 +196,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           return;
         }
         if (widget.pasteClipboard) _pasteClipboard();
+        if (widget.takePicture) {
+          unawaited(_picturesIntoText(fromCamera: true));
+          return;
+        }
         Future.delayed(const Duration(milliseconds: 280), () {
           // Unless the title was tapped meanwhile.
           if (!mounted || _writing) return;
@@ -952,6 +960,15 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       ],
     );
     if (fromCamera == null || !mounted) return;
+    await _picturesIntoText(fromCamera: fromCamera, at: at);
+  }
+
+  /// Pictures from the camera or the phone, attached and placed in the text
+  /// at [at] (the caret when null).
+  Future<void> _picturesIntoText({required bool fromCamera, int? at}) async {
+    final editor = _editor;
+    if (editor == null || _isReadOnly) return;
+    at ??= editor.caretOffset;
     final picker = ImagePicker();
     final List<XFile> picked;
     if (fromCamera) {

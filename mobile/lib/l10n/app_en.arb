@@ -4925,5 +4925,9 @@
   "cardFrozen": "Frozen",
   "@cardFrozen": {
     "description": "Tooltip of the snowflake on a frozen note’s card, and read out with the card."
+  },
+  "noteNewCamera": "Camera note",
+  "@noteNewCamera": {
+    "description": "Option in the menu shown when holding the New note button: opens a new note and takes a picture straight into its text."
   }
 }

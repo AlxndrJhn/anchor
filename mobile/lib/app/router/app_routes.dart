@@ -19,6 +19,11 @@ class AppRoutes {
   /// double-tapped).
   static const newNoteWithClipboard = '$newNote?$pasteParameter=1';
   static const pasteParameter = 'paste';
+
+  /// A new note that starts by taking a picture into its text ("Camera
+  /// note").
+  static const newCameraNote = '$newNote?$cameraParameter=1';
+  static const cameraParameter = 'camera';
   static String note(String id) => '/note/$id';
 
   /// A note opened from a search, which marks the search in its text.

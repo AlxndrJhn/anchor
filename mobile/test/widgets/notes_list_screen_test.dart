@@ -577,7 +577,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('New list'), findsOneWidget);
+    expect(find.text('Camera note'), findsOneWidget);
     expect(find.text('New note'), findsOneWidget);
+  });
+
+  testWidgets('Camera note opens a new note that takes a picture', (
+    tester,
+  ) async {
+    await pumpList(tester, notesNamed('Note', 2), routed: true);
+
+    await tester.longPress(find.bySemanticsLabel('New note'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Camera note'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Opened /note/new?camera=1'), findsOneWidget);
   });
 
   group('New note with text on the clipboard', () {

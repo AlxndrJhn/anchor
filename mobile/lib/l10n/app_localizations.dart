@@ -5505,6 +5505,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Frozen'**
   String get cardFrozen;
+
+  /// Option in the menu shown when holding the New note button: opens a new note and takes a picture straight into its text.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera note'**
+  String get noteNewCamera;
 }
 
 class _AppLocalizationsDelegate

@@ -393,23 +393,29 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     final button = CardRegistry.newNoteButton.currentContext;
     if (button == null) return;
     final l10n = context.l10n;
-    final isList = await showAnchorMenu<bool>(
+    // New list, Camera note or New note.
+    final route = await showAnchorMenu<String>(
       button,
       items: [
         AnchorMenuItem(
-          value: true,
+          value: AppRoutes.newList,
           icon: LucideIcons.listChecks,
           label: l10n.noteNewList,
         ),
         AnchorMenuItem(
-          value: false,
+          value: AppRoutes.newCameraNote,
+          icon: LucideIcons.camera,
+          label: l10n.noteNewCamera,
+        ),
+        AnchorMenuItem(
+          value: AppRoutes.newNote,
           icon: LucideIcons.penLine,
           label: l10n.noteNew,
         ),
       ],
     );
-    if (!mounted || isList == null) return;
-    context.go(isList ? AppRoutes.newList : AppRoutes.newNote);
+    if (!mounted || route == null) return;
+    context.go(route);
   }
 
   void _openSettings() {

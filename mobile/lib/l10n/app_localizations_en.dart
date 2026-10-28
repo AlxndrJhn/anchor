@@ -3786,4 +3786,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cardFrozen => 'Frozen';
+
+  @override
+  String get noteNewCamera => 'Camera note';
 }
