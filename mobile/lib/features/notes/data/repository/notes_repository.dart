@@ -601,6 +601,14 @@ class NotesRepository {
     return ids.length;
   }
 
+  // Bulk unarchive notes
+  Future<int> bulkUnarchiveNotes(List<String> ids) async {
+    if (ids.isEmpty) return 0;
+    await _writeArchived(ids: ids, isArchived: false);
+    scheduleAppSync(trigger: 'NotesRepo.bulkUnarchiveNotes');
+    return ids.length;
+  }
+
   // Pins sync on their own, so the note itself is left alone.
   Future<int> bulkSetPinned(List<String> ids, bool isPinned) async {
     if (ids.isEmpty) return 0;

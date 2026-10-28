@@ -11,6 +11,7 @@ import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
 import 'package:anchor/features/notes/presentation/note_freeze_actions.dart';
 import '../note_search.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import '../notes_controller.dart';
 import 'package:anchor/core/widgets/app_bottom_sheet.dart';
@@ -25,37 +26,52 @@ class SelectionAppBarActions extends ConsumerWidget {
     required this.onExitSelectionMode,
   });
 
+  /// Archives the notes, or brings them back when they all are archived.
   Future<void> _handleArchive(
     BuildContext context,
     WidgetRef ref,
-    List<String> ids,
-  ) async {
+    List<String> ids, {
+    bool unarchive = false,
+  }) async {
     final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.archive,
+        icon: unarchive ? LucideIcons.archiveRestore : LucideIcons.archive,
         iconColor: theme.colorScheme.primary,
-        title: 'Archive ${_notes(ids.length)}?',
-        message: '${_these(ids.length)} will be moved to archive.',
+        title: '${unarchive ? 'Unarchive' : 'Archive'} ${_notes(ids.length)}?',
+        message: unarchive
+            ? '${_these(ids.length)} will be moved back to your notes.'
+            : '${_these(ids.length)} will be moved to archive.',
         cancelText: 'Cancel',
-        confirmText: 'Archive',
+        confirmText: unarchive ? 'Unarchive' : 'Archive',
         onConfirm: () {},
       ),
     );
     if (confirmed == true && context.mounted) {
       try {
-        await ref.read(notesControllerProvider.notifier).bulkArchiveNotes(ids);
+        final controller = ref.read(notesControllerProvider.notifier);
+        if (unarchive) {
+          await controller.bulkUnarchiveNotes(ids);
+        } else {
+          await controller.bulkArchiveNotes(ids);
+        }
         onExitSelectionMode();
         if (context.mounted) {
           AppSnackbar.showSuccess(
             context,
-            message: '${_notes(ids.length)} archived',
+            message:
+                '${_notes(ids.length)} ${unarchive ? 'unarchived' : 'archived'}',
           );
         }
       } catch (e) {
         if (context.mounted) {
-          AppSnackbar.showError(context, message: 'Failed to archive notes');
+          AppSnackbar.showError(
+            context,
+            message: unarchive
+                ? 'Failed to unarchive notes'
+                : 'Failed to archive notes',
+          );
         }
       }
     }
@@ -278,12 +294,35 @@ class SelectionAppBarActions extends ConsumerWidget {
       orElse: () => <Note>[],
     );
 
+    // Archived notes the list shows after the others (a search, a tag or a
+    // filter) can be picked too, as in the list.
+    final filters = ref.watch(noteFiltersControllerProvider);
+    final selectedTagId = ref.watch(selectedTagFilterProvider);
+    final withArchived =
+        query.trim().isNotEmpty || selectedTagId != null || !filters.isEmpty;
+    final archivedNotes = !withArchived
+        ? const <Note>[]
+        : (ref.watch(archiveControllerProvider).value ?? const <Note>[])
+              .where(
+                (note) =>
+                    (selectedTagId == null ||
+                        note.tagIds.contains(selectedTagId)) &&
+                    filters.matches(note) &&
+                    noteMatchesSearch(
+                      note,
+                      query,
+                      titleOnly: isNoteHidden(note, unlocked),
+                    ),
+              )
+              .toList();
+    final selectableNotes = [...filteredNotes, ...archivedNotes];
+
     final allSelected =
-        filteredNotes.isNotEmpty &&
-        selectedNoteIds.length == filteredNotes.length;
+        selectableNotes.isNotEmpty &&
+        selectedNoteIds.length == selectableNotes.length;
 
     // When every selected note is already pinned, the toggle unpins instead.
-    final selectedNotes = filteredNotes
+    final selectedNotes = selectableNotes
         .where((note) => selectedNoteIds.contains(note.id))
         .toList();
     final allSelectedPinned =
@@ -296,13 +335,13 @@ class SelectionAppBarActions extends ConsumerWidget {
       for (final n in ownSelected)
         if (n.isFrozen) n.id,
     };
-    final selectedSharedIds = notes.maybeWhen(
-      data: (notesList) => {
-        for (final n in notesList)
-          if (selectedNoteIds.contains(n.id) && !n.isOwner) n.id,
-      },
-      orElse: () => <String>{},
-    );
+    // When every selected note is archived, the toggle unarchives instead.
+    final allSelectedArchived =
+        selectedNotes.isNotEmpty && selectedNotes.every((n) => n.isArchived);
+    final selectedSharedIds = {
+      for (final n in [...?notes.value, ...archivedNotes])
+        if (selectedNoteIds.contains(n.id) && !n.isOwner) n.id,
+    };
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -372,13 +411,21 @@ class SelectionAppBarActions extends ConsumerWidget {
                 ),
             ],
           ),
-        // Archive button
+        // Archive / unarchive toggle
         if (selectedNoteIds.isNotEmpty)
           IconButton(
-            icon: const Icon(LucideIcons.archive),
-            onPressed: () =>
-                _handleArchive(context, ref, selectedNoteIds.toList()),
-            tooltip: 'Archive',
+            icon: Icon(
+              allSelectedArchived
+                  ? LucideIcons.archiveRestore
+                  : LucideIcons.archive,
+            ),
+            onPressed: () => _handleArchive(
+              context,
+              ref,
+              selectedNoteIds.toList(),
+              unarchive: allSelectedArchived,
+            ),
+            tooltip: allSelectedArchived ? 'Unarchive' : 'Archive',
           ),
         // Delete button
         if (selectedNoteIds.isNotEmpty)
@@ -405,7 +452,7 @@ class SelectionAppBarActions extends ConsumerWidget {
             } else {
               ref
                   .read(selectedNoteIdsProvider.notifier)
-                  .selectAll(filteredNotes.map((n) => n.id).toList());
+                  .selectAll(selectableNotes.map((n) => n.id).toList());
             }
           },
           tooltip: allSelected ? 'Deselect all' : 'Select all',

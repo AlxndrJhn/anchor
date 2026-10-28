@@ -801,9 +801,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                         _notesSliver(
                           archivedMatches,
                           viewOptions,
-                          false,
-                          const <String>{},
-                          selectable: false,
+                          isSelectionMode,
+                          selectedNoteIds,
                           underLabel: true,
                           lazy: filteredNotes.isEmpty,
                         ),
