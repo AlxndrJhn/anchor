@@ -3,6 +3,10 @@ import { prefersReducedMotion } from "./motion";
 
 /** How long a card takes to burn away, in ms. */
 export const DESTROY_MS = 1100;
+/** How long the last sparks keep flying, fading out, once the card is gone. */
+export const SPARKS_TAIL_MS = 500;
+/** The end of that fade, in the effect's time (1 = the card is gone). */
+const TAIL_END = 1 + SPARKS_TAIL_MS / DESTROY_MS;
 
 /** The jolt takes the start of the effect; the burn the rest. */
 const JOLT_END = 0.14;
@@ -70,11 +74,20 @@ export function burnPattern(
   return { columns, rows, cell, thresholds: raw.map((v) => (v - low) / span) };
 }
 
-/** How far the burn has gone at t (0 to 1 of the effect), to just past 1. */
+/**
+ * How far the burn has gone at t (0 to 1 of the effect), to just past 1.
+ * Past 1 (the sparks' tail) it keeps going at about its final pace.
+ */
 export function burnFront(t: number): number {
   if (t <= JOLT_END) return 0;
+  if (t > 1) return burnFront(1) + (t - 1) * 2.2;
   const d = (t - JOLT_END) / (1 - JOLT_END);
   return d * d * (1 + EDGE * 1.2);
+}
+
+/** How visible the sparks are at t: fully, then fading over the tail. */
+export function sparkOpacity(t: number): number {
+  return t <= 1 ? 1 : Math.max(0, 1 - (t - 1) / (TAIL_END - 1));
 }
 
 export type BlockState = "whole" | "burning" | "gone";
@@ -179,9 +192,26 @@ export function burnElement(el: HTMLElement): Burn {
     finish = resolve;
   });
   const start = performance.now();
+  let gone = false;
   const frame = (now: number) => {
-    const t = Math.min(1, (now - start) / DESTROY_MS);
+    const t = Math.min(TAIL_END, (now - start) / DESTROY_MS);
     const front = burnFront(t);
+    if (gone) {
+      // The card is gone; its last sparks fly on where it was, fading.
+      if (context)
+        drawBurn(
+          context,
+          pattern,
+          front,
+          width,
+          height,
+          ratio,
+          sparkOpacity(t),
+        );
+      if (t < TAIL_END) frameId = requestAnimationFrame(frame);
+      else canvas.remove();
+      return;
+    }
     // The jolt: a shake that settles, a little bigger, a flash.
     const jolt = Math.max(0, 1 - t / JOLT_END);
     if (jolt > 0) {
@@ -198,11 +228,11 @@ export function burnElement(el: HTMLElement): Burn {
     canvas.style.left = `${rect.left - MARGIN}px`;
     canvas.style.top = `${rect.top - MARGIN}px`;
     if (context) drawBurn(context, pattern, front, width, height, ratio);
-    if (t < 1) frameId = requestAnimationFrame(frame);
-    else {
-      canvas.remove();
+    if (t >= 1) {
+      gone = true;
       finish();
     }
+    frameId = requestAnimationFrame(frame);
   };
   frameId = requestAnimationFrame(frame);
   return {
@@ -235,9 +265,11 @@ function drawBurn(
   width: number,
   height: number,
   ratio: number,
+  opacity = 1,
 ) {
   const { columns, rows, cell, thresholds } = pattern;
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  context.globalAlpha = opacity;
   context.clearRect(0, 0, width + MARGIN * 2, height + MARGIN * 2);
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < columns; x++) {
@@ -258,7 +290,7 @@ function drawBurn(
         if (age > 1) continue;
         const drift = Math.sin(x * 12.9898 + y * 78.233) * 22;
         const size = cell * 0.6 * (1 - age);
-        context.globalAlpha = 0.9;
+        context.globalAlpha = 0.9 * opacity;
         context.fillStyle =
           GLOW[Math.min(GLOW.length - 1, Math.floor(age * GLOW.length))];
         context.fillRect(
@@ -267,7 +299,7 @@ function drawBurn(
           size,
           size,
         );
-        context.globalAlpha = 1;
+        context.globalAlpha = opacity;
       }
     }
   }
