@@ -1,6 +1,7 @@
 name: Release (fork)
 
-# Every push to main releases this fork: a GitHub release tagged
+# Releases this fork when started by hand (Actions › Release (fork) › Run
+# workflow, on main): a GitHub release tagged
 # fork-<app version>.<run>, with the APK and the desktop installers (Windows,
 # macOS) attached, and the Docker image
 # (amd64 + arm64) tagged with the same name plus :fork-latest and
@@ -8,12 +9,6 @@ name: Release (fork)
 #   https://github.com/<owner>/<repo>/releases/latest/download/anchor-fork.apk
 
 on:
-  push:
-    branches: [main]
-    tags-ignore:
-      - "v*"
-    paths-ignore:
-      - "**.md"
   workflow_dispatch:
 
 # Queue releases instead of cancelling one that is half published.

@@ -104,7 +104,7 @@ differences. "Web" and "Android" say where each one is available.
 | The notes list can scroll to the end with pinned notes and pictures | | ✓ |
 | Next.js upgraded to 16.4.3 for security fixes | ✓ | |
 | **Releases** | | |
-| Every push to `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
+| Running the "Release (fork)" workflow on `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
 | A desktop app for Windows and macOS: your server's web client in its own window, in every release, that updates itself (see [Desktop App](#desktop-app)) | ✓ | |
 
 ### Custom themes
