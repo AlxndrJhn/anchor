@@ -358,6 +358,67 @@ void main() {
     });
   });
 
+  group('frozen notes', () {
+    test('the feed brings the freeze, even under an edit waiting to go up, '
+        'and a push never carries it', () async {
+      await insertNote(id: 'waiting', version: 1);
+      stub([
+        response(
+          entries: [
+            noteEntry({...serverNoteJson('frozen'), 'isFrozen': true}),
+            noteEntry({
+              ...serverNoteJson('waiting'),
+              'isFrozen': true,
+            }, seq: '2'),
+          ],
+          nextCursor: 'cursor-1',
+        ),
+      ]);
+
+      await service.run();
+
+      expect((await note('frozen'))!.isFrozen, isTrue);
+      expect((await note('waiting'))!.isFrozen, isTrue);
+      for (final request in requests) {
+        for (final change in (request['changes'] as List? ?? const [])) {
+          expect((change as Map).containsKey('isFrozen'), isFalse);
+        }
+      }
+    });
+
+    test('an edit to a note frozen elsewhere gives way to the server copy '
+        'and is kept as a version', () async {
+      await insertNote(id: 'n1', title: 'Mine', version: 3);
+      stub([
+        response(
+          results: [
+            {
+              'type': 'note',
+              'id': 'n1',
+              'status': 'conflict',
+              'serverCopy': {
+                ...serverNoteJson('n1', title: 'Signed', version: 4),
+                'isFrozen': true,
+              },
+            },
+          ],
+        ),
+      ]);
+
+      await service.run();
+
+      final row = await note('n1');
+      expect(row!.title, 'Signed');
+      expect(row.isFrozen, isTrue);
+      expect(row.isSynced, isTrue);
+      expect(requests, hasLength(1));
+      final kept = await (db.select(
+        db.noteRevisions,
+      )..where((tbl) => tbl.noteId.equals('n1'))).getSingle();
+      expect(kept.title, 'Mine');
+    });
+  });
+
   Future<void> insertRevision({
     required String id,
     String noteId = 'n1',

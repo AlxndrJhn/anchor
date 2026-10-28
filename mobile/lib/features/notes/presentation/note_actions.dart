@@ -18,6 +18,7 @@ import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_dates.dart';
 import 'editor/checklist_lines.dart';
+import 'note_freeze_actions.dart';
 import 'notes_controller.dart';
 import 'notes_view_options.dart';
 import 'widgets/background_sheet.dart';
@@ -33,6 +34,7 @@ enum NoteAction {
   copy,
   lock,
   removeLock,
+  freeze,
   addImage,
   takePicture,
   takeSeveral,
@@ -77,6 +79,14 @@ enum NoteAction {
     NoteAction.removeLock => (
       icon: LucideIcons.lockOpen,
       label: l10n.actionRemoveLock,
+    ),
+    NoteAction.freeze when unfreezesAll(notes) => (
+      icon: LucideIcons.snowflake,
+      label: l10n.actionUnfreeze,
+    ),
+    NoteAction.freeze => (
+      icon: LucideIcons.snowflake,
+      label: l10n.actionFreeze,
     ),
     NoteAction.addImage => (
       icon: LucideIcons.imagePlus,
@@ -159,12 +169,53 @@ class NoteActions {
       case NoteAction.background:
         await setBackground(notes, beforeChange: beforeChange);
       case NoteAction.lock:
-        await lockSelectedNotes(
-          context,
-          ref,
+        // Freezing sits with Lock, so the bar still fits a narrow phone.
+        final isUnfreezing = unfreezesAll(notes);
+        final canFreeze = freezableIdsOf(
           notes,
-          beforeChange: beforeChange,
-        );
+          isFreezing: !isUnfreezing,
+        ).isNotEmpty;
+        final l10n = context.l10n;
+        final choice = !canFreeze
+            ? NoteAction.lock
+            : await showChoiceSheet<NoteAction>(
+                context,
+                title: l10n.notesLockOrFreeze,
+                choices: [
+                  SheetChoice(
+                    value: NoteAction.lock,
+                    icon: LucideIcons.lock,
+                    label: NoteAction.lock.iconAndLabelFor(notes, l10n).label,
+                    showChevron: true,
+                  ),
+                  SheetChoice(
+                    value: NoteAction.freeze,
+                    icon: LucideIcons.snowflake,
+                    label: isUnfreezing
+                        ? l10n.actionUnfreeze
+                        : l10n.actionFreeze,
+                    subtitle: isUnfreezing ? null : l10n.noteFreezeHelp,
+                  ),
+                ],
+              );
+        if (!context.mounted) return;
+        if (choice == NoteAction.lock) {
+          await lockSelectedNotes(
+            context,
+            ref,
+            notes,
+            beforeChange: beforeChange,
+          );
+        } else if (choice == NoteAction.freeze) {
+          await run(NoteAction.freeze, notes, beforeChange: beforeChange);
+        }
+      case NoteAction.freeze:
+        final isFreezing = !unfreezesAll(notes);
+        final ids = freezableIdsOf(notes, isFreezing: isFreezing);
+        if (ids.isEmpty) return;
+        await beforeChange?.call();
+        if (!context.mounted) return;
+        await setNotesFrozen(context, ref, ids, isFrozen: isFreezing);
       case NoteAction.archive:
         await archive(notes, beforeChange: beforeChange);
       case NoteAction.unarchive:
@@ -342,6 +393,13 @@ class NoteActions {
   }) async {
     if (notes.isEmpty) return;
     final l10n = context.l10n;
+    // Frozen notes of this person's own stay where they are.
+    final frozen = notes.where((n) => n.isOwnFrozen).length;
+    notes = notes.where((n) => !n.isOwnFrozen).toList();
+    if (notes.isEmpty) {
+      AppSnackbar.show(context, l10n.notesFrozenStay(frozen));
+      return;
+    }
     final repo = _repo;
     final shared = notes.where((n) => !n.isOwner).toList();
     final own = notes.where((n) => n.isOwner).toList();

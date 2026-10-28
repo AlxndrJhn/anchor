@@ -318,8 +318,16 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   ) {
     if (action == NoteAction.pin ||
         action == NoteAction.background ||
-        action == NoteAction.lock) {
+        action == NoteAction.lock ||
+        action == NoteAction.freeze) {
       return const [];
+    }
+    if (action.isDeleting) {
+      // Frozen notes of this person's own aren't deleted.
+      return [
+        for (final note in selectedNotes)
+          if (!note.isOwnFrozen) note.id,
+      ];
     }
     if (action != NoteAction.archive) {
       return [for (final note in selectedNotes) note.id];

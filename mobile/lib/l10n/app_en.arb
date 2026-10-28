@@ -4855,5 +4855,75 @@
   "actionTakeSeveral": "Take several",
   "@actionTakeSeveral": {
     "description": "Option in an open note’s More menu: opens the camera to take several pictures in a row."
+  },
+  "actionFreeze": "Freeze",
+  "@actionFreeze": {
+    "description": "Verb: option for a note this person owns: nobody can change, trash or delete it until it’s unfrozen."
+  },
+  "actionUnfreeze": "Unfreeze",
+  "@actionUnfreeze": {
+    "description": "Verb: option, and the button on a frozen note’s bar, that lets the note be changed and deleted again."
+  },
+  "noteFreezeHelp": "Nobody can change or delete it until you unfreeze it",
+  "@noteFreezeHelp": {
+    "description": "Subtitle of the Freeze option."
+  },
+  "noteFreezeFailed": "Couldn’t freeze. It needs a connection to the server.",
+  "@noteFreezeFailed": {
+    "description": "Toast when freezing failed, usually offline."
+  },
+  "noteUnfreezeFailed": "Couldn’t unfreeze. It needs a connection to the server.",
+  "@noteUnfreezeFailed": {
+    "description": "Toast when unfreezing failed, usually offline."
+  },
+  "notesFrozen": "{count, plural, =1{Note frozen} other{{count} notes frozen}}",
+  "@notesFrozen": {
+    "description": "Toast after notes were frozen, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesUnfrozen": "{count, plural, =1{Note unfrozen} other{{count} notes unfrozen}}",
+  "@notesUnfrozen": {
+    "description": "Toast after notes were unfrozen, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesFrozenStay": "{count, plural, =1{A frozen note can’t be deleted. Unfreeze it first.} other{Frozen notes can’t be deleted. Unfreeze them first.}}",
+  "@notesFrozenStay": {
+    "description": "Toast when the notes picked for deleting are all frozen.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesLockOrFreeze": "Lock or freeze",
+  "@notesLockOrFreeze": {
+    "description": "Title of the menu behind the Lock button of the selection bar."
+  },
+  "readOnlyFrozen": "Frozen.",
+  "@readOnlyFrozen": {
+    "description": "Bold lead at the bottom of a frozen note, before a sentence about what that means."
+  },
+  "readOnlyFrozenOwn": "It can’t be changed or deleted until you unfreeze it.",
+  "@readOnlyFrozenOwn": {
+    "description": "Follows the bold “Frozen.” at the bottom of a note this person froze."
+  },
+  "readOnlyFrozenByOwner": "Its owner froze it, so it can’t be changed.",
+  "@readOnlyFrozenByOwner": {
+    "description": "Follows the bold “Frozen.” at the bottom of a note shared with this person that its owner froze."
+  },
+  "cardFrozen": "Frozen",
+  "@cardFrozen": {
+    "description": "Tooltip of the snowflake on a frozen note’s card, and read out with the card."
   }
 }

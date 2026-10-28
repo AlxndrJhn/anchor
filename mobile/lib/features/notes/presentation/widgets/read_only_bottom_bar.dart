@@ -51,12 +51,19 @@ class ReadOnlyBottomBar extends StatelessWidget {
     required this.appearance,
     required this.onRestore,
     required this.onDeleteForever,
+    this.onUnfreeze,
   });
 
   final Note note;
   final NoteAppearance appearance;
   final VoidCallback onRestore;
   final VoidCallback onDeleteForever;
+
+  /// Unfreezes a note this person froze; null leaves the button out.
+  final VoidCallback? onUnfreeze;
+
+  /// Frozen, and not in the trash: it reads as frozen.
+  bool get _isFrozen => note.isFrozen && !note.isTrashed;
 
   static final _filter = frostedGlassFilter(20);
 
@@ -115,6 +122,8 @@ class ReadOnlyBottomBar extends StatelessWidget {
             children: [
               if (trashed)
                 const _BarIcon(LucideIcons.trash2)
+              else if (_isFrozen)
+                const _BarIcon(LucideIcons.snowflake)
               else if (note.sharedBy != null)
                 PersonAvatar(
                   name: note.sharedBy!.name,
@@ -134,6 +143,13 @@ class ReadOnlyBottomBar extends StatelessWidget {
             ],
           ),
         ),
+        if (_isFrozen && onUnfreeze != null)
+          AppButton(
+            label: l10n.actionUnfreeze,
+            icon: LucideIcons.snowflake,
+            kind: AppButtonKind.secondary,
+            onPressed: onUnfreeze,
+          ),
         if (trashed)
           LayoutBuilder(
             builder: (context, box) {
@@ -187,6 +203,25 @@ class ReadOnlyBottomBar extends StatelessWidget {
                   ),
                 ),
                 TextSpan(text: trashDeletionLabel(note.updatedAt, l10n)),
+              ],
+            ),
+          )
+        : _isFrozen
+        ? Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '${l10n.readOnlyFrozen} ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: context.anchor.appText,
+                  ),
+                ),
+                TextSpan(
+                  text: note.isOwner
+                      ? l10n.readOnlyFrozenOwn
+                      : l10n.readOnlyFrozenByOwner,
+                ),
               ],
             ),
           )

@@ -58,6 +58,7 @@ import 'editor/text_formats.dart';
 import 'multi_shot_camera_screen.dart';
 import 'note_actions.dart';
 import 'note_editor_controller.dart';
+import 'note_freeze_actions.dart';
 import 'note_labels.dart';
 import 'note_morph_route.dart';
 import 'notes_controller.dart';
@@ -471,6 +472,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       canHideCheckboxes:
           !canShowCheckboxes && (editor?.isAllChecklist ?? false),
       canAddPictures: editor != null && !note.isTrashed,
+      canFreeze: note.isOwner && note.isActive,
+      isFrozen: note.isFrozen,
     );
     if (action == null || !mounted) return;
     final actions = NoteActions(context, ref);
@@ -491,6 +494,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         await lockOpenNote(context, ref, note);
       case NoteAction.removeLock:
         await unlockOpenNote(context, ref, note);
+      case NoteAction.freeze:
+        await _setFrozen(isFrozen: !note.isFrozen);
       case NoteAction.addImage:
         await _addImages();
       case NoteAction.takePicture:
@@ -515,6 +520,15 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           NoteAction.deleteForever:
         break;
     }
+  }
+
+  /// Freezes or unfreezes the note; what is typed so far goes up first.
+  Future<void> _setFrozen({required bool isFrozen}) async {
+    final id = _draft.noteId;
+    if (id == null) return;
+    await _draft.saveNow();
+    if (!mounted) return;
+    await setNotesFrozen(context, ref, [id], isFrozen: isFrozen);
   }
 
   /// The bar's Archive: archiving leaves the note, unarchiving stays.
@@ -1067,7 +1081,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       onBackground: _showBackground,
       onReminder: _showReminder,
       onArchive: isNew || note == null ? null : _toggleArchived,
-      onTrash: isNew || note == null ? null : _trash,
+      // A note this person froze can't be deleted until it's unfrozen.
+      onTrash: isNew || note == null || note.isOwnFrozen ? null : _trash,
       onMore: isNew ? null : _showMore,
     );
 
@@ -1358,6 +1373,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                     child: ReadOnlyBottomBar(
                       note: note,
                       appearance: appearance,
+                      onUnfreeze: note.isOwnFrozen
+                          ? () => _setFrozen(isFrozen: false)
+                          : null,
                       onRestore: _restoreFromTrash,
                       onDeleteForever: _deleteForever,
                     ),

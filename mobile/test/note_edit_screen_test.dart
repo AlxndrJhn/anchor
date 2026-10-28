@@ -948,7 +948,7 @@ void main() {
     setUp(() {
       when(() => notesRepo.archive(any())).thenAnswer((_) async {});
       when(() => notesRepo.unarchive(any())).thenAnswer((_) async {});
-      when(() => notesRepo.trash(any())).thenAnswer((_) async {});
+      when(() => notesRepo.trash(any())).thenAnswer((_) async => 1);
       when(() => notesRepo.restore(any())).thenAnswer((_) async {});
     });
 
@@ -1125,6 +1125,9 @@ void main() {
 
     Future<void> choose(WidgetTester tester, String action) async {
       await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      // The sheet scrolls when the menu is long.
+      await tester.ensureVisible(find.text(action));
       await tester.pumpAndSettle();
       await tester.tap(find.text(action));
       for (var i = 0; i < 10; i++) {
@@ -2848,7 +2851,7 @@ void main() {
     );
 
     setUp(() {
-      when(() => notesRepo.trash(any())).thenAnswer((_) async {});
+      when(() => notesRepo.trash(any())).thenAnswer((_) async => 1);
       when(() => notesRepo.restore(any())).thenAnswer((_) async {});
       when(
         () => notesRepo.watchNote('n1'),
@@ -3040,6 +3043,56 @@ void main() {
 
       expect(find.text('Take a picture'), findsOneWidget);
       expect(find.text('Choose pictures'), findsOneWidget);
+    });
+  });
+  group('a frozen note', () {
+    const frozen = Note(
+      id: 'n1',
+      title: 'Deed',
+      content: '{"ops":[{"insert":"hi\\n"}]}',
+      isFrozen: true,
+    );
+
+    testWidgets('reads only, has no Move to trash, and offers Unfreeze', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await pumpScreen(tester, note: frozen);
+      await tester.pumpAndSettle();
+
+      expect(editorController(tester).readOnly, isTrue);
+      expect(barButton('Move to trash'), findsNothing);
+      expect(barButton('Archive'), findsOneWidget);
+      expect(
+        find.textContaining('Frozen.', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.text('Unfreeze'), findsOneWidget);
+
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Unfreeze'), findsNWidgets(2));
+      expect(find.text('Add image'), findsNothing);
+    });
+
+    testWidgets('frozen by its owner, it has no Unfreeze', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await pumpScreen(
+        tester,
+        note: frozen.copyWith(permission: NotePermission.editor),
+      );
+      await tester.pumpAndSettle();
+
+      expect(editorController(tester).readOnly, isTrue);
+      expect(
+        find.textContaining('Its owner froze it', findRichText: true),
+        findsOneWidget,
+      );
+      expect(find.text('Unfreeze'), findsNothing);
     });
   });
 }

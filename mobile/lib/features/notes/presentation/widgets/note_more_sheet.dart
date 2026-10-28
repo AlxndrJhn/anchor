@@ -21,6 +21,8 @@ Future<NoteAction?> showNoteMoreSheet(
   bool canShowCheckboxes = false,
   bool canHideCheckboxes = false,
   bool canAddPictures = false,
+  bool canFreeze = false,
+  bool isFrozen = false,
 }) {
   final l10n = context.l10n;
   return showChoiceSheet<NoteAction>(
@@ -73,6 +75,13 @@ Future<NoteAction?> showNoteMoreSheet(
             label: l10n.actionRemoveLock,
           ),
       ],
+      if (canFreeze)
+        SheetChoice(
+          value: NoteAction.freeze,
+          icon: LucideIcons.snowflake,
+          label: isFrozen ? l10n.actionUnfreeze : l10n.actionFreeze,
+          subtitle: isFrozen ? null : l10n.noteFreezeHelp,
+        ),
       if (canAddPictures) ...[
         null,
         for (final action in const [

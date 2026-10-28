@@ -5427,6 +5427,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Take several'**
   String get actionTakeSeveral;
+
+  /// Verb: option for a note this person owns: nobody can change, trash or delete it until it’s unfrozen.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze'**
+  String get actionFreeze;
+
+  /// Verb: option, and the button on a frozen note’s bar, that lets the note be changed and deleted again.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfreeze'**
+  String get actionUnfreeze;
+
+  /// Subtitle of the Freeze option.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody can change or delete it until you unfreeze it'**
+  String get noteFreezeHelp;
+
+  /// Toast when freezing failed, usually offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t freeze. It needs a connection to the server.'**
+  String get noteFreezeFailed;
+
+  /// Toast when unfreezing failed, usually offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t unfreeze. It needs a connection to the server.'**
+  String get noteUnfreezeFailed;
+
+  /// Toast after notes were frozen, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note frozen} other{{count} notes frozen}}'**
+  String notesFrozen(int count);
+
+  /// Toast after notes were unfrozen, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Note unfrozen} other{{count} notes unfrozen}}'**
+  String notesUnfrozen(int count);
+
+  /// Toast when the notes picked for deleting are all frozen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{A frozen note can’t be deleted. Unfreeze it first.} other{Frozen notes can’t be deleted. Unfreeze them first.}}'**
+  String notesFrozenStay(int count);
+
+  /// Title of the menu behind the Lock button of the selection bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock or freeze'**
+  String get notesLockOrFreeze;
+
+  /// Bold lead at the bottom of a frozen note, before a sentence about what that means.
+  ///
+  /// In en, this message translates to:
+  /// **'Frozen.'**
+  String get readOnlyFrozen;
+
+  /// Follows the bold “Frozen.” at the bottom of a note this person froze.
+  ///
+  /// In en, this message translates to:
+  /// **'It can’t be changed or deleted until you unfreeze it.'**
+  String get readOnlyFrozenOwn;
+
+  /// Follows the bold “Frozen.” at the bottom of a note shared with this person that its owner froze.
+  ///
+  /// In en, this message translates to:
+  /// **'Its owner froze it, so it can’t be changed.'**
+  String get readOnlyFrozenByOwner;
+
+  /// Tooltip of the snowflake on a frozen note’s card, and read out with the card.
+  ///
+  /// In en, this message translates to:
+  /// **'Frozen'**
+  String get cardFrozen;
 }
 
 class _AppLocalizationsDelegate

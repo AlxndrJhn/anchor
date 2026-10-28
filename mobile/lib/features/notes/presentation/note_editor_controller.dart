@@ -114,7 +114,11 @@ class NoteEditorController extends ChangeNotifier {
   bool get isActive => _note?.isActive ?? true;
   bool get isTrashed => _note?.isTrashed ?? false;
   bool get isViewOnly => _note?.permission == NotePermission.viewer;
-  bool get isReadOnly => !isActive || isViewOnly;
+  bool get isFrozen => _note?.isFrozen ?? false;
+
+  /// Trashed, shared to view, or frozen: only what is this person's own
+  /// (pin, archive, tags, reminder, lock) changes.
+  bool get isReadOnly => !isActive || !(_note?.canEdit ?? true);
 
   @override
   void dispose() {

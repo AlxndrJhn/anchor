@@ -345,6 +345,16 @@ class _Footer extends StatelessWidget {
             color: muted,
           ),
         ),
+      if (note.isFrozen)
+        Tooltip(
+          key: const ValueKey('card-frozen'),
+          message: context.l10n.cardFrozen,
+          child: Icon(
+            LucideIcons.snowflake,
+            size: 13, // off-scale: card footer
+            color: muted,
+          ),
+        ),
       if (!note.isSynced)
         Tooltip(
           message: context.l10n.cardNotSynced,

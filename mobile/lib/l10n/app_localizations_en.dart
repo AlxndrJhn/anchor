@@ -3718,4 +3718,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionTakeSeveral => 'Take several';
+
+  @override
+  String get actionFreeze => 'Freeze';
+
+  @override
+  String get actionUnfreeze => 'Unfreeze';
+
+  @override
+  String get noteFreezeHelp =>
+      'Nobody can change or delete it until you unfreeze it';
+
+  @override
+  String get noteFreezeFailed =>
+      'Couldn’t freeze. It needs a connection to the server.';
+
+  @override
+  String get noteUnfreezeFailed =>
+      'Couldn’t unfreeze. It needs a connection to the server.';
+
+  @override
+  String notesFrozen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes frozen',
+      one: 'Note frozen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesUnfrozen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes unfrozen',
+      one: 'Note unfrozen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notesFrozenStay(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Frozen notes can’t be deleted. Unfreeze them first.',
+      one: 'A frozen note can’t be deleted. Unfreeze it first.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notesLockOrFreeze => 'Lock or freeze';
+
+  @override
+  String get readOnlyFrozen => 'Frozen.';
+
+  @override
+  String get readOnlyFrozenOwn =>
+      'It can’t be changed or deleted until you unfreeze it.';
+
+  @override
+  String get readOnlyFrozenByOwner =>
+      'Its owner froze it, so it can’t be changed.';
+
+  @override
+  String get cardFrozen => 'Frozen';
 }

@@ -421,6 +421,51 @@ void main() {
     });
   });
 
+  group('frozen notes', () {
+    Future<void> freeze(String id) => repo.markFrozen([id], isFrozen: true);
+
+    test('stay when deleted, while the others go', () async {
+      await insertNote(id: 'frozen');
+      await insertNote(id: 'loose');
+      await freeze('frozen');
+
+      expect(await repo.trash(['frozen', 'loose']), 1);
+
+      expect((await repo.getNote('frozen'))!.state, NoteState.active);
+      expect((await repo.getNote('loose'))!.state, NoteState.trashed);
+    });
+
+    test(
+      'keep their text, colour and versions; what is personal changes',
+      () async {
+        await insertNote(id: 'n1', title: 'Deed');
+        await freeze('n1');
+        final note = (await repo.getNote('n1'))!;
+        expect(note.isFrozen, isTrue);
+        expect(note.canEdit, isFalse);
+
+        await repo.updateNote(
+          note.copyWith(title: 'Changed', background: 'red', isPinned: true),
+        );
+        expect(await repo.setBackground(['n1'], 'blue'), isEmpty);
+        final revision = NoteRevision(
+          id: 'r1',
+          noteId: 'n1',
+          version: 1,
+          title: 'Old',
+          cause: RevisionCause.edit,
+          createdAt: DateTime.utc(2026),
+        );
+        await repo.restoreVersion('n1', revision);
+
+        final after = (await repo.getNote('n1'))!;
+        expect(after.title, 'Deed');
+        expect(after.background, isNull);
+        expect(after.isPinned, isTrue);
+      },
+    );
+  });
+
   group('edit time', () {
     Future<Note> stored(String id) async => (await repo.getNote(id))!;
     final edited = DateTime.utc(2026, 7, 1);

@@ -5,6 +5,7 @@ import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
+import 'package:anchor/features/notes/data/repository/note_freeze_repository.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/note_folder.dart';
@@ -61,6 +62,7 @@ void main() {
     List<Note> trashed = const [],
     PictureSearchRepository? pictureSearch,
     bool burnDeleted = true,
+    NoteFreezeRepository? freezer,
   }) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
@@ -91,6 +93,8 @@ void main() {
           ),
           if (pictureSearch != null)
             pictureSearchRepositoryProvider.overrideWithValue(pictureSearch),
+          if (freezer != null)
+            noteFreezeRepositoryProvider.overrideWithValue(freezer),
           pictureSearchStatusProvider.overrideWith(
             (ref) async => PictureSearchStatus(
               available: true,
@@ -253,7 +257,7 @@ void main() {
     testWidgets('a deleted card burns where it stands, then goes', (
       tester,
     ) async {
-      when(() => repo.trash(any())).thenAnswer((_) async {});
+      when(() => repo.trash(any())).thenAnswer((_) async => 1);
       await pumpList(tester, notesNamed('Note', 3));
       final nextBefore = tester.getTopLeft(find.text('Note 2'));
 
@@ -335,7 +339,7 @@ void main() {
     testWidgets('with Burn deleted notes off, the card just goes', (
       tester,
     ) async {
-      when(() => repo.trash(any())).thenAnswer((_) async {});
+      when(() => repo.trash(any())).thenAnswer((_) async => 1);
       await pumpList(tester, notesNamed('Note', 3), burnDeleted: false);
 
       await deleteSelected(tester, 'Note 1');
@@ -349,7 +353,7 @@ void main() {
     });
 
     testWidgets('with reduced motion nothing burns', (tester) async {
-      when(() => repo.trash(any())).thenAnswer((_) async {});
+      when(() => repo.trash(any())).thenAnswer((_) async => 1);
       tester.platformDispatcher.accessibilityFeaturesTestValue =
           const FakeAccessibilityFeatures(disableAnimations: true);
       addTearDown(
@@ -675,6 +679,10 @@ void main() {
 
       await tester.tap(find.bySemanticsLabel('Lock'));
       await tester.pumpAndSettle();
+      // Freezing sits with Lock.
+      expect(find.text('Freeze'), findsOneWidget);
+      await tester.tap(find.text('Lock').last);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Just a tap'));
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -700,6 +708,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.bySemanticsLabel('Change lock'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Change lock').last);
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -710,6 +720,70 @@ void main() {
         findsOneWidget,
       );
       verifyNever(() => repo.setLock(any(), any()));
+      await tester.pump(const Duration(seconds: 11));
+    });
+  });
+  group('frozen notes', () {
+    testWidgets('Freeze, behind Lock, asks the server and keeps the cards', (
+      tester,
+    ) async {
+      final freezer = _MockFreezer();
+      when(
+        () => freezer.setFrozen(any(), isFrozen: any(named: 'isFrozen')),
+      ).thenAnswer((_) async {});
+      when(
+        () => repo.markFrozen(any(), isFrozen: any(named: 'isFrozen')),
+      ).thenAnswer((_) async {});
+      await pumpList(tester, notesNamed('Note', 2), freezer: freezer);
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Note 0'));
+      await tester.tap(find.text('Note 1'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Lock'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Freeze'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verify(
+        () => freezer.setFrozen(['Note0', 'Note1'], isFrozen: true),
+      ).called(1);
+      verify(
+        () => repo.markFrozen(['Note0', 'Note1'], isFrozen: true),
+      ).called(1);
+      expect(find.text('Note 0'), findsOneWidget);
+      expect(
+        find.textContaining('2 notes frozen', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 11));
+    });
+
+    testWidgets('a frozen card shows a snowflake, and deleting it does '
+        'nothing but say why', (tester) async {
+      await pumpList(tester, [
+        const Note(id: 'f', title: 'Deed', isFrozen: true),
+      ]);
+      expect(find.byKey(const ValueKey('card-frozen')), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Select notes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Deed'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.bySemanticsLabel('Delete'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      verifyNever(() => repo.trash(any()));
+      expect(find.text('Deed'), findsOneWidget);
+      expect(
+        find.textContaining('can’t be deleted', findRichText: true),
+        findsOneWidget,
+      );
       await tester.pump(const Duration(seconds: 11));
     });
   });
@@ -751,3 +825,5 @@ class _Sync extends SyncManager {
   @override
   Future<bool> requestSync() async => false;
 }
+
+class _MockFreezer extends Mock implements NoteFreezeRepository {}
