@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { blockState, burnFront, burnPattern, wholeBlocksPath } from "./destroy";
+import {
+  blockState,
+  burnFront,
+  burnPattern,
+  sparkOpacity,
+  wholeBlocksPath,
+} from "./destroy";
 
 describe("the burn", () => {
   it("waits for the jolt, then reaches every block", () => {
@@ -7,6 +13,13 @@ describe("the burn", () => {
     expect(burnFront(0.1)).toBe(0);
     expect(burnFront(0.5)).toBeGreaterThan(0);
     expect(blockState(1, burnFront(1))).toBe("gone");
+  });
+
+  it("lets the sparks fly on past the end, fading out", () => {
+    expect(burnFront(1.2)).toBeGreaterThan(burnFront(1));
+    expect(sparkOpacity(1)).toBe(1);
+    expect(sparkOpacity(1 + 250 / 1100)).toBeCloseTo(0.5);
+    expect(sparkOpacity(1 + 500 / 1100)).toBe(0);
   });
 
   it("glows at the edge before a block goes", () => {
