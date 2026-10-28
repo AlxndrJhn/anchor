@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/haptics.dart';
+import '../../../../core/motion/springs.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
@@ -52,6 +53,11 @@ class _TagPicker extends ConsumerStatefulWidget {
 
 class _TagPickerState extends ConsumerState<_TagPicker> {
   final _query = TextEditingController();
+
+  /// The row of a tag just created here, scrolled into view once shown.
+  final _createdRow = GlobalKey();
+  String? _createdId;
+
   late final Map<String, Set<String>> _tagsOf = {
     for (final n in widget.initial) n.id: {...n.tagIds},
   };
@@ -106,8 +112,10 @@ class _TagPickerState extends ConsumerState<_TagPicker> {
           .read(tagsControllerProvider.notifier)
           .createTag(name);
       _query.clear();
+      _createdId = tag.id;
       await _toggle(tag);
       Haptics.success();
+      _revealCreated();
     } catch (error) {
       if (mounted) {
         AppSnackbar.show(
@@ -117,6 +125,22 @@ class _TagPickerState extends ConsumerState<_TagPicker> {
         );
       }
     }
+  }
+
+  /// The list shows every tag again once the search is cleared: the new
+  /// one may be out of sight.
+  void _revealCreated() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final row = _createdRow.currentContext;
+      if (!mounted || row == null) return;
+      _createdId = null;
+      Scrollable.ensureVisible(
+        row,
+        alignment: 0.5,
+        duration: context.motion(AnchorTokens.motionDurationMorph),
+        curve: AnchorTokens.motionEaseStandard,
+      );
+    });
   }
 
   @override
@@ -147,6 +171,7 @@ class _TagPickerState extends ConsumerState<_TagPicker> {
         ),
       for (final t in shown)
         GroupedListTile(
+          key: t.id == _createdId ? _createdRow : null,
           label: t.name,
           leading: SizedBox(
             width: AnchorTokens.sizeIconMedium,
