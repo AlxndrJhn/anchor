@@ -30,6 +30,8 @@ export interface TransformedNote {
   isArchived: boolean;
   background: string | null;
   state: string;
+  // Frozen by the owner: can't be changed, trashed or deleted.
+  isFrozen: boolean;
   updatedAt: string;
   createdAt: string;
   userId: string;
@@ -62,6 +64,7 @@ interface NoteWithIncludes {
   version: number;
   background: string | null;
   state: string;
+  isFrozen: boolean;
   createdAt: Date;
   updatedAt: Date;
   stateChangedAt?: Date;

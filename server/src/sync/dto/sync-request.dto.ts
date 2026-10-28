@@ -104,6 +104,11 @@ export class SyncNoteChangeDto extends SyncChangeBaseDto {
   @IsOptional()
   lock?: NoteLockKind | null;
 
+  // Owner only: freezes the note (true) or unfreezes it (false).
+  @IsBoolean()
+  @IsOptional()
+  isFrozen?: boolean;
+
   // The note was placed after its last edit (an item ticked from its card
   // keeps its place): the place is stamped after the edit, not before, so
   // it holds.
