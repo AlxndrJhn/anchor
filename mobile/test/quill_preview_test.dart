@@ -35,8 +35,8 @@ void main() {
     final aLeft = tester.getTopLeft(find.text('a')).dx;
     final a1Left = tester.getTopLeft(find.text('a1')).dx;
     final g1Left = tester.getTopLeft(find.text('g1')).dx;
-    expect(a1Left - aLeft, 12);
-    expect(g1Left - a1Left, 12);
+    expect(a1Left - aLeft, closeTo(12, 1e-9));
+    expect(g1Left - a1Left, closeTo(12, 1e-9));
   });
 
   testWidgets('nested ordered lists number per level like the editor', (
