@@ -81,6 +81,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
   /// Starts the new note with the clipboard's text (New Note double-tapped).
   final bool pasteClipboard;
 
+  /// Starts the new note by taking a picture into it (Camera note).
+  final bool takePicture;
+
   /// The note opens with the caret here (its trash undone).
   final NoteCaret? caret;
   const NoteEditScreen({
@@ -92,6 +95,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.shared,
     this.startAsChecklist = false,
     this.pasteClipboard = false,
+    this.takePicture = false,
     this.caret,
   });
 
@@ -202,11 +206,15 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       } else {
         if (widget.startAsChecklist) _initialContent = _emptyChecklist;
         // A new note opens with the caret in its text, ready to type.
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => widget.pasteClipboard
-              ? _pasteClipboard()
-              : _editorKey.currentState?.focusStart(),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (widget.pasteClipboard) {
+            _pasteClipboard();
+          } else if (widget.takePicture) {
+            _picturesIntoText(fromCamera: true);
+          } else {
+            _editorKey.currentState?.focusStart();
+          }
+        });
       }
     }
 
