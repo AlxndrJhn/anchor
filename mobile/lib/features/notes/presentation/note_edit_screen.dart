@@ -47,6 +47,14 @@ import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
 import 'package:anchor/core/theme/tokens/app_radius.dart';
 import 'package:anchor/core/widgets/app_bottom_sheet.dart';
 
+/// Where the caret was in a note, to open it there again.
+class NoteCaret {
+  const NoteCaret({required this.inTitle, required this.selection});
+
+  final bool inTitle;
+  final TextSelection selection;
+}
+
 class NoteEditScreen extends ConsumerStatefulWidget {
   final String? noteId;
   final Note? note;
@@ -65,6 +73,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
 
   /// Starts the new note with the clipboard's text (New Note double-tapped).
   final bool pasteClipboard;
+
+  /// The note opens with the caret here (its trash undone).
+  final NoteCaret? caret;
   const NoteEditScreen({
     super.key,
     this.noteId,
@@ -74,6 +85,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.shared,
     this.startAsChecklist = false,
     this.pasteClipboard = false,
+    this.caret,
   });
 
   @override
@@ -114,6 +126,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   bool _isSaving = false;
   String _lastTitleText = '';
 
+  /// Whether the caret was last in the title or the text; null until either
+  /// has had focus.
+  bool? _caretInTitle;
+
   String get _editorContent =>
       _editorKey.currentState?.getContent() ?? _initialContent ?? '';
 
@@ -141,6 +157,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       if (!widget.note!.isActive || !widget.note!.canEdit) {
         _isEditing = false;
       }
+      _placeCaretOnceShown();
     } else if (widget.noteId != null) {
       _isNew = false;
       _loadNote();
@@ -177,6 +194,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   void _updateEditingState() {
     final titleEditing = _titleFocusNode.hasFocus;
     final editorEditing = _editorKey.currentState?.isEditing ?? false;
+    if (titleEditing || editorEditing) _caretInTitle = titleEditing;
     final newEditingState = _isReadOnly
         ? false
         : (titleEditing || editorEditing);
@@ -269,7 +287,38 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           _isEditing = false;
         }
       });
+      _placeCaretOnceShown();
     }
+  }
+
+  /// Back from an undone trash: the caret goes where it was.
+  void _placeCaretOnceShown() {
+    final caret = widget.caret;
+    if (caret == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isReadOnly) return;
+      if (!caret.inTitle) {
+        _editorKey.currentState?.focusAt(caret.selection);
+        return;
+      }
+      final end = _titleController.text.length;
+      _titleController.selection = TextSelection(
+        baseOffset: caret.selection.baseOffset.clamp(0, end),
+        extentOffset: caret.selection.extentOffset.clamp(0, end),
+      );
+      _titleFocusNode.requestFocus();
+    });
+  }
+
+  /// Where the caret is in the note, if it has been in it.
+  NoteCaret? _readCaret() {
+    final inTitle = _caretInTitle;
+    if (inTitle == null) return null;
+    final selection = inTitle
+        ? _titleController.selection
+        : _editorKey.currentState?.selection;
+    if (selection == null || !selection.isValid) return null;
+    return NoteCaret(inTitle: inTitle, selection: selection);
   }
 
   /// The title controller also notifies on selection changes; only text
@@ -921,10 +970,20 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final noteId = _noteId!;
     // Read now: the delete and Undo run after this screen has closed.
     final repo = ref.read(notesRepositoryProvider);
+    final router = GoRouter.of(context);
+    final caret = _readCaret();
+    // With nothing to go back to, the app closes instead.
+    final reopens = context.canPop();
+    // Undo opens the note again, the caret where it was.
+    Future<void> undo() async {
+      await repo.restoreNote(noteId);
+      if (reopens) router.push('/note/$noteId', extra: caret);
+    }
+
     await _closeThenBurn(
       remove: () => repo.deleteNote(noteId),
       message: isOwner ? 'Note moved to trash' : 'Note removed',
-      onUndo: isOwner ? () => repo.restoreNote(noteId) : null,
+      onUndo: isOwner ? undo : null,
     );
   }
 

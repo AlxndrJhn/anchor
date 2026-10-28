@@ -38,6 +38,12 @@ import {
   useApplyLock,
   useUnlockedIds,
 } from "@/features/notes/hooks/use-note-lock";
+import {
+  clampCaret,
+  hasReturnCaret,
+  type NoteCaret,
+  takeReturnCaret,
+} from "@/features/notes/note-caret";
 import { isLockHidden, useUnlockedNotes } from "@/features/notes/note-lock";
 import { sendNote } from "@/features/notes/note-text";
 import { parseStoredContent } from "@/features/notes/quill";
@@ -110,6 +116,24 @@ function NoteEditor({
     saveFailure,
     save,
   } = editor;
+  const contentEditorRef = useRef<RichTextEditorHandle | null>(null);
+  // The field the caret was last in, which a menu or button may since have
+  // taken focus from.
+  const caretField = useRef<NoteCaret["field"] | null>(null);
+  const readCaret = (): NoteCaret | null => {
+    if (caretField.current === "title") {
+      const input = editor.titleInputRef.current;
+      if (!input) return null;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? start;
+      return { field: "title", index: start, length: end - start };
+    }
+    if (caretField.current === "content") {
+      const caret = contentEditorRef.current?.getCaret();
+      return caret ? { field: "content", ...caret } : null;
+    }
+    return null;
+  };
   const actions = useNoteActions({
     noteId,
     note,
@@ -117,8 +141,8 @@ function NoteEditor({
     save,
     refetchNote: editor.refetchNote,
     setIsArchived: editor.setIsArchived,
+    readCaret,
   });
-  const contentEditorRef = useRef<RichTextEditorHandle | null>(null);
   // A locked note shows its lock screen until it is unlocked this session.
   const unlockedIds = useUnlockedIds();
   const lockedOut = !isNew && !!note && isLockHidden(note, unlockedIds);
@@ -293,6 +317,34 @@ function NoteEditor({
     return () => cancelAnimationFrame(frame);
   }, [isNew, startsList]);
 
+  // Back from an undone trash: the caret goes where it was.
+  const editorShown = !isNew && !isLoading && !lockedOut && !!note;
+  useEffect(() => {
+    if (!editorShown || !hasReturnCaret(noteId)) return;
+    let frame = 0;
+    let tries = 0;
+    const place = () => {
+      if (!document.querySelector(".ed .ql-editor")) {
+        if (++tries < 120) frame = requestAnimationFrame(place);
+        return;
+      }
+      // Taken only once placed: an effect run that was cut short leaves it.
+      const caret = takeReturnCaret(noteId);
+      if (!caret) return;
+      if (caret.field === "content") {
+        contentEditorRef.current?.setSelection(caret.index, caret.length);
+        return;
+      }
+      const input = editor.titleInputRef.current;
+      if (!input) return;
+      const { index, length } = clampCaret(caret, input.value.length);
+      input.focus();
+      input.setSelectionRange(index, index + length);
+    };
+    frame = requestAnimationFrame(place);
+    return () => cancelAnimationFrame(frame);
+  }, [editorShown, noteId, editor.titleInputRef]);
+
   const showSkeleton = useDelayedFlag(isLoading && !isNew);
   if (isLoading && !isNew) return showSkeleton ? <EditorSkeleton /> : null;
   if (!isNew && !note && editor.noteError)
@@ -384,6 +436,12 @@ function NoteEditor({
             : undefined
         }
         aria-label="Note"
+        onFocus={(e) => {
+          if (e.target === editor.titleInputRef.current)
+            caretField.current = "title";
+          else if (e.target.closest(".ql-editor"))
+            caretField.current = "content";
+        }}
       >
         {editor.historyOpen && !isNew && (
           <HistoryView

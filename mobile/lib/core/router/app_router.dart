@@ -96,7 +96,9 @@ GoRouter goRouter(Ref ref) {
             path: AppRoutes.noteEdit,
             pageBuilder: (context, state) {
               final id = state.pathParameters['id'];
-              final note = state.extra as Note?;
+              // The list passes the note; Undo of its trash, the caret.
+              final extra = state.extra;
+              final note = extra is Note ? extra : null;
               return MaterialPage(
                 key: ValueKey('note/$id'),
                 // A locked note opens only once unlocked.
@@ -108,6 +110,7 @@ GoRouter goRouter(Ref ref) {
                     note: note,
                     // Set when opened from search results.
                     highlightTerm: state.uri.queryParameters['hl'],
+                    caret: extra is NoteCaret ? extra : null,
                   ),
                 ),
               );
