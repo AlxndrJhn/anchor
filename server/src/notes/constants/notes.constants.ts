@@ -136,13 +136,16 @@ export const TRASH_RETENTION_DAYS = 30;
 // Attachment constants
 export const ATTACHMENT_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-export const ATTACHMENT_ALLOWED_MIME_TYPES = new Set([
-  // Image
+// Pictures shown in the note. Any other file can be attached too, as a file.
+export const ATTACHMENT_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
-  // Audio
+]);
+
+// Recordings played in the note.
+export const ATTACHMENT_AUDIO_MIME_TYPES = new Set([
   'audio/mpeg',
   'audio/wav',
   'audio/mp4',

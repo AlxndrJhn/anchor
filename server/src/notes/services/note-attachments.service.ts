@@ -20,11 +20,14 @@ import { deleteFileIfExists } from '../../common/utils/file-system.util';
 import {
   assertValidAttachmentFile,
   attachmentTypeForMime,
+  clientAttachmentId,
   writeAttachmentFile,
 } from '../utils/attachment-storage.util';
 import { toAttachmentResponse } from '../dto/attachment-response.dto';
 import { PictureTextService } from './picture-text.service';
 import { PictureSearchService } from '../../picture-search/picture-search.service';
+import { replaceAttachmentIds } from '../utils/inline-images.util';
+import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createReadStream, existsSync } from 'fs';
@@ -66,7 +69,18 @@ export class NoteAttachmentsService {
     return path.join(this.storageConfig.attachmentsDir, noteId, storedFilename);
   }
 
-  async upload(userId: string, noteId: string, file: Express.Multer.File) {
+  /**
+   * Stores an uploaded file. [clientId] is the id the client gave it while
+   * offline (a picture placed in the note's text refers to it); it's kept
+   * when free. Sending the same one again, after a reply that got lost,
+   * returns the attachment made the first time.
+   */
+  async upload(
+    userId: string,
+    noteId: string,
+    file: Express.Multer.File,
+    clientId?: string,
+  ) {
     await this.noteAccessService.ensureNoteAccess(
       userId,
       noteId,
@@ -75,6 +89,14 @@ export class NoteAttachmentsService {
     await this.noteAccessService.ensureNoteIsActive(noteId);
 
     assertValidAttachmentFile(file);
+
+    const id = clientAttachmentId(clientId);
+    const taken = id
+      ? await this.prisma.noteAttachment.findUnique({ where: { id } })
+      : null;
+    if (taken && taken.noteId === noteId && taken.uploadedByUserId === userId) {
+      return toAttachmentResponse(taken);
+    }
 
     const attachmentType = attachmentTypeForMime(file.mimetype);
 
@@ -96,6 +118,7 @@ export class NoteAttachmentsService {
 
         const created = await tx.noteAttachment.create({
           data: {
+            ...(id && !taken ? { id } : {}),
             noteId,
             uploadedByUserId: userId,
             type: attachmentType,
@@ -127,7 +150,8 @@ export class NoteAttachmentsService {
 
   /**
    * Copies every attachment of `fromNoteId` to `toNoteId`, files included,
-   * in the same order. Used by "Make a copy".
+   * in the same order. Used by "Make a copy". Pictures placed in the copy's
+   * text are pointed at their copies.
    */
   async copyAll(userId: string, fromNoteId: string, toNoteId: string) {
     const attachments = await this.prisma.noteAttachment.findMany({
@@ -135,6 +159,7 @@ export class NoteAttachmentsService {
       orderBy: { position: 'asc' },
     });
     if (attachments.length === 0) return;
+    const newIds = new Map<string, string>();
 
     const written: string[] = [];
     try {
@@ -149,7 +174,10 @@ export class NoteAttachmentsService {
           data,
         );
         written.push(stored.filePath);
+        const copyId = crypto.randomUUID();
+        newIds.set(attachment.id, copyId);
         copies.push({
+          id: copyId,
           noteId: toNoteId,
           uploadedByUserId: userId,
           type: attachment.type,
@@ -165,6 +193,16 @@ export class NoteAttachmentsService {
       }
       await this.prisma.$transaction(async (tx) => {
         await tx.noteAttachment.createMany({ data: copies });
+        const copy = await tx.note.findUnique({
+          where: { id: toNoteId },
+          select: { content: true },
+        });
+        const content = copy?.content
+          ? replaceAttachmentIds(copy.content, newIds)
+          : null;
+        if (content !== null && content !== copy?.content) {
+          await tx.note.update({ where: { id: toNoteId }, data: { content } });
+        }
         await this.emitAttachmentChange(tx, toNoteId);
       });
     } catch (error) {

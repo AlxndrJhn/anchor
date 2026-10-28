@@ -27,6 +27,8 @@ enum NoteSharePermission {
 enum AttachmentType {
   image
   audio
+  /// Any other kind of file (documents, archives, a zipped folder).
+  file
 }
 
 enum SyncEntityType {
