@@ -1,4 +1,5 @@
-FROM node:26-alpine AS base
+# Node 24: Prisma 7 does not support Node 26 yet, and Node 25+ drops corepack.
+FROM node:24-alpine AS base
 
 # pnpm via corepack
 RUN corepack enable && corepack prepare pnpm@latest --activate
