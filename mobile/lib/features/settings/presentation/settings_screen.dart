@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -31,6 +33,9 @@ import '../../../core/update/app_release.dart';
 import '../../../core/update/app_updater.dart';
 import '../../../core/update/update_sheet.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/files/save_to_device.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../backup/data/notes_backup.dart';
 import '../../picture_search/picture_search.dart';
 import '../../note_locks/data/note_lock_secrets.dart';
 import '../../note_locks/presentation/lock_secret_setup_screen.dart';
@@ -259,6 +264,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const _PictureSearchSection(),
 
                     const _NoteLocksSection(),
+
+                    const _BackupSection(),
 
                     _Section(
                       title: 'Account',
@@ -673,6 +680,138 @@ class _NoteLocksSectionState extends ConsumerState<_NoteLocksSection> {
           subtitle: 'Opens the notes you lock with a pattern',
           icon: LucideIcons.grip,
           onTap: () => _set(LockSecretKind.pattern),
+        ),
+      ],
+    );
+  }
+}
+
+/// Saving every note to a file, and putting the notes from one back.
+class _BackupSection extends ConsumerStatefulWidget {
+  const _BackupSection();
+
+  @override
+  ConsumerState<_BackupSection> createState() => _BackupSectionState();
+}
+
+class _BackupSectionState extends ConsumerState<_BackupSection> {
+  /// What is under way: 'export', 'restore' or nothing.
+  String? _busy;
+
+  Future<void> _export() async {
+    if (_busy != null) return;
+    setState(() => _busy = 'export');
+    try {
+      final backup = await ref.read(notesBackupProvider).export();
+      final result = await saveToDevice(
+        filename: backup.filename,
+        bytes: backup.bytes,
+        tag: 'Backup',
+      );
+      if (!mounted) return;
+      final missing = backup.missingFiles == 0
+          ? ''
+          : '. ${backup.missingFiles} attachment(s) weren’t on this device '
+                'and couldn’t be fetched';
+      switch (result) {
+        case SavedWithPicker():
+          AppSnackbar.showSuccess(
+            context,
+            message:
+                'Saved ${backup.notes} note(s) to ${backup.filename}'
+                '$missing',
+          );
+        case SavedTo(:final path):
+          AppSnackbar.showSuccess(
+            context,
+            message: 'Saved ${backup.notes} note(s) to $path$missing',
+          );
+        case SaveFailed():
+          AppSnackbar.showError(context, message: 'Couldn’t save the backup');
+        case SaveCancelled():
+          break;
+      }
+    } catch (e, st) {
+      AppLogger.instance.error(
+        'Backup',
+        'Export failed',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        AppSnackbar.showError(context, message: 'Couldn’t make the backup');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _restore() async {
+    if (_busy != null) return;
+    final PlatformFile? file;
+    try {
+      file = await FilePicker.pickFile(dialogTitle: 'Pick an Anchor backup');
+    } catch (e) {
+      AppLogger.instance.warn('Backup', 'Picking a backup failed: $e');
+      if (mounted) {
+        AppSnackbar.showError(context, message: 'Couldn’t open the file');
+      }
+      return;
+    }
+    if (file == null || !mounted) return;
+    setState(() => _busy = 'restore');
+    try {
+      final bytes = await file.readAsBytes();
+      final summary = await ref.read(notesBackupProvider).restore(bytes);
+      if (!mounted) return;
+      final skipped = summary.skipped == 0
+          ? ''
+          : ', ${summary.skipped} already here';
+      AppSnackbar.showSuccess(
+        context,
+        message: summary.notes == 0
+            ? 'Nothing to restore: every note is already here'
+            : 'Restored ${summary.notes} note(s)$skipped',
+      );
+    } on BackupFormatException catch (e) {
+      if (mounted) AppSnackbar.showError(context, message: e.message);
+    } catch (e, st) {
+      AppLogger.instance.error(
+        'Backup',
+        'Restore failed',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        AppSnackbar.showError(context, message: 'Couldn’t restore the backup');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Section(
+      title: 'Backup',
+      icon: LucideIcons.archive,
+      children: [
+        SettingsActionRow(
+          title: 'Export backup',
+          subtitle: _busy == 'export'
+              ? 'Making the backup…'
+              : 'Save every note, tag, picture and recording to a file',
+          icon: LucideIcons.download,
+          onTap: _export,
+        ),
+        SettingsActionRow(
+          title: 'Restore backup',
+          subtitle: _busy == 'restore'
+              ? 'Restoring…'
+              : 'Bring back the notes from a backup file. Notes already '
+                    'here stay as they are',
+          icon: LucideIcons.upload,
+          onTap: _restore,
         ),
       ],
     );

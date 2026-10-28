@@ -65,6 +65,7 @@ differences. "Web" and "Android" say where each one is available.
 | Each version shows its added (+) and removed (−) lines | ✓ | ✓ |
 | **Offline** | | |
 | Open, edit and create notes without a connection, even after a reload; changes sync when back online ([#202](https://github.com/ZhFahim/anchor/issues/202)) | ✓ | (upstream) |
+| Back up every note, tag, picture and recording to a .zip file, and restore one: missing notes come back and sync up, notes already there are left alone (Settings › Backup) | | ✓ |
 | **Reminders** | | |
 | Done button on the reminder notification | | ✓ |
 | **Appearance** | | |
