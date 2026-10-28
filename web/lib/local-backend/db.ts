@@ -126,10 +126,18 @@ export function browserStorage(): Storage {
   };
 }
 
-export function memoryStorage(): Storage {
+/** Kept only by this page; `initial` is what it starts with. */
+export function memoryStorage(
+  initial?: () => { data: Data; files: Map<string, Blob> },
+): Storage {
   const files = new Map<string, Blob>();
   return {
-    load: async () => undefined,
+    load: async () => {
+      if (!initial) return undefined;
+      const start = initial();
+      for (const [id, blob] of start.files) files.set(id, blob);
+      return start.data;
+    },
     save: async () => {},
     getFile: async (id) => files.get(id),
     putFile: async (id, blob) => {

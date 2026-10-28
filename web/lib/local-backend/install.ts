@@ -2,6 +2,8 @@
 // builds served without a server (see ./mode).
 
 import { setAccessToken, setRefreshToken } from "@/features/auth/store";
+import { welcome } from "@/lib/demo/demos";
+import { buildData } from "@/lib/demo/seed";
 import { browserStorage, memoryStorage } from "./db";
 import { basePath, isDemo, isServerless } from "./mode";
 import { LocalServer } from "./server";
@@ -10,7 +12,9 @@ let server: LocalServer | null = null;
 
 /** The backend in the browser; only in the serverless builds. */
 export function localServer(): LocalServer {
-  server ??= new LocalServer(isDemo ? memoryStorage() : browserStorage());
+  server ??= new LocalServer(
+    isDemo ? memoryStorage(() => buildData(welcome)) : browserStorage(),
+  );
   return server;
 }
 
@@ -19,10 +23,10 @@ function isApiRequest(url: URL) {
 }
 
 // A static build has one note page, /notes/new, and it reads the note's id
-// from the address. The payloads Next.js fetches to open /notes/<id> are
-// taken from that page.
+// from the address. What Next.js fetches to open /notes/<id> (the page's
+// payloads, and a check that it exists) is taken from that page.
 const notePayload = new RegExp(
-  `^${basePath}/notes/(?!new(?:[./]|$))[^/.]+(?=\\.txt$|/__next)`,
+  `^${basePath}/notes/(?!new(?:[./]|$))[^/.]+(?=\\.txt$|/__next|$)`,
 );
 
 function payloadUrl(url: URL): string | null {
