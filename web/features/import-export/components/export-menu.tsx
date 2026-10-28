@@ -9,10 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/toast";
+import { isServerless } from "@/lib/local-backend/mode";
 import { downloadExport } from "../api";
 import type { ExportFormat } from "../types";
 
-const CHOICES = [
+const ALL_CHOICES = [
   {
     format: "anchor",
     label: "Anchor backup (.zip)",
@@ -26,6 +27,11 @@ const CHOICES = [
     icon: FileText,
   },
 ] as const;
+
+// The server writes the Markdown; without one there is only the backup.
+const CHOICES = isServerless
+  ? ALL_CHOICES.filter((choice) => choice.format === "anchor")
+  : ALL_CHOICES;
 
 function startExport(format: ExportFormat) {
   void toast

@@ -8,7 +8,11 @@ export type Target =
   | {
       label?: string;
       text?: string;
+      /** The control's text starts with this. */
+      textStarts?: string;
       css?: string;
+      /** Also when not shown yet, e.g. until its row is hovered. */
+      hidden?: boolean;
       /** Only inside the element this selector finds. */
       within?: string;
       /** Which one, when several match; the first by default. */
@@ -22,10 +26,10 @@ export type Step =
   | { hover: Target; say?: string }
   /** Types into the target, or where the caret is. */
   | { type: string; into?: Target; say?: string }
-  | { key: string; shift?: boolean; ctrl?: boolean }
+  | { key: string; code?: string; shift?: boolean; ctrl?: boolean }
   | { go: string; say?: string }
   | { wait: number }
-  | { waitFor: Target }
+  | { waitFor: Target; timeout?: number }
   /** Anything else the app needs, e.g. a drag. */
   | { run: (play: Play) => Promise<void> | void; say?: string };
 
@@ -67,7 +71,10 @@ function matches(target: Target): HTMLElement[] {
       root.querySelectorAll<HTMLElement>(spec.css ?? CONTROLS),
     );
     for (const element of candidates) {
-      if (!isShown(element)) continue;
+      if (
+        spec.hidden ? element.closest("[data-demo-player]") : !isShown(element)
+      )
+        continue;
       if (spec.label !== undefined) {
         const label =
           element.getAttribute("aria-label") ?? element.getAttribute("title");
@@ -80,6 +87,11 @@ function matches(target: Target): HTMLElement[] {
       if (
         spec.text !== undefined &&
         normalize(element.textContent) !== spec.text
+      )
+        continue;
+      if (
+        spec.textStarts !== undefined &&
+        !normalize(element.textContent).startsWith(spec.textStarts)
       )
         continue;
       found.push(element);
@@ -138,14 +150,20 @@ export function clickElement(element: HTMLElement) {
   element.dispatchEvent(new PointerEvent("pointerover", pointer));
   element.dispatchEvent(new PointerEvent("pointerenter", pointer));
   element.dispatchEvent(new MouseEvent("mouseover", init));
-  element.dispatchEvent(
+  // As in a browser: a pointerdown that is prevented sends no mouse events,
+  // and a press focuses what it lands on unless prevented.
+  const mouse = element.dispatchEvent(
     new PointerEvent("pointerdown", { ...pointer, buttons: 1 }),
   );
-  element.dispatchEvent(new MouseEvent("mousedown", { ...init, buttons: 1 }));
-  if (element.matches("input, textarea, select, [contenteditable=true]"))
-    element.focus();
+  const focuses =
+    mouse &&
+    element.dispatchEvent(new MouseEvent("mousedown", { ...init, buttons: 1 }));
+  const focusable = element.closest<HTMLElement>(
+    "input, textarea, select, button, a[href], [tabindex], [contenteditable=true]",
+  );
+  if (focuses && focusable) focusable.focus({ preventScroll: true });
   element.dispatchEvent(new PointerEvent("pointerup", pointer));
-  element.dispatchEvent(new MouseEvent("mouseup", init));
+  if (mouse) element.dispatchEvent(new MouseEvent("mouseup", init));
   element.dispatchEvent(new MouseEvent("click", init));
 }
 
@@ -179,13 +197,17 @@ export function leaveElement(element: Element) {
 
 export function pressKey(
   key: string,
-  { shift = false, ctrl = false }: { shift?: boolean; ctrl?: boolean } = {},
+  {
+    code,
+    shift = false,
+    ctrl = false,
+  }: { code?: string; shift?: boolean; ctrl?: boolean } = {},
 ) {
   const target =
     (document.activeElement as HTMLElement | null) ?? document.body;
   const init = {
     key,
-    code: key.length === 1 ? `Key${key.toUpperCase()}` : key,
+    code: code ?? (/^[a-z]$/i.test(key) ? `Key${key.toUpperCase()}` : key),
     bubbles: true,
     cancelable: true,
     shiftKey: shift,
@@ -248,4 +270,75 @@ export function caretToEnd(element: HTMLElement) {
   const selection = window.getSelection();
   selection?.removeAllRanges();
   selection?.addRange(range);
+}
+
+/** Selects the first occurrence of `text` in the note's text, as a drag would. */
+export function selectInEditor(text: string): Element | null {
+  const editor = document.querySelector<HTMLElement>(".ql-editor");
+  if (!editor) return null;
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const at = node.textContent?.indexOf(text) ?? -1;
+    if (at < 0) continue;
+    editor.focus();
+    const range = document.createRange();
+    range.setStart(node, at);
+    range.setEnd(node, at + text.length);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
+    return node.parentElement;
+  }
+  return null;
+}
+
+/** Drags with the mouse from one element to another, in small moves. */
+export async function dragBetween(from: Element, to: Element, play: Play) {
+  const start = center(from);
+  const end = center(to);
+  const pointer = {
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    pointerId: 1,
+    pointerType: "mouse",
+    isPrimary: true,
+    button: 0,
+    view: window,
+  };
+  await play.moveTo(from);
+  play.cursor(start.x, start.y, true);
+  from.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      ...pointer,
+      buttons: 1,
+      clientX: start.x,
+      clientY: start.y,
+    }),
+  );
+  const steps = 30;
+  for (let i = 1; i <= steps; i++) {
+    const x = start.x + ((end.x - start.x) * i) / steps;
+    const y = start.y + ((end.y - start.y) * i) / steps;
+    play.cursor(x, y, true);
+    window.dispatchEvent(
+      new PointerEvent("pointermove", {
+        ...pointer,
+        buttons: 1,
+        clientX: x,
+        clientY: y,
+      }),
+    );
+    await play.pause(45);
+  }
+  await play.pause(600);
+  window.dispatchEvent(
+    new PointerEvent("pointerup", {
+      ...pointer,
+      clientX: end.x,
+      clientY: end.y,
+    }),
+  );
+  play.cursor(end.x, end.y, false);
 }
