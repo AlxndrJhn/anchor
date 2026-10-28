@@ -23,6 +23,7 @@ import 'package:anchor/features/notes/data/repository/note_attachments_repositor
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/widgets/audio_player_row.dart';
+import 'package:anchor/features/notes/presentation/widgets/file_attachment_row.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/picture_search/picture_search.dart';
 
@@ -52,12 +53,16 @@ class NoteAttachmentsGallery extends ConsumerStatefulWidget {
   final bool canEdit;
   final String? currentUserId;
 
+  /// Pictures shown in the note's text instead, left out here.
+  final Set<String> hiddenIds;
+
   const NoteAttachmentsGallery({
     super.key,
     required this.noteId,
     this.isOwner = false,
     this.canEdit = false,
     this.currentUserId,
+    this.hiddenIds = const {},
   });
 
   @override
@@ -87,13 +92,17 @@ class _NoteAttachmentsGalleryState
     return StreamBuilder<List<NoteAttachment>>(
       stream: repo.watchAttachments(widget.noteId),
       builder: (context, snapshot) {
-        final attachments = snapshot.data ?? [];
+        final attachments = [
+          for (final a in snapshot.data ?? const <NoteAttachment>[])
+            if (!widget.hiddenIds.contains(a.id)) a,
+        ];
         if (attachments.isEmpty) {
           return const SizedBox.shrink();
         }
 
         final images = attachments.where((a) => a.isImage).toList();
         final audios = attachments.where((a) => a.isAudio).toList();
+        final files = attachments.where((a) => a.isFile).toList();
 
         return Padding(
           padding: EdgeInsets.only(
@@ -123,6 +132,28 @@ class _NoteAttachmentsGalleryState
                       child: AudioPlayerRow(
                         attachment: a,
                         localPath: a.localPath,
+                        canDelete: _canDeleteAttachment(a),
+                        isOnline: isOnline,
+                        onDelete: () =>
+                            repo.deleteAttachment(widget.noteId, a.id),
+                        onDownload: () => repo.downloadAttachment(
+                          widget.noteId,
+                          a.id,
+                          a.originalFilename,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                if (files.isNotEmpty) ...[
+                  if (images.isNotEmpty || audios.isNotEmpty)
+                    SizedBox(height: dims.md),
+                  ...files.map(
+                    (a) => Padding(
+                      padding: EdgeInsets.only(bottom: dims.xs),
+                      child: FileAttachmentRow(
+                        key: ValueKey(a.id),
+                        attachment: a,
                         canDelete: _canDeleteAttachment(a),
                         isOnline: isOnline,
                         onDelete: () =>

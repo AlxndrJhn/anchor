@@ -18,6 +18,13 @@ class NoteOptionsSheet extends StatelessWidget {
   final VoidCallback onBackgroundTap;
   final VoidCallback onAttachmentTap;
 
+  /// Pictures straight from the gallery or the camera; null hides them.
+  final VoidCallback? onAddImageTap;
+  final VoidCallback? onTakePictureTap;
+
+  /// The camera, for several pictures in a row; null hides it.
+  final VoidCallback? onTakeSeveralTap;
+
   /// Shares the note with other users; null when the user can't.
   final VoidCallback? onShareTap;
 
@@ -54,6 +61,9 @@ class NoteOptionsSheet extends StatelessWidget {
     required this.onReminderTap,
     required this.onBackgroundTap,
     required this.onAttachmentTap,
+    this.onAddImageTap,
+    this.onTakePictureTap,
+    this.onTakeSeveralTap,
     this.onShareTap,
     required this.onSendTap,
     this.onCopyTap,
@@ -93,6 +103,24 @@ class NoteOptionsSheet extends StatelessWidget {
           icon: LucideIcons.palette,
           label: 'Background',
           onTap: onBackgroundTap,
+        ),
+      if (!isReadOnly && onAddImageTap != null)
+        _OptionSpec(
+          icon: LucideIcons.imagePlus,
+          label: 'Add image',
+          onTap: onAddImageTap!,
+        ),
+      if (!isReadOnly && onTakePictureTap != null)
+        _OptionSpec(
+          icon: LucideIcons.camera,
+          label: 'Take picture',
+          onTap: onTakePictureTap!,
+        ),
+      if (!isReadOnly && onTakeSeveralTap != null)
+        _OptionSpec(
+          icon: LucideIcons.aperture,
+          label: 'Take several',
+          onTap: onTakeSeveralTap!,
         ),
       if (!isReadOnly)
         _OptionSpec(

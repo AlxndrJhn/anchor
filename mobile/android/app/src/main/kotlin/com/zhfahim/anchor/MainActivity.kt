@@ -10,6 +10,7 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import com.zhfahim.anchor.widget.NotesWidgetProvider
@@ -21,6 +22,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import java.io.File
 import java.util.UUID
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 // A FragmentActivity so local_auth can show the fingerprint prompt.
 class MainActivity : FlutterFragmentActivity() {
@@ -43,6 +46,9 @@ class MainActivity : FlutterFragmentActivity() {
             lockChannel?.invokeMethod("screenOff", null)
         }
     }
+
+    /** A folder pick waiting for Android's folder screen to answer. */
+    private var pendingFolder: MethodChannel.Result? = null
 
     /** What another app shared, until the Flutter side takes it. */
     private var pendingShare: Map<String, Any?>? = null
@@ -134,6 +140,27 @@ class MainActivity : FlutterFragmentActivity() {
                     }
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FILES_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "pickFolderAsZip" -> pickFolder(result)
+                    "open" -> {
+                        val path = call.argument<String>("path")
+                        val name = call.argument<String>("name")
+                        val mime = call.argument<String>("mimeType")
+                        if (path == null || name == null) {
+                            result.error("args", "No file", null)
+                        } else {
+                            try {
+                                result.success(openFile(File(path), name, mime))
+                            } catch (e: Exception) {
+                                result.error("open", e.message, null)
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, UPDATE_CHANNEL)
             .setMethodCallHandler { call, result ->
                 if (call.method != "install") return@setMethodCallHandler result.notImplemented()
@@ -146,6 +173,120 @@ class MainActivity : FlutterFragmentActivity() {
                     result.error("install", e.message, null)
                 }
             }
+    }
+
+    /**
+     * Opens Android's folder screen; the picked folder comes back zipped
+     * ({path, name, files}), or null when nothing was picked.
+     */
+    private fun pickFolder(result: MethodChannel.Result) {
+        if (pendingFolder != null) {
+            result.error("busy", "Already picking a folder", null)
+            return
+        }
+        pendingFolder = result
+        try {
+            @Suppress("DEPRECATION")
+            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), PICK_FOLDER)
+        } catch (e: Exception) {
+            pendingFolder = null
+            result.error("pick", e.message, null)
+        }
+    }
+
+    @Deprecated("Still how a FlutterFragmentActivity hears back")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != PICK_FOLDER) return
+        val result = pendingFolder ?: return
+        pendingFolder = null
+        val tree = data?.data
+        if (resultCode != RESULT_OK || tree == null) {
+            result.success(null)
+            return
+        }
+        // Zipping a big folder takes a while; not on the UI thread.
+        Thread {
+            try {
+                val zipped = zipFolder(tree)
+                runOnUiThread { result.success(zipped) }
+            } catch (e: Exception) {
+                android.util.Log.w("AnchorFiles", "Couldn't zip folder $tree", e)
+                runOnUiThread { result.error("zip", e.message, null) }
+            }
+        }.start()
+    }
+
+    /** Zips the folder at [tree], subfolders included, into the cache. */
+    private fun zipFolder(tree: Uri): Map<String, Any> {
+        val rootId = DocumentsContract.getTreeDocumentId(tree)
+        val name = folderName(tree, rootId)
+        val dir = File(cacheDir, "folders").apply { mkdirs() }
+        val zip = File(dir, "${UUID.randomUUID()}.zip")
+        var count = 0
+        ZipOutputStream(zip.outputStream().buffered()).use { out ->
+            fun walk(documentId: String, prefix: String) {
+                val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, documentId)
+                val columns = arrayOf(
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE,
+                )
+                contentResolver.query(children, columns, null, null, null)?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getString(0)
+                        val entry = prefix + (cursor.getString(1) ?: id)
+                        if (cursor.getString(2) == DocumentsContract.Document.MIME_TYPE_DIR) {
+                            out.putNextEntry(ZipEntry("$entry/"))
+                            out.closeEntry()
+                            walk(id, "$entry/")
+                        } else {
+                            val uri = DocumentsContract.buildDocumentUriUsingTree(tree, id)
+                            out.putNextEntry(ZipEntry(entry))
+                            contentResolver.openInputStream(uri)?.use { it.copyTo(out) }
+                            out.closeEntry()
+                            count++
+                        }
+                    }
+                }
+            }
+            walk(rootId, "")
+        }
+        return mapOf("path" to zip.absolutePath, "name" to "$name.zip", "files" to count)
+    }
+
+    private fun folderName(tree: Uri, rootId: String): String {
+        val uri = DocumentsContract.buildDocumentUriUsingTree(tree, rootId)
+        val columns = arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+        val name = contentResolver.query(uri, columns, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+        return name ?: rootId.substringAfterLast(':').substringAfterLast('/').ifEmpty { "Folder" }
+    }
+
+    /**
+     * Opens an attached file in an app that can show it. Returns false when
+     * no app can.
+     */
+    private fun openFile(file: File, name: String, mimeType: String?): Boolean {
+        val dir = File(cacheDir, "open").apply { mkdirs() }
+        val copy = File(dir, name.replace('/', '_'))
+        file.copyTo(copy, overwrite = true)
+        val uri = FileProvider.getUriForFile(this, "$packageName.updates", copy)
+        val type = mimeType?.takeIf { it != "application/octet-stream" }
+            ?: MimeTypeMap.getSingleton()
+                .getMimeTypeFromExtension(copy.extension.lowercase())
+            ?: "*/*"
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, type)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        return try {
+            startActivity(Intent.createChooser(intent, name))
+            true
+        } catch (e: android.content.ActivityNotFoundException) {
+            false
+        }
     }
 
     /**
@@ -238,5 +379,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val SHARE_CHANNEL = "anchor/share"
         private const val UPDATE_CHANNEL = "anchor/update"
         private const val LOCK_CHANNEL = "anchor/lock"
+        private const val FILES_CHANNEL = "anchor/files"
+        private const val PICK_FOLDER = 4711
     }
 }

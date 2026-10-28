@@ -10,16 +10,27 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import '../../../../core/files/device_files.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/app_icon_sizes.dart';
 import '../../../../core/theme/tokens/app_radius.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 
-class NoteAttachmentSheet extends StatefulWidget {
-  final Future<void> Function(String filePath, String mimeType, String filename)
-  onFileSelected;
+/// A file picked to attach to a note.
+typedef PickedAttachment = ({String path, String mimeType, String name});
 
-  const NoteAttachmentSheet({super.key, required this.onFileSelected});
+class NoteAttachmentSheet extends StatefulWidget {
+  /// Gets what was picked, recorded or taken, once the sheet has closed.
+  final Future<void> Function(List<PickedAttachment> files) onFilesSelected;
+
+  /// Opens the camera for several pictures in a row; null hides it.
+  final VoidCallback? onTakeSeveral;
+
+  const NoteAttachmentSheet({
+    super.key,
+    required this.onFilesSelected,
+    this.onTakeSeveral,
+  });
 
   @override
   State<NoteAttachmentSheet> createState() => _NoteAttachmentSheetState();
@@ -157,7 +168,9 @@ class _NoteAttachmentSheetState extends State<NoteAttachmentSheet> {
       if (mounted) {
         final filename = path.basename(recordedPath);
         context.pop();
-        await widget.onFileSelected(recordedPath, 'audio/mp4', filename);
+        await widget.onFilesSelected([
+          (path: recordedPath, mimeType: 'audio/mp4', name: filename),
+        ]);
       }
     }
   }
@@ -180,7 +193,9 @@ class _NoteAttachmentSheetState extends State<NoteAttachmentSheet> {
     final filePath = _previewPath!;
     final filename = path.basename(filePath);
     context.pop();
-    await widget.onFileSelected(filePath, 'audio/mp4', filename);
+    await widget.onFilesSelected([
+      (path: filePath, mimeType: 'audio/mp4', name: filename),
+    ]);
   }
 
   Future<void> _discardRecording() async {
@@ -201,51 +216,64 @@ class _NoteAttachmentSheetState extends State<NoteAttachmentSheet> {
     }
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: source);
+  Future<void> _takePhoto() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.camera);
     if (image == null || !mounted) return;
-
     context.pop();
-    final ext = path.extension(image.path).toLowerCase();
-    final mime = ext == '.png'
-        ? 'image/png'
-        : ext == '.gif'
-        ? 'image/gif'
-        : 'image/jpeg';
-    await widget.onFileSelected(image.path, mime, path.basename(image.path));
+    await widget.onFilesSelected([_picked(image.path, image.name)]);
   }
 
-  static const _allowedAudioExtensions = ['mp3', 'wav', 'm4a', 'ogg', 'aac'];
+  Future<void> _takeSeveral() async {
+    context.pop();
+    widget.onTakeSeveral?.call();
+  }
 
-  static const _extToMime = {
-    '.mp3': 'audio/mpeg',
-    '.wav': 'audio/wav',
-    '.m4a': 'audio/mp4',
-    '.ogg': 'audio/ogg',
-    '.aac': 'audio/aac',
-  };
+  Future<void> _chooseImages() async {
+    final images = await ImagePicker().pickMultiImage();
+    if (images.isEmpty || !mounted) return;
+    context.pop();
+    await widget.onFilesSelected([
+      for (final image in images) _picked(image.path, image.name),
+    ]);
+  }
 
-  Future<void> _pickAudioFile() async {
-    final file = await FilePicker.pickFile(
-      type: FileType.custom,
-      allowedExtensions: _allowedAudioExtensions,
-    );
-    if (file == null || !mounted) return;
-    if (file.path == null) return;
+  /// Any kind of file, several at once.
+  Future<void> _chooseFiles() async {
+    final files = await FilePicker.pickFiles();
+    final picked = [
+      for (final file in files)
+        if (file.path != null) _picked(file.path!, file.name),
+    ];
+    if (picked.isEmpty || !mounted) return;
+    context.pop();
+    await widget.onFilesSelected(picked);
+  }
 
-    final ext = path.extension(file.path!).toLowerCase();
-    final mime = _extToMime[ext];
-    if (mime == null) {
-      AppSnackbar.showError(
-        context,
-        message: 'Unsupported audio format. Allowed: mp3, wav, m4a, ogg, aac',
-      );
+  /// A whole folder, subfolders included, as one zip file.
+  Future<void> _chooseFolder() async {
+    final ZippedFolder? folder;
+    try {
+      folder = await pickFolderAsZip();
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.showError(context, message: 'Couldn’t read that folder');
+      }
       return;
     }
-
+    if (folder == null || !mounted) return;
+    if (folder.fileCount == 0) {
+      AppSnackbar.showWarning(context, message: 'That folder is empty');
+      return;
+    }
     context.pop();
-    await widget.onFileSelected(file.path!, mime, file.name);
+    await widget.onFilesSelected([
+      (path: folder.path, mimeType: 'application/zip', name: folder.name),
+    ]);
+  }
+
+  static PickedAttachment _picked(String filePath, String name) {
+    final filename = name.isEmpty ? path.basename(filePath) : name;
+    return (path: filePath, mimeType: mimeTypeFor(filename), name: filename);
   }
 
   String _formatDuration(Duration d) {
@@ -265,7 +293,7 @@ class _NoteAttachmentSheetState extends State<NoteAttachmentSheet> {
           ? 'Recording in progress'
           : _sheetState == _SheetState.preview
           ? 'Review your recording'
-          : 'Images or audio',
+          : 'Pictures, recordings or any file',
       contentPadding: EdgeInsets.fromLTRB(dims.xl, 0, dims.xl, dims.xl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -294,13 +322,21 @@ class _NoteAttachmentSheetState extends State<NoteAttachmentSheet> {
                 _OptionTile(
                   icon: LucideIcons.camera,
                   label: 'Take Photo',
-                  onTap: () => _pickImage(ImageSource.camera),
+                  onTap: _takePhoto,
                 ),
+                if (widget.onTakeSeveral != null) ...[
+                  SizedBox(height: dims.xs),
+                  _OptionTile(
+                    icon: LucideIcons.aperture,
+                    label: 'Take Several Photos',
+                    onTap: _takeSeveral,
+                  ),
+                ],
                 SizedBox(height: dims.xs),
                 _OptionTile(
-                  icon: LucideIcons.image,
-                  label: 'Choose Image',
-                  onTap: () => _pickImage(ImageSource.gallery),
+                  icon: LucideIcons.images,
+                  label: 'Choose Images',
+                  onTap: _chooseImages,
                 ),
                 SizedBox(height: dims.xs),
                 _OptionTile(
@@ -310,9 +346,15 @@ class _NoteAttachmentSheetState extends State<NoteAttachmentSheet> {
                 ),
                 SizedBox(height: dims.xs),
                 _OptionTile(
-                  icon: LucideIcons.music,
-                  label: 'Choose Audio File',
-                  onTap: _pickAudioFile,
+                  icon: LucideIcons.file,
+                  label: 'Choose Files',
+                  onTap: _chooseFiles,
+                ),
+                SizedBox(height: dims.xs),
+                _OptionTile(
+                  icon: LucideIcons.folderArchive,
+                  label: 'Choose a Folder',
+                  onTap: _chooseFolder,
                 ),
               ],
             ),

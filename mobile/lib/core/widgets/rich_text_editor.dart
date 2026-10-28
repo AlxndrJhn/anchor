@@ -73,6 +73,15 @@ class RichTextEditor extends StatefulWidget {
   /// first is scrolled into view, until the text is edited.
   final String? highlightTerm;
 
+  /// Draw the embeds the content may hold (pictures placed in the text).
+  final Iterable<EmbedBuilder>? embedBuilders;
+
+  /// The toolbar's camera button, left of the text styles; null hides it.
+  final VoidCallback? onTakePicture;
+
+  /// The toolbar's pictures button, next to the camera; null hides it.
+  final VoidCallback? onPickImages;
+
   const RichTextEditor({
     super.key,
     this.initialContent,
@@ -87,6 +96,9 @@ class RichTextEditor extends StatefulWidget {
     this.header,
     this.onImageInserted,
     this.highlightTerm,
+    this.embedBuilders,
+    this.onTakePicture,
+    this.onPickImages,
   });
 
   @override
@@ -558,6 +570,48 @@ class RichTextEditorState extends State<RichTextEditor>
     );
   }
 
+  /// Where the caret is, for something to go in there later (a picture
+  /// being taken); the end of the text when there is no caret.
+  int get caretOffset {
+    final selection = _controller.selection;
+    final end = _controller.document.length - 1;
+    return selection.isValid ? selection.start.clamp(0, end) : end;
+  }
+
+  /// Puts [embeds] at [offset] (the caret when null), each on a line of its
+  /// own: the line there is split, keeping its style on the part before.
+  /// One undo step; the caret goes after them.
+  void insertBlockEmbeds(List<BlockEmbed> embeds, {int? offset}) {
+    if (_controller.readOnly || embeds.isEmpty) return;
+    final end = _controller.document.length - 1;
+    final at = (offset ?? caretOffset).clamp(0, end);
+    final line = _controller.document.queryChild(at);
+    final lineStyle = line.node is Line
+        ? (line.node! as Line).style.toJson()
+        : null;
+    final splits = line.offset > 0;
+    final change = Delta()..retain(at);
+    if (splits) change.insert('\n', lineStyle);
+    for (final embed in embeds) {
+      change
+        ..insert(embed.toJson())
+        ..insert('\n');
+    }
+    final inserted = (splits ? 1 : 0) + embeds.length * 2;
+    final after = TextSelection.collapsed(offset: at + inserted);
+    _controller
+      ..compose(change, after, ChangeSource.local)
+      // compose keeps the caret where it was in the text.
+      ..updateSelection(after, ChangeSource.local);
+  }
+
+  /// The data of each embed of [type] in the text, in order.
+  List<Object?> embedsOf(String type) => [
+    for (final op in _controller.document.toDelta().toList())
+      if (op.data is Map && (op.data as Map).containsKey(type))
+        (op.data as Map)[type],
+  ];
+
   /// Ticked checklist items in the note.
   int get checkedItemCount =>
       parseDocumentLines(_controller.document).where((l) => l.isChecked).length;
@@ -710,6 +764,8 @@ class RichTextEditorState extends State<RichTextEditor>
                     textSpanBuilder: _spanBuilder,
                     customStyleBuilder: (attribute) =>
                         getEditorCustomStyle(attribute, context),
+                    embedBuilders: widget.embedBuilders,
+                    unknownEmbedBuilder: const _UnknownEmbedBuilder(),
                     // ignore: experimental_member_use
                     customLeadingBlockBuilder: _buildLeading,
                     editorKey: _editorKey,
@@ -829,10 +885,39 @@ class RichTextEditorState extends State<RichTextEditor>
                     controller: _controller,
                     state: formatting,
                     onLinkPressed: _openLinkDialog,
+                    onCameraPressed: widget.onTakePicture,
+                    onImagesPressed: widget.onPickImages,
                   )
                 : const SizedBox(width: double.infinity),
           ),
       ],
+    );
+  }
+}
+
+/// An embed this app can't draw (from a newer version) stays in the text,
+/// shown as a box, so editing the note doesn't lose it.
+class _UnknownEmbedBuilder extends EmbedBuilder {
+  const _UnknownEmbedBuilder();
+
+  @override
+  String get key => '';
+
+  @override
+  Widget build(BuildContext context, EmbedContext embedContext) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 48,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        LucideIcons.box,
+        size: AppIconSizes.sm,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
     );
   }
 }

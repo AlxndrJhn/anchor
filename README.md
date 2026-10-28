@@ -56,6 +56,9 @@ differences. "Web" and "Android" say where each one is available.
 | Paste a picture to add it as an attachment | ✓ | ✓ |
 | Click a card's picture to view it full size | ✓ | ✓ |
 | Record audio straight into a note | ✓ | |
+| Attach any kind of file; Android can also attach a whole folder, zipped | ✓ | ✓ |
+| Add image, Take picture and Take several (one picture after another, without going back to the note) in an opened note's menu | | ✓ |
+| Camera and pictures buttons left of the text styles put pictures in the text at the caret; drag a picture's corner to resize it, hold it to retake, crop, mirror, caption or delete it | (shows them) | ✓ |
 | Download pictures and recordings ([#164](https://github.com/ZhFahim/anchor/issues/164)) | | ✓ |
 | Share to Anchor from other apps: text, links, pictures, files ([#52](https://github.com/ZhFahim/anchor/issues/52)) | | ✓ |
 | **History** | | |

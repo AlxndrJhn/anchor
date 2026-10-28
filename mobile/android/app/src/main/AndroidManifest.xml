@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <!-- Locked notes that open with a fingerprint or face (local_auth). -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Taking several pictures in a row (the camera plugin). -->
+    <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
         android:label="${appLabel}"
@@ -50,8 +52,8 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- "Share to Anchor": text, links, pictures and audio become a
-                 new note (MainActivity.readShare). -->
+            <!-- "Share to Anchor": text and links become a new note, and
+                 files of any kind its attachments (MainActivity.readShare). -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -61,8 +63,7 @@
                 <action android:name="android.intent.action.SEND"/>
                 <action android:name="android.intent.action.SEND_MULTIPLE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="image/*"/>
-                <data android:mimeType="audio/*"/>
+                <data android:mimeType="*/*"/>
             </intent-filter>
         </activity>
         <!-- Re-arms pending alarms after a reboot or an app update. -->

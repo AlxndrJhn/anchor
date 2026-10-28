@@ -117,11 +117,19 @@ class EditorToolbar extends StatelessWidget {
   final EditorFormattingState state;
   final VoidCallback? onLinkPressed;
 
+  /// Takes a picture into the text at the caret; null hides the button.
+  final VoidCallback? onCameraPressed;
+
+  /// Puts pictures from the gallery in the text; null hides the button.
+  final VoidCallback? onImagesPressed;
+
   const EditorToolbar({
     super.key,
     required this.controller,
     required this.state,
     this.onLinkPressed,
+    this.onCameraPressed,
+    this.onImagesPressed,
   });
 
   @override
@@ -179,6 +187,27 @@ class EditorToolbar extends StatelessWidget {
               ],
             ),
             _buildDivider(context, theme),
+
+            // Pictures into the text, at the caret
+            if (onCameraPressed != null || onImagesPressed != null) ...[
+              _ToolbarGroup(
+                buttons: [
+                  if (onCameraPressed != null)
+                    _ToolbarButtonData(
+                      icon: LucideIcons.camera,
+                      onTap: onCameraPressed!,
+                      tooltip: 'Take a picture',
+                    ),
+                  if (onImagesPressed != null)
+                    _ToolbarButtonData(
+                      icon: LucideIcons.images,
+                      onTap: onImagesPressed!,
+                      tooltip: 'Insert pictures',
+                    ),
+                ],
+              ),
+              _buildDivider(context, theme),
+            ],
 
             // Text styles
             _ToolbarGroup(

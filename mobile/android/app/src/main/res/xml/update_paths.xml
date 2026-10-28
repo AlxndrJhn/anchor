@@ -2,4 +2,6 @@
 <!-- Where downloaded updates wait for Android's installer (UpdateSource). -->
 <paths>
     <cache-path name="updates" path="updates/" />
+    <!-- An attached file opened in another app (MainActivity.openFile). -->
+    <cache-path name="open" path="open/" />
 </paths>

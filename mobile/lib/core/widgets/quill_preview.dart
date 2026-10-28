@@ -359,10 +359,15 @@ List<_PreviewLine> _parseQuillContentToPreviewLines(String? content) {
     final ops = document.toDelta().toList();
     final result = <_PreviewLine>[];
     var currentRuns = <_PreviewRun>[];
+    // A line holding only a picture placed in the text shows nothing here,
+    // but still counts: a line's index is where it is in the note.
+    var isEmbedLine = false;
+    var lineCount = 0;
 
     for (final op in ops) {
       if (op.data is! String) {
         currentRuns.add(const _PreviewRun('', null));
+        isEmbedLine = true;
         continue;
       }
       final text = op.data as String;
@@ -376,11 +381,19 @@ List<_PreviewLine> _parseQuillContentToPreviewLines(String? content) {
         if (i < parts.length - 1) {
           final listType = op.attributes?['list'] as String?;
           final indent = op.attributes?['indent'] as int? ?? 0;
+          final lineText = currentRuns.map((r) => r.text).join();
+          final index = lineCount++;
+          if (isEmbedLine && lineText.isEmpty) {
+            currentRuns = [];
+            isEmbedLine = false;
+            continue;
+          }
+          isEmbedLine = false;
           result.add(
             _PreviewLine(
-              text: currentRuns.map((r) => r.text).join(),
+              text: lineText,
               runs: currentRuns,
-              index: result.length,
+              index: index,
               listType: listType,
               indent: indent,
             ),
@@ -395,7 +408,7 @@ List<_PreviewLine> _parseQuillContentToPreviewLines(String? content) {
         _PreviewLine(
           text: currentRuns.map((r) => r.text).join(),
           runs: currentRuns,
-          index: result.length,
+          index: lineCount,
         ),
       );
     }
@@ -414,7 +427,8 @@ String extractPlainTextFromQuillContent(String? content) {
     final json = jsonDecode(content);
     if (json is Map && json['ops'] is List) {
       final document = Document.fromJson(json['ops'] as List);
-      final raw = document.toPlainText();
+      // Embeds (pictures in the text) come out as U+FFFC.
+      final raw = document.toPlainText().replaceAll('\uFFFC', '');
       final lines = raw
           .split(RegExp(r'\r?\n'))
           .map((l) => l.trim())

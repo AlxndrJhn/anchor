@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show File;
 
+import 'package:anchor/core/files/device_files.dart';
 import 'package:anchor/core/logging/app_logger.dart';
 import 'package:anchor/core/network/dio_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
@@ -16,7 +17,10 @@ import 'package:anchor/core/widgets/editor/link_utils.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/core/widgets/rich_text_editor.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
+import 'package:anchor/features/notes/domain/inline_image.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/presentation/multi_shot_camera_screen.dart';
+import 'package:anchor/features/notes/presentation/widgets/inline_image_embed.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_attachments_gallery.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_audio_recorder_sheet.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_background.dart';
@@ -29,7 +33,9 @@ import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart' show BlockEmbed;
 import 'package:anchor/core/widgets/destruction/destruction.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -117,10 +123,20 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   String get _editorContent =>
       _editorKey.currentState?.getContent() ?? _initialContent ?? '';
 
+  /// The attachments shown as pictures in the text, kept out of the gallery.
+  Set<String> _inlineIds = const {};
+
+  late final InlineImages _inlineImages;
+  late final _embedBuilders = [InlineImageEmbedBuilder(_inlineImages)];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _inlineImages = InlineImages(
+      repo: ref.read(noteAttachmentsRepositoryProvider),
+      noteId: () => _noteId,
+    );
 
     final watchedId = widget.note?.id ?? widget.noteId;
     if (watchedId != null) {
@@ -135,6 +151,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       _lastTitleText = widget.note!.title;
       _titleController.text = widget.note!.title;
       _initialContent = widget.note!.content;
+      _inlineIds = inlineImageIds(_initialContent);
       _selectedTagIds = List.from(widget.note!.tagIds);
       _selectedBackground = widget.note!.background;
       _isLoaded = true;
@@ -186,6 +203,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         _isEditing = newEditingState;
       });
     }
+    _inlineImages.editing.value = !_isReadOnly && editorEditing;
   }
 
   void _watchNote(String id) {
@@ -218,6 +236,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         _titleController.text = note.title;
       }
       _initialContent = note.content;
+      _inlineIds = inlineImageIds(note.content);
       _isPinned = note.isPinned;
       _isArchived = note.isArchived;
       _selectedTagIds = List.from(note.tagIds);
@@ -262,6 +281,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         _isArchived = note.isArchived;
         _titleController.text = note.title;
         _initialContent = note.content;
+        _inlineIds = inlineImageIds(note.content);
         _selectedTagIds = List.from(note.tagIds);
         _selectedBackground = note.background;
         _isLoaded = true;
@@ -283,6 +303,17 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   void _onContentChanged() {
     _hasUnsavedChanges = true;
     _resetAutoSaveTimer();
+  }
+
+  void _onEditorChanged() {
+    _onContentChanged();
+    final shown = {
+      for (final data
+          in _editorKey.currentState?.embedsOf(InlineImage.embedType) ??
+              const [])
+        ?InlineImage.tryParse(data)?.id,
+    };
+    if (!_setEquals(shown, _inlineIds)) setState(() => _inlineIds = shown);
   }
 
   bool _setEquals(Set<String> a, Set<String> b) {
@@ -504,8 +535,46 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   void _showAttachmentSheet() {
     AppBottomSheet.show(
       context,
-      builder: (context) => NoteAttachmentSheet(onFileSelected: _addAttachment),
+      builder: (context) => NoteAttachmentSheet(
+        onFilesSelected: _addAttachments,
+        onTakeSeveral: _takeSeveralPictures,
+      ),
     );
+  }
+
+  /// The server's limit for one file.
+  static const _maxAttachmentBytes = 50 * 1024 * 1024;
+
+  /// Attaches a file to the note and returns its id; null when it couldn't
+  /// be, after saying why.
+  Future<String?> _attach(
+    String filePath,
+    String mimeType,
+    String filename,
+  ) async {
+    try {
+      if (await File(filePath).length() > _maxAttachmentBytes) {
+        if (mounted) {
+          AppSnackbar.showWarning(
+            context,
+            message: 'Can\'t attach $filename: files can be up to 50 MB',
+          );
+        }
+        return null;
+      }
+      // Attachments are keyed to a persisted note. For a brand-new note
+      // the user may start by adding an attachment, so create the note
+      // now that there's something to attach to.
+      var noteId = widget.noteId ?? _existingNote?.id;
+      noteId ??= await _createNote();
+      final repo = ref.read(noteAttachmentsRepositoryProvider);
+      return await repo.addAttachment(noteId, filePath, mimeType, filename);
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.showError(context, message: 'Failed to add attachment');
+      }
+      return null;
+    }
   }
 
   Future<void> _addAttachment(
@@ -513,20 +582,107 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     String mimeType,
     String filename,
   ) async {
-    try {
-      // Attachments are keyed to a persisted note. For a brand-new note
-      // the user may start by adding an attachment, so create the note
-      // now that there's something to attach to.
-      var noteId = widget.noteId ?? _existingNote?.id;
-      noteId ??= await _createNote();
-      final repo = ref.read(noteAttachmentsRepositoryProvider);
-      await repo.addAttachment(noteId, filePath, mimeType, filename);
+    final id = await _attach(filePath, mimeType, filename);
+    if (id == null || !mounted) return;
+    AppSnackbar.showSuccess(context, message: 'Attachment added');
+  }
+
+  /// Attaches what was picked, then says how many went in.
+  Future<void> _addAttachments(List<PickedAttachment> files) async {
+    final zips = p.join((await getTemporaryDirectory()).path, 'folders');
+    var added = 0;
+    for (final file in files) {
+      if (await _attach(file.path, file.mimeType, file.name) != null) added++;
+      // A zipped folder was made for this; the attachment has its own copy.
+      if (p.isWithin(zips, file.path)) {
+        try {
+          await File(file.path).delete();
+        } catch (_) {}
+      }
       if (!mounted) return;
-      AppSnackbar.showSuccess(context, message: 'Attachment added');
-    } catch (_) {
-      if (!mounted) return;
-      AppSnackbar.showError(context, message: 'Failed to add attachment');
     }
+    if (added == 0 || !mounted) return;
+    AppSnackbar.showSuccess(
+      context,
+      message: added == 1 ? 'Attachment added' : '$added attachments added',
+    );
+  }
+
+  static String _pictureName(String extension) =>
+      'Picture ${DateFormat('yyyy-MM-dd-HH-mm-ss-SSS').format(DateTime.now())}'
+      '$extension';
+
+  static PickedAttachment _pickedPicture(XFile picture) {
+    final ext = p.extension(picture.name).toLowerCase();
+    return (
+      path: picture.path,
+      mimeType: mimeTypeFor(picture.name),
+      name: _pictureName(ext.isEmpty ? '.jpg' : ext),
+    );
+  }
+
+  /// "Take picture": one picture with the phone's camera app.
+  Future<void> _takePicture() async {
+    final shot = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (shot == null || !mounted) return;
+    await _addAttachments([_pickedPicture(shot)]);
+  }
+
+  /// "Add image": pictures from the gallery.
+  Future<void> _addImages() async {
+    final images = await ImagePicker().pickMultiImage();
+    if (images.isEmpty || !mounted) return;
+    await _addAttachments([for (final image in images) _pickedPicture(image)]);
+  }
+
+  /// "Take several": pictures one after another, without coming back to the
+  /// note in between; each is attached as it's taken.
+  Future<void> _takeSeveralPictures() async {
+    final count = await MultiShotCameraScreen.open(
+      context,
+      onPicture: (shot) async {
+        await _attach(shot.path, 'image/jpeg', _pictureName('.jpg'));
+        try {
+          await File(shot.path).delete();
+        } catch (_) {}
+      },
+    );
+    if (count == 0 || !mounted) return;
+    AppSnackbar.showSuccess(
+      context,
+      message: count == 1 ? '1 picture added' : '$count pictures added',
+    );
+  }
+
+  /// Pictures from the camera or the gallery, placed in the text where the
+  /// caret was.
+  Future<void> _picturesIntoText({required bool fromCamera}) async {
+    final editor = _editorKey.currentState;
+    if (editor == null || _isReadOnly) return;
+    final at = editor.caretOffset;
+    final picker = ImagePicker();
+    final List<XFile> pictures;
+    if (fromCamera) {
+      final shot = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 92,
+      );
+      pictures = [?shot];
+    } else {
+      pictures = await picker.pickMultiImage(imageQuality: 92);
+    }
+    if (pictures.isEmpty || !mounted) return;
+    final ids = <String>[];
+    for (final picture in pictures) {
+      final picked = _pickedPicture(picture);
+      final id = await _attach(picked.path, picked.mimeType, picked.name);
+      if (!mounted) return;
+      if (id != null) ids.add(id);
+    }
+    _editorKey.currentState?.insertBlockEmbeds([
+      for (final id in ids)
+        BlockEmbed(InlineImage.embedType, InlineImage(id: id).encode()),
+    ], offset: at);
   }
 
   /// Shared text as note content; a lone link stays a link.
@@ -557,42 +713,18 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   Future<void> _receiveShared(SharedContent shared) async {
     if (!mounted) return;
     if (shared.title != null || shared.text != null) _onContentChanged();
-    final skipped = <String>[];
-    for (final file in shared.files) {
-      if (!_attachableTypes.contains(file.mimeType)) {
-        skipped.add(file.name);
-        continue;
-      }
-      await _addAttachment(file.path, file.mimeType, file.name);
-      if (!mounted) return;
+    if (shared.files.isNotEmpty) {
+      await _addAttachments([
+        for (final file in shared.files)
+          (path: file.path, mimeType: file.mimeType, name: file.name),
+      ]);
     }
     for (final file in shared.files) {
       try {
         await File(file.path).delete();
       } catch (_) {}
     }
-    if (skipped.isNotEmpty && mounted) {
-      AppSnackbar.showWarning(
-        context,
-        message: 'Can\'t attach ${skipped.join(', ')}: only pictures and audio',
-      );
-    }
   }
-
-  /// Attachment types the server accepts.
-  static const _attachableTypes = {
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'audio/mpeg',
-    'audio/wav',
-    'audio/mp4',
-    'audio/x-m4a',
-    'audio/ogg',
-    'audio/aac',
-    'audio/webm',
-  };
 
   /// A picture pasted from the keyboard becomes an attachment, as on the web.
   Future<void> _onImageInserted(Uint8List bytes, String mimeType) async {
@@ -652,6 +784,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         onBackgroundTap: _showColorPicker,
         onReminderTap: _showReminderPicker,
         onAttachmentTap: _showAttachmentSheet,
+        onAddImageTap: _addImages,
+        onTakePictureTap: _takePicture,
+        onTakeSeveralTap: _takeSeveralPictures,
         onShareTap:
             !_isNew &&
                 (_existingNote?.isActive ?? false) &&
@@ -781,6 +916,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     _titleController.dispose();
     _titleFocusNode.removeListener(_updateEditingState);
     _titleFocusNode.dispose();
+    _inlineImages.editing.dispose();
     super.dispose();
   }
 
@@ -1222,6 +1358,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                   (_existingNote?.canEdit ?? false) &&
                   (_existingNote?.isActive ?? false),
               currentUserId: ref.read(activeUserIdProvider),
+              hiddenIds: _inlineIds,
             ),
           ),
       ],
@@ -1311,7 +1448,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                             showToolbar: !isReadOnly,
                             canEdit: !isReadOnly,
                             onEditingChanged: (_) => _updateEditingState(),
-                            onChanged: _onContentChanged,
+                            onChanged: _onEditorChanged,
                             sortChecklistItems: ref
                                 .watch(editorPreferencesControllerProvider)
                                 .sortChecklistItems,
@@ -1319,6 +1456,13 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                             header: _buildEditorHeader(theme),
                             onImageInserted: _onImageInserted,
                             highlightTerm: widget.highlightTerm,
+                            embedBuilders: _embedBuilders,
+                            onTakePicture: isReadOnly
+                                ? null
+                                : () => _picturesIntoText(fromCamera: true),
+                            onPickImages: isReadOnly
+                                ? null
+                                : () => _picturesIntoText(fromCamera: false),
                           )
                         : const Center(child: CircularProgressIndicator()),
                   ),

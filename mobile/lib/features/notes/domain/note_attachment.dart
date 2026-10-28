@@ -5,14 +5,43 @@ part 'note_attachment.g.dart';
 
 enum AttachmentType {
   image,
-  audio;
+  audio,
+
+  /// Any other kind of file: a document, an archive, a zipped folder.
+  file;
 
   static AttachmentType fromString(String value) {
     return AttachmentType.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => AttachmentType.image,
+      orElse: () => AttachmentType.file,
     );
   }
+
+  /// How a file of [mimeType] shows in a note, as the server decides.
+  static AttachmentType forMimeType(String mimeType) {
+    if (imageMimeTypes.contains(mimeType)) return AttachmentType.image;
+    if (audioMimeTypes.contains(mimeType)) return AttachmentType.audio;
+    return AttachmentType.file;
+  }
+
+  /// Pictures shown in the note.
+  static const imageMimeTypes = {
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+  };
+
+  /// Recordings played in the note.
+  static const audioMimeTypes = {
+    'audio/mpeg',
+    'audio/wav',
+    'audio/mp4',
+    'audio/x-m4a',
+    'audio/ogg',
+    'audio/aac',
+    'audio/webm',
+  };
 }
 
 /// Sync status for attachments (stored in DB as text).
@@ -61,4 +90,5 @@ abstract class NoteAttachment with _$NoteAttachment {
 
   bool get isImage => type == AttachmentType.image;
   bool get isAudio => type == AttachmentType.audio;
+  bool get isFile => type == AttachmentType.file;
 }

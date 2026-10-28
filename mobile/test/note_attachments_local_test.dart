@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:anchor/core/database/app_database.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart' as domain;
@@ -119,5 +122,118 @@ void main() {
 
     final row = await db.select(db.noteAttachments).getSingle();
     expect(row.pictureText, 'Kassenbon EUR 4,20');
+  });
+
+  group('uploading', () {
+    late Directory tmp;
+    late List<RequestOptions> sent;
+
+    /// The server's answer to an upload: the attachment it made, with [id].
+    void answerUploadsWith(String Function(FormData form) id) {
+      repo = NoteAttachmentsRepository(
+        db,
+        Dio()
+          ..interceptors.add(
+            InterceptorsWrapper(
+              onRequest: (options, handler) {
+                sent.add(options);
+                final form = options.data as FormData;
+                handler.resolve(
+                  Response(
+                    requestOptions: options,
+                    statusCode: 201,
+                    data: {
+                      'id': id(form),
+                      'noteId': 'n1',
+                      'type': 'image',
+                      'originalFilename': 'a.png',
+                      'mimeType': 'image/png',
+                      'fileSize': 1,
+                      'position': 0,
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+      );
+    }
+
+    setUp(() async {
+      sent = [];
+      tmp = await Directory.systemTemp.createTemp('attachments');
+    });
+
+    tearDown(() => tmp.delete(recursive: true));
+
+    Future<void> pendingUpload(String id, {String? content}) async {
+      await db
+          .into(db.notes)
+          .insert(
+            NotesCompanion.insert(
+              id: 'n1',
+              title: 'Note',
+              content: Value(content),
+              isSynced: const Value(true),
+            ),
+          );
+      final file = File('${tmp.path}/a.png')..writeAsBytesSync([1]);
+      await db
+          .into(db.noteAttachments)
+          .insert(
+            NoteAttachmentsCompanion.insert(
+              id: id,
+              noteId: 'n1',
+              type: 'image',
+              originalFilename: 'a.png',
+              mimeType: 'image/png',
+              fileSize: 1,
+              localPath: Value(file.path),
+              syncStatus: Value(
+                domain.AttachmentSyncStatus.pendingUpload.dbValue,
+              ),
+            ),
+          );
+    }
+
+    String contentShowing(String id) => jsonEncode({
+      'ops': [
+        {
+          'insert': {
+            'note-image': jsonEncode({'id': id}),
+          },
+        },
+        {'insert': '\n'},
+      ],
+    });
+
+    test('sends the id the picture in the text knows it by', () async {
+      answerUploadsWith(
+        (form) => form.fields.firstWhere((f) => f.key == 'id').value,
+      );
+      await pendingUpload('local-1', content: contentShowing('local-1'));
+
+      await repo.sync();
+
+      final fields = (sent.single.data as FormData).fields;
+      expect(fields.map((f) => '${f.key}=${f.value}'), contains('id=local-1'));
+      final note = await readNote('n1');
+      expect(note.content, contentShowing('local-1'));
+      expect(note.isSynced, isTrue);
+      expect(await repo.watchAttachment('local-1').first, isNotNull);
+    });
+
+    test('an older server\'s new id is put in the text', () async {
+      answerUploadsWith((_) => 'server-1');
+      await pendingUpload('local-1', content: contentShowing('local-1'));
+
+      await repo.sync();
+
+      final note = await readNote('n1');
+      expect(note.content, contentShowing('server-1'));
+      expect(note.isSynced, isFalse);
+      expect(await repo.watchAttachment('server-1').first, isNotNull);
+      expect(await repo.watchAttachment('local-1').first, isNull);
+    });
   });
 }
