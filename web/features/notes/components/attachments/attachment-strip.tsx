@@ -123,6 +123,8 @@ function focusInside(tile: Element) {
 export interface AttachmentStripHandle {
   pick: () => void;
   add: (files: File[]) => void;
+  /** Opens a picture in the viewer, e.g. one placed in the text. */
+  view: (id: string) => void;
 }
 
 interface AttachmentStripProps {
@@ -175,6 +177,8 @@ export function AttachmentStrip({
   const refocus = React.useRef<string | null>(null);
   const focusAfterDelete = React.useRef<string[] | null>(null);
   const focusAfterViewer = React.useRef<string[]>([]);
+  // Opened from the text, so focus goes back there rather than to the strip.
+  const viewingFromText = React.useRef(false);
   const isMounted = React.useRef(false);
 
   const { data: attachments = [] } = useQuery({
@@ -341,6 +345,10 @@ export function AttachmentStrip({
   React.useImperativeHandle(ref, () => ({
     pick: () => input.current?.click(),
     add: (files) => void add(files),
+    view: (id) => {
+      viewingFromText.current = true;
+      setViewing(id);
+    },
   }));
 
   const remove = (attachment: NoteAttachment) => {
@@ -416,6 +424,11 @@ export function AttachmentStrip({
   };
 
   const focusFromViewer = (id: string) => {
+    if (viewingFromText.current) {
+      viewingFromText.current = false;
+      focusAfterViewer.current = [];
+      return false;
+    }
     const open = tileOf(id)?.querySelector<HTMLElement>(".t-open");
     const nearby = focusAfterViewer.current;
     focusAfterViewer.current = [];

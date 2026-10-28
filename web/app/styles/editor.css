@@ -475,6 +475,8 @@
 .ql-editor .note-image img[src] {
   min-height: 0;
   background: none;
+  /* Double-click opens it in the viewer. */
+  cursor: zoom-in;
 }
 .ql-editor .note-image-caption {
   display: block;
