@@ -318,6 +318,15 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           if (props.readOnly && (e.target as HTMLElement).closest(".ql-ui"))
             props.onReadOnlyAttempt?.();
         }}
+        onDoubleClick={(e) => {
+          // A picture in the text opens in the viewer, like its tile does.
+          const target = e.target as HTMLElement;
+          if (target.tagName !== "IMG") return;
+          const id = target.closest<HTMLElement>(".note-image")?.dataset.id;
+          if (!id) return;
+          e.preventDefault();
+          strip.current?.view(id);
+        }}
       >
         <RichTextEditor
           ref={props.contentEditorRef}

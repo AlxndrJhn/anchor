@@ -12,6 +12,8 @@ import {
   Tags,
   Trash2,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -25,6 +27,7 @@ import {
 } from "@/features/picture-search/api";
 import type { ImageText } from "@/lib/image-text";
 import { useAttachmentBlob } from "../../hooks/use-attachment-blob";
+import { usePictureZoom } from "../../hooks/use-picture-zoom";
 import type { NoteAttachment } from "../../types";
 import { ImageTextView } from "./image-text-view";
 
@@ -62,6 +65,7 @@ export function Viewer({
     picture?.id ?? "",
   );
   const swipe = React.useRef<{ x: number; y: number } | null>(null);
+  const zoom = usePictureZoom(picture?.id ?? "");
 
   const go = (step: number) => {
     if (pictures.length < 2) return;
@@ -163,6 +167,10 @@ export function Viewer({
               if (found) return;
               if (e.key === "ArrowLeft") go(-1);
               else if (e.key === "ArrowRight") go(1);
+              else if (e.ctrlKey || e.metaKey || e.altKey) return;
+              else if (e.key === "+" || e.key === "=") zoom.zoomIn();
+              else if (e.key === "-" || e.key === "_") zoom.zoomOut();
+              else if (e.key === "0") zoom.reset();
             }}
           >
             <div className="vw-top">
@@ -175,6 +183,36 @@ export function Viewer({
                 </div>
               </div>
               <div className="vw-actions">
+                {!found && (
+                  <div className="vw-zoom">
+                    <button
+                      type="button"
+                      aria-label="Zoom out"
+                      onClick={zoom.zoomOut}
+                      disabled={!zoom.ready || !zoom.canZoomOut}
+                    >
+                      <ZoomOut aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      className="vw-pct"
+                      aria-label="Fit to screen"
+                      title="Fit to screen"
+                      onClick={zoom.reset}
+                      disabled={!zoom.ready || !zoom.zoomed}
+                    >
+                      {zoom.percent === null ? "–" : `${zoom.percent}%`}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Zoom in"
+                      onClick={zoom.zoomIn}
+                      disabled={!zoom.ready || !zoom.canZoomIn}
+                    >
+                      <ZoomIn aria-hidden />
+                    </button>
+                  </div>
+                )}
                 <button
                   type="button"
                   aria-label="Grab image text"
@@ -254,7 +292,7 @@ export function Viewer({
                 <div
                   className="vw-stage"
                   onPointerDown={(e) => {
-                    if (e.pointerType !== "mouse")
+                    if (e.pointerType !== "mouse" && !zoom.zoomed)
                       swipe.current = { x: e.clientX, y: e.clientY };
                   }}
                   onPointerUp={(e) => {
@@ -278,7 +316,11 @@ export function Viewer({
                   >
                     <ChevronLeft aria-hidden />
                   </button>
-                  <div className="vw-img">
+                  <div
+                    className="vw-img"
+                    ref={zoom.stageRef}
+                    {...zoom.panProps}
+                  >
                     {error ? (
                       <div className="vw-fail">
                         <CircleAlert aria-hidden />
@@ -292,6 +334,7 @@ export function Viewer({
                         key={picture.id}
                         src={blobUrl}
                         alt={picture.originalFilename}
+                        {...zoom.imgProps}
                       />
                     ) : (
                       <div className="vw-wait" />
@@ -326,7 +369,10 @@ export function Viewer({
                   </ul>
                 ) : (
                   <div className="vw-hint">
-                    <span className="dk">← → to move · Esc to close</span>
+                    <span className="dk">
+                      ← → to move · + − or wheel to zoom · 0 to fit · Esc to
+                      close
+                    </span>
                     <span className="ph">Swipe to move</span>
                   </div>
                 )}

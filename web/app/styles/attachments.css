@@ -505,6 +505,26 @@
 .vw-actions .vw-x {
   padding: 7px;
 }
+.vw-zoom {
+  display: flex;
+  gap: 2px;
+  margin-right: --spacing(1.5);
+}
+.vw-actions .vw-zoom button {
+  padding: 7px;
+}
+.vw-actions .vw-zoom button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.vw-actions .vw-zoom .vw-pct {
+  min-width: 52px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.vw-actions .vw-zoom .vw-pct:disabled {
+  opacity: 1;
+}
 .viewer :focus-visible {
   outline-color: var(--color-media-text);
 }
@@ -525,6 +545,7 @@
   display: grid;
   place-items: center;
   position: relative;
+  overflow: hidden;
 }
 .vw-img img {
   max-width: 100%;
@@ -770,6 +791,7 @@
     padding: --spacing(2) 0;
   }
   .vw-hint .dk,
+  .vw-zoom,
   .vw-nav {
     display: none;
   }
