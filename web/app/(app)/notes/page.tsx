@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
   ArchiveRestore,
+  EyeOff,
   Hash,
   Images,
   Lock,
@@ -53,13 +54,14 @@ import {
   isOwnFrozen,
   useApplyFreeze,
 } from "@/features/notes/hooks/use-note-freeze";
+import { useApplyInvisible } from "@/features/notes/hooks/use-note-invisible";
 import {
   matchesSearch,
   useNoteList,
 } from "@/features/notes/hooks/use-note-list";
 import { useUnlockedIds } from "@/features/notes/hooks/use-note-lock";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
-import { matchesFilters } from "@/features/notes/note-filters";
+import { matchesFilters, showsInList } from "@/features/notes/note-filters";
 import { isLockHidden } from "@/features/notes/note-lock";
 import { compareNotes, positionBetween } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
@@ -124,6 +126,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             .filter(
               (n) =>
                 (!tagId || n.tagIds?.includes(tagId)) &&
+                showsInList(n, list.searching) &&
                 matchesSearch(n, list.term, unlocked) &&
                 matchesFilters(n, list.filters),
             )
@@ -133,6 +136,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
       withArchived,
       archivedNotes,
       list.term,
+      list.searching,
       list.filters,
       tagId,
       list.sortBy,
@@ -349,6 +353,32 @@ function NotesView({ tagId }: { tagId: string | null }) {
       () =>
         toast.error(
           `Couldn’t ${isFrozen ? "freeze" : "unfreeze"} ${ids.length === 1 ? "note" : "notes"}`,
+        ),
+    );
+  };
+
+  const applyInvisible = useApplyInvisible();
+  const allInvisible = chosen.length > 0 && chosen.every((n) => n.isInvisible);
+  const invisibleChosen = () => {
+    const isInvisible = !allInvisible;
+    const ids = chosen
+      .filter((n) => !!n.isInvisible !== isInvisible)
+      .map((n) => n.id);
+    list.stopPicking();
+    applyInvisible(ids, isInvisible).then(
+      () =>
+        toast.success(
+          `${plural(ids.length, "note")} ${isInvisible ? "made invisible" : "made visible"}`,
+          {
+            undo: () =>
+              void applyInvisible(ids, !isInvisible).catch(() =>
+                toast.error("Couldn’t undo that"),
+              ),
+          },
+        ),
+      () =>
+        toast.error(
+          `Couldn’t make ${ids.length === 1 ? "the note" : "the notes"} ${isInvisible ? "invisible" : "visible"}`,
         ),
     );
   };
@@ -608,6 +638,12 @@ function NotesView({ tagId }: { tagId: string | null }) {
                 },
               ]
             : []),
+          {
+            key: "invisible",
+            label: allInvisible ? "Make visible" : "Make invisible",
+            icon: <EyeOff aria-hidden />,
+            onClick: invisibleChosen,
+          },
           {
             key: "archive",
             label: "Archive",

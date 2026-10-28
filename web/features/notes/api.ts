@@ -89,6 +89,14 @@ export async function setNoteFrozen(
     .json<Note>();
 }
 
+/** Makes the note invisible for this person, or shows it again. */
+export async function setNoteInvisible(
+  id: string,
+  isInvisible: boolean,
+): Promise<void> {
+  await api.patch(`api/notes/${id}/invisible`, { json: { isInvisible } });
+}
+
 /** "Make a copy": the server copies the text, colour, tags and attachments. */
 export async function copyNote(id: string): Promise<Note> {
   return api.post(`api/notes/${id}/copy`).json<Note>();
@@ -239,6 +247,19 @@ export async function bulkLockNotes(
   return inBulkBatches(noteIds, (batch) =>
     api
       .post("api/notes/bulk/lock", { json: { noteIds: batch, lock } })
+      .json<{ count: number }>(),
+  );
+}
+
+export async function bulkInvisibleNotes(
+  noteIds: string[],
+  isInvisible: boolean,
+): Promise<{ count: number }> {
+  return inBulkBatches(noteIds, (batch) =>
+    api
+      .post("api/notes/bulk/invisible", {
+        json: { noteIds: batch, isInvisible },
+      })
       .json<{ count: number }>(),
   );
 }
