@@ -38,6 +38,23 @@ class MultiShotCameraScreen extends StatefulWidget {
 
 class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  /// Cameras being let go of, one after another. The camera plugin keeps
+  /// one camera for the whole app, and letting go unbinds whatever is bound
+  /// by then: a camera opened before the last let-go finished would be
+  /// unbound under it, and never show. So opening waits for this.
+  static Future<void> _lettingGo = Future.value();
+
+  static void _letGo(CameraController camera) {
+    _lettingGo = _lettingGo
+        .then((_) => camera.dispose())
+        .catchError(
+          (Object e) => AppLogger.instance.warn(
+            'Camera',
+            'Couldn’t let go of the camera: $e',
+          ),
+        );
+  }
+
   List<CameraDescription> _cameras = const [];
   int _cameraIndex = 0;
   CameraController? _camera;
@@ -90,23 +107,32 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _camera?.dispose();
+    final camera = _camera;
+    if (camera != null) _letGo(camera);
     _flashFade.dispose();
     _flight.dispose();
     _bump.dispose();
     super.dispose();
   }
 
+  /// Whether the app is out of sight, when the camera must be let go of.
+  static bool _isAway(AppLifecycleState? state) =>
+      state == AppLifecycleState.hidden ||
+      state == AppLifecycleState.paused ||
+      state == AppLifecycleState.detached;
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // The camera is the system's; let go of it while away.
+    // The camera is the system's; let go of it while away. Not on merely
+    // inactive: Android says that for any dialog in front, like the
+    // permission prompt or "unblock the camera?", which come back here.
     final camera = _camera;
-    if (state == AppLifecycleState.inactive) {
+    if (_isAway(state)) {
+      if (camera == null) return;
       _camera = null;
-      camera?.dispose();
+      _letGo(camera);
       if (mounted) setState(() {});
     } else if (state == AppLifecycleState.resumed && camera == null) {
-      // Also back from the permission prompt, which a first open waits on.
       _open();
     }
   }
@@ -132,7 +158,8 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
     if (_cameras.isEmpty || _isOpening) return;
     _isOpening = true;
     try {
-      await _openCamera();
+      await _lettingGo;
+      if (mounted) await _openCamera();
     } finally {
       _isOpening = false;
     }
@@ -148,18 +175,22 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
     try {
       await camera.initialize();
       await camera.setFlashMode(_flash);
-    } on CameraException catch (e) {
-      await camera.dispose();
+    } catch (e) {
+      // Not only CameraException: anything else would leave the spinner
+      // turning for good.
+      AppLogger.instance.warn('Camera', 'Couldn’t start the camera: $e');
+      _letGo(camera);
       if (!mounted) return;
       setState(
-        () => _error = e.code.contains('Access')
+        () => _error = e is CameraException && e.code.contains('Access')
             ? 'Anchor needs the camera permission to take pictures'
             : 'Couldn’t start the camera',
       );
       return;
     }
-    if (!mounted) {
-      await camera.dispose();
+    // Closed, or the app went away, while the camera was starting.
+    if (!mounted || _isAway(WidgetsBinding.instance.lifecycleState)) {
+      _letGo(camera);
       return;
     }
     setState(() {
@@ -175,7 +206,7 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
       _camera = null;
       _cameraIndex = (_cameraIndex + 1) % _cameras.length;
     });
-    await old?.dispose();
+    if (old != null) _letGo(old);
     await _open();
   }
 
