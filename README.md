@@ -105,7 +105,7 @@ differences. "Web" and "Android" say where each one is available.
 | Next.js upgraded to 16.4.3 for security fixes | ✓ | |
 | **Releases** | | |
 | Every push to `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
-| A desktop app for Windows and macOS: your server's web client in its own window, in every release (see [Desktop App](#desktop-app)) | ✓ | |
+| A desktop app for Windows and macOS: your server's web client in its own window, in every release, that updates itself (see [Desktop App](#desktop-app)) | ✓ | |
 
 ### Custom themes
 
@@ -348,6 +348,13 @@ The builds are not signed, so the system warns the first time:
   Settings › Privacy & Security** (**Open Anyway**).
 - **Windows:** if SmartScreen says it protected your PC, choose
   **More info › Run anyway**.
+
+The app keeps itself up to date: it looks for a newer release now and then,
+downloads it in the background, and then shows a small **Update** button in
+the top right (also **Restart to Update** in the File menu, or the Anchor menu
+on macOS). Clicking it restarts Anchor on the new version. On macOS this needs
+Anchor in a folder you can write to, such as Applications; run from the disk
+image, the button opens the release page instead.
 
 Links to other websites open in your browser. To build it yourself:
 `cd desktop && pnpm install && pnpm run dist:win` (or `dist:mac`).

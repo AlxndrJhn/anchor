@@ -18,7 +18,7 @@ files:
 # electron-builder makes the .ico and .icns from this.
 icon: ../web/public/icons/anchor_icon.png
 asar: true
-# Nothing to update itself with; installers come from the GitHub releases.
+# Not electron-updater: src/updater.js updates from the GitHub releases.
 publish: null
 
 win:
