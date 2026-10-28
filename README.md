@@ -32,7 +32,8 @@ Each release also publishes the web app on GitHub Pages, without a server:
 
 Without a server there is no syncing, sharing, sign-in, API token or picture
 search. To publish your own copy, set Settings › Pages › Source to "GitHub
-Actions"; the workflow is `.github/workflows/pages.yml`, and
+Actions" (until then a release skips the site with a warning); the workflow
+is `.github/workflows/pages.yml`, and
 `BASE_PATH=/anchor pnpm build:pages` (in `web/`) builds the same site into
 `web/out`.
 

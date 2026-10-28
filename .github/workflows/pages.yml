@@ -6,7 +6,8 @@ name: GitHub Pages
 #   /demo/  a playground with sample notes, kept in memory (a reload resets
 #           it), and a demo of each feature, e.g. /demo/freeze
 # Run by each release (release-fork.yml), or by hand. Needs Settings › Pages ›
-# Source set to "GitHub Actions".
+# Source set to "GitHub Actions"; until it is, the site is skipped with a
+# warning rather than failing the release.
 
 on:
   workflow_call:
@@ -23,7 +24,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # A repository without a Pages site (or one built from a branch) can't take
+  # this deployment, and configure-pages can't enable it with this token.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check that Pages is set up
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BUILD_TYPE=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || true)
+          if [ "$BUILD_TYPE" = workflow ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=GitHub Pages not set up::Skipping the site. Set Settings › Pages › Source to \"GitHub Actions\" (https://github.com/$GITHUB_REPOSITORY/settings/pages) and run this workflow again."
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
