@@ -7,10 +7,18 @@ import 'app_bar_scrim.dart';
 /// Plain app bar for a pushed sub-page: a back chevron and a bold title over
 /// an [AppBarScrim]. [LargeTitleAppBar] is the collapsing counterpart.
 class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
-  const AppPageBar({super.key, required this.title, this.actions});
+  const AppPageBar({
+    super.key,
+    required this.title,
+    this.actions,
+    this.leading,
+  });
 
   final Widget title;
   final List<Widget>? actions;
+
+  /// Replaces the back chevron, e.g. with a close button while selecting.
+  final Widget? leading;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -22,10 +30,12 @@ class AppPageBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       flexibleSpace: const AppBarScrim(),
-      leading: IconButton(
-        icon: const Icon(LucideIcons.chevronLeft),
-        onPressed: () => context.pop(),
-      ),
+      leading:
+          leading ??
+          IconButton(
+            icon: const Icon(LucideIcons.chevronLeft),
+            onPressed: () => context.pop(),
+          ),
       titleTextStyle: theme.textTheme.titleLarge?.copyWith(
         fontWeight: FontWeight.bold,
         color: theme.colorScheme.onSurface,

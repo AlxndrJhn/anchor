@@ -167,4 +167,12 @@ class ArchiveController extends _$ArchiveController {
   Future<void> unarchiveNote(String id) async {
     await ref.read(notesRepositoryProvider).unarchiveNote(id);
   }
+
+  Future<int> bulkUnarchiveNotes(List<String> ids) async {
+    return await ref.read(notesRepositoryProvider).bulkUnarchiveNotes(ids);
+  }
+
+  Future<int> bulkDeleteNotes(List<String> ids) async {
+    return await ref.read(notesRepositoryProvider).bulkDeleteNotes(ids);
+  }
 }
