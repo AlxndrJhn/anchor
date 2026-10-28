@@ -1,7 +1,7 @@
 FROM node:26-alpine AS base
 
-# pnpm via corepack
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# pnpm via corepack (no longer bundled with Node 25+)
+RUN npm install -g corepack@latest && corepack enable && corepack prepare pnpm@latest --activate
 
 # Next.js on Alpine can need libc compatibility
 RUN apk add --no-cache libc6-compat
