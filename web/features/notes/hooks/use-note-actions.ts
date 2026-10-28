@@ -13,6 +13,7 @@ import {
   restoreNote,
   unarchiveNote,
 } from "../api";
+import { type NoteCaret, returnCaretTo } from "../note-caret";
 import type { Note } from "../types";
 import { useRefreshNotes } from "./use-refresh-notes";
 
@@ -23,6 +24,7 @@ export function useNoteActions({
   save,
   refetchNote,
   setIsArchived,
+  readCaret,
 }: {
   noteId: string;
   note: Note | null;
@@ -30,6 +32,8 @@ export function useNoteActions({
   save: () => void;
   refetchNote: () => Promise<unknown>;
   setIsArchived: (isArchived: boolean) => void;
+  /** Where the caret is in the note, if it has been in it. */
+  readCaret: () => NoteCaret | null;
 }) {
   const router = useRouter();
   const refreshLists = useRefreshNotes();
@@ -113,14 +117,24 @@ export function useNoteActions({
 
   const trashMutation = useMutation({
     mutationFn: () => closeBurnThen(leave, () => deleteNote(noteId)),
-    onMutate: () => setConfirmLeaveShare(false),
-    onSuccess: () => {
+    onMutate: () => {
+      setConfirmLeaveShare(false);
+      // Read before the note closes, for Undo to bring it back.
+      return { caret: readCaret() };
+    },
+    onSuccess: (_, __, context) => {
       refreshLists();
       if (isOwner)
         toast.success("Note moved to trash", {
+          // Undo opens the note again, the caret where it was.
           undo: () =>
-            restoreNote(noteId).then(refreshLists, () =>
-              toast.error("Couldn’t undo that"),
+            restoreNote(noteId).then(
+              () => {
+                refreshLists();
+                if (context?.caret) returnCaretTo(noteId, context.caret);
+                router.push(`/notes/${noteId}`);
+              },
+              () => toast.error("Couldn’t undo that"),
             ),
         });
       else toast.success("Note removed from your notes");

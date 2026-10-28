@@ -133,6 +133,14 @@ void main() {
                     builder: (_, _) =>
                         NoteEditScreen(note: note, noteId: note?.id),
                   ),
+                  // Where Undo of a trash opens the note again.
+                  GoRoute(
+                    path: 'note/:id',
+                    builder: (_, state) => NoteEditScreen(
+                      noteId: state.pathParameters['id'],
+                      caret: state.extra as NoteCaret?,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -303,6 +311,67 @@ void main() {
     await tester.pumpAndSettle();
     verify(() => notesRepo.deleteNote('n1')).called(1);
     expect(find.text('Note moved to trash'), findsOneWidget);
+  });
+
+  group('undoing a trash opens the note again', () {
+    const note = Note(
+      id: 'n1',
+      title: 'My title',
+      content: '{"ops":[{"insert":"hello world\\n"}]}',
+    );
+
+    Future<void> trashThenUndo(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Delete note'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NoteEditScreen), findsNothing);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      verify(() => notesRepo.restoreNote('n1')).called(1);
+      expect(find.byType(NoteEditScreen), findsOneWidget);
+    }
+
+    setUp(() {
+      when(() => notesRepo.deleteNote(any())).thenAnswer((_) async {});
+      when(() => notesRepo.restoreNote(any())).thenAnswer((_) async {});
+      when(() => notesRepo.getNote('n1')).thenAnswer((_) async => note);
+    });
+
+    testWidgets('with the caret where it was in the text', (tester) async {
+      await pumpScreen(tester, note: note, fromList: true);
+      await tester.pumpAndSettle();
+      tester
+          .state<RichTextEditorState>(find.byType(RichTextEditor))
+          .focusAt(const TextSelection(baseOffset: 3, extentOffset: 7));
+      await tester.pump();
+
+      await trashThenUndo(tester);
+
+      final editable = find.descendant(
+        of: find.byType(RichTextEditor),
+        matching: find.byType(QuillEditor),
+      );
+      expect(tester.widget<QuillEditor>(editable).focusNode.hasFocus, isTrue);
+      expect(
+        editorController(tester).selection,
+        const TextSelection(baseOffset: 3, extentOffset: 7),
+      );
+    });
+
+    testWidgets('with the caret where it was in the title', (tester) async {
+      await pumpScreen(tester, note: note, fromList: true);
+      await tester.pumpAndSettle();
+      await tester.tap(titleField);
+      await tester.pump();
+      tester.widget<TextField>(titleField).controller!.selection =
+          const TextSelection.collapsed(offset: 2);
+      await tester.pump();
+
+      await trashThenUndo(tester);
+
+      final title = tester.widget<TextField>(titleField);
+      expect(title.focusNode!.hasFocus, isTrue);
+      expect(title.controller!.selection.baseOffset, 2);
+    });
   });
 
   testWidgets('Show checkboxes turns every line into an unchecked item', (

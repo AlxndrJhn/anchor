@@ -165,6 +165,8 @@ interface RichTextEditorProps {
 
 export interface RichTextEditorHandle {
   setSelection: (index: number, length: number) => void;
+  /** Where the caret last was in the text, focused or not. */
+  getCaret: () => { index: number; length: number } | null;
   /** False when read-only. */
   focusEnd: (extend: boolean) => boolean;
   startList: (kind: "unchecked" | "bullet") => void;
@@ -735,8 +737,14 @@ export const RichTextEditor = forwardRef<
           if (readOnly) return;
           const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
           if (!quill) return;
-          quill.setSelection(index, length, "user");
+          const end = quill.getLength() - 1;
+          const start = Math.max(0, Math.min(index, end));
+          quill.setSelection(start, Math.min(length, end - start), "user");
           setIsFocused(true);
+        },
+        getCaret: () => {
+          const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
+          return quill ? { ...quill.selection.savedRange } : null;
         },
         focusEnd: (extend: boolean) => {
           if (readOnly) return false;

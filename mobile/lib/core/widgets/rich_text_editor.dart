@@ -546,6 +546,23 @@ class RichTextEditorState extends State<RichTextEditor>
     _focusNode.requestFocus();
   }
 
+  /// Where the caret is in the text, focused or not.
+  TextSelection get selection => _controller.selection;
+
+  /// Puts the caret back at [selection], as far as the text still reaches.
+  void focusAt(TextSelection selection) {
+    if (!widget.canEdit) return;
+    final end = _controller.document.length - 1;
+    _controller.updateSelection(
+      TextSelection(
+        baseOffset: selection.baseOffset.clamp(0, end),
+        extentOffset: selection.extentOffset.clamp(0, end),
+      ),
+      ChangeSource.local,
+    );
+    _focusNode.requestFocus();
+  }
+
   /// Puts the caret at the end of the text, ready to type on.
   void focusEnd() {
     if (!widget.canEdit) return;
