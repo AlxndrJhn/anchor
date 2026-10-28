@@ -195,13 +195,17 @@ jobs:
 
       # Unsigned: no certificate is looked for, the macOS app is ad-hoc signed
       # (see electron-builder.yml) and nothing is notarized or published.
+      # anchorBuild (the number ending the release tag) and anchorUpdateRepo
+      # let the app find and install newer releases itself (src/updater.js).
       - name: Build installer
         env:
           VERSION: ${{ needs.version.outputs.version }}
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: |
           pnpm exec electron-builder ${{ matrix.targets }} --publish never \
-            -c.extraMetadata.version="$VERSION"
+            -c.extraMetadata.version="$VERSION" \
+            -c.extraMetadata.anchorBuild="$GITHUB_RUN_NUMBER" \
+            -c.extraMetadata.anchorUpdateRepo="$GITHUB_REPOSITORY"
           ls -l dist
 
       - name: Upload installer artifact

@@ -138,3 +138,13 @@ button.secondary {
   margin-top: 20px;
   font-size: 12px;
 }
+
+/* An app update is ready: a small button in the top right, as in VS Code. */
+.update {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  padding: 3px 12px;
+  font-size: 12px;
+  border-radius: 999px;
+}

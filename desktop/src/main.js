@@ -15,6 +15,7 @@ const {
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const { startUpdater } = require("./updater");
 
 const APP_NAME = "Anchor";
 const SETUP_PAGE = path.join(__dirname, "setup.html");
@@ -297,6 +298,33 @@ ipcMain.handle("anchor:retry", (event) => {
   return { ok: true };
 });
 
+// --- Updates ---------------------------------------------------------------
+
+let updater = null;
+
+// The window's own top frame: the setup page or the server's web client.
+function fromAppPage(event) {
+  if (!mainWindow || event.sender !== mainWindow.webContents) return false;
+  if (event.senderFrame !== event.sender.mainFrame) return false;
+  const url = event.senderFrame.url;
+  return url === SETUP_URL || (originOf(url) !== null && originOf(url) === serverOrigin());
+}
+
+function updateReady(update) {
+  buildMenu();
+  for (const window of BrowserWindow.getAllWindows()) window.webContents.send("anchor:update", update);
+}
+
+ipcMain.handle("anchor:get-update", (event) => {
+  if (!fromAppPage(event)) throw new Error("Not allowed");
+  return updater?.current() ?? null;
+});
+
+ipcMain.handle("anchor:install-update", (event) => {
+  if (!fromAppPage(event)) throw new Error("Not allowed");
+  return updater?.install() ?? false;
+});
+
 // --- Menu ------------------------------------------------------------------
 
 function changeServer() {
@@ -308,6 +336,10 @@ function changeServer() {
 function buildMenu() {
   const isMac = process.platform === "darwin";
   const changeServerItem = { label: "Change server…", click: changeServer };
+  const update = updater?.current();
+  const updateItems = update
+    ? [{ label: `Restart to Update (${update.version})`, click: () => updater.install() }, { type: "separator" }]
+    : [];
   const template = [
     ...(isMac
       ? [
@@ -316,6 +348,7 @@ function buildMenu() {
             submenu: [
               { role: "about" },
               { type: "separator" },
+              ...updateItems,
               changeServerItem,
               { type: "separator" },
               { role: "services" },
@@ -328,7 +361,7 @@ function buildMenu() {
             ],
           },
         ]
-      : [{ label: "&File", submenu: [changeServerItem, { type: "separator" }, { role: "quit" }] }]),
+      : [{ label: "&File", submenu: [...updateItems, changeServerItem, { type: "separator" }, { role: "quit" }] }]),
     { role: "editMenu" },
     {
       label: "View",
@@ -367,6 +400,7 @@ if (!app.requestSingleInstanceLock()) {
     buildMenu();
     createWindow();
     start();
+    updater = startUpdater({ onReady: updateReady, openExternal });
 
     // Locking the computer ends the web client's unlock session: notes
     // unlocked since lock again, as on a phone.
