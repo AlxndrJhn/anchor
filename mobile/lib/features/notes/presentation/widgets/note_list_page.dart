@@ -135,9 +135,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 tooltip: 'Cancel selection',
               )
             : null,
-        actions: _selecting
-            ? _selectionBarActions(shownNotes)
-            : widget.actions,
+        actions: _selecting ? _selectionBarActions(shownNotes) : widget.actions,
         wash: PageWash.content,
         body: widget.notes.when(
           data: (notes) {
@@ -150,12 +148,18 @@ class _NoteListPageState extends State<NoteListPage> {
             final dims = context.dims;
             final shown = notes.where(_matches).toList();
             return ListView.builder(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: dims.screenInsets.copyWith(
                 top: AppPageScaffold.topInset(context) + dims.screenGutter,
               ),
               itemCount: shown.length + 2,
+              findChildIndexCallback: (key) {
+                final index = shown.indexWhere((n) => ValueKey(n.id) == key);
+                return index < 0 ? null : index + 2;
+              },
+              // Each card has its own; around it, one would keep the card
+              // from seeing it moved, to strike into place (see Strike).
+              addRepaintBoundaries: false,
               itemBuilder: (context, index) {
                 if (index == 0) return const SyncWarning();
                 if (index == 1) {
@@ -166,8 +170,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         NotesSearchBar(
                           controller: _searchController,
                           query: _query,
-                          onChanged: (value) =>
-                              setState(() => _query = value),
+                          onChanged: (value) => setState(() => _query = value),
                           onClear: () {
                             _searchController.clear();
                             setState(() => _query = '');
@@ -187,6 +190,9 @@ class _NoteListPageState extends State<NoteListPage> {
                 }
                 final note = shown[index - 2];
                 return Padding(
+                  // Keyed by note, so the cards after a deleted one move up
+                  // instead of taking on the notes after theirs.
+                  key: ValueKey(note.id),
                   padding: EdgeInsets.only(bottom: dims.listItemSpacing),
                   child: NoteCard(
                     note: note,

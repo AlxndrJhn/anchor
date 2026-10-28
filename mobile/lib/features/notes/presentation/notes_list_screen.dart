@@ -427,6 +427,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         (context, index) => item(notes[index]),
         childCount: notes.length,
         findChildIndexCallback: indexOf,
+        // Each card has its own; around it, one would keep the card from
+        // seeing it moved, to strike into place (see Strike).
+        addRepaintBoundaries: false,
       ),
     );
 
@@ -457,6 +460,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                 ),
                 childCount: notes.length,
                 findChildIndexCallback: indexOf,
+                addRepaintBoundaries: false,
               ),
             ),
     );

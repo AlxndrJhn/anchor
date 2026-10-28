@@ -1,4 +1,5 @@
 import 'package:anchor/core/widgets/destruction/destruction.dart';
+import 'package:anchor/core/widgets/destruction/strike.dart';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -58,8 +59,11 @@ class NoteCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) =>
-      // Deleted, the card burns away where it stands.
-      Destructible(id: note.id, child: _card(context, ref));
+      // Deleted, the card burns away where it stands; the cards after it
+      // strike into their new places.
+      Strike(
+        child: Destructible(id: note.id, child: _card(context, ref)),
+      );
 
   Widget _card(BuildContext context, WidgetRef ref) {
     final tagsAsync = ref.watch(tagsControllerProvider);
