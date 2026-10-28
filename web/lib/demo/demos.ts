@@ -1,8 +1,16 @@
 // The feature demos of the demo build: each opens at /<slug> (on GitHub
 // Pages, /anchor/demo/<slug>), loads its own notes and plays its steps.
 
-import { dragBetween, pressKey, type Step, selectInEditor } from "./runner";
-import type { Seed } from "./seed";
+import {
+  caretToEnd,
+  clickElement,
+  dragBetween,
+  pressKey,
+  type Step,
+  selectInEditor,
+  typeCharacter,
+} from "./runner";
+import { pictureBlob, type Seed } from "./seed";
 
 export interface Demo {
   slug: string;
@@ -125,6 +133,39 @@ const openNote = (title: string, say?: string): Step => ({
   click: { css: `a.nc-link[aria-label="${title}"]` },
   say,
 });
+
+/** Hands files to the open note's attachment picker, as choosing them would. */
+const attach = (files: () => File[], say?: string): Step => ({
+  say,
+  run: async (play) => {
+    const button = await play.find({ css: "button", text: "Picture or audio" });
+    await play.moveTo(button);
+    const input = document.querySelector<HTMLInputElement>(
+      ".note-in input[type=file]",
+    );
+    if (!input) throw new Error("Not found: the attachment picker");
+    const chosen = new DataTransfer();
+    for (const file of files()) chosen.items.add(file);
+    input.files = chosen.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  },
+});
+
+const customTheme = JSON.stringify(
+  {
+    name: "Ink",
+    light: {
+      background: "#f4f1ea",
+      card: "#fffdf8",
+      sidebar: "#ebe6db",
+      accent: "#2f6fdd",
+      border: "#d6cfc1",
+    },
+    dark: { background: "#000", card: "#111111", accent: "#7aa2f7" },
+  },
+  null,
+  2,
+);
 
 export const demos: Demo[] = [
   {
@@ -353,6 +394,118 @@ export const demos: Demo[] = [
       { wait: 1500 },
     ],
     outro: "Try it: search, then open a result.",
+  },
+  {
+    slug: "search-kept",
+    title: "Search kept on the way back",
+    summary: "Open a note from a search; Back returns to the same search.",
+    seed: base,
+    start: "/notes",
+    steps: [
+      {
+        type: "trip",
+        into: { css: 'input[aria-label="Search notes"]' },
+        say: "Search for something…",
+      },
+      { wait: 600 },
+      openNote("Lisbon trip", "…open a note it found…"),
+      { wait: 1000 },
+      { click: "Back", say: "…and go back: the search is still there." },
+      { wait: 1800 },
+    ],
+    outro: "Try it: search, open a note, then press Back.",
+  },
+  {
+    slug: "tag-archived",
+    title: "Tags count archived notes",
+    summary:
+      "A tag's count includes its archived notes, and the tag lists them.",
+    seed: withNotes({
+      id: "n-rome",
+      title: "Rome, last spring",
+      archived: true,
+      tags: ["Travel"],
+      age: 60 * 24 * 90,
+      lines: ["Trastevere at dusk", "Supplì from the corner shop"],
+    }),
+    start: "/notes",
+    steps: [
+      {
+        hover: { css: "a", textStarts: "Travel" },
+        say: "Travel counts 2 notes: one of them is archived.",
+      },
+      { click: { css: "a", textStarts: "Travel" }, say: "The tag lists both…" },
+      { wait: 1200 },
+      { say: "…the archived one included, so nothing tagged goes missing." },
+    ],
+    outro: "Try it: archive a tagged note, then open its tag.",
+  },
+  {
+    slug: "paste-picture",
+    title: "Paste a picture",
+    summary: "Paste a picture into a note to add it as an attachment.",
+    seed: base,
+    start: "/notes",
+    steps: [
+      openNote("Lisbon trip", "Copy a picture, open a note…"),
+      { wait: 800 },
+      {
+        say: "…and paste it: it is added to the note.",
+        run: async (play) => {
+          const editor = await play.find({ css: ".ql-editor" });
+          await play.moveTo(editor);
+          caretToEnd(editor);
+          const clipboard = new DataTransfer();
+          clipboard.items.add(
+            new File([pictureBlob(190, "Tram 28")], "image.png", {
+              type: "image/png",
+            }),
+          );
+          editor.dispatchEvent(
+            new ClipboardEvent("paste", {
+              bubbles: true,
+              cancelable: true,
+              clipboardData: clipboard,
+            }),
+          );
+        },
+      },
+      { wait: 1500 },
+      { click: { label: "Back" }, say: "The card shows it, too." },
+      { wait: 1500 },
+    ],
+    outro:
+      "Try it: copy a picture or take a screenshot, then paste it in a note.",
+  },
+  {
+    slug: "attach-file",
+    title: "Attach any file",
+    summary: "Attach files of any kind to a note, not only pictures and audio.",
+    seed: base,
+    start: "/notes",
+    steps: [
+      {
+        click: { css: "a", textStarts: "New note" },
+        say: "In a note, Picture or audio…",
+      },
+      { type: "Tickets", into: "Title" },
+      attach(
+        () => [
+          new File(
+            ["Lisbon, 12–16 May\nFlight TP 1351, seat 14A\n"],
+            "boarding-pass.txt",
+            { type: "text/plain" },
+          ),
+          new File(["date,place\n2026-05-13,Belém\n"], "plan.csv", {
+            type: "text/csv",
+          }),
+        ],
+        "…takes any kind of file, not only pictures and recordings.",
+      ),
+      { wait: 2000 },
+      { say: "They sit with the note and download with a click." },
+    ],
+    outro: "Try it: attach a file to a note, or drop one on it.",
   },
   {
     slug: "tags",
@@ -594,6 +747,39 @@ export const demos: Demo[] = [
       { say: "A custom theme can be pasted as JSON, too." },
     ],
     outro: "Try it: Settings › Appearance. A reload goes back to the default.",
+  },
+  {
+    slug: "custom-theme",
+    title: "Custom theme from JSON",
+    summary: "Paste a theme as JSON; the same JSON works on Android.",
+    seed: base,
+    start: "/settings",
+    steps: [
+      {
+        say: "Settings › Appearance › Custom theme takes a theme as JSON.",
+        run: async (play) => {
+          const box = await play.find({ label: "Custom theme JSON" });
+          await play.moveTo(box);
+          clickElement(box);
+          caretToEnd(box);
+          // Pasted in one go, as from the clipboard.
+          typeCharacter(customTheme);
+          await play.pause(1200);
+        },
+      },
+      {
+        click: { css: "button", text: "Apply" },
+        say: "Apply, and its colours replace the scheme's.",
+      },
+      { wait: 1200 },
+      { go: "/notes" },
+      { wait: 1500 },
+      {
+        say: "Colours it leaves out are the scheme's. Reset removes it.",
+      },
+    ],
+    outro:
+      "Try it: Settings › Appearance › Copy current theme as JSON, then change a colour.",
   },
   {
     slug: "shortcuts",

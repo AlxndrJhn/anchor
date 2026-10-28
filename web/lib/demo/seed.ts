@@ -128,7 +128,7 @@ export function buildData(seed: Seed): {
 }
 
 /** A small made-up picture: a landscape in one hue, with a caption. */
-function pictureBlob(hue: number, label: string): Blob {
+export function pictureBlob(hue: number, label: string): Blob {
   const canvas = document.createElement("canvas");
   canvas.width = 640;
   canvas.height = 420;
