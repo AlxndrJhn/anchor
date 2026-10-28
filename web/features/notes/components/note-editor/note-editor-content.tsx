@@ -330,6 +330,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           }
           onRecordAudio={record}
           below={starters}
+          noteId={props.noteId}
         />
       </div>
       <NoteOutline root={root} />

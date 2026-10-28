@@ -787,3 +787,9 @@
     padding: 9px;
   }
 }
+/* Any other file: no player bar, so it's shorter. */
+.att-file:not([data-upload]) {
+  height: auto;
+  min-height: 64px;
+  justify-content: center;
+}

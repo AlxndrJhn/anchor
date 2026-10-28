@@ -124,6 +124,7 @@ export const QUILL_FORMATS = [
   "highlight",
   "color",
   "font",
+  "note-image",
 ] as const;
 
 /**

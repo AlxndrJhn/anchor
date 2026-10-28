@@ -1,4 +1,5 @@
 import { HIGHLIGHTS } from "@/lib/design/tokens";
+import { INLINE_IMAGE_EMBED, parseInlineImage } from "./inline-images";
 import { LINK_PROTOCOLS } from "./link-utils";
 import { deleteWholeLines, isWholeLines, type QuillInstance } from "./quill";
 import { MAX_LIST_INDENT } from "./quill-lines";
@@ -55,6 +56,43 @@ export function registerNoteFormats(Quill: QuillStatic) {
     }
   }
   Quill.register(Highlight, true);
+
+  // A picture placed in the text on Android. Kept as it came, so editing the
+  // note here never drops it; the picture loads in showInlineImages.
+  const Embed = Quill.import("blots/embed") as {
+    new (...args: never[]): object;
+    create(value: unknown): HTMLElement;
+  };
+  class NoteImage extends Embed {
+    static blotName = INLINE_IMAGE_EMBED;
+    static tagName = "SPAN";
+    static className = "note-image";
+    static create(value: unknown) {
+      // biome-ignore lint/complexity/noThisInStatic: Parchment's create reads this.tagName
+      const node = super.create(value);
+      node.setAttribute("data-value", typeof value === "string" ? value : "");
+      const image = parseInlineImage(value);
+      if (!image) return node;
+      node.dataset.id = image.id;
+      if (image.width)
+        node.style.setProperty("--note-image-width", `${image.width * 100}%`);
+      const img = document.createElement("img");
+      img.alt = image.caption ?? "";
+      img.draggable = false;
+      node.appendChild(img);
+      if (image.caption) {
+        const caption = document.createElement("span");
+        caption.className = "note-image-caption";
+        caption.textContent = image.caption;
+        node.appendChild(caption);
+      }
+      return node;
+    }
+    static value(node: HTMLElement) {
+      return node.getAttribute("data-value") ?? "";
+    }
+  }
+  Quill.register(NoteImage, true);
 
   // A font for the selected text, written as its font-family.
   const FontStyle = Quill.import("attributors/style/font") as {
