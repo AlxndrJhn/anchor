@@ -413,6 +413,15 @@ class NotesRepository {
     await _db.transaction(() async {
       final prior = await _noteRow(note.id);
       if (prior == null) return;
+      if (prior.isFrozen) {
+        // Only what is this person's own changes on a frozen note.
+        note = note.copyWith(
+          title: prior.title,
+          content: prior.content,
+          background: prior.background,
+          state: domain.NoteState.fromString(prior.state),
+        );
+      }
 
       if (prior.title != note.title || prior.content != note.content) {
         await _revisions.record(prior);
@@ -497,7 +506,7 @@ class NotesRepository {
   Future<void> restoreVersion(String noteId, NoteRevision revision) async {
     await _db.transaction(() async {
       final prior = await _noteRow(noteId);
-      if (prior == null) return;
+      if (prior == null || prior.isFrozen) return;
       if (prior.title == revision.title && prior.content == revision.content) {
         return;
       }
@@ -580,12 +589,12 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.unarchiveNote');
   }
 
-  // Bulk delete notes
+  // Bulk delete notes; frozen ones stay. The count says how many went.
   Future<int> bulkDeleteNotes(List<String> ids) async {
     if (ids.isEmpty) return 0;
-    await _trashOrRemove(ids);
+    final count = await _trashOrRemove(ids);
     scheduleAppSync(trigger: 'NotesRepo.bulkDeleteNotes');
-    return ids.length;
+    return count;
   }
 
   // Bulk archive notes
@@ -593,6 +602,14 @@ class NotesRepository {
     if (ids.isEmpty) return 0;
     await _writeArchived(ids: ids, isArchived: true);
     scheduleAppSync(trigger: 'NotesRepo.bulkArchiveNotes');
+    return ids.length;
+  }
+
+  // Bulk unarchive notes
+  Future<int> bulkUnarchiveNotes(List<String> ids) async {
+    if (ids.isEmpty) return 0;
+    await _writeArchived(ids: ids, isArchived: false);
+    scheduleAppSync(trigger: 'NotesRepo.bulkUnarchiveNotes');
     return ids.length;
   }
 
@@ -629,6 +646,15 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.setLock');
   }
 
+  /// Shows the notes frozen (or not) at once, once the server has taken
+  /// it; the feed brings the rest. Nothing goes up for it.
+  Future<void> markFrozen(List<String> ids, bool isFrozen) async {
+    if (ids.isEmpty) return;
+    await (_db.update(_db.notes)..where((tbl) => tbl.id.isIn(ids))).write(
+      NotesCompanion(isFrozen: drift.Value(isFrozen)),
+    );
+  }
+
   /// Puts a note where it was dragged among the notes; it stays there until it
   /// is next edited, and goes up with the note.
   Future<void> setPosition(String noteId, double position) async {
@@ -650,7 +676,8 @@ class NotesRepository {
     final editable =
         await (_db.select(_db.notes)
               ..where((tbl) => tbl.id.isIn(ids))
-              ..where((tbl) => tbl.permission.isIn(const ['owner', 'editor'])))
+              ..where((tbl) => tbl.permission.isIn(const ['owner', 'editor']))
+              ..where((tbl) => tbl.isFrozen.equals(false)))
             .map((row) => row.id)
             .get();
     if (editable.isEmpty) return 0;
@@ -728,17 +755,30 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.permanentDelete');
   }
 
-  /// Shared notes are marked deleted, which leaves the share.
-  Future<void> _trashOrRemove(List<String> ids) async {
+  /// Shared notes are marked deleted, which leaves the share. Frozen notes
+  /// of this person's own stay; the count says how many went.
+  Future<int> _trashOrRemove(List<String> ids) async {
     final shared =
         await (_db.select(_db.notes)..where(
               (tbl) => tbl.id.isIn(ids) & tbl.permission.equals('owner').not(),
             ))
             .map((row) => row.id)
             .get();
-    final owned = ids.where((id) => !shared.contains(id)).toList();
+    final frozen =
+        await (_db.select(_db.notes)..where(
+              (tbl) =>
+                  tbl.id.isIn(ids) &
+                  tbl.permission.equals('owner') &
+                  tbl.isFrozen.equals(true),
+            ))
+            .map((row) => row.id)
+            .get();
+    final owned = ids
+        .where((id) => !shared.contains(id) && !frozen.contains(id))
+        .toList();
     if (owned.isNotEmpty) await _writeState(ids: owned, state: 'trashed');
     if (shared.isNotEmpty) await _writeState(ids: shared, state: 'deleted');
+    return owned.length + shared.length;
   }
 
   Future<void> _writeState({
@@ -799,6 +839,7 @@ class NotesRepository {
             )
           : null,
       lock: domain.NoteLock.fromString(row.lock),
+      isFrozen: row.isFrozen,
       isSynced: row.isSynced,
       reminderSlot: row.reminderSlot,
       reminder: row.reminderAt == null

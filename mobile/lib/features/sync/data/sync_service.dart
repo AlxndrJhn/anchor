@@ -346,7 +346,8 @@ class SyncService {
           return;
         }
         await _revisions.markStale(result.id);
-        if (!server.canEdit) {
+        // A note frozen elsewhere takes nothing from here, as for a viewer.
+        if (!server.canEdit || server.isFrozen) {
           final prior = await _noteRow(result.id);
           if (prior != null &&
               !prior.isSynced &&
@@ -668,6 +669,7 @@ class SyncService {
 
   NotesCompanion _sharingOf(SyncServerNote note) => NotesCompanion(
     permission: Value(note.permission),
+    isFrozen: note.hasFrozenField ? Value(note.isFrozen) : const Value.absent(),
     shareIds: Value(jsonEncode(note.shareIds)),
     sharedById: Value(note.sharedBy?.id),
     sharedByName: Value(note.sharedBy?.name),

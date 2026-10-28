@@ -442,6 +442,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('New list'), findsOneWidget);
+    expect(find.text('Camera note'), findsOneWidget);
     expect(find.text('New note'), findsOneWidget);
   });
 

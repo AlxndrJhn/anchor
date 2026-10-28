@@ -74,6 +74,8 @@ export interface Note {
   positionedAt?: string | null;
   /** What opens the note for this person, if they locked it. */
   lock?: NoteLockKind | null;
+  /** Frozen by its owner: nobody can change, trash or delete it. */
+  isFrozen?: boolean;
 }
 
 /** The ways a person can lock a note for themselves. */

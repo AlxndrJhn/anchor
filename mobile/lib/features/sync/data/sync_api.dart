@@ -372,6 +372,8 @@ class SyncServerNote {
     this.positionedAt,
     this.hasLockField = false,
     this.lock,
+    this.hasFrozenField = false,
+    this.isFrozen = false,
   });
 
   factory SyncServerNote.fromJson(Map<String, dynamic> json) {
@@ -396,6 +398,9 @@ class SyncServerNote {
       // Servers without locks leave it out: keep what is here.
       hasLockField: json.containsKey('lock'),
       lock: json['lock'] as String?,
+      // Servers without freezing leave it out: keep what is here.
+      hasFrozenField: json.containsKey('isFrozen'),
+      isFrozen: json['isFrozen'] as bool? ?? false,
       tagIds: (json['tagIds'] as List?)?.cast<String>() ?? const [],
       permission: json['permission'] as String? ?? 'owner',
       shareIds: (json['shareIds'] as List?)?.cast<String>() ?? const [],
@@ -425,6 +430,8 @@ class SyncServerNote {
   final DateTime? positionedAt;
   final bool hasLockField;
   final String? lock;
+  final bool hasFrozenField;
+  final bool isFrozen;
   final List<String> tagIds;
   final String permission;
   final List<String> shareIds;

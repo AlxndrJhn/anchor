@@ -47,7 +47,9 @@ export function BulkColorPicker({
     [shownAnchor],
   );
 
-  const editable = notes.filter((n) => n.permission !== "viewer");
+  const editable = notes.filter(
+    (n) => n.permission !== "viewer" && !n.isFrozen,
+  );
   const backgrounds = new Set(editable.map((n) => n.background ?? null));
   const shared = backgrounds.size === 1 ? [...backgrounds][0] : undefined;
 
@@ -84,7 +86,7 @@ export function BulkColorPicker({
         const skipped = notes.length - editable.length;
         toast.success(
           skipped
-            ? `Colour changed on ${plural(editable.length, "note")}; ${plural(skipped, "note")} you can only view stayed as they were`
+            ? `Colour changed on ${plural(editable.length, "note")}; ${plural(skipped, "note")} you can’t change stayed as they were`
             : `Colour changed on ${plural(editable.length, "note")}`,
           {
             undo: () => {

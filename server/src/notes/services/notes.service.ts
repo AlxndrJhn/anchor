@@ -1,5 +1,7 @@
 import {
+  BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -303,11 +305,15 @@ export class NotesService {
         return { gone: true as const };
       }
 
+      const noteChanged = guardedNoteFieldsChanged(prior, noteData);
+      if (noteChanged && prior.isFrozen) {
+        return { frozen: true as const };
+      }
+
       if (baseVersion !== undefined && baseVersion !== prior.version) {
         return { conflict: true as const };
       }
 
-      const noteChanged = guardedNoteFieldsChanged(prior, noteData);
       if (noteChanged) {
         // A writer that slipped in since the read above makes count 0.
         const updated = await tx.note.updateMany({
@@ -369,6 +375,9 @@ export class NotesService {
 
     if ('gone' in outcome) {
       throw new NotFoundException(ERROR_MESSAGES.NOTE_NOT_FOUND);
+    }
+    if ('frozen' in outcome) {
+      throw new ForbiddenException(ERROR_MESSAGES.NOTE_FROZEN);
     }
     if (outcome.conflict) {
       throw await this.noteVersionConflict(userId, id, updateNoteDto);
@@ -435,6 +444,9 @@ export class NotesService {
       const prior = await tx.note.findUniqueOrThrow({ where: { id } });
       if (prior.state === NoteState.deleted) {
         throw new NotFoundException(ERROR_MESSAGES.NOTE_NOT_FOUND);
+      }
+      if (prior.isFrozen) {
+        throw new ForbiddenException(ERROR_MESSAGES.NOTE_FROZEN);
       }
       const updated = await tx.note.update({
         where: { id },
@@ -507,6 +519,9 @@ export class NotesService {
 
     const note = await this.prisma.$transaction(async (tx) => {
       const prior = await tx.note.findUniqueOrThrow({ where: { id } });
+      if (prior.isFrozen) {
+        throw new ForbiddenException(ERROR_MESSAGES.NOTE_FROZEN);
+      }
       // Resolve recipients before anything changes; they all get the remove.
       const recipients = await this.syncEmitter.noteRecipients(tx, id);
       const updated = await tx.note.update({
@@ -592,6 +607,7 @@ export class NotesService {
         where: {
           state: NoteState.trashed,
           stateChangedAt: { lt: cutoffDate },
+          isFrozen: false,
         },
         select: { id: true },
         take: RETENTION_CHUNK_SIZE,
@@ -677,7 +693,8 @@ export class NotesService {
     };
   }
 
-  // Bulk delete - owned notes move to trash, shared ones are left
+  // Bulk delete - owned notes move to trash, shared ones are left; frozen
+  // ones stay where they are
   async bulkRemove(userId: string, noteIds: string[]) {
     const notes = await this.prisma.note.findMany({
       where: {
@@ -685,10 +702,10 @@ export class NotesService {
         state: { not: NoteState.deleted },
         ...noteAccessibleBy(userId),
       },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, isFrozen: true },
     });
     const ownedIds = notes
-      .filter((note) => note.userId === userId)
+      .filter((note) => note.userId === userId && !note.isFrozen)
       .map((note) => note.id);
     const sharedIds = notes
       .filter((note) => note.userId !== userId)
@@ -697,7 +714,7 @@ export class NotesService {
     if (ownedIds.length > 0) {
       await this.prisma.$transaction(async (tx) => {
         await tx.note.updateMany({
-          where: { id: { in: ownedIds } },
+          where: { id: { in: ownedIds }, isFrozen: false },
           data: {
             state: NoteState.trashed,
             version: { increment: 1 },
@@ -721,7 +738,7 @@ export class NotesService {
       await this.noteSharesService.leaveShare(userId, id);
     }
 
-    return { count: notes.length };
+    return { count: ownedIds.length + sharedIds.length };
   }
 
   // Bulk archive - per-user, works for owned and shared notes
@@ -743,6 +760,70 @@ export class NotesService {
     });
 
     return { count: accessibleIds.length };
+  }
+
+  /**
+   * Freezes a note (owner only): until it's unfrozen nobody can change its
+   * title, text, colour or attachments, or trash or delete it.
+   */
+  async setFrozen(userId: string, id: string, isFrozen: boolean) {
+    const access = await this.noteAccessService.hasNoteAccess(userId, id);
+    if (!access.hasAccess || access.state === NoteState.deleted) {
+      throw new NotFoundException(ERROR_MESSAGES.NOTE_NOT_FOUND);
+    }
+    if (!access.isOwner) {
+      throw new ForbiddenException(ERROR_MESSAGES.ONLY_OWNER_CAN_FREEZE);
+    }
+    if (isFrozen && access.state !== NoteState.active) {
+      throw new BadRequestException('Only active notes can be frozen');
+    }
+    await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.note.updateMany({
+        where: { id, isFrozen: !isFrozen },
+        data: { isFrozen, version: { increment: 1 } },
+      });
+      if (count > 0) {
+        const recipients = await this.syncEmitter.noteRecipients(tx, id);
+        await this.syncEmitter.emit(tx, noteEmissions(recipients, id));
+      }
+    });
+    return this.findOne(userId, id);
+  }
+
+  // Bulk freeze/unfreeze - owned active notes only
+  async bulkSetFrozen(userId: string, noteIds: string[], isFrozen: boolean) {
+    const notes = await this.prisma.note.findMany({
+      where: {
+        id: { in: noteIds },
+        userId,
+        state: isFrozen ? NoteState.active : { not: NoteState.deleted },
+      },
+      select: { id: true },
+    });
+    const ids = notes.map((note) => note.id);
+    await this.prisma.$transaction(async (tx) => {
+      const changed = await tx.note.findMany({
+        where: { id: { in: ids }, isFrozen: !isFrozen },
+        select: { id: true },
+      });
+      const changedIds = changed.map((note) => note.id);
+      if (changedIds.length === 0) return;
+      await tx.note.updateMany({
+        where: { id: { in: changedIds } },
+        data: { isFrozen, version: { increment: 1 } },
+      });
+      const recipientsByNote = await this.syncEmitter.notesRecipients(
+        tx,
+        changedIds,
+      );
+      await this.syncEmitter.emit(
+        tx,
+        changedIds.flatMap((id) =>
+          noteEmissions(recipientsByNote.get(id) ?? [], id),
+        ),
+      );
+    });
+    return { count: ids.length };
   }
 
   /** Locks a note for this person, or takes the lock off (null). */

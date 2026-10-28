@@ -8,6 +8,7 @@ export interface GuardedNoteFields {
   content?: string | null;
   background?: string | null;
   state?: NoteState;
+  isFrozen?: boolean;
 }
 
 export const guardedNoteFieldsChanged = (
@@ -16,7 +17,8 @@ export const guardedNoteFieldsChanged = (
 ) =>
   noteContentChanged(prior, data) ||
   (data.background !== undefined && data.background !== prior.background) ||
-  (data.state !== undefined && data.state !== prior.state);
+  (data.state !== undefined && data.state !== prior.state) ||
+  (data.isFrozen !== undefined && data.isFrozen !== prior.isFrozen);
 
 export const noteContentChanged = (prior: Note, data: GuardedNoteFields) =>
   (data.title !== undefined && data.title !== prior.title) ||

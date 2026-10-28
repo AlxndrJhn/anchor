@@ -1,4 +1,5 @@
 import 'package:anchor/core/widgets/destruction/destruction.dart';
+import 'package:anchor/core/widgets/destruction/strike.dart';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -58,8 +59,11 @@ class NoteCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) =>
-      // Deleted, the card burns away where it stands.
-      Destructible(id: note.id, child: _card(context, ref));
+      // Deleted, the card burns away where it stands; the cards after it
+      // strike into their new places.
+      Strike(
+        child: Destructible(id: note.id, child: _card(context, ref)),
+      );
 
   Widget _card(BuildContext context, WidgetRef ref) {
     final tagsAsync = ref.watch(tagsControllerProvider);
@@ -204,6 +208,18 @@ class NoteCard extends ConsumerWidget {
                                       LucideIcons.pin,
                                       size: AppIconSizes.sm,
                                       color: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                  if (note.isFrozen) ...[
+                                    SizedBox(width: dims.xs),
+                                    Icon(
+                                      LucideIcons.snowflake,
+                                      key: const ValueKey('card-frozen'),
+                                      size: AppIconSizes.sm,
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(
+                                            alpha: AppOpacity.secondary,
+                                          ),
                                     ),
                                   ],
                                   // Opened this session: shown, but still

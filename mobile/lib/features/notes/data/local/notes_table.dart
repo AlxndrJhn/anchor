@@ -24,6 +24,9 @@ class Notes extends Table {
   // means not known yet (a database from before locks, until the feed
   // brings the note again): nothing is sent for it.
   TextColumn get lock => text().nullable()();
+  // Frozen by its owner: nobody can change, trash or delete it until it's
+  // unfrozen. The server's say, like sharing: it is never sent up.
+  BoolColumn get isFrozen => boolean().withDefault(const Constant(false))();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
   // The server version this note was written against; null until it exists there.
   IntColumn get version => integer().nullable()();

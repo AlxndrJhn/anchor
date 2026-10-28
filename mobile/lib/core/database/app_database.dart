@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -169,6 +169,18 @@ class AppDatabase extends _$AppDatabase {
         await update(
           notes,
         ).write(const NotesCompanion(lock: Value(unknownNoteLock)));
+        await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
+          const SyncStateCompanion(cursor: Value(null)),
+        );
+      }
+      if (from < 17) {
+        final existing = await customSelect(
+          'PRAGMA table_info(notes)',
+        ).map((row) => row.read<String>('name')).get();
+        if (!existing.contains('is_frozen')) {
+          await m.addColumn(notes, notes.isFrozen);
+        }
+        // Known once the feed resends the notes.
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
           const SyncStateCompanion(cursor: Value(null)),
         );

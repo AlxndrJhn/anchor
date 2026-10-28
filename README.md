@@ -29,6 +29,7 @@ differences. "Web" and "Android" say where each one is available.
 | Drag notes to arrange them, as in Google Keep: the others make room as you drag, and a moved note stays put until it is edited again (Android: hold a card, then drag) | ✓ | ✓ |
 | A Select button for choosing several notes; holding a card without moving still selects it | | ✓ |
 | Make a copy of a note, with its pictures and attachments | ✓ | ✓ |
+| Freeze a note: nobody can change, trash or delete it until its owner unfreezes it (freezing needs a connection) | ✓ | ✓ |
 | Send a note to other apps as text (checklists as ☐/☑) | ✓ | ✓ |
 | Change the colour of many selected notes at once | ✓ | ✓ |
 | Tick checklist items straight from the notes list ([#70](https://github.com/ZhFahim/anchor/issues/70)) | ✓ | ✓ |

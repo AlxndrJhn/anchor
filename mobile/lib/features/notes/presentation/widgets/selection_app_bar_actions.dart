@@ -9,8 +9,10 @@ import 'package:anchor/features/notes/domain/note_merge.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
+import 'package:anchor/features/notes/presentation/note_freeze_actions.dart';
 import '../note_search.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
+import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import '../notes_controller.dart';
 import 'package:anchor/core/widgets/app_bottom_sheet.dart';
@@ -25,37 +27,52 @@ class SelectionAppBarActions extends ConsumerWidget {
     required this.onExitSelectionMode,
   });
 
+  /// Archives the notes, or brings them back when they all are archived.
   Future<void> _handleArchive(
     BuildContext context,
     WidgetRef ref,
-    List<String> ids,
-  ) async {
+    List<String> ids, {
+    bool unarchive = false,
+  }) async {
     final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.archive,
+        icon: unarchive ? LucideIcons.archiveRestore : LucideIcons.archive,
         iconColor: theme.colorScheme.primary,
-        title: 'Archive ${_notes(ids.length)}?',
-        message: '${_these(ids.length)} will be moved to archive.',
+        title: '${unarchive ? 'Unarchive' : 'Archive'} ${_notes(ids.length)}?',
+        message: unarchive
+            ? '${_these(ids.length)} will be moved back to your notes.'
+            : '${_these(ids.length)} will be moved to archive.',
         cancelText: 'Cancel',
-        confirmText: 'Archive',
+        confirmText: unarchive ? 'Unarchive' : 'Archive',
         onConfirm: () {},
       ),
     );
     if (confirmed == true && context.mounted) {
       try {
-        await ref.read(notesControllerProvider.notifier).bulkArchiveNotes(ids);
+        final controller = ref.read(notesControllerProvider.notifier);
+        if (unarchive) {
+          await controller.bulkUnarchiveNotes(ids);
+        } else {
+          await controller.bulkArchiveNotes(ids);
+        }
         onExitSelectionMode();
         if (context.mounted) {
           AppSnackbar.showSuccess(
             context,
-            message: '${_notes(ids.length)} archived',
+            message:
+                '${_notes(ids.length)} ${unarchive ? 'unarchived' : 'archived'}',
           );
         }
       } catch (e) {
         if (context.mounted) {
-          AppSnackbar.showError(context, message: 'Failed to archive notes');
+          AppSnackbar.showError(
+            context,
+            message: unarchive
+                ? 'Failed to unarchive notes'
+                : 'Failed to archive notes',
+          );
         }
       }
     }
@@ -66,7 +83,20 @@ class SelectionAppBarActions extends ConsumerWidget {
     WidgetRef ref,
     List<String> ids,
     Set<String> sharedIds,
+    Set<String> frozenIds,
   ) async {
+    // Frozen notes stay where they are.
+    ids = [
+      for (final id in ids)
+        if (!frozenIds.contains(id)) id,
+    ];
+    if (ids.isEmpty) {
+      AppSnackbar.showInfo(
+        context,
+        message: 'Frozen notes can’t be deleted. Unfreeze them first.',
+      );
+      return;
+    }
     final sharedCount = sharedIds.length;
     // Your own notes go to trash at once, with Undo. Shared ones ask first:
     // Undo can't bring them back, their owners have to share them again.
@@ -128,6 +158,8 @@ class SelectionAppBarActions extends ConsumerWidget {
     final String? refusal;
     if (selected.any((n) => !n.isOwner)) {
       refusal = 'Only your own notes can be merged';
+    } else if (selected.any((n) => n.isFrozen)) {
+      refusal = 'Frozen notes can’t be merged; unfreeze them first';
     } else if (selected.any((n) => isNoteHidden(n, unlocked))) {
       refusal = 'Open the locked notes first, then merge them';
     } else {
@@ -320,23 +352,54 @@ class SelectionAppBarActions extends ConsumerWidget {
       orElse: () => <Note>[],
     );
 
+    // Archived notes the list shows after the others (a search, a tag or a
+    // filter) can be picked too, as in the list.
+    final filters = ref.watch(noteFiltersControllerProvider);
+    final selectedTagId = ref.watch(selectedTagFilterProvider);
+    final withArchived =
+        query.trim().isNotEmpty || selectedTagId != null || !filters.isEmpty;
+    final archivedNotes = !withArchived
+        ? const <Note>[]
+        : (ref.watch(archiveControllerProvider).value ?? const <Note>[])
+              .where(
+                (note) =>
+                    (selectedTagId == null ||
+                        note.tagIds.contains(selectedTagId)) &&
+                    filters.matches(note) &&
+                    noteMatchesSearch(
+                      note,
+                      query,
+                      titleOnly: isNoteHidden(note, unlocked),
+                    ),
+              )
+              .toList();
+    final selectableNotes = [...filteredNotes, ...archivedNotes];
+
     final allSelected =
-        filteredNotes.isNotEmpty &&
-        selectedNoteIds.length == filteredNotes.length;
+        selectableNotes.isNotEmpty &&
+        selectedNoteIds.length == selectableNotes.length;
 
     // When every selected note is already pinned, the toggle unpins instead.
-    final selectedNotes = filteredNotes
+    final selectedNotes = selectableNotes
         .where((note) => selectedNoteIds.contains(note.id))
         .toList();
     final allSelectedPinned =
         selectedNotes.isNotEmpty && selectedNotes.every((n) => n.isPinned);
-    final selectedSharedIds = notes.maybeWhen(
-      data: (notesList) => {
-        for (final n in notesList)
-          if (selectedNoteIds.contains(n.id) && !n.isOwner) n.id,
-      },
-      orElse: () => <String>{},
-    );
+    // This person's own: they can freeze them, and frozen ones don't delete.
+    final ownSelected = selectedNotes.where((n) => n.isOwner).toList();
+    final allOwnFrozen =
+        ownSelected.isNotEmpty && ownSelected.every((n) => n.isFrozen);
+    final selectedFrozenIds = {
+      for (final n in ownSelected)
+        if (n.isFrozen) n.id,
+    };
+    // When every selected note is archived, the toggle unarchives instead.
+    final allSelectedArchived =
+        selectedNotes.isNotEmpty && selectedNotes.every((n) => n.isArchived);
+    final selectedSharedIds = {
+      for (final n in [...?notes.value, ...archivedNotes])
+        if (selectedNoteIds.contains(n.id) && !n.isOwner) n.id,
+    };
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -370,21 +433,25 @@ class SelectionAppBarActions extends ConsumerWidget {
             ),
             tooltip: allSelectedPinned ? 'Unpin' : 'Pin',
           ),
-        // Lock (one choice for them all) and merge, under More
+        // Lock (one choice for them all), freeze / unfreeze the ones this
+        // person owns, and merge, under More
         if (selectedNoteIds.isNotEmpty)
-          PopupMenuButton<String>(
+          PopupMenuButton<_MoreAction>(
             icon: const Icon(LucideIcons.ellipsisVertical),
             tooltip: 'More',
-            onSelected: (choice) async {
-              switch (choice) {
-                case 'lock':
-                  final locked = await lockSelectedNotes(
-                    context,
-                    ref,
-                    selectedNotes,
-                  );
-                  if (locked) onExitSelectionMode();
-                case 'merge':
+            onSelected: (action) async {
+              switch (action) {
+                case _MoreAction.lock:
+                  if (await lockSelectedNotes(context, ref, selectedNotes)) {
+                    onExitSelectionMode();
+                  }
+                case _MoreAction.freeze:
+                  final done = await setNotesFrozen(context, ref, [
+                    for (final n in ownSelected)
+                      if (n.isFrozen == allOwnFrozen) n.id,
+                  ], !allOwnFrozen);
+                  if (done) onExitSelectionMode();
+                case _MoreAction.merge:
                   // In the order they were picked: the first one stays.
                   final byId = {for (final n in selectedNotes) n.id: n};
                   await _handleMerge(context, ref, [
@@ -394,31 +461,45 @@ class SelectionAppBarActions extends ConsumerWidget {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
-                value: 'lock',
+                value: _MoreAction.lock,
                 child: ListTile(
                   leading: Icon(LucideIcons.lock),
                   title: Text('Lock…'),
-                  contentPadding: EdgeInsets.zero,
                 ),
               ),
+              if (ownSelected.isNotEmpty)
+                PopupMenuItem(
+                  value: _MoreAction.freeze,
+                  child: ListTile(
+                    leading: const Icon(LucideIcons.snowflake),
+                    title: Text(allOwnFrozen ? 'Unfreeze' : 'Freeze'),
+                  ),
+                ),
               PopupMenuItem(
-                value: 'merge',
+                value: _MoreAction.merge,
                 enabled: selectedNotes.length >= 2,
                 child: const ListTile(
                   leading: Icon(LucideIcons.merge),
                   title: Text('Merge notes'),
-                  contentPadding: EdgeInsets.zero,
                 ),
               ),
             ],
           ),
-        // Archive button
+        // Archive / unarchive toggle
         if (selectedNoteIds.isNotEmpty)
           IconButton(
-            icon: const Icon(LucideIcons.archive),
-            onPressed: () =>
-                _handleArchive(context, ref, selectedNoteIds.toList()),
-            tooltip: 'Archive',
+            icon: Icon(
+              allSelectedArchived
+                  ? LucideIcons.archiveRestore
+                  : LucideIcons.archive,
+            ),
+            onPressed: () => _handleArchive(
+              context,
+              ref,
+              selectedNoteIds.toList(),
+              unarchive: allSelectedArchived,
+            ),
+            tooltip: allSelectedArchived ? 'Unarchive' : 'Archive',
           ),
         // Delete button
         if (selectedNoteIds.isNotEmpty)
@@ -429,6 +510,7 @@ class SelectionAppBarActions extends ConsumerWidget {
               ref,
               selectedNoteIds.toList(),
               selectedSharedIds,
+              selectedFrozenIds,
             ),
             tooltip: 'Delete',
             color: theme.colorScheme.error,
@@ -444,7 +526,7 @@ class SelectionAppBarActions extends ConsumerWidget {
             } else {
               ref
                   .read(selectedNoteIdsProvider.notifier)
-                  .selectAll(filteredNotes.map((n) => n.id).toList());
+                  .selectAll(selectableNotes.map((n) => n.id).toList());
             }
           },
           tooltip: allSelected ? 'Deselect all' : 'Select all',
@@ -453,3 +535,5 @@ class SelectionAppBarActions extends ConsumerWidget {
     );
   }
 }
+
+enum _MoreAction { lock, freeze, merge }

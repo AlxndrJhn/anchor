@@ -76,6 +76,19 @@ export async function verifyNoteLock(
   return ok;
 }
 
+/**
+ * Freezes the note, or unfreezes it (owner only); answers with the note at
+ * its new version.
+ */
+export async function setNoteFrozen(
+  id: string,
+  isFrozen: boolean,
+): Promise<Note> {
+  return api
+    .patch(`api/notes/${id}/freeze`, { json: { isFrozen } })
+    .json<Note>();
+}
+
 /** "Make a copy": the server copies the text, colour, tags and attachments. */
 export async function copyNote(id: string): Promise<Note> {
   return api.post(`api/notes/${id}/copy`).json<Note>();
@@ -226,6 +239,17 @@ export async function bulkLockNotes(
   return inBulkBatches(noteIds, (batch) =>
     api
       .post("api/notes/bulk/lock", { json: { noteIds: batch, lock } })
+      .json<{ count: number }>(),
+  );
+}
+
+export async function bulkFreezeNotes(
+  noteIds: string[],
+  isFrozen: boolean,
+): Promise<{ count: number }> {
+  return inBulkBatches(noteIds, (batch) =>
+    api
+      .post("api/notes/bulk/freeze", { json: { noteIds: batch, isFrozen } })
       .json<{ count: number }>(),
   );
 }

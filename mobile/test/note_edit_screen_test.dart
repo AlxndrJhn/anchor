@@ -257,6 +257,28 @@ void main() {
     expect(find.text('Share'), findsOneWidget);
   });
 
+  testWidgets('a frozen note reads only, has no delete, and offers Unfreeze', (
+    tester,
+  ) async {
+    const note = Note(
+      id: 'n1',
+      title: 'Deed',
+      content: '{"ops":[{"insert":"hi\\n"}]}',
+      isFrozen: true,
+    );
+    await pumpScreen(tester, note: note);
+
+    expect(find.byTooltip('Pin Note'), findsOneWidget);
+    expect(find.byTooltip('Delete note'), findsNothing);
+    expect(find.textContaining('Frozen.'), findsOneWidget);
+    expect(find.text('Unfreeze'), findsOneWidget);
+    expect(editorController(tester).readOnly, isTrue);
+
+    await tester.tap(find.byTooltip('More options'));
+    await tester.pumpAndSettle();
+    expect(find.text('Unfreeze'), findsNWidgets(2));
+  });
+
   testWidgets('deleting your note asks nothing and offers Undo', (
     tester,
   ) async {

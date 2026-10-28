@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import 'strike.dart';
+
 /// How long a card takes to burn away.
 const destructionDuration = Duration(milliseconds: 1100);
 
@@ -244,11 +246,15 @@ void restoreNoteCards(Iterable<String> ids) {
 }
 
 /// Burns away, in place, the cards of notes [ids] that are on screen;
-/// completes when they're gone, for the notes to be deleted then.
-Future<void> burnNoteCards(Iterable<String> ids) => Future.wait([
-  for (final id in ids)
-    if (_cards[id] case final card?) card.burn(),
-]);
+/// completes when they're gone, for the notes to be deleted then. The cards
+/// that move into their places strike there; see [Strike].
+Future<void> burnNoteCards(Iterable<String> ids) async {
+  await Future.wait([
+    for (final id in ids)
+      if (_cards[id] case final card?) card.burn(),
+  ]);
+  armCardStrike();
+}
 
 /// Where a card burns first: one threshold per block, from 0 (first) to 1
 /// (last), in smooth patches like Balatro's dissolve.

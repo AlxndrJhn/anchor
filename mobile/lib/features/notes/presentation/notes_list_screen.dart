@@ -264,7 +264,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  /// New note or new list, above the New Note button that was held.
+  /// New note, new list or camera note, above the New Note button that was
+  /// held.
   Future<void> _showNewMenu(BuildContext fabContext, String? tagId) async {
     HapticFeedback.mediumImpact();
     final box = fabContext.findRenderObject() as RenderBox?;
@@ -289,6 +290,13 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
           ),
         ),
         PopupMenuItem(
+          value: 'camera',
+          child: ListTile(
+            leading: Icon(LucideIcons.camera),
+            title: Text('Camera note'),
+          ),
+        ),
+        PopupMenuItem(
           value: 'note',
           child: ListTile(
             leading: Icon(LucideIcons.stickyNote),
@@ -298,10 +306,11 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       ],
     );
     if (!mounted || choice == null) return;
-    context.go(
-      choice == 'list' ? '/note/new?checklist=1' : '/note/new',
-      extra: tagId,
-    );
+    context.go(switch (choice) {
+      'list' => '/note/new?checklist=1',
+      'camera' => '/note/new?camera=1',
+      _ => '/note/new',
+    }, extra: tagId);
   }
 
   /// The note's page, carrying the search so the note marks its matches.
@@ -459,6 +468,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         (context, index) => item(notes[index]),
         childCount: notes.length,
         findChildIndexCallback: indexOf,
+        // Each card has its own; around it, one would keep the card from
+        // seeing it moved, to strike into place (see Strike).
+        addRepaintBoundaries: false,
       ),
     );
 
@@ -489,6 +501,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                 ),
                 childCount: notes.length,
                 findChildIndexCallback: indexOf,
+                addRepaintBoundaries: false,
               ),
             ),
     );
@@ -844,9 +857,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                           _notesSliver(
                             archivedMatches,
                             viewOptions,
-                            false,
-                            const <String>{},
-                            selectable: false,
+                            isSelectionMode,
+                            selectedNoteIds,
                             underLabel: true,
                             lazy: filteredNotes.isEmpty,
                           ),
@@ -915,9 +927,9 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             ),
             if (!isSelectionMode)
               Builder(
-                // Holding the button offers a new list as well, as in
-                // Google Keep; double-tapping it pastes the clipboard into a
-                // new note.
+                // Holding the button offers a new list or a camera note as
+                // well, as in Google Keep; double-tapping it pastes the
+                // clipboard into a new note.
                 builder: (fabContext) => Listener(
                   onPointerDown: (_) => _checkClipboard(),
                   child: GestureDetector(

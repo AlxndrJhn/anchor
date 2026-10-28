@@ -27,6 +27,7 @@ import {
   NotesBoardSkeleton,
 } from "@/features/notes/components/notes-board";
 import { ShareDialog } from "@/features/notes/components/share-dialog";
+import { isOwnFrozen } from "@/features/notes/hooks/use-note-freeze";
 import { useNoteList } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
@@ -73,10 +74,10 @@ export default function ArchivePage() {
     }) => {
       if (kind === "unarchive") await eachLimited(ids, unarchiveNote);
       else {
-        // Deleted cards burn away in place; the others move up after.
+        // Deleted cards burn away in place; the others strike into place after.
         const burn = burnNoteCards(ids);
         await burn.done;
-        list.prepareCardMotion();
+        list.prepareCardMotion("strike");
         await bulkDeleteNotes(ids).catch((error: unknown) => {
           burn.restore();
           throw error;
@@ -140,8 +141,14 @@ export default function ArchivePage() {
   );
 
   const deleteChosen = () => {
-    const ids = list.chosen.map((n) => n.id);
-    const sharedCount = list.chosen.filter(
+    // Frozen notes stay where they are.
+    const deletable = list.chosen.filter((n) => !isOwnFrozen(n));
+    if (!deletable.length) {
+      toast.info("Frozen notes can’t be deleted; unfreeze them first");
+      return;
+    }
+    const ids = deletable.map((n) => n.id);
+    const sharedCount = deletable.filter(
       (n) => n.permission !== "owner",
     ).length;
     if (sharedCount) setConfirmRemove({ ids, sharedCount });

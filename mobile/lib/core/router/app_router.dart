@@ -90,6 +90,8 @@ GoRouter goRouter(Ref ref) {
                       state.uri.queryParameters['checklist'] == '1',
                   // Double-tapping New Note pastes the clipboard into it.
                   pasteClipboard: state.uri.queryParameters['paste'] == '1',
+                  // "Camera note", from holding the New Note button.
+                  takePicture: state.uri.queryParameters['camera'] == '1',
                 ),
               );
             },

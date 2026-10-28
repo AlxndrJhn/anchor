@@ -110,6 +110,9 @@ model Note {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   stateChangedAt DateTime @default(now())
+  // Frozen by its owner: nobody can change, trash or delete it until it's
+  // unfrozen.
+  isFrozen    Boolean     @default(false)
   userId      String
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags        Tag[]

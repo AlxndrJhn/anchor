@@ -158,6 +158,8 @@ export const ATTACHMENT_AUDIO_MIME_TYPES = new Set([
 // Error messages
 export const ERROR_MESSAGES = {
   NOTE_NOT_FOUND: 'Note not found',
+  NOTE_FROZEN: 'This note is frozen; unfreeze it first',
+  ONLY_OWNER_CAN_FREEZE: 'Only note owner can freeze notes',
   REVISION_NOT_FOUND: 'Revision not found',
   USER_NOT_FOUND: 'User not found',
   SHARE_NOT_FOUND: 'Share not found',

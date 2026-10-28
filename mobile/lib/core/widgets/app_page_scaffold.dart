@@ -12,12 +12,14 @@ class AppPageScaffold extends StatelessWidget {
     required this.title,
     required this.body,
     this.actions,
+    this.leading,
     this.wash = PageWash.gradient,
   });
 
   final Widget title;
   final Widget body;
   final List<Widget>? actions;
+  final Widget? leading;
   final PageWash wash;
 
   /// Height the bar covers, including the status bar.
@@ -28,7 +30,7 @@ class AppPageScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppPageBar(title: title, actions: actions),
+      appBar: AppPageBar(title: title, actions: actions, leading: leading),
       body: wash.wrap(body),
     );
   }
