@@ -21,6 +21,8 @@ import { memoryStorage } from 'multer';
 import { NoteAttachmentsService } from '../services/note-attachments.service';
 import { ReorderAttachmentsDto } from '../dto/reorder-attachments.dto';
 import { ATTACHMENT_MAX_FILE_SIZE } from '../constants/notes.constants';
+import { servedMimeType } from '../utils/attachment-storage.util';
+import { AttachmentType } from 'src/generated/prisma/enums';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../../auth/auth.guard';
 
@@ -42,8 +44,9 @@ export class NoteAttachmentsController {
     @CurrentUser('id') userId: string,
     @Param('noteId') noteId: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body('id') clientId?: string,
   ) {
-    return this.noteAttachmentsService.upload(userId, noteId, file);
+    return this.noteAttachmentsService.upload(userId, noteId, file, clientId);
   }
 
   @Get()
@@ -64,9 +67,10 @@ export class NoteAttachmentsController {
       attachmentId,
     );
 
+    const isFile = attachment.type === AttachmentType.file;
     res.set({
-      'Content-Type': attachment.mimeType,
-      'Content-Disposition': `inline; filename="${encodeURIComponent(attachment.originalFilename)}"`,
+      'Content-Type': servedMimeType(attachment.type, attachment.mimeType),
+      'Content-Disposition': `${isFile ? 'attachment' : 'inline'}; filename="${encodeURIComponent(attachment.originalFilename)}"`,
       'Content-Length': attachment.fileSize.toString(),
       'Cache-Control': 'private, max-age=31536000, immutable',
       'X-Content-Type-Options': 'nosniff',

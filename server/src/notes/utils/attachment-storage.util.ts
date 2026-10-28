@@ -4,16 +4,14 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { AttachmentType } from 'src/generated/prisma/enums';
 import {
-  ATTACHMENT_ALLOWED_MIME_TYPES,
+  ATTACHMENT_AUDIO_MIME_TYPES,
+  ATTACHMENT_IMAGE_MIME_TYPES,
   ATTACHMENT_MAX_FILE_SIZE,
 } from '../constants/notes.constants';
 
 export function assertValidAttachmentFile(file?: Express.Multer.File): void {
   if (!file) {
     throw new BadRequestException('No file provided');
-  }
-  if (!ATTACHMENT_ALLOWED_MIME_TYPES.has(file.mimetype)) {
-    throw new BadRequestException(`File type ${file.mimetype} is not allowed`);
   }
   if (file.size > ATTACHMENT_MAX_FILE_SIZE) {
     throw new BadRequestException(
@@ -22,10 +20,27 @@ export function assertValidAttachmentFile(file?: Express.Multer.File): void {
   }
 }
 
+/** Pictures and recordings the clients show; anything else is a file. */
 export function attachmentTypeForMime(mimeType: string): AttachmentType {
-  return mimeType.startsWith('image/')
-    ? AttachmentType.image
-    : AttachmentType.audio;
+  if (ATTACHMENT_IMAGE_MIME_TYPES.has(mimeType)) return AttachmentType.image;
+  if (ATTACHMENT_AUDIO_MIME_TYPES.has(mimeType)) return AttachmentType.audio;
+  return AttachmentType.file;
+}
+
+/**
+ * The Content-Type an attachment is served with. A file is sent as bytes to
+ * download, never as something the browser would render (HTML, SVG) on the
+ * app's own origin.
+ */
+export function servedMimeType(type: AttachmentType, mimeType: string) {
+  return type === AttachmentType.file ? 'application/octet-stream' : mimeType;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** An id a client picked for its upload, if it is a usable one. */
+export function clientAttachmentId(id: unknown): string | undefined {
+  return typeof id === 'string' && UUID.test(id) ? id : undefined;
 }
 
 export async function writeAttachmentFile(
