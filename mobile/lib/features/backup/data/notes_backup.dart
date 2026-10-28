@@ -170,6 +170,8 @@ class NotesBackup {
         files++;
         attachmentEntries.add({
           'file': name,
+          // What the pictures placed in the note's text call it.
+          'id': row.serverAttachmentId ?? row.id,
           'type': row.type,
           'originalFilename': row.originalFilename,
           'mimeType': row.mimeType,
@@ -417,6 +419,8 @@ class NotesBackup {
                 );
           }
 
+          // Restored attachments get new ids; the text's pictures follow.
+          final newAttachmentIds = <String, String>{};
           for (final attachment
               in note['attachments'] as List? ?? const <dynamic>[]) {
             final entry = attachment as Map<String, dynamic>;
@@ -447,7 +451,7 @@ class NotesBackup {
                     noteId: newId,
                     type:
                         entry['type'] as String? ??
-                        (mimeType.startsWith('image/') ? 'image' : 'audio'),
+                        domain.AttachmentType.fromMimeType(mimeType).name,
                     originalFilename: filename,
                     mimeType: mimeType,
                     fileSize: content.length,
@@ -458,7 +462,23 @@ class NotesBackup {
                     ),
                   ),
                 );
+            final oldId = entry['id'];
+            if (oldId is String && oldId.isNotEmpty) {
+              newAttachmentIds[oldId] = localId;
+            }
             restoredFiles++;
+          }
+          if (content != null) {
+            var renamed = content;
+            for (final MapEntry(key: from, value: to)
+                in newAttachmentIds.entries) {
+              renamed = renamed.replaceAll(from, to);
+            }
+            if (renamed != content) {
+              await (_db.update(_db.notes)
+                    ..where((tbl) => tbl.id.equals(newId)))
+                  .write(NotesCompanion(content: drift.Value(renamed)));
+            }
           }
           restoredNotes++;
         }

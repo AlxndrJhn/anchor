@@ -206,6 +206,29 @@ void main() {
     expect(await File(attachment.localPath!).readAsBytes(), [1, 2, 3, 4]);
   });
 
+  test('pictures in a restored note’s text find their new files', () async {
+    String showing(String id) => jsonEncode({
+      'ops': [
+        {
+          'insert': {
+            'note-image': jsonEncode({'id': id}),
+          },
+        },
+        {'insert': '\n'},
+      ],
+    });
+    await insertNote(source, 'n1', title: 'Pics', content: showing('a1'));
+    await insertImage(source, 'a1', 'n1');
+    final backup = await backupOf(source).export();
+
+    await backupOf(target).restore(backup.bytes);
+
+    final note = await target.select(target.notes).getSingle();
+    final attachment = await target.select(target.noteAttachments).getSingle();
+    expect(attachment.id, isNot('a1'));
+    expect(note.content, showing(attachment.id));
+  });
+
   test('restoring twice, or onto the same notes, adds nothing', () async {
     await insertNote(source, 'n1', title: 'Hello');
     final backup = await backupOf(source).export();
