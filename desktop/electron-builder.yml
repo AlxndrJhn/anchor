@@ -3,7 +3,10 @@
 #   Windows: electron-builder --win nsis --x64     -> Anchor-Setup-<version>.exe
 #   macOS:   electron-builder --mac dmg --universal -> Anchor-<version>-universal.dmg
 appId: io.github.alxndrjhn.anchor
-productName: Anchor
+productName: Anchor+
+# The program file keeps the old name, so shortcuts made before the rename
+# still start the app after an update.
+executableName: Anchor
 copyright: Anchor contributors, AGPL-3.0
 directories:
   output: dist
@@ -30,8 +33,8 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  shortcutName: Anchor
-  uninstallDisplayName: Anchor
+  shortcutName: Anchor+
+  uninstallDisplayName: Anchor+
 
 mac:
   target:

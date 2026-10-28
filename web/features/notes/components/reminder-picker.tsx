@@ -139,7 +139,7 @@ function ReminderPicker({
             Reminder
           </PopoverTitle>
           <PopoverDescription className="text-muted-foreground text-small">
-            Sent to the Anchor app on your phone
+            Sent to the Anchor+ app on your phone
           </PopoverDescription>
         </div>
         {onClose && (

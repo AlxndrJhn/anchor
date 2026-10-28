@@ -72,7 +72,7 @@ export const anchorAdapter: ImportAdapter = {
       manifest.version > SUPPORTED_VERSION
     ) {
       throw new ImportFileError(
-        "This backup is from a newer version of Anchor. Update your server, then try again.",
+        "This backup is from a newer version of Anchor+. Update your server, then try again.",
       );
     }
 

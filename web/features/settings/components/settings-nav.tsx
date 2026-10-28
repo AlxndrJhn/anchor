@@ -7,15 +7,18 @@ import {
   Lock,
   LockKeyhole,
   PencilLine,
+  Play,
   Search,
   SunMoon,
   UserRound,
 } from "lucide-react";
 import * as React from "react";
+import { isDemo, isServerless } from "@/lib/local-backend/mode";
 import { glidePill, prefersReducedMotion } from "@/lib/motion";
 import { onUserScroll } from "@/lib/user-scroll";
 
-const SECTIONS = [
+const ALL_SECTIONS = [
+  { id: "demos", label: "Feature demos", icon: Play },
   { id: "profile", label: "Profile", icon: UserRound },
   { id: "appearance", label: "Appearance", icon: SunMoon },
   { id: "editor", label: "Editor", icon: PencilLine },
@@ -26,6 +29,14 @@ const SECTIONS = [
   { id: "password", label: "Password", icon: Lock },
   { id: "about", label: "About", icon: Info },
 ] as const;
+
+// Without a server there is no API token, password or picture search; the
+// demo build lists its feature demos first.
+const SECTIONS = ALL_SECTIONS.filter((section) =>
+  section.id === "demos"
+    ? isDemo
+    : !(isServerless && ["token", "password", "search"].includes(section.id)),
+);
 
 export function SettingsNav() {
   const [activeSection, setActiveSection] = React.useState<string>(

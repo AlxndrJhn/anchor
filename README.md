@@ -17,11 +17,31 @@ Anchor focuses on speed, privacy, simplicity, and reliability across mobile and 
 
 </div>
 
+## Try it in your browser
+
+Each release also publishes the web app on GitHub Pages, without a server:
+
+- **[alxndrjhn.github.io/anchor](https://alxndrjhn.github.io/anchor/)**: the
+  app itself. Your notes, tags and pictures stay in this browser (IndexedDB)
+  and never leave it; Settings › Import and export backs them up.
+- **[alxndrjhn.github.io/anchor/demo](https://alxndrjhn.github.io/anchor/demo/)**:
+  a playground with sample notes, kept in memory only: a reload starts it
+  over. Settings › Feature demos plays a short demo of each feature, after
+  which it's yours to try; each has its own address, such as
+  [/demo/freeze](https://alxndrjhn.github.io/anchor/demo/freeze).
+
+Without a server there is no syncing, sharing, sign-in, API token or picture
+search. To publish your own copy, set Settings › Pages › Source to "GitHub
+Actions"; the workflow is `.github/workflows/pages.yml`, and
+`BASE_PATH=/anchor pnpm build:pages` (in `web/`) builds the same site into
+`web/out`.
+
 ## Anchor+ vs Anchor
 
 Anchor+ is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
 to date with it, and works with any Anchor server. Everything upstream does,
-Anchor+ does too; these are the differences. "Web" and "Android" say where each one is available.
+Anchor+ does too; these are the differences. "Web" and "Android" say where
+each one is available.
 
 | | Web | Android |
 |---|:---:|:---:|
@@ -334,16 +354,16 @@ shortcuts). It does not store notes itself; it connects to your server.
    [releases page](https://github.com/AlxndrJhn/anchor/releases):
    - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
-     open it and drag Anchor to Applications
+     open it and drag Anchor+ to Applications
 
-2. **Connect:** on first launch, enter the address you open Anchor at in your
+2. **Connect:** on first launch, enter the address you open Anchor+ at in your
    browser, such as `https://notes.example.com`. The app checks that the server
    answers, then remembers it. **Change server…** (File menu on Windows, the
-   Anchor menu on macOS) switches to another one.
+   Anchor+ menu on macOS) switches to another one.
 
 The builds are not signed, so the system warns the first time:
 
-- **macOS:** right-click Anchor in Applications and choose **Open**, then
+- **macOS:** right-click Anchor+ in Applications and choose **Open**, then
   **Open** again; or try to open it once, then allow it under **System
   Settings › Privacy & Security** (**Open Anyway**).
 - **Windows:** if SmartScreen says it protected your PC, choose
@@ -351,9 +371,9 @@ The builds are not signed, so the system warns the first time:
 
 The app keeps itself up to date: it looks for a newer release now and then,
 downloads it in the background, and then shows a small **Update** button in
-the top right (also **Restart to Update** in the File menu, or the Anchor menu
-on macOS). Clicking it restarts Anchor on the new version. On macOS this needs
-Anchor in a folder you can write to, such as Applications; run from the disk
+the top right (also **Restart to Update** in the File menu, or the Anchor+ menu
+on macOS). Clicking it restarts Anchor+ on the new version. On macOS this needs
+Anchor+ in a folder you can write to, such as Applications; run from the disk
 image, the button opens the release page instead.
 
 Links to other websites open in your browser. To build it yourself:

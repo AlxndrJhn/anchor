@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { publicPath } from "@/lib/local-backend/mode";
 import { cn } from "@/lib/utils";
 
 /** The app's icon: a ruled pad with a brass anchor on slate cloth. */
 export function AnchorLogo({ className }: { className?: string }) {
   return (
     <img
-      src="/anchor-mark.svg"
+      src={publicPath("/anchor-mark.svg")}
       alt=""
       aria-hidden
       draggable={false}

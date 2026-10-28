@@ -70,6 +70,8 @@ export function refreshAccessToken(): Promise<boolean> {
 
 export const api = ky.create({
   prefix: "/",
+  // Looked up on each request: the serverless builds answer it themselves.
+  fetch: (input, init) => globalThis.fetch(input, init),
   timeout: 30000,
   hooks: {
     beforeRequest: [

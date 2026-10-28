@@ -165,7 +165,7 @@ export function ProfileSection() {
                   if (!file) return;
                   if (!PICTURE_TYPES.includes(file.type))
                     return setPictureError(
-                      "That file isn’t a picture Anchor can use. Pick a JPG, PNG or WebP.",
+                      "That file isn’t a picture Anchor+ can use. Pick a JPG, PNG or WebP.",
                     );
                   if (file.size > 5 * 1024 * 1024)
                     return setPictureError(

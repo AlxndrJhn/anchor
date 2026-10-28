@@ -30,7 +30,7 @@ function ThemeThumb({ theme }: { theme: "light" | "dark" }) {
 
 const ANCHOR_SCHEME = {
   id: "anchor",
-  name: "Anchor",
+  name: "Anchor+",
   light: {
     background: "#F0F4F8",
     card: "#FFFFFF",
@@ -213,7 +213,7 @@ export function AppearanceSection() {
   return (
     <Section id="appearance" title="Appearance">
       <Row className="grid items-start gap-3.5">
-        <RowText title="Theme" text="Choose how Anchor looks." />
+        <RowText title="Theme" text="Choose how Anchor+ looks." />
         <RadioCards
           aria-label="Theme"
           value={theme as "light" | "dark" | "system"}

@@ -1,4 +1,5 @@
 import { getAccessToken } from "@/features/auth/store";
+import { isServerless } from "@/lib/local-backend/mode";
 import { refreshAccessToken } from "./client";
 
 interface UploadOptions {
@@ -31,15 +32,30 @@ function send(path: string, body: FormData, options: UploadOptions) {
   });
 }
 
+/** Without a server the app stores the file itself (see lib/local-backend). */
+async function sendLocally(path: string, body: FormData) {
+  const response = await fetch(`/${path}`, { method: "POST", body });
+  return { status: response.status, text: await response.text() };
+}
+
 /** XMLHttpRequest: fetch has no upload progress. */
 export async function uploadWithProgress<T>(
   path: string,
   body: FormData,
   options: UploadOptions = {},
 ): Promise<T> {
+  if (isServerless) {
+    const response = await sendLocally(path, body);
+    options.onProgress?.(1);
+    return parseUpload<T>(response);
+  }
   let response = await send(path, body, options);
   if (response.status === 401 && (await refreshAccessToken()))
     response = await send(path, body, options);
+  return parseUpload<T>(response);
+}
+
+function parseUpload<T>(response: { status: number; text: string }): T {
   let data: unknown = null;
   try {
     data = JSON.parse(response.text);
