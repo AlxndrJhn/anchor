@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CalendarDays,
   Code,
   Heading1,
   Heading2,
@@ -17,8 +18,10 @@ import {
 import * as React from "react";
 import { menuItem, menuSurface } from "@/components/ui/dropdown-menu";
 import { ShortcutHints } from "@/components/ui/shortcut-hints";
+import { usePreferencesStore } from "@/features/preferences";
 import { isPhoneWidth } from "@/lib/hooks/use-is-phone";
 import { cn } from "@/lib/utils";
+import { formatDate } from "../../date-stamp";
 import { lineFormatChange, type QuillInstance } from "../../quill";
 import { findSlashItems } from "../../slash-search";
 
@@ -33,6 +36,7 @@ type Kind =
   | "code"
   | "text"
   | "link"
+  | "date"
   | "attachment"
   | "record";
 
@@ -113,6 +117,12 @@ const ITEMS: {
     format: {},
   },
   { kind: "link", label: "Link", icon: <Link />, keywords: "url web address" },
+  {
+    kind: "date",
+    label: "Date",
+    icon: <CalendarDays />,
+    keywords: "today day now stamp",
+  },
   {
     kind: "attachment",
     label: "Picture or audio",
@@ -310,6 +320,16 @@ export function SlashMenu({
       const from = dropsSpace ? current.index - 1 : current.index;
       quill.history.cutoff();
       quill.deleteText(from, end - from, "user");
+      if (kind === "date") {
+        const date = formatDate(
+          new Date(),
+          usePreferencesStore.getState().editor.dateFormat,
+        );
+        quill.insertText(from, date, "user");
+        quill.history.cutoff();
+        quill.setSelection(from + date.length, 0, "user");
+        return;
+      }
       if (!item.format) {
         quill.history.cutoff();
         quill.setSelection(from, 0, "silent");
