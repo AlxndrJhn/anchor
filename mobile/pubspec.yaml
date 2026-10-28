@@ -95,6 +95,7 @@ dependencies:
   google_mlkit_text_recognition: ^0.17.1
   local_auth: ^3.0.2
   crypto: ^3.0.8
+  archive: ^4.0.0
 
 dev_dependencies:
   flutter_test:
