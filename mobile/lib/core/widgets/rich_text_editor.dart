@@ -6,6 +6,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+// Reads pictures from the clipboard; flutter_quill exports it for this.
+// ignore: experimental_member_use
+import 'package:flutter_quill/internal.dart' show ClipboardServiceProvider;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../search/search_pattern.dart';
@@ -66,9 +69,11 @@ class RichTextEditor extends StatefulWidget {
   final Widget? header;
 
   /// Called with a picture the keyboard inserts (for example a screenshot
-  /// pasted from Gboard's clipboard). Null keeps the keyboard from offering
-  /// pictures.
-  final void Function(Uint8List bytes, String mimeType)? onImageInserted;
+  /// pasted from Gboard's clipboard), or pasted with "Paste picture", and
+  /// where in the text the caret was. Null keeps the keyboard from offering
+  /// pictures, and the menu from pasting them.
+  final void Function(Uint8List bytes, String mimeType, int offset)?
+  onImageInserted;
 
   /// A search the note was opened from: its matches are marked, and the
   /// first is scrolled into view, until the text is edited.
@@ -284,7 +289,24 @@ class RichTextEditorState extends State<RichTextEditor>
   void _onContentInserted(KeyboardInsertedContent content) {
     final bytes = content.data;
     if (bytes == null || bytes.isEmpty) return;
-    widget.onImageInserted?.call(bytes, content.mimeType);
+    widget.onImageInserted?.call(bytes, content.mimeType, caretOffset);
+  }
+
+  /// The text selection menu, with "Paste picture" when the clipboard holds
+  /// one.
+  Widget _contextMenu(BuildContext context, QuillRawEditorState state) {
+    final onImage = widget.onImageInserted;
+    if (onImage == null || !widget.canEdit) {
+      return QuillRawEditorConfig.defaultContextMenuBuilder(context, state);
+    }
+    return _PastePictureMenu(
+      state: state,
+      onPaste: (bytes) {
+        final at = caretOffset;
+        state.hideToolbar();
+        onImage(bytes, imageMimeType(bytes), at);
+      },
+    );
   }
 
   Future<bool> _onClipboardPaste() async {
@@ -779,6 +801,7 @@ class RichTextEditorState extends State<RichTextEditor>
                             allowedMimeTypes: insertableImageTypes,
                             onContentInserted: _onContentInserted,
                           ),
+                    contextMenuBuilder: _contextMenu,
                     placeholder: widget.hintText,
                     padding: widget.contentPadding,
                     autoFocus: false,
@@ -1164,4 +1187,71 @@ class _BubbleAction extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The selection menu, plus "Paste picture" once the clipboard turns out to
+/// hold a picture (asking takes a moment, so it joins the menu then).
+class _PastePictureMenu extends StatefulWidget {
+  const _PastePictureMenu({required this.state, required this.onPaste});
+
+  final QuillRawEditorState state;
+  final ValueChanged<Uint8List> onPaste;
+
+  @override
+  State<_PastePictureMenu> createState() => _PastePictureMenuState();
+}
+
+class _PastePictureMenuState extends State<_PastePictureMenu> {
+  Uint8List? _picture;
+
+  @override
+  void initState() {
+    super.initState();
+    _readClipboard();
+  }
+
+  Future<void> _readClipboard() async {
+    try {
+      // ignore: experimental_member_use
+      final bytes = await ClipboardServiceProvider.instance.getImageFile();
+      if (mounted && bytes != null && bytes.isNotEmpty) {
+        setState(() => _picture = bytes);
+      }
+    } catch (_) {
+      // No picture, or no way to read one here.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final picture = _picture;
+    return TextFieldTapRegion(
+      child: AdaptiveTextSelectionToolbar.buttonItems(
+        anchors: widget.state.contextMenuAnchors,
+        buttonItems: [
+          ...widget.state.contextMenuButtonItems,
+          if (picture != null)
+            ContextMenuButtonItem(
+              label: 'Paste picture',
+              onPressed: () => widget.onPaste(picture),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The picture type [bytes] start like; PNG when unsure.
+String imageMimeType(Uint8List bytes) {
+  bool starts(List<int> magic) =>
+      bytes.length >= magic.length &&
+      Iterable.generate(magic.length).every((i) => bytes[i] == magic[i]);
+  if (starts([0xFF, 0xD8, 0xFF])) return 'image/jpeg';
+  if (starts([0x47, 0x49, 0x46, 0x38])) return 'image/gif';
+  if (starts([0x52, 0x49, 0x46, 0x46]) &&
+      bytes.length >= 12 &&
+      String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP') {
+    return 'image/webp';
+  }
+  return 'image/png';
 }

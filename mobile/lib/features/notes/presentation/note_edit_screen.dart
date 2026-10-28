@@ -631,16 +631,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     }
   }
 
-  Future<void> _addAttachment(
-    String filePath,
-    String mimeType,
-    String filename,
-  ) async {
-    final id = await _attach(filePath, mimeType, filename);
-    if (id == null || !mounted) return;
-    AppSnackbar.showSuccess(context, message: 'Attachment added');
-  }
-
   /// Attaches what was picked, then says how many went in.
   Future<void> _addAttachments(List<PickedAttachment> files) async {
     final zips = p.join((await getTemporaryDirectory()).path, 'folders');
@@ -780,8 +770,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     }
   }
 
-  /// A picture pasted from the keyboard becomes an attachment, as on the web.
-  Future<void> _onImageInserted(Uint8List bytes, String mimeType) async {
+  /// A picture pasted from the keyboard or the selection menu goes into the
+  /// text where the caret was, where a corner handle resizes it.
+  Future<void> _onImageInserted(
+    Uint8List bytes,
+    String mimeType,
+    int offset,
+  ) async {
+    if (_isReadOnly) return;
     final stamp = DateFormat('yyyy-MM-dd-HH-mm-ss').format(DateTime.now());
     final ext = switch (mimeType) {
       'image/jpeg' => 'jpg',
@@ -793,10 +789,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final dir = await getTemporaryDirectory();
     final file = File(p.join(dir.path, filename));
     await file.writeAsBytes(bytes, flush: true);
-    await _addAttachment(file.path, mimeType, filename);
+    final id = await _attach(file.path, mimeType, filename);
     try {
       await file.delete();
     } catch (_) {}
+    if (id == null || !mounted) return;
+    _editorKey.currentState?.insertBlockEmbeds([
+      BlockEmbed(InlineImage.embedType, InlineImage(id: id).encode()),
+    ], offset: offset);
   }
 
   void _showTagPicker() {

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'dart:convert';
 
 import 'package:anchor/core/widgets/editor/editor_toolbar.dart';
@@ -21,6 +23,20 @@ Widget wrap(Widget child) {
 }
 
 void main() {
+  test('a pasted picture\'s type comes from its first bytes', () {
+    Uint8List bytes(List<int> start) =>
+        Uint8List.fromList([...start, ...List.filled(12, 0)]);
+    expect(imageMimeType(bytes([0xFF, 0xD8, 0xFF, 0xE0])), 'image/jpeg');
+    expect(imageMimeType(bytes([0x47, 0x49, 0x46, 0x38])), 'image/gif');
+    expect(
+      imageMimeType(
+        Uint8List.fromList('RIFF\x00\x00\x00\x00WEBPVP8 '.codeUnits),
+      ),
+      'image/webp',
+    );
+    expect(imageMimeType(bytes([0x89, 0x50, 0x4E, 0x47])), 'image/png');
+  });
+
   Future<(RichTextEditorState, FocusNode)> pumpEditor(
     WidgetTester tester, {
     String content = _shortNote,
