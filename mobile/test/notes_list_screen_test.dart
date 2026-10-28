@@ -170,6 +170,31 @@ void main() {
     expect(find.text('Note 14'), findsOneWidget);
   });
 
+  testWidgets('two screens down, a chevron goes back to the top', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await pumpList(tester, notesNamed('Note', 40));
+    final toTop = find.byTooltip('Back to top');
+    double shown() => tester
+        .widget<AnimatedScale>(
+          find.ancestor(of: toTop, matching: find.byType(AnimatedScale)),
+        )
+        .scale;
+    expect(shown(), 0);
+
+    await scrollToEnd(tester);
+    expect(listPosition(tester).pixels, greaterThan(2340 / 3 * 2));
+    expect(shown(), 1);
+
+    await tester.tap(toTop);
+    await tester.pumpAndSettle();
+    expect(listPosition(tester).pixels, 0);
+    expect(shown(), 0);
+  });
+
   testWidgets('scrolls to the last archived search result', (tester) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3;

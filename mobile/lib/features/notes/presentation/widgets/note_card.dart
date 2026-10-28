@@ -4,7 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:anchor/features/notes/domain/note_history.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:anchor/features/notes/domain/note.dart';
@@ -321,22 +321,25 @@ class NoteCard extends ConsumerWidget {
                                         SizedBox(width: dims.xs),
                                       ],
                                       if (note.updatedAt != null)
-                                        Text(
-                                          datePrefix != null
-                                              ? '$datePrefix ${DateFormat.MMMd().format(note.updatedAt!)}'
-                                              : DateFormat.MMMd().format(
-                                                  note.updatedAt!,
+                                        Flexible(
+                                          child: Text(
+                                            cardDateLabel(
+                                              note.updatedAt!,
+                                              prefix: datePrefix,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.labelSmall
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(
+                                                        alpha: AppOpacity
+                                                            .secondary,
+                                                      ),
                                                 ),
-                                          style: theme.textTheme.labelSmall
-                                              ?.copyWith(
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(
-                                                      alpha:
-                                                          AppOpacity.secondary,
-                                                    ),
-                                              ),
+                                          ),
                                         ),
                                     ],
                                   ),

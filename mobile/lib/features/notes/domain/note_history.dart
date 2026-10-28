@@ -32,6 +32,25 @@ String dayLabel(DateTime date, DateTime now) {
   return DateFormat('MMMM d, yyyy').format(date);
 }
 
+/// The short day on a note card: "Today", "Yesterday", "Mar 4", or with the
+/// year when it isn't this year ("Mar 4, 2025"). After a [prefix] ("Edited")
+/// the first two are lower case.
+String cardDateLabel(DateTime date, {String? prefix, DateTime? now}) {
+  final local = date.toLocal();
+  final today = now ?? DateTime.now();
+  final String day;
+  if (_isSameDay(local, today)) {
+    day = prefix == null ? 'Today' : 'today';
+  } else if (_isSameDay(local, today.subtract(const Duration(days: 1)))) {
+    day = prefix == null ? 'Yesterday' : 'yesterday';
+  } else if (local.year == today.year) {
+    day = DateFormat.MMMd().format(local);
+  } else {
+    day = DateFormat.yMMMd().format(local);
+  }
+  return prefix == null ? day : '$prefix $day';
+}
+
 bool _isSameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 

@@ -94,6 +94,32 @@ void main() {
     expect(revisionAuthorName(revisionOf(id: 'r1'), 'u1'), 'Someone');
   });
 
+  group('card dates', () {
+    final now = DateTime(2026, 8, 18, 12);
+
+    test('today and yesterday by name, the year only when not this one', () {
+      expect(cardDateLabel(DateTime(2026, 8, 18, 9), now: now), 'Today');
+      expect(cardDateLabel(DateTime(2026, 8, 17, 23), now: now), 'Yesterday');
+      expect(cardDateLabel(DateTime(2026, 3, 4), now: now), 'Mar 4');
+      expect(cardDateLabel(DateTime(2025, 3, 4), now: now), 'Mar 4, 2025');
+    });
+
+    test('after a prefix, lower case', () {
+      expect(
+        cardDateLabel(DateTime(2026, 8, 18), prefix: 'Edited', now: now),
+        'Edited today',
+      );
+      expect(
+        cardDateLabel(DateTime(2026, 8, 17), prefix: 'Edited', now: now),
+        'Edited yesterday',
+      );
+      expect(
+        cardDateLabel(DateTime(2024, 1, 2), prefix: 'Edited', now: now),
+        'Edited Jan 2, 2024',
+      );
+    });
+  });
+
   group('day labels', () {
     final now = DateTime(2026, 8, 18, 15);
 

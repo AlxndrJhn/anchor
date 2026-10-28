@@ -51,6 +51,36 @@ class NotesListScreen extends ConsumerStatefulWidget {
 class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   final _searchController = TextEditingController();
 
+  /// The list's scroll, once it has scrolled; for the back-to-top button.
+  ScrollableState? _list;
+
+  /// Whether the list is scrolled two screens or more down, which offers a
+  /// way back to the top.
+  final _farDown = ValueNotifier(false);
+
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    _list = Scrollable.maybeOf(notification.context!);
+    final metrics = notification.metrics;
+    _farDown.value = metrics.pixels >= metrics.viewportDimension * 2;
+    return false;
+  }
+
+  void _scrollToTop() {
+    final position = _list?.position;
+    if (position == null) return;
+    // From far down, jump most of the way so it doesn't take ages.
+    final near = position.viewportDimension;
+    if (position.pixels > near) position.jumpTo(near);
+    position.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   /// A note being dragged to a new place: the order its section would take
   /// if it were let go now. Once let go it is [_settling] until the list
   /// itself has that order, so nothing flashes back to the old one.
@@ -191,6 +221,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   void dispose() {
     _newNoteTap?.cancel();
     _searchController.dispose();
+    _farDown.dispose();
     super.dispose();
   }
 
@@ -501,354 +532,381 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             displacement: 20,
             edgeOffset: dims.appBarExpandedHeight,
             color: theme.colorScheme.primary,
-            child: CustomScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverAppBar(
-                  backgroundColor: Colors.transparent,
-                  floating: true,
-                  pinned: true,
-                  expandedHeight: isSelectionMode
-                      ? kToolbarHeight
-                      : dims.appBarExpandedHeight,
-                  toolbarHeight: kToolbarHeight,
-                  scrolledUnderElevation: 0,
-                  leading: isSelectionMode
-                      ? IconButton(
-                          icon: const Icon(LucideIcons.x),
-                          onPressed: _exitSelectionMode,
-                          tooltip: 'Cancel',
-                        )
-                      : Builder(
-                          builder: (context) => IconButton(
-                            icon: const Icon(LucideIcons.menu),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
-                            tooltip: 'Menu',
-                          ),
-                        ),
-                  flexibleSpace: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      const AppBarScrim(),
-                      if (!isSelectionMode)
-                        FlexibleSpaceBar(
-                          centerTitle: Platform.isIOS,
-                          expandedTitleScale:
-                              LargeTitleAppBar.expandedTitleScale,
-                          titlePadding: EdgeInsets.only(
-                            left: LargeTitleAppBar.titleInset,
-                            right: Platform.isIOS
-                                ? LargeTitleAppBar.titleInset
-                                : 0,
-                            bottom: dims.sm,
-                          ),
-                          title: Text(
-                            'Anchor (fork)',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _onScroll,
+              child: CustomScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Colors.transparent,
+                    floating: true,
+                    pinned: true,
+                    expandedHeight: isSelectionMode
+                        ? kToolbarHeight
+                        : dims.appBarExpandedHeight,
+                    toolbarHeight: kToolbarHeight,
+                    scrolledUnderElevation: 0,
+                    leading: isSelectionMode
+                        ? IconButton(
+                            icon: const Icon(LucideIcons.x),
+                            onPressed: _exitSelectionMode,
+                            tooltip: 'Cancel',
+                          )
+                        : Builder(
+                            builder: (context) => IconButton(
+                              icon: const Icon(LucideIcons.menu),
+                              onPressed: () =>
+                                  Scaffold.of(context).openDrawer(),
+                              tooltip: 'Menu',
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  title: isSelectionMode
-                      ? Text(
-                          selectedNoteIds.isEmpty
-                              ? 'Select notes'
-                              : '${selectedNoteIds.length} ${selectedNoteIds.length == 1 ? 'note' : 'notes'}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        )
-                      : null,
-                  actions: [
-                    if (isSelectionMode)
-                      SelectionAppBarActions(
-                        selectedNoteIds: selectedNoteIds,
-                        onExitSelectionMode: _exitSelectionMode,
-                      )
-                    else ...[
-                      // Only show sync indicator when actively syncing
-                      if (isSyncing)
-                        Padding(
-                          padding: EdgeInsets.only(right: dims.xs),
-                          child: Center(child: _SyncIndicator(theme: theme)),
-                        ),
-                      // Selecting without a long press, which now drags.
-                      IconButton(
-                        icon: const Icon(LucideIcons.squareCheck),
-                        tooltip: 'Select notes',
-                        onPressed: () => ref
-                            .read(selectionModeProvider.notifier)
-                            .setEnabled(true),
-                      ),
-                      if (viewOptions != null)
-                        IconButton(
-                          icon: Icon(
-                            viewOptions.viewType == ViewType.grid
-                                ? LucideIcons.layoutGrid
-                                : LucideIcons.list,
-                          ),
-                          tooltip: 'View options',
-                          onPressed: () {
-                            AppBottomSheet.show(
-                              context,
-                              builder: (context) => const ViewOptionsSheet(),
-                            );
-                          },
-                        ),
-                    ],
-                  ],
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    dims.screenGutter,
-                    dims.xs,
-                    dims.screenGutter,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    flexibleSpace: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        const SyncWarning(),
-                        const UpdateBanner(),
-                        NotesSearchBar(
-                          controller: _searchController,
-                          query: searchQuery,
-                          onChanged: (value) =>
-                              ref.read(searchQueryProvider.notifier).set(value),
-                          onClear: () {
-                            _searchController.clear();
-                            ref.read(searchQueryProvider.notifier).set('');
-                          },
-                          filterCount:
-                              filters.count + (selectedTagId != null ? 1 : 0),
-                          onFilter: () => AppBottomSheet.show(
-                            context,
-                            builder: (context) => const NoteFiltersSheet(),
+                        const AppBarScrim(),
+                        if (!isSelectionMode)
+                          FlexibleSpaceBar(
+                            centerTitle: Platform.isIOS,
+                            expandedTitleScale:
+                                LargeTitleAppBar.expandedTitleScale,
+                            titlePadding: EdgeInsets.only(
+                              left: LargeTitleAppBar.titleInset,
+                              right: Platform.isIOS
+                                  ? LargeTitleAppBar.titleInset
+                                  : 0,
+                              bottom: dims.sm,
+                            ),
+                            title: Text(
+                              'Anchor (fork)',
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
                           ),
-                        ),
-                        // Tag filter indicator
-                        if (selectedTag != null) ...[
-                          SizedBox(height: dims.sm),
-                          _TagFilterChip(
-                            tag: selectedTag,
-                            onClear: () {
-                              ref
-                                  .read(selectedTagFilterProvider.notifier)
-                                  .clear();
-                            },
-                          ),
-                        ],
                       ],
                     ),
-                  ),
-                ),
-                // Each section is its own sliver here: grouped, the masonry
-                // grids' estimated heights stop scrolling short of the end.
-                ...notesAsync.when(
-                  data: (notes) {
-                    final q = searchQuery.trim().toLowerCase();
-                    final unlocked = ref.watch(noteLockSessionProvider);
-                    bool matches(Note note) =>
-                        filters.matches(note) &&
-                        noteMatchesSearch(
-                          note,
-                          q,
-                          titleOnly: isNoteHidden(note, unlocked),
-                        );
-
-                    final filteredNotes = notes.where(matches).toList();
-                    // A search, or a tag (whose count includes them), also
-                    // lists archived notes after the others, as Google Keep
-                    // does.
-                    final withArchived =
-                        q.isNotEmpty ||
-                        selectedTagId != null ||
-                        !filters.isEmpty;
-                    final archived = !withArchived
-                        ? const <Note>[]
-                        : (ref.watch(archiveControllerProvider).value ??
-                                  const <Note>[])
-                              .where(
-                                (note) =>
-                                    selectedTagId == null ||
-                                    note.tagIds.contains(selectedTagId),
-                              )
-                              .toList();
-                    final archivedMatches = archived.where(matches).toList();
-                    // Notes whose pictures look like the search, for those
-                    // who turned picture search on.
-                    final pictureMatches = q.isEmpty
-                        ? const <Note>[]
-                        : notesForMatches(
-                            ref.watch(pictureMatchesProvider(q)).value ??
-                                const [],
-                            [...notes, ...archived].where(
-                              (note) =>
-                                  filters.matches(note) &&
-                                  !isNoteHidden(note, unlocked),
+                    title: isSelectionMode
+                        ? Text(
+                            selectedNoteIds.isEmpty
+                                ? 'Select notes'
+                                : '${selectedNoteIds.length} ${selectedNoteIds.length == 1 ? 'note' : 'notes'}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
                             ),
-                            [...filteredNotes, ...archivedMatches],
+                          )
+                        : null,
+                    actions: [
+                      if (isSelectionMode)
+                        SelectionAppBarActions(
+                          selectedNoteIds: selectedNoteIds,
+                          onExitSelectionMode: _exitSelectionMode,
+                        )
+                      else ...[
+                        // Only show sync indicator when actively syncing
+                        if (isSyncing)
+                          Padding(
+                            padding: EdgeInsets.only(right: dims.xs),
+                            child: Center(child: _SyncIndicator(theme: theme)),
+                          ),
+                        // Selecting without a long press, which now drags.
+                        IconButton(
+                          icon: const Icon(LucideIcons.squareCheck),
+                          tooltip: 'Select notes',
+                          onPressed: () => ref
+                              .read(selectionModeProvider.notifier)
+                              .setEnabled(true),
+                        ),
+                        if (viewOptions != null)
+                          IconButton(
+                            icon: Icon(
+                              viewOptions.viewType == ViewType.grid
+                                  ? LucideIcons.layoutGrid
+                                  : LucideIcons.list,
+                            ),
+                            tooltip: 'View options',
+                            onPressed: () {
+                              AppBottomSheet.show(
+                                context,
+                                builder: (context) => const ViewOptionsSheet(),
+                              );
+                            },
+                          ),
+                      ],
+                    ],
+                  ),
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      dims.screenGutter,
+                      dims.xs,
+                      dims.screenGutter,
+                      0,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SyncWarning(),
+                          const UpdateBanner(),
+                          NotesSearchBar(
+                            controller: _searchController,
+                            query: searchQuery,
+                            onChanged: (value) => ref
+                                .read(searchQueryProvider.notifier)
+                                .set(value),
+                            onClear: () {
+                              _searchController.clear();
+                              ref.read(searchQueryProvider.notifier).set('');
+                            },
+                            filterCount:
+                                filters.count + (selectedTagId != null ? 1 : 0),
+                            onFilter: () => AppBottomSheet.show(
+                              context,
+                              builder: (context) => const NoteFiltersSheet(),
+                            ),
+                          ),
+                          // Tag filter indicator
+                          if (selectedTag != null) ...[
+                            SizedBox(height: dims.sm),
+                            _TagFilterChip(
+                              tag: selectedTag,
+                              onClear: () {
+                                ref
+                                    .read(selectedTagFilterProvider.notifier)
+                                    .clear();
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Each section is its own sliver here: grouped, the masonry
+                  // grids' estimated heights stop scrolling short of the end.
+                  ...notesAsync.when(
+                    data: (notes) {
+                      final q = searchQuery.trim().toLowerCase();
+                      final unlocked = ref.watch(noteLockSessionProvider);
+                      bool matches(Note note) =>
+                          filters.matches(note) &&
+                          noteMatchesSearch(
+                            note,
+                            q,
+                            titleOnly: isNoteHidden(note, unlocked),
                           );
 
-                    if (filteredNotes.isEmpty &&
-                        archivedMatches.isEmpty &&
-                        pictureMatches.isEmpty) {
-                      if (searchQuery.isNotEmpty || !filters.isEmpty) {
+                      final filteredNotes = notes.where(matches).toList();
+                      // A search, or a tag (whose count includes them), also
+                      // lists archived notes after the others, as Google Keep
+                      // does.
+                      final withArchived =
+                          q.isNotEmpty ||
+                          selectedTagId != null ||
+                          !filters.isEmpty;
+                      final archived = !withArchived
+                          ? const <Note>[]
+                          : (ref.watch(archiveControllerProvider).value ??
+                                    const <Note>[])
+                                .where(
+                                  (note) =>
+                                      selectedTagId == null ||
+                                      note.tagIds.contains(selectedTagId),
+                                )
+                                .toList();
+                      final archivedMatches = archived.where(matches).toList();
+                      // Notes whose pictures look like the search, for those
+                      // who turned picture search on.
+                      final pictureMatches = q.isEmpty
+                          ? const <Note>[]
+                          : notesForMatches(
+                              ref.watch(pictureMatchesProvider(q)).value ??
+                                  const [],
+                              [...notes, ...archived].where(
+                                (note) =>
+                                    filters.matches(note) &&
+                                    !isNoteHidden(note, unlocked),
+                              ),
+                              [...filteredNotes, ...archivedMatches],
+                            );
+
+                      if (filteredNotes.isEmpty &&
+                          archivedMatches.isEmpty &&
+                          pictureMatches.isEmpty) {
+                        if (searchQuery.isNotEmpty || !filters.isEmpty) {
+                          return const [
+                            SliverAppEmptyState(
+                              icon: LucideIcons.search,
+                              message: 'No matching notes found',
+                            ),
+                          ];
+                        }
                         return const [
                           SliverAppEmptyState(
-                            icon: LucideIcons.search,
-                            message: 'No matching notes found',
+                            icon: LucideIcons.sparkles,
+                            message: 'Capture your ideas here',
                           ),
                         ];
                       }
-                      return const [
-                        SliverAppEmptyState(
-                          icon: LucideIcons.sparkles,
-                          message: 'Capture your ideas here',
-                        ),
-                      ];
-                    }
 
-                    if (viewOptions == null) {
-                      return const [
-                        SliverToBoxAdapter(child: SizedBox.shrink()),
-                      ];
-                    }
+                      if (viewOptions == null) {
+                        return const [
+                          SliverToBoxAdapter(child: SizedBox.shrink()),
+                        ];
+                      }
 
-                    final comparator = noteComparator(viewOptions);
-                    filteredNotes.sort(comparator);
-                    archivedMatches.sort(comparator);
+                      final comparator = noteComparator(viewOptions);
+                      filteredNotes.sort(comparator);
+                      archivedMatches.sort(comparator);
 
-                    // Pinned and other notes get headings, as on the web.
-                    final sortedPinned = filteredNotes
-                        .where((n) => n.isPinned)
-                        .toList();
-                    final sortedOthers = filteredNotes
-                        .where((n) => !n.isPinned)
-                        .toList();
-                    // Notes can be dragged to new places in the default
-                    // order, as on the web, while the whole list is shown.
-                    final canReorder =
-                        viewOptions.sortOption == SortOption.dateModified &&
-                        !viewOptions.isAscending &&
-                        !isSelectionMode &&
-                        q.isEmpty &&
-                        filters.isEmpty;
-                    final pinned = _inDragOrder('pinned', sortedPinned);
-                    final others = _inDragOrder('others', sortedOthers);
-                    Widget label(IconData icon, String text, int count) =>
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            dims.screenGutter,
-                            dims.sm,
-                            dims.screenGutter,
-                            0,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: _SectionLabel(
-                              icon: icon,
-                              label: text,
-                              count: count,
+                      // Pinned and other notes get headings, as on the web.
+                      final sortedPinned = filteredNotes
+                          .where((n) => n.isPinned)
+                          .toList();
+                      final sortedOthers = filteredNotes
+                          .where((n) => !n.isPinned)
+                          .toList();
+                      // Notes can be dragged to new places in the default
+                      // order, as on the web, while the whole list is shown.
+                      final canReorder =
+                          viewOptions.sortOption == SortOption.dateModified &&
+                          !viewOptions.isAscending &&
+                          !isSelectionMode &&
+                          q.isEmpty &&
+                          filters.isEmpty;
+                      final pinned = _inDragOrder('pinned', sortedPinned);
+                      final others = _inDragOrder('others', sortedOthers);
+                      Widget label(IconData icon, String text, int count) =>
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              dims.screenGutter,
+                              dims.sm,
+                              dims.screenGutter,
+                              0,
                             ),
-                          ),
-                        );
+                            sliver: SliverToBoxAdapter(
+                              child: _SectionLabel(
+                                icon: icon,
+                                label: text,
+                                count: count,
+                              ),
+                            ),
+                          );
 
-                    return [
-                      if (pinned.isNotEmpty) ...[
-                        label(LucideIcons.pin, 'Pinned', pinned.length),
-                        _notesSliver(
-                          pinned,
-                          viewOptions,
-                          isSelectionMode,
-                          selectedNoteIds,
-                          underLabel: true,
-                          lazy: others.isEmpty,
-                          reorderGroup: canReorder ? 'pinned' : null,
-                          reorderNotes: sortedPinned,
-                        ),
-                      ],
-                      if (others.isNotEmpty) ...[
-                        if (pinned.isNotEmpty)
-                          label(
-                            LucideIcons.stickyNote,
-                            'Others',
-                            others.length,
+                      return [
+                        if (pinned.isNotEmpty) ...[
+                          label(LucideIcons.pin, 'Pinned', pinned.length),
+                          _notesSliver(
+                            pinned,
+                            viewOptions,
+                            isSelectionMode,
+                            selectedNoteIds,
+                            underLabel: true,
+                            lazy: others.isEmpty,
+                            reorderGroup: canReorder ? 'pinned' : null,
+                            reorderNotes: sortedPinned,
                           ),
-                        _notesSliver(
-                          others,
-                          viewOptions,
-                          isSelectionMode,
-                          selectedNoteIds,
-                          underLabel: pinned.isNotEmpty,
-                          reorderGroup: canReorder ? 'others' : null,
-                          reorderNotes: sortedOthers,
+                        ],
+                        if (others.isNotEmpty) ...[
+                          if (pinned.isNotEmpty)
+                            label(
+                              LucideIcons.stickyNote,
+                              'Others',
+                              others.length,
+                            ),
+                          _notesSliver(
+                            others,
+                            viewOptions,
+                            isSelectionMode,
+                            selectedNoteIds,
+                            underLabel: pinned.isNotEmpty,
+                            reorderGroup: canReorder ? 'others' : null,
+                            reorderNotes: sortedOthers,
+                          ),
+                        ],
+                        if (archivedMatches.isNotEmpty) ...[
+                          label(
+                            LucideIcons.archive,
+                            'Archived',
+                            archivedMatches.length,
+                          ),
+                          _notesSliver(
+                            archivedMatches,
+                            viewOptions,
+                            false,
+                            const <String>{},
+                            selectable: false,
+                            underLabel: true,
+                            lazy: filteredNotes.isEmpty,
+                          ),
+                        ],
+                        if (pictureMatches.isNotEmpty) ...[
+                          label(
+                            LucideIcons.images,
+                            'Pictures that may match',
+                            pictureMatches.length,
+                          ),
+                          _notesSliver(
+                            pictureMatches,
+                            viewOptions,
+                            false,
+                            const <String>{},
+                            selectable: false,
+                            underLabel: true,
+                            lazy:
+                                filteredNotes.isEmpty &&
+                                archivedMatches.isEmpty,
+                          ),
+                        ],
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: isSelectionMode ? 0 : _fabClearance,
+                          ),
                         ),
-                      ],
-                      if (archivedMatches.isNotEmpty) ...[
-                        label(
-                          LucideIcons.archive,
-                          'Archived',
-                          archivedMatches.length,
-                        ),
-                        _notesSliver(
-                          archivedMatches,
-                          viewOptions,
-                          false,
-                          const <String>{},
-                          selectable: false,
-                          underLabel: true,
-                          lazy: filteredNotes.isEmpty,
-                        ),
-                      ],
-                      if (pictureMatches.isNotEmpty) ...[
-                        label(
-                          LucideIcons.images,
-                          'Pictures that may match',
-                          pictureMatches.length,
-                        ),
-                        _notesSliver(
-                          pictureMatches,
-                          viewOptions,
-                          false,
-                          const <String>{},
-                          selectable: false,
-                          underLabel: true,
-                          lazy:
-                              filteredNotes.isEmpty && archivedMatches.isEmpty,
-                        ),
-                      ],
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: isSelectionMode ? 0 : _fabClearance,
-                        ),
+                      ];
+                    },
+                    loading: () => const [
+                      SliverFillRemaining(
+                        child: Center(child: CircularProgressIndicator()),
                       ),
-                    ];
-                  },
-                  loading: () => const [
-                    SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  ],
-                  error: (err, stack) => [
-                    SliverFillRemaining(
-                      child: Center(child: Text('Error: $err')),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                    error: (err, stack) => [
+                      SliverFillRemaining(
+                        child: Center(child: Text('Error: $err')),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        floatingActionButton: isSelectionMode
-            ? null
-            : Builder(
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Far down the list, a way back to the top.
+            ValueListenableBuilder(
+              valueListenable: _farDown,
+              builder: (context, farDown, _) => AnimatedScale(
+                scale: farDown ? 1 : 0,
+                duration: const Duration(milliseconds: 180),
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: dims.md),
+                  child: FloatingActionButton.small(
+                    heroTag: 'notes-to-top',
+                    tooltip: 'Back to top',
+                    onPressed: farDown ? _scrollToTop : null,
+                    child: const Icon(LucideIcons.chevronUp),
+                  ),
+                ),
+              ),
+            ),
+            if (!isSelectionMode)
+              Builder(
                 // Holding the button offers a new list as well, as in
                 // Google Keep; double-tapping it pastes the clipboard into a
                 // new note.
@@ -864,6 +922,8 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                   ),
                 ),
               ),
+          ],
+        ),
       ),
     );
   }
