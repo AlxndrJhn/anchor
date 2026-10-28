@@ -20,6 +20,8 @@ describe("text styles", () => {
   it("knows the fonts both apps have", () => {
     expect(isFont("serif")).toBe(true);
     expect(isFont("monospace")).toBe(true);
+    expect(isFont("comic")).toBe(true);
+    expect(isFont("marker")).toBe(true);
     expect(isFont("comic sans")).toBe(false);
   });
 

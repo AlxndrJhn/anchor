@@ -93,6 +93,10 @@ TextSpan _lineSpan(_PreviewLine line, TextStyle style) {
 }
 
 /// A lightweight read-only preview of Quill content for list views.
+/// The checkboxes on note cards: a fifth larger than small icons, so they are
+/// easier to hit.
+const double checkboxSize = AppIconSizes.sm * 1.2;
+
 /// Renders checklists with checkbox icons, bullet/ordered lists with markers, and plain text.
 class QuillPreview extends StatelessWidget {
   /// The content in JSON Delta format or plain text.
@@ -166,7 +170,7 @@ class QuillPreview extends StatelessWidget {
                       line.isChecked
                           ? LucideIcons.checkSquare
                           : LucideIcons.square,
-                      size: AppIconSizes.sm,
+                      size: checkboxSize,
                       color: line.isChecked
                           ? theme.colorScheme.primary
                           : theme.textTheme.bodyMedium?.color?.withValues(

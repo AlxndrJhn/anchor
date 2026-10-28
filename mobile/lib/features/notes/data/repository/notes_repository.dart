@@ -474,8 +474,12 @@ class NotesRepository {
       sort: sort,
     );
     if (content == null) return;
-    await updateNote(note.copyWith(content: content));
-    if (keepAt != null) await setPosition(noteId, keepAt);
+    // One write, so the list doesn't first move the edited note up and then
+    // back to its place: that showed as a jerk of the cards.
+    await _db.transaction(() async {
+      await updateNote(note.copyWith(content: content));
+      if (keepAt != null) await setPosition(noteId, keepAt);
+    });
   }
 
   /// Adds lines of text at the end of a note that isn't open ("Grab image

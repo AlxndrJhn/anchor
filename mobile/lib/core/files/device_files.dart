@@ -48,6 +48,21 @@ Future<bool> openWithApp({
       false;
 }
 
+/// Puts the picture at [path] on the clipboard, for pasting into other apps.
+/// Throws when the system won't take it; false off Android.
+Future<bool> copyImageToClipboard({
+  required String path,
+  required String name,
+}) async {
+  if (!Platform.isAndroid) return false;
+  await _channel.invokeMethod<void>('copyImage', {
+    'path': path,
+    'name': name,
+    'mimeType': lookupMimeType(name) ?? 'image/jpeg',
+  });
+  return true;
+}
+
 /// The MIME type a file name suggests; bytes for one it doesn't.
 String mimeTypeFor(String name) =>
     lookupMimeType(name) ?? 'application/octet-stream';

@@ -5,7 +5,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 ///
 /// * `highlight`: a preset name ([highlightPresets]) or a custom `#rrggbb`;
 /// * `color`: the text colour, `#rrggbb`;
-/// * `font`: `serif` or `monospace` (absent means the app's normal font).
+/// * `font`: one of [fontOptions] (absent means the app's normal font).
 ///
 /// Removing a format sets it to null, as in Quill.
 abstract final class TextFormats {
@@ -66,6 +66,13 @@ const fontOptions = <(String?, String)>[
   (null, 'Default'),
   ('serif', 'Serif'),
   ('monospace', 'Monospace'),
+  // Bundled in assets/fonts, under these family names.
+  ('comic', 'Comic Sans'),
+  ('handwriting', 'Handwriting'),
+  ('typewriter', 'Typewriter'),
+  ('rounded', 'Rounded'),
+  ('slab', 'Slab'),
+  ('marker', 'Marker'),
 ];
 
 /// Dark ink for text on a light highlight, so it stays readable on dark
@@ -117,7 +124,9 @@ Color? textColorValue(Object? value) =>
 
 /// The stored `font` value as a font family, or null for the app's font.
 String? fontFamilyValue(Object? value) =>
-    value == 'serif' || value == 'monospace' ? value as String : null;
+    value != null && fontOptions.any((option) => option.$1 == value)
+    ? value as String
+    : null;
 
 double _contrast(Color a, Color b) {
   final la = a.computeLuminance();

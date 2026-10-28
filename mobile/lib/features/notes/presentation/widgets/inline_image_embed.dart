@@ -10,6 +10,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 import 'package:photo_view/photo_view.dart';
 
+import '../../../../core/files/picture_actions.dart';
 import '../../../../core/files/picture_edits.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/theme/context_extensions.dart';
@@ -260,6 +261,20 @@ class InlineImages {
             backgroundColor: Colors.black,
             foregroundColor: Colors.white,
             title: caption == null ? null : Text(caption),
+            actions: [
+              IconButton(
+                tooltip: 'Share',
+                onPressed: () =>
+                    sharePicture(path: path, name: p.basename(path)),
+                icon: const Icon(LucideIcons.share2),
+              ),
+              IconButton(
+                tooltip: 'Copy picture',
+                onPressed: () =>
+                    copyPicture(context, path: path, name: p.basename(path)),
+                icon: const Icon(LucideIcons.copy),
+              ),
+            ],
           ),
           body: PhotoView(
             imageProvider: FileImage(File(path)),

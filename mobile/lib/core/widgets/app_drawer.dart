@@ -126,7 +126,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Anchor',
+                  'Anchor (fork)',
                   style: AppTypography.serif(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

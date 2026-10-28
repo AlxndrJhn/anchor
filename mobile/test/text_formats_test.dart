@@ -78,6 +78,17 @@ void main() {
     });
   });
 
+  group('font values', () {
+    test('every offered font is its own family; others are ignored', () {
+      for (final (value, _) in fontOptions.skip(1)) {
+        expect(fontFamilyValue(value), value);
+      }
+      expect(fontFamilyValue('comic'), 'comic');
+      expect(fontFamilyValue('Comic Sans MS'), isNull);
+      expect(fontFamilyValue(null), isNull);
+    });
+  });
+
   group('highlight values', () {
     test('presets and custom hex resolve to their fills', () {
       expect(highlightFill('yellow'), _yellow);

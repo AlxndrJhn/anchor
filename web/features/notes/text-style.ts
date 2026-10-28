@@ -1,7 +1,8 @@
 /**
  * Text colours, fonts and custom highlight colours, as the notes store
  * them (shared with the Android app): `color` and a custom `highlight` are
- * "#rrggbb"; `font` is "serif" or "monospace".
+ * "#rrggbb"; `font` is one of FONTS' values. The bundled fonts are
+ * declared under those names in app/styles/note-fonts.css.
  */
 
 export const TEXT_COLORS = [
@@ -19,6 +20,12 @@ export const TEXT_COLORS = [
 export const FONTS = [
   { name: "Serif", value: "serif" },
   { name: "Monospace", value: "monospace" },
+  { name: "Comic Sans", value: "comic" },
+  { name: "Handwriting", value: "handwriting" },
+  { name: "Typewriter", value: "typewriter" },
+  { name: "Rounded", value: "rounded" },
+  { name: "Slab", value: "slab" },
+  { name: "Marker", value: "marker" },
 ] as const;
 
 export type FontName = (typeof FONTS)[number]["value"];

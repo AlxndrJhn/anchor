@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -100,6 +102,8 @@ class SyncService {
 
       if (!response.hasMore && pending.isEmpty) {
         await _attachments.evictCache();
+        // Every picture on the phone, so none waits for a connection.
+        if (Platform.isAndroid) unawaited(_attachments.downloadMissingImages());
         AppLogger.instance.info(
           _tag,
           'Sync done in ${DateTime.now().difference(start).inMilliseconds}ms: '

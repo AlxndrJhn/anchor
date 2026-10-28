@@ -9,6 +9,13 @@ import 'package:flutter/services.dart';
 /// How long a card takes to burn away.
 const destructionDuration = Duration(milliseconds: 1100);
 
+/// How long the last sparks keep flying, fading out, once the card is gone.
+const burnTailDuration = Duration(milliseconds: 500);
+
+/// The end of the sparks' fade, in the effect's time (1 = the card is gone).
+final double burnTailEnd =
+    1 + burnTailDuration.inMicroseconds / destructionDuration.inMicroseconds;
+
 /// Whether deleted notes burn away at all; a setting on this device.
 bool burnDeletedNotes = true;
 
@@ -102,7 +109,40 @@ class DestructibleState extends State<Destructible>
       await controller.forward().orCancel;
     } on TickerCanceled {
       // Gone before it finished burning.
+      return;
     }
+    if (mounted) _leaveSparks();
+  }
+
+  /// The card is about to go: its last sparks fly on above everything,
+  /// fading out, rather than vanishing with it.
+  void _leaveSparks() {
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    final box = context.findRenderObject();
+    final overlayBox = overlay?.context.findRenderObject();
+    if (overlay == null ||
+        box is! RenderBox ||
+        overlayBox is! RenderBox ||
+        !box.attached ||
+        !box.hasSize) {
+      return;
+    }
+    final origin = box.localToGlobal(Offset.zero, ancestor: overlayBox);
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: origin.dx - BurnPainter.margin,
+        top: origin.dy - BurnPainter.margin,
+        width: box.size.width + BurnPainter.margin * 2,
+        height: box.size.height + BurnPainter.margin * 2,
+        child: _BurnTail(
+          image: _image!.clone(),
+          pattern: _pattern!,
+          onDone: () => entry.remove(),
+        ),
+      ),
+    );
+    overlay.insert(entry);
   }
 
   /// Shows it again, as it was; for when the delete failed.
@@ -146,6 +186,54 @@ class DestructibleState extends State<Destructible>
       ],
     );
   }
+}
+
+/// The sparks a burnt card leaves, flying on and fading out.
+class _BurnTail extends StatefulWidget {
+  const _BurnTail({
+    required this.image,
+    required this.pattern,
+    required this.onDone,
+  });
+
+  final ui.Image image;
+  final BurnPattern pattern;
+  final VoidCallback onDone;
+
+  @override
+  State<_BurnTail> createState() => _BurnTailState();
+}
+
+class _BurnTailState extends State<_BurnTail>
+    with SingleTickerProviderStateMixin {
+  late final _controller =
+      AnimationController(
+          vsync: this,
+          duration: burnTailDuration,
+          lowerBound: 1,
+          upperBound: burnTailEnd,
+        )
+        ..forward(from: 1).whenComplete(() {
+          if (mounted) widget.onDone();
+        });
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    widget.image.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    child: CustomPaint(
+      painter: BurnPainter(
+        image: widget.image,
+        pattern: widget.pattern,
+        progress: _controller,
+      ),
+    ),
+  );
 }
 
 /// Shows the cards of notes [ids] again, for when the delete failed.
@@ -222,12 +310,19 @@ const _joltEnd = 0.14;
 const _edge = 0.1;
 
 /// How far the burn has gone at [t] (0 to 1 of the effect), from 0 to just
-/// past 1, so that the last blocks burn too.
+/// past 1, so that the last blocks burn too. Past 1 (the sparks' tail) it
+/// keeps going at about its final pace, so the sparks keep flying.
 double burnFront(double t) {
   if (t <= _joltEnd) return 0;
+  if (t > 1) return burnFront(1) + (t - 1) * 2.2;
   final d = (t - _joltEnd) / (1 - _joltEnd);
   return Curves.easeIn.transform(d) * (1 + _edge * 1.2);
 }
+
+/// How visible the sparks are at [t]: fully during the burn, fading to
+/// nothing over the tail.
+double sparkOpacity(double t) =>
+    t <= 1 ? 1 : (1 - (t - 1) / (burnTailEnd - 1)).clamp(0.0, 1.0);
 
 BlockState blockStateAt(double threshold, double front) {
   if (threshold < front - _edge) return BlockState.gone;
@@ -366,11 +461,15 @@ class BurnPainter extends CustomPainter {
       );
     }
     canvas.restore();
+    final opacity = sparkOpacity(t);
     for (var i = 0; i < _glow.length; i++) {
-      canvas.drawPath(burning[i], Paint()..color = _glow[i]);
+      canvas.drawPath(
+        burning[i],
+        Paint()..color = _glow[i].withValues(alpha: opacity),
+      );
       canvas.drawPath(
         sparks[i],
-        Paint()..color = _glow[i].withValues(alpha: 0.9),
+        Paint()..color = _glow[i].withValues(alpha: 0.9 * opacity),
       );
     }
     canvas.restore();

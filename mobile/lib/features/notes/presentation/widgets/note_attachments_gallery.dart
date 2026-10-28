@@ -5,6 +5,7 @@ import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:anchor/core/files/image_text.dart';
 import 'package:anchor/features/notes/presentation/widgets/image_text_view.dart';
+import 'package:anchor/core/files/picture_actions.dart';
 import 'package:anchor/core/files/save_to_device.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:flutter/services.dart';
@@ -1114,7 +1115,31 @@ class _ImageLightboxGalleryState extends ConsumerState<_ImageLightboxGallery> {
                               ),
                       ),
                     IconButton(
+                      tooltip: 'Share',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _imagePaths[currentAttachment.id] == null
+                          ? null
+                          : () => sharePicture(
+                              path: _imagePaths[currentAttachment.id]!,
+                              name: currentAttachment.originalFilename,
+                            ),
+                      icon: const Icon(LucideIcons.share2, color: Colors.white),
+                    ),
+                    IconButton(
+                      tooltip: 'Copy picture',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _imagePaths[currentAttachment.id] == null
+                          ? null
+                          : () => copyPicture(
+                              context,
+                              path: _imagePaths[currentAttachment.id]!,
+                              name: currentAttachment.originalFilename,
+                            ),
+                      icon: const Icon(LucideIcons.copy, color: Colors.white),
+                    ),
+                    IconButton(
                       tooltip: 'Download',
+                      visualDensity: VisualDensity.compact,
                       onPressed: _imagePaths[currentAttachment.id] == null
                           ? null
                           : () => saveFileToDevice(

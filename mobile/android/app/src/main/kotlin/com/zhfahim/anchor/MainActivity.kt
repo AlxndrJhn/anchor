@@ -1,6 +1,9 @@
 package com.zhfahim.anchor
 
 import android.content.BroadcastReceiver
+import android.content.ClipData
+import android.content.ClipDescription
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -158,6 +161,20 @@ class MainActivity : FlutterFragmentActivity() {
                             }
                         }
                     }
+                    "copyImage" -> {
+                        val path = call.argument<String>("path")
+                        val name = call.argument<String>("name")
+                        if (path == null || name == null) {
+                            result.error("args", "No file", null)
+                        } else {
+                            try {
+                                copyImage(File(path), name, call.argument<String>("mimeType"))
+                                result.success(null)
+                            } catch (e: Exception) {
+                                result.error("copy", e.message, null)
+                            }
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
@@ -287,6 +304,22 @@ class MainActivity : FlutterFragmentActivity() {
         } catch (e: android.content.ActivityNotFoundException) {
             false
         }
+    }
+
+    /**
+     * Puts a picture on the clipboard, for pasting into other apps. The
+     * clipboard hands the reading app permission to the copy's address.
+     */
+    private fun copyImage(file: File, name: String, mimeType: String?) {
+        val dir = File(cacheDir, "open").apply { mkdirs() }
+        val copy = File(dir, name.replace('/', '_'))
+        file.copyTo(copy, overwrite = true)
+        val uri = FileProvider.getUriForFile(this, "$packageName.updates", copy)
+        val type = mimeType
+            ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(copy.extension.lowercase())
+            ?: "image/*"
+        val clip = ClipData(ClipDescription(name, arrayOf(type)), ClipData.Item(uri))
+        getSystemService(ClipboardManager::class.java).setPrimaryClip(clip)
     }
 
     /**

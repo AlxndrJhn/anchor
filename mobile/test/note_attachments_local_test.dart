@@ -236,4 +236,30 @@ void main() {
       expect(await repo.watchAttachment('local-1').first, isNull);
     });
   });
+
+  test(
+    'pictures without a file on the device are the ones to download',
+    () async {
+      await insertNote('n1');
+      await insertAttachment('a1', 'n1');
+      await insertAttachment('a2', 'n1');
+      await insertAttachment(
+        'a3',
+        'n1',
+        status: domain.AttachmentSyncStatus.pendingUpload,
+      );
+      final kept = File(
+        '${Directory.systemTemp.createTempSync('anchor').path}/a2.png',
+      )..writeAsBytesSync([1]);
+      await (db.update(db.noteAttachments)..where((tbl) => tbl.id.equals('a2')))
+          .write(NoteAttachmentsCompanion(localPath: Value(kept.path)));
+
+      // a2 is here, a3 isn't uploaded yet: only a1 is missing.
+      expect(await repo.imagesToDownload(), [('n1', 'a1', 'a.png')]);
+
+      // A file the system deleted counts as missing again.
+      kept.deleteSync();
+      expect((await repo.imagesToDownload()).map((e) => e.$2), ['a1', 'a2']);
+    },
+  );
 }

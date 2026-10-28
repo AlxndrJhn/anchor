@@ -143,6 +143,30 @@ flutter:
   assets:
     - assets/icons/anchor_logo.png
 
+  # Fonts for text in notes (see assets/fonts/README.md). The family names
+  # are the values stored on the text, shared with the web client.
+  fonts:
+    - family: comic
+      fonts:
+        - asset: assets/fonts/ComicNeue-Regular.ttf
+        - asset: assets/fonts/ComicNeue-Bold.ttf
+          weight: 700
+    - family: handwriting
+      fonts:
+        - asset: assets/fonts/Caveat.ttf
+    - family: typewriter
+      fonts:
+        - asset: assets/fonts/SpecialElite-Regular.ttf
+    - family: rounded
+      fonts:
+        - asset: assets/fonts/Nunito.ttf
+    - family: slab
+      fonts:
+        - asset: assets/fonts/RobotoSlab.ttf
+    - family: marker
+      fonts:
+        - asset: assets/fonts/PermanentMarker-Regular.ttf
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

@@ -296,6 +296,14 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       ref.read(searchQueryProvider.notifier).set('');
       return;
     }
+    // A tag (or other filter) narrows the list: back shows all notes again
+    // before it offers to leave.
+    if (ref.read(selectedTagFilterProvider) != null ||
+        !ref.read(noteFiltersControllerProvider).isEmpty) {
+      ref.read(selectedTagFilterProvider.notifier).clear();
+      ref.read(noteFiltersControllerProvider.notifier).clear();
+      return;
+    }
     final now = DateTime.now();
     final asked = _exitAskedAt;
     if (asked != null && now.difference(asked) < _exitWindow) {
@@ -536,7 +544,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
                             bottom: dims.sm,
                           ),
                           title: Text(
-                            'Anchor',
+                            'Anchor (fork)',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,

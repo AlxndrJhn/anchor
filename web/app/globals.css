@@ -14,6 +14,7 @@
 @import "./styles/editor.css";
 @import "./styles/schemes.css";
 @import "./styles/appearance.css";
+@import "./styles/note-fonts.css";
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant focus-visible (&:focus-visible:not([data-input="pointer"] *));

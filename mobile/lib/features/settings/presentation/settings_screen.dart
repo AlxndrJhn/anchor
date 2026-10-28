@@ -337,8 +337,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       icon: LucideIcons.heart,
                       children: [
                         SettingsActionRow(
-                          title: 'Buy me a coffee',
-                          subtitle: 'Support the development of Anchor',
+                          title: 'Donate to the original creator',
+                          subtitle:
+                              'Buy Anchor\'s author a coffee; this fork '
+                              'builds on their work',
                           icon: LucideIcons.coffee,
                           onTap: () => launchExternal(
                             context,
