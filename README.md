@@ -17,6 +17,25 @@ Anchor focuses on speed, privacy, simplicity, and reliability across mobile and 
 
 </div>
 
+## Try it in your browser
+
+Each release also publishes the web app on GitHub Pages, without a server:
+
+- **[alxndrjhn.github.io/anchor](https://alxndrjhn.github.io/anchor/)**: the
+  app itself. Your notes, tags and pictures stay in this browser (IndexedDB)
+  and never leave it; Settings › Import and export backs them up.
+- **[alxndrjhn.github.io/anchor/demo](https://alxndrjhn.github.io/anchor/demo/)**:
+  a playground with sample notes, kept in memory only: a reload starts it
+  over. Settings › Feature demos plays a short demo of each feature, after
+  which it's yours to try; each has its own address, such as
+  [/demo/freeze](https://alxndrjhn.github.io/anchor/demo/freeze).
+
+Without a server there is no syncing, sharing, sign-in, API token or picture
+search. To publish your own copy, set Settings › Pages › Source to "GitHub
+Actions"; the workflow is `.github/workflows/pages.yml`, and
+`BASE_PATH=/anchor pnpm build:pages` (in `web/`) builds the same site into
+`web/out`.
+
 ## Anchor vs this fork
 
 This is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
