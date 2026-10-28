@@ -3292,6 +3292,132 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 filter on} other{{count} filters on}}'**
   String filterCount(int count);
 
+  /// Title of the page that plays back a debug recording (debug mode: two fingers held still for 3 s film the app for a bug report).
+  ///
+  /// In en, this message translates to:
+  /// **'Debug recording'**
+  String get debugRecordingTitle;
+
+  /// The camera button in the top left corner while debug mode films the app; it stops filming.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop debug recording'**
+  String get debugStopRecording;
+
+  /// Throws the debug recording away and closes the player.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get debugDiscard;
+
+  /// Dialog title when leaving the debug player with problems marked.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard recording?'**
+  String get debugDiscardTitle;
+
+  /// Dialog message when discarding a debug recording.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording and the problems you marked will be lost.'**
+  String get debugDiscardMessage;
+
+  /// Bar button in the debug player that shares the report file (an MP4) with another app.
+  ///
+  /// In en, this message translates to:
+  /// **'Share file'**
+  String get debugShareFile;
+
+  /// Plays the debug recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get debugPlay;
+
+  /// Pauses the debug recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get debugPause;
+
+  /// Button in the debug player that marks a problem at the current moment of the recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Problem here ({time})'**
+  String debugProblemHere(String time);
+
+  /// Title of the sheet that asks what was expected at a moment of the debug recording.
+  ///
+  /// In en, this message translates to:
+  /// **'Problem at {time}'**
+  String debugProblemAt(String time);
+
+  /// Label of the field for what should have happened at a marked problem.
+  ///
+  /// In en, this message translates to:
+  /// **'Expectation'**
+  String get debugExpectation;
+
+  /// Hint in the Expectation field.
+  ///
+  /// In en, this message translates to:
+  /// **'What should have happened?'**
+  String get debugExpectationHint;
+
+  /// Adds the marked problem to the debug report.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get debugAdd;
+
+  /// Shown for a marked problem whose expectation was left empty.
+  ///
+  /// In en, this message translates to:
+  /// **'(no expectation)'**
+  String get debugNoExpectation;
+
+  /// Shown in the debug player before any problem is marked.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to where it went wrong and tap Problem here.\nThe video and the app’s state can show your notes: check before sharing.'**
+  String get debugProblemsHint;
+
+  /// Saves the debug report and opens a new GitHub issue to attach it to.
+  ///
+  /// In en, this message translates to:
+  /// **'Create issue'**
+  String get debugCreateIssue;
+
+  /// Title of the save dialog for the debug report file.
+  ///
+  /// In en, this message translates to:
+  /// **'Save debug report'**
+  String get debugSaveReport;
+
+  /// Read out while the debug report file is being built.
+  ///
+  /// In en, this message translates to:
+  /// **'Building the report…'**
+  String get debugBuilding;
+
+  /// Toast when sharing the debug report failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t share the report'**
+  String get debugShareFailed;
+
+  /// Toast when the browser could not open GitHub’s new-issue page.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t open GitHub'**
+  String get debugGithubFailed;
+
+  /// Toast when the debug report file could not be built or saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t build the report'**
+  String get debugBuildFailed;
+
   /// Filter choice in the filter sheet's Has section: only notes holding something that looks like a secret (a key, token, id or password).
   ///
   /// In en, this message translates to:

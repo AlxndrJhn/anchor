@@ -70,3 +70,25 @@ flutter build apk --release
 ```bash
 flutter build ios --release
 ```
+
+## Debug Reports
+
+Hold two fingers still on the screen for 3 seconds to start debug mode: the
+app films itself (at most 15 s; tap the camera in the top left corner to stop
+sooner) and notes what happens meanwhile: screen changes, touches, provider
+updates and log lines. In the player that opens afterwards, move to where it
+went wrong, tap **Problem here** and say what you expected. **Create issue**
+saves `anchor-debug-<ISO time>.mp4` and opens a new GitHub issue on the fork,
+to attach it to.
+
+The file is one MP4: a Motion-JPEG video track, a timed metadata track
+(`application/json`) with every event and problem at its time, and a summary
+document holding all of it (app, device, problems, events) as the
+`com.anchor.debug` metadata tag:
+
+```bash
+ffprobe -v quiet -show_entries format_tags=com.anchor.debug -of json \
+  anchor-debug-2026-10-28T14-03-22Z.mp4 | jq -r '.format.tags["com.anchor.debug"]'
+# The events track on its own, as JSON arrays one after another:
+ffmpeg -v error -i anchor-debug-2026-10-28T14-03-22Z.mp4 -map 0:d -c copy -f data -
+```

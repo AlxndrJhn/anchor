@@ -2991,6 +2991,102 @@
       }
     }
   },
+  "debugRecordingTitle": "Debug recording",
+  "@debugRecordingTitle": {
+    "description": "Title of the page that plays back a debug recording (debug mode: two fingers held still for 3 s film the app for a bug report)."
+  },
+  "debugStopRecording": "Stop debug recording",
+  "@debugStopRecording": {
+    "description": "The camera button in the top left corner while debug mode films the app; it stops filming."
+  },
+  "debugDiscard": "Discard",
+  "@debugDiscard": {
+    "description": "Throws the debug recording away and closes the player."
+  },
+  "debugDiscardTitle": "Discard recording?",
+  "@debugDiscardTitle": {
+    "description": "Dialog title when leaving the debug player with problems marked."
+  },
+  "debugDiscardMessage": "The recording and the problems you marked will be lost.",
+  "@debugDiscardMessage": {
+    "description": "Dialog message when discarding a debug recording."
+  },
+  "debugShareFile": "Share file",
+  "@debugShareFile": {
+    "description": "Bar button in the debug player that shares the report file (an MP4) with another app."
+  },
+  "debugPlay": "Play",
+  "@debugPlay": {
+    "description": "Plays the debug recording."
+  },
+  "debugPause": "Pause",
+  "@debugPause": {
+    "description": "Pauses the debug recording."
+  },
+  "debugProblemHere": "Problem here ({time})",
+  "@debugProblemHere": {
+    "description": "Button in the debug player that marks a problem at the current moment of the recording.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "00:02.0"
+      }
+    }
+  },
+  "debugProblemAt": "Problem at {time}",
+  "@debugProblemAt": {
+    "description": "Title of the sheet that asks what was expected at a moment of the debug recording.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "00:02.0"
+      }
+    }
+  },
+  "debugExpectation": "Expectation",
+  "@debugExpectation": {
+    "description": "Label of the field for what should have happened at a marked problem."
+  },
+  "debugExpectationHint": "What should have happened?",
+  "@debugExpectationHint": {
+    "description": "Hint in the Expectation field."
+  },
+  "debugAdd": "Add",
+  "@debugAdd": {
+    "description": "Adds the marked problem to the debug report."
+  },
+  "debugNoExpectation": "(no expectation)",
+  "@debugNoExpectation": {
+    "description": "Shown for a marked problem whose expectation was left empty."
+  },
+  "debugProblemsHint": "Move to where it went wrong and tap Problem here.\nThe video and the app’s state can show your notes: check before sharing.",
+  "@debugProblemsHint": {
+    "description": "Shown in the debug player before any problem is marked."
+  },
+  "debugCreateIssue": "Create issue",
+  "@debugCreateIssue": {
+    "description": "Saves the debug report and opens a new GitHub issue to attach it to."
+  },
+  "debugSaveReport": "Save debug report",
+  "@debugSaveReport": {
+    "description": "Title of the save dialog for the debug report file."
+  },
+  "debugBuilding": "Building the report…",
+  "@debugBuilding": {
+    "description": "Read out while the debug report file is being built."
+  },
+  "debugShareFailed": "Couldn’t share the report",
+  "@debugShareFailed": {
+    "description": "Toast when sharing the debug report failed."
+  },
+  "debugGithubFailed": "Couldn’t open GitHub",
+  "@debugGithubFailed": {
+    "description": "Toast when the browser could not open GitHub’s new-issue page."
+  },
+  "debugBuildFailed": "Couldn’t build the report",
+  "@debugBuildFailed": {
+    "description": "Toast when the debug report file could not be built or saved."
+  },
   "filterSecrets": "Secrets",
   "@filterSecrets": {
     "description": "Filter choice in the filter sheet's Has section: only notes holding something that looks like a secret (a key, token, id or password)."

@@ -2243,6 +2243,75 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get debugRecordingTitle => 'Debug recording';
+
+  @override
+  String get debugStopRecording => 'Stop debug recording';
+
+  @override
+  String get debugDiscard => 'Discard';
+
+  @override
+  String get debugDiscardTitle => 'Discard recording?';
+
+  @override
+  String get debugDiscardMessage =>
+      'The recording and the problems you marked will be lost.';
+
+  @override
+  String get debugShareFile => 'Share file';
+
+  @override
+  String get debugPlay => 'Play';
+
+  @override
+  String get debugPause => 'Pause';
+
+  @override
+  String debugProblemHere(String time) {
+    return 'Problem here ($time)';
+  }
+
+  @override
+  String debugProblemAt(String time) {
+    return 'Problem at $time';
+  }
+
+  @override
+  String get debugExpectation => 'Expectation';
+
+  @override
+  String get debugExpectationHint => 'What should have happened?';
+
+  @override
+  String get debugAdd => 'Add';
+
+  @override
+  String get debugNoExpectation => '(no expectation)';
+
+  @override
+  String get debugProblemsHint =>
+      'Move to where it went wrong and tap Problem here.\nThe video and the app’s state can show your notes: check before sharing.';
+
+  @override
+  String get debugCreateIssue => 'Create issue';
+
+  @override
+  String get debugSaveReport => 'Save debug report';
+
+  @override
+  String get debugBuilding => 'Building the report…';
+
+  @override
+  String get debugShareFailed => 'Couldn’t share the report';
+
+  @override
+  String get debugGithubFailed => 'Couldn’t open GitHub';
+
+  @override
+  String get debugBuildFailed => 'Couldn’t build the report';
+
+  @override
   String get filterSecrets => 'Secrets';
 
   @override

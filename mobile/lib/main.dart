@@ -9,6 +9,8 @@ import 'core/motion/springs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/style_typography.dart';
 import 'core/update/app_updater.dart';
+import 'features/debug_recorder/data/debug_state_observer.dart';
+import 'features/debug_recorder/presentation/debug_recorder_host.dart';
 import 'features/home_widget/data/home_widget_service.dart';
 import 'features/note_locks/data/note_lock_secrets.dart';
 import 'features/note_locks/presentation/note_lock_session.dart';
@@ -26,6 +28,7 @@ void main() async {
   runApp(
     ProviderScope(
       overrides: [appBootstrapProvider.overrideWithValue(bootstrap)],
+      observers: const [DebugStateObserver()],
       child: const AnchorApp(),
     ),
   );
@@ -113,7 +116,8 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
       routerConfig: router,
       builder: (context, child) => StyleTypography(
         style: style,
-        child: BackdropGroup(child: child!),
+        // Debug mode: hold two fingers still for 3 s to film the app.
+        child: DebugRecorderHost(child: BackdropGroup(child: child!)),
       ),
       localizationsDelegates: const [
         ...AppLocalizations.localizationsDelegates,
