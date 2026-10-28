@@ -9,6 +9,7 @@ import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_filters.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_list_controller.dart';
 import 'package:anchor/features/notes/presentation/notes_list_screen.dart';
@@ -338,6 +339,52 @@ void main() {
     expect(find.text('Press back again to exit'), findsNothing);
     await tester.binding.handlePopRoute();
     await settle(tester);
+    expect(exits, isEmpty);
+    await tester.pump(const Duration(seconds: 7));
+  });
+
+  testWidgets('Back with a tag or a filter on shows all notes again before '
+      'it offers to leave', (tester) async {
+    final exits = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') exits.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final container = await pumpList(tester, tagId: 'travel');
+    container
+        .read(noteFiltersControllerProvider.notifier)
+        .set(const NoteFilters(checklist: true));
+    await settle(tester);
+
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(container.read(selectedTagFilterProvider), isNull);
+    expect(container.read(noteFiltersControllerProvider).isEmpty, isTrue);
+    expect(find.text('Press back again to exit'), findsNothing);
+
+    // A filter alone is cleared the same way.
+    container
+        .read(noteFiltersControllerProvider.notifier)
+        .set(const NoteFilters(reminder: true));
+    await settle(tester);
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(container.read(noteFiltersControllerProvider).isEmpty, isTrue);
+    expect(find.text('Press back again to exit'), findsNothing);
+
+    // Then Back asks to leave.
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+    expect(find.text('Press back again to exit'), findsOneWidget);
     expect(exits, isEmpty);
     await tester.pump(const Duration(seconds: 7));
   });

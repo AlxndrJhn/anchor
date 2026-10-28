@@ -11,6 +11,7 @@ import 'package:anchor/features/notes/presentation/widgets/picture_viewer.dart';
 import 'package:anchor/features/picture_search/picture_search.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -257,6 +258,77 @@ void main() {
       await openViewer(tester, onGrabText: (_) {});
 
       expect(find.bySemanticsLabel('Grab image text'), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+  });
+
+  group('Copy picture', () {
+    const files = MethodChannel('anchor/files');
+    late List<MethodCall> calls;
+
+    void answer(Future<Object?> Function(MethodCall call) handler) {
+      calls = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(files, (call) {
+            calls.add(call);
+            return handler(call);
+          });
+    }
+
+    tearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(files, null),
+    );
+
+    Future<void> pumpToast(WidgetTester tester) async {
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    testWidgets('puts the picture on the clipboard and says so', (
+      tester,
+    ) async {
+      answer((_) async => null);
+      download(() async => '/nowhere/harbor.jpg');
+      await openViewer(tester);
+
+      await tester.tap(find.bySemanticsLabel('Copy picture'));
+      await pumpToast(tester);
+
+      expect(calls.single.method, 'copyImage');
+      expect(calls.single.arguments, {
+        'path': '/nowhere/harbor.jpg',
+        'name': 'harbor.jpg',
+        'mimeType': 'image/jpeg',
+      });
+      expect(
+        find.textContaining('Picture copied', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 10));
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('says so when the system won\'t take it', (tester) async {
+      answer((_) async => throw PlatformException(code: 'copy'));
+      download(() async => '/nowhere/harbor.jpg');
+      await openViewer(tester);
+
+      await tester.tap(find.bySemanticsLabel('Copy picture'));
+      await pumpToast(tester);
+
+      expect(
+        find.textContaining('copy the picture', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 10));
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('is not offered off Android', (tester) async {
+      download(() async => '/nowhere/harbor.jpg');
+      await openViewer(tester);
+
+      expect(find.bySemanticsLabel('Copy picture'), findsNothing);
+      expect(find.bySemanticsLabel('Share'), findsOneWidget);
     }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
   });
 

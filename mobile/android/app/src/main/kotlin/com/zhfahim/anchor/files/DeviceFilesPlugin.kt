@@ -2,6 +2,9 @@ package com.zhfahim.anchor.files
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipDescription
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -24,7 +27,7 @@ import java.util.zip.ZipOutputStream
  * "pickFolderAsZip" opens Android's folder screen and zips the picked folder,
  * subfolders included, into the cache ({path, name, files}, or null when
  * nothing was picked); "open" shows an attached file in an app that can
- * (false when no app can).
+ * (false when no app can); "copyImage" puts a picture on the clipboard.
  */
 class DeviceFilesPlugin :
     FlutterPlugin,
@@ -78,6 +81,20 @@ class DeviceFilesPlugin :
                         result.success(openFile(File(path), name, mime))
                     } catch (e: Exception) {
                         result.error("open", e.message, null)
+                    }
+                }
+            }
+            "copyImage" -> {
+                val path = call.argument<String>("path")
+                val name = call.argument<String>("name")
+                if (path == null || name == null) {
+                    result.error("args", "No file", null)
+                } else {
+                    try {
+                        copyImage(File(path), name, call.argument<String>("mimeType"))
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("copy", e.message, null)
                     }
                 }
             }
@@ -195,6 +212,23 @@ class DeviceFilesPlugin :
         } catch (e: ActivityNotFoundException) {
             false
         }
+    }
+
+    /**
+     * Puts a picture on the clipboard, for pasting into other apps. The
+     * clipboard hands the reading app permission to the copy's address.
+     */
+    private fun copyImage(file: File, name: String, mimeType: String?) {
+        val activity = binding?.activity ?: throw IllegalStateException("No activity")
+        val dir = File(activity.cacheDir, "open").apply { mkdirs() }
+        val copy = File(dir, name.replace('/', '_'))
+        file.copyTo(copy, overwrite = true)
+        val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.updates", copy)
+        val type = mimeType
+            ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(copy.extension.lowercase())
+            ?: "image/*"
+        val clip = ClipData(ClipDescription(name, arrayOf(type)), ClipData.Item(uri))
+        activity.getSystemService(ClipboardManager::class.java).setPrimaryClip(clip)
     }
 
     private companion object {

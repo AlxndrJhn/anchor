@@ -707,14 +707,21 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
           !isSelecting &&
           !_searching &&
           folder == NoteFolder.notes &&
-          tagId == null,
+          tagId == null &&
+          filters.isEmpty,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         // The drawer closes itself.
         if (_drawerKey.currentState?.isCovered ?? false) return;
         if (isSelecting) return _selection.end();
         if (_searching) return _endSearch();
-        if (tagId != null) return clearTag();
+        // A tag or a filter narrows the list: back shows all notes again
+        // before it offers to leave.
+        if (tagId != null || !filters.isEmpty) {
+          clearTag();
+          ref.read(noteFiltersControllerProvider.notifier).clear();
+          return;
+        }
         if (folder != NoteFolder.notes) {
           return ref.read(noteFolderProvider.notifier).go(NoteFolder.notes);
         }

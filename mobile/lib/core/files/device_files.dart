@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:mime/mime.dart';
 
@@ -46,6 +47,25 @@ Future<bool> openWithApp({
         'mimeType': mimeType,
       }) ??
       false;
+}
+
+/// Whether a picture can be put on the clipboard (Android only).
+bool get canCopyPictures => defaultTargetPlatform == TargetPlatform.android;
+
+/// Puts the picture at [path] on the clipboard, for pasting into other apps.
+/// Throws when the system won't take it; false where it can't
+/// ([canCopyPictures]).
+Future<bool> copyImageToClipboard({
+  required String path,
+  required String name,
+}) async {
+  if (!canCopyPictures) return false;
+  await _channel.invokeMethod<void>('copyImage', {
+    'path': path,
+    'name': name,
+    'mimeType': lookupMimeType(name) ?? 'image/jpeg',
+  });
+  return true;
 }
 
 /// The MIME type a file name suggests; bytes for one it doesn't.

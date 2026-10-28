@@ -8,6 +8,7 @@ import 'package:gal/gal.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/files/device_files.dart';
 import '../../../../core/files/image_text.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/logging/log_tags.dart';
@@ -296,6 +297,41 @@ class _ViewerState extends ConsumerState<_Viewer>
         sharePositionOrigin: globalRectOf(button),
       ),
     );
+  }
+
+  /// Puts the picture on the clipboard, for pasting into other apps.
+  Future<void> _copy() async {
+    final file = _files[_current.id];
+    if (file == null) return;
+    final l10n = context.l10n;
+    try {
+      if (!await copyImageToClipboard(
+        path: file,
+        name: _current.originalFilename,
+      )) {
+        return;
+      }
+      Haptics.light();
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.pictureCopied,
+          kind: SnackbarKind.success,
+        );
+      }
+    } catch (error) {
+      AppLogger.instance.warn(
+        LogTags.attachments,
+        'Copying picture ${_current.id} failed: $error',
+      );
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.pictureCopyFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+    }
   }
 
   Future<void> _save() async {
@@ -680,6 +716,13 @@ class _ViewerState extends ConsumerState<_Viewer>
                         color: ink,
                         onPressed: _save,
                       ),
+                      if (canCopyPictures)
+                        BarButton(
+                          icon: LucideIcons.copy,
+                          label: context.l10n.pictureCopy,
+                          color: ink,
+                          onPressed: hasPicture ? _copy : null,
+                        ),
                       if (widget.canGrabText)
                         _isReadingText
                             ? Semantics(

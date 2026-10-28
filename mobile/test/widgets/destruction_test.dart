@@ -12,6 +12,13 @@ void main() {
       expect(blockStateAt(1, burnFront(1)), BlockState.gone);
     });
 
+    test('past the end the sparks fly on and fade out', () {
+      expect(burnFront(1.2), greaterThan(burnFront(1)));
+      expect(sparkOpacity(1), 1);
+      expect(sparkOpacity((1 + burnTailEnd) / 2), closeTo(0.5, 0.01));
+      expect(sparkOpacity(burnTailEnd), 0);
+    });
+
     test('a block glows at the edge before it goes', () {
       expect(blockStateAt(0.5, 0.3), BlockState.whole);
       expect(blockStateAt(0.5, 0.55), BlockState.burning);
@@ -82,13 +89,24 @@ void main() {
     expect(tester.getSize(find.byType(Destructible)), const Size(120, 80));
     expect(tester.getTopLeft(find.text('Next card')), nextBefore);
 
-    await tester.pumpAndSettle();
-    // Burnt, it's deleted, and the next card moves up.
+    await tester.pump(
+      destructionDuration ~/ 2 + const Duration(milliseconds: 20),
+    );
+    await tester.pump();
+    await tester.pump();
+    // Burnt, it's deleted, and the next card moves up; its last sparks
+    // fly on above it for a moment.
     expect(find.byType(Destructible), findsNothing);
     expect(
       tester.getTopLeft(find.text('Next card')).dy,
       lessThan(nextBefore.dy),
     );
+    expect(burn(), findsOneWidget);
+
+    await tester.pump(burnTailDuration ~/ 2);
+    await tester.pump(burnTailDuration);
+    // Then they're gone too.
+    expect(burn(), findsNothing);
   });
 
   testWidgets('with animations turned off, the card just goes', (tester) async {

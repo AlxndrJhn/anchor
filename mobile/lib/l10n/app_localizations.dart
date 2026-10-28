@@ -1450,16 +1450,16 @@ abstract class AppLocalizations {
   /// **'Activity details for troubleshooting'**
   String get settingsLogsHelp;
 
-  /// Row in Settings that opens a web page to donate to the developer.
+  /// Row in Settings that opens a web page to donate to the original author of Anchor (this app is a fork).
   ///
   /// In en, this message translates to:
-  /// **'Support Anchor'**
+  /// **'Donate to the original creator'**
   String get settingsSupport;
 
-  /// Under the Support Anchor row: a small donation to the developer.
+  /// Under the Donate to the original creator row: a small donation to the author of Anchor, which this fork builds on.
   ///
   /// In en, this message translates to:
-  /// **'Buy the developer a coffee'**
+  /// **'Buy Anchor’s author a coffee; this fork builds on their work'**
   String get settingsSupportHelp;
 
   /// Small line at the bottom of Settings while the phone is offline.
@@ -1501,7 +1501,7 @@ abstract class AppLocalizations {
   /// The app’s short name, at the top of the menu and the bottom of Settings.
   ///
   /// In en, this message translates to:
-  /// **'Anchor'**
+  /// **'Anchor (fork)'**
   String get settingsAppNameShort;
 
   /// The app’s tagline under its version.
@@ -3556,6 +3556,42 @@ abstract class AppLocalizations {
   /// **'Font'**
   String get textStyleFont;
 
+  /// Font choice for some words in a note (Aa › Color and font): a casual, comic-book handwriting font (Comic Neue, drawn like Comic Sans). Shown written in that font.
+  ///
+  /// In en, this message translates to:
+  /// **'Comic Sans'**
+  String get textFontComic;
+
+  /// Font choice for some words in a note (Aa › Color and font): a font that looks handwritten. Shown written in that font.
+  ///
+  /// In en, this message translates to:
+  /// **'Handwriting'**
+  String get textFontHandwriting;
+
+  /// Font choice for some words in a note (Aa › Color and font): a font that looks typed on a typewriter. Shown written in that font.
+  ///
+  /// In en, this message translates to:
+  /// **'Typewriter'**
+  String get textFontTypewriter;
+
+  /// Font choice for some words in a note (Aa › Color and font): a sans-serif font with rounded ends. Shown written in that font.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded'**
+  String get textFontRounded;
+
+  /// Font choice for some words in a note (Aa › Color and font): a slab-serif font (thick, block-like serifs). Shown written in that font.
+  ///
+  /// In en, this message translates to:
+  /// **'Slab'**
+  String get textFontSlab;
+
+  /// Font choice for some words in a note (Aa › Color and font): a font that looks drawn with a felt marker. Shown written in that font.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker'**
+  String get textFontMarker;
+
   /// Swatch in the Color and font sheet that opens a color picker for the highlight, and that picker's title.
   ///
   /// In en, this message translates to:
@@ -4167,6 +4203,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allow access to Photos in Settings to save pictures'**
   String get pictureAllowPhotos;
+
+  /// Button in the picture viewer that puts the picture on the clipboard, to paste into other apps.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy picture'**
+  String get pictureCopy;
+
+  /// Toast after Copy picture put the picture on the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture copied'**
+  String get pictureCopied;
+
+  /// Toast when the picture could not be put on the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t copy the picture'**
+  String get pictureCopyFailed;
 
   /// Toast after a picture was saved to the phone’s photo library.
   ///

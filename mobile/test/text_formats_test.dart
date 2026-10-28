@@ -7,6 +7,7 @@ import 'package:anchor/core/widgets/highlighted_text.dart';
 import 'package:anchor/features/notes/domain/note_blocks.dart';
 import 'package:anchor/features/notes/presentation/editor/color_picker_sheet.dart';
 import 'package:anchor/features/notes/presentation/editor/text_formats.dart';
+import 'package:anchor/features/notes/presentation/editor/text_style_sheet.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_surface.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_text.dart';
 import 'package:anchor/l10n/app_localizations.dart';
@@ -89,6 +90,25 @@ void main() {
       expect(TextFont.of('cursive'), isNull);
     });
 
+    test('every font is offered by its stored value and drawn in a '
+        'bundled family; others are ignored', () {
+      final web = File(
+        '../web/features/notes/text-style.ts',
+      ).readAsStringSync();
+      final webFonts = RegExp(
+        r'value: "([a-z]+)"',
+      ).allMatches(web).map((m) => m.group(1)).toList();
+      expect([for (final font in TextFont.values) font.value], webFonts);
+      final pubspec = File('pubspec.yaml').readAsStringSync();
+      for (final font in TextFont.values) {
+        expect(TextFont.of(font.value), font);
+        expect(pubspec, contains('- family: ${font.family}\n'));
+      }
+      expect(TextFont.of('comic')!.family, 'Comic Neue');
+      expect(TextFont.of('Comic Sans MS'), isNull);
+      expect(TextFont.of(null), isNull);
+    });
+
     test('a note’s runs keep their color and font', () {
       final blocks = parseNoteBlocks(
         '{"ops":[{"insert":"hi","attributes":{"color":"#e03131",'
@@ -156,6 +176,56 @@ void main() {
       // An explicit color still wins.
       expect(styleOf(span, 'marked')!.color, _red);
     });
+  });
+
+  testWidgets('the Color and font sheet offers every font, each written '
+      'in itself, and picks one', (tester) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    final fonts = <String?>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showTextStyleSheet(
+                context,
+                current: const TextLook(font: 'serif'),
+                highlightFill: (_) => const Color(0xFFFFEE88),
+                onHighlight: (_) {},
+                onColor: (_) {},
+                onFont: fonts.add,
+              ),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    for (final (label, family) in [
+      ('Comic Sans', 'Comic Neue'),
+      ('Handwriting', 'Caveat'),
+      ('Typewriter', 'Special Elite'),
+      ('Rounded', 'Nunito'),
+      ('Slab', 'Roboto Slab'),
+      ('Marker', 'Permanent Marker'),
+    ]) {
+      expect(tester.widget<Text>(find.text(label)).style!.fontFamily, family);
+    }
+    await tester.ensureVisible(find.text('Marker'));
+    await tester.tap(find.text('Marker'));
+    await tester.pumpAndSettle();
+    expect(fonts, ['marker']);
+
+    await tester.tap(find.text('Default').last);
+    await tester.pumpAndSettle();
+    expect(fonts, ['marker', null]);
   });
 
   group('color picker', () {

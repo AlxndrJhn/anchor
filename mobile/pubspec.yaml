@@ -139,7 +139,8 @@ flutter:
   assets:
     - assets/icons/anchor_logo.png
 
-  # Licenses (SIL OFL 1.1) sit next to the files.
+  # Licenses sit next to the files (SIL OFL 1.1; the note fonts' are listed in
+  # assets/fonts/README.md).
   fonts:
     - family: DM Sans
       fonts:
@@ -188,6 +189,28 @@ flutter:
     - family: Patrick Hand
       fonts:
         - asset: assets/fonts/PatrickHand-Regular.ttf
+    # Fonts for some words in a note (Aa › Color and font), shared with the
+    # web; see assets/fonts/README.md.
+    - family: Comic Neue
+      fonts:
+        - asset: assets/fonts/ComicNeue-Regular.ttf
+        - asset: assets/fonts/ComicNeue-Bold.ttf
+          weight: 700
+    - family: Caveat
+      fonts:
+        - asset: assets/fonts/Caveat.ttf
+    - family: Special Elite
+      fonts:
+        - asset: assets/fonts/SpecialElite-Regular.ttf
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito.ttf
+    - family: Roboto Slab
+      fonts:
+        - asset: assets/fonts/RobotoSlab.ttf
+    - family: Permanent Marker
+      fonts:
+        - asset: assets/fonts/PermanentMarker-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

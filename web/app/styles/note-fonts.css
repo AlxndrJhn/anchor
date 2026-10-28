@@ -1,0 +1,50 @@
+/*
+ * The fonts offered for text in notes (public/fonts/README.md). Each family
+ * is named by the `font` value stored on the text, shared with the Android
+ * app, so the editor's font-family style reads back as that value. A font
+ * is only downloaded when some text uses it.
+ */
+@font-face {
+  font-family: comic;
+  src:
+    local("Comic Sans MS"),
+    url("/fonts/ComicNeue-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: comic;
+  src:
+    local("Comic Sans MS Bold"),
+    local("ComicSansMS-Bold"),
+    url("/fonts/ComicNeue-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: handwriting;
+  src: url("/fonts/Caveat.ttf") format("truetype");
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: typewriter;
+  src: url("/fonts/SpecialElite-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: rounded;
+  src: url("/fonts/Nunito.ttf") format("truetype");
+  font-weight: 200 1000;
+  font-display: swap;
+}
+@font-face {
+  font-family: slab;
+  src: url("/fonts/RobotoSlab.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: marker;
+  src: url("/fonts/PermanentMarker-Regular.ttf") format("truetype");
+  font-display: swap;
+}

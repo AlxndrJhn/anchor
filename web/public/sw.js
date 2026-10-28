@@ -23,7 +23,7 @@ const shellPath = (pathname) => {
 
 const isStatic = (url) =>
   url.pathname.startsWith("/_next/static/") ||
-  /\.(?:png|svg|ico|webmanifest|woff2?)$/.test(url.pathname);
+  /\.(?:png|svg|ico|webmanifest|woff2?|ttf)$/.test(url.pathname);
 
 async function keepPage(path, response) {
   const cache = await caches.open(PAGE_CACHE);

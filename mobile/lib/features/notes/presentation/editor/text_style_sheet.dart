@@ -3,12 +3,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/anchor_sheet.dart';
 import '../../../../core/widgets/grouped_list.dart';
 import '../../../../core/widgets/pressable.dart';
-import '../../../../core/widgets/segmented_control.dart';
 import '../../../../core/widgets/selection_ring.dart';
 import '../../../../l10n/l10n.dart';
 import 'color_picker_sheet.dart';
@@ -136,6 +136,38 @@ class _TextStyleSheetState extends State<_TextStyleSheet> {
         ),
       );
 
+  /// The fonts three to a row, each written in itself.
+  Widget _fonts(AppLocalizations l10n) => Semantics(
+    container: true,
+    label: l10n.textStyleFont,
+    child: LayoutBuilder(
+      builder: (context, box) {
+        const gap = 8.0;
+        final width = (box.maxWidth - gap * 2) / 3;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            _FontTile(
+              width: width,
+              label: l10n.textStyleDefault,
+              on: _font == null,
+              onTap: () => _pickFont(null),
+            ),
+            for (final font in TextFont.values)
+              _FontTile(
+                width: width,
+                label: font.labelIn(l10n),
+                family: font.family,
+                on: _font == font.value,
+                onTap: () => _pickFont(font.value),
+              ),
+          ],
+        );
+      },
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -222,20 +254,7 @@ class _TextStyleSheetState extends State<_TextStyleSheet> {
                 Section(
                   label: l10n.textStyleFont,
                   isBoxed: false,
-                  child: SegmentedControl<String?>(
-                    semanticLabel: l10n.textStyleFont,
-                    value: _font,
-                    segments: [
-                      Segment(value: null, label: l10n.textStyleDefault),
-                      for (final font in TextFont.values)
-                        Segment(
-                          value: font.value,
-                          label: font.labelIn(l10n),
-                          fontFamily: font.family,
-                        ),
-                    ],
-                    onChanged: _pickFont,
-                  ),
+                  child: _fonts(l10n),
                 ),
                 const SheetBottomSpace(),
               ],
@@ -340,6 +359,66 @@ class _Swatch extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A font to pick, its name written in it, ringed when it's the chosen one.
+class _FontTile extends StatelessWidget {
+  const _FontTile({
+    required this.width,
+    required this.label,
+    required this.on,
+    required this.onTap,
+    this.family,
+  });
+
+  final double width;
+  final String label;
+  final bool on;
+  final VoidCallback onTap;
+
+  /// Null: the note's own font.
+  final String? family;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.anchor;
+    final radius = context.appStyle.corners(AnchorTokens.radiusLg);
+    return Pressable(
+      style: PressStyle.button,
+      onTap: onTap,
+      semanticLabel: label,
+      selected: on,
+      child: SizedBox(
+        width: width,
+        height: AnchorTokens.sizeControlMedium,
+        child: SelectionRing(
+          isShown: on,
+          borderRadius: radius,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: GroupedList.fillOf(context),
+              borderRadius: radius,
+              border: Border.all(color: colors.appBorder),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.secondary.copyWith(
+                    fontFamily: family,
+                    color: colors.appText,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

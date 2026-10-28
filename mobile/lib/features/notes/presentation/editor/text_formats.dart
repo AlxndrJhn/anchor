@@ -8,7 +8,7 @@ import '../../../../l10n/app_localizations.dart';
 ///
 /// * `highlight`: a highlight's name ("yellow") or a custom `#rrggbb`;
 /// * `color`: the text color, `#rrggbb`;
-/// * `font`: `serif` or `monospace` (absent: the note's font).
+/// * `font`: a [TextFont]'s value (absent: the note's font).
 ///
 /// `color` and `font` are Quill's own attributes; removing one sets it to
 /// null.
@@ -48,10 +48,18 @@ enum TextColor {
   };
 }
 
-/// A font for some words, stored as [value].
+/// A font for some words, stored as [value]; the same as on the web
+/// (web/features/notes/text-style.ts). All but serif and monospace are
+/// bundled only for this (assets/fonts/README.md).
 enum TextFont {
   serif('serif'),
-  monospace('monospace');
+  monospace('monospace'),
+  comic('comic'),
+  handwriting('handwriting'),
+  typewriter('typewriter'),
+  rounded('rounded'),
+  slab('slab'),
+  marker('marker');
 
   const TextFont(this.value);
 
@@ -61,11 +69,23 @@ enum TextFont {
   String get family => switch (this) {
     serif => AppTypography.serif,
     monospace => AppTypography.mono,
+    comic => 'Comic Neue',
+    handwriting => 'Caveat',
+    typewriter => 'Special Elite',
+    rounded => 'Nunito',
+    slab => 'Roboto Slab',
+    marker => 'Permanent Marker',
   };
 
   String labelIn(AppLocalizations l10n) => switch (this) {
     serif => l10n.noteFontSerif,
     monospace => l10n.noteFontMono,
+    comic => l10n.textFontComic,
+    handwriting => l10n.textFontHandwriting,
+    typewriter => l10n.textFontTypewriter,
+    rounded => l10n.textFontRounded,
+    slab => l10n.textFontSlab,
+    marker => l10n.textFontMarker,
   };
 
   static TextFont? of(Object? value) {

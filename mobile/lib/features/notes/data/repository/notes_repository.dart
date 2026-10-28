@@ -310,10 +310,13 @@ class NotesRepository {
     if (note == null) return;
     final content = change(note.content);
     if (content == null || content == note.content) return;
-    await updateNote(note.copyWith(content: content));
-    // Placed there after the change, as a dragged note is, so it keeps its
-    // place in the list rather than move up.
-    if (keepAt != null) await setPosition(noteId, keepAt);
+    // One write, so the list doesn't first move the edited note up and then
+    // back to its place (placed there after the change, as a dragged note
+    // is): that showed as a jerk of the cards.
+    await _db.transaction(() async {
+      await updateNote(note.copyWith(content: content));
+      if (keepAt != null) await setPosition(noteId, keepAt);
+    });
   }
 
   /// What the note says now is kept as a version of its own.

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -150,13 +151,23 @@ class NoteAttachmentsRepository {
     }
   }
 
+  /// Downloads an attachment's file. Deduplicates concurrent requests for
+  /// the same attachment and writes through a temp file, so a partial file
+  /// is never served. Pictures are kept for good, not in the cache: Android
+  /// keeps every picture on the device (see [downloadMissingImages]), and
+  /// the system may clear a cache.
   Future<String> downloadAttachment(
     String noteId,
     String attachmentId,
     String filename,
   ) async {
+    final isImage =
+        AttachmentType.fromMimeType(lookupMimeType(filename) ?? '') ==
+        AttachmentType.image;
     final attachmentDir = _noteDir(
-      await getApplicationCacheDirectory(),
+      isImage
+          ? await getApplicationDocumentsDirectory()
+          : await getApplicationCacheDirectory(),
       noteId,
     );
     if (!attachmentDir.existsSync()) {
@@ -239,6 +250,55 @@ class NoteAttachmentsRepository {
         .write(NoteAttachmentsCompanion(localPath: drift.Value(filePath)));
 
     return filePath;
+  }
+
+  /// The uploaded pictures with no file on this device yet, as
+  /// (note id, attachment id, file name).
+  Future<List<(String, String, String)>> imagesToDownload() async {
+    final rows =
+        await (_db.select(_db.noteAttachments)..where(
+              (tbl) =>
+                  tbl.type.equals(AttachmentType.image.name) &
+                  tbl.syncStatus.equals(AttachmentSyncStatus.synced.dbValue),
+            ))
+            .get();
+    return [
+      for (final row in rows)
+        if (row.localPath == null || !File(row.localPath!).existsSync())
+          (row.noteId, row.serverAttachmentId ?? row.id, row.originalFilename),
+    ];
+  }
+
+  bool _downloadingImages = false;
+
+  /// Downloads every picture not on this device yet, one at a time, so all
+  /// of them can be seen offline. A picture that fails is tried again on
+  /// the next call.
+  Future<void> downloadMissingImages() async {
+    if (_downloadingImages) return;
+    _downloadingImages = true;
+    var downloaded = 0;
+    try {
+      for (final (noteId, id, filename) in await imagesToDownload()) {
+        try {
+          await downloadAttachment(noteId, id, filename);
+          downloaded++;
+        } catch (e) {
+          AppLogger.instance.warn(
+            LogTags.attachments,
+            'Couldn\'t download picture $id of note $noteId: $e',
+          );
+        }
+      }
+    } finally {
+      _downloadingImages = false;
+      if (downloaded > 0) {
+        AppLogger.instance.info(
+          LogTags.attachments,
+          'Downloaded $downloaded picture(s) for offline use',
+        );
+      }
+    }
   }
 
   Future<void> retryUpload(String id) async {

@@ -1154,13 +1154,13 @@
   "@settingsLogsHelp": {
     "description": "Under the Logs row in Settings."
   },
-  "settingsSupport": "Support Anchor",
+  "settingsSupport": "Donate to the original creator",
   "@settingsSupport": {
-    "description": "Row in Settings that opens a web page to donate to the developer."
+    "description": "Row in Settings that opens a web page to donate to the original author of Anchor (this app is a fork)."
   },
-  "settingsSupportHelp": "Buy the developer a coffee",
+  "settingsSupportHelp": "Buy Anchor’s author a coffee; this fork builds on their work",
   "@settingsSupportHelp": {
-    "description": "Under the Support Anchor row: a small donation to the developer."
+    "description": "Under the Donate to the original creator row: a small donation to the author of Anchor, which this fork builds on."
   },
   "settingsOffline": "Offline. Changes are saved on this phone.",
   "@settingsOffline": {
@@ -1220,7 +1220,7 @@
       }
     }
   },
-  "settingsAppNameShort": "Anchor",
+  "settingsAppNameShort": "Anchor (fork)",
   "@settingsAppNameShort": {
     "description": "The app’s short name, at the top of the menu and the bottom of Settings."
   },
@@ -3167,6 +3167,30 @@
   "@textStyleFont": {
     "description": "Section of the Color and font sheet that sets the words' font."
   },
+  "textFontComic": "Comic Sans",
+  "@textFontComic": {
+    "description": "Font choice for some words in a note (Aa › Color and font): a casual, comic-book handwriting font (Comic Neue, drawn like Comic Sans). Shown written in that font."
+  },
+  "textFontHandwriting": "Handwriting",
+  "@textFontHandwriting": {
+    "description": "Font choice for some words in a note (Aa › Color and font): a font that looks handwritten. Shown written in that font."
+  },
+  "textFontTypewriter": "Typewriter",
+  "@textFontTypewriter": {
+    "description": "Font choice for some words in a note (Aa › Color and font): a font that looks typed on a typewriter. Shown written in that font."
+  },
+  "textFontRounded": "Rounded",
+  "@textFontRounded": {
+    "description": "Font choice for some words in a note (Aa › Color and font): a sans-serif font with rounded ends. Shown written in that font."
+  },
+  "textFontSlab": "Slab",
+  "@textFontSlab": {
+    "description": "Font choice for some words in a note (Aa › Color and font): a slab-serif font (thick, block-like serifs). Shown written in that font."
+  },
+  "textFontMarker": "Marker",
+  "@textFontMarker": {
+    "description": "Font choice for some words in a note (Aa › Color and font): a font that looks drawn with a felt marker. Shown written in that font."
+  },
   "textStyleCustomHighlight": "Custom highlight",
   "@textStyleCustomHighlight": {
     "description": "Swatch in the Color and font sheet that opens a color picker for the highlight, and that picker's title."
@@ -3736,6 +3760,18 @@
   "pictureAllowPhotos": "Allow access to Photos in Settings to save pictures",
   "@pictureAllowPhotos": {
     "description": "Toast when saving a picture is blocked because the app has no Photos permission."
+  },
+  "pictureCopy": "Copy picture",
+  "@pictureCopy": {
+    "description": "Button in the picture viewer that puts the picture on the clipboard, to paste into other apps."
+  },
+  "pictureCopied": "Picture copied",
+  "@pictureCopied": {
+    "description": "Toast after Copy picture put the picture on the clipboard."
+  },
+  "pictureCopyFailed": "Couldn’t copy the picture",
+  "@pictureCopyFailed": {
+    "description": "Toast when the picture could not be put on the clipboard."
   },
   "pictureSaved": "Saved to Photos",
   "@pictureSaved": {

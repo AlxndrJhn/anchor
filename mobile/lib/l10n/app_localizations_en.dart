@@ -824,10 +824,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogsHelp => 'Activity details for troubleshooting';
 
   @override
-  String get settingsSupport => 'Support Anchor';
+  String get settingsSupport => 'Donate to the original creator';
 
   @override
-  String get settingsSupportHelp => 'Buy the developer a coffee';
+  String get settingsSupportHelp =>
+      'Buy Anchor’s author a coffee; this fork builds on their work';
 
   @override
   String get settingsOffline => 'Offline. Changes are saved on this phone.';
@@ -858,7 +859,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsAppNameShort => 'Anchor';
+  String get settingsAppNameShort => 'Anchor (fork)';
 
   @override
   String get settingsTagline => 'Your thoughts, secured.';
@@ -2375,6 +2376,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textStyleFont => 'Font';
 
   @override
+  String get textFontComic => 'Comic Sans';
+
+  @override
+  String get textFontHandwriting => 'Handwriting';
+
+  @override
+  String get textFontTypewriter => 'Typewriter';
+
+  @override
+  String get textFontRounded => 'Rounded';
+
+  @override
+  String get textFontSlab => 'Slab';
+
+  @override
+  String get textFontMarker => 'Marker';
+
+  @override
   String get textStyleCustomHighlight => 'Custom highlight';
 
   @override
@@ -2781,6 +2800,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pictureAllowPhotos =>
       'Allow access to Photos in Settings to save pictures';
+
+  @override
+  String get pictureCopy => 'Copy picture';
+
+  @override
+  String get pictureCopied => 'Picture copied';
+
+  @override
+  String get pictureCopyFailed => 'Couldn’t copy the picture';
 
   @override
   String get pictureSaved => 'Saved to Photos';

@@ -285,6 +285,11 @@ class _CardLine extends StatelessWidget {
   }
 }
 
+/// The checkboxes on cards: a fifth larger than the token, so they are
+/// easier to hit when ticking an item from the list; they still fit the
+/// line.
+const double cardCheckboxSize = AnchorTokens.sizeCheckboxCard * 1.2;
+
 class _ListMarker extends StatelessWidget {
   const _ListMarker({
     required this.block,
@@ -324,8 +329,8 @@ class _ListMarker extends StatelessWidget {
     }
     if (block.type == BlockType.check) {
       return Container(
-        width: AnchorTokens.sizeCheckboxCard,
-        height: AnchorTokens.sizeCheckboxCard,
+        width: cardCheckboxSize,
+        height: cardCheckboxSize,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4.5), // off-scale: card checkbox
           border: Border.all(color: appearance.colors.muted, width: 1.5),
