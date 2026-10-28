@@ -1,3 +1,5 @@
+import 'package:anchor/app/app_bootstrap.dart';
+import 'package:anchor/app/bootstrap.dart';
 import 'package:anchor/core/storage/preferences_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
@@ -110,6 +112,54 @@ void main() {
       addTearDown(next.dispose);
       final options = await next.read(notesViewOptionsProvider.future);
       expect(options.showPictures, isFalse);
+    });
+  });
+
+  group('at launch', () {
+    test('the first build takes the options read with the rest, at once', () {
+      final c = ProviderContainer(
+        overrides: [
+          appBootstrapProvider.overrideWithValue(
+            const AppBootstrap(
+              notesViewOptions: NotesViewOptions(
+                viewType: ViewType.list,
+                sortOption: SortOption.title,
+                showPictures: false,
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      // Ready with the first frame: no loading state to wait through.
+      final options = c.read(notesViewOptionsProvider).value;
+      expect(options?.viewType, ViewType.list);
+      expect(options?.sortOption, SortOption.title);
+      expect(options?.showPictures, isFalse);
+    });
+
+    test('settings come from one read of everything stored', () async {
+      FlutterSecureStorage.setMockInitialValues({
+        'notes_view_type': 'list',
+        'notes_sort_option': 'title',
+        'notes_is_ascending': 'true',
+      });
+      const storage = FlutterSecureStorage();
+      final saved = await readAllStorage(storage);
+      // Changed after the read: the snapshot keeps what was read.
+      await storage.write(key: 'notes_view_type', value: 'grid');
+
+      final options = await readNotesViewOptions(
+        PreferencesRepository(storage, snapshot: saved),
+      );
+      expect(options.viewType, ViewType.list);
+      expect(options.sortOption, SortOption.title);
+      expect(options.isAscending, isTrue);
+      expect(
+        (await readNotesViewOptions(PreferencesRepository(storage))).viewType,
+        ViewType.masonry,
+      );
     });
   });
 }

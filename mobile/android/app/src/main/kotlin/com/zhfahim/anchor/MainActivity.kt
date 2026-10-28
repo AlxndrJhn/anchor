@@ -29,7 +29,8 @@ class MainActivity : FlutterFragmentActivity() {
         attachWidgetNoteUri(intent)
         super.onCreate(savedInstanceState)
         preferFastestRefreshRate()
-        publishShortcuts()
+        // Talks to the launcher, which takes a moment: not while starting up.
+        Thread(::publishShortcuts).start()
     }
 
     /**

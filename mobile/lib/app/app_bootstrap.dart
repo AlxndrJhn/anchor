@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../core/theme/custom_theme.dart';
 import '../core/theme/display_density.dart';
 import '../core/theme/tokens/app_style.dart';
+import '../features/notes/presentation/notes_view_options.dart';
 import '../features/settings/domain/editor_preferences.dart';
 import 'router/app_routes.dart';
 
@@ -21,6 +22,7 @@ class AppBootstrap {
     this.openArchivedTags = const [],
     this.userId,
     this.initialRoute = AppRoutes.home,
+    this.notesViewOptions,
   });
 
   final ThemeMode themeMode;
@@ -38,6 +40,10 @@ class AppBootstrap {
   final List<String> openArchivedTags;
   final String? userId;
   final String initialRoute;
+
+  /// The notes list's options, so it shows with the first frame; null reads
+  /// them when the list first asks.
+  final NotesViewOptions? notesViewOptions;
 }
 
 /// Overridden in `main` with what `initializeApp` read.

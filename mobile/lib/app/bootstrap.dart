@@ -22,6 +22,7 @@ import '../core/theme/display_density.dart';
 import '../core/theme/note_typography.dart';
 import '../core/theme/tokens/app_style.dart';
 import '../features/home_widget/data/home_widget_payload.dart';
+import '../features/notes/presentation/notes_view_options.dart';
 import '../features/reminders/presentation/notification_launch.dart';
 import '../features/settings/domain/editor_preferences.dart';
 import 'app_bootstrap.dart';
@@ -36,8 +37,13 @@ Future<AppBootstrap> initializeApp({
   // DateFormat with a locale throws until this has run.
   await initializeDateFormatting();
 
-  await AppLogger.instance.init();
-  await _logSessionHeader();
+  // Everything here keeps the splash screen up, so the steps that don't
+  // need each other run side by side.
+  final logging = AppLogger.instance.init().then((_) => _logSessionHeader());
+  // Registers notifications on every launch, whatever route the app opens on.
+  final notificationRoute = _notificationLaunchRoute();
+  final widgetRoute = _widgetLaunchRoute();
+  await logging;
   FlutterError.onError = (details) {
     AppLogger.instance.error(
       LogTags.flutterError,
@@ -74,7 +80,10 @@ Future<AppBootstrap> initializeApp({
     }
   }
 
-  final preferences = PreferencesRepository(storage);
+  // Every setting in one read, rather than one round trip (and decryption)
+  // each.
+  final saved = await readAllStorage(storage);
+  final preferences = PreferencesRepository(storage, snapshot: saved);
   final savedTheme = await preferences.getThemeMode();
   final themeMode = ThemeMode.values.firstWhere(
     (mode) => mode.name == savedTheme,
@@ -110,7 +119,7 @@ Future<AppBootstrap> initializeApp({
   );
 
   String? userId;
-  final userData = await storage.read(key: StorageKeys.userData);
+  final userData = saved[StorageKeys.userData];
   if (userData != null) {
     try {
       userId = (jsonDecode(userData) as Map<String, dynamic>)['id'] as String?;
@@ -119,11 +128,8 @@ Future<AppBootstrap> initializeApp({
     }
   }
 
-  // Registers notifications on every launch, whatever route the app opens on.
-  final notificationRoute = await _notificationLaunchRoute();
-
-  final serverUrl = await storage.read(key: StorageKeys.serverUrl);
-  final accessToken = await storage.read(key: StorageKeys.accessToken);
+  final serverUrl = saved[StorageKeys.serverUrl];
+  final accessToken = saved[StorageKeys.accessToken];
   final String initialRoute;
   if (serverUrl == null || serverUrl.isEmpty) {
     initialRoute = AppRoutes.serverConfig;
@@ -131,7 +137,7 @@ Future<AppBootstrap> initializeApp({
     initialRoute = AppRoutes.login;
   } else {
     initialRoute =
-        notificationRoute ?? await _widgetLaunchRoute() ?? AppRoutes.home;
+        await notificationRoute ?? await widgetRoute ?? AppRoutes.home;
   }
 
   return AppBootstrap(
@@ -145,7 +151,32 @@ Future<AppBootstrap> initializeApp({
     openArchivedTags: await preferences.getOpenArchivedTags(),
     userId: userId,
     initialRoute: initialRoute,
+    notesViewOptions: await readNotesViewOptions(preferences),
   );
+}
+
+/// Every stored value at once. Falls back to reading key by key when that
+/// fails (a value that can't be decrypted), leaving out what can't be read.
+Future<Map<String, String>> readAllStorage(FlutterSecureStorage storage) async {
+  try {
+    return Map.of(await storage.readAll());
+  } catch (error) {
+    AppLogger.instance.warn(
+      LogTags.app,
+      'Reading all settings at once failed',
+      error: error,
+    );
+    final values = <String, String>{};
+    for (final key in StorageKeys.all) {
+      try {
+        final value = await storage.read(key: key);
+        if (value != null) values[key] = value;
+      } catch (_) {
+        // Left out, as if never set.
+      }
+    }
+    return values;
+  }
 }
 
 Future<String?> _notificationLaunchRoute() async {

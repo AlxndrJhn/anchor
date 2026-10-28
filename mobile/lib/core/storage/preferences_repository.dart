@@ -16,10 +16,22 @@ PreferencesRepository preferencesRepository(Ref ref) {
 class PreferencesRepository {
   final FlutterSecureStorage _storage;
 
-  const PreferencesRepository(this._storage);
+  /// Every stored value, read at once at launch ([readAllStorage]); reads
+  /// come from it instead of a round trip (and decryption) each. Writes
+  /// still go to storage, so it is only for reading while the app starts.
+  final Map<String, String>? _snapshot;
+
+  const PreferencesRepository(this._storage, {Map<String, String>? snapshot})
+    : _snapshot = snapshot;
+
+  Future<String?> _read(String key) async {
+    final snapshot = _snapshot;
+    if (snapshot != null) return snapshot[key];
+    return _storage.read(key: key);
+  }
 
   Future<bool> getSortChecklistItems() async {
-    final value = await _storage.read(key: StorageKeys.sortChecklistItems);
+    final value = await _read(StorageKeys.sortChecklistItems);
     return value != 'false';
   }
 
@@ -32,7 +44,7 @@ class PreferencesRepository {
 
   /// Deleted notes burn away; on unless turned off.
   Future<bool> getBurnDeleted() async {
-    final value = await _storage.read(key: StorageKeys.burnDeleted);
+    final value = await _read(StorageKeys.burnDeleted);
     return value != 'false';
   }
 
@@ -54,7 +66,7 @@ class PreferencesRepository {
       _writeIds(StorageKeys.openArchivedTags, tagIds);
 
   Future<List<String>> _readIds(String key) async {
-    final value = await _storage.read(key: key);
+    final value = await _read(key);
     if (value == null) return const [];
     try {
       final ids = jsonDecode(value);
@@ -69,7 +81,7 @@ class PreferencesRepository {
 
   /// Whether the app looks for a newer release of the fork when it starts.
   Future<bool> getCheckForUpdates() async {
-    final value = await _storage.read(key: StorageKeys.checkForUpdates);
+    final value = await _read(StorageKeys.checkForUpdates);
     return value != 'false';
   }
 
@@ -82,7 +94,7 @@ class PreferencesRepository {
 
   /// The release build the user said "Later" to.
   Future<int?> getDismissedUpdate() async =>
-      int.tryParse(await _storage.read(key: StorageKeys.dismissedUpdate) ?? '');
+      int.tryParse(await _read(StorageKeys.dismissedUpdate) ?? '');
 
   Future<void> setDismissedUpdate(int build) async {
     await _storage.write(
@@ -92,7 +104,7 @@ class PreferencesRepository {
   }
 
   Future<bool> getNotificationsAsked() async {
-    final value = await _storage.read(key: StorageKeys.notificationsAsked);
+    final value = await _read(StorageKeys.notificationsAsked);
     return value == 'true';
   }
 
@@ -104,7 +116,7 @@ class PreferencesRepository {
   }
 
   Future<bool> getExactAlarmsOffered() async {
-    final value = await _storage.read(key: StorageKeys.exactAlarmsOffered);
+    final value = await _read(StorageKeys.exactAlarmsOffered);
     return value == 'true';
   }
 
@@ -115,48 +127,44 @@ class PreferencesRepository {
     );
   }
 
-  Future<String?> getNoteFont() => _storage.read(key: StorageKeys.noteFont);
+  Future<String?> getNoteFont() => _read(StorageKeys.noteFont);
 
   Future<void> setNoteFont(String font) async {
     await _storage.write(key: StorageKeys.noteFont, value: font);
   }
 
-  Future<String?> getNoteTextSize() =>
-      _storage.read(key: StorageKeys.noteTextSize);
+  Future<String?> getNoteTextSize() => _read(StorageKeys.noteTextSize);
 
   Future<void> setNoteTextSize(String textSize) async {
     await _storage.write(key: StorageKeys.noteTextSize, value: textSize);
   }
 
-  Future<String?> getThemeMode() => _storage.read(key: StorageKeys.themeMode);
+  Future<String?> getThemeMode() => _read(StorageKeys.themeMode);
 
   Future<void> setThemeMode(String mode) async {
     await _storage.write(key: StorageKeys.themeMode, value: mode);
   }
 
-  Future<String?> getDisplayDensity() =>
-      _storage.read(key: StorageKeys.displayDensity);
+  Future<String?> getDisplayDensity() => _read(StorageKeys.displayDensity);
 
   Future<void> setDisplayDensity(String density) async {
     await _storage.write(key: StorageKeys.displayDensity, value: density);
   }
 
-  Future<String?> getColorScheme() =>
-      _storage.read(key: StorageKeys.colorScheme);
+  Future<String?> getColorScheme() => _read(StorageKeys.colorScheme);
 
   Future<void> setColorScheme(String scheme) async {
     await _storage.write(key: StorageKeys.colorScheme, value: scheme);
   }
 
-  Future<String?> getAppStyle() => _storage.read(key: StorageKeys.appStyle);
+  Future<String?> getAppStyle() => _read(StorageKeys.appStyle);
 
   Future<void> setAppStyle(String style) async {
     await _storage.write(key: StorageKeys.appStyle, value: style);
   }
 
   /// The custom theme's JSON, as `CustomTheme.encode` writes it.
-  Future<String?> getCustomTheme() =>
-      _storage.read(key: StorageKeys.customTheme);
+  Future<String?> getCustomTheme() => _read(StorageKeys.customTheme);
 
   /// Null removes the custom theme.
   Future<void> setCustomTheme(String? json) async {
@@ -168,7 +176,7 @@ class PreferencesRepository {
   }
 
   Future<bool> getAllowSelfSignedCert() async {
-    final value = await _storage.read(key: StorageKeys.allowSelfSignedCert);
+    final value = await _read(StorageKeys.allowSelfSignedCert);
     return value == 'true';
   }
 
@@ -179,22 +187,20 @@ class PreferencesRepository {
     );
   }
 
-  Future<String?> getNotesViewType() =>
-      _storage.read(key: StorageKeys.notesViewType);
+  Future<String?> getNotesViewType() => _read(StorageKeys.notesViewType);
 
   Future<void> setNotesViewType(String viewType) async {
     await _storage.write(key: StorageKeys.notesViewType, value: viewType);
   }
 
-  Future<String?> getNotesSortOption() =>
-      _storage.read(key: StorageKeys.notesSortOption);
+  Future<String?> getNotesSortOption() => _read(StorageKeys.notesSortOption);
 
   Future<void> setNotesSortOption(String sortOption) async {
     await _storage.write(key: StorageKeys.notesSortOption, value: sortOption);
   }
 
   Future<bool> getNotesSortAscending() async {
-    final value = await _storage.read(key: StorageKeys.notesSortAscending);
+    final value = await _read(StorageKeys.notesSortAscending);
     return value == 'true';
   }
 
@@ -207,7 +213,7 @@ class PreferencesRepository {
 
   /// On unless turned off.
   Future<bool> getNotesShowPictures() async {
-    final value = await _storage.read(key: StorageKeys.notesShowPictures);
+    final value = await _read(StorageKeys.notesShowPictures);
     return value != 'false';
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/app_bootstrap.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/storage/preferences_repository.dart';
@@ -96,44 +97,50 @@ int Function(Note, Note) noteComparator(NotesViewOptions options) {
   };
 }
 
+/// The saved view options; the defaults when they can't be read.
+Future<NotesViewOptions> readNotesViewOptions(
+  PreferencesRepository preferences,
+) async {
+  try {
+    final viewTypeStr = await preferences.getNotesViewType();
+    final sortOptionStr = await preferences.getNotesSortOption();
+    final isAscending = await preferences.getNotesSortAscending();
+    final showPictures = await preferences.getNotesShowPictures();
+
+    final viewType = switch (viewTypeStr) {
+      'list' => ViewType.list,
+      'uniform' => ViewType.grid,
+      _ => ViewType.masonry,
+    };
+
+    final sortOption = sortOptionStr == 'title'
+        ? SortOption.title
+        : SortOption.dateModified;
+
+    return NotesViewOptions(
+      viewType: viewType,
+      sortOption: sortOption,
+      isAscending: isAscending,
+      showPictures: showPictures,
+    );
+  } catch (error) {
+    AppLogger.instance.warn(
+      LogTags.settings,
+      'Reading the view options failed',
+      error: error,
+    );
+    return const NotesViewOptions();
+  }
+}
+
 class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
   @override
-  Future<NotesViewOptions> build() async {
-    return _loadOptions();
-  }
-
-  Future<NotesViewOptions> _loadOptions() async {
-    try {
-      final preferences = ref.read(preferencesRepositoryProvider);
-      final viewTypeStr = await preferences.getNotesViewType();
-      final sortOptionStr = await preferences.getNotesSortOption();
-      final isAscending = await preferences.getNotesSortAscending();
-      final showPictures = await preferences.getNotesShowPictures();
-
-      final viewType = switch (viewTypeStr) {
-        'list' => ViewType.list,
-        'uniform' => ViewType.grid,
-        _ => ViewType.masonry,
-      };
-
-      final sortOption = sortOptionStr == 'title'
-          ? SortOption.title
-          : SortOption.dateModified;
-
-      return NotesViewOptions(
-        viewType: viewType,
-        sortOption: sortOption,
-        isAscending: isAscending,
-        showPictures: showPictures,
-      );
-    } catch (error) {
-      AppLogger.instance.warn(
-        LogTags.settings,
-        'Reading the view options failed',
-        error: error,
-      );
-      return const NotesViewOptions();
-    }
+  FutureOr<NotesViewOptions> build() {
+    // Read with the rest at launch, so the list shows with the app's first
+    // frame instead of after four more reads.
+    final atLaunch = ref.read(appBootstrapProvider).notesViewOptions;
+    if (atLaunch != null) return atLaunch;
+    return readNotesViewOptions(ref.read(preferencesRepositoryProvider));
   }
 
   Future<void> _saveOptions(NotesViewOptions options) async {

@@ -25,4 +25,28 @@ class StorageKeys {
   static const openArchivedTags = 'notes_open_archived_tags';
   static const checkForUpdates = 'updates_check_automatically';
   static const dismissedUpdate = 'updates_dismissed_build';
+
+  /// What the app reads while it starts, when reading everything at once
+  /// fails and it reads key by key.
+  static const all = [
+    serverUrl,
+    allowSelfSignedCert,
+    accessToken,
+    userData,
+    themeMode,
+    displayDensity,
+    colorScheme,
+    appStyle,
+    customTheme,
+    sortChecklistItems,
+    burnDeleted,
+    foldedChecklistNotes,
+    noteFont,
+    noteTextSize,
+    notesViewType,
+    notesSortOption,
+    notesSortAscending,
+    notesShowPictures,
+    openArchivedTags,
+  ];
 }
