@@ -3,6 +3,7 @@
 
 import {
   caretToEnd,
+  center,
   clickElement,
   dragBetween,
   pressKey,
@@ -613,6 +614,65 @@ export const demos: Demo[] = [
       { click: { css: "#cards-pictures" }, say: "And shows them again." },
     ],
     outro: "Try it: open a picture, or paste one into a note.",
+  },
+  {
+    slug: "pictures-in-text",
+    title: "Pictures in the text",
+    summary:
+      "Pictures placed in the text on Android show at their size, with their captions.",
+    seed: withNotes({
+      id: "n-garden",
+      title: "Balcony garden",
+      age: 1,
+      lines: [
+        "The tomatoes finally got some sun this week.",
+        { picture: "p-tomatoes", width: 0.4, caption: "First ripe ones" },
+        "The basil, bigger:",
+        { picture: "p-basil", width: 0.7 },
+        "Water every other evening.",
+      ],
+      pictures: [
+        { id: "p-tomatoes", name: "tomatoes.png", hue: 5, label: "Tomatoes" },
+        { id: "p-basil", name: "basil.png", hue: 110, label: "Basil" },
+      ],
+    }),
+    start: "/notes",
+    steps: [
+      openNote("Balcony garden", "Open a note with pictures in its text."),
+      { wait: 800 },
+      {
+        hover: { css: ".ql-editor .note-image img", nth: 1 },
+        say: "Each one keeps the size and caption it was given on Android.",
+      },
+      { wait: 1200 },
+      {
+        say: "Double-click one to see it full size.",
+        run: async (play) => {
+          const picture = await play.find({
+            css: ".ql-editor .note-image img",
+          });
+          await play.moveTo(picture);
+          clickElement(picture);
+          const { x, y } = center(picture);
+          picture.dispatchEvent(
+            new MouseEvent("dblclick", {
+              bubbles: true,
+              cancelable: true,
+              clientX: x,
+              clientY: y,
+              view: window,
+            }),
+          );
+        },
+      },
+      { wait: 1500 },
+      { click: "Close" },
+      {
+        say: "On Android, the camera and pictures buttons put them in the text; drag a corner to resize.",
+      },
+    ],
+    outro:
+      "Try it: double-click a picture. On Android, hold one to crop, mirror or caption it.",
   },
   {
     slug: "image-text",
