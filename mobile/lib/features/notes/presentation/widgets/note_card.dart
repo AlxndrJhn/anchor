@@ -206,6 +206,18 @@ class NoteCard extends ConsumerWidget {
                                       color: theme.colorScheme.primary,
                                     ),
                                   ],
+                                  if (note.isFrozen) ...[
+                                    SizedBox(width: dims.xs),
+                                    Icon(
+                                      LucideIcons.snowflake,
+                                      key: const ValueKey('card-frozen'),
+                                      size: AppIconSizes.sm,
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(
+                                            alpha: AppOpacity.secondary,
+                                          ),
+                                    ),
+                                  ],
                                   // Opened this session: shown, but still
                                   // locked.
                                   if (note.isLocked && !isHidden) ...[

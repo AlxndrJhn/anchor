@@ -52,6 +52,10 @@ class NoteOptionsSheet extends StatelessWidget {
   /// Remove lock; null hides it.
   final VoidCallback? onRemoveLockTap;
 
+  /// Freeze (or Unfreeze when [isFrozen]); null hides it.
+  final VoidCallback? onFreezeTap;
+  final bool isFrozen;
+
   const NoteOptionsSheet({
     super.key,
     required this.isReadOnly,
@@ -75,6 +79,8 @@ class NoteOptionsSheet extends StatelessWidget {
     this.onLockTap,
     this.isLocked = false,
     this.onRemoveLockTap,
+    this.onFreezeTap,
+    this.isFrozen = false,
   });
 
   static const double _maxTileWidth = 104;
@@ -182,6 +188,12 @@ class NoteOptionsSheet extends StatelessWidget {
           icon: LucideIcons.lockOpen,
           label: 'Remove lock',
           onTap: onRemoveLockTap!,
+        ),
+      if (onFreezeTap != null)
+        _OptionSpec(
+          icon: LucideIcons.snowflake,
+          label: isFrozen ? 'Unfreeze' : 'Freeze',
+          onTap: onFreezeTap!,
         ),
     ];
 

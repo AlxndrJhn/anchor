@@ -281,6 +281,27 @@ void main() {
     });
   });
 
+  test('a database from before frozen notes gains the column, unfrozen, and '
+      're-downloads the feed', () async {
+    await withDatabase((db) async {
+      await db
+          .into(db.syncState)
+          .insert(const SyncStateCompanion(cursor: Value('cursor-16')));
+      await db
+          .into(db.notes)
+          .insert(NotesCompanion.insert(id: 'n1', title: 'Kept'));
+      await dropColumns(db, ['is_frozen']);
+      await db.customStatement('PRAGMA user_version = 16');
+    });
+
+    await withDatabase((db) async {
+      final row = await db.select(db.notes).getSingle();
+      expect(row.isFrozen, isFalse);
+      final state = await db.select(db.syncState).getSingle();
+      expect(state.cursor, isNull);
+    });
+  });
+
   test(
     'a database from the first reminders release re-downloads the feed',
     () async {

@@ -8,6 +8,7 @@ import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/core/widgets/confirm_dialog.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
+import 'package:anchor/features/notes/presentation/note_freeze_actions.dart';
 import '../note_search.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
@@ -65,7 +66,20 @@ class SelectionAppBarActions extends ConsumerWidget {
     WidgetRef ref,
     List<String> ids,
     Set<String> sharedIds,
+    Set<String> frozenIds,
   ) async {
+    // Frozen notes stay where they are.
+    ids = [
+      for (final id in ids)
+        if (!frozenIds.contains(id)) id,
+    ];
+    if (ids.isEmpty) {
+      AppSnackbar.showInfo(
+        context,
+        message: 'Frozen notes can’t be deleted. Unfreeze them first.',
+      );
+      return;
+    }
     final sharedCount = sharedIds.length;
     // Your own notes go to trash at once, with Undo. Shared ones ask first:
     // Undo can't bring them back, their owners have to share them again.
@@ -274,6 +288,14 @@ class SelectionAppBarActions extends ConsumerWidget {
         .toList();
     final allSelectedPinned =
         selectedNotes.isNotEmpty && selectedNotes.every((n) => n.isPinned);
+    // This person's own: they can freeze them, and frozen ones don't delete.
+    final ownSelected = selectedNotes.where((n) => n.isOwner).toList();
+    final allOwnFrozen =
+        ownSelected.isNotEmpty && ownSelected.every((n) => n.isFrozen);
+    final selectedFrozenIds = {
+      for (final n in ownSelected)
+        if (n.isFrozen) n.id,
+    };
     final selectedSharedIds = notes.maybeWhen(
       data: (notesList) => {
         for (final n in notesList)
@@ -314,19 +336,41 @@ class SelectionAppBarActions extends ConsumerWidget {
             ),
             tooltip: allSelectedPinned ? 'Unpin' : 'Pin',
           ),
-        // Lock, with one choice for them all
+        // Lock, with one choice for them all, and freeze / unfreeze the
+        // ones this person owns
         if (selectedNoteIds.isNotEmpty)
-          IconButton(
+          PopupMenuButton<_MoreAction>(
             icon: const Icon(LucideIcons.lock),
-            onPressed: () async {
-              final locked = await lockSelectedNotes(
-                context,
-                ref,
-                selectedNotes,
-              );
-              if (locked) onExitSelectionMode();
+            tooltip: 'Lock or freeze',
+            onSelected: (action) async {
+              final bool done;
+              if (action == _MoreAction.lock) {
+                done = await lockSelectedNotes(context, ref, selectedNotes);
+              } else {
+                done = await setNotesFrozen(context, ref, [
+                  for (final n in ownSelected)
+                    if (n.isFrozen == allOwnFrozen) n.id,
+                ], !allOwnFrozen);
+              }
+              if (done) onExitSelectionMode();
             },
-            tooltip: 'Lock…',
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: _MoreAction.lock,
+                child: ListTile(
+                  leading: Icon(LucideIcons.lock),
+                  title: Text('Lock…'),
+                ),
+              ),
+              if (ownSelected.isNotEmpty)
+                PopupMenuItem(
+                  value: _MoreAction.freeze,
+                  child: ListTile(
+                    leading: const Icon(LucideIcons.snowflake),
+                    title: Text(allOwnFrozen ? 'Unfreeze' : 'Freeze'),
+                  ),
+                ),
+            ],
           ),
         // Archive button
         if (selectedNoteIds.isNotEmpty)
@@ -345,6 +389,7 @@ class SelectionAppBarActions extends ConsumerWidget {
               ref,
               selectedNoteIds.toList(),
               selectedSharedIds,
+              selectedFrozenIds,
             ),
             tooltip: 'Delete',
             color: theme.colorScheme.error,
@@ -369,3 +414,5 @@ class SelectionAppBarActions extends ConsumerWidget {
     );
   }
 }
+
+enum _MoreAction { lock, freeze }
