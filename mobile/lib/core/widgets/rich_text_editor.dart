@@ -19,6 +19,7 @@ import 'app_snackbar.dart';
 import 'editor/checklist_drag_mixin.dart';
 import 'editor/checklist_lines.dart';
 import 'editor/checklist_reorder_mixin.dart';
+import 'editor/date_command.dart';
 import 'editor/editor_styles.dart';
 import 'editor/editor_toolbar.dart';
 import 'editor/link_actions_sheet.dart';
@@ -166,7 +167,7 @@ class RichTextEditorState extends State<RichTextEditor>
       });
       WidgetsBinding.instance.addPostFrameCallback((_) => _showFirstMatch());
     }
-    _onChangedSub = _controller.changes.listen((_) => widget.onChanged?.call());
+    _onChangedSub = _controller.changes.listen(_onEditorChange);
     attachChecklistSorting();
 
     if (widget.focusNode != null) {
@@ -212,7 +213,7 @@ class RichTextEditorState extends State<RichTextEditor>
       ),
       ChangeSource.silent,
     );
-    _onChangedSub = _controller.changes.listen((_) => widget.onChanged?.call());
+    _onChangedSub = _controller.changes.listen(_onEditorChange);
     attachChecklistSorting();
     // The armed focus guard suppresses the editor's own repaint.
     setState(() {});
@@ -237,6 +238,35 @@ class RichTextEditorState extends State<RichTextEditor>
       _focusNode.dispose();
     }
     super.dispose();
+  }
+
+  void _onEditorChange(DocChange change) {
+    widget.onChanged?.call();
+    if (change.source != ChangeSource.local || _controller.readOnly) return;
+    final start = finishedDateCommandAt(_controller.document, change.change);
+    if (start == null) return;
+    // After the keyboard's own change has settled, like checklist sorting.
+    scheduleMicrotask(() => _expandDateCommand(start));
+  }
+
+  /// Puts today's date where `/date` was typed.
+  void _expandDateCommand(int start) {
+    if (!mounted) return;
+    final typed = _controller.document.getPlainText(start, dateCommand.length);
+    if (typed.toLowerCase() != dateCommand) return;
+    final date = formatLongDate(DateTime.now());
+    final shift = date.length - dateCommand.length;
+    final selection = _controller.selection;
+    int moved(int offset) => offset > start ? offset + shift : offset;
+    _controller.replaceText(
+      start,
+      dateCommand.length,
+      date,
+      selection.copyWith(
+        baseOffset: moved(selection.baseOffset),
+        extentOffset: moved(selection.extentOffset),
+      ),
+    );
   }
 
   void _onFocusChanged() {

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Shortcut } from "@/features/notes/date-stamp";
+import type { DateFormat, Shortcut } from "@/features/notes/date-stamp";
 import type { CustomTheme } from "@/lib/design/custom-theme";
 
 export type ViewMode = "masonry" | "grid" | "list";
@@ -34,6 +34,8 @@ interface EditorPreferences {
   dateShortcut?: Shortcut;
   /** Inserts the date and time; unset means Ctrl+Shift+;. */
   dateTimeShortcut?: Shortcut;
+  /** How an inserted date reads; unset means "Oct 28th 2026". */
+  dateFormat?: DateFormat;
 }
 
 interface PreferencesState {

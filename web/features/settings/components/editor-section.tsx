@@ -2,10 +2,14 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import {
+  type DateFormat,
+  DEFAULT_DATE_FORMAT,
   DEFAULT_DATE_SHORTCUT,
   DEFAULT_DATE_TIME_SHORTCUT,
+  formatDate,
   type Shortcut,
   shortcutFromEvent,
 } from "@/features/notes/date-stamp";
@@ -21,6 +25,7 @@ import {
 export function EditorSection() {
   const { editor, setEditorPreference } = usePreferencesStore();
   const [saveStatus, setSaveStatus] = useSaveStatus();
+  const today = new Date();
   return (
     <Section id="editor" title="Editor">
       <Row>
@@ -59,7 +64,7 @@ export function EditorSection() {
       <Row>
         <RowText
           title="Insert today’s date"
-          text="In a note, types the date, e.g. 2026-10-27."
+          text={`In a note, types the date, e.g. ${formatDate(today, editor.dateFormat)}. Typing /date does the same.`}
         />
         <ShortcutRecorder
           id="date-shortcut"
@@ -69,6 +74,22 @@ export function EditorSection() {
             setEditorPreference("dateShortcut", shortcut);
             setSaveStatus("saved");
           }}
+        />
+      </Row>
+      <Row>
+        <RowText title="Date format" text="How an inserted date reads." />
+        <SegmentedControl<DateFormat>
+          aria-label="Date format"
+          size="sm"
+          value={editor.dateFormat ?? DEFAULT_DATE_FORMAT}
+          onValueChange={(format) => {
+            setEditorPreference("dateFormat", format);
+            setSaveStatus("saved");
+          }}
+          options={[
+            { value: "long", label: formatDate(today, "long") },
+            { value: "iso", label: formatDate(today, "iso") },
+          ]}
         />
       </Row>
       <Row>
