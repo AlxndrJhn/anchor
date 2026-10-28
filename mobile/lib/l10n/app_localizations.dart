@@ -3904,6 +3904,12 @@ abstract class AppLocalizations {
   /// **'Type / for more'**
   String get editorSlashHint;
 
+  /// Entry in the text selection menu (next to Cut, Copy, Paste) when the clipboard holds a picture: places it in the note's text at the caret.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste picture'**
+  String get editorPastePicture;
+
   /// Placeholder in an empty note.
   ///
   /// In en, this message translates to:

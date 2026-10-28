@@ -3417,6 +3417,10 @@
   "@editorSlashHint": {
     "description": "Hint in an empty line: typing a slash opens a menu of line styles."
   },
+  "editorPastePicture": "Paste picture",
+  "@editorPastePicture": {
+    "description": "Entry in the text selection menu (next to Cut, Copy, Paste) when the clipboard holds a picture: places it in the note's text at the caret."
+  },
   "editorPlaceholder": "Start writing",
   "@editorPlaceholder": {
     "description": "Placeholder in an empty note."

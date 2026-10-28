@@ -790,8 +790,13 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     await _addFiles(files);
   }
 
-  /// A picture pasted from the keyboard becomes an attachment, as on the web.
-  Future<void> _onImageInserted(Uint8List bytes, String mimeType) async {
+  /// A picture pasted from the keyboard or the selection menu goes into the
+  /// text where the caret was ([offset]).
+  Future<void> _onImageInserted(
+    Uint8List bytes,
+    String mimeType,
+    int offset,
+  ) async {
     if (_isReadOnly) return;
     final stamp = DateFormat('yyyy-MM-dd-HH-mm-ss').format(DateTime.now());
     final ext = switch (mimeType) {
@@ -804,7 +809,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final dir = await getTemporaryDirectory();
     final file = File(p.join(dir.path, filename));
     await file.writeAsBytes(bytes, flush: true);
-    await _addFiles([(path: file.path, mime: mimeType, name: filename)]);
+    await _placePictures([
+      (path: file.path, mime: mimeType, name: filename),
+    ], at: offset);
     try {
       await file.delete();
     } catch (_) {}

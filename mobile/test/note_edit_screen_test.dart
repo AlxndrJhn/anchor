@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
@@ -3043,6 +3044,59 @@ void main() {
 
       expect(find.text('Take a picture'), findsOneWidget);
       expect(find.text('Choose pictures'), findsOneWidget);
+    });
+
+    testWidgets('a pasted picture goes into the text where the caret was', (
+      tester,
+    ) async {
+      final temp = Directory.systemTemp.createTempSync('anchor-paste');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/path_provider'),
+        (_) async => temp.path,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          null,
+        ),
+      );
+      when(() => attachmentsRepo.checkSize(any())).thenAnswer((_) async {});
+      when(
+        () => attachmentsRepo.addAttachment(any(), any(), any(), any()),
+      ).thenAnswer((_) async => 'pasted');
+      await open(tester, withPicture, const []);
+
+      final editor = tester.widget<RichTextEditor>(find.byType(RichTextEditor));
+      // After "Be" of "Beach".
+      await tester.runAsync(
+        () async => editor.onImageInserted!(
+          Uint8List.fromList([0x89, 0x50, 0x4E, 0x47]),
+          'image/png',
+          2,
+        ),
+      );
+      await tester.pump();
+
+      final state = tester.state<RichTextEditorState>(
+        find.byType(RichTextEditor),
+      );
+      final ops = (jsonDecode(state.getContent()) as Map)['ops'] as List;
+      final embeds = [
+        for (final op in ops)
+          if (op['insert'] case {InlineImage.embedType: final Object data})
+            InlineImage.tryParse(data)?.id,
+      ];
+      // In the text at the caret: before the picture that was at the end.
+      expect(embeds, ['pasted', 'inText']);
+      verify(
+        () => attachmentsRepo.addAttachment(
+          'n1',
+          any(),
+          'image/png',
+          any(that: startsWith('Pasted ')),
+        ),
+      ).called(1);
     });
   });
   group('a frozen note', () {

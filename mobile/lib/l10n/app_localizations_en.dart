@@ -2565,6 +2565,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editorSlashHint => 'Type / for more';
 
   @override
+  String get editorPastePicture => 'Paste picture';
+
+  @override
   String get editorPlaceholder => 'Start writing';
 
   @override
