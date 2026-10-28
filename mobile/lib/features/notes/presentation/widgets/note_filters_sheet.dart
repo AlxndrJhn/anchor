@@ -171,6 +171,20 @@ class _NoteFiltersSheet extends ConsumerWidget {
                   ),
                 ),
                 Section(
+                  label: l10n.filterIs,
+                  child: GroupedList(
+                    semanticLabel: l10n.filterIs,
+                    children: [
+                      has(
+                        LucideIcons.eyeOff,
+                        l10n.filterInvisible,
+                        filters.invisible,
+                        filters.copyWith(invisible: !filters.invisible),
+                      ),
+                    ],
+                  ),
+                ),
+                Section(
                   label: l10n.filterSearch,
                   child: GroupedList(
                     semanticLabel: l10n.filterSearch,

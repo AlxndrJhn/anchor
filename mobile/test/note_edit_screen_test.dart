@@ -1319,6 +1319,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Hide checkboxes'), findsNothing);
       expect(find.text('Uncheck all'), findsNothing);
+      await tester.ensureVisible(find.text('Show checkboxes'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Show checkboxes'));
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -1336,6 +1338,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Show checkboxes'), findsNothing);
       expect(find.text('Hide checkboxes'), findsOneWidget);
+      await tester.ensureVisible(find.text('Hide checkboxes'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Hide checkboxes'));
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -2777,6 +2781,66 @@ void main() {
       expect(barButton('Edit'), findsNothing);
       expect(calls.launched, isEmpty);
       expect(calls.haptics, ['HapticFeedbackType.selectionClick']);
+    });
+  });
+
+  group('invisible note', () {
+    setUp(() {
+      when(
+        () => notesRepo.setInvisible(
+          any(),
+          isInvisible: any(named: 'isInvisible'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    Future<void> chooseFromMore(WidgetTester tester, String action) async {
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text(action));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(action));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    testWidgets('More › Make invisible hides the open note from the lists, '
+        'with Undo', (tester) async {
+      await pumpScreen(
+        tester,
+        note: const Note(id: 'n1', title: 'Diary'),
+      );
+      await tester.pumpAndSettle();
+
+      await chooseFromMore(tester, 'Make invisible');
+
+      verify(() => notesRepo.setInvisible(['n1'], isInvisible: true)).called(1);
+      expect(
+        find.textContaining('Note made invisible', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Undo'));
+      await tester.pump();
+      verify(
+        () => notesRepo.setInvisible(['n1'], isInvisible: false),
+      ).called(1);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('an invisible note offers Make visible', (tester) async {
+      await pumpScreen(
+        tester,
+        note: const Note(id: 'n1', title: 'Diary', isInvisible: true),
+      );
+      await tester.pumpAndSettle();
+
+      await chooseFromMore(tester, 'Make visible');
+
+      verify(
+        () => notesRepo.setInvisible(['n1'], isInvisible: false),
+      ).called(1);
+      await drainSnackbar(tester);
     });
   });
 

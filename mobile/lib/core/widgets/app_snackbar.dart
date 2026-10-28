@@ -165,7 +165,8 @@ class _SnackbarViewState extends State<_SnackbarView>
     if (!mounted) return;
     _leaving = false;
     _drag = 0;
-    if (_show.value < 1) _show.springTo(1);
+    // Also when on its way out (its action showed the next message).
+    if (_show.value < 1 || _show.isAnimating) _show.springTo(1);
     _startClock();
     setState(() {});
   }

@@ -30,6 +30,7 @@ differences. "Web" and "Android" say where each one is available.
 | A Select button for choosing several notes; holding a card without moving still selects it | | ✓ |
 | Make a copy of a note, with its pictures and attachments | ✓ | ✓ |
 | Freeze a note: nobody can change, trash or delete it until its owner unfreezes it (freezing needs a connection) | ✓ | ✓ |
+| Make a note invisible: it stays out of your lists and only a search finds it; filter by "Invisible" to list them | ✓ | ✓ |
 | Send a note to other apps as text (checklists as ☐/☑) | ✓ | ✓ |
 | Change the colour of many selected notes at once | ✓ | ✓ |
 | Tick checklist items straight from the notes list ([#70](https://github.com/ZhFahim/anchor/issues/70)) | ✓ | ✓ |

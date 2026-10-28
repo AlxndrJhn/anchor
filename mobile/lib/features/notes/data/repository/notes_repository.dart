@@ -222,6 +222,7 @@ class NotesRepository {
               content: drift.Value(note.content),
               isPinned: drift.Value(note.isPinned),
               isArchived: drift.Value(note.isArchived),
+              isInvisible: drift.Value(note.isInvisible),
               background: drift.Value(note.background),
               state: drift.Value(NoteState.active.name),
               updatedAt: drift.Value(DateTime.now().toUtc()),
@@ -492,8 +493,6 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.setPinned');
   }
 
-  /// Locks the notes with [lock], or unlocks them (null). The lock is this
-  /// person's own and goes up with each note.
   /// Shows the notes frozen (or not) at once, once the server has taken
   /// it; the feed brings the rest. Nothing goes up for it.
   Future<void> markFrozen(List<String> ids, {required bool isFrozen}) async {
@@ -503,6 +502,8 @@ class NotesRepository {
     );
   }
 
+  /// Locks the notes with [lock], or unlocks them (null). The lock is this
+  /// person's own and goes up with each note.
   Future<void> setLock(List<String> ids, NoteLock? lock) async {
     if (ids.isEmpty) return;
     await (_db.update(_db.notes)..where((tbl) => tbl.id.isIn(ids))).write(
@@ -517,6 +518,28 @@ class NotesRepository {
       'setLock count=${ids.length} lock=${lock?.name ?? 'none'}',
     );
     scheduleAppSync(trigger: 'NotesRepo.setLock');
+  }
+
+  /// Makes the notes invisible for this person (left out of the lists,
+  /// found by search), or shows them again. Their own, like a lock, and
+  /// goes up with each note.
+  Future<void> setInvisible(
+    List<String> ids, {
+    required bool isInvisible,
+  }) async {
+    if (ids.isEmpty) return;
+    await (_db.update(_db.notes)..where((tbl) => tbl.id.isIn(ids))).write(
+      NotesCompanion.custom(
+        isInvisible: drift.Constant(isInvisible),
+        isSynced: const drift.Constant(false),
+        localRev: _db.nextLocalRev,
+      ),
+    );
+    AppLogger.instance.info(
+      LogTags.notes,
+      'setInvisible count=${ids.length} invisible=$isInvisible',
+    );
+    scheduleAppSync(trigger: 'NotesRepo.setInvisible');
   }
 
   /// Puts a note where it was dragged among the notes; it stays there until it
@@ -672,6 +695,7 @@ class NotesRepository {
           : null,
       lock: NoteLock.fromString(row.lock),
       isFrozen: row.isFrozen,
+      isInvisible: row.isInvisible ?? false,
       isSynced: row.isSynced,
       reminderSlot: row.reminderSlot,
       imagePreviewData: imagePreviews,

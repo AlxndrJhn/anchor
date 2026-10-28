@@ -223,6 +223,7 @@ class SyncService {
       position: note.position,
       lock: note.lock,
       sendsLock: note.lock != unknownNoteLock,
+      isInvisible: note.isInvisible,
       placedAfterEdit:
           note.position != null &&
           note.positionedAt != null &&
@@ -599,6 +600,7 @@ class SyncService {
           reminderSlot: serverReminder.reminderSlot,
           // A lock not known here yet is taken; a local change waits to go up.
           lock: _unknownLockOf(row, note),
+          isInvisible: _unknownInvisibleOf(row, note),
         ),
       );
       return;
@@ -629,6 +631,9 @@ class SyncService {
                 ? Value(note.positionedAt)
                 : const Value.absent(),
             lock: note.hasLockField ? Value(note.lock) : const Value.absent(),
+            isInvisible: note.hasInvisibleField
+                ? Value(note.isInvisible)
+                : const Value.absent(),
             version: Value(note.version),
             isSynced: const Value(true),
             syncedTitle: Value(note.title),
@@ -677,8 +682,16 @@ class SyncService {
       syncedBackground: Value(server.background),
       syncedState: Value(server.state),
       lock: _unknownLockOf(row, server),
+      isInvisible: _unknownInvisibleOf(row, server),
     );
   }
+
+  /// The server's say for a note this device doesn't know is invisible or
+  /// not yet (a database from before it); otherwise the local one stays.
+  Value<bool?> _unknownInvisibleOf(NoteRow row, SyncServerNote server) =>
+      row.isInvisible == null && server.hasInvisibleField
+      ? Value(server.isInvisible)
+      : const Value.absent();
 
   /// The server's lock for a note whose lock this device doesn't know yet
   /// (a database from before locks); otherwise the local one stays.

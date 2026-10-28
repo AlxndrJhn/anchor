@@ -13,6 +13,7 @@ import '../../reminders/data/reminder_permissions.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../domain/note.dart';
 import '../domain/note_blocks.dart';
+import '../domain/note_filters.dart';
 import 'note_folder.dart';
 import 'notes_controller.dart';
 import 'notes_view_options.dart';
@@ -103,7 +104,13 @@ VisibleNotes visibleNotes(Ref ref) {
   // A locked note not opened since the phone was last locked is found by its
   // title alone, so a match gives nothing of its text away.
   final unlocked = ref.watch(noteLockSessionProvider);
+  // Filters search too: they bring in matching archived notes, open.
+  final isSearching = words.isNotEmpty || !filters.isEmpty;
+  // Invisible notes stay out of the lists until a search or a filter brings
+  // them up; the trash still lists them, so they can be put back.
+  final searching = isSearching || folder == NoteFolder.trash;
   bool matches(Note note) {
+    if (!showsInList(note, searching: searching)) return false;
     final isHidden = isNoteHidden(note, unlocked);
     // Nor do filters on what's in it (pictures, a checklist, a secret)
     // find it.
@@ -133,8 +140,6 @@ VisibleNotes visibleNotes(Ref ref) {
   final tagId = folder == NoteFolder.notes
       ? ref.watch(selectedTagFilterProvider)
       : null;
-  // Filters search too: they bring in matching archived notes, open.
-  final isSearching = words.isNotEmpty || !filters.isEmpty;
   if (folder != NoteFolder.notes || (!isSearching && tagId == null)) {
     return VisibleNotes(
       notes: visible,

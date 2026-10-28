@@ -53,7 +53,7 @@ final class NoteLockSessionProvider
   }
 }
 
-String _$noteLockSessionHash() => r'626d2967426728b534deac16f539c3eb18054cbd';
+String _$noteLockSessionHash() => r'3957fa77290c1ac9f343422253e534ab87d1ec19';
 
 /// The locked notes opened since the phone was last locked. Kept in memory
 /// only, so it also ends with the app's process. Switching apps keeps it;
