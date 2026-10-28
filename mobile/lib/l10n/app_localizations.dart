@@ -1450,16 +1450,16 @@ abstract class AppLocalizations {
   /// **'Activity details for troubleshooting'**
   String get settingsLogsHelp;
 
-  /// Row in Settings that opens a web page to donate to the original author of Anchor (this app is a fork).
+  /// Row in Settings that opens a web page to donate to the original author of Anchor (this app, Anchor+, is a fork of it).
   ///
   /// In en, this message translates to:
   /// **'Donate to the original creator'**
   String get settingsSupport;
 
-  /// Under the Donate to the original creator row: a small donation to the author of Anchor, which this fork builds on.
+  /// Under the Donate to the original creator row: a small donation to the author of Anchor, which Anchor+ builds on.
   ///
   /// In en, this message translates to:
-  /// **'Buy Anchor’s author a coffee; this fork builds on their work'**
+  /// **'Buy Anchor’s author a coffee; Anchor+ builds on their work'**
   String get settingsSupportHelp;
 
   /// Small line at the bottom of Settings while the phone is offline.
@@ -1501,7 +1501,7 @@ abstract class AppLocalizations {
   /// The app’s short name, at the top of the menu and the bottom of Settings.
   ///
   /// In en, this message translates to:
-  /// **'Anchor (fork)'**
+  /// **'Anchor+'**
   String get settingsAppNameShort;
 
   /// The app’s tagline under its version.

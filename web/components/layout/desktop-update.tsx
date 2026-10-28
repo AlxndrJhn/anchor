@@ -11,7 +11,7 @@ export function DesktopUpdateButton({ className }: { className?: string }) {
   const [restarting, setRestarting] = React.useState(false);
   if (!update) return null;
   return (
-    <Tip label={`Restart Anchor to update to ${update.version}`}>
+    <Tip label={`Restart Anchor+ to update to ${update.version}`}>
       <Button
         size="sm"
         className={className}

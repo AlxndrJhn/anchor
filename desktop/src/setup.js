@@ -21,7 +21,7 @@
 
   const state = await api.getState();
   document.getElementById("logo").src = state.iconUrl;
-  document.getElementById("version").textContent = `Anchor desktop ${state.version}`;
+  document.getElementById("version").textContent = `Anchor+ desktop ${state.version}`;
   input.value = state.serverUrl;
   showError(state.error);
   retry.hidden = !state.canRetry;
@@ -49,7 +49,7 @@
 
   const update = document.getElementById("update");
   api.onUpdate(({ version }) => {
-    update.title = `Restart Anchor to update to ${version}`;
+    update.title = `Restart Anchor+ to update to ${version}`;
     update.hidden = false;
   });
   update.addEventListener("click", () => {

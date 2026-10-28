@@ -1156,11 +1156,11 @@
   },
   "settingsSupport": "Donate to the original creator",
   "@settingsSupport": {
-    "description": "Row in Settings that opens a web page to donate to the original author of Anchor (this app is a fork)."
+    "description": "Row in Settings that opens a web page to donate to the original author of Anchor (this app, Anchor+, is a fork of it)."
   },
-  "settingsSupportHelp": "Buy Anchor’s author a coffee; this fork builds on their work",
+  "settingsSupportHelp": "Buy Anchor’s author a coffee; Anchor+ builds on their work",
   "@settingsSupportHelp": {
-    "description": "Under the Donate to the original creator row: a small donation to the author of Anchor, which this fork builds on."
+    "description": "Under the Donate to the original creator row: a small donation to the author of Anchor, which Anchor+ builds on."
   },
   "settingsOffline": "Offline. Changes are saved on this phone.",
   "@settingsOffline": {
@@ -1220,7 +1220,7 @@
       }
     }
   },
-  "settingsAppNameShort": "Anchor (fork)",
+  "settingsAppNameShort": "Anchor+",
   "@settingsAppNameShort": {
     "description": "The app’s short name, at the top of the menu and the bottom of Settings."
   },

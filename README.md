@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor/main/web/public/icons/anchor_icon.png" alt="Anchor" width="120" height="120">
+<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor/main/web/public/icons/anchor_icon.png" alt="Anchor+" width="120" height="120">
 
-# Anchor
+# Anchor+
 
 **An offline first, self hostable note taking application**
 
@@ -36,11 +36,11 @@ Actions"; the workflow is `.github/workflows/pages.yml`, and
 `BASE_PATH=/anchor pnpm build:pages` (in `web/`) builds the same site into
 `web/out`.
 
-## Anchor vs this fork
+## Anchor+ vs Anchor
 
-This is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
-to date with it. Everything upstream does, this fork does too; these are the
-differences. "Web" and "Android" say where each one is available.
+Anchor+ is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
+to date with it, and works with any Anchor server. Everything upstream does,
+Anchor+ does too; these are the differences. "Web" and "Android" say where each one is available.
 
 | | Web | Android |
 |---|:---:|:---:|
@@ -123,7 +123,7 @@ differences. "Web" and "Android" say where each one is available.
 | The notes list can scroll to the end with pinned notes and pictures | | ✓ |
 | Next.js upgraded to 16.4.3 for security fixes | ✓ | |
 | **Releases** | | |
-| Running the "Release (fork)" workflow on `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor (fork)" next to the official app | ✓ | ✓ |
+| Running the "Release (fork)" workflow on `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor+" next to the official app | ✓ | ✓ |
 | A desktop app for Windows and macOS: your server's web client in its own window, in every release, that updates itself (see [Desktop App](#desktop-app)) | ✓ | |
 
 ### Custom themes

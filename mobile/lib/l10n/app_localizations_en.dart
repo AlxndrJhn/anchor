@@ -828,7 +828,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSupportHelp =>
-      'Buy Anchor’s author a coffee; this fork builds on their work';
+      'Buy Anchor’s author a coffee; Anchor+ builds on their work';
 
   @override
   String get settingsOffline => 'Offline. Changes are saved on this phone.';
@@ -859,7 +859,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsAppNameShort => 'Anchor (fork)';
+  String get settingsAppNameShort => 'Anchor+';
 
   @override
   String get settingsTagline => 'Your thoughts, secured.';

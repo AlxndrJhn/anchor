@@ -45,7 +45,7 @@ android {
         manifestPlaceholders["appAuthRedirectScheme"] = "anchor"
         manifestPlaceholders["appLabel"] = when {
             isPreviewBuild -> "Anchor+ preview"
-            isForkBuild -> "Anchor (fork)"
+            isForkBuild -> "Anchor+"
             else -> "Anchor Notes"
         }
     }
