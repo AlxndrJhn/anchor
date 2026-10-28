@@ -12,6 +12,8 @@ import 'features/reminders/data/reminder_scheduler.dart';
 import 'features/reminders/presentation/reminder_tap_handler.dart';
 import 'features/settings/presentation/editor_preferences_controller.dart';
 import 'features/settings/presentation/theme_preferences_controller.dart';
+import 'features/share_target/data/share_target_service.dart';
+import 'features/share_target/presentation/share_sheet_app.dart';
 import 'features/sync/data/sync_manager.dart';
 import 'l10n/l10n.dart';
 
@@ -24,6 +26,10 @@ void main() async {
     ),
   );
 }
+
+/// The sheet Android shows when another app shares to Anchor.
+@pragma('vm:entry-point')
+Future<void> shareMain() => runShareSheet();
 
 class AnchorApp extends ConsumerStatefulWidget {
   const AnchorApp({super.key});
@@ -65,6 +71,8 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     ref.watch(homeWidgetLaunchHandlerProvider);
     ref.watch(reminderSchedulerProvider);
     ref.watch(reminderTapHandlerProvider);
+    ref.watch(shareImportProvider);
+    ref.watch(shareContextSyncProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => context.l10n.appName,

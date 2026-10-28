@@ -3392,5 +3392,72 @@
         "example": "4"
       }
     }
+  },
+  "shareSheetTitle": "New note",
+  "@shareSheetTitle": {
+    "description": "Title of the sheet that opens over another app when something is shared to Anchor; it names the note the sheet makes."
+  },
+  "shareTag": "Tag {name}",
+  "@shareTag": {
+    "description": "Spoken label of a tag in the share sheet; tapping it adds the tag to the new note or takes it off.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Recipes"
+      }
+    }
+  },
+  "shareSignIn": "Sign in to Anchor to save what you share.",
+  "@shareSignIn": {
+    "description": "Shown in the sheet that opens when something is shared to Anchor from another app while no one is signed in."
+  },
+  "shareOpenApp": "Open Anchor",
+  "@shareOpenApp": {
+    "description": "Button in that sheet, beside Cancel, that opens the app to sign in."
+  },
+  "shareNothing": "There’s nothing here that Anchor can save.",
+  "@shareNothing": {
+    "description": "Shown in the share sheet when what another app shared has nothing Anchor can keep."
+  },
+  "shareNotAdded": "{count, plural, =1{1 file couldn’t be added.} other{{count} files couldn’t be added.}}",
+  "@shareNotAdded": {
+    "description": "Shown below the new note in the share sheet when some shared files can’t come in, for mixed or unknown reasons.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareUnsupported": "{count, plural, =1{1 file can’t be added. Anchor adds pictures and audio.} other{{count} files can’t be added. Anchor adds pictures and audio.}}",
+  "@shareUnsupported": {
+    "description": "Shown below the new note in the share sheet when shared files are of a kind Anchor doesn’t keep, such as a video or a PDF.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTooBig": "{count, plural, =1{1 file is over 50 MB, so it can’t be added.} other{{count} files are over 50 MB, so they can’t be added.}}",
+  "@shareTooBig": {
+    "description": "Shown below the new note in the share sheet when shared files are larger than a note’s file limit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareOverLimit": "Only the first 20 files are added.",
+  "@shareOverLimit": {
+    "description": "Shown below the new note in the share sheet when more than 20 files were shared at once."
+  },
+  "shareRemoveItem": "Remove {name}",
+  "@shareRemoveItem": {
+    "description": "Spoken label of the small x on a picture or audio file in the share sheet; it leaves that file out of the new note.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "IMG_2041.jpg"
+      }
+    }
   }
 }

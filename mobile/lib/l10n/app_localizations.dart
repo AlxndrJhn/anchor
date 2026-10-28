@@ -3867,6 +3867,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{All 1 done} other{All {count} done}}'**
   String cardAllChecked(int count);
+
+  /// Title of the sheet that opens over another app when something is shared to Anchor; it names the note the sheet makes.
+  ///
+  /// In en, this message translates to:
+  /// **'New note'**
+  String get shareSheetTitle;
+
+  /// Spoken label of a tag in the share sheet; tapping it adds the tag to the new note or takes it off.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag {name}'**
+  String shareTag(String name);
+
+  /// Shown in the sheet that opens when something is shared to Anchor from another app while no one is signed in.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to Anchor to save what you share.'**
+  String get shareSignIn;
+
+  /// Button in that sheet, beside Cancel, that opens the app to sign in.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Anchor'**
+  String get shareOpenApp;
+
+  /// Shown in the share sheet when what another app shared has nothing Anchor can keep.
+  ///
+  /// In en, this message translates to:
+  /// **'There’s nothing here that Anchor can save.'**
+  String get shareNothing;
+
+  /// Shown below the new note in the share sheet when some shared files can’t come in, for mixed or unknown reasons.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file couldn’t be added.} other{{count} files couldn’t be added.}}'**
+  String shareNotAdded(int count);
+
+  /// Shown below the new note in the share sheet when shared files are of a kind Anchor doesn’t keep, such as a video or a PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file can’t be added. Anchor adds pictures and audio.} other{{count} files can’t be added. Anchor adds pictures and audio.}}'**
+  String shareUnsupported(int count);
+
+  /// Shown below the new note in the share sheet when shared files are larger than a note’s file limit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file is over 50 MB, so it can’t be added.} other{{count} files are over 50 MB, so they can’t be added.}}'**
+  String shareTooBig(int count);
+
+  /// Shown below the new note in the share sheet when more than 20 files were shared at once.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first 20 files are added.'**
+  String get shareOverLimit;
+
+  /// Spoken label of the small x on a picture or audio file in the share sheet; it leaves that file out of the new note.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String shareRemoveItem(String name);
 }
 
 class _AppLocalizationsDelegate

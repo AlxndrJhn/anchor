@@ -2536,4 +2536,62 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get shareSheetTitle => 'New note';
+
+  @override
+  String shareTag(String name) {
+    return 'Tag $name';
+  }
+
+  @override
+  String get shareSignIn => 'Sign in to Anchor to save what you share.';
+
+  @override
+  String get shareOpenApp => 'Open Anchor';
+
+  @override
+  String get shareNothing => 'There’s nothing here that Anchor can save.';
+
+  @override
+  String shareNotAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files couldn’t be added.',
+      one: '1 file couldn’t be added.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareUnsupported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files can’t be added. Anchor adds pictures and audio.',
+      one: '1 file can’t be added. Anchor adds pictures and audio.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareTooBig(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files are over 50 MB, so they can’t be added.',
+      one: '1 file is over 50 MB, so it can’t be added.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shareOverLimit => 'Only the first 20 files are added.';
+
+  @override
+  String shareRemoveItem(String name) {
+    return 'Remove $name';
+  }
 }

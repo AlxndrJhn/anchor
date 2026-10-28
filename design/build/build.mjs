@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { dartPatterns, dartTokens } from "./dart.mjs";
+import { dartPatterns, dartTokens, parsePath } from "./dart.mjs";
 import dtcg from "./dtcg.mjs";
+import { swiftIcons, swiftTokens } from "./swift.mjs";
 
 const ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -387,6 +388,34 @@ out["mobile/lib/core/theme/tokens/anchor_tokens.dart"] = dartTokens({
   set,
   resolved,
   base,
+  HEAD: DART_HEAD,
+});
+out["mobile/ios/ShareExtension/AnchorTokens.swift"] = swiftTokens({
+  dtcg,
+  set,
+  resolved,
+  base,
+  HEAD: DART_HEAD,
+});
+// The icons the share extension draws, by their Swift name.
+const SHARE_ICONS = {
+  hash: "hash",
+  link: "link",
+  x: "x",
+  audioLines: "audio-lines",
+  loaderCircle: "loader-circle",
+};
+const shareIcons = {};
+for (const [name, lucideName] of Object.entries(SHARE_ICONS)) {
+  const file = path.join(
+    ROOT,
+    `web/node_modules/lucide-react/dist/esm/icons/${lucideName}.mjs`,
+  );
+  shareIcons[name] = (await import(pathToFileURL(file).href)).__iconData.node;
+}
+out["mobile/ios/ShareExtension/AnchorIcon.swift"] = swiftIcons({
+  icons: shareIcons,
+  parsePath,
   HEAD: DART_HEAD,
 });
 out["mobile/lib/core/theme/tokens/anchor_patterns.dart"] = dartPatterns({
