@@ -14,6 +14,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
+import '../../../../core/search/search_pattern.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../l10n/l10n.dart';
@@ -70,6 +71,7 @@ class RichTextEditor extends StatefulWidget {
     this.visibleArea,
     this.onImageInserted,
     this.searchTerm,
+    this.searchOptions = const SearchOptions(),
     this.embedBuilders,
   });
 
@@ -119,6 +121,9 @@ class RichTextEditor extends StatefulWidget {
   /// first is scrolled into view, until the text is edited.
   final String? searchTerm;
 
+  /// How [searchTerm] is read: as a regular expression, matching case.
+  final SearchOptions searchOptions;
+
   /// Draw the embeds the text may hold (pictures placed in the text).
   final Iterable<EmbedBuilder>? embedBuilders;
 
@@ -137,8 +142,8 @@ class RichTextEditorState extends State<RichTextEditor>
   final ValueNotifier<int> _paintTick = ValueNotifier(0);
   final ValueNotifier<String?> _slashQuery = ValueNotifier(null);
 
-  /// Lowercase; null once the text is edited.
-  String? _search;
+  /// Null once the text is edited.
+  SearchPattern? _search;
 
   int? _typedSlashOffset;
   late TextSelection _selection;
@@ -200,8 +205,11 @@ class RichTextEditorState extends State<RichTextEditor>
     _refreshLists();
     _listen();
     widget.focusNode.addListener(_onFocusChanged);
-    final search = widget.searchTerm?.trim().toLowerCase() ?? '';
-    if (search.isNotEmpty) {
+    final search = SearchPattern(
+      widget.searchTerm ?? '',
+      options: widget.searchOptions,
+    );
+    if (!search.isEmpty) {
       _search = search;
       WidgetsBinding.instance.addPostFrameCallback((_) => _showFirstMatch());
     }
@@ -215,8 +223,11 @@ class RichTextEditorState extends State<RichTextEditor>
     if (!mounted || search == null || editor == null || !editor.hasSize) {
       return;
     }
-    final at = _controller.document.toPlainText().toLowerCase().indexOf(search);
-    if (at < 0) return;
+    final first = search
+        .allMatches(_controller.document.toPlainText())
+        .firstOrNull;
+    if (first == null) return;
+    final at = first.start;
     final caret = editor.getLocalRectForCaret(TextPosition(offset: at));
     editor.showOnScreen(
       rect: caret.inflate(AnchorTokens.space48),

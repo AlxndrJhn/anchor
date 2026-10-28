@@ -1,5 +1,6 @@
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
+import 'package:anchor/core/search/search_pattern.dart';
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
@@ -44,8 +45,8 @@ void main() {
 
   late ProviderContainer container;
 
-  Future<void> pumpList(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+  Future<void> pumpList(WidgetTester tester, {double height = 844}) async {
+    tester.view.physicalSize = Size(390 * 3, height * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
@@ -139,7 +140,9 @@ void main() {
   });
 
   testWidgets('Clear filters turns every filter off', (tester) async {
-    await pumpList(tester);
+    // Tall enough for the whole sheet: at its full height the header's
+    // subtitle, which the test font wraps onto two lines, would move it.
+    await pumpList(tester, height: 1300);
     await startSearch(tester);
     container
         .read(noteFiltersControllerProvider.notifier)
@@ -162,6 +165,73 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Pictures').first);
     await tester.pumpAndSettle();
     expect(tester.getRect(find.text('Clear filters')), clear);
+  });
+
+  testWidgets('Regular expression and Match case change how the search '
+      'reads, and a regex not complete yet turns its icon red', (tester) async {
+    await pumpList(tester);
+    await startSearch(tester);
+    await tester.tap(find.bySemanticsLabel('Filter notes'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Regular expression'));
+    await tester.tap(find.text('Regular expression'));
+    await tester.pumpAndSettle();
+    // Not a filter: none is counted.
+    expect(find.text('Show only notes that match'), findsOneWidget);
+    expect(
+      container.read(searchOptionsControllerProvider),
+      const SearchOptions(regex: true),
+    );
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Search with a regex'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), r'^(Pl|Sh)\w+$');
+    await tester.pumpAndSettle();
+    expect(find.text('Plain'), findsOneWidget);
+    expect(find.text('Shopping'), findsOneWidget);
+    expect(find.text('Red idea'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), '(Pl');
+    await tester.pumpAndSettle();
+    final icon = find.byKey(const Key('search-options-icon'));
+    final red = tester.widget<Icon>(icon).color;
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Tooltip && w.message!.startsWith('Not a complete'),
+      ),
+      findsOneWidget,
+    );
+    // Meanwhile it looks for the text as typed.
+    expect(find.text('Plain'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), '(Pl)');
+    await tester.pumpAndSettle();
+    expect(tester.widget<Icon>(icon).color, isNot(red));
+    expect(find.text('Plain'), findsOneWidget);
+  });
+
+  testWidgets('Secrets finds the notes holding a password', (tester) async {
+    notes.add(
+      Note(
+        id: 'n4',
+        title: 'Wifi',
+        content: delta('password: hunter2'),
+        updatedAt: DateTime.utc(2026, 7, 1),
+      ),
+    );
+    addTearDown(() => notes.removeLast());
+    await pumpList(tester);
+    await startSearch(tester);
+    await tester.tap(find.bySemanticsLabel('Filter notes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Secrets'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 filter on'), findsOneWidget);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Wifi'), findsOneWidget);
+    expect(find.text('Plain'), findsNothing);
   });
 }
 

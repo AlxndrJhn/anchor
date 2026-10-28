@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:anchor/core/search/search_pattern.dart';
 import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_format.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_link.dart';
@@ -1668,7 +1669,11 @@ void main() {
   group('search marks', () {
     const note = '{"ops":[{"insert":"Buy eggs and more Eggs\\n"}]}';
 
-    Future<RichTextEditorState> pumpSearch(WidgetTester tester) async {
+    Future<RichTextEditorState> pumpSearch(
+      WidgetTester tester, {
+      String term = ' EGGS ',
+      SearchOptions options = const SearchOptions(),
+    }) async {
       final focusNode = FocusNode();
       addTearDown(focusNode.dispose);
       await tester.pumpWidget(
@@ -1678,7 +1683,8 @@ void main() {
             focusNode: focusNode,
             scrollController: scroll,
             palette: palette,
-            searchTerm: ' EGGS ',
+            searchTerm: term,
+            searchOptions: options,
           ),
         ),
       );
@@ -1699,6 +1705,41 @@ void main() {
         paints
           ..path()
           ..path(),
+      );
+    });
+
+    testWidgets('matching case, only the match in that case', (tester) async {
+      await pumpSearch(
+        tester,
+        term: 'Eggs',
+        options: const SearchOptions(matchCase: true),
+      );
+      expect(underlay(tester), paints..path());
+      expect(
+        underlay(tester),
+        isNot(
+          paints
+            ..path()
+            ..path(),
+        ),
+      );
+    });
+
+    testWidgets('a regular expression marks what it matches', (tester) async {
+      await pumpSearch(
+        tester,
+        term: r'b\w+',
+        options: const SearchOptions(regex: true),
+      );
+      // "Buy" only: "and more" has no b.
+      expect(underlay(tester), paints..path());
+      expect(
+        underlay(tester),
+        isNot(
+          paints
+            ..path()
+            ..path(),
+        ),
       );
     });
 

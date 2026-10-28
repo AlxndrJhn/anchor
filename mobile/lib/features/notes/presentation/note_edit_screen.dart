@@ -22,6 +22,7 @@ import '../../../core/motion/haptics.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/network/sync_requester.dart';
+import '../../../core/search/search_pattern.dart';
 import '../../../core/session/active_user_id_provider.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
@@ -89,6 +90,7 @@ class NoteEditScreen extends ConsumerStatefulWidget {
     this.noteId,
     this.note,
     this.searchTerm,
+    this.searchOptions = const SearchOptions(),
     this.startAsChecklist = false,
     this.pasteClipboard = false,
     this.takePicture = false,
@@ -100,6 +102,9 @@ class NoteEditScreen extends ConsumerStatefulWidget {
 
   /// The search the note was opened from, marked in its text.
   final String? searchTerm;
+
+  /// How [searchTerm] is read, as the search that found the note.
+  final SearchOptions searchOptions;
 
   /// A new note starts as a checklist, its first item ready to type (the
   /// launcher's "New checklist" shortcut). Left empty, it is discarded like
@@ -1257,6 +1262,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                     initialContent: _draft.initialContent,
                     contentVersion: _draft.contentVersion,
                     searchTerm: widget.searchTerm,
+                    searchOptions: widget.searchOptions,
                     focusNode: _editorFocus,
                     canEdit: !_isReadOnly,
                     scrollController: _scroll,

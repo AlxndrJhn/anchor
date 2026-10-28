@@ -2991,6 +2991,42 @@
       }
     }
   },
+  "filterSecrets": "Secrets",
+  "@filterSecrets": {
+    "description": "Filter choice in the filter sheet's Has section: only notes holding something that looks like a secret (a key, token, id or password)."
+  },
+  "filterSecretsHelp": "Keys, tokens, ids and passwords",
+  "@filterSecretsHelp": {
+    "description": "Under the Secrets filter: what it looks for in a note's title, text and pictures' text."
+  },
+  "filterSearch": "Search",
+  "@filterSearch": {
+    "description": "Section label in the filter sheet, above Regular expression and Match case: how the search reads what is typed. Not filters; they stay on after the search ends."
+  },
+  "filterRegex": "Regular expression",
+  "@filterRegex": {
+    "description": "Search option: what is typed in the search box is read as a regular expression."
+  },
+  "filterMatchCase": "Match case",
+  "@filterMatchCase": {
+    "description": "Search option: upper and lower case letters must match exactly."
+  },
+  "searchHintRegex": "Search with a regex",
+  "@searchHintRegex": {
+    "description": "Search box hint while the search reads what is typed as a regular expression (set in the filter sheet)."
+  },
+  "searchHintMatchCase": "Search, matching case",
+  "@searchHintMatchCase": {
+    "description": "Search box hint while the search matches upper and lower case exactly (set in the filter sheet)."
+  },
+  "searchHintRegexMatchCase": "Regex, matching case",
+  "@searchHintRegexMatchCase": {
+    "description": "Search box hint while the search reads a regular expression and matches case (both set in the filter sheet)."
+  },
+  "searchRegexIncomplete": "Not a complete regular expression yet: looking for the text as typed",
+  "@searchRegexIncomplete": {
+    "description": "Read out (and shown as a hint) on the search box's red regex icon while what is typed can't be read as a regular expression yet."
+  },
   "filterHas": "Has",
   "@filterHas": {
     "description": "Section label in the filter sheet, above Pictures, Checklists and Reminders: notes that have them."

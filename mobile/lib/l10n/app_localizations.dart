@@ -3292,6 +3292,60 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 filter on} other{{count} filters on}}'**
   String filterCount(int count);
 
+  /// Filter choice in the filter sheet's Has section: only notes holding something that looks like a secret (a key, token, id or password).
+  ///
+  /// In en, this message translates to:
+  /// **'Secrets'**
+  String get filterSecrets;
+
+  /// Under the Secrets filter: what it looks for in a note's title, text and pictures' text.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys, tokens, ids and passwords'**
+  String get filterSecretsHelp;
+
+  /// Section label in the filter sheet, above Regular expression and Match case: how the search reads what is typed. Not filters; they stay on after the search ends.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get filterSearch;
+
+  /// Search option: what is typed in the search box is read as a regular expression.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular expression'**
+  String get filterRegex;
+
+  /// Search option: upper and lower case letters must match exactly.
+  ///
+  /// In en, this message translates to:
+  /// **'Match case'**
+  String get filterMatchCase;
+
+  /// Search box hint while the search reads what is typed as a regular expression (set in the filter sheet).
+  ///
+  /// In en, this message translates to:
+  /// **'Search with a regex'**
+  String get searchHintRegex;
+
+  /// Search box hint while the search matches upper and lower case exactly (set in the filter sheet).
+  ///
+  /// In en, this message translates to:
+  /// **'Search, matching case'**
+  String get searchHintMatchCase;
+
+  /// Search box hint while the search reads a regular expression and matches case (both set in the filter sheet).
+  ///
+  /// In en, this message translates to:
+  /// **'Regex, matching case'**
+  String get searchHintRegexMatchCase;
+
+  /// Read out (and shown as a hint) on the search box's red regex icon while what is typed can't be read as a regular expression yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a complete regular expression yet: looking for the text as typed'**
+  String get searchRegexIncomplete;
+
   /// Section label in the filter sheet, above Pictures, Checklists and Reminders: notes that have them.
   ///
   /// In en, this message translates to:

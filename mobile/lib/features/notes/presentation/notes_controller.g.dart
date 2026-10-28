@@ -255,6 +255,69 @@ abstract class _$SearchQuery extends $Notifier<String> {
   }
 }
 
+/// How the search box reads what's typed (Regular expression, Match case),
+/// set in the filter sheet; kept while the app runs.
+
+@ProviderFor(SearchOptionsController)
+final searchOptionsControllerProvider = SearchOptionsControllerProvider._();
+
+/// How the search box reads what's typed (Regular expression, Match case),
+/// set in the filter sheet; kept while the app runs.
+final class SearchOptionsControllerProvider
+    extends $NotifierProvider<SearchOptionsController, SearchOptions> {
+  /// How the search box reads what's typed (Regular expression, Match case),
+  /// set in the filter sheet; kept while the app runs.
+  SearchOptionsControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'searchOptionsControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchOptionsControllerHash();
+
+  @$internal
+  @override
+  SearchOptionsController create() => SearchOptionsController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SearchOptions value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SearchOptions>(value),
+    );
+  }
+}
+
+String _$searchOptionsControllerHash() =>
+    r'389300d4b4a40ec088f53dcf573af53c7258b59e';
+
+/// How the search box reads what's typed (Regular expression, Match case),
+/// set in the filter sheet; kept while the app runs.
+
+abstract class _$SearchOptionsController extends $Notifier<SearchOptions> {
+  SearchOptions build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<SearchOptions, SearchOptions>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<SearchOptions, SearchOptions>,
+              SearchOptions,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// The list's filters besides the tag (colour, pictures, checklists and
 /// reminders). They belong to the search: ending it clears them.
 

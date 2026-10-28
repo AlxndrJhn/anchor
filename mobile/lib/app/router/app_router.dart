@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/network/server_config_provider.dart';
+import '../../core/search/search_pattern.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/change_password_screen.dart';
 import '../../features/auth/presentation/edit_profile_screen.dart';
@@ -124,6 +125,9 @@ GoRouter goRouter(Ref ref) {
                     note: note,
                     searchTerm:
                         state.uri.queryParameters[AppRoutes.searchParameter],
+                    searchOptions: SearchOptions.fromQueryParameters(
+                      state.uri.queryParameters,
+                    ),
                     caret: extra is NoteCaret ? extra : null,
                   ),
                 ),

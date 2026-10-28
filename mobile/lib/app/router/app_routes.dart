@@ -1,3 +1,5 @@
+import '../../core/search/search_pattern.dart';
+
 /// Must match the path patterns in app_router.dart.
 class AppRoutes {
   AppRoutes._();
@@ -26,10 +28,17 @@ class AppRoutes {
   static const cameraParameter = 'camera';
   static String note(String id) => '/note/$id';
 
-  /// A note opened from a search, which marks the search in its text.
-  static String noteFromSearch(String id, String search) => Uri(
+  /// A note opened from a search, which marks the search in its text, read
+  /// as the search read it ([options]).
+  static String noteFromSearch(
+    String id,
+    String search, {
+    SearchOptions options = const SearchOptions(),
+  }) => Uri(
     path: note(id),
-    queryParameters: search.isEmpty ? null : {searchParameter: search},
+    queryParameters: search.isEmpty
+        ? null
+        : {searchParameter: search, ...options.queryParameters},
   ).toString();
 
   static const searchParameter = 'q';

@@ -16,7 +16,8 @@ import '../notes_controller.dart';
 import 'background_sheet.dart';
 
 /// Filters for the list being searched: what a note has, its colour or
-/// pattern, and (in Notes) its tag, which is the list's own tag filter.
+/// pattern, and (in Notes) its tag, which is the list's own tag filter;
+/// also how the search reads its words (Regular expression, Match case).
 Future<void> showNoteFiltersSheet(BuildContext context) => showAnchorSheet(
   context,
   semanticLabel: context.l10n.filterTitle,
@@ -46,6 +47,10 @@ class _NoteFiltersSheet extends ConsumerWidget {
         ? ref.watch(tagsControllerProvider).value ?? const <Tag>[]
         : const <Tag>[];
     final active = activeFilterCount(ref);
+    // How the search reads its words; not a filter, so not counted or
+    // cleared with them.
+    final search = ref.watch(searchOptionsControllerProvider);
+    final searchNotifier = ref.read(searchOptionsControllerProvider.notifier);
 
     void set(NoteFilters next) {
       Haptics.selection();
@@ -153,6 +158,44 @@ class _NoteFiltersSheet extends ConsumerWidget {
                         l10n.filterReminders,
                         filters.reminder,
                         filters.copyWith(reminder: !filters.reminder),
+                      ),
+                      GroupedListTile(
+                        icon: LucideIcons.keyRound,
+                        label: l10n.filterSecrets,
+                        subtitle: l10n.filterSecretsHelp,
+                        checked: filters.secret,
+                        onTap: () =>
+                            set(filters.copyWith(secret: !filters.secret)),
+                      ),
+                    ],
+                  ),
+                ),
+                Section(
+                  label: l10n.filterSearch,
+                  child: GroupedList(
+                    semanticLabel: l10n.filterSearch,
+                    children: [
+                      GroupedListTile(
+                        icon: LucideIcons.regex,
+                        label: l10n.filterRegex,
+                        checked: search.regex,
+                        onTap: () {
+                          Haptics.selection();
+                          searchNotifier.set(
+                            search.copyWith(regex: !search.regex),
+                          );
+                        },
+                      ),
+                      GroupedListTile(
+                        icon: LucideIcons.caseSensitive,
+                        label: l10n.filterMatchCase,
+                        checked: search.matchCase,
+                        onTap: () {
+                          Haptics.selection();
+                          searchNotifier.set(
+                            search.copyWith(matchCase: !search.matchCase),
+                          );
+                        },
                       ),
                     ],
                   ),

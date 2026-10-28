@@ -142,12 +142,14 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 children: [
                   const AnchorLogo(size: AnchorLogo.drawer, isRaised: false),
                   const SizedBox(width: 12),
-                  CapHeightText(
-                    context.l10n.settingsAppNameShort,
-                    style: AppTypography.serifText(
-                      fontSize: AppTypography.sheetTitle.fontSize,
-                      color: colors.appText,
-                    ).copyWith(letterSpacing: -0.1),
+                  Flexible(
+                    child: CapHeightText(
+                      context.l10n.settingsAppNameShort,
+                      style: AppTypography.serifText(
+                        fontSize: AppTypography.sheetTitle.fontSize,
+                        color: colors.appText,
+                      ).copyWith(letterSpacing: -0.1),
+                    ),
                   ),
                 ],
               ),

@@ -48,7 +48,7 @@ final class VisibleNotesProvider
   }
 }
 
-String _$visibleNotesHash() => r'53bb833e657b555e138b06be7c73fc2176dde6ed';
+String _$visibleNotesHash() => r'9db617e93264266289ea46882b35c2fd6b2d909b';
 
 /// The tags whose page shows its archived notes.
 

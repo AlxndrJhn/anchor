@@ -1,3 +1,4 @@
+import 'package:anchor/core/search/search_pattern.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_filters.dart';
@@ -437,4 +438,54 @@ void main() {
       expect(shown.notes.map((n) => n.id), ['o1']);
     },
   );
+
+  test('a search reads a regular expression or matches case when asked, '
+      'in the text too', () async {
+    final container = containerWith();
+    final search = container.read(searchOptionsControllerProvider.notifier);
+    container.read(searchQueryProvider.notifier).set(r'milk\s+AND');
+    var shown = await visibleIn(container);
+    expect(shown.notes, isEmpty);
+
+    search.set(const SearchOptions(regex: true));
+    shown = container.read(visibleNotesProvider);
+    expect(shown.notes.map((n) => n.id), ['n1']);
+
+    search.set(const SearchOptions(regex: true, matchCase: true));
+    shown = container.read(visibleNotesProvider);
+    expect(shown.notes, isEmpty);
+
+    search.set(const SearchOptions(matchCase: true));
+    container.read(searchQueryProvider.notifier).set('lisbon');
+    shown = container.read(visibleNotesProvider);
+    expect(shown.notes, isEmpty);
+    container.read(searchQueryProvider.notifier).set('Lisbon');
+    shown = container.read(visibleNotesProvider);
+    expect(shown.notes.map((n) => n.id), ['n2']);
+  });
+
+  test('the Secrets filter finds notes holding keys or passwords, not '
+      'locked ones not opened', () async {
+    final container = containerWith(
+      active: [
+        ...notes,
+        Note(id: 's1', title: 'Wifi', content: delta('password: hunter2')),
+        Note(
+          id: 's2',
+          title: 'Bank',
+          content: delta('PIN: 4711'),
+          lock: NoteLock.pin,
+        ),
+      ],
+    );
+    container
+        .read(noteFiltersControllerProvider.notifier)
+        .set(const NoteFilters(secret: true));
+    var shown = await visibleIn(container);
+    expect(shown.notes.map((n) => n.id), ['s1']);
+
+    container.read(noteLockSessionProvider.notifier).unlock('s2');
+    shown = container.read(visibleNotesProvider);
+    expect(shown.notes.map((n) => n.id).toSet(), {'s1', 's2'});
+  });
 }

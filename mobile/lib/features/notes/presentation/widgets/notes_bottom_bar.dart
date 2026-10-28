@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/springs.dart';
+import '../../../../core/search/search_pattern.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
@@ -27,6 +28,7 @@ class NotesBottomBar extends StatefulWidget {
     this.newNoteKey,
     this.filterCount = 0,
     this.onFilter,
+    this.searchOptions = const SearchOptions(),
   });
 
   final String placeholder;
@@ -50,6 +52,11 @@ class NotesBottomBar extends StatefulWidget {
 
   /// Null leaves the filter button out of the search field.
   final VoidCallback? onFilter;
+
+  /// How the search reads its words (set in the filter sheet): its icon
+  /// shows a regular expression or matching case, red while the regular
+  /// expression can't be read yet.
+  final SearchOptions searchOptions;
 
   @override
   State<NotesBottomBar> createState() => _NotesBottomBarState();
@@ -124,11 +131,7 @@ class _NotesBottomBarState extends State<NotesBottomBar> {
                           open,
                         ),
                       ),
-                      Icon(
-                        LucideIcons.search,
-                        size: AnchorTokens.sizeIconMedium,
-                        color: colors.appText,
-                      ),
+                      _searchIcon(colors),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Opacity(
@@ -257,6 +260,30 @@ class _NotesBottomBarState extends State<NotesBottomBar> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _searchIcon(AnchorColors colors) {
+    final options = widget.searchOptions;
+    if (!widget.searching || options.isDefault) {
+      return Icon(
+        LucideIcons.search,
+        size: AnchorTokens.sizeIconMedium,
+        color: colors.appText,
+      );
+    }
+    final isValid = SearchPattern(widget.query, options: options).isValid;
+    final icon = Icon(
+      options.regex ? LucideIcons.regex : LucideIcons.caseSensitive,
+      key: const Key('search-options-icon'),
+      size: AnchorTokens.sizeIconMedium,
+      color: isValid ? colors.appText : colors.statusDanger,
+    );
+    if (isValid) return icon;
+    final why = context.l10n.searchRegexIncomplete;
+    return Tooltip(
+      message: why,
+      child: Semantics(label: why, liveRegion: true, child: icon),
     );
   }
 

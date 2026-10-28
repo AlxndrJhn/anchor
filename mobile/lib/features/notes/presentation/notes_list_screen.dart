@@ -371,7 +371,14 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     if (_searching) FocusScope.of(context).unfocus();
     // From a search, the note marks what was searched for.
     final search = _searching ? ref.read(searchQueryProvider).trim() : '';
-    context.go(AppRoutes.noteFromSearch(note.id, search), extra: note);
+    context.go(
+      AppRoutes.noteFromSearch(
+        note.id,
+        search,
+        options: ref.read(searchOptionsControllerProvider),
+      ),
+      extra: note,
+    );
   }
 
   void _newNote() => context.go(AppRoutes.newNote);
@@ -475,6 +482,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     final options =
         ref.watch(notesViewOptionsProvider).value ?? const NotesViewOptions();
     final query = ref.watch(searchQueryProvider);
+    final searchOptions = ref.watch(searchOptionsControllerProvider);
     // A search started elsewhere (a picture's detected tag) shows the search.
     ref.listen(searchQueryProvider, (_, query) {
       if (query.isNotEmpty && !_searching) setState(() => _searching = true);
@@ -689,9 +697,19 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
           builder: (context, isCompact, _) => Listener(
             onPointerDown: (_) => _checkClipboard(),
             child: NotesBottomBar(
-              placeholder: tag != null
-                  ? context.l10n.searchTag(tag.name)
-                  : folder.searchHintIn(context.l10n),
+              placeholder: switch ((
+                _searching && searchOptions.regex,
+                _searching && searchOptions.matchCase,
+              )) {
+                (true, true) => context.l10n.searchHintRegexMatchCase,
+                (true, false) => context.l10n.searchHintRegex,
+                (false, true) => context.l10n.searchHintMatchCase,
+                _ =>
+                  tag != null
+                      ? context.l10n.searchTag(tag.name)
+                      : folder.searchHintIn(context.l10n),
+              },
+              searchOptions: searchOptions,
               compact: isCompact,
               searching: _searching,
               query: query,

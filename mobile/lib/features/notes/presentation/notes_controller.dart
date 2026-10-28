@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/search/search_pattern.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
@@ -37,6 +38,16 @@ class SearchQuery extends _$SearchQuery {
   void set(String query) {
     state = query;
   }
+}
+
+/// How the search box reads what's typed (Regular expression, Match case),
+/// set in the filter sheet; kept while the app runs.
+@Riverpod(keepAlive: true)
+class SearchOptionsController extends _$SearchOptionsController {
+  @override
+  SearchOptions build() => const SearchOptions();
+
+  void set(SearchOptions options) => state = options;
 }
 
 /// The list's filters besides the tag (colour, pictures, checklists and

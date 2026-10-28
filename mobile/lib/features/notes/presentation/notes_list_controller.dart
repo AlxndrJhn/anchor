@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/app_bootstrap.dart';
 import '../../../core/motion/haptics.dart';
+import '../../../core/search/search_pattern.dart';
 import '../../../core/storage/preferences_repository.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../note_locks/presentation/note_lock_session.dart';
@@ -95,6 +96,8 @@ VisibleNotes visibleNotes(Ref ref) {
   final notes = source.value ?? const <Note>[];
 
   final words = query.trim().toLowerCase();
+  final searchOptions = ref.watch(searchOptionsControllerProvider);
+  final pattern = SearchPattern(query, options: searchOptions);
   final searchText = ref.watch(noteSearchTextProvider);
   final filters = ref.watch(noteFiltersControllerProvider);
   // A locked note not opened since the phone was last locked is found by its
@@ -102,12 +105,20 @@ VisibleNotes visibleNotes(Ref ref) {
   final unlocked = ref.watch(noteLockSessionProvider);
   bool matches(Note note) {
     final isHidden = isNoteHidden(note, unlocked);
-    // Nor do filters on what's in it (pictures, a checklist) find it.
-    if (isHidden && (filters.picture || filters.checklist)) return false;
-    return filters.matches(note) &&
-        (words.isEmpty ||
-            note.title.toLowerCase().contains(words) ||
-            (!isHidden && searchText.of(note).contains(words)));
+    // Nor do filters on what's in it (pictures, a checklist, a secret)
+    // find it.
+    if (isHidden && (filters.picture || filters.checklist || filters.secret)) {
+      return false;
+    }
+    if (!filters.matches(note)) return false;
+    if (words.isEmpty) return true;
+    // Plain words in any case: the quick way, on lower case text.
+    if (searchOptions.isDefault) {
+      return note.title.toLowerCase().contains(words) ||
+          (!isHidden && searchText.of(note).contains(words));
+    }
+    return pattern.hasMatch(note.title) ||
+        (!isHidden && pattern.hasMatch(searchText.asWritten(note)));
   }
 
   final comparator = noteComparator(options);
@@ -139,7 +150,8 @@ VisibleNotes visibleNotes(Ref ref) {
   ]..sort(comparator);
   // Notes whose pictures look like the search, for those who turned picture
   // search on, after the ones found by their words.
-  final pictures = words.isEmpty
+  // (Not for a regular expression: pictures are found by words.)
+  final pictures = words.isEmpty || searchOptions.regex
       ? const <Note>[]
       : notesForMatches(
           ref.watch(pictureMatchesProvider(query.trim())).value ?? const [],
@@ -207,26 +219,38 @@ List<NoteGroup> _pinnedFirst(List<Note> notes) {
 /// Lower-cased note text for search, cached per content: the note's text
 /// and the text read from its pictures.
 class NoteSearchText {
-  final Map<String, ({String? content, String pictureText, String text})>
+  final Map<
+    String,
+    ({String? content, String pictureText, String text, String lower})
+  >
   _cache = {};
 
-  String of(Note note) {
+  /// The note's text and its pictures' text, in lower case.
+  String of(Note note) => _read(note).lower;
+
+  /// The same as written, for a search that matches case or a regular
+  /// expression.
+  String asWritten(Note note) => _read(note).text;
+
+  ({String? content, String pictureText, String text, String lower}) _read(
+    Note note,
+  ) {
     final known = _cache[note.id];
     if (known != null &&
         known.content == note.content &&
         known.pictureText == note.pictureText) {
-      return known.text;
+      return known;
     }
     final text = [
       plainTextOf(note.content),
       if (note.pictureText.isNotEmpty) note.pictureText,
-    ].join('\n').toLowerCase();
-    _cache[note.id] = (
+    ].join('\n');
+    return _cache[note.id] = (
       content: note.content,
       pictureText: note.pictureText,
       text: text,
+      lower: text.toLowerCase(),
     );
-    return text;
   }
 }
 

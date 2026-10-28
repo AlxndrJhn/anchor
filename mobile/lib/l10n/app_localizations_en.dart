@@ -2243,6 +2243,34 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get filterSecrets => 'Secrets';
+
+  @override
+  String get filterSecretsHelp => 'Keys, tokens, ids and passwords';
+
+  @override
+  String get filterSearch => 'Search';
+
+  @override
+  String get filterRegex => 'Regular expression';
+
+  @override
+  String get filterMatchCase => 'Match case';
+
+  @override
+  String get searchHintRegex => 'Search with a regex';
+
+  @override
+  String get searchHintMatchCase => 'Search, matching case';
+
+  @override
+  String get searchHintRegexMatchCase => 'Regex, matching case';
+
+  @override
+  String get searchRegexIncomplete =>
+      'Not a complete regular expression yet: looking for the text as typed';
+
+  @override
   String get filterHas => 'Has';
 
   @override

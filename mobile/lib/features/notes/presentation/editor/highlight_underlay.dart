@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
+import '../../../../core/search/search_pattern.dart';
 import '../../../../core/theme/note_typography.dart';
 import '../../../../core/widgets/marker_stroke.dart';
 import 'checklist_fold.dart';
@@ -30,9 +31,9 @@ class HighlightUnderlay extends CustomPainter {
   final NoteTypography typography;
   final TextScaler textScaler;
 
-  /// The search the note was opened from, lowercase: every match is marked
-  /// in yellow, like a highlight, without changing the note.
-  final String? Function()? searchTerm;
+  /// The search the note was opened from: every match is marked in yellow,
+  /// like a highlight, without changing the note.
+  final SearchPattern? Function()? searchTerm;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -167,22 +168,21 @@ class HighlightUnderlay extends CustomPainter {
     TextStyle style,
     bool isDimmed,
   ) {
-    final term = searchTerm?.call();
-    if (term == null || term.isEmpty) return;
-    final text = line.toPlainText().toLowerCase();
-    for (var hit = text.indexOf(term); hit != -1;) {
+    final pattern = searchTerm?.call();
+    if (pattern == null || pattern.isEmpty) return;
+    final text = line.toPlainText();
+    for (final hit in pattern.allMatches(text)) {
       _paintRange(
         canvas,
         render,
         host,
-        start + hit,
-        start + hit + term.length,
+        start + hit.start,
+        start + hit.end,
         colors('yellow'),
-        'search|${_head(term)}',
+        'search|${_head(text.substring(hit.start, hit.end).toLowerCase())}',
         style: style,
         isDimmed: isDimmed,
       );
-      hit = text.indexOf(term, hit + term.length);
     }
   }
 
