@@ -32,7 +32,7 @@ export function Brand({
     <>
       <AnchorLogo className="size-7" />
       <span data-slot="brand-name" className={cn(wordmarkClass, nameClassName)}>
-        Anchor
+        Anchor (fork)
       </span>
     </>
   );

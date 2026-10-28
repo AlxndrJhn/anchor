@@ -24,7 +24,7 @@ export default function GlobalError({
   return (
     <html lang="en" suppressHydrationWarning className={dmSans.variable}>
       <body>
-        <title>Anchor</title>
+        <title>Anchor (fork)</title>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
