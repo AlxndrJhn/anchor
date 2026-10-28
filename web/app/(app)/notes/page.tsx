@@ -240,10 +240,10 @@ function NotesView({ tagId }: { tagId: string | null }) {
         await bulkPinNotes(ids, kind === "pin");
       else if (kind === "archive") await bulkArchiveNotes(ids);
       else {
-        // Deleted cards burn away in place; the others move up after.
+        // Deleted cards burn away in place; the others strike into place after.
         const burn = burnNoteCards(ids);
         await burn.done;
-        list.prepareCardMotion();
+        list.prepareCardMotion("strike");
         await bulkDeleteNotes(ids).catch((error: unknown) => {
           burn.restore();
           throw error;

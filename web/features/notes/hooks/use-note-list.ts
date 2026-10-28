@@ -43,11 +43,14 @@ export function useNoteList(notes: Note[], { pinnedFirst = false } = {}) {
   const boardRef = React.useRef<HTMLDivElement>(null);
   const searchRef = React.useRef<HTMLInputElement>(null);
   const flip = useFlip(boardRef);
-  // A note deleted while open burns in this list, then goes: its cards glide.
+  // A note deleted while open burns in this list, then goes: its cards
+  // strike into their places.
+  const { prepare } = flip;
   React.useEffect(() => {
-    window.addEventListener(NOTES_WILL_CHANGE, flip.prepare);
-    return () => window.removeEventListener(NOTES_WILL_CHANGE, flip.prepare);
-  }, [flip.prepare]);
+    const strike = () => prepare("strike");
+    window.addEventListener(NOTES_WILL_CHANGE, strike);
+    return () => window.removeEventListener(NOTES_WILL_CHANGE, strike);
+  }, [prepare]);
   const searchParams = useSearchParams();
   // Kept in the address, so Back from an opened note finds the same results.
   const [query, setQueryValue] = React.useState(
