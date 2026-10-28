@@ -204,6 +204,8 @@ String attachmentAddedLabel(
   (AttachmentKind.picture, false) => l10n.attachmentPictureAddedOffline,
   (AttachmentKind.voiceNote, false) => l10n.attachmentVoiceAddedOffline,
   (AttachmentKind.audioFile, false) => l10n.attachmentAudioAddedOffline,
+  (AttachmentKind.file, true) => l10n.attachmentFileAdded,
+  (AttachmentKind.file, false) => l10n.attachmentFileAddedOffline,
 };
 
 String attachmentAddFailedLabel(AttachmentKind kind, AppLocalizations l10n) =>
@@ -211,6 +213,7 @@ String attachmentAddFailedLabel(AttachmentKind kind, AppLocalizations l10n) =>
       AttachmentKind.picture => l10n.attachmentPictureAddFailed,
       AttachmentKind.voiceNote => l10n.attachmentVoiceAddFailed,
       AttachmentKind.audioFile => l10n.attachmentAudioAddFailed,
+      AttachmentKind.file => l10n.attachmentFileAddFailed,
     };
 
 String attachmentDeletedLabel(AttachmentKind kind, AppLocalizations l10n) =>
@@ -218,4 +221,5 @@ String attachmentDeletedLabel(AttachmentKind kind, AppLocalizations l10n) =>
       AttachmentKind.picture => l10n.attachmentPictureDeleted,
       AttachmentKind.voiceNote => l10n.attachmentVoiceDeleted,
       AttachmentKind.audioFile => l10n.attachmentAudioDeleted,
+      AttachmentKind.file => l10n.attachmentFileDeleted,
     };

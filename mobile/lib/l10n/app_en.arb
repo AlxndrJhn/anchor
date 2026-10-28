@@ -1041,7 +1041,12 @@
   "pictureSearchDownloading": "Downloading the picture model… {percent}%",
   "@pictureSearchDownloading": {
     "description": "Picture search status in Settings while the server downloads its model.",
-    "placeholders": {"percent": {"type": "int", "example": "42"}}
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "example": "42"
+      }
+    }
   },
   "pictureSearchFailed": "The picture model couldn’t be downloaded. Turn it off and on to try again.",
   "@pictureSearchFailed": {
@@ -1050,12 +1055,26 @@
   "pictureSearchIndexing": "Looking at your pictures… {indexed} of {total}",
   "@pictureSearchIndexing": {
     "description": "Picture search status in Settings while the server goes through the user's pictures.",
-    "placeholders": {"indexed": {"type": "int", "example": "1"}, "total": {"type": "int", "example": "4"}}
+    "placeholders": {
+      "indexed": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "4"
+      }
+    }
   },
   "pictureSearchReady": "{count, plural, =0{Your pictures will be searchable as you add them.} =1{Your picture is ready to search.} other{All {count} pictures are ready to search.}}",
   "@pictureSearchReady": {
     "description": "Picture search status in Settings once every picture of the user's notes has been looked at.",
-    "placeholders": {"count": {"type": "int", "example": "3"}}
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
   },
   "pictureSearchChangeFailed": "Couldn’t change picture search",
   "@pictureSearchChangeFailed": {
@@ -1758,7 +1777,12 @@
   "tagMove": "Move {name}",
   "@tagMove": {
     "description": "Screen reader label of the grip beside a tag in the drawer, dragged to put the tag elsewhere in the list.",
-    "placeholders": {"name": {"type": "String", "example": "Work"}}
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Work"
+      }
+    }
   },
   "tagNamePreview": "tag name",
   "@tagNamePreview": {
@@ -2657,7 +2681,12 @@
   "notesDeleteFailed": "{count, plural, =1{Couldn’t delete the note} other{Couldn’t delete the notes}}",
   "@notesDeleteFailed": {
     "description": "Error message when moving notes to the trash or deleting them failed; their cards come back on the list.",
-    "placeholders": {"count": {"type": "int", "example": "3"}}
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
   },
   "notesDeleteForeverTitle": "{count, plural, =1{Permanently delete 1 note?} other{Permanently delete {count} notes?}}",
   "@notesDeleteForeverTitle": {
@@ -2890,9 +2919,9 @@
   "@attachmentVoiceDeleted": {
     "description": "Toast after a voice note recorded in the app was removed from a note, with an Undo button."
   },
-  "attachmentAddLabel": "Add picture or audio",
+  "attachmentAddLabel": "Add a picture, recording or file",
   "@attachmentAddLabel": {
-    "description": "Screen reader label of the button that adds a picture or audio file to a note."
+    "description": "Screen reader label of the button that adds a picture, recording or other file to a note."
   },
   "attachmentAdd": "Add",
   "@attachmentAdd": {
@@ -3578,10 +3607,6 @@
   "@addToNote": {
     "description": "Title of the sheet with options to add a picture or audio to a note."
   },
-  "addAudioFormats": "Anchor supports MP3, WAV, M4A, OGG and AAC audio",
-  "@addAudioFormats": {
-    "description": "Toast when the picked audio file is a type the app can’t play."
-  },
   "addPhotoUnsupported": "Couldn’t add this photo. Try a JPEG or PNG.",
   "@addPhotoUnsupported": {
     "description": "Toast when the picked photo is in a format the phone couldn’t read or convert."
@@ -3594,17 +3619,13 @@
   "@addTakePhoto": {
     "description": "Option that opens the camera to take a photo for the note."
   },
-  "addChoosePhoto": "Choose photo",
+  "addChoosePhoto": "Choose photos",
   "@addChoosePhoto": {
-    "description": "Option that picks a photo from the phone’s photo library to add to the note."
+    "description": "Option that picks one or more photos from the phone’s photo library to add to the note."
   },
   "addRecordAudio": "Record audio",
   "@addRecordAudio": {
     "description": "Option that starts recording a voice note."
-  },
-  "addAudioFile": "Audio file",
-  "@addAudioFile": {
-    "description": "Noun: option that picks an audio file stored on the phone."
   },
   "recordingTitle": "Recording",
   "@recordingTitle": {
@@ -4612,5 +4633,227 @@
   "backupTooNew": "This backup is from a newer Anchor. Update the app to restore it.",
   "@backupTooNew": {
     "description": "Toast when the backup was made by a newer version of the app."
+  },
+  "attachmentFileAdded": "File added",
+  "@attachmentFileAdded": {
+    "description": "Toast after a file that isn’t a picture or a recording was added to a note."
+  },
+  "attachmentFileAddedOffline": "File added. It will upload when you’re back online.",
+  "@attachmentFileAddedOffline": {
+    "description": "Toast after a file that isn’t a picture or a recording was added to a note while offline."
+  },
+  "attachmentFileAddFailed": "Couldn’t add the file",
+  "@attachmentFileAddFailed": {
+    "description": "Toast when a file couldn’t be added to a note."
+  },
+  "attachmentFileDeleted": "File deleted",
+  "@attachmentFileDeleted": {
+    "description": "Toast after a file was deleted from a note, with an Undo button."
+  },
+  "attachmentsAdded": "{count, plural, =1{1 attachment added} other{{count} attachments added}}",
+  "@attachmentsAdded": {
+    "description": "Toast after several files were added to a note at once.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "attachmentsAddedOffline": "{count, plural, =1{1 attachment added. It will upload when you’re back online.} other{{count} attachments added. They will upload when you’re back online.}}",
+  "@attachmentsAddedOffline": {
+    "description": "Toast after several files were added to a note at once while offline.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "toolPictureInText": "Picture in the text",
+  "@toolPictureInText": {
+    "description": "Toolbar button over the keyboard, and the title of the menu it opens: puts a picture taken with the camera, or pictures from the phone, in the note’s text where the cursor is."
+  },
+  "pictureInTextCamera": "Take a picture",
+  "@pictureInTextCamera": {
+    "description": "Option of the Picture in the text menu: takes a picture with the camera."
+  },
+  "pictureInTextChoose": "Choose pictures",
+  "@pictureInTextChoose": {
+    "description": "Option of the Picture in the text menu: picks pictures from the phone’s photo library."
+  },
+  "pictureCrop": "Crop",
+  "@pictureCrop": {
+    "description": "Verb: title of the page that crops a picture placed in a note’s text, its button that applies the crop, and the menu option that opens it."
+  },
+  "pictureCropReset": "Reset",
+  "@pictureCropReset": {
+    "description": "Button on the crop page that puts the frame back around the whole picture."
+  },
+  "cameraFlashOff": "Flash off",
+  "@cameraFlashOff": {
+    "description": "Button on the camera page while the flash is off; tapping it turns the flash on."
+  },
+  "cameraFlashOn": "Flash on",
+  "@cameraFlashOn": {
+    "description": "Button on the camera page while the flash is on; tapping it turns the flash off."
+  },
+  "cameraNone": "No camera found",
+  "@cameraNone": {
+    "description": "Message on the camera page when the phone has no camera the app can use."
+  },
+  "cameraNoPermission": "Anchor needs the camera permission to take pictures",
+  "@cameraNoPermission": {
+    "description": "Message on the camera page when the person hasn’t let the app use the camera."
+  },
+  "cameraFailed": "Couldn’t start the camera",
+  "@cameraFailed": {
+    "description": "Message on the camera page when the camera couldn’t be started."
+  },
+  "cameraSwitch": "Switch camera",
+  "@cameraSwitch": {
+    "description": "Button on the camera page that switches between the front and back cameras."
+  },
+  "cameraShutter": "Take a picture",
+  "@cameraShutter": {
+    "description": "Screen reader name of the round shutter button on the camera page."
+  },
+  "cameraTaken": "{count, plural, =1{1 picture taken} other{{count} pictures taken}}",
+  "@cameraTaken": {
+    "description": "Screen reader label of the pile of pictures taken so far on the camera page.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "cameraPicturesAdded": "{count, plural, =1{1 picture added} other{{count} pictures added}}",
+  "@cameraPicturesAdded": {
+    "description": "Toast after the camera page closed, saying how many pictures were added to the note.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "inlinePicture": "Picture",
+  "@inlinePicture": {
+    "description": "Title of the menu shown when holding a picture placed in a note’s text, and its screen reader name when it has no caption."
+  },
+  "inlinePictureRetake": "Retake",
+  "@inlinePictureRetake": {
+    "description": "Option in a picture’s menu: takes a new picture in its place."
+  },
+  "inlinePictureMirrorHorizontally": "Mirror horizontally",
+  "@inlinePictureMirrorHorizontally": {
+    "description": "Option in a picture’s menu: swaps its left and right."
+  },
+  "inlinePictureMirrorVertically": "Mirror vertically",
+  "@inlinePictureMirrorVertically": {
+    "description": "Option in a picture’s menu: swaps its top and bottom."
+  },
+  "inlinePictureAddCaption": "Add caption",
+  "@inlinePictureAddCaption": {
+    "description": "Option in a picture’s menu, and the title of the sheet that writes a caption shown under the picture."
+  },
+  "inlinePictureEditCaption": "Edit caption",
+  "@inlinePictureEditCaption": {
+    "description": "Option in a picture’s menu when it has a caption, and the title of the sheet that changes it."
+  },
+  "inlinePictureCaptionHint": "Caption",
+  "@inlinePictureCaptionHint": {
+    "description": "Placeholder of the field for a picture’s caption."
+  },
+  "inlinePictureChangeFailed": "Couldn’t change the picture",
+  "@inlinePictureChangeFailed": {
+    "description": "Toast when retaking, cropping or mirroring a picture in a note’s text failed."
+  },
+  "inlinePictureResize": "Resize picture",
+  "@inlinePictureResize": {
+    "description": "Screen reader name of the round handle in a picture’s corner that changes its width."
+  },
+  "fileOffline": "This file will open when you’re back online",
+  "@fileOffline": {
+    "description": "Toast when the person opens or saves a file that hasn’t downloaded while offline."
+  },
+  "fileLoadFailed": "Couldn’t load the file",
+  "@fileLoadFailed": {
+    "description": "Toast when an attached file couldn’t be downloaded."
+  },
+  "fileNoApp": "No app on this phone opens it. Save it instead.",
+  "@fileNoApp": {
+    "description": "Toast when no app on the phone can open an attached file."
+  },
+  "fileSaveDialog": "Save file",
+  "@fileSaveDialog": {
+    "description": "Title of the system dialog for saving an attached file to the phone."
+  },
+  "fileSaved": "Saved {name}",
+  "@fileSaved": {
+    "description": "Toast after an attached file was saved to the phone.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Report.pdf"
+      }
+    }
+  },
+  "fileSaveFailed": "Couldn’t save the file",
+  "@fileSaveFailed": {
+    "description": "Toast when an attached file couldn’t be saved to the phone."
+  },
+  "fileOpen": "Open {name}",
+  "@fileOpen": {
+    "description": "Screen reader name of an attached file’s tile; tapping it opens the file in another app.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Report.pdf"
+      }
+    }
+  },
+  "fileSave": "Save {name}",
+  "@fileSave": {
+    "description": "Screen reader name of the download button on an attached file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Report.pdf"
+      }
+    }
+  },
+  "addTakeSeveral": "Take several",
+  "@addTakeSeveral": {
+    "description": "Option that opens the camera to take several pictures in a row, each added to the note as it’s taken."
+  },
+  "addFiles": "Files",
+  "@addFiles": {
+    "description": "Noun: option that picks one or more files of any kind stored on the phone."
+  },
+  "addFolder": "Folder",
+  "@addFolder": {
+    "description": "Noun: option that picks a folder on the phone and adds it, zipped with its subfolders."
+  },
+  "addFolderFailed": "Couldn’t read that folder",
+  "@addFolderFailed": {
+    "description": "Toast when the picked folder couldn’t be zipped."
+  },
+  "addFolderEmpty": "That folder is empty",
+  "@addFolderEmpty": {
+    "description": "Toast when the picked folder holds no files."
+  },
+  "actionAddImage": "Add image",
+  "@actionAddImage": {
+    "description": "Option in an open note’s More menu: adds pictures from the phone as attachments."
+  },
+  "actionTakePicture": "Take picture",
+  "@actionTakePicture": {
+    "description": "Option in an open note’s More menu: takes a picture with the camera app and adds it as an attachment."
+  },
+  "actionTakeSeveral": "Take several",
+  "@actionTakeSeveral": {
+    "description": "Option in an open note’s More menu: opens the camera to take several pictures in a row."
   }
 }

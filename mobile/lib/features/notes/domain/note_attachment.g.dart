@@ -37,4 +37,5 @@ Map<String, dynamic> _$NoteAttachmentToJson(_NoteAttachment instance) =>
 const _$AttachmentTypeEnumMap = {
   AttachmentType.image: 'image',
   AttachmentType.audio: 'audio',
+  AttachmentType.file: 'file',
 };

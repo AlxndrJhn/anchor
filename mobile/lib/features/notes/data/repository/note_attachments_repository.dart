@@ -37,6 +37,22 @@ class NoteAttachmentsRepository {
 
   NoteAttachmentsRepository(this._db, this._dio);
 
+  /// Watches one attachment by its id; null once it's gone.
+  Stream<NoteAttachment?> watchAttachment(String attachmentId) {
+    return (_db.select(_db.noteAttachments)
+          ..where(
+            (tbl) =>
+                (tbl.id.equals(attachmentId) |
+                    tbl.serverAttachmentId.equals(attachmentId)) &
+                tbl.syncStatus
+                    .equals(AttachmentSyncStatus.pendingDelete.dbValue)
+                    .not(),
+          )
+          ..limit(1))
+        .watchSingleOrNull()
+        .map((row) => row == null ? null : _mapToDomain(row));
+  }
+
   Stream<List<NoteAttachment>> watchAttachments(String noteId) {
     return (_db.select(_db.noteAttachments)
           ..where(
@@ -393,6 +409,7 @@ class NoteAttachmentsRepository {
       }
       try {
         final attachment = await _uploadToServer(
+          row.id,
           row.noteId,
           row.localPath!,
           row.mimeType,
@@ -457,9 +474,15 @@ class NoteAttachmentsRepository {
                 ),
               );
 
-          await (_db.delete(
-            _db.noteAttachments,
-          )..where((tbl) => tbl.id.equals(row.id))).go();
+          // The server keeps the id it was sent: then the row above is the
+          // pending one, now synced. One from before pictures in the text
+          // gives it a new id, which the note's text then needs.
+          if (attachment.id != row.id) {
+            await (_db.delete(
+              _db.noteAttachments,
+            )..where((tbl) => tbl.id.equals(row.id))).go();
+            await _renameInText(attachment.noteId, row.id, attachment.id);
+          }
           return isGone;
         });
         if (isDeletedMeanwhile) {
@@ -533,13 +556,33 @@ class NoteAttachmentsRepository {
     }
   }
 
+  /// Points the pictures placed in a note's text at the attachment's new id.
+  Future<void> _renameInText(String noteId, String from, String to) async {
+    final note = await (_db.select(
+      _db.notes,
+    )..where((tbl) => tbl.id.equals(noteId))).getSingleOrNull();
+    final content = note?.content;
+    if (note == null || content == null || !content.contains(from)) return;
+    await (_db.update(_db.notes)..where((tbl) => tbl.id.equals(noteId))).write(
+      NotesCompanion(
+        content: drift.Value(content.replaceAll(from, to)),
+        isSynced: const drift.Value(false),
+        localRev: drift.Value(note.localRev + 1),
+        updatedAt: drift.Value(DateTime.now().toUtc()),
+      ),
+    );
+  }
+
+  /// The server keeps [localId], so the pictures in the text still find it.
   Future<NoteAttachment> _uploadToServer(
+    String localId,
     String noteId,
     String localFilePath,
     String mimeType,
     String originalFilename,
   ) async {
     final formData = FormData.fromMap({
+      'id': localId,
       'file': await MultipartFile.fromFile(
         localFilePath,
         filename: originalFilename,

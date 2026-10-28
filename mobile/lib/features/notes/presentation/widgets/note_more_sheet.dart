@@ -20,6 +20,7 @@ Future<NoteAction?> showNoteMoreSheet(
   bool hasCheckedItems = false,
   bool canShowCheckboxes = false,
   bool canHideCheckboxes = false,
+  bool canAddPictures = false,
 }) {
   final l10n = context.l10n;
   return showChoiceSheet<NoteAction>(
@@ -70,6 +71,19 @@ Future<NoteAction?> showNoteMoreSheet(
             value: NoteAction.removeLock,
             icon: LucideIcons.lockOpen,
             label: l10n.actionRemoveLock,
+          ),
+      ],
+      if (canAddPictures) ...[
+        null,
+        for (final action in const [
+          NoteAction.addImage,
+          NoteAction.takePicture,
+          NoteAction.takeSeveral,
+        ])
+          SheetChoice(
+            value: action,
+            icon: action.iconAndLabelFor(const [], l10n).icon,
+            label: action.iconAndLabelFor(const [], l10n).label,
           ),
       ],
       null,

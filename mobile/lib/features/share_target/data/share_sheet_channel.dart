@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/links/link_utils.dart';
 
-enum SharedFileKind { picture, audio }
+/// A file of any other kind is attached as it is.
+enum SharedFileKind { picture, audio, file }
 
 enum SharedFileState { copying, ready }
 

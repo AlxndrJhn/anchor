@@ -83,7 +83,7 @@ void main() {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
-    AddedFile? added;
+    List<AddedFile>? added;
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -110,7 +110,7 @@ void main() {
     await waitFor(tester, () => added != null);
 
     expect(recorder.isOn, isFalse);
-    expect(added!.path, recorder.path);
-    expect(File(added!.path).existsSync(), isTrue);
+    expect(added!.single.path, recorder.path);
+    expect(File(added!.single.path).existsSync(), isTrue);
   });
 }

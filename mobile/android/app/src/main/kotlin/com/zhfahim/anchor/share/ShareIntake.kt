@@ -96,13 +96,19 @@ class ShareIntake(context: Context, shared: SharedIntent, private val onChange: 
         skipped[reason] = (skipped[reason] ?: 0) + 1
     }
 
-    /** The kind and the type the server takes; null for anything else. */
+    /**
+     * The kind and the type the server takes: a picture, a recording, or any
+     * other file. Null for what a share must not read.
+     */
     private fun kindOf(uri: Uri, name: String, sharedType: String?): Pair<String, String>? {
         if (!isForeign(uri)) return null
         val type = (resolver.getType(uri) ?: typeFromName(name) ?: sharedType)
-            ?.substringBefore(';')?.trim()?.lowercase() ?: return null
+            ?.substringBefore(';')?.trim()?.lowercase()
+            ?.takeIf { it.isNotEmpty() && it != "*/*" }
+            ?: "application/octet-stream"
         if (type.startsWith("image/")) return "picture" to type
-        return AUDIO_TYPES[type]?.let { "audio" to it }
+        AUDIO_TYPES[type]?.let { return "audio" to it }
+        return "file" to type
     }
 
     /** False for Anchor's own files, which a share must not read. */
@@ -138,7 +144,11 @@ class ShareIntake(context: Context, shared: SharedIntent, private val onChange: 
         val reason = try {
             val raw = File(staging, "${item.id}.part")
             copyCapped(uri, raw)
-            copied = if (kind == "picture") picture(item.id, raw, name) else audio(item.id, raw, mime, name)
+            copied = when (kind) {
+                "picture" -> picture(item.id, raw, name)
+                "audio" -> audio(item.id, raw, mime, name)
+                else -> file(item.id, raw, mime, name)
+            }
             null
         } catch (_: TooBig) {
             Skip.tooBig
@@ -223,6 +233,12 @@ class ShareIntake(context: Context, shared: SharedIntent, private val onChange: 
             null
         }
         return Copied(file.name, mime, name.ifEmpty { file.name }, durationMs)
+    }
+
+    private fun file(id: String, raw: File, mime: String, name: String): Copied {
+        val extension = name.substringAfterLast('.', "").filter { it.isLetterOrDigit() }.take(10)
+        val file = rename(raw, if (extension.isEmpty()) "$id.bin" else "$id.$extension")
+        return Copied(file.name, mime, name.ifEmpty { file.name }, null)
     }
 
     private fun rename(raw: File, name: String): File {

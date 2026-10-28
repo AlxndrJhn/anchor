@@ -3202,10 +3202,10 @@ abstract class AppLocalizations {
   /// **'Voice note deleted'**
   String get attachmentVoiceDeleted;
 
-  /// Screen reader label of the button that adds a picture or audio file to a note.
+  /// Screen reader label of the button that adds a picture, recording or other file to a note.
   ///
   /// In en, this message translates to:
-  /// **'Add picture or audio'**
+  /// **'Add a picture, recording or file'**
   String get attachmentAddLabel;
 
   /// Short label on a small square tile that adds a picture or audio.
@@ -4018,12 +4018,6 @@ abstract class AppLocalizations {
   /// **'Add to note'**
   String get addToNote;
 
-  /// Toast when the picked audio file is a type the app can’t play.
-  ///
-  /// In en, this message translates to:
-  /// **'Anchor supports MP3, WAV, M4A, OGG and AAC audio'**
-  String get addAudioFormats;
-
   /// Toast when the picked photo is in a format the phone couldn’t read or convert.
   ///
   /// In en, this message translates to:
@@ -4042,10 +4036,10 @@ abstract class AppLocalizations {
   /// **'Take photo'**
   String get addTakePhoto;
 
-  /// Option that picks a photo from the phone’s photo library to add to the note.
+  /// Option that picks one or more photos from the phone’s photo library to add to the note.
   ///
   /// In en, this message translates to:
-  /// **'Choose photo'**
+  /// **'Choose photos'**
   String get addChoosePhoto;
 
   /// Option that starts recording a voice note.
@@ -4053,12 +4047,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Record audio'**
   String get addRecordAudio;
-
-  /// Noun: option that picks an audio file stored on the phone.
-  ///
-  /// In en, this message translates to:
-  /// **'Audio file'**
-  String get addAudioFile;
 
   /// Noun: title of the sheet while a voice note is being recorded.
   ///
@@ -5169,6 +5157,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This backup is from a newer Anchor. Update the app to restore it.'**
   String get backupTooNew;
+
+  /// Toast after a file that isn’t a picture or a recording was added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'File added'**
+  String get attachmentFileAdded;
+
+  /// Toast after a file that isn’t a picture or a recording was added to a note while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'File added. It will upload when you’re back online.'**
+  String get attachmentFileAddedOffline;
+
+  /// Toast when a file couldn’t be added to a note.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t add the file'**
+  String get attachmentFileAddFailed;
+
+  /// Toast after a file was deleted from a note, with an Undo button.
+  ///
+  /// In en, this message translates to:
+  /// **'File deleted'**
+  String get attachmentFileDeleted;
+
+  /// Toast after several files were added to a note at once.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attachment added} other{{count} attachments added}}'**
+  String attachmentsAdded(int count);
+
+  /// Toast after several files were added to a note at once while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attachment added. It will upload when you’re back online.} other{{count} attachments added. They will upload when you’re back online.}}'**
+  String attachmentsAddedOffline(int count);
+
+  /// Toolbar button over the keyboard, and the title of the menu it opens: puts a picture taken with the camera, or pictures from the phone, in the note’s text where the cursor is.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture in the text'**
+  String get toolPictureInText;
+
+  /// Option of the Picture in the text menu: takes a picture with the camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a picture'**
+  String get pictureInTextCamera;
+
+  /// Option of the Picture in the text menu: picks pictures from the phone’s photo library.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose pictures'**
+  String get pictureInTextChoose;
+
+  /// Verb: title of the page that crops a picture placed in a note’s text, its button that applies the crop, and the menu option that opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop'**
+  String get pictureCrop;
+
+  /// Button on the crop page that puts the frame back around the whole picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get pictureCropReset;
+
+  /// Button on the camera page while the flash is off; tapping it turns the flash on.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash off'**
+  String get cameraFlashOff;
+
+  /// Button on the camera page while the flash is on; tapping it turns the flash off.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash on'**
+  String get cameraFlashOn;
+
+  /// Message on the camera page when the phone has no camera the app can use.
+  ///
+  /// In en, this message translates to:
+  /// **'No camera found'**
+  String get cameraNone;
+
+  /// Message on the camera page when the person hasn’t let the app use the camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor needs the camera permission to take pictures'**
+  String get cameraNoPermission;
+
+  /// Message on the camera page when the camera couldn’t be started.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t start the camera'**
+  String get cameraFailed;
+
+  /// Button on the camera page that switches between the front and back cameras.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch camera'**
+  String get cameraSwitch;
+
+  /// Screen reader name of the round shutter button on the camera page.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a picture'**
+  String get cameraShutter;
+
+  /// Screen reader label of the pile of pictures taken so far on the camera page.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 picture taken} other{{count} pictures taken}}'**
+  String cameraTaken(int count);
+
+  /// Toast after the camera page closed, saying how many pictures were added to the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 picture added} other{{count} pictures added}}'**
+  String cameraPicturesAdded(int count);
+
+  /// Title of the menu shown when holding a picture placed in a note’s text, and its screen reader name when it has no caption.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture'**
+  String get inlinePicture;
+
+  /// Option in a picture’s menu: takes a new picture in its place.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get inlinePictureRetake;
+
+  /// Option in a picture’s menu: swaps its left and right.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror horizontally'**
+  String get inlinePictureMirrorHorizontally;
+
+  /// Option in a picture’s menu: swaps its top and bottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror vertically'**
+  String get inlinePictureMirrorVertically;
+
+  /// Option in a picture’s menu, and the title of the sheet that writes a caption shown under the picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Add caption'**
+  String get inlinePictureAddCaption;
+
+  /// Option in a picture’s menu when it has a caption, and the title of the sheet that changes it.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit caption'**
+  String get inlinePictureEditCaption;
+
+  /// Placeholder of the field for a picture’s caption.
+  ///
+  /// In en, this message translates to:
+  /// **'Caption'**
+  String get inlinePictureCaptionHint;
+
+  /// Toast when retaking, cropping or mirroring a picture in a note’s text failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t change the picture'**
+  String get inlinePictureChangeFailed;
+
+  /// Screen reader name of the round handle in a picture’s corner that changes its width.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize picture'**
+  String get inlinePictureResize;
+
+  /// Toast when the person opens or saves a file that hasn’t downloaded while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'This file will open when you’re back online'**
+  String get fileOffline;
+
+  /// Toast when an attached file couldn’t be downloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load the file'**
+  String get fileLoadFailed;
+
+  /// Toast when no app on the phone can open an attached file.
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this phone opens it. Save it instead.'**
+  String get fileNoApp;
+
+  /// Title of the system dialog for saving an attached file to the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Save file'**
+  String get fileSaveDialog;
+
+  /// Toast after an attached file was saved to the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name}'**
+  String fileSaved(String name);
+
+  /// Toast when an attached file couldn’t be saved to the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save the file'**
+  String get fileSaveFailed;
+
+  /// Screen reader name of an attached file’s tile; tapping it opens the file in another app.
+  ///
+  /// In en, this message translates to:
+  /// **'Open {name}'**
+  String fileOpen(String name);
+
+  /// Screen reader name of the download button on an attached file.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {name}'**
+  String fileSave(String name);
+
+  /// Option that opens the camera to take several pictures in a row, each added to the note as it’s taken.
+  ///
+  /// In en, this message translates to:
+  /// **'Take several'**
+  String get addTakeSeveral;
+
+  /// Noun: option that picks one or more files of any kind stored on the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get addFiles;
+
+  /// Noun: option that picks a folder on the phone and adds it, zipped with its subfolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get addFolder;
+
+  /// Toast when the picked folder couldn’t be zipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read that folder'**
+  String get addFolderFailed;
+
+  /// Toast when the picked folder holds no files.
+  ///
+  /// In en, this message translates to:
+  /// **'That folder is empty'**
+  String get addFolderEmpty;
+
+  /// Option in an open note’s More menu: adds pictures from the phone as attachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Add image'**
+  String get actionAddImage;
+
+  /// Option in an open note’s More menu: takes a picture with the camera app and adds it as an attachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Take picture'**
+  String get actionTakePicture;
+
+  /// Option in an open note’s More menu: opens the camera to take several pictures in a row.
+  ///
+  /// In en, this message translates to:
+  /// **'Take several'**
+  String get actionTakeSeveral;
 }
 
 class _AppLocalizationsDelegate

@@ -189,11 +189,16 @@ void main() {
         'files': [
           {'id': '0', 'kind': 'picture', 'name': 'a.jpg', 'file': '0.jpg'},
           {'id': '1', 'kind': 'audio', 'name': 'b.mp3'},
-          {'id': '2', 'kind': 'video', 'name': 'c.mp4'},
+          {'id': '2', 'kind': 'file', 'name': 'c.pdf', 'file': '2.pdf'},
+          {'id': '3', 'kind': 'video', 'name': 'd.mp4'},
         ],
         'skipped': {'tooBig': 1, 'unsupported': 0},
       });
-      expect([for (final file in intake.files) file.isReady], [true, false]);
+      expect(
+        [for (final file in intake.files) file.isReady],
+        [true, false, true],
+      );
+      expect(intake.files.last.kind, SharedFileKind.file);
       expect(intake.isCopying, isTrue);
       expect(intake.skipped, {SkipReason.tooBig: 1});
     });

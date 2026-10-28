@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
@@ -11,6 +12,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
+import '../../../../core/files/device_files.dart';
 import '../../../../core/motion/animated_resize.dart';
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
@@ -31,30 +33,52 @@ import 'audio_playback.dart';
 
 typedef AddedFile = ({String path, String mime, String name});
 
-Future<AddedFile?> showAddSheet(BuildContext context) {
-  return showAnchorSheet<AddedFile>(
+/// What was picked, recorded or taken, once the sheet has closed; null when
+/// nothing was. Take several closes the sheet and calls [onTakeSeveral]
+/// (null leaves it out).
+Future<List<AddedFile>?> showAddSheet(
+  BuildContext context, {
+  VoidCallback? onTakeSeveral,
+}) {
+  return showAnchorSheet<List<AddedFile>>(
     context,
     semanticLabel: context.l10n.addToNote,
-    builder: (_) => const _AddSheet(),
+    builder: (_) => _AddSheet(onTakeSeveral: onTakeSeveral),
   );
 }
 
-enum _Stage { pick, recording, review }
+/// [images] as files the server takes: photos it can't show (HEIC and the
+/// like) are made JPEG first; [unsupported] counts the ones that couldn't be.
+Future<({List<AddedFile> files, int unsupported})> uploadablePictures(
+  List<XFile> images,
+) async {
+  final files = <AddedFile>[];
+  var unsupported = 0;
+  for (final image in images) {
+    final photo = await PhotoFiles.uploadable(image.path);
+    if (photo == null) {
+      unsupported++;
+    } else {
+      files.add((
+        path: photo.path,
+        mime: photo.mime,
+        name: path.basename(photo.path),
+      ));
+    }
+  }
+  return (files: files, unsupported: unsupported);
+}
 
-const _audioTypes = {
-  '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav',
-  '.m4a': 'audio/mp4',
-  '.ogg': 'audio/ogg',
-  '.aac': 'audio/aac',
-};
+enum _Stage { pick, recording, review }
 
 const _waveformBarCount = 36;
 
 const _recordingLimit = maxAttachmentBytes - 2 * 1024 * 1024;
 
 class _AddSheet extends StatefulWidget {
-  const _AddSheet();
+  const _AddSheet({this.onTakeSeveral});
+
+  final VoidCallback? onTakeSeveral;
 
   @override
   State<_AddSheet> createState() => _AddSheetState();
@@ -96,44 +120,83 @@ class _AddSheetState extends State<_AddSheet> {
     super.dispose();
   }
 
-  Future<void> _pickPicture(ImageSource source) async {
-    final image = await ImagePicker().pickImage(source: source);
-    if (image == null || !mounted) return;
-    final photo = await PhotoFiles.uploadable(image.path);
-    if (!mounted) return;
-    if (photo == null) {
+  void _done(List<AddedFile> files) =>
+      Navigator.of(context).pop<List<AddedFile>>(files);
+
+  Future<List<AddedFile>?> _uploadable(List<XFile> images) async {
+    final pictures = await uploadablePictures(images);
+    if (!mounted) return null;
+    if (pictures.unsupported > 0) {
       AppSnackbar.show(
         context,
         context.l10n.addPhotoUnsupported,
         kind: SnackbarKind.error,
       );
-      return;
     }
-    Navigator.of(context).pop<AddedFile>((
-      path: photo.path,
-      mime: photo.mime,
-      name: path.basename(photo.path),
-    ));
+    return pictures.files;
   }
 
-  Future<void> _pickAudio() async {
-    final file = await FilePicker.pickFile(
-      type: FileType.custom,
-      allowedExtensions: [for (final e in _audioTypes.keys) e.substring(1)],
-    );
-    if (file?.path == null || !mounted) return;
-    final mime = _audioTypes[path.extension(file!.path!).toLowerCase()];
-    if (mime == null) {
-      AppSnackbar.show(
-        context,
-        context.l10n.addAudioFormats,
-        kind: SnackbarKind.error,
-      );
+  Future<void> _takePhoto() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (image == null || !mounted) return;
+    final files = await _uploadable([image]);
+    if (files != null && files.isNotEmpty) _done(files);
+  }
+
+  void _takeSeveral() {
+    final onTakeSeveral = widget.onTakeSeveral!;
+    Navigator.of(context).pop();
+    onTakeSeveral();
+  }
+
+  /// Several photos from the gallery at once.
+  Future<void> _choosePhotos() async {
+    final images = await ImagePicker().pickMultiImage();
+    if (images.isEmpty || !mounted) return;
+    final files = await _uploadable(images);
+    if (files != null && files.isNotEmpty) _done(files);
+  }
+
+  /// Any kind of file, several at once.
+  Future<void> _chooseFiles() async {
+    final picked = await FilePicker.pickFiles();
+    final files = [
+      for (final file in picked)
+        if (file.path case final filePath?)
+          (
+            path: filePath,
+            mime: mimeTypeFor(file.name),
+            name: file.name.isEmpty ? path.basename(filePath) : file.name,
+          ),
+    ];
+    if (files.isEmpty || !mounted) return;
+    _done(files);
+  }
+
+  /// A whole folder, subfolders included, as one zip file.
+  Future<void> _chooseFolder() async {
+    final ZippedFolder? folder;
+    try {
+      folder = await pickFolderAsZip();
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          context.l10n.addFolderFailed,
+          kind: SnackbarKind.error,
+        );
+      }
       return;
     }
-    Navigator.of(
-      context,
-    ).pop<AddedFile>((path: file.path!, mime: mime, name: file.name));
+    if (folder == null || !mounted) return;
+    if (folder.fileCount == 0) {
+      AppSnackbar.show(context, context.l10n.addFolderEmpty);
+      try {
+        await File(folder.path).delete();
+      } catch (_) {}
+      return;
+    }
+    _done([(path: folder.path, mime: 'application/zip', name: folder.name)]);
   }
 
   Future<void> _record() async {
@@ -242,11 +305,7 @@ class _AddSheetState extends State<_AddSheet> {
     if (file == null) return;
     _file = null;
     unawaited(_player.stop());
-    Navigator.of(context).pop<AddedFile>((
-      path: file,
-      mime: 'audio/mp4',
-      name: path.basename(file),
-    ));
+    _done([(path: file, mime: 'audio/mp4', name: path.basename(file))]);
   }
 
   Future<void> _discard() async {
@@ -288,6 +347,8 @@ class _AddSheetState extends State<_AddSheet> {
   Widget build(BuildContext context) {
     final seconds = math.max(1, _length.inSeconds);
     final l10n = context.l10n;
+    // Android's folder screen zips a folder (DeviceFilesPlugin).
+    final canPickFolder = defaultTargetPlatform == TargetPlatform.android;
     final (title, subtitle) = switch (_stage) {
       _Stage.pick => (l10n.addToNote, null),
       _Stage.recording => (l10n.recordingTitle, l10n.recordingHelp),
@@ -315,33 +376,40 @@ class _AddSheetState extends State<_AddSheet> {
             if (_stage == _Stage.pick) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  spacing: 12,
-                  children: [
-                    _OptionRow(
-                      first: _Option(
-                        icon: LucideIcons.camera,
-                        label: l10n.addTakePhoto,
-                        onTap: () => _pickPicture(ImageSource.camera),
-                      ),
-                      second: _Option(
-                        icon: LucideIcons.images,
-                        label: l10n.addChoosePhoto,
-                        onTap: () => _pickPicture(ImageSource.gallery),
-                      ),
+                child: _OptionGrid(
+                  options: [
+                    _Option(
+                      icon: LucideIcons.camera,
+                      label: l10n.addTakePhoto,
+                      onTap: _takePhoto,
                     ),
-                    _OptionRow(
-                      first: _Option(
-                        icon: LucideIcons.mic,
-                        label: l10n.addRecordAudio,
-                        onTap: _record,
+                    if (widget.onTakeSeveral != null)
+                      _Option(
+                        icon: LucideIcons.aperture,
+                        label: l10n.addTakeSeveral,
+                        onTap: _takeSeveral,
                       ),
-                      second: _Option(
-                        icon: LucideIcons.fileAudio,
-                        label: l10n.addAudioFile,
-                        onTap: _pickAudio,
-                      ),
+                    _Option(
+                      icon: LucideIcons.images,
+                      label: l10n.addChoosePhoto,
+                      onTap: _choosePhotos,
                     ),
+                    _Option(
+                      icon: LucideIcons.mic,
+                      label: l10n.addRecordAudio,
+                      onTap: _record,
+                    ),
+                    _Option(
+                      icon: LucideIcons.file,
+                      label: l10n.addFiles,
+                      onTap: _chooseFiles,
+                    ),
+                    if (canPickFolder)
+                      _Option(
+                        icon: LucideIcons.folderArchive,
+                        label: l10n.addFolder,
+                        onTap: _chooseFolder,
+                      ),
                   ],
                 ),
               ),
@@ -440,22 +508,32 @@ class _AddSheetState extends State<_AddSheet> {
   }
 }
 
-class _OptionRow extends StatelessWidget {
-  const _OptionRow({required this.first, required this.second});
+/// Options two to a row; an odd one out keeps a half-width.
+class _OptionGrid extends StatelessWidget {
+  const _OptionGrid({required this.options});
 
-  final Widget first;
-  final Widget second;
+  final List<Widget> options;
 
   @override
-  Widget build(BuildContext context) => IntrinsicHeight(
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 12,
-      children: [
-        Expanded(child: first),
-        Expanded(child: second),
-      ],
-    ),
+  Widget build(BuildContext context) => Column(
+    spacing: 12,
+    children: [
+      for (var i = 0; i < options.length; i += 2)
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
+            children: [
+              Expanded(child: options[i]),
+              Expanded(
+                child: i + 1 < options.length
+                    ? options[i + 1]
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+    ],
   );
 }
 

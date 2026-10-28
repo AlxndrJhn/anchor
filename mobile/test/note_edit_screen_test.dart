@@ -12,7 +12,9 @@ import 'package:anchor/core/widgets/grouped_list.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_copies_repository.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
+import 'package:anchor/features/notes/domain/inline_image.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/editor/document_lines.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_format.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_tool_button.dart';
@@ -23,7 +25,9 @@ import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart'
 import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_menu.dart';
 import 'package:anchor/features/notes/presentation/note_edit_screen.dart';
+import 'package:anchor/features/notes/presentation/widgets/file_card.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_chips.dart';
+import 'package:anchor/features/notes/presentation/widgets/picture_tile.dart';
 import 'package:anchor/features/notes/presentation/widgets/read_only_bottom_bar.dart';
 import 'package:anchor/features/reminders/data/notification_gateway.dart';
 import 'package:anchor/features/reminders/domain/reminder_schedule.dart';
@@ -1489,7 +1493,8 @@ void main() {
         'Text styles',
         'Checklist',
         'Bullet list',
-        'Add picture or audio',
+        'Add a picture, recording or file',
+        'Picture in the text',
         'Undo',
         'Redo',
         'Hide keyboard',
@@ -1545,7 +1550,7 @@ void main() {
       );
       await settle(tester);
 
-      expect(tool('Add picture or audio'), findsOneWidget);
+      expect(tool('Add a picture, recording or file'), findsOneWidget);
       expect(tester.getRect(tool('Checklist')), checklist);
     });
 
@@ -2901,6 +2906,140 @@ void main() {
       expect(title.focusNode!.hasFocus, isTrue);
       expect(title.controller!.selection.baseOffset, 2);
       await drainSnackbar(tester);
+    });
+  });
+  group('pictures in the text and files', () {
+    setUp(() {
+      when(
+        () => attachmentsRepo.watchAttachment(any()),
+      ).thenAnswer((_) => Stream.value(null));
+    });
+
+    NoteAttachment attachment(
+      String id, {
+      AttachmentType type = AttachmentType.image,
+      String name = 'a.png',
+      String mime = 'image/png',
+    }) => NoteAttachment(
+      id: id,
+      noteId: 'n1',
+      type: type,
+      originalFilename: name,
+      mimeType: mime,
+      fileSize: 3 * 1024 * 1024,
+    );
+
+    final withPicture = Note(
+      id: 'n1',
+      title: 'Trip',
+      content: jsonEncode({
+        'ops': [
+          {'insert': 'Beach\n'},
+          {
+            'insert': {
+              InlineImage.embedType: const InlineImage(id: 'inText').encode(),
+            },
+          },
+          {'insert': '\n'},
+        ],
+      }),
+    );
+
+    Future<void> open(
+      WidgetTester tester,
+      Note note,
+      List<NoteAttachment> attachments,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      when(
+        () => attachmentsRepo.watchAttachments(any()),
+      ).thenAnswer((_) => Stream.value(attachments));
+      when(() => attachmentsRepo.watchAttachment(any())).thenAnswer(
+        (invocation) => Stream.value(
+          attachments
+              .where((a) => a.id == invocation.positionalArguments.first)
+              .firstOrNull,
+        ),
+      );
+      when(
+        () => attachmentsRepo.downloadAttachment(any(), any(), any()),
+      ).thenAnswer((_) => Completer<String>().future);
+      await pumpScreen(tester, note: note);
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    testWidgets('a picture in the text stays out of the attachments above', (
+      tester,
+    ) async {
+      await open(tester, withPicture, [
+        attachment('inText'),
+        attachment('above'),
+      ]);
+
+      expect(find.byType(PictureTile), findsOneWidget);
+      expect(
+        tester.widget<PictureTile>(find.byType(PictureTile)).attachment.id,
+        'above',
+      );
+    });
+
+    testWidgets('a file shows with its name and size', (tester) async {
+      await open(tester, withPicture, [
+        attachment(
+          'f',
+          type: AttachmentType.file,
+          name: 'Report.pdf',
+          mime: 'application/pdf',
+        ),
+      ]);
+
+      expect(find.byType(FileCard), findsOneWidget);
+      expect(find.text('Report.pdf'), findsOneWidget);
+      expect(find.text('3.0 MB'), findsOneWidget);
+      expect(find.bySemanticsLabel('Save Report.pdf'), findsOneWidget);
+    });
+
+    testWidgets('More offers Add image, Take picture and Take several', (
+      tester,
+    ) async {
+      await open(tester, withPicture, const []);
+
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+
+      for (final label in ['Add image', 'Take picture', 'Take several']) {
+        expect(find.text(label), findsOneWidget, reason: label);
+      }
+    });
+
+    testWidgets('Picture in the text offers the camera or the phone’s '
+        'pictures', (tester) async {
+      tester.view
+        ..physicalSize = const Size(1170, 2532)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await pumpScreen(tester, note: withPicture);
+      tester.state<RichTextEditorState>(find.byType(RichTextEditor)).focusEnd();
+      tester.view.viewInsets = const FakeViewPadding(bottom: 900);
+      for (var i = 0; i < 8; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      await tester.tap(
+        find.byWidgetPredicate(
+          (w) => w is EditorToolButton && w.label == 'Picture in the text',
+        ),
+      );
+      for (var i = 0; i < 8; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(find.text('Take a picture'), findsOneWidget);
+      expect(find.text('Choose pictures'), findsOneWidget);
     });
   });
 }

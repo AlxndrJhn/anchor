@@ -123,6 +123,27 @@ void main() {
     );
   });
 
+  testWidgets('any other file is kept with its name', (tester) async {
+    await show(tester, {
+      'staging': '/nowhere',
+      'files': [
+        {
+          'id': '0',
+          'kind': 'file',
+          'name': 'Report.pdf',
+          'file': '0.pdf',
+          'mime': 'application/pdf',
+        },
+      ],
+    });
+
+    expect(find.text('Report.pdf'), findsOneWidget);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(saved.single.files.single.mime, 'application/pdf');
+  });
+
   testWidgets('says which files were left out', (tester) async {
     await show(tester, {
       'text': 'Holiday',

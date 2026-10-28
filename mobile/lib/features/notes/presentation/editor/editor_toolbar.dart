@@ -41,6 +41,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       case EditorTool.undo || EditorTool.redo:
         Haptics.light();
       case EditorTool.add ||
+          EditorTool.picture ||
           EditorTool.link ||
           EditorTool.textStyle ||
           EditorTool.hideKeyboard:

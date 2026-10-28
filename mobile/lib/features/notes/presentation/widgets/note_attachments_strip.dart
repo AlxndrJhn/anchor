@@ -19,6 +19,7 @@ import '../note_labels.dart';
 import '../note_morph_route.dart';
 import 'attachment_tile.dart';
 import 'audio_card.dart';
+import 'file_card.dart';
 import 'note_surface.dart';
 import 'picture_tile.dart';
 import 'picture_viewer.dart';
@@ -34,6 +35,7 @@ class NoteAttachmentsStrip extends ConsumerStatefulWidget {
     this.currentUserId,
     this.onGrabText,
     this.onSearch,
+    this.hiddenIds = const {},
   });
 
   final String noteId;
@@ -49,6 +51,9 @@ class NoteAttachmentsStrip extends ConsumerStatefulWidget {
 
   /// Searches the notes for a tag detected in a picture.
   final ValueChanged<String>? onSearch;
+
+  /// Pictures shown in the note's text instead, left out here.
+  final Set<String> hiddenIds;
 
   @override
   ConsumerState<NoteAttachmentsStrip> createState() =>
@@ -121,12 +126,17 @@ class _NoteAttachmentsStripState extends ConsumerState<NoteAttachmentsStrip> {
       stream: _stream,
       builder: (context, snapshot) {
         final all = (snapshot.data ?? const <NoteAttachment>[])
-            .where((attachment) => !_isPendingRemoval(attachment))
+            .where(
+              (attachment) =>
+                  !_isPendingRemoval(attachment) &&
+                  !widget.hiddenIds.contains(attachment.id),
+            )
             .toList();
         final pictures = all.where((attachment) => attachment.isImage).toList();
         final audioFiles = all
             .where((attachment) => attachment.isAudio)
             .toList();
+        final files = all.where((attachment) => attachment.isFile).toList();
         final first = !_loaded && snapshot.hasData;
         if (snapshot.hasData) _loaded = true;
         final shown = all.map((attachment) => attachment.id).join(',');
@@ -149,6 +159,13 @@ class _NoteAttachmentsStripState extends ConsumerState<NoteAttachmentsStrip> {
               attachment: audio,
               appearance: widget.appearance,
               onDelete: _canDelete(audio) ? () => _delete(audio) : null,
+            ),
+          for (final file in files)
+            FileCard(
+              key: ValueKey(file.id),
+              attachment: file,
+              appearance: widget.appearance,
+              onDelete: _canDelete(file) ? () => _delete(file) : null,
             ),
           if (widget.canEdit && all.isNotEmpty)
             _AddTile(appearance: widget.appearance, onTap: widget.onAdd),

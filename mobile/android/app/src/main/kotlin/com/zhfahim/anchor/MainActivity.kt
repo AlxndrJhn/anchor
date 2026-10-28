@@ -7,6 +7,7 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import com.zhfahim.anchor.files.DeviceFilesPlugin
 import com.zhfahim.anchor.lock.ScreenOffPlugin
 import com.zhfahim.anchor.photos.PhotoConverterPlugin
 import com.zhfahim.anchor.share.ShareFolderPlugin
@@ -96,6 +97,7 @@ class MainActivity : FlutterFragmentActivity() {
         flutterEngine.plugins.add(ShareFolderPlugin(listens = true))
         flutterEngine.plugins.add(UpdateInstallerPlugin())
         flutterEngine.plugins.add(ScreenOffPlugin())
+        flutterEngine.plugins.add(DeviceFilesPlugin())
     }
 
     private fun preferFastestRefreshRate() {

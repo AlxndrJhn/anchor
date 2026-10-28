@@ -10,6 +10,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
@@ -69,6 +70,7 @@ class RichTextEditor extends StatefulWidget {
     this.visibleArea,
     this.onImageInserted,
     this.searchTerm,
+    this.embedBuilders,
   });
 
   final String? initialContent;
@@ -116,6 +118,9 @@ class RichTextEditor extends StatefulWidget {
   /// The search the note was opened from: its matches are marked and the
   /// first is scrolled into view, until the text is edited.
   final String? searchTerm;
+
+  /// Draw the embeds the text may hold (pictures placed in the text).
+  final Iterable<EmbedBuilder>? embedBuilders;
 
   @override
   State<RichTextEditor> createState() => RichTextEditorState();
@@ -631,6 +636,54 @@ class RichTextEditorState extends State<RichTextEditor>
     });
   }
 
+  /// Where the caret is, for something to go in there later (a picture
+  /// being taken); the end of the text when there is no caret.
+  int get caretOffset {
+    final selection = _controller.selection;
+    final end = _controller.document.length - 1;
+    return selection.isValid ? selection.start.clamp(0, end) : end;
+  }
+
+  /// Puts [embeds] at [offset] (the caret when null), each on a line of its
+  /// own: the line there is split, keeping its style on the part before.
+  /// One undo step; the caret goes after them.
+  void insertBlockEmbeds(List<BlockEmbed> embeds, {int? offset}) {
+    if (!widget.canEdit || embeds.isEmpty) return;
+    final end = _controller.document.length - 1;
+    final at = (offset ?? caretOffset).clamp(0, end);
+    final line = _controller.document.queryChild(at);
+    final lineStyle = line.node is Line
+        ? (line.node! as Line).style.toJson()
+        : null;
+    final splits = line.offset > 0;
+    final change = Delta()..retain(at);
+    if (splits) change.insert('\n', lineStyle);
+    for (final embed in embeds) {
+      change
+        ..insert(embed.toJson())
+        ..insert('\n');
+    }
+    final inserted = (splits ? 1 : 0) + embeds.length * 2;
+    final after = TextSelection.collapsed(offset: at + inserted);
+    _ownUndoStep(() {
+      _apply(
+        () => _controller
+          ..compose(change, after, ChangeSource.local)
+          // compose keeps the caret where it was in the text.
+          ..updateSelection(after, ChangeSource.local),
+      );
+      return true;
+    });
+  }
+
+  /// The data of each embed of [type] in the text, in order.
+  List<Object?> embedsOf(String type) => [
+    for (final op in _controller.document.toDelta().toList())
+      if (op.data case final Map<dynamic, dynamic> data
+          when data.containsKey(type))
+        data[type],
+  ];
+
   void addFirstLine(String text) {
     widget.focusNode.requestFocus();
     _ownUndoStep(() {
@@ -1059,6 +1112,8 @@ class RichTextEditorState extends State<RichTextEditor>
               editorKey: _editorKey,
               onTapUp: _onEditorTapUp,
               customRecognizerBuilder: _buildLinkRecognizer,
+              embedBuilders: widget.embedBuilders,
+              unknownEmbedBuilder: _UnknownEmbedBuilder(widget.palette),
             ),
           ),
         ),
@@ -1071,6 +1126,38 @@ class RichTextEditorState extends State<RichTextEditor>
       controller: _ghost,
       overlayChildBuilder: (context) => ChecklistDragGhost(drag: _drag),
       child: editor,
+    );
+  }
+}
+
+/// An embed this app can't draw (from a newer version) stays in the text,
+/// shown as a box, so editing the note doesn't lose it.
+class _UnknownEmbedBuilder extends EmbedBuilder {
+  const _UnknownEmbedBuilder(this.palette);
+
+  final EditorPalette palette;
+
+  @override
+  String get key => '';
+
+  @override
+  bool get expanded => true;
+
+  @override
+  Widget build(BuildContext context, EmbedContext embedContext) {
+    return Container(
+      height: AnchorTokens.sizeControlMedium,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: palette.surface.withValues(alpha: 0.6),
+        borderRadius: context.appStyle.corners(AnchorTokens.radiusTile),
+        border: Border.all(color: palette.border),
+      ),
+      child: Icon(
+        LucideIcons.box,
+        size: AnchorTokens.sizeIconSmall,
+        color: palette.muted,
+      ),
     );
   }
 }

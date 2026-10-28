@@ -39,6 +39,7 @@ class EditorOverlay extends StatelessWidget {
     required this.isTitleFocused,
     required this.titleHistory,
     required this.onAddAttachment,
+    this.onPictureInText,
   });
 
   final EditorOverlayController controller;
@@ -54,6 +55,10 @@ class EditorOverlay extends StatelessWidget {
   final UndoHistoryController titleHistory;
 
   final VoidCallback onAddAttachment;
+
+  /// The toolbar's Picture: pictures from the camera or the phone, into
+  /// the text at the caret.
+  final VoidCallback? onPictureInText;
 
   @override
   Widget build(BuildContext context) {
@@ -152,6 +157,8 @@ class EditorOverlay extends StatelessWidget {
         }
       case EditorTool.add:
         onAddAttachment();
+      case EditorTool.picture:
+        onPictureInText?.call();
       case EditorTool.outdent:
         controller.indentBy(-1);
       case EditorTool.indent:

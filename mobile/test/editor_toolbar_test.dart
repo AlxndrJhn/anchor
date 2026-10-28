@@ -103,6 +103,7 @@ void main() {
         'checklist',
         'bullet',
         'add',
+        'picture',
         'space',
         'undo',
         'redo',

@@ -5,9 +5,12 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart' show BlockEmbed;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -24,6 +27,7 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bottom_bar_frame.dart';
+import '../../../core/widgets/choice_sheet.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/page_bar.dart';
 import '../../../l10n/l10n.dart';
@@ -38,6 +42,7 @@ import '../data/repository/note_attachments_repository.dart';
 import '../data/repository/note_copies_repository.dart';
 import '../data/repository/note_shares_repository.dart';
 import '../data/repository/notes_repository.dart';
+import '../domain/inline_image.dart';
 import '../domain/note.dart';
 import '../domain/note_attachment.dart';
 import '../domain/note_history.dart';
@@ -46,9 +51,11 @@ import 'checked_folds_controller.dart';
 import 'editor/editor_overlay.dart';
 import 'editor/editor_overlay_controller.dart';
 import 'editor/editor_palette.dart';
+import 'editor/inline_image_embed.dart';
 import 'editor/line_kind.dart';
 import 'editor/rich_text_editor.dart';
 import 'editor/text_formats.dart';
+import 'multi_shot_camera_screen.dart';
 import 'note_actions.dart';
 import 'note_editor_controller.dart';
 import 'note_labels.dart';
@@ -62,6 +69,7 @@ import 'widgets/note_bar.dart';
 import 'widgets/note_header.dart';
 import 'widgets/note_more_sheet.dart';
 import 'widgets/note_surface.dart';
+import 'widgets/picture_viewer.dart';
 import 'widgets/read_only_bottom_bar.dart';
 import 'widgets/share_sheet.dart';
 import 'widgets/title_input_formatter.dart';
@@ -155,10 +163,24 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
   bool get _writing => _titleFocus.hasFocus || _editorFocus.hasFocus;
 
+  /// The pictures placed in the text: how they load, show and change.
+  late final InlineImages _inlineImages;
+  late final _embedBuilders = [InlineImageEmbedBuilder(_inlineImages)];
+
+  /// The attachments the text shows as pictures, kept out of the strip;
+  /// null until the text changes, then read from the editor.
+  Set<String>? _shownInline;
+  (int, String?)? _shownInlineOf;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _inlineImages = InlineImages(
+      repo: ref.read(noteAttachmentsRepositoryProvider),
+      noteId: () => _draft.noteId,
+      onView: _viewInlinePicture,
+    );
     _draft.addListener(_draftChanged);
     _editorOverlay.addListener(_editorOverlayChanged);
     if (_openedAsNew) {
@@ -246,7 +268,43 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       _editorOverlay.closeLink();
     }
     if (!_editorFocus.hasFocus) _editorOverlay.closeSubmenu();
+    _inlineImages.editing.value = _editorFocus.hasFocus && !_isReadOnly;
     setState(() {});
+  }
+
+  Set<String> get _inlineIds {
+    final of = (_draft.contentVersion, _draft.initialContent);
+    if (of != _shownInlineOf) {
+      _shownInlineOf = of;
+      _shownInline = null;
+    }
+    return _shownInline ??= inlineImageIds(_draft.initialContent);
+  }
+
+  void _onEditorChanged() {
+    _draft.contentChanged();
+    final shown = {
+      for (final data
+          in _editor?.embedsOf(InlineImage.embedType) ?? const <Object?>[])
+        ?InlineImage.tryParse(data)?.id,
+    };
+    if (!setEquals(shown, _inlineIds)) setState(() => _shownInline = shown);
+  }
+
+  /// A picture in the text, full size.
+  void _viewInlinePicture(BuildContext context, NoteAttachment picture) {
+    Haptics.light();
+    showPictureViewer(
+      context,
+      noteId: picture.noteId,
+      pictures: [picture],
+      initial: 0,
+      // Its hold menu deletes it, with its place in the text.
+      canDelete: (_) => false,
+      onDelete: (_) {},
+      onGrabText: _isReadOnly ? null : (text) => _editor?.appendText(text),
+      onSearch: _searchNotesFor,
+    );
   }
 
   void _editorOverlayChanged() => setState(() {});
@@ -336,6 +394,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     _titleHistory.dispose();
     _nudge.dispose();
     _flash.dispose();
+    _inlineImages.dispose();
     super.dispose();
   }
 
@@ -411,6 +470,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       canShowCheckboxes: canShowCheckboxes,
       canHideCheckboxes:
           !canShowCheckboxes && (editor?.isAllChecklist ?? false),
+      canAddPictures: editor != null && !note.isTrashed,
     );
     if (action == null || !mounted) return;
     final actions = NoteActions(context, ref);
@@ -431,6 +491,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         await lockOpenNote(context, ref, note);
       case NoteAction.removeLock:
         await unlockOpenNote(context, ref, note);
+      case NoteAction.addImage:
+        await _addImages();
+      case NoteAction.takePicture:
+        await _takePicture();
+      case NoteAction.takeSeveral:
+        await _takeSeveralPictures();
       case NoteAction.showCheckboxes:
         _offerUndo(_editor?.showCheckboxes(), l10n.checkboxesShown);
       case NoteAction.hideCheckboxes:
@@ -689,9 +755,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
   Future<void> _showAdd() async {
     if (_isReadOnly) return;
-    final file = await showAddSheet(context);
-    if (file == null || !mounted) return;
-    await _addFile(file.path, file.mime, file.name);
+    final files = await showAddSheet(
+      context,
+      onTakeSeveral: _takeSeveralPictures,
+    );
+    if (files == null || files.isEmpty || !mounted) return;
+    await _addFiles(files);
   }
 
   /// A picture pasted from the keyboard becomes an attachment, as on the web.
@@ -708,27 +777,27 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final dir = await getTemporaryDirectory();
     final file = File(p.join(dir.path, filename));
     await file.writeAsBytes(bytes, flush: true);
-    await _addFile(file.path, mimeType, filename);
+    await _addFiles([(path: file.path, mime: mimeType, name: filename)]);
     try {
       await file.delete();
     } catch (_) {}
   }
 
-  Future<void> _addFile(String path, String mime, String name) async {
-    final file = (path: path, mime: mime, name: name);
+  /// Attaches [file] to the note, saving a new note first, and returns its
+  /// id; null when it couldn't be, after saying why. A folder zipped for
+  /// this is deleted then: the attachment has its own copy.
+  Future<String?> _attach(AddedFile file) async {
     final kind = AttachmentKind.of(mimeType: file.mime, filename: file.name);
     final l10n = context.l10n;
     final attachments = ref.read(noteAttachmentsRepositoryProvider);
     try {
       await attachments.checkSize(file.path);
       final id = _draft.noteId ?? await _draft.createNote();
-      await attachments.addAttachment(id, file.path, file.mime, file.name);
-      if (!mounted) return;
-      final online = ref.read(isOnlineProvider);
-      AppSnackbar.show(
-        context,
-        attachmentAddedLabel(kind, l10n, isOnline: online),
-        kind: SnackbarKind.success,
+      return await attachments.addAttachment(
+        id,
+        file.path,
+        file.mime,
+        file.name,
       );
     } on AttachmentTooBigException {
       if (mounted) {
@@ -746,7 +815,161 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           kind: SnackbarKind.error,
         );
       }
+    } finally {
+      await _dropZippedFolder(file.path);
     }
+    return null;
+  }
+
+  static Future<void> _dropZippedFolder(String path) async {
+    final folders = p.join((await getTemporaryDirectory()).path, 'folders');
+    if (!p.isWithin(folders, path)) return;
+    try {
+      await File(path).delete();
+    } catch (_) {}
+  }
+
+  /// Attaches what was picked, then says what went in.
+  Future<void> _addFiles(List<AddedFile> files) async {
+    final l10n = context.l10n;
+    var added = 0;
+    for (final file in files) {
+      if (await _attach(file) != null) added++;
+      if (!mounted) return;
+    }
+    if (added == 0) return;
+    final online = ref.read(isOnlineProvider);
+    AppSnackbar.show(
+      context,
+      files.length == 1
+          ? attachmentAddedLabel(
+              AttachmentKind.of(
+                mimeType: files.single.mime,
+                filename: files.single.name,
+              ),
+              l10n,
+              isOnline: online,
+            )
+          : online
+          ? l10n.attachmentsAdded(added)
+          : l10n.attachmentsAddedOffline(added),
+      kind: SnackbarKind.success,
+    );
+  }
+
+  /// Pictures the server can show, out of [images]; says when some can't
+  /// be.
+  Future<List<AddedFile>> _uploadable(List<XFile> images) async {
+    final pictures = await uploadablePictures(images);
+    if (pictures.unsupported > 0 && mounted) {
+      AppSnackbar.show(
+        context,
+        context.l10n.addPhotoUnsupported,
+        kind: SnackbarKind.error,
+      );
+    }
+    return pictures.files;
+  }
+
+  /// More › Add image: pictures from the phone, as attachments.
+  Future<void> _addImages() async {
+    final images = await ImagePicker().pickMultiImage();
+    if (images.isEmpty || !mounted) return;
+    final files = await _uploadable(images);
+    if (files.isEmpty || !mounted) return;
+    await _addFiles(files);
+  }
+
+  /// More › Take picture: one picture with the phone's camera app.
+  Future<void> _takePicture() async {
+    final shot = await ImagePicker().pickImage(source: ImageSource.camera);
+    if (shot == null || !mounted) return;
+    final files = await _uploadable([shot]);
+    if (files.isEmpty || !mounted) return;
+    await _addFiles(files);
+  }
+
+  /// Take several: pictures one after another, without coming back to the
+  /// note in between; each is attached as it's taken.
+  Future<void> _takeSeveralPictures() async {
+    if (_isReadOnly) return;
+    final count = await MultiShotCameraScreen.open(
+      context,
+      onPicture: (shot) async {
+        await _attach((
+          path: shot.path,
+          mime: 'image/jpeg',
+          name: p.basename(shot.path),
+        ));
+        try {
+          await File(shot.path).delete();
+        } catch (_) {}
+      },
+    );
+    if (count == 0 || !mounted) return;
+    AppSnackbar.show(
+      context,
+      context.l10n.cameraPicturesAdded(count),
+      kind: SnackbarKind.success,
+    );
+  }
+
+  /// The toolbar's Picture: a picture taken with the camera, or pictures
+  /// from the phone, attached and placed in the text where the caret was.
+  Future<void> _pictureInText() async {
+    final editor = _editor;
+    if (editor == null || _isReadOnly) return;
+    final at = editor.caretOffset;
+    final l10n = context.l10n;
+    final fromCamera = await showChoiceSheet<bool>(
+      context,
+      title: l10n.toolPictureInText,
+      choices: [
+        SheetChoice(
+          value: true,
+          icon: LucideIcons.camera,
+          label: l10n.pictureInTextCamera,
+        ),
+        SheetChoice(
+          value: false,
+          icon: LucideIcons.images,
+          label: l10n.pictureInTextChoose,
+        ),
+      ],
+    );
+    if (fromCamera == null || !mounted) return;
+    final picker = ImagePicker();
+    final List<XFile> picked;
+    if (fromCamera) {
+      final shot = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 92,
+      );
+      picked = [?shot];
+    } else {
+      picked = await picker.pickMultiImage(imageQuality: 92);
+    }
+    if (picked.isEmpty || !mounted) return;
+    final files = await _uploadable(picked);
+    if (files.isEmpty || !mounted) return;
+    await _placePictures(files, at: at);
+  }
+
+  /// [files] attached to the note and shown in its text at [at], each on a
+  /// line of its own.
+  Future<void> _placePictures(List<AddedFile> files, {required int at}) async {
+    final ids = <String>[];
+    for (final file in files) {
+      final id = await _attach(file);
+      if (!mounted) return;
+      if (id != null) ids.add(id);
+    }
+    if (ids.isEmpty) return;
+    Haptics.success();
+    _editor?.insertBlockEmbeds([
+      for (final id in ids)
+        BlockEmbed(InlineImage.embedType, InlineImage(id: id).encode()),
+    ], offset: at);
   }
 
   RichTextEditorState? get _editor => _editorKey.currentState;
@@ -937,6 +1160,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 ? null
                 : (text) => _editorKey.currentState?.appendText(text),
             onSearch: _searchNotesFor,
+            hiddenIds: _inlineIds,
           ),
         ValueListenableBuilder(
           valueListenable: _showsEmptyNoteActions,
@@ -1026,7 +1250,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                     visibleArea: _visibleArea,
                     onImageInserted: _onImageInserted,
                     hasSlashHint: _openedAsNew,
-                    onChanged: _draft.contentChanged,
+                    onChanged: _onEditorChanged,
+                    embedBuilders: _embedBuilders,
                     onSelectionChanged: _editorOverlay.selectionMoved,
                     onBlankChanged: _bodyBlankChanged,
                     onBackspaceAtStart: _isReadOnly ? null : _joinTitle,
@@ -1107,6 +1332,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 isTitleFocused: _titleFocus.hasFocus,
                 titleHistory: _titleHistory,
                 onAddAttachment: _showAdd,
+                onPictureInText: _pictureInText,
               ),
             ),
             if (_isReadOnly && note != null && !note.isDeleted)

@@ -33,6 +33,9 @@ enum NoteAction {
   copy,
   lock,
   removeLock,
+  addImage,
+  takePicture,
+  takeSeveral,
   showCheckboxes,
   hideCheckboxes,
   uncheckAll,
@@ -74,6 +77,18 @@ enum NoteAction {
     NoteAction.removeLock => (
       icon: LucideIcons.lockOpen,
       label: l10n.actionRemoveLock,
+    ),
+    NoteAction.addImage => (
+      icon: LucideIcons.imagePlus,
+      label: l10n.actionAddImage,
+    ),
+    NoteAction.takePicture => (
+      icon: LucideIcons.camera,
+      label: l10n.actionTakePicture,
+    ),
+    NoteAction.takeSeveral => (
+      icon: LucideIcons.aperture,
+      label: l10n.actionTakeSeveral,
     ),
     NoteAction.history => (
       icon: LucideIcons.history,
@@ -167,6 +182,9 @@ class NoteActions {
           NoteAction.send ||
           NoteAction.copy ||
           NoteAction.removeLock ||
+          NoteAction.addImage ||
+          NoteAction.takePicture ||
+          NoteAction.takeSeveral ||
           NoteAction.showCheckboxes ||
           NoteAction.hideCheckboxes ||
           NoteAction.uncheckAll ||

@@ -2179,7 +2179,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attachmentVoiceDeleted => 'Voice note deleted';
 
   @override
-  String get attachmentAddLabel => 'Add picture or audio';
+  String get attachmentAddLabel => 'Add a picture, recording or file';
 
   @override
   String get attachmentAdd => 'Add';
@@ -2687,10 +2687,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addToNote => 'Add to note';
 
   @override
-  String get addAudioFormats =>
-      'Anchor supports MP3, WAV, M4A, OGG and AAC audio';
-
-  @override
   String get addPhotoUnsupported =>
       'Couldn’t add this photo. Try a JPEG or PNG.';
 
@@ -2701,13 +2697,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addTakePhoto => 'Take photo';
 
   @override
-  String get addChoosePhoto => 'Choose photo';
+  String get addChoosePhoto => 'Choose photos';
 
   @override
   String get addRecordAudio => 'Record audio';
-
-  @override
-  String get addAudioFile => 'Audio file';
 
   @override
   String get recordingTitle => 'Recording';
@@ -3549,4 +3542,180 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backupTooNew =>
       'This backup is from a newer Anchor. Update the app to restore it.';
+
+  @override
+  String get attachmentFileAdded => 'File added';
+
+  @override
+  String get attachmentFileAddedOffline =>
+      'File added. It will upload when you’re back online.';
+
+  @override
+  String get attachmentFileAddFailed => 'Couldn’t add the file';
+
+  @override
+  String get attachmentFileDeleted => 'File deleted';
+
+  @override
+  String attachmentsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attachments added',
+      one: '1 attachment added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String attachmentsAddedOffline(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count attachments added. They will upload when you’re back online.',
+      one: '1 attachment added. It will upload when you’re back online.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get toolPictureInText => 'Picture in the text';
+
+  @override
+  String get pictureInTextCamera => 'Take a picture';
+
+  @override
+  String get pictureInTextChoose => 'Choose pictures';
+
+  @override
+  String get pictureCrop => 'Crop';
+
+  @override
+  String get pictureCropReset => 'Reset';
+
+  @override
+  String get cameraFlashOff => 'Flash off';
+
+  @override
+  String get cameraFlashOn => 'Flash on';
+
+  @override
+  String get cameraNone => 'No camera found';
+
+  @override
+  String get cameraNoPermission =>
+      'Anchor needs the camera permission to take pictures';
+
+  @override
+  String get cameraFailed => 'Couldn’t start the camera';
+
+  @override
+  String get cameraSwitch => 'Switch camera';
+
+  @override
+  String get cameraShutter => 'Take a picture';
+
+  @override
+  String cameraTaken(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pictures taken',
+      one: '1 picture taken',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String cameraPicturesAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pictures added',
+      one: '1 picture added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inlinePicture => 'Picture';
+
+  @override
+  String get inlinePictureRetake => 'Retake';
+
+  @override
+  String get inlinePictureMirrorHorizontally => 'Mirror horizontally';
+
+  @override
+  String get inlinePictureMirrorVertically => 'Mirror vertically';
+
+  @override
+  String get inlinePictureAddCaption => 'Add caption';
+
+  @override
+  String get inlinePictureEditCaption => 'Edit caption';
+
+  @override
+  String get inlinePictureCaptionHint => 'Caption';
+
+  @override
+  String get inlinePictureChangeFailed => 'Couldn’t change the picture';
+
+  @override
+  String get inlinePictureResize => 'Resize picture';
+
+  @override
+  String get fileOffline => 'This file will open when you’re back online';
+
+  @override
+  String get fileLoadFailed => 'Couldn’t load the file';
+
+  @override
+  String get fileNoApp => 'No app on this phone opens it. Save it instead.';
+
+  @override
+  String get fileSaveDialog => 'Save file';
+
+  @override
+  String fileSaved(String name) {
+    return 'Saved $name';
+  }
+
+  @override
+  String get fileSaveFailed => 'Couldn’t save the file';
+
+  @override
+  String fileOpen(String name) {
+    return 'Open $name';
+  }
+
+  @override
+  String fileSave(String name) {
+    return 'Save $name';
+  }
+
+  @override
+  String get addTakeSeveral => 'Take several';
+
+  @override
+  String get addFiles => 'Files';
+
+  @override
+  String get addFolder => 'Folder';
+
+  @override
+  String get addFolderFailed => 'Couldn’t read that folder';
+
+  @override
+  String get addFolderEmpty => 'That folder is empty';
+
+  @override
+  String get actionAddImage => 'Add image';
+
+  @override
+  String get actionTakePicture => 'Take picture';
+
+  @override
+  String get actionTakeSeveral => 'Take several';
 }

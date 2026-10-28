@@ -17,6 +17,7 @@ import '../../../l10n/l10n.dart';
 import '../../notes/domain/note.dart';
 import '../../notes/domain/note_dates.dart';
 import '../../notes/presentation/widgets/attachment_tile.dart';
+import '../../notes/presentation/widgets/file_icons.dart';
 import '../../notes/presentation/widgets/note_surface.dart';
 import '../../notes/presentation/widgets/title_input_formatter.dart';
 import '../../tags/domain/tag.dart';
@@ -405,12 +406,19 @@ class _FileTile extends StatelessWidget {
         errorBuilder: (_, _, _) => const SizedBox.expand(),
       );
     } else {
-      body = _AudioTile(file: file, appearance: appearance);
+      body = _AudioTile(
+        file: file,
+        appearance: appearance,
+        icon: file.kind == SharedFileKind.audio
+            ? LucideIcons.audioLines
+            : fileIconOf(file.mime, file.name),
+        keepsExtension: file.kind == SharedFileKind.file,
+      );
     }
     return AttachmentTile(
       width: isPicture
           ? AttachmentTile.height
-          : 210, // off-scale: an audio tile, as in a note
+          : 210, // off-scale: an audio or file tile, as in a note
       appearance: appearance,
       deleteLabel: context.l10n.shareRemoveItem(file.name),
       onDelete: () {
@@ -433,17 +441,30 @@ class _FileTile extends StatelessWidget {
   }
 }
 
+/// A recording or another file: its icon and name, and how long a
+/// recording plays.
 class _AudioTile extends StatelessWidget {
-  const _AudioTile({required this.file, required this.appearance});
+  const _AudioTile({
+    required this.file,
+    required this.appearance,
+    required this.icon,
+    this.keepsExtension = false,
+  });
 
   final SharedFile file;
   final NoteAppearance appearance;
+  final IconData icon;
+
+  /// A file's name says what it is with its extension.
+  final bool keepsExtension;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final dot = file.name.lastIndexOf('.');
-    final name = dot > 0 ? file.name.substring(0, dot) : file.name;
+    final name = dot > 0 && !keepsExtension
+        ? file.name.substring(0, dot)
+        : file.name;
     final duration = file.duration;
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -452,7 +473,7 @@ class _AudioTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Icon(
-            LucideIcons.audioLines,
+            icon,
             size: AnchorTokens.sizeIconMedium,
             color: appearance.colors.muted,
           ),
