@@ -7,6 +7,9 @@ import { type ReactNode, useEffect, useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAppearance } from "@/lib/appearance";
 import { trackInputModality } from "@/lib/input-modality";
+import { installLocalBackend } from "@/lib/local-backend/install";
+
+installLocalBackend();
 
 interface ProvidersProps {
   children: ReactNode;

@@ -55,6 +55,7 @@ import {
 } from "@/features/tags";
 import { TAG_COLORS } from "@/lib/design/tokens";
 import { useLastShown } from "@/lib/hooks/use-last-shown";
+import { isServerless } from "@/lib/local-backend/mode";
 import { rememberNewNoteButton } from "@/lib/morph";
 import { glidePill, prefersReducedMotion } from "@/lib/motion";
 import { isMac } from "@/lib/platform";
@@ -771,11 +772,15 @@ function AccountMenu({
           value={theme}
           onChange={(value) => switchTheme(value, setTheme)}
         />
-        <DropdownMenuSeparator />
-        <DropdownMenuItem tone="danger" onSelect={onSignOut}>
-          <LogOut />
-          Sign out
-        </DropdownMenuItem>
+        {!isServerless && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem tone="danger" onSelect={onSignOut}>
+              <LogOut />
+              Sign out
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,35 +1,11 @@
-"use client";
+import { isServerless } from "@/lib/local-backend/mode";
+import MissingPage from "./missing-page";
 
-import { NotebookPen, Search } from "lucide-react";
-import Link from "next/link";
-import { AppPage } from "@/components/layout/app-page";
-import { ErrorScreen } from "@/components/layout/error-screen";
-import { Button } from "@/components/ui/button";
+// A static build needs one; GitHub Pages serves 404.html for the rest.
+export function generateStaticParams() {
+  return isServerless ? [{ missing: ["missing"] }] : [];
+}
 
-export default function MissingPage() {
-  return (
-    <AppPage title={null}>
-      <ErrorScreen
-        illustration="missing"
-        title="Page not found"
-        text="Check the address, or go back to your notes."
-        actions={
-          <>
-            <Button asChild>
-              <Link href="/notes">
-                <NotebookPen aria-hidden />
-                Go to your notes
-              </Link>
-            </Button>
-            <Button variant="secondary" asChild>
-              <Link href="/notes?search=1">
-                <Search aria-hidden />
-                Search notes
-              </Link>
-            </Button>
-          </>
-        }
-      />
-    </AppPage>
-  );
+export default function Page() {
+  return <MissingPage />;
 }
