@@ -4508,5 +4508,109 @@
   "cardUnlocked": "Locked, open until the screen turns off",
   "@cardUnlocked": {
     "description": "Tooltip of the open lock on a locked note's card after it was opened; screen readers read it with the card."
+  },
+  "settingsBackup": "Backup",
+  "@settingsBackup": {
+    "description": "Settings section to save every note to a file and restore one."
+  },
+  "backupExport": "Export backup",
+  "@backupExport": {
+    "description": "Settings row: saves every note, tag, picture and recording to one .zip file."
+  },
+  "backupExportHelp": "Save every note, tag, picture and recording to a file",
+  "@backupExportHelp": {
+    "description": "Under Export backup in Settings."
+  },
+  "backupExporting": "Making the backup…",
+  "@backupExporting": {
+    "description": "Under Export backup while the file is being made."
+  },
+  "backupSaveTitle": "Save the backup",
+  "@backupSaveTitle": {
+    "description": "Title of the phone's save screen for the backup file."
+  },
+  "backupSaved": "{count, plural, =1{Saved 1 note to the backup} other{Saved {count} notes to the backup}}",
+  "@backupSaved": {
+    "description": "Toast after the backup file was saved.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "backupMissingFiles": "{count, plural, =1{1 attachment wasn’t on this phone and couldn’t be fetched.} other{{count} attachments weren’t on this phone and couldn’t be fetched.}}",
+  "@backupMissingFiles": {
+    "description": "Added after the saved-backup toast when some attachments couldn't be put in (not downloaded, no connection).",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "backupExportFailed": "Couldn’t make the backup",
+  "@backupExportFailed": {
+    "description": "Toast when making or saving the backup failed."
+  },
+  "backupRestore": "Restore backup",
+  "@backupRestore": {
+    "description": "Settings row: brings back the notes from a backup file."
+  },
+  "backupRestoreHelp": "Bring back the notes from a backup file. Notes already here stay as they are",
+  "@backupRestoreHelp": {
+    "description": "Under Restore backup in Settings."
+  },
+  "backupRestoring": "Restoring…",
+  "@backupRestoring": {
+    "description": "Under Restore backup while a backup is being restored."
+  },
+  "backupPickTitle": "Pick an Anchor backup",
+  "@backupPickTitle": {
+    "description": "Title of the phone's file picker when restoring a backup."
+  },
+  "backupOpenFailed": "Couldn’t open the file",
+  "@backupOpenFailed": {
+    "description": "Toast when the picked backup file can't be read."
+  },
+  "backupRestored": "{count, plural, =1{Restored 1 note} other{Restored {count} notes}}",
+  "@backupRestored": {
+    "description": "Toast after a backup was restored.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "backupAlreadyHere": "{count, plural, =1{1 was already here.} other{{count} were already here.}}",
+  "@backupAlreadyHere": {
+    "description": "Added after the restored toast: notes of the backup that were already on the phone and were left alone.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "backupNothingToRestore": "Nothing to restore: every note is already here",
+  "@backupNothingToRestore": {
+    "description": "Toast when a restored backup held no note missing from the phone."
+  },
+  "backupRestoreFailed": "Couldn’t restore the backup",
+  "@backupRestoreFailed": {
+    "description": "Toast when restoring a backup failed."
+  },
+  "backupNotABackup": "This file isn’t an Anchor backup",
+  "@backupNotABackup": {
+    "description": "Toast when the file picked to restore isn't an Anchor backup."
+  },
+  "backupDamaged": "This backup is damaged",
+  "@backupDamaged": {
+    "description": "Toast when the backup's list of notes can't be read."
+  },
+  "backupTooNew": "This backup is from a newer Anchor. Update the app to restore it.",
+  "@backupTooNew": {
+    "description": "Toast when the backup was made by a newer version of the app."
   }
 }

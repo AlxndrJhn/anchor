@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +10,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../app/router/app_routes.dart';
+import '../../../core/files/save_to_device.dart';
 import '../../../core/links/link_utils.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_tags.dart';
 import '../../../core/motion/haptics.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
@@ -42,6 +46,7 @@ import '../../../l10n/l10n.dart';
 import '../../auth/domain/user.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/oidc_config_provider.dart';
+import '../../backup/data/notes_backup.dart';
 import '../../note_locks/data/note_lock_secrets.dart';
 import '../../note_locks/presentation/lock_secret_setup_screen.dart';
 import '../../notes/presentation/notes_controller.dart';
@@ -91,6 +96,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               gap,
               const _PictureSearchSection(),
               const _NoteLocksSection(),
+              gap,
+              const _BackupSection(),
               gap,
               _AccountSection(user: user),
               gap,
@@ -833,6 +840,154 @@ class _NoteLocksSectionState extends ConsumerState<_NoteLocksSection> {
               showChevron: true,
               onTap: () => _set(kind),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _BackupWork { export, restore }
+
+/// Saving every note to a file, and putting the notes from one back.
+class _BackupSection extends ConsumerStatefulWidget {
+  const _BackupSection();
+
+  @override
+  ConsumerState<_BackupSection> createState() => _BackupSectionState();
+}
+
+class _BackupSectionState extends ConsumerState<_BackupSection> {
+  /// What is under way, if anything.
+  _BackupWork? _busy;
+
+  Future<void> _export() async {
+    if (_busy != null) return;
+    final l10n = context.l10n;
+    setState(() => _busy = _BackupWork.export);
+    try {
+      final backup = await ref.read(notesBackupProvider).export();
+      final saved = await saveBytesToDevice(
+        name: backup.filename,
+        bytes: backup.bytes,
+        dialogTitle: l10n.backupSaveTitle,
+        mimeType: 'application/zip',
+        allowedExtensions: const ['zip'],
+      );
+      if (!saved || !mounted) return;
+      AppSnackbar.show(
+        context,
+        [
+          l10n.backupSaved(backup.notes),
+          if (backup.missingFiles > 0)
+            l10n.backupMissingFiles(backup.missingFiles),
+        ].join('. '),
+      );
+    } catch (e, st) {
+      AppLogger.instance.error(
+        LogTags.backup,
+        'Export failed',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.backupExportFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  Future<void> _restore() async {
+    if (_busy != null) return;
+    final l10n = context.l10n;
+    final PlatformFile? file;
+    try {
+      file = await FilePicker.pickFile(dialogTitle: l10n.backupPickTitle);
+    } catch (e) {
+      AppLogger.instance.warn(LogTags.backup, 'Picking a backup failed: $e');
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.backupOpenFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+      return;
+    }
+    if (file == null || !mounted) return;
+    setState(() => _busy = _BackupWork.restore);
+    try {
+      final bytes = await file.readAsBytes();
+      final summary = await ref.read(notesBackupProvider).restore(bytes);
+      if (!mounted) return;
+      AppSnackbar.show(
+        context,
+        summary.notes == 0
+            ? l10n.backupNothingToRestore
+            : [
+                l10n.backupRestored(summary.notes),
+                if (summary.skipped > 0)
+                  l10n.backupAlreadyHere(summary.skipped),
+              ].join('. '),
+      );
+    } on BackupFormatException catch (e) {
+      if (mounted) {
+        AppSnackbar.show(context, switch (e.problem) {
+          BackupProblem.notABackup => l10n.backupNotABackup,
+          BackupProblem.damaged => l10n.backupDamaged,
+          BackupProblem.tooNew => l10n.backupTooNew,
+        }, kind: SnackbarKind.error);
+      }
+    } catch (e, st) {
+      AppLogger.instance.error(
+        LogTags.backup,
+        'Restore failed',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.backupRestoreFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Section(
+      label: l10n.settingsBackup,
+      child: GroupedList(
+        children: [
+          GroupedListTile(
+            key: const ValueKey('backup-export'),
+            icon: LucideIcons.download,
+            label: l10n.backupExport,
+            subtitle: _busy == _BackupWork.export
+                ? l10n.backupExporting
+                : l10n.backupExportHelp,
+            enabled: _busy == null,
+            onTap: _export,
+          ),
+          GroupedListTile(
+            key: const ValueKey('backup-restore'),
+            icon: LucideIcons.upload,
+            label: l10n.backupRestore,
+            subtitle: _busy == _BackupWork.restore
+                ? l10n.backupRestoring
+                : l10n.backupRestoreHelp,
+            enabled: _busy == null,
+            onTap: _restore,
+          ),
         ],
       ),
     );

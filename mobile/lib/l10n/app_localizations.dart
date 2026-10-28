@@ -5049,6 +5049,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Locked, open until the screen turns off'**
   String get cardUnlocked;
+
+  /// Settings section to save every note to a file and restore one.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get settingsBackup;
+
+  /// Settings row: saves every note, tag, picture and recording to one .zip file.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup'**
+  String get backupExport;
+
+  /// Under Export backup in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Save every note, tag, picture and recording to a file'**
+  String get backupExportHelp;
+
+  /// Under Export backup while the file is being made.
+  ///
+  /// In en, this message translates to:
+  /// **'Making the backup…'**
+  String get backupExporting;
+
+  /// Title of the phone's save screen for the backup file.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the backup'**
+  String get backupSaveTitle;
+
+  /// Toast after the backup file was saved.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Saved 1 note to the backup} other{Saved {count} notes to the backup}}'**
+  String backupSaved(int count);
+
+  /// Added after the saved-backup toast when some attachments couldn't be put in (not downloaded, no connection).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attachment wasn’t on this phone and couldn’t be fetched.} other{{count} attachments weren’t on this phone and couldn’t be fetched.}}'**
+  String backupMissingFiles(int count);
+
+  /// Toast when making or saving the backup failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t make the backup'**
+  String get backupExportFailed;
+
+  /// Settings row: brings back the notes from a backup file.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get backupRestore;
+
+  /// Under Restore backup in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring back the notes from a backup file. Notes already here stay as they are'**
+  String get backupRestoreHelp;
+
+  /// Under Restore backup while a backup is being restored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring…'**
+  String get backupRestoring;
+
+  /// Title of the phone's file picker when restoring a backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an Anchor backup'**
+  String get backupPickTitle;
+
+  /// Toast when the picked backup file can't be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t open the file'**
+  String get backupOpenFailed;
+
+  /// Toast after a backup was restored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Restored 1 note} other{Restored {count} notes}}'**
+  String backupRestored(int count);
+
+  /// Added after the restored toast: notes of the backup that were already on the phone and were left alone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 was already here.} other{{count} were already here.}}'**
+  String backupAlreadyHere(int count);
+
+  /// Toast when a restored backup held no note missing from the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to restore: every note is already here'**
+  String get backupNothingToRestore;
+
+  /// Toast when restoring a backup failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t restore the backup'**
+  String get backupRestoreFailed;
+
+  /// Toast when the file picked to restore isn't an Anchor backup.
+  ///
+  /// In en, this message translates to:
+  /// **'This file isn’t an Anchor backup'**
+  String get backupNotABackup;
+
+  /// Toast when the backup's list of notes can't be read.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is damaged'**
+  String get backupDamaged;
+
+  /// Toast when the backup was made by a newer version of the app.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is from a newer Anchor. Update the app to restore it.'**
+  String get backupTooNew;
 }
 
 class _AppLocalizationsDelegate

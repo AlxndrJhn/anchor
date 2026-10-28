@@ -19,4 +19,5 @@ class LogTags {
   static const notifications = 'Notifications';
   static const reminders = 'Reminders';
   static const logs = 'Logs';
+  static const backup = 'Backup';
 }

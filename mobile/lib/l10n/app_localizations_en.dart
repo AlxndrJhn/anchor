@@ -3452,4 +3452,101 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cardUnlocked => 'Locked, open until the screen turns off';
+
+  @override
+  String get settingsBackup => 'Backup';
+
+  @override
+  String get backupExport => 'Export backup';
+
+  @override
+  String get backupExportHelp =>
+      'Save every note, tag, picture and recording to a file';
+
+  @override
+  String get backupExporting => 'Making the backup…';
+
+  @override
+  String get backupSaveTitle => 'Save the backup';
+
+  @override
+  String backupSaved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Saved $count notes to the backup',
+      one: 'Saved 1 note to the backup',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupMissingFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count attachments weren’t on this phone and couldn’t be fetched.',
+      one: '1 attachment wasn’t on this phone and couldn’t be fetched.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupExportFailed => 'Couldn’t make the backup';
+
+  @override
+  String get backupRestore => 'Restore backup';
+
+  @override
+  String get backupRestoreHelp =>
+      'Bring back the notes from a backup file. Notes already here stay as they are';
+
+  @override
+  String get backupRestoring => 'Restoring…';
+
+  @override
+  String get backupPickTitle => 'Pick an Anchor backup';
+
+  @override
+  String get backupOpenFailed => 'Couldn’t open the file';
+
+  @override
+  String backupRestored(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Restored $count notes',
+      one: 'Restored 1 note',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupAlreadyHere(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count were already here.',
+      one: '1 was already here.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupNothingToRestore =>
+      'Nothing to restore: every note is already here';
+
+  @override
+  String get backupRestoreFailed => 'Couldn’t restore the backup';
+
+  @override
+  String get backupNotABackup => 'This file isn’t an Anchor backup';
+
+  @override
+  String get backupDamaged => 'This backup is damaged';
+
+  @override
+  String get backupTooNew =>
+      'This backup is from a newer Anchor. Update the app to restore it.';
 }
