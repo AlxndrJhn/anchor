@@ -169,6 +169,8 @@ abstract class Note with _$Note {
     NoteLock? lock,
     // Frozen by its owner: nobody can change, trash or delete it.
     @Default(false) bool isFrozen,
+    // Made invisible by this person: left out of the lists, found by search.
+    @Default(false) bool isInvisible,
     // Local only - not serialized
     @Default(true)
     @JsonKey(includeFromJson: false, includeToJson: false)

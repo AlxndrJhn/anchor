@@ -103,6 +103,22 @@ class NoteFiltersSheet extends ConsumerWidget {
                 ],
               ),
             ),
+            section('Is'),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: dims.xl),
+              child: Wrap(
+                spacing: dims.sm,
+                runSpacing: dims.sm,
+                children: [
+                  kind(
+                    'Invisible',
+                    LucideIcons.eyeOff,
+                    filters.invisible,
+                    filters.copyWith(invisible: !filters.invisible),
+                  ),
+                ],
+              ),
+            ),
             section('Search'),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: dims.xl),

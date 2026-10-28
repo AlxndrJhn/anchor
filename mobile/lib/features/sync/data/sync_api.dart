@@ -91,6 +91,7 @@ class SyncNoteChange extends SyncChange {
     this.position,
     this.lock,
     this.sendsLock = true,
+    this.isInvisible,
     this.placedAfterEdit = false,
     this.revisions = const [],
     this.isRevisionsOnly = false,
@@ -107,6 +108,10 @@ class SyncNoteChange extends SyncChange {
   /// False while this device doesn't know the note's lock yet, so the
   /// server keeps whatever it has.
   final bool sendsLock;
+
+  /// Kept out of this person's lists; null while this device doesn't know
+  /// yet, so the server keeps whatever it has.
+  final bool? isInvisible;
 
   /// Placed after its last edit (an item ticked from its card), so the
   /// server stamps the place after the edit and the note keeps it.
@@ -151,6 +156,7 @@ class SyncNoteChange extends SyncChange {
     'tagIds': tagIds,
     if (position != null) 'position': position,
     if (sendsLock) 'lock': lock,
+    if (isInvisible != null) 'isInvisible': isInvisible,
     if (placedAfterEdit) 'placedAfterEdit': true,
     if (revisions.isNotEmpty)
       'revisions': [for (final revision in revisions) revision.toJson()],
@@ -374,6 +380,8 @@ class SyncServerNote {
     this.lock,
     this.hasFrozenField = false,
     this.isFrozen = false,
+    this.hasInvisibleField = false,
+    this.isInvisible = false,
   });
 
   factory SyncServerNote.fromJson(Map<String, dynamic> json) {
@@ -401,6 +409,9 @@ class SyncServerNote {
       // Servers without freezing leave it out: keep what is here.
       hasFrozenField: json.containsKey('isFrozen'),
       isFrozen: json['isFrozen'] as bool? ?? false,
+      // Servers without invisible notes leave it out: keep what is here.
+      hasInvisibleField: json.containsKey('isInvisible'),
+      isInvisible: json['isInvisible'] as bool? ?? false,
       tagIds: (json['tagIds'] as List?)?.cast<String>() ?? const [],
       permission: json['permission'] as String? ?? 'owner',
       shareIds: (json['shareIds'] as List?)?.cast<String>() ?? const [],
@@ -432,6 +443,8 @@ class SyncServerNote {
   final String? lock;
   final bool hasFrozenField;
   final bool isFrozen;
+  final bool hasInvisibleField;
+  final bool isInvisible;
   final List<String> tagIds;
   final String permission;
   final List<String> shareIds;

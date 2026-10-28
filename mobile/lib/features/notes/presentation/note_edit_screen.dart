@@ -29,6 +29,7 @@ import 'package:anchor/features/notes/presentation/widgets/note_options_sheet.da
 import 'package:anchor/features/notes/presentation/widgets/share_note_sheet.dart';
 import 'package:anchor/features/note_locks/presentation/note_lock_actions.dart';
 import 'package:anchor/features/notes/presentation/note_freeze_actions.dart';
+import 'package:anchor/features/notes/presentation/note_invisible_actions.dart';
 import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
 import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -889,6 +890,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             ? () => _setFrozen(!lockable.isFrozen)
             : null,
         isFrozen: _isFrozen,
+        onInvisibleTap: lockable == null
+            ? null
+            : () => setNotesInvisible(context, ref, [
+                lockable.id,
+              ], !lockable.isInvisible),
+        isInvisible: lockable?.isInvisible ?? false,
         onUncheckAllTap: checked > 0 ? () => editor?.uncheckAll() : null,
         onRemoveCheckedTap: checked > 0
             ? () {

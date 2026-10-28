@@ -175,6 +175,7 @@ class NotesBackup {
         'background': note.background,
         'state': note.state,
         'lock': domain.NoteLock.fromString(note.lock)?.name,
+        'isInvisible': note.isInvisible == true,
         'createdAt': note.createdAt?.toUtc().toIso8601String(),
         'updatedAt': note.updatedAt?.toUtc().toIso8601String(),
         'reminder': note.reminderAt == null
@@ -364,6 +365,7 @@ class NotesBackup {
                   lock: drift.Value(
                     domain.NoteLock.fromString(note['lock'] as String?)?.name,
                   ),
+                  isInvisible: drift.Value(note['isInvisible'] == true),
                   createdAt: drift.Value(
                     _parseDate(note['createdAt']) ?? DateTime.now().toUtc(),
                   ),

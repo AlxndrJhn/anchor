@@ -210,6 +210,20 @@ class NoteCard extends ConsumerWidget {
                                       color: theme.colorScheme.primary,
                                     ),
                                   ],
+                                  // Found by a search; it stays out of the
+                                  // lists.
+                                  if (note.isInvisible) ...[
+                                    SizedBox(width: dims.xs),
+                                    Icon(
+                                      LucideIcons.eyeOff,
+                                      key: const ValueKey('card-invisible'),
+                                      size: AppIconSizes.sm,
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(
+                                            alpha: AppOpacity.secondary,
+                                          ),
+                                    ),
+                                  ],
                                   if (note.isFrozen) ...[
                                     SizedBox(width: dims.xs),
                                     Icon(
