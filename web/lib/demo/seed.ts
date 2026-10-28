@@ -1,5 +1,6 @@
 // Sample notes for the demo: each feature's demo starts from a set of them.
 
+import { INLINE_IMAGE_EMBED } from "@/features/notes/inline-images";
 import type { NoteRevisionCause } from "@/features/notes/types";
 import {
   type Data,
@@ -11,14 +12,26 @@ import {
 
 type Op = { insert: string | object; attributes?: Record<string, unknown> };
 
-/** One line of a note: plain text, or a checklist item. */
-export type Line = string | { item: string; done?: boolean };
+/**
+ * One line of a note: plain text, a checklist item, or one of the note's
+ * pictures placed in the text, as the Android app puts it there.
+ */
+export type Line =
+  | string
+  | { item: string; done?: boolean }
+  | { picture: string; width?: number; caption?: string };
 
 export function delta(lines: Line[]): string {
   const ops: Op[] = [];
   for (const line of lines) {
     if (typeof line === "string") ops.push({ insert: `${line}\n` });
-    else {
+    else if ("picture" in line) {
+      const { picture: id, ...rest } = line;
+      ops.push({
+        insert: { [INLINE_IMAGE_EMBED]: JSON.stringify({ id, ...rest }) },
+      });
+      ops.push({ insert: "\n" });
+    } else {
       ops.push({ insert: line.item });
       ops.push({
         insert: "\n",
