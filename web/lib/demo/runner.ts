@@ -74,12 +74,8 @@ function isShown(element: Element) {
   return style.visibility !== "hidden" && style.display !== "none";
 }
 
-/**
- * On the page, though maybe not visible yet (shown on hover); not inside
- * something left out of this layout, e.g. the desktop sidebar on a phone.
- */
+/** Takes up room on the page, though maybe not visible (shown on hover). */
 function isLaidOut(element: Element) {
-  if (element.closest("[data-demo-player]")) return false;
   const box = element.getBoundingClientRect();
   return box.width > 0 && box.height > 0;
 }
@@ -95,7 +91,10 @@ function matches(target: Target): HTMLElement[] {
       root.querySelectorAll<HTMLElement>(spec.css ?? CONTROLS),
     );
     for (const element of candidates) {
-      if (spec.hidden ? !isLaidOut(element) : !isShown(element)) continue;
+      if (
+        spec.hidden ? element.closest("[data-demo-player]") : !isShown(element)
+      )
+        continue;
       if (spec.label !== undefined) {
         const label =
           element.getAttribute("aria-label") ?? element.getAttribute("title");
@@ -118,6 +117,10 @@ function matches(target: Target): HTMLElement[] {
       found.push(element);
     }
   }
+  // A hidden one in this layout before one left out of it, e.g. the desktop
+  // sidebar's on a phone.
+  if (spec.hidden && found.some(isLaidOut))
+    found.splice(0, found.length, ...found.filter(isLaidOut));
   // The innermost control that matches, not the ones around it.
   return found.filter(
     (element) =>
