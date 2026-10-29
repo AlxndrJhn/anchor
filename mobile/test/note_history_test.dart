@@ -1,12 +1,19 @@
+import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_history.dart';
 import 'package:anchor/features/notes/domain/note_revision.dart';
+import 'package:anchor/features/notes/domain/user_summary.dart';
+import 'package:anchor/features/notes/presentation/note_labels.dart';
+import 'package:anchor/l10n/app_localizations.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+final _english = lookupAppLocalizations(const Locale('en'));
 
 NoteRevision revisionOf({
   required String id,
   RevisionCause cause = RevisionCause.edit,
   DateTime? createdAt,
-  NoteRevisionAuthor? author,
+  UserSummary? author,
 }) => NoteRevision(
   id: id,
   noteId: 'n1',
@@ -17,8 +24,8 @@ NoteRevision revisionOf({
   author: author,
 );
 
-const ada = NoteRevisionAuthor(id: 'u1', name: 'Ada', email: 'ada@x.dev');
-const bob = NoteRevisionAuthor(id: 'u2', name: 'Bob', email: 'bob@x.dev');
+const ada = UserSummary(id: 'u1', name: 'Ada', email: 'ada@x.dev');
+const bob = UserSummary(id: 'u2', name: 'Bob', email: 'bob@x.dev');
 
 void main() {
   group('comparisonTarget', () {
@@ -89,47 +96,86 @@ void main() {
   test('revisionAuthorName says You for the reader', () {
     final revision = revisionOf(id: 'r1', author: ada);
 
-    expect(revisionAuthorName(revision, 'u1'), 'You');
-    expect(revisionAuthorName(revision, 'u2'), 'Ada');
-    expect(revisionAuthorName(revisionOf(id: 'r1'), 'u1'), 'Someone');
-  });
-
-  group('day labels', () {
-    final now = DateTime(2026, 8, 18, 15);
-
-    test('names today, yesterday and older days', () {
-      expect(dayLabel(DateTime(2026, 8, 18, 9), now), 'Today');
-      expect(dayLabel(DateTime(2026, 8, 17, 23), now), 'Yesterday');
-      expect(dayLabel(DateTime(2026, 8, 2), now), 'August 2, 2026');
-    });
-
-    test('reads a version as a day and a time', () {
-      final revision = revisionOf(
-        id: 'r1',
-        createdAt: DateTime(2026, 8, 18, 16, 5),
-      );
-
-      expect(revisionDayTime(revision, now: now), 'Today at 4:05 PM');
-      expect(revisionTime(revision), '4:05 PM');
-    });
+    expect(revisionAuthorName(revision, 'u1', _english), 'You');
+    expect(revisionAuthorName(revision, 'u2', _english), 'Ada');
+    expect(revisionAuthorName(revisionOf(id: 'r1'), 'u1', _english), 'Someone');
   });
 
   test('groupRevisionsByDay keeps the order and splits on the day', () {
-    final now = DateTime(2026, 8, 18, 15);
     final days = groupRevisionsByDay([
       revisionOf(id: 'r3', createdAt: DateTime(2026, 8, 18, 10)),
       revisionOf(id: 'r2', createdAt: DateTime(2026, 8, 18, 9)),
       revisionOf(id: 'r1', createdAt: DateTime(2026, 8, 17, 9)),
-    ], now: now);
+    ]);
 
-    expect(days.map((day) => day.label), ['Today', 'Yesterday']);
+    expect(days.map((day) => day.date), [
+      DateTime(2026, 8, 18, 10),
+      DateTime(2026, 8, 17, 9),
+    ]);
     expect(days.first.revisions.map((r) => r.id), ['r3', 'r2']);
     expect(days.last.revisions.map((r) => r.id), ['r1']);
   });
 
-  test('only unusual versions carry a hint', () {
-    expect(revisionHint(RevisionCause.edit), isNull);
-    expect(revisionHint(RevisionCause.conflict), isNotNull);
-    expect(revisionLabel(RevisionCause.restore), 'Before a restore');
+  test('each kind of version has its own name', () {
+    expect(
+      revisionLabel(RevisionCause.edit, _english),
+      _english.historyEarlier,
+    );
+    expect(revisionLabel(RevisionCause.restore, _english), 'Before a restore');
+  });
+
+  group('what changed after a version', () {
+    String delta(String text) => '{"ops":[{"insert":"$text\\n"}]}';
+    NoteRevision version(String id, String title, String text) =>
+        revisionOf(id: id).copyWith(title: title, content: delta(text));
+
+    test('reads a version against the next one, then the note', () {
+      final revisions = [
+        version('r2', 'Shop', 'milk\\neggs'),
+        version('r1', 'Shop', 'milk'),
+      ];
+      final note = Note(id: 'n1', title: 'Shopping', content: delta('milk'));
+      final changes = VersionChanges();
+
+      final older = changes.of(revisions, revisions[1], note);
+      expect(older.target?.id, 'r2');
+      expect(older.diff.added, 1);
+      expect(older.isTitleChangedFrom(revisions[1].title), isFalse);
+
+      final newest = changes.of(revisions, revisions[0], note);
+      expect(newest.target, isNull);
+      expect(newest.diff.removed, 1);
+      expect(newest.isTitleChangedFrom(revisions[0].title), isTrue);
+    });
+
+    test('works a pair out once, and again when the note changes', () {
+      final revisions = [version('r1', 'Shop', 'milk')];
+      final note = Note(id: 'n1', title: 'Shop', content: delta('milk'));
+      final changes = VersionChanges();
+
+      final first = changes.of(revisions, revisions[0], note).diff;
+      expect(
+        identical(changes.of(revisions, revisions[0], note).diff, first),
+        isTrue,
+      );
+      final edited = note.copyWith(content: delta('bread'));
+      expect(
+        identical(changes.of(revisions, revisions[0], edited).diff, first),
+        isFalse,
+      );
+      expect(changes.current(note).isUnchanged, isTrue);
+    });
+
+    test('a blank title and no title are the same title', () {
+      final revisions = [version('r1', '  ', 'milk')];
+      final note = Note(id: 'n1', title: '', content: delta('milk'));
+
+      expect(
+        VersionChanges()
+            .of(revisions, revisions[0], note)
+            .isTitleChangedFrom(revisions[0].title),
+        isFalse,
+      );
+    });
   });
 }

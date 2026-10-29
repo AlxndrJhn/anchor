@@ -6,8 +6,6 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 
-/// Upgrades on a real file database: an existing install must come out with
-/// the tables the current code expects.
 void main() {
   late Directory dir;
   late File file;
@@ -167,7 +165,7 @@ void main() {
       });
 
       await withDatabase((db) async {
-        Future<Note> row(String id) => (db.select(
+        Future<NoteRow> row(String id) => (db.select(
           db.notes,
         )..where((tbl) => tbl.id.equals(id))).getSingle();
 

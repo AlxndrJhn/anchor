@@ -1,43 +1,25 @@
-import 'package:anchor/core/widgets/editor/checklist_reorder_mixin.dart';
-import 'package:flutter/material.dart';
+import 'package:anchor/features/notes/presentation/editor/checklist_sorter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Minimal host so the mixin can be exercised without rendering QuillEditor.
-class _SortHost extends StatefulWidget {
-  const _SortHost({required this.controller, this.sortEnabled = true});
-
-  final QuillController controller;
-  final bool sortEnabled;
-
-  @override
-  State<_SortHost> createState() => _SortHostState();
+void sortWith(
+  QuillController controller, {
+  bool sortEnabled = true,
+  Duration delay = Duration.zero,
+}) {
+  final sorter = ChecklistSorter(
+    controller,
+    isEnabled: () => sortEnabled,
+    delay: () => delay,
+  );
+  final changes = controller.changes.listen(sorter.handleChange);
+  addTearDown(() {
+    changes.cancel();
+    sorter.dispose();
+  });
 }
 
-class _SortHostState extends State<_SortHost> with ChecklistReorderMixin {
-  @override
-  QuillController get controller => widget.controller;
-
-  @override
-  bool get sortChecklistItems => widget.sortEnabled;
-
-  @override
-  void initState() {
-    super.initState();
-    attachChecklistSorting();
-  }
-
-  @override
-  void dispose() {
-    detachChecklistSorting();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
-
-/// Builds a controller from (text, listType) lines; listType null = paragraph.
 QuillController makeController(List<(String, String?)> lines) {
   final ops = <Map<String, dynamic>>[];
   for (final (text, list) in lines) {
@@ -53,7 +35,6 @@ QuillController makeController(List<(String, String?)> lines) {
   );
 }
 
-/// Reads the document back as (text, listType) lines.
 List<(String, String?)> docLines(QuillController controller) {
   final lines = <(String, String?)>[];
   final buffer = StringBuffer();
@@ -75,7 +56,6 @@ List<(String, String?)> docLines(QuillController controller) {
   return lines;
 }
 
-/// Document offset of the first character of line [index] in [lines].
 int lineStart(List<(String, String?)> lines, int index) {
   var offset = 0;
   for (var i = 0; i < index; i++) {
@@ -89,12 +69,11 @@ void main() {
     WidgetTester tester,
     List<(String, String?)> lines, {
     bool sortEnabled = true,
+    Duration delay = Duration.zero,
   }) async {
     final controller = makeController(lines);
     addTearDown(controller.dispose);
-    await tester.pumpWidget(
-      _SortHost(controller: controller, sortEnabled: sortEnabled),
-    );
+    sortWith(controller, sortEnabled: sortEnabled, delay: delay);
     return controller;
   }
 
@@ -226,6 +205,76 @@ void main() {
     expect(controller.selection, const TextSelection.collapsed(offset: 2));
   });
 
+  testWidgets('the caret stays with its line when a tick moves lines', (
+    tester,
+  ) async {
+    final initial = <(String, String?)>[
+      ('Milk', 'unchecked'),
+      ('Bread', 'unchecked'),
+      ('After the list', null),
+    ];
+    final controller = await pumpHost(tester, initial);
+    final breadEnd = lineStart(initial, 1) + 'Bread'.length;
+    controller.updateSelection(
+      TextSelection.collapsed(offset: breadEnd),
+      ChangeSource.local,
+    );
+
+    controller.formatText(lineStart(initial, 0), 0, Attribute.checked);
+    await tester.pump();
+
+    expect(docLines(controller).take(2), [
+      ('Bread', 'unchecked'),
+      ('Milk', 'checked'),
+    ]);
+    expect(
+      controller.selection,
+      const TextSelection.collapsed(offset: 'Bread'.length),
+    );
+  });
+
+  testWidgets('a line just made a checklist item stays where it is', (
+    tester,
+  ) async {
+    final initial = <(String, String?)>[
+      ('Butter', null),
+      ('Milk', 'unchecked'),
+      ('Eggs', 'unchecked'),
+    ];
+    final controller = await pumpHost(tester, initial);
+
+    controller.formatText(lineStart(initial, 0), 0, Attribute.unchecked);
+    await tester.pump();
+
+    expect(docLines(controller), [
+      ('Butter', 'unchecked'),
+      ('Milk', 'unchecked'),
+      ('Eggs', 'unchecked'),
+    ]);
+  });
+
+  testWidgets('undoing an item made text puts it back where it was', (
+    tester,
+  ) async {
+    final initial = <(String, String?)>[
+      ('A', 'unchecked'),
+      ('B', 'unchecked'),
+      ('C', 'unchecked'),
+    ];
+    final controller = await pumpHost(tester, initial);
+
+    controller.formatText(
+      lineStart(initial, 1),
+      0,
+      Attribute.clone(Attribute.list, null),
+    );
+    await tester.pump();
+    controller.undo();
+    await tester.pump();
+
+    expect(docLines(controller), initial);
+  });
+
   testWidgets('a single undo reverts both the toggle and the move', (
     tester,
   ) async {
@@ -245,7 +294,6 @@ void main() {
     await tester.pump();
 
     expect(docLines(controller), initial);
-    // The sorter must not re-sort what undo just restored.
     await tester.pump();
     expect(docLines(controller), initial);
   });
@@ -320,7 +368,7 @@ void main() {
       selection: const TextSelection.collapsed(offset: 0),
     );
     addTearDown(controller.dispose);
-    await tester.pumpWidget(_SortHost(controller: controller));
+    sortWith(controller);
 
     controller.formatText(0, 0, Attribute.checked);
     await tester.pump();
@@ -370,8 +418,6 @@ void main() {
     ];
     final controller = await pumpHost(tester, initial);
 
-    // Convert all three lines to unchecked in one format call, like the
-    // toolbar does for a multi-line selection.
     controller.formatText(0, 5, Attribute.unchecked);
     await tester.pump();
 
@@ -380,5 +426,90 @@ void main() {
       ('b', 'unchecked'),
       ('c', 'unchecked'),
     ]);
+  });
+
+  group('with a pause before the move', () {
+    const pause = Duration(milliseconds: 320);
+    final initial = <(String, String?)>[
+      ('a', 'unchecked'),
+      ('b', 'unchecked'),
+      ('c', 'checked'),
+    ];
+
+    testWidgets('a ticked item stays in place until the pause ends', (
+      tester,
+    ) async {
+      final controller = await pumpHost(tester, initial, delay: pause);
+
+      controller.formatText(lineStart(initial, 0), 0, Attribute.checked);
+      await tester.pump(pause - const Duration(milliseconds: 20));
+      expect(docLines(controller).first, ('a', 'checked'));
+
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(docLines(controller), [
+        ('b', 'unchecked'),
+        ('c', 'checked'),
+        ('a', 'checked'),
+      ]);
+    });
+
+    testWidgets('unticking it in the pause keeps it where it was', (
+      tester,
+    ) async {
+      final controller = await pumpHost(tester, initial, delay: pause);
+
+      controller.formatText(lineStart(initial, 0), 0, Attribute.checked);
+      await tester.pump(const Duration(milliseconds: 100));
+      controller.formatText(lineStart(initial, 0), 0, Attribute.unchecked);
+      await tester.pump(pause * 2);
+
+      expect(docLines(controller), initial);
+    });
+
+    testWidgets('an unticked item waits too, then moves up', (tester) async {
+      final controller = await pumpHost(tester, initial, delay: pause);
+
+      controller.formatText(lineStart(initial, 2), 0, Attribute.unchecked);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(docLines(controller).last, ('c', 'unchecked'));
+      await tester.pump(pause);
+
+      expect(docLines(controller).map((l) => l.$2), everyElement('unchecked'));
+    });
+
+    testWidgets('typing elsewhere in the pause still moves the right item', (
+      tester,
+    ) async {
+      final controller = await pumpHost(tester, initial, delay: pause);
+
+      controller.formatText(lineStart(initial, 1), 0, Attribute.checked);
+      await tester.pump(const Duration(milliseconds: 100));
+      controller.replaceText(
+        0,
+        0,
+        'xyz',
+        const TextSelection.collapsed(offset: 3),
+      );
+      await tester.pump(pause);
+
+      expect(docLines(controller), [
+        ('xyza', 'unchecked'),
+        ('c', 'checked'),
+        ('b', 'checked'),
+      ]);
+    });
+
+    testWidgets('one Undo takes back the tick and the move', (tester) async {
+      final controller = await pumpHost(tester, initial, delay: pause);
+
+      controller.formatText(lineStart(initial, 0), 0, Attribute.checked);
+      await tester.pump(pause * 2);
+      expect(docLines(controller).first, ('b', 'unchecked'));
+
+      controller.undo();
+      await tester.pump(pause * 2);
+
+      expect(docLines(controller), initial);
+    });
   });
 }

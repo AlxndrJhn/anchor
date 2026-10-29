@@ -1,0 +1,3463 @@
+{
+  "@@locale": "en",
+  "appName": "Anchor Notes",
+  "@appName": {
+    "description": "The app's name in Android's recent apps, the same as its launcher name."
+  },
+  "commonBack": "Back",
+  "@commonBack": {
+    "description": "Screen reader label of the back arrow in the top bar and the editor toolbar."
+  },
+  "commonCancel": "Cancel",
+  "@commonCancel": {
+    "description": "Button that closes a dialog, sheet, search or selection without making changes."
+  },
+  "commonClose": "Close",
+  "@commonClose": {
+    "description": "Spoken label of the picture viewer’s close button and of the area outside a dialog, and the button that closes the share sheet when nothing in a share can be saved."
+  },
+  "commonDone": "Done",
+  "@commonDone": {
+    "description": "Small button at the top of a sheet that closes it."
+  },
+  "commonMenu": "Menu",
+  "@commonMenu": {
+    "description": "Screen reader name of a pop-up menu and of the side menu with the lists and tags."
+  },
+  "commonCloseMenu": "Close menu",
+  "@commonCloseMenu": {
+    "description": "Screen reader label for the area outside an open menu, which closes it."
+  },
+  "commonShowPassword": "Show password",
+  "@commonShowPassword": {
+    "description": "Screen reader label of the eye button that shows a hidden password."
+  },
+  "commonHidePassword": "Hide password",
+  "@commonHidePassword": {
+    "description": "Screen reader label of the eye button that hides a shown password."
+  },
+  "commonSelectedNotes": "Selected notes",
+  "@commonSelectedNotes": {
+    "description": "Screen reader name of the bar shown while notes are selected."
+  },
+  "commonPlay": "Play",
+  "@commonPlay": {
+    "description": "Screen reader label of a play button for an audio file without a name."
+  },
+  "commonPause": "Pause",
+  "@commonPause": {
+    "description": "Screen reader label of a pause button for an audio file without a name."
+  },
+  "commonPlayItem": "Play {name}",
+  "@commonPlayItem": {
+    "description": "Screen reader label of a play button for an audio or video file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "voice-memo.m4a"
+      }
+    }
+  },
+  "commonPauseItem": "Pause {name}",
+  "@commonPauseItem": {
+    "description": "Screen reader label of a pause button for an audio or video file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "voice-memo.m4a"
+      }
+    }
+  },
+  "commonSwitchOn": "{label}, on",
+  "@commonSwitchOn": {
+    "description": "Screen reader text for a settings switch that is on.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Allow self-signed certificates"
+      }
+    }
+  },
+  "commonSwitchOff": "{label}, off",
+  "@commonSwitchOff": {
+    "description": "Screen reader text for a settings switch that is off.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Allow self-signed certificates"
+      }
+    }
+  },
+  "formOffline": "You’re offline. Connect to the internet to continue.",
+  "@formOffline": {
+    "description": "Notice at the top of a form that needs the server."
+  },
+  "linkInvalid": "Invalid link",
+  "@linkInvalid": {
+    "description": "Message when a tapped link isn’t a valid web address."
+  },
+  "linkCantOpen": "Couldn’t open link",
+  "@linkCantOpen": {
+    "description": "Message when no app on the phone can open a tapped link."
+  },
+  "densityDefault": "Default",
+  "@densityDefault": {
+    "description": "Display density with regular spacing."
+  },
+  "densityCompact": "Compact",
+  "@densityCompact": {
+    "description": "Display density with tighter spacing that fits more notes."
+  },
+  "noteFontSans": "Sans",
+  "@noteFontSans": {
+    "description": "Note font choice: a sans-serif font."
+  },
+  "noteFontSerif": "Serif",
+  "@noteFontSerif": {
+    "description": "Note font choice: a serif font."
+  },
+  "noteFontMono": "Mono",
+  "@noteFontMono": {
+    "description": "Note font choice: a monospaced font."
+  },
+  "textSizeSmall": "Small",
+  "@textSizeSmall": {
+    "description": "Note text size."
+  },
+  "textSizeDefault": "Default",
+  "@textSizeDefault": {
+    "description": "Note text size."
+  },
+  "textSizeLarge": "Large",
+  "@textSizeLarge": {
+    "description": "Note text size."
+  },
+  "errorOffline": "No internet connection.",
+  "@errorOffline": {
+    "description": "Error when a request fails because the phone has no internet."
+  },
+  "errorTimeout": "The server took too long to respond.",
+  "@errorTimeout": {
+    "description": "Error when the server doesn’t answer in time."
+  },
+  "errorCertificate": "The server’s certificate isn’t trusted.",
+  "@errorCertificate": {
+    "description": "Error when the server’s security certificate can’t be verified."
+  },
+  "errorCancelled": "The request was canceled.",
+  "@errorCancelled": {
+    "description": "Error when a request to the server stopped before it finished."
+  },
+  "errorSignInAgain": "Sign in again to continue.",
+  "@errorSignInAgain": {
+    "description": "Error when the person’s sign-in has expired and the server refuses the request."
+  },
+  "errorForbidden": "You don’t have permission to do that.",
+  "@errorForbidden": {
+    "description": "Error when the server refuses an action this account isn’t allowed to do."
+  },
+  "errorNotFound": "The item couldn’t be found.",
+  "@errorNotFound": {
+    "description": "Error when the server can’t find what the app asked for."
+  },
+  "errorIncompatible": "This app and your server aren’t compatible. Update them to continue.",
+  "@errorIncompatible": {
+    "description": "Error when the app and server versions can’t work together."
+  },
+  "errorCheckInput": "Check the information you entered.",
+  "@errorCheckInput": {
+    "description": "Error at the top of a form when the server rejects what was entered."
+  },
+  "errorGeneric": "Something went wrong. Try again.",
+  "@errorGeneric": {
+    "description": "Error for any unexpected failure."
+  },
+  "errorServer": "The server ran into a problem. Try again later.",
+  "@errorServer": {
+    "description": "Error when the server fails while handling a request."
+  },
+  "commonSave": "Save",
+  "@commonSave": {
+    "description": "Button that saves a form or the choice made in a sheet."
+  },
+  "commonSaving": "Saving…",
+  "@commonSaving": {
+    "description": "Text on the Save button while the profile is being saved."
+  },
+  "commonUndo": "Undo",
+  "@commonUndo": {
+    "description": "Button that reverses the last change, in toasts and in the editor toolbar."
+  },
+  "fieldName": "Name",
+  "@fieldName": {
+    "description": "Label of the person’s name field when signing up or editing the profile."
+  },
+  "fieldNameHint": "Your name",
+  "@fieldNameHint": {
+    "description": "Hint inside the empty name field when creating an account."
+  },
+  "fieldEmail": "Email",
+  "@fieldEmail": {
+    "description": "Label of the email address field."
+  },
+  "fieldEmailHint": "you@example.com",
+  "@fieldEmailHint": {
+    "description": "An example email address shown in an empty email field."
+  },
+  "fieldPassword": "Password",
+  "@fieldPassword": {
+    "description": "Label of the password field on the sign-in and sign-up pages."
+  },
+  "fieldCurrentPassword": "Current password",
+  "@fieldCurrentPassword": {
+    "description": "Label of the field for the old password on the change password page."
+  },
+  "fieldNewPassword": "New password",
+  "@fieldNewPassword": {
+    "description": "Label of the field for the new password on the change password page."
+  },
+  "passwordHelp": "{count, plural, =1{At least 1 character.} other{At least {count} characters.}}",
+  "@passwordHelp": {
+    "description": "Shown under a new password field.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "authEnterName": "Enter your name.",
+  "@authEnterName": {
+    "description": "Error under the name field when it’s left empty."
+  },
+  "authEnterEmail": "Enter your email address.",
+  "@authEnterEmail": {
+    "description": "Error under the email field when it’s left empty."
+  },
+  "authEnterValidEmail": "Enter a valid email address.",
+  "@authEnterValidEmail": {
+    "description": "Error under the email field when the address isn’t valid."
+  },
+  "authEnterPassword": "Enter your password.",
+  "@authEnterPassword": {
+    "description": "Error under the password field on the sign-in page when it’s left empty."
+  },
+  "authEnterCurrentPassword": "Enter your current password.",
+  "@authEnterCurrentPassword": {
+    "description": "Error under the current password field when the server says it’s missing."
+  },
+  "authPasswordTooShort": "{count, plural, =1{Use at least 1 character.} other{Use at least {count} characters.}}",
+  "@authPasswordTooShort": {
+    "description": "Error under a new password that is too short.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "authIncorrectCredentials": "Incorrect email or password.",
+  "@authIncorrectCredentials": {
+    "description": "Error at the top of the sign-in form when the email or password is wrong."
+  },
+  "authPasswordless": "This account doesn’t use a password. Sign in with your provider instead.",
+  "@authPasswordless": {
+    "description": "The account was created through a sign-in provider such as an identity service."
+  },
+  "authPendingApproval": "Your account is waiting for admin approval.",
+  "@authPendingApproval": {
+    "description": "Error at the top of the sign-in form when an admin hasn’t approved the account yet."
+  },
+  "authPasswordSignInOff": "Email and password sign-in is turned off. Sign in with {provider}.",
+  "@authPasswordSignInOff": {
+    "description": "Error on the sign-in page when the server only allows signing in through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authPasswordSignUpOff": "Email and password sign-up is turned off. Sign up with {provider}.",
+  "@authPasswordSignUpOff": {
+    "description": "Error on the sign-up page when the server only allows new accounts through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authPasswordSignInOffHere": "Email and password sign-in is turned off on this server.",
+  "@authPasswordSignInOffHere": {
+    "description": "Error on the sign-in page when the server allows no email and password sign-in."
+  },
+  "authPasswordSignUpOffHere": "Email and password sign-up is turned off on this server.",
+  "@authPasswordSignUpOffHere": {
+    "description": "Error on the sign-up page when the server allows no email and password sign-up."
+  },
+  "authRegistrationClosed": "This server isn’t accepting new accounts.",
+  "@authRegistrationClosed": {
+    "description": "Error at the top of the sign-up form when the server takes no new accounts."
+  },
+  "authEmailTaken": "An account with this email already exists.",
+  "@authEmailTaken": {
+    "description": "Error under the email field when signing up with an email already in use."
+  },
+  "authWrongCurrentPassword": "Your current password is incorrect.",
+  "@authWrongCurrentPassword": {
+    "description": "Error under the current password field when it’s wrong."
+  },
+  "authSamePassword": "Your new password must be different from your current one.",
+  "@authSamePassword": {
+    "description": "Error under the new password field when it matches the old one."
+  },
+  "authUnreachable": "Couldn’t reach your server. Check your connection and try again.",
+  "@authUnreachable": {
+    "description": "Error at the top of an account form when the server can’t be reached."
+  },
+  "authProviderNotSetUp": "Signing in with a provider isn’t set up on this server.",
+  "@authProviderNotSetUp": {
+    "description": "Error on the sign-in page when the server has no sign-in provider set up."
+  },
+  "authProviderFailed": "Couldn’t sign in with your provider. Try again.",
+  "@authProviderFailed": {
+    "description": "Error on the sign-in page when signing in through a sign-in provider fails."
+  },
+  "authProviderFailedWith": "Couldn’t sign in with your provider: {detail}",
+  "@authProviderFailedWith": {
+    "description": "{detail} is the provider’s own error text, often in English.",
+    "placeholders": {
+      "detail": {
+        "type": "String",
+        "example": "access_denied"
+      }
+    }
+  },
+  "authSignIn": "Sign in",
+  "@authSignIn": {
+    "description": "Button that signs in, a link to the sign-in page, and that page’s spoken name."
+  },
+  "authSigningIn": "Signing in…",
+  "@authSigningIn": {
+    "description": "Text on the Sign in button while signing in."
+  },
+  "authContinueWith": "Continue with {provider}",
+  "@authContinueWith": {
+    "description": "Button that signs in through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authOpeningProvider": "Opening {provider}…",
+  "@authOpeningProvider": {
+    "description": "Text on the sign-in provider button while the provider’s page opens.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "authWelcomeBack": "Welcome back",
+  "@authWelcomeBack": {
+    "description": "Title of the sign-in page."
+  },
+  "authSignInToAnchor": "Sign in to continue to Anchor.",
+  "@authSignInToAnchor": {
+    "description": "Under the sign-in page title when no server address is shown."
+  },
+  "authSignInTo": "Sign in to {server}",
+  "@authSignInTo": {
+    "description": "Under the sign-in title. {server} is the server’s address, shown as a link that opens the server page.",
+    "placeholders": {
+      "server": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "authOfflineSignIn": "You’re offline. Connect to the internet to sign in.",
+  "@authOfflineSignIn": {
+    "description": "Notice at the top of the sign-in form while the phone is offline."
+  },
+  "authNewToAnchor": "New to Anchor?",
+  "@authNewToAnchor": {
+    "description": "Followed by the link “Create an account”."
+  },
+  "authCreateAnAccount": "Create an account",
+  "@authCreateAnAccount": {
+    "description": "Link after “New to Anchor?” on the sign-in page that opens the sign-up page."
+  },
+  "authOr": "or",
+  "@authOr": {
+    "description": "Between the sign-in provider button and the email and password fields."
+  },
+  "authCreateAccount": "Create account",
+  "@authCreateAccount": {
+    "description": "Button that submits the sign-up form; also the sign-up page’s spoken name."
+  },
+  "authCreatingAccount": "Creating account…",
+  "@authCreatingAccount": {
+    "description": "Text on the Create account button while the account is being created."
+  },
+  "authCreateYourAccount": "Create your account",
+  "@authCreateYourAccount": {
+    "description": "Title of the sign-up page."
+  },
+  "authApprovalNeeded": "New accounts need admin approval before you can sign in.",
+  "@authApprovalNeeded": {
+    "description": "Under the sign-up page title when an admin must approve new accounts."
+  },
+  "authRegisterSubtitle": "Start capturing your thoughts.",
+  "@authRegisterSubtitle": {
+    "description": "Under the sign-up page title, a short welcoming line."
+  },
+  "authAlreadyHaveAccount": "Already have an account?",
+  "@authAlreadyHaveAccount": {
+    "description": "Followed by the link “Sign in”."
+  },
+  "authWelcomeName": "Welcome to Anchor, {name}",
+  "@authWelcomeName": {
+    "description": "Message after creating an account. {name} is the person’s first name.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "authWaitingTitle": "Waiting for approval",
+  "@authWaitingTitle": {
+    "description": "Title of the page shown after signing up, until an admin approves the account."
+  },
+  "authWaitingMessage": "An admin needs to approve your account before you can sign in.",
+  "@authWaitingMessage": {
+    "description": "Under the title of the page that waits for an admin to approve the account."
+  },
+  "authBackToSignIn": "Back to sign in",
+  "@authBackToSignIn": {
+    "description": "Button on the waiting for approval page that returns to the sign-in page."
+  },
+  "passwordTitle": "Password",
+  "@passwordTitle": {
+    "description": "Title of the change password page."
+  },
+  "passwordChange": "Change password",
+  "@passwordChange": {
+    "description": "Button that saves the new password on the change password page."
+  },
+  "passwordChanging": "Changing…",
+  "@passwordChanging": {
+    "description": "Text on the Change password button while the new password is saved."
+  },
+  "passwordChanged": "Password changed",
+  "@passwordChanged": {
+    "description": "Toast after the password was changed."
+  },
+  "passwordOffline": "You’re offline. Connect to the internet to change your password.",
+  "@passwordOffline": {
+    "description": "Notice at the top of the change password page while the phone is offline."
+  },
+  "profileTitle": "Profile",
+  "@profileTitle": {
+    "description": "Title of the page where the person edits their name and photo."
+  },
+  "profileSaved": "Profile saved",
+  "@profileSaved": {
+    "description": "Toast after the profile changes were saved."
+  },
+  "profileOffline": "You’re offline. Connect to the internet to change your profile.",
+  "@profileOffline": {
+    "description": "Notice at the top of the profile page while the phone is offline."
+  },
+  "profilePhoto": "Profile photo",
+  "@profilePhoto": {
+    "description": "Title of the sheet with options for the person’s profile picture."
+  },
+  "profilePhotoVisible": "People you share notes with can see it.",
+  "@profilePhotoVisible": {
+    "description": "Under the profile photo sheet title: who sees the person’s picture."
+  },
+  "profileTakePhoto": "Take photo",
+  "@profileTakePhoto": {
+    "description": "Option that opens the camera to take a new profile picture."
+  },
+  "profileChoosePhoto": "Choose photo",
+  "@profileChoosePhoto": {
+    "description": "Option that picks a profile picture from the phone’s photos."
+  },
+  "profileRemovePhoto": "Remove photo",
+  "@profileRemovePhoto": {
+    "description": "Option that removes the current profile picture."
+  },
+  "profilePhotoUpdated": "Photo updated",
+  "@profilePhotoUpdated": {
+    "description": "Toast after a new profile picture was saved."
+  },
+  "profilePhotoUpdateFailed": "Couldn’t update your photo",
+  "@profilePhotoUpdateFailed": {
+    "description": "Toast when a new profile picture couldn’t be saved."
+  },
+  "profilePhotoRemoved": "Photo removed",
+  "@profilePhotoRemoved": {
+    "description": "Toast after the profile picture was removed, with an Undo button."
+  },
+  "profilePhotoRemoveFailed": "Couldn’t remove your photo",
+  "@profilePhotoRemoveFailed": {
+    "description": "Toast when the profile picture couldn’t be removed."
+  },
+  "profileEmailAdminOnly": "Only an admin can change your email.",
+  "@profileEmailAdminOnly": {
+    "description": "Help under the read-only email field on the profile page."
+  },
+  "profileChangePhoto": "Change profile photo",
+  "@profileChangePhoto": {
+    "description": "Screen reader label of the profile picture button."
+  },
+  "commonContinue": "Continue",
+  "@commonContinue": {
+    "description": "Button that goes to the next step on the server page or in a permission dialog."
+  },
+  "commonExpandedItem": "{label}, expanded",
+  "@commonExpandedItem": {
+    "description": "Screen reader text for a section heading that is open.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Advanced"
+      }
+    }
+  },
+  "commonCollapsedItem": "{label}, collapsed",
+  "@commonCollapsedItem": {
+    "description": "Screen reader text for a section heading that is closed.",
+    "placeholders": {
+      "label": {
+        "type": "String",
+        "example": "Advanced"
+      }
+    }
+  },
+  "serverTitle": "Server",
+  "@serverTitle": {
+    "description": "Name of the server page, read by screen readers."
+  },
+  "serverWelcome": "Welcome to Anchor",
+  "@serverWelcome": {
+    "description": "Title of the first page, where the person enters their server address."
+  },
+  "serverSubtitle": "Enter your server address to get started.",
+  "@serverSubtitle": {
+    "description": "Under the title of the first page, where the server address is entered."
+  },
+  "serverAddress": "Server address",
+  "@serverAddress": {
+    "description": "Label of the field for the web address of the person’s Anchor server."
+  },
+  "serverAddressHint": "notes.example.com",
+  "@serverAddressHint": {
+    "description": "An example server address shown in the empty field."
+  },
+  "serverConnecting": "Connecting…",
+  "@serverConnecting": {
+    "description": "Text on the Continue button while the app checks the server."
+  },
+  "serverAdvanced": "Advanced",
+  "@serverAdvanced": {
+    "description": "Heading of a section of extra connection settings that opens and closes."
+  },
+  "serverSelfSigned": "Allow self-signed certificates",
+  "@serverSelfSigned": {
+    "description": "Switch that lets the app trust a server certificate it can’t verify."
+  },
+  "serverSelfSignedWarning": "Use only with a server you manage. Anchor can’t verify its identity.",
+  "@serverSelfSignedWarning": {
+    "description": "Warning under the self-signed certificates switch while it’s on."
+  },
+  "serverSelfHosted": "Anchor requires a self-hosted server.",
+  "@serverSelfHosted": {
+    "description": "Note at the bottom of the server page: Anchor has no shared public server."
+  },
+  "serverEnterAddress": "Enter a server address.",
+  "@serverEnterAddress": {
+    "description": "Error under the server address field when it’s left empty."
+  },
+  "serverEnterValidAddress": "Enter a valid server address.",
+  "@serverEnterValidAddress": {
+    "description": "Error under the server address field when the address isn’t valid."
+  },
+  "serverConnectFailed": "Couldn’t connect to the server. Try again.",
+  "@serverConnectFailed": {
+    "description": "Error at the top of the server page when connecting fails for an unknown reason."
+  },
+  "serverNotAnchor": "{host} isn’t an Anchor server. Check the address.",
+  "@serverNotAnchor": {
+    "description": "Error when the address answers but isn’t an Anchor server.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "serverUntrusted": "Couldn’t verify the certificate for {host}. If it’s self-signed, turn on Allow self-signed certificates in Advanced.",
+  "@serverUntrusted": {
+    "description": "“Allow self-signed certificates” and “Advanced” are names of controls on the same page.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "serverUnreachableNoScheme": "Couldn’t reach {host}. Check the address, or add http:// if your server doesn’t use https.",
+  "@serverUnreachableNoScheme": {
+    "description": "Shown when the address was typed without http:// or https://. Keep http:// and https:// as they are.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "192.168.1.5:3000"
+      }
+    }
+  },
+  "serverUnreachable": "Couldn’t reach {host}. Check the address and your connection.",
+  "@serverUnreachable": {
+    "description": "Error when nothing answers at the server address.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "serverConnectAnyway": "Connect anyway",
+  "@serverConnectAnyway": {
+    "description": "Button in a dialog warning that the app and server versions don’t match."
+  },
+  "serverLinkLabel": "Server {host}. Change server",
+  "@serverLinkLabel": {
+    "description": "Screen reader label of the server address link on the sign-in page.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "commonMore": "More",
+  "@commonMore": {
+    "description": "Screen reader label of the three dots button that opens more actions."
+  },
+  "commonCopy": "Copy",
+  "@commonCopy": {
+    "description": "Button that copies a link or the selected logs. Short: fits a small bubble."
+  },
+  "commonSelect": "Select",
+  "@commonSelect": {
+    "description": "Menu item on the logs page that starts selecting logs."
+  },
+  "commonSelectAll": "Select all",
+  "@commonSelectAll": {
+    "description": "Button that selects every item shown while selecting."
+  },
+  "commonDeselectAll": "Deselect all",
+  "@commonDeselectAll": {
+    "description": "Button that clears the selection when every item is selected."
+  },
+  "commonStopSelecting": "Stop selecting",
+  "@commonStopSelecting": {
+    "description": "Screen reader label of the button that leaves selection mode."
+  },
+  "commonSelectedCount": "{count} selected",
+  "@commonSelectedCount": {
+    "description": "Page title while selecting items.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Title of the Settings page, also the name of the button that opens it."
+  },
+  "settingsProfileCard": "{name}, {email}. Profile",
+  "@settingsProfileCard": {
+    "description": "Screen reader label of the card that opens the profile.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      },
+      "email": {
+        "type": "String",
+        "example": "ada@example.com"
+      }
+    }
+  },
+  "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Section label in Settings for theme and density."
+  },
+  "settingsDensity": "Density",
+  "@settingsDensity": {
+    "description": "Setting for how tightly the app spaces notes and other items."
+  },
+  "settingsDensityHelp": "Compact fits more notes on the screen.",
+  "@settingsDensityHelp": {
+    "description": "Under the Density setting; Compact is the name of one of its options."
+  },
+  "settingsTheme": "Theme",
+  "@settingsTheme": {
+    "description": "Screen reader name of the group of light, dark and automatic theme choices."
+  },
+  "themeLight": "Light",
+  "@themeLight": {
+    "description": "Theme choice with a light background. Short: one of three tiles in a row."
+  },
+  "themeDark": "Dark",
+  "@themeDark": {
+    "description": "Theme choice with a dark background. Short: one of three tiles in a row."
+  },
+  "themeAutomatic": "Automatic",
+  "@themeAutomatic": {
+    "description": "Theme that follows the phone’s light or dark setting."
+  },
+  "settingsEditor": "Editor",
+  "@settingsEditor": {
+    "description": "Section label in Settings for how notes look and behave while writing."
+  },
+  "settingsFont": "Font",
+  "@settingsFont": {
+    "description": "Setting that picks the typeface used in notes."
+  },
+  "settingsTextSize": "Text size",
+  "@settingsTextSize": {
+    "description": "Setting that picks how big the text in notes is."
+  },
+  "settingsMoveChecked": "Move checked items to the bottom",
+  "@settingsMoveChecked": {
+    "description": "Switch in Settings for checklists in notes."
+  },
+  "settingsMoveCheckedHelp": "Checked items move below the unchecked ones.",
+  "@settingsMoveCheckedHelp": {
+    "description": "Under the switch that moves checked checklist items to the bottom."
+  },
+  "settingsPreviewTitle": "Weekend in Lisbon",
+  "@settingsPreviewTitle": {
+    "description": "Title of a sample note that previews the font and text size."
+  },
+  "settingsPreviewText": "Pack light. The hills are steep, and the trams fill up by nine.",
+  "@settingsPreviewText": {
+    "description": "Text of a sample note that previews the font and text size."
+  },
+  "settingsAccount": "Account",
+  "@settingsAccount": {
+    "description": "Section label in Settings for password and sign out."
+  },
+  "settingsPassword": "Password",
+  "@settingsPassword": {
+    "description": "Row in Settings that opens the change password page, or shows who manages it."
+  },
+  "settingsPasswordManaged": "Your password is managed by {provider}.",
+  "@settingsPasswordManaged": {
+    "description": "Under the Password row when the account signs in through a sign-in provider.",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Pocket ID"
+      }
+    }
+  },
+  "settingsPasswordManagedElsewhere": "Your password is managed by your sign-in provider.",
+  "@settingsPasswordManagedElsewhere": {
+    "description": "Under the Password row when the account uses a sign-in provider with no known name."
+  },
+  "settingsSignOut": "Sign out",
+  "@settingsSignOut": {
+    "description": "Row in Settings and the confirm button of its dialog: signs out of the account."
+  },
+  "settingsSigningOut": "Signing out…",
+  "@settingsSigningOut": {
+    "description": "The Sign out button of the sign-out dialog while signing out runs."
+  },
+  "settingsSignOutTitle": "Sign out?",
+  "@settingsSignOutTitle": {
+    "description": "Title of the dialog that confirms signing out."
+  },
+  "settingsSignOutMessage": "{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}",
+  "@settingsSignOutMessage": {
+    "description": "{count} is the number of changes not yet sent to the server.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "settingsHelp": "Help",
+  "@settingsHelp": {
+    "description": "Section label in Settings for logs and supporting the developer."
+  },
+  "settingsLogs": "Logs",
+  "@settingsLogs": {
+    "description": "Row in Settings that opens the app’s technical activity records."
+  },
+  "settingsLogsHelp": "Activity details for troubleshooting",
+  "@settingsLogsHelp": {
+    "description": "Under the Logs row in Settings."
+  },
+  "settingsSupport": "Support Anchor",
+  "@settingsSupport": {
+    "description": "Row in Settings that opens a web page to donate to the developer."
+  },
+  "settingsSupportHelp": "Buy the developer a coffee",
+  "@settingsSupportHelp": {
+    "description": "Under the Support Anchor row: a small donation to the developer."
+  },
+  "settingsOffline": "Offline. Changes are saved on this phone.",
+  "@settingsOffline": {
+    "description": "Small line at the bottom of Settings while the phone is offline."
+  },
+  "settingsSyncPaused": "Sync is paused. {reason}",
+  "@settingsSyncPaused": {
+    "description": "{reason} is a short instruction, such as “Update your server.”",
+    "placeholders": {
+      "reason": {
+        "type": "String",
+        "example": "Update your server."
+      }
+    }
+  },
+  "settingsCantReach": "Can’t reach {host}",
+  "@settingsCantReach": {
+    "description": "Small line at the bottom of Settings when the server doesn’t answer.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "settingsConnectedTo": "Connected to {host}",
+  "@settingsConnectedTo": {
+    "description": "Small line at the bottom of Settings showing the server in use.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      }
+    }
+  },
+  "settingsConnectedToVersion": "Connected to {host} · Server {version}",
+  "@settingsConnectedToVersion": {
+    "description": "Small line at the bottom of Settings showing the server and its version.",
+    "placeholders": {
+      "host": {
+        "type": "String",
+        "example": "notes.example.com"
+      },
+      "version": {
+        "type": "String",
+        "example": "0.17.2"
+      }
+    }
+  },
+  "settingsAppVersion": "Anchor {version}",
+  "@settingsAppVersion": {
+    "description": "The app’s name and version at the bottom of Settings.",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "0.17.2"
+      }
+    }
+  },
+  "settingsAppNameShort": "Anchor",
+  "@settingsAppNameShort": {
+    "description": "The app’s short name, at the top of the menu and the bottom of Settings."
+  },
+  "settingsTagline": "Your thoughts, secured.",
+  "@settingsTagline": {
+    "description": "The app’s tagline under its version."
+  },
+  "logsTitle": "Logs",
+  "@logsTitle": {
+    "description": "Title of the logs page and of its menu of actions."
+  },
+  "logsMenuHelp": "Copy and Save include earlier sessions too.",
+  "@logsMenuHelp": {
+    "description": "Under the title of the logs menu; Copy and Save are names of its options."
+  },
+  "logsCopyAll": "Copy all",
+  "@logsCopyAll": {
+    "description": "Menu item that copies every log, including earlier sessions."
+  },
+  "logsSaveToFile": "Save to a file",
+  "@logsSaveToFile": {
+    "description": "Menu item that saves every log to a file on the phone."
+  },
+  "logsClear": "Clear logs",
+  "@logsClear": {
+    "description": "Menu item and dialog button that delete all logs."
+  },
+  "logsCopiedAll": "Logs copied, including earlier sessions",
+  "@logsCopiedAll": {
+    "description": "Toast after all logs were copied."
+  },
+  "logsCopiedNewest": "Newest logs copied. Save to a file to get them all.",
+  "@logsCopiedNewest": {
+    "description": "Toast after Copy all copied only the newest logs, because all of them are too long for the clipboard. \"Save to a file\" is the menu item next to Copy all."
+  },
+  "logsClearTitle": "Clear logs?",
+  "@logsClearTitle": {
+    "description": "Title of the dialog that confirms deleting all logs."
+  },
+  "logsClearMessage": "All logs on this phone will be deleted. This can’t be undone.",
+  "@logsClearMessage": {
+    "description": "Message of the dialog that confirms deleting all logs."
+  },
+  "logsCleared": "Logs cleared",
+  "@logsCleared": {
+    "description": "Toast after all logs were deleted."
+  },
+  "logsSaveDialog": "Save logs",
+  "@logsSaveDialog": {
+    "description": "Title of the system dialog for saving the logs file."
+  },
+  "logsSaved": "Saved {name}",
+  "@logsSaved": {
+    "description": "Toast after the logs were saved to a file.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "anchor-logs-20261011-2200.log"
+      }
+    }
+  },
+  "logsSaveFailed": "Couldn’t save the logs",
+  "@logsSaveFailed": {
+    "description": "Toast when the logs file couldn’t be saved."
+  },
+  "logsCopied": "{count, plural, =1{1 log copied} other{{count} logs copied}}",
+  "@logsCopied": {
+    "description": "Toast after the selected logs were copied.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "logsSelectTitle": "Select logs",
+  "@logsSelectTitle": {
+    "description": "Page title while selecting logs and none is selected yet."
+  },
+  "logsSearch": "Search logs",
+  "@logsSearch": {
+    "description": "Hint inside the empty search field on the logs page."
+  },
+  "logsSelected": "Selected logs",
+  "@logsSelected": {
+    "description": "Screen reader name of the bar shown while logs are selected."
+  },
+  "logsLevel": "Log level",
+  "@logsLevel": {
+    "description": "Screen reader name of the filter for log levels."
+  },
+  "logsAll": "All",
+  "@logsAll": {
+    "description": "Filter that shows logs of every level. Short: one of five tabs in a row."
+  },
+  "logsErrors": "Errors",
+  "@logsErrors": {
+    "description": "Filter that shows only error logs. Short: one of five tabs in a row."
+  },
+  "logsWarnings": "Warnings",
+  "@logsWarnings": {
+    "description": "Filter that shows only warning logs. Short: one of five tabs in a row."
+  },
+  "logsInfo": "Info",
+  "@logsInfo": {
+    "description": "Filter that shows only general information logs. Short: one of five tabs in a row."
+  },
+  "logsDebug": "Debug",
+  "@logsDebug": {
+    "description": "Filter that shows only detailed technical logs. Short: one of five tabs in a row."
+  },
+  "logsSessionNote": "Showing this session only. Copy and Save include earlier sessions too.",
+  "@logsSessionNote": {
+    "description": "Note under the log filters; Copy and Save are names of menu options."
+  },
+  "logsNoMatches": "No matching logs",
+  "@logsNoMatches": {
+    "description": "Empty-screen title on the logs page when the search or filter matches nothing."
+  },
+  "logsNoMatchesHelp": "Try another word or show all levels.",
+  "@logsNoMatchesHelp": {
+    "description": "Empty-screen help on the logs page when the search or filter matches nothing."
+  },
+  "logsEmpty": "No logs yet",
+  "@logsEmpty": {
+    "description": "Empty-screen title on the logs page when nothing has been recorded."
+  },
+  "logsEmptyHelp": "Activity from this session appears here.",
+  "@logsEmptyHelp": {
+    "description": "Empty-screen help on the logs page when nothing has been recorded."
+  },
+  "logLevelError": "Error",
+  "@logLevelError": {
+    "description": "Level tag on a single log line that records an error."
+  },
+  "logLevelWarning": "Warning",
+  "@logLevelWarning": {
+    "description": "Level tag on a single log line that records a warning."
+  },
+  "logLevelInfo": "Info",
+  "@logLevelInfo": {
+    "description": "Level tag on a single log line with general information."
+  },
+  "logLevelDebug": "Debug",
+  "@logLevelDebug": {
+    "description": "Level tag on a single log line with detailed technical information."
+  },
+  "commonToday": "Today",
+  "@commonToday": {
+    "description": "The current day, as a date heading, on a note card or in a reminder time."
+  },
+  "commonTomorrow": "Tomorrow",
+  "@commonTomorrow": {
+    "description": "The next day, in a reminder time or as a quick reminder choice."
+  },
+  "commonNotNow": "Not now",
+  "@commonNotNow": {
+    "description": "Button that closes a permission dialog without asking for the permission."
+  },
+  "commonLater": "Later",
+  "@commonLater": {
+    "description": "Button that closes the sign in again dialog without signing in."
+  },
+  "commonOk": "OK",
+  "@commonOk": {
+    "description": "Button that closes a warning dialog."
+  },
+  "commonOpenSettings": "Open settings",
+  "@commonOpenSettings": {
+    "description": "Opens the phone’s settings for the app."
+  },
+  "reminderTitle": "Reminder",
+  "@reminderTitle": {
+    "description": "Title of the reminder sheet, and of a reminder notification when the note has no title."
+  },
+  "reminderSheetSubtitle": "You’ll get a notification on this phone.",
+  "@reminderSheetSubtitle": {
+    "description": "Under the title of the sheet that sets a reminder."
+  },
+  "reminderDayTime": "{day}, {time}",
+  "@reminderDayTime": {
+    "description": "A reminder’s day and time, such as “Today, 6:05 PM” or “Fri, Aug 21, 9:00 AM”.",
+    "placeholders": {
+      "day": {
+        "type": "String",
+        "example": "Today"
+      },
+      "time": {
+        "type": "String",
+        "example": "6:05 PM"
+      }
+    }
+  },
+  "reminderWithRepeat": "{when} · {repeat}",
+  "@reminderWithRepeat": {
+    "description": "A repeating reminder, such as “Mon, Aug 24, 5:00 PM · Weekly”.",
+    "placeholders": {
+      "when": {
+        "type": "String",
+        "example": "Mon, Aug 24, 5:00 PM"
+      },
+      "repeat": {
+        "type": "String",
+        "example": "Weekly"
+      }
+    }
+  },
+  "reminderSpoken": "Reminder: {when}",
+  "@reminderSpoken": {
+    "description": "Screen reader text of a reminder.",
+    "placeholders": {
+      "when": {
+        "type": "String",
+        "example": "Today, 6:05 PM"
+      }
+    }
+  },
+  "reminderSpokenLate": "Overdue reminder: {when}",
+  "@reminderSpokenLate": {
+    "description": "Screen reader text of a reminder whose time has passed.",
+    "placeholders": {
+      "when": {
+        "type": "String",
+        "example": "Aug 10, 5:00 PM"
+      }
+    }
+  },
+  "reminderLaterToday": "Later today",
+  "@reminderLaterToday": {
+    "description": "Quick reminder choice for a time later on the same day."
+  },
+  "reminderNextWeek": "Next week",
+  "@reminderNextWeek": {
+    "description": "Quick reminder choice for a day in the coming week."
+  },
+  "reminderNone": "No reminder",
+  "@reminderNone": {
+    "description": "Big summary line at the top of the reminder sheet before a time is picked."
+  },
+  "reminderPickTime": "Pick a date and time",
+  "@reminderPickTime": {
+    "description": "Under the summary at the top of the reminder sheet before a time is picked."
+  },
+  "reminderTimePassed": "This time has already passed",
+  "@reminderTimePassed": {
+    "description": "Summary at the top of the reminder sheet when the picked time is in the past."
+  },
+  "reminderInMinutes": "{count, plural, =1{In 1 minute} other{In {count} minutes}}",
+  "@reminderInMinutes": {
+    "description": "How soon a reminder rings, under the summary in the reminder sheet.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "reminderInHours": "{count, plural, =1{In 1 hour} other{In {count} hours}}",
+  "@reminderInHours": {
+    "description": "How soon a reminder rings, under the summary in the reminder sheet.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "reminderInDays": "{count, plural, =1{In 1 day} other{In {count} days}}",
+  "@reminderInDays": {
+    "description": "How soon a reminder rings, under the summary in the reminder sheet.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "reminderRepeatsDaily": "Repeats every day",
+  "@reminderRepeatsDaily": {
+    "description": "Under the summary in the reminder sheet for a reminder that rings every day."
+  },
+  "reminderRepeatsWeekly": "Repeats every {weekday}",
+  "@reminderRepeatsWeekly": {
+    "description": "Under the summary in the reminder sheet for a reminder that rings weekly.",
+    "placeholders": {
+      "weekday": {
+        "type": "String",
+        "example": "Tuesday"
+      }
+    }
+  },
+  "reminderRepeatsMonthly": "Repeats monthly on day {day}",
+  "@reminderRepeatsMonthly": {
+    "description": "Under the summary in the reminder sheet for a reminder that rings monthly.",
+    "placeholders": {
+      "day": {
+        "type": "int",
+        "example": "14"
+      }
+    }
+  },
+  "reminderRepeatsMonthlyEnd": "Repeats monthly on day {day} or the last day",
+  "@reminderRepeatsMonthlyEnd": {
+    "placeholders": {
+      "day": {
+        "type": "int",
+        "example": "31"
+      }
+    },
+    "description": "For days 29 to 31: in shorter months it rings on the last day. Keep it short, it shows on one line."
+  },
+  "reminderRepeatsYearly": "Repeats every year on {date}",
+  "@reminderRepeatsYearly": {
+    "description": "Under the summary in the reminder sheet for a reminder that rings once a year.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Aug 2"
+      }
+    }
+  },
+  "repeatOnce": "Once",
+  "@repeatOnce": {
+    "description": "How often a reminder rings: one time only, without repeating."
+  },
+  "repeatDaily": "Daily",
+  "@repeatDaily": {
+    "description": "How often a reminder rings. Short: one of four tabs in a row."
+  },
+  "repeatWeekly": "Weekly",
+  "@repeatWeekly": {
+    "description": "How often a reminder rings. Short: one of four tabs in a row."
+  },
+  "repeatMonthly": "Monthly",
+  "@repeatMonthly": {
+    "description": "How often a reminder rings. Short: one of four tabs in a row."
+  },
+  "repeatYearly": "Yearly",
+  "@repeatYearly": {
+    "description": "How often a reminder rings. Short: one of four tabs in a row."
+  },
+  "reminderWhen": "When",
+  "@reminderWhen": {
+    "description": "Screen reader name of the list of reminder times."
+  },
+  "reminderPickDate": "Pick a date",
+  "@reminderPickDate": {
+    "description": "Row in the reminder sheet that opens a calendar and clock to choose any time."
+  },
+  "reminderDate": "Date",
+  "@reminderDate": {
+    "description": "Button that opens the calendar in the reminder sheet before a day is chosen."
+  },
+  "reminderTime": "Time",
+  "@reminderTime": {
+    "description": "Button that opens the clock in the reminder sheet before a time is chosen."
+  },
+  "reminderRepeat": "Repeat",
+  "@reminderRepeat": {
+    "description": "Switch in the reminder sheet that makes the reminder ring again and again."
+  },
+  "reminderRemove": "Remove",
+  "@reminderRemove": {
+    "description": "Button in the reminder sheet that deletes the note’s reminder."
+  },
+  "reminderSetFailed": "Couldn’t set the reminder",
+  "@reminderSetFailed": {
+    "description": "Error shown when a reminder picked in the reminder sheet couldn’t be saved."
+  },
+  "reminderNotifyTitle": "Allow notifications?",
+  "@reminderNotifyTitle": {
+    "description": "Title of the dialog shown before the phone asks for notification permission."
+  },
+  "reminderNotifyMessage": "Anchor needs permission to send notifications so your reminders can ring on this phone.",
+  "@reminderNotifyMessage": {
+    "description": "Message of the dialog shown before the phone asks for notification permission."
+  },
+  "reminderExactTitle": "Allow exact alarms?",
+  "@reminderExactTitle": {
+    "description": "Android’s “Alarms & reminders” permission."
+  },
+  "reminderExactMessage": "Android may delay reminders to save battery. Allow exact alarms so they ring on time.",
+  "@reminderExactMessage": {
+    "description": "Message of the dialog that asks for Android’s Alarms & reminders permission."
+  },
+  "reminderNotificationsOff": "Notifications are off. Turn them on in your phone’s settings.",
+  "@reminderNotificationsOff": {
+    "description": "Toast when a reminder is set but notifications for the app are blocked."
+  },
+  "monthPrevious": "Previous month",
+  "@monthPrevious": {
+    "description": "Screen reader label of the arrow that shows the previous month in a calendar."
+  },
+  "monthNext": "Next month",
+  "@monthNext": {
+    "description": "Screen reader label of the arrow that shows the next month in a calendar."
+  },
+  "reminderChannelName": "Reminders",
+  "@reminderChannelName": {
+    "description": "Name of the app’s notification category in Android’s settings."
+  },
+  "reminderChannelDescription": "Reminders you set on your notes",
+  "@reminderChannelDescription": {
+    "description": "Description of the app’s notification category in Android’s settings."
+  },
+  "notesCount": "{count, plural, =1{1 note} other{{count} notes}}",
+  "@notesCount": {
+    "description": "Number of notes, under the list title, in the tag sheet and the Empty trash menu.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "tagsTitle": "Tags",
+  "@tagsTitle": {
+    "description": "Title of the sheet that tags a note, and the tags heading in the side menu."
+  },
+  "tagNotesTitle": "Tag notes",
+  "@tagNotesTitle": {
+    "description": "Title of the sheet that tags several selected notes at once."
+  },
+  "tagSaveFailed": "Couldn’t save the tag",
+  "@tagSaveFailed": {
+    "description": "Error when a new or renamed tag couldn’t be saved."
+  },
+  "tagUpdateFailed": "Couldn’t update the tags",
+  "@tagUpdateFailed": {
+    "description": "Toast when adding or removing tags on notes failed."
+  },
+  "tagNameTaken": "A tag named “{name}” already exists.",
+  "@tagNameTaken": {
+    "description": "Error when creating or renaming a tag to a name that’s already used.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagCreateNamed": "Create “{name}”",
+  "@tagCreateNamed": {
+    "description": "Row in the tag sheet that makes a new tag from the typed text.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagAdded": "{tag}, added",
+  "@tagAdded": {
+    "description": "Screen reader text of a tag that is on the note.",
+    "placeholders": {
+      "tag": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagNotAdded": "{tag}, not added",
+  "@tagNotAdded": {
+    "description": "Screen reader text of a tag that isn’t on the note.",
+    "placeholders": {
+      "tag": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagAddedToSome": "{tag}, added to some notes",
+  "@tagAddedToSome": {
+    "description": "Screen reader text of a tag on some of the selected notes.",
+    "placeholders": {
+      "tag": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagSearchOrCreate": "Search or create a tag",
+  "@tagSearchOrCreate": {
+    "description": "Hint inside the empty search field of the tag sheet."
+  },
+  "tagsEmpty": "No tags yet. Type a name to create one.",
+  "@tagsEmpty": {
+    "description": "Shown in the tag sheet when the person has no tags yet."
+  },
+  "tagSheetLabel": "Tag {name}",
+  "@tagSheetLabel": {
+    "description": "Screen reader name of the sheet for one tag.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagColor": "Color",
+  "@tagColor": {
+    "description": "Section label for the color choices of a tag."
+  },
+  "tagRename": "Rename tag",
+  "@tagRename": {
+    "description": "Row in a tag’s sheet that renames it, and title of the rename sheet."
+  },
+  "tagDelete": "Delete tag",
+  "@tagDelete": {
+    "description": "Row in a tag’s sheet and the confirm button of its dialog: deletes the tag."
+  },
+  "tagDeleteTitle": "Delete tag “{name}”?",
+  "@tagDeleteTitle": {
+    "description": "Title of the dialog that confirms deleting a tag.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagDeleteMessage": "{count, plural, =1{The tag will be removed from 1 note. Your notes won’t be deleted.} other{The tag will be removed from {count} notes. Your notes won’t be deleted.}}",
+  "@tagDeleteMessage": {
+    "description": "Message of the dialog that confirms deleting a tag that is on notes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "tagDeleteUnused": "This tag isn’t on any notes.",
+  "@tagDeleteUnused": {
+    "description": "Message of the dialog that confirms deleting a tag no note uses."
+  },
+  "tagDeleted": "Tag “{name}” deleted",
+  "@tagDeleted": {
+    "description": "Toast after a tag was deleted.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagNew": "New tag",
+  "@tagNew": {
+    "description": "Title of the new tag sheet, and spoken name of the plus button that opens it."
+  },
+  "tagNamePreview": "tag name",
+  "@tagNamePreview": {
+    "description": "Placeholder in the tag preview while the name field is empty. Lowercase, like a tag."
+  },
+  "tagNameHint": "Tag name",
+  "@tagNameHint": {
+    "description": "Hint inside the empty tag name field."
+  },
+  "tagCreate": "Create tag",
+  "@tagCreate": {
+    "description": "Button that saves a new tag."
+  },
+  "tagRenameAction": "Rename",
+  "@tagRenameAction": {
+    "description": "Verb: button that saves a tag’s new name."
+  },
+  "colorRed": "Red",
+  "@colorRed": {
+    "description": "Screen reader name of a tag or note background color swatch."
+  },
+  "colorPink": "Pink",
+  "@colorPink": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorPurple": "Purple",
+  "@colorPurple": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorDeepPurple": "Deep purple",
+  "@colorDeepPurple": {
+    "description": "Screen reader name of a tag color swatch, darker than purple."
+  },
+  "colorIndigo": "Indigo",
+  "@colorIndigo": {
+    "description": "Screen reader name of a dark blue tag or note background color swatch."
+  },
+  "colorBlue": "Blue",
+  "@colorBlue": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorLightBlue": "Light blue",
+  "@colorLightBlue": {
+    "description": "Screen reader name of a tag color swatch, paler than blue."
+  },
+  "colorCyan": "Cyan",
+  "@colorCyan": {
+    "description": "Screen reader name of a bright blue-green tag color swatch."
+  },
+  "colorTeal": "Teal",
+  "@colorTeal": {
+    "description": "Screen reader name of a dark blue-green tag or note background color swatch."
+  },
+  "colorGreen": "Green",
+  "@colorGreen": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "colorLightGreen": "Light green",
+  "@colorLightGreen": {
+    "description": "Screen reader name of a tag color swatch, paler than green."
+  },
+  "colorLime": "Lime",
+  "@colorLime": {
+    "description": "Screen reader name of a yellow-green tag color swatch."
+  },
+  "colorAmber": "Amber",
+  "@colorAmber": {
+    "description": "Screen reader name of a golden orange-yellow tag color swatch."
+  },
+  "colorOrange": "Orange",
+  "@colorOrange": {
+    "description": "Screen reader name of a tag or note background color swatch."
+  },
+  "colorDeepOrange": "Deep orange",
+  "@colorDeepOrange": {
+    "description": "Screen reader name of a tag color swatch, redder than orange."
+  },
+  "colorBrown": "Brown",
+  "@colorBrown": {
+    "description": "Screen reader name of a tag or note background color swatch."
+  },
+  "colorBlueGrey": "Blue gray",
+  "@colorBlueGrey": {
+    "description": "Screen reader name of a grayish blue tag color swatch."
+  },
+  "colorYellow": "Yellow",
+  "@colorYellow": {
+    "description": "Screen reader name of a tag, note background or highlight color swatch."
+  },
+  "syncSignedOutLead": "Signed out.",
+  "@syncSignedOutLead": {
+    "description": "Bold lead of a warning above the notes list after the sign-in expired."
+  },
+  "syncSignedOutText": "Sign in again to sync your notes.",
+  "@syncSignedOutText": {
+    "description": "Follows the bold “Signed out.” in a warning at the top of the notes list."
+  },
+  "syncSignInAgainTitle": "Sign in again",
+  "@syncSignInAgainTitle": {
+    "description": "Title of the dialog that asks the person to sign in again after the sign-in expired."
+  },
+  "syncSignInAgainMessage": "Your notes stay on this phone and sync once you sign in.",
+  "@syncSignInAgainMessage": {
+    "description": "Message of the dialog that asks the person to sign in again."
+  },
+  "syncServerOutdatedLead": "Update your server.",
+  "@syncServerOutdatedLead": {
+    "description": "Bold lead of a warning when the server is too old, also used after “Sync is paused.” in Settings."
+  },
+  "syncServerOutdatedText": "It’s too old to sync with this app.",
+  "@syncServerOutdatedText": {
+    "description": "Follows the bold “Update your server.” in a warning; “It” is the server."
+  },
+  "syncServerOutdatedTitle": "Update your server",
+  "@syncServerOutdatedTitle": {
+    "description": "Title of the dialog explaining that the server is too old for this app."
+  },
+  "syncServerOutdatedMessage": "Your Anchor server is too old to sync with this app. Update the server to continue.",
+  "@syncServerOutdatedMessage": {
+    "description": "Message of the dialog explaining that the server is too old for this app."
+  },
+  "syncAppOutdatedLead": "Update Anchor.",
+  "@syncAppOutdatedLead": {
+    "description": "Bold lead of a warning when the app is too old, also used after “Sync is paused.” in Settings."
+  },
+  "syncAppOutdatedText": "This app is too old to sync with your server.",
+  "@syncAppOutdatedText": {
+    "description": "Follows the bold “Update Anchor.” in a warning at the top of the notes list."
+  },
+  "syncAppOutdatedTitle": "Update Anchor",
+  "@syncAppOutdatedTitle": {
+    "description": "Title of the dialog explaining that the app is too old for the server."
+  },
+  "syncAppOutdatedMessage": "This app is too old to sync with your Anchor server. Update the app to continue.",
+  "@syncAppOutdatedMessage": {
+    "description": "Message of the dialog explaining that the app is too old for the server."
+  },
+  "syncPausedMessage": "{reason} Your notes stay on this phone in the meantime.",
+  "@syncPausedMessage": {
+    "description": "{reason} says which side needs an update.",
+    "placeholders": {
+      "reason": {
+        "type": "String",
+        "example": "This app is too old to sync with your Anchor server. Update the app to continue."
+      }
+    }
+  },
+  "reminderAdd": "Add a reminder",
+  "@reminderAdd": {
+    "description": "Screen reader label of the bell button on a note without a reminder."
+  },
+  "commonYesterday": "Yesterday",
+  "@commonYesterday": {
+    "description": "The day before today, as a date heading or on a note card."
+  },
+  "peopleCount": "{count, plural, =1{1 person} other{{count} people}}",
+  "@peopleCount": {
+    "description": "How many people a note is shared with, beside Sharing in the note’s menu.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "wordsCount": "{count, plural, =1{1 word} other{{count} words}}",
+  "@wordsCount": {
+    "description": "Number of words in the note, in the small line under its title.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "21"
+      }
+    }
+  },
+  "notesSelectTitle": "Select notes",
+  "@notesSelectTitle": {
+    "description": "Page title while selecting notes and none is selected yet."
+  },
+  "noteUntitled": "Untitled",
+  "@noteUntitled": {
+    "description": "Shown for a note without a title."
+  },
+  "namesTwo": "{first} and {second}",
+  "@namesTwo": {
+    "description": "Two people’s first names joined, as in “Shared with Ada and Ben”.",
+    "placeholders": {
+      "first": {
+        "type": "String",
+        "example": "Ada"
+      },
+      "second": {
+        "type": "String",
+        "example": "Ben"
+      }
+    }
+  },
+  "namesMore": "{count, plural, other{{first}, {second} and {count} more}}",
+  "@namesMore": {
+    "description": "Two names and how many other people.",
+    "placeholders": {
+      "first": {
+        "type": "String",
+        "example": "Ada"
+      },
+      "second": {
+        "type": "String",
+        "example": "Ben"
+      },
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "shareOnlyYou": "Only you can see this note.",
+  "@shareOnlyYou": {
+    "description": "Small line in the share sheet when the note isn’t shared with anyone."
+  },
+  "shareLoadFailed": "Couldn’t load the people with access.",
+  "@shareLoadFailed": {
+    "description": "Notice in the share sheet when the list of people the note is shared with didn’t load, next to a Try again button."
+  },
+  "shareSharedWith": "{count, plural, =1{Shared with 1 person.} other{Shared with {count} people.}}",
+  "@shareSharedWith": {
+    "description": "Small line in the share sheet giving how many people can see the note.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "shareSharedWithOffline": "{count, plural, =1{Shared with 1 person. Connect to see who has access.} other{Shared with {count} people. Connect to see who has access.}}",
+  "@shareSharedWithOffline": {
+    "description": "Small line in the share sheet while offline, when the list of people can’t load.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "shareSharedWithNames": "Shared with {names}",
+  "@shareSharedWithNames": {
+    "description": "Under a note’s title, or in a toast after sharing; {names} holds first names.",
+    "placeholders": {
+      "names": {
+        "type": "String",
+        "example": "Ada and Ben"
+      }
+    }
+  },
+  "shareSharedWithCount": "{count, plural, =1{Shared with 1 person} other{Shared with {count} people}}",
+  "@shareSharedWithCount": {
+    "description": "A short line on a note, without a period.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "shareCanView": "Can view",
+  "@shareCanView": {
+    "description": "Access level: the person can read the note but not change it."
+  },
+  "shareCanEdit": "Can edit",
+  "@shareCanEdit": {
+    "description": "Access level: the person can read and change the note."
+  },
+  "dayTodayAt": "Today at {time}",
+  "@dayTodayAt": {
+    "description": "When a version of a note was saved, in version history.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "dayYesterdayAt": "Yesterday at {time}",
+  "@dayYesterdayAt": {
+    "description": "When a version of a note was saved, in version history.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "dayOnAt": "{date} at {time}",
+  "@dayOnAt": {
+    "description": "When a version of a note was saved, in version history.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "August 2, 2026"
+      },
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "editedToday": "Edited today",
+  "@editedToday": {
+    "description": "When the note last changed, in the small line under its title."
+  },
+  "editedYesterday": "Edited yesterday",
+  "@editedYesterday": {
+    "description": "When the note last changed, in the small line under its title."
+  },
+  "editedOn": "Edited {date}",
+  "@editedOn": {
+    "description": "When the note last changed, in the small line under its title.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Mar 4"
+      }
+    }
+  },
+  "editedJustNow": "Edited just now",
+  "@editedJustNow": {
+    "description": "When the current version last changed, in version history."
+  },
+  "editedMinutesAgo": "{count, plural, =1{Edited 1 min ago} other{Edited {count} min ago}}",
+  "@editedMinutesAgo": {
+    "description": "When the current version last changed, in version history.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "editedTodayAt": "Edited today at {time}",
+  "@editedTodayAt": {
+    "description": "When the current version last changed, in version history.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "editedYesterdayAt": "Edited yesterday at {time}",
+  "@editedYesterdayAt": {
+    "description": "When the current version last changed, in version history.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "editedOnAt": "Edited {date} at {time}",
+  "@editedOnAt": {
+    "description": "When the current version last changed, in version history.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "August 2, 2026"
+      },
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "trashRule": "{count, plural, =1{Notes here are deleted after 1 day.} other{Notes here are deleted after {count} days.}}",
+  "@trashRule": {
+    "description": "Under the Trash title in the trash menu, which has the Empty trash option.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "trashEmpty": "{count, plural, =1{Notes you delete stay here for 1 day.} other{Notes you delete stay here for {count} days.}}",
+  "@trashEmpty": {
+    "description": "Empty-screen help when the trash has no notes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "trashDaysLeft": "{count, plural, =1{1 day left} other{{count} days left}}",
+  "@trashDaysLeft": {
+    "description": "Small label on a note card in the trash: days until it’s permanently deleted.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "trashDeletesOn": "Will be deleted on {date}.",
+  "@trashDeletesOn": {
+    "description": "Follows the bold “In trash.” at the bottom of a note opened from the trash.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Nov 10"
+      }
+    }
+  },
+  "trashDeletesAfter": "{count, plural, =1{Will be deleted after 1 day.} other{Will be deleted after {count} days.}}",
+  "@trashDeletesAfter": {
+    "description": "Follows the bold “In trash.” when the date the note was deleted isn’t known.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "historyKept": "{count, plural, =1{A version is saved each time the note changes and kept for 1 day.} other{A version is saved each time the note changes and kept for {count} days.}}",
+  "@historyKept": {
+    "description": "Empty-screen help in version history when the note has no earlier versions.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "90"
+      }
+    }
+  },
+  "historyLimit": "{count, plural, =1{Edits older than 1 day are removed.} other{Edits older than {count} days are removed.}}",
+  "@historyLimit": {
+    "description": "Small note at the end of the version history list.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "90"
+      }
+    }
+  },
+  "historyEarlier": "Earlier version",
+  "@historyEarlier": {
+    "description": "Label of a version saved by an ordinary edit of the note."
+  },
+  "historyNotSaved": "Not saved",
+  "@historyNotSaved": {
+    "description": "A version that couldn’t be saved because the note had already changed elsewhere."
+  },
+  "historyBeforeRestore": "Before a restore",
+  "@historyBeforeRestore": {
+    "description": "A version saved just before an older version was restored."
+  },
+  "historySomeone": "Someone",
+  "@historySomeone": {
+    "description": "The author of a version when it isn’t known."
+  },
+  "historyYou": "You",
+  "@historyYou": {
+    "description": "The author of a version when it’s the person using the app."
+  },
+  "navNotes": "Notes",
+  "@navNotes": {
+    "description": "Item in the side menu and title of the main list of notes."
+  },
+  "navArchive": "Archive",
+  "@navArchive": {
+    "description": "Noun: the side menu item and list title for archived notes."
+  },
+  "navTrash": "Trash",
+  "@navTrash": {
+    "description": "Noun: the side menu item and list title for deleted notes."
+  },
+  "drawerAccount": "{name}, Settings",
+  "@drawerAccount": {
+    "description": "Screen reader label of the account row at the bottom of the menu.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "shareNowCanView": "{person} can now view",
+  "@shareNowCanView": {
+    "description": "Message after changing someone’s access.",
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareNowCanEdit": "{person} can now edit",
+  "@shareNowCanEdit": {
+    "description": "Message after changing someone’s access.",
+    "placeholders": {
+      "person": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "revisionComparedCurrent": "Compared with the current version",
+  "@revisionComparedCurrent": {
+    "description": "Shown above a version’s changes when they’re compared with the latest text."
+  },
+  "revisionComparedTodayAt": "Compared with today at {time}",
+  "@revisionComparedTodayAt": {
+    "description": "Shown above a version’s changes: the later version they’re compared with.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "revisionComparedYesterdayAt": "Compared with yesterday at {time}",
+  "@revisionComparedYesterdayAt": {
+    "description": "Shown above a version’s changes: the later version they’re compared with.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "revisionComparedOnAt": "Compared with {date} at {time}",
+  "@revisionComparedOnAt": {
+    "description": "Shown above a version’s changes: the later version they’re compared with.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "August 2, 2026"
+      },
+      "time": {
+        "type": "String",
+        "example": "9:41 PM"
+      }
+    }
+  },
+  "listArchiveLine": "Hidden from Notes",
+  "@listArchiveLine": {
+    "description": "The line under the Archive title: archived notes don’t show in the Notes list."
+  },
+  "listTrashLine": "{count, plural, =1{Deleted after 1 day} other{Deleted after {count} days}}",
+  "@listTrashLine": {
+    "description": "The line under the Trash title: how long notes stay in the trash.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "listOfflineSaved": "Offline · changes are saved on this phone",
+  "@listOfflineSaved": {
+    "description": "The line under the list title while offline with nothing waiting to sync."
+  },
+  "listOfflineChanges": "{count, plural, =1{Offline · 1 change to sync} other{Offline · {count} changes to sync}}",
+  "@listOfflineChanges": {
+    "description": "The line under the list title while offline, with changes that haven’t been sent yet.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "listSyncFailed": "Couldn’t sync",
+  "@listSyncFailed": {
+    "description": "The line under the list title after the last sync failed, until one works."
+  },
+  "listTitleMenu": "{title}, open menu",
+  "@listTitleMenu": {
+    "description": "Screen reader label of the list title, which opens the menu.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Notes"
+      }
+    }
+  },
+  "searchNotes": "Search notes",
+  "@searchNotes": {
+    "description": "Hint inside the empty search field on the Notes list."
+  },
+  "searchArchive": "Search archive",
+  "@searchArchive": {
+    "description": "Hint inside the empty search field on the Archive list."
+  },
+  "searchTrash": "Search trash",
+  "@searchTrash": {
+    "description": "Hint inside the empty search field on the Trash list."
+  },
+  "actionTag": "Tag",
+  "@actionTag": {
+    "description": "Action that opens the tag picker for notes."
+  },
+  "actionPin": "Pin",
+  "@actionPin": {
+    "description": "Verb, in the note menu and selection bar: keeps notes at the top of the list."
+  },
+  "actionUnpin": "Unpin",
+  "@actionUnpin": {
+    "description": "Verb, in the note menu and selection bar: stops keeping notes at the top."
+  },
+  "actionShare": "Share",
+  "@actionShare": {
+    "description": "Verb: opens sharing for a note or a picture; also the title of the share sheet."
+  },
+  "actionHistory": "Version history",
+  "@actionHistory": {
+    "description": "Menu item and button that open a note’s earlier versions; also that page’s title."
+  },
+  "actionUncheckAll": "Uncheck all",
+  "@actionUncheckAll": {
+    "description": "Item in a note's More menu that unchecks every checked item in the note's checklists. Shown for notes with a checklist, dimmed while no item is checked."
+  },
+  "actionDeleteChecked": "Delete checked items",
+  "@actionDeleteChecked": {
+    "description": "Item in a note's More menu that deletes every checked item from the note's checklists, with Undo. Shown for notes with a checklist, dimmed while no item is checked."
+  },
+  "actionArchive": "Archive",
+  "@actionArchive": {
+    "description": "Verb: moves notes to the archive."
+  },
+  "actionUnarchive": "Unarchive",
+  "@actionUnarchive": {
+    "description": "Verb, in menus and the selection bar: moves notes from the archive back to Notes."
+  },
+  "actionDelete": "Delete",
+  "@actionDelete": {
+    "description": "Verb: moves notes to the trash or deletes a picture. Short: fits the selection bar."
+  },
+  "actionRemove": "Remove",
+  "@actionRemove": {
+    "description": "Removes a note shared with you from your notes."
+  },
+  "actionRestore": "Restore",
+  "@actionRestore": {
+    "description": "Verb: brings notes back from the trash, or brings back an earlier version."
+  },
+  "actionDeletePermanently": "Delete permanently",
+  "@actionDeletePermanently": {
+    "description": "Button that permanently deletes notes in the trash."
+  },
+  "notesPinned": "{count, plural, =1{Note pinned} other{{count} notes pinned}}",
+  "@notesPinned": {
+    "description": "Toast after notes were pinned to the top of the list, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesUnpinned": "{count, plural, =1{Note unpinned} other{{count} notes unpinned}}",
+  "@notesUnpinned": {
+    "description": "Toast after notes were unpinned, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesArchived": "{count, plural, =1{Note archived} other{{count} notes archived}}",
+  "@notesArchived": {
+    "description": "Toast after notes were moved to the archive, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesUnarchived": "{count, plural, =1{Note unarchived} other{{count} notes unarchived}}",
+  "@notesUnarchived": {
+    "description": "Toast after notes were moved out of the archive, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "itemsUnchecked": "{count, plural, =1{Item unchecked} other{{count} items unchecked}}",
+  "@itemsUnchecked": {
+    "description": "Toast after Uncheck all in a note's More menu, with an Undo button. The items are checklist items in the note.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "checkedItemsDeleted": "{count, plural, =1{Checked item deleted} other{{count} checked items deleted}}",
+  "@checkedItemsDeleted": {
+    "description": "Toast after Delete checked items in a note's More menu, with an Undo button. The items are checklist items in the note.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesRestored": "{count, plural, =1{Note restored} other{{count} notes restored}}",
+  "@notesRestored": {
+    "description": "Toast after notes were brought back from the trash, with an Undo button.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesDeletedForever": "{count, plural, =1{Note permanently deleted} other{{count} notes permanently deleted}}",
+  "@notesDeletedForever": {
+    "description": "Toast after notes were permanently deleted.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesMovedToTrash": "{count, plural, =1{Note moved to trash} other{{count} notes moved to trash}}",
+  "@notesMovedToTrash": {
+    "description": "Toast after the person’s own notes were moved to the trash.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesRemovedFromYours": "{count, plural, =1{Note removed from your notes} other{{count} notes removed from your notes}}",
+  "@notesRemovedFromYours": {
+    "description": "Notes shared with the person, taken off their list.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesTrashedMixed": "{moved} {removed}",
+  "@notesTrashedMixed": {
+    "description": "Two sentences: notes moved to trash, and shared notes removed.",
+    "placeholders": {
+      "moved": {
+        "type": "String",
+        "example": "2 notes moved to trash."
+      },
+      "removed": {
+        "type": "String",
+        "example": "1 removed from your notes."
+      }
+    }
+  },
+  "notesMovedToTrashPart": "{count, plural, =1{1 note moved to trash.} other{{count} notes moved to trash.}}",
+  "@notesMovedToTrashPart": {
+    "description": "First sentence of a toast that also mentions removed shared notes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "notesRemovedPart": "{count, plural, =1{1 removed from your notes.} other{{count} removed from your notes.}}",
+  "@notesRemovedPart": {
+    "description": "About notes shared with the person.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "notesRemoveSharedTitle": "Remove this note from your notes?",
+  "@notesRemoveSharedTitle": {
+    "description": "For a note someone else shared with the person."
+  },
+  "notesRemoveSharedMessage": "To see it again, its owner has to share it with you again.",
+  "@notesRemoveSharedMessage": {
+    "description": "Message of the dialog that removes one note someone else shared with the person."
+  },
+  "notesDeleteTitle": "{count, plural, =1{Delete 1 note?} other{Delete {count} notes?}}",
+  "@notesDeleteTitle": {
+    "description": "Title of the dialog that confirms deleting notes, some of them shared with the person.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesDeleteSharedMessage": "{count, plural, =1{A note shared with you will be removed from your notes. To see it again, its owner has to share it with you again.} other{{count} notes shared with you will be removed from your notes. To see them again, their owners have to share them with you again.}}",
+  "@notesDeleteSharedMessage": {
+    "description": "Message of the dialog that confirms deleting notes that others shared with the person.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "notesDeleteForeverOneTitle": "Permanently delete this note?",
+  "@notesDeleteForeverOneTitle": {
+    "description": "Title of the dialog that confirms permanently deleting the open note."
+  },
+  "notesDeleteForeverTitle": "{count, plural, =1{Permanently delete 1 note?} other{Permanently delete {count} notes?}}",
+  "@notesDeleteForeverTitle": {
+    "description": "Title of the dialog that confirms permanently deleting the selected notes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "notesDeleteForeverMessage": "{count, plural, =1{This can’t be undone. People you shared it with will lose access too.} other{This can’t be undone. People you shared them with will lose access too.}}",
+  "@notesDeleteForeverMessage": {
+    "description": "Message of the dialog that confirms permanently deleting notes.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "trashEmptyAction": "Empty trash",
+  "@trashEmptyAction": {
+    "description": "Menu item and dialog button that permanently delete every note in the trash."
+  },
+  "trashNothing": "Nothing to delete",
+  "@trashNothing": {
+    "description": "Under the Empty trash menu item when the trash has no notes."
+  },
+  "trashEmptyTitle": "Empty trash?",
+  "@trashEmptyTitle": {
+    "description": "Title of the dialog that confirms emptying the trash."
+  },
+  "trashEmptyMessage": "{count, plural, =1{1 note will be permanently deleted. This can’t be undone.} other{{count} notes will be permanently deleted. This can’t be undone.}}",
+  "@trashEmptyMessage": {
+    "description": "Message of the dialog that confirms emptying the trash.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "trashEmptied": "Trash emptied",
+  "@trashEmptied": {
+    "description": "Toast after every note in the trash was permanently deleted."
+  },
+  "listViewOptions": "View options",
+  "@listViewOptions": {
+    "description": "Title of the sheet for layout and sort order, and the button that opens it."
+  },
+  "searchTag": "Search #{tag}",
+  "@searchTag": {
+    "description": "Hint inside the empty search field while the list shows only one tag.",
+    "placeholders": {
+      "tag": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "searchNoResults": "No results for “{query}”",
+  "@searchNoResults": {
+    "description": "Empty-screen title when a search finds no notes.",
+    "placeholders": {
+      "query": {
+        "type": "String",
+        "example": "lisbon"
+      }
+    }
+  },
+  "searchNoResultsHelp": "Check the spelling or try different words.",
+  "@searchNoResultsHelp": {
+    "description": "Empty-screen help when a search finds no notes."
+  },
+  "archiveEmptyTitle": "No archived notes",
+  "@archiveEmptyTitle": {
+    "description": "Empty-screen title when the archive has no notes."
+  },
+  "archiveEmptyHelp": "Archive notes you want to keep but don’t need to see every day.",
+  "@archiveEmptyHelp": {
+    "description": "Empty-screen help in the archive, where “Archive” is a verb."
+  },
+  "trashEmptyStateTitle": "Trash is empty",
+  "@trashEmptyStateTitle": {
+    "description": "Empty-screen title when the trash has no notes."
+  },
+  "tagEmptyTitle": "No notes tagged #{tag}",
+  "@tagEmptyTitle": {
+    "description": "Empty-screen title when no note has the tag the list is showing.",
+    "placeholders": {
+      "tag": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "tagEmptyHelp": "New notes you create here get this tag.",
+  "@tagEmptyHelp": {
+    "description": "Empty-screen help when the list shows a tag that no note has yet."
+  },
+  "notesLoading": "Loading notes",
+  "@notesLoading": {
+    "description": "Read by screen readers while gray card shapes stand in for notes still coming from the server."
+  },
+  "notesEmptyTitle": "No notes yet",
+  "@notesEmptyTitle": {
+    "description": "Empty-screen title when the person has no notes."
+  },
+  "notesEmptyHelp": "Tap New note to write your first one.",
+  "@notesEmptyHelp": {
+    "description": "“New note” is the name of the button."
+  },
+  "notesLoadFailedTitle": "Couldn’t load your notes",
+  "@notesLoadFailedTitle": {
+    "description": "Title in the middle of the notes list when the person's notes haven't come to this phone yet because it is offline, the server can't be reached or syncing is paused."
+  },
+  "notesLoadFailedHelp": "Check your connection, then try again.",
+  "@notesLoadFailedHelp": {
+    "description": "Under “Couldn’t load your notes”, above a Try again button."
+  },
+  "notesLoadPausedHelp": "Your notes will appear here once they sync.",
+  "@notesLoadPausedHelp": {
+    "description": "Under “Couldn’t load your notes” while syncing is paused (signed out, or the app or the server needs an update). A warning above the list says what to do."
+  },
+  "noteNew": "New note",
+  "@noteNew": {
+    "description": "Button that starts a new note, on the empty list and the plus button."
+  },
+  "cardNotSynced": "Not synced yet",
+  "@cardNotSynced": {
+    "description": "Tooltip of the cloud icon on a note card with changes not yet sent. Screen readers also read it with the card."
+  },
+  "cardPictures": "{count, plural, =1{1 picture} other{{count} pictures}}",
+  "@cardPictures": {
+    "description": "Read out by screen readers with a note card: how many pictures the note has.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareSharedBy": "Shared by {name}",
+  "@shareSharedBy": {
+    "description": "Under a note’s title, or spoken on a card: who shared the note with the person.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "actionSharing": "Sharing",
+  "@actionSharing": {
+    "description": "The Share action when the note is already shared."
+  },
+  "actionMoveToTrash": "Move to trash",
+  "@actionMoveToTrash": {
+    "description": "Menu item that moves the open note to the trash."
+  },
+  "actionRemoveFromMine": "Remove from my notes",
+  "@actionRemoveFromMine": {
+    "description": "For a note someone else shared with the person."
+  },
+  "readOnlyInTrash": "In trash.",
+  "@readOnlyInTrash": {
+    "description": "Bold lead before a sentence about when the note will be deleted."
+  },
+  "readOnlyViewOnly": "View only.",
+  "@readOnlyViewOnly": {
+    "description": "Bold lead before a sentence about who can edit the note."
+  },
+  "readOnlyOwnerEdits": "Only the owner can edit it.",
+  "@readOnlyOwnerEdits": {
+    "description": "Follows the bold “View only.” at the bottom of a note the person can’t edit."
+  },
+  "readOnlySharedBy": "Shared by {name}.",
+  "@readOnlySharedBy": {
+    "description": "Follows the bold “View only.” at the bottom of a note someone shared with the person.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "noteArchived": "Archived",
+  "@noteArchived": {
+    "description": "Shown on a note that is in the archive."
+  },
+  "tagAdd": "Add tag",
+  "@tagAdd": {
+    "description": "Small button under the note’s title that opens the tag picker."
+  },
+  "tagRemoveNamed": "Remove {tag}",
+  "@tagRemoveNamed": {
+    "description": "Screen reader label of the remove button on a tag chip.",
+    "placeholders": {
+      "tag": {
+        "type": "String",
+        "example": "work"
+      }
+    }
+  },
+  "starterList": "List",
+  "@starterList": {
+    "description": "Starts a bulleted list in an empty note."
+  },
+  "starterAttachment": "Picture or audio",
+  "@starterAttachment": {
+    "description": "Adds a picture or an audio file to an empty note."
+  },
+  "attachmentPictureDeleted": "Picture deleted",
+  "@attachmentPictureDeleted": {
+    "description": "Toast after a picture was removed from a note, with an Undo button."
+  },
+  "attachmentVoiceDeleted": "Voice note deleted",
+  "@attachmentVoiceDeleted": {
+    "description": "Toast after a voice note recorded in the app was removed from a note, with an Undo button."
+  },
+  "attachmentAddLabel": "Add picture or audio",
+  "@attachmentAddLabel": {
+    "description": "Screen reader label of the button that adds a picture or audio file to a note."
+  },
+  "attachmentAdd": "Add",
+  "@attachmentAdd": {
+    "description": "Short label on a small square tile that adds a picture or audio."
+  },
+  "pullOffline": "You’re offline. Your changes are saved on this phone.",
+  "@pullOffline": {
+    "description": "Shown when the person pulls down the list to sync while offline."
+  },
+  "pullSyncing": "Syncing…",
+  "@pullSyncing": {
+    "description": "Shown above the list while a pull-down sync runs."
+  },
+  "pullUpToDate": "Up to date",
+  "@pullUpToDate": {
+    "description": "Shown above the list after a pull-down sync finished."
+  },
+  "pullFailed": "Couldn’t sync. Your changes are saved on this phone.",
+  "@pullFailed": {
+    "description": "Shown above the list when a pull-down sync failed."
+  },
+  "searchClear": "Clear search",
+  "@searchClear": {
+    "description": "Screen reader label of the button that empties the search field."
+  },
+  "lineText": "Text",
+  "@lineText": {
+    "description": "Line style: plain text."
+  },
+  "lineH1": "Heading 1",
+  "@lineH1": {
+    "description": "Line style for the biggest heading, in the slash menu and the line styles toolbar."
+  },
+  "lineH2": "Heading 2",
+  "@lineH2": {
+    "description": "Line style for a medium heading, in the slash menu and the line styles toolbar."
+  },
+  "lineH3": "Heading 3",
+  "@lineH3": {
+    "description": "Line style for the smallest heading, in the slash menu and the line styles toolbar."
+  },
+  "lineChecklist": "Checklist",
+  "@lineChecklist": {
+    "description": "Line style with checkboxes; also a starter button in an empty note."
+  },
+  "lineBullet": "Bullet list",
+  "@lineBullet": {
+    "description": "Line style for a list with dots, in the slash menu and the toolbars."
+  },
+  "lineNumbered": "Numbered list",
+  "@lineNumbered": {
+    "description": "Line style for a list with numbers, in the slash menu and the line styles toolbar."
+  },
+  "lineQuote": "Quote",
+  "@lineQuote": {
+    "description": "Noun: line style for quoted text, in the slash menu and toolbar."
+  },
+  "lineCode": "Code block",
+  "@lineCode": {
+    "description": "Line style for computer code in a fixed-width font."
+  },
+  "editorLink": "Link",
+  "@editorLink": {
+    "description": "Noun: slash menu item and spoken toolbar button that add a web link."
+  },
+  "slashWordsChecklist": "todo to-do task checkbox list",
+  "@slashWordsChecklist": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsH1": "h1 title",
+  "@slashWordsH1": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsH2": "h2 subtitle subheading",
+  "@slashWordsH2": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsH3": "h3 subheading",
+  "@slashWordsH3": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsBullet": "unordered ul dashes",
+  "@slashWordsBullet": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsNumbered": "ordered ol",
+  "@slashWordsNumbered": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsQuote": "blockquote citation",
+  "@slashWordsQuote": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsCode": "pre snippet",
+  "@slashWordsCode": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsText": "paragraph plain normal body",
+  "@slashWordsText": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsLink": "url web address",
+  "@slashWordsLink": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "slashWordsAttachment": "image img photo file voice recording attachment",
+  "@slashWordsAttachment": {
+    "description": "Search words for the slash menu, separated by spaces. Keep the English words and add your own."
+  },
+  "barFormatting": "Formatting",
+  "@barFormatting": {
+    "description": "Screen reader name of the editor toolbar while typing."
+  },
+  "barList": "List",
+  "@barList": {
+    "description": "Screen reader name of the editor toolbar on a list line."
+  },
+  "barSelected": "Selected text",
+  "@barSelected": {
+    "description": "Screen reader name of the editor toolbar while text is selected."
+  },
+  "barStyles": "Text styles",
+  "@barStyles": {
+    "description": "Screen reader name of the toolbar with text and line styles, and of its button."
+  },
+  "barColors": "Highlight colors",
+  "@barColors": {
+    "description": "Screen reader name of the editor toolbar with highlight colors."
+  },
+  "barLineStyles": "Line styles",
+  "@barLineStyles": {
+    "description": "Screen reader name of the row of line style buttons in the editor toolbar."
+  },
+  "toolOutdent": "Outdent",
+  "@toolOutdent": {
+    "description": "Screen reader label of the toolbar button that moves a list item one level left."
+  },
+  "toolIndent": "Indent",
+  "@toolIndent": {
+    "description": "Screen reader label of the toolbar button that moves a list item one level right."
+  },
+  "toolBold": "Bold",
+  "@toolBold": {
+    "description": "Screen reader label of the toolbar button that makes text bold."
+  },
+  "toolItalic": "Italic",
+  "@toolItalic": {
+    "description": "Screen reader label of the toolbar button that makes text italic."
+  },
+  "toolUnderline": "Underline",
+  "@toolUnderline": {
+    "description": "Screen reader label of the toolbar button that underlines text."
+  },
+  "toolStrikethrough": "Strikethrough",
+  "@toolStrikethrough": {
+    "description": "Screen reader label of the toolbar button that crosses text out."
+  },
+  "toolHighlight": "Highlight",
+  "@toolHighlight": {
+    "description": "Screen reader label of the toolbar button that marks text with a color."
+  },
+  "toolRemoveHighlight": "Remove highlight",
+  "@toolRemoveHighlight": {
+    "description": "Screen reader label of the toolbar button that removes the color mark from text."
+  },
+  "toolRedo": "Redo",
+  "@toolRedo": {
+    "description": "Screen reader label of the toolbar button that repeats an undone change."
+  },
+  "toolHideKeyboard": "Hide keyboard",
+  "@toolHideKeyboard": {
+    "description": "Screen reader label of the toolbar button that closes the on-screen keyboard."
+  },
+  "editorEmptyItem": "Empty item",
+  "@editorEmptyItem": {
+    "description": "Screen reader name of an empty checklist or list item."
+  },
+  "editorLinkCopied": "Link copied",
+  "@editorLinkCopied": {
+    "description": "Toast after a link’s web address was copied."
+  },
+  "editorCheckedItems": "{count, plural, =1{1 checked item} other{{count} checked items}}",
+  "@editorCheckedItems": {
+    "description": "Folded checked items at the end of a checklist.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "linkAdd": "Add link",
+  "@linkAdd": {
+    "description": "Title of the sheet that adds a link to text, and its confirm button."
+  },
+  "linkEdit": "Edit link",
+  "@linkEdit": {
+    "description": "Title of the sheet that changes an existing link."
+  },
+  "linkTextHint": "Text",
+  "@linkTextHint": {
+    "description": "Hint in the field for the words a link shows."
+  },
+  "commonOpen": "Open",
+  "@commonOpen": {
+    "description": "Opens a link in the browser. Short: one of four buttons in a small bubble."
+  },
+  "commonEdit": "Edit",
+  "@commonEdit": {
+    "description": "Changes a link. Short: one of four buttons in a small bubble over the link."
+  },
+  "commonRemove": "Remove",
+  "@commonRemove": {
+    "description": "Verb: removes a link from text, or a person from a shared note."
+  },
+  "editorSlashHint": "Type / for more",
+  "@editorSlashHint": {
+    "description": "Hint in an empty line: typing a slash opens a menu of line styles."
+  },
+  "editorPlaceholder": "Start writing",
+  "@editorPlaceholder": {
+    "description": "Placeholder in an empty note."
+  },
+  "commonTryAgain": "Try again",
+  "@commonTryAgain": {
+    "description": "Button that retries something that failed, such as a picture upload."
+  },
+  "historyCurrent": "Current version",
+  "@historyCurrent": {
+    "description": "The note’s latest text, at the top of version history and as a page title."
+  },
+  "historySavedOnPhone": "Saved on this phone",
+  "@historySavedOnPhone": {
+    "description": "A note that hasn’t synced yet, so it has no edit time from the server."
+  },
+  "historyNoChanges": "No changes",
+  "@historyNoChanges": {
+    "description": "A version that changed no lines, under its time in version history and in its title bar."
+  },
+  "historyEmptyTitle": "No earlier versions yet",
+  "@historyEmptyTitle": {
+    "description": "Empty-screen title in version history when the note has no earlier versions."
+  },
+  "historyFetchFailed": "Couldn’t check for versions from your other devices.",
+  "@historyFetchFailed": {
+    "description": "Warning in version history when loading versions from the server failed."
+  },
+  "historyOffline": "Connect to the internet to see versions from your other devices.",
+  "@historyOffline": {
+    "description": "Notice in version history while the phone is offline."
+  },
+  "diffAdded": "{count} added",
+  "@diffAdded": {
+    "description": "Lines added in a version.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "diffRemoved": "{count} removed",
+  "@diffRemoved": {
+    "description": "Lines removed in a version.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "diffChanged": "{count} changed",
+  "@diffChanged": {
+    "description": "Lines changed in a version.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "diffLinesAdded": "{count, plural, =1{1 line added} other{{count} lines added}}",
+  "@diffLinesAdded": {
+    "description": "What a version did, under its time in version history and in its title bar. When it did more, the other kinds follow in the short form, as in “2 lines added, 1 removed”.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "diffLinesRemoved": "{count, plural, =1{1 line removed} other{{count} lines removed}}",
+  "@diffLinesRemoved": {
+    "description": "What a version did, under its time in version history and in its title bar. When it did more, the other kinds follow in the short form, as in “2 lines removed, 1 removed”.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "diffLinesChanged": "{count, plural, =1{1 line changed} other{{count} lines changed}}",
+  "@diffLinesChanged": {
+    "description": "What a version did, under its time in version history and in its title bar. When it did more, the other kinds follow in the short form, as in “2 lines changed, 1 removed”.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "diffShowUnchanged": "{count, plural, =1{Show 1 unchanged line} other{Show {count} unchanged lines}}",
+  "@diffShowUnchanged": {
+    "description": "Screen reader label of the button that shows hidden lines that didn’t change.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "diffUnchanged": "{count, plural, =1{1 unchanged line} other{{count} unchanged lines}}",
+  "@diffUnchanged": {
+    "description": "Small label standing in for lines that didn’t change between versions.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "diffAddedMark": "Added:",
+  "@diffAddedMark": {
+    "description": "Screen reader prefix before a line added in a version."
+  },
+  "diffRemovedMark": "Removed:",
+  "@diffRemovedMark": {
+    "description": "Screen reader prefix before a line removed in a version."
+  },
+  "diffChangedMark": "Changed:",
+  "@diffChangedMark": {
+    "description": "Screen reader prefix before a line changed in a version."
+  },
+  "diffCheckedMark": "Checked:",
+  "@diffCheckedMark": {
+    "description": "Screen reader prefix before a checked checklist item."
+  },
+  "diffUncheckedMark": "Not checked:",
+  "@diffUncheckedMark": {
+    "description": "Screen reader prefix before an unchecked checklist item."
+  },
+  "diffRemovedTitle": "Removed title:",
+  "@diffRemovedTitle": {
+    "description": "Screen reader prefix before a title removed in a version."
+  },
+  "diffAddedTitle": "Added title:",
+  "@diffAddedTitle": {
+    "description": "Screen reader prefix before a title added in a version."
+  },
+  "revisionNotSavedLead": "Not saved.",
+  "@revisionNotSavedLead": {
+    "description": "Bold lead of a warning on a version that couldn’t be saved."
+  },
+  "revisionNotSavedText": "This edit wasn’t saved because the note changed on another device first. Restore it, or copy what you need.",
+  "@revisionNotSavedText": {
+    "description": "Follows the bold “Not saved.” on a version that couldn’t be saved."
+  },
+  "revisionAlreadyMatches": "The note already matches this version",
+  "@revisionAlreadyMatches": {
+    "description": "Toast when restoring a version whose text is the same as the note."
+  },
+  "revisionRestoreFailed": "Couldn’t restore this version",
+  "@revisionRestoreFailed": {
+    "description": "Toast when an earlier version couldn’t be restored."
+  },
+  "revisionRestoring": "Restoring…",
+  "@revisionRestoring": {
+    "description": "Text on the Restore button while an earlier version is restored."
+  },
+  "revisionBackToList": "Back to the version list",
+  "@revisionBackToList": {
+    "description": "Screen reader label of the back button on a version page."
+  },
+  "revisionNewer": "Newer version",
+  "@revisionNewer": {
+    "description": "Screen reader label of the up arrow that shows the next newer version."
+  },
+  "revisionOlder": "Older version",
+  "@revisionOlder": {
+    "description": "Screen reader label of the down arrow that shows the next older version."
+  },
+  "revisionPosition": "{index} of {count}",
+  "@revisionPosition": {
+    "description": "Which version is shown, such as “2 of 5”.",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "2"
+      },
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "revisionGone": "This version is no longer available.",
+  "@revisionGone": {
+    "description": "Shown on a version page when that version was deleted."
+  },
+  "revisionSameAsNext": "Same text as the version after this one.",
+  "@revisionSameAsNext": {
+    "description": "Shown above a version whose text matches the next newer version."
+  },
+  "revisionSameAsCurrent": "Same text as the current version.",
+  "@revisionSameAsCurrent": {
+    "description": "Shown above a version whose text matches the note’s latest text."
+  },
+  "revisionEmpty": "This version is empty.",
+  "@revisionEmpty": {
+    "description": "Shown on a version page when that version has no text."
+  },
+  "shareFailed": "Couldn’t share with {name}",
+  "@shareFailed": {
+    "description": "Toast when sharing a note with a person failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareAccessFor": "Access for {name}",
+  "@shareAccessFor": {
+    "description": "Screen reader name of the menu that changes someone’s access.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "shareRevoked": "{name} no longer has access",
+  "@shareRevoked": {
+    "description": "Toast after a person was removed from a shared note, with an Undo button.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareRevokeFailed": "Couldn’t remove access for {name}",
+  "@shareRevokeFailed": {
+    "description": "Toast when removing a person from a shared note failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareChangeFailed": "Couldn’t change access for {name}",
+  "@shareChangeFailed": {
+    "description": "Toast when changing a person’s access to a shared note failed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada"
+      }
+    }
+  },
+  "shareSubtitle": "People you add will see this note in their list.",
+  "@shareSubtitle": {
+    "description": "Under the share sheet title."
+  },
+  "shareOffline": "Connect to the internet to share this note.",
+  "@shareOffline": {
+    "description": "Under the share sheet title while the phone is offline."
+  },
+  "shareSearchHint": "Add people by name or email",
+  "@shareSearchHint": {
+    "description": "Hint inside the empty field of the share sheet that finds people."
+  },
+  "shareNoMatches": "No one found. Only people with an account on this server can be added.",
+  "@shareNoMatches": {
+    "description": "Shown in the share sheet when the search finds no one."
+  },
+  "shareRecent": "Recently shared with",
+  "@shareRecent": {
+    "description": "Section label in the share sheet for people the person shared with before."
+  },
+  "sharePeople": "People",
+  "@sharePeople": {
+    "description": "Section label in the share sheet for people found by the search."
+  },
+  "shareAddPerson": "Add {name}",
+  "@shareAddPerson": {
+    "description": "Screen reader label of a person in the share search results.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "shareWithAccess": "People with access",
+  "@shareWithAccess": {
+    "description": "Section label in the share sheet for everyone who can see the note."
+  },
+  "shareYou": "{name} (you)",
+  "@shareYou": {
+    "description": "The person’s own name in the share sheet’s list of people.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "shareOwner": "Owner",
+  "@shareOwner": {
+    "description": "Noun beside the person’s own name in the share sheet: they own the note."
+  },
+  "shareChangeAccess": "{permission}. Change access for {name}",
+  "@shareChangeAccess": {
+    "description": "Screen reader label of the access button, such as “Can edit. Change access for Ada Lovelace”.",
+    "placeholders": {
+      "permission": {
+        "type": "String",
+        "example": "Can edit"
+      },
+      "name": {
+        "type": "String",
+        "example": "Ada Lovelace"
+      }
+    }
+  },
+  "commonOffline": "Offline",
+  "@commonOffline": {
+    "description": "Small label on a picture that can’t load while the phone is offline."
+  },
+  "commonDeleteItem": "Delete {name}",
+  "@commonDeleteItem": {
+    "description": "Screen reader label of the delete button on an attachment.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "photo.jpg"
+      }
+    }
+  },
+  "commonPosition": "{index} of {count}",
+  "@commonPosition": {
+    "description": "Which picture is shown, such as “2 of 5”.",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "2"
+      },
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "addToNote": "Add to note",
+  "@addToNote": {
+    "description": "Title of the sheet with options to add a picture or audio to a note."
+  },
+  "addAudioFormats": "Anchor supports MP3, WAV, M4A, OGG and AAC audio",
+  "@addAudioFormats": {
+    "description": "Toast when the picked audio file is a type the app can’t play."
+  },
+  "addPhotoUnsupported": "Couldn’t add this photo. Try a JPEG or PNG.",
+  "@addPhotoUnsupported": {
+    "description": "Toast when the picked photo is in a format the phone couldn’t read or convert."
+  },
+  "addMicDenied": "Allow microphone access in Settings to record",
+  "@addMicDenied": {
+    "description": "Toast when recording is blocked because the app has no microphone permission."
+  },
+  "addTakePhoto": "Take photo",
+  "@addTakePhoto": {
+    "description": "Option that opens the camera to take a photo for the note."
+  },
+  "addChoosePhoto": "Choose photo",
+  "@addChoosePhoto": {
+    "description": "Option that picks a photo from the phone’s photo library to add to the note."
+  },
+  "addRecordAudio": "Record audio",
+  "@addRecordAudio": {
+    "description": "Option that starts recording a voice note."
+  },
+  "addAudioFile": "Audio file",
+  "@addAudioFile": {
+    "description": "Noun: option that picks an audio file stored on the phone."
+  },
+  "recordingTitle": "Recording",
+  "@recordingTitle": {
+    "description": "Noun: title of the sheet while a voice note is being recorded."
+  },
+  "recordingHelp": "Speak normally. The recording stays on this phone until it uploads.",
+  "@recordingHelp": {
+    "description": "Under the title while a voice note is being recorded."
+  },
+  "recordingReviewTitle": "Your recording",
+  "@recordingReviewTitle": {
+    "description": "Title of the sheet after recording, where the person listens before keeping it."
+  },
+  "recordingReviewHelp": "{count, plural, =1{1 second. Listen, then keep it or record again.} other{{count} seconds. Listen, then keep it or record again.}}",
+  "@recordingReviewHelp": {
+    "description": "Under the title after recording; {count} is the length in seconds.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "recordingStoppedAtLimit": "Stopped at the maximum length. Listen, then keep it or record again.",
+  "@recordingStoppedAtLimit": {
+    "description": "Under the title after a recording stopped by itself at the longest length a note can hold, about 70 minutes."
+  },
+  "recordingElapsed": "Recording, {time}",
+  "@recordingElapsed": {
+    "description": "Screen reader text while recording. {time} is minutes and seconds, such as 0:12.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "0:12"
+      }
+    }
+  },
+  "recordingStop": "Stop",
+  "@recordingStop": {
+    "description": "Verb: button that ends the recording."
+  },
+  "recordingDiscard": "Discard",
+  "@recordingDiscard": {
+    "description": "Button that throws away the recording without adding it to the note."
+  },
+  "recordingAgain": "Again",
+  "@recordingAgain": {
+    "description": "Records the audio again. Keep it short, it shares a row with two other buttons."
+  },
+  "voiceOffline": "This voice note will play when you’re back online",
+  "@voiceOffline": {
+    "description": "Toast when the person plays a voice note that hasn’t downloaded while offline."
+  },
+  "voiceNote": "Voice note",
+  "@voiceNote": {
+    "description": "Name of an audio recording made in the app."
+  },
+  "voiceLoadFailed": "Couldn’t load",
+  "@voiceLoadFailed": {
+    "description": "Short line on a voice note card when its audio couldn’t load."
+  },
+  "attachmentUploading": "Uploading…",
+  "@attachmentUploading": {
+    "description": "Short line on a voice note or audio file card while it uploads."
+  },
+  "attachmentUploadFailed": "Couldn’t upload",
+  "@attachmentUploadFailed": {
+    "description": "Short line on a voice note or audio file card when the server didn’t take it. A Try again button sits under it."
+  },
+  "voicePosition": "Position in {name}",
+  "@voicePosition": {
+    "description": "Screen reader name of the playback slider.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Voice note"
+      }
+    }
+  },
+  "pictureAllowPhotos": "Allow access to Photos in Settings to save pictures",
+  "@pictureAllowPhotos": {
+    "description": "Toast when saving a picture is blocked because the app has no Photos permission."
+  },
+  "pictureSaved": "Saved to Photos",
+  "@pictureSaved": {
+    "description": "Toast after a picture was saved to the phone’s photo library."
+  },
+  "pictureSaveFailed": "Couldn’t save the picture",
+  "@pictureSaveFailed": {
+    "description": "Toast when saving a picture to the phone’s photo library failed."
+  },
+  "pictureOffline": "This picture will show when you’re back online",
+  "@pictureOffline": {
+    "description": "Shown in the picture viewer when a picture can’t load while offline."
+  },
+  "pictureLoadFailed": "Couldn’t load this picture",
+  "@pictureLoadFailed": {
+    "description": "Shown in the picture viewer when a picture didn’t download while online, above a Try again button."
+  },
+  "pictureSaveToPhotos": "Save to Photos",
+  "@pictureSaveToPhotos": {
+    "description": "Screen reader label of the download button in the picture viewer."
+  },
+  "attachmentRetry": "Try again, {name}",
+  "@attachmentRetry": {
+    "description": "Screen reader label of the retry button on a picture, voice note or audio file that didn’t upload or download.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "photo.jpg"
+      }
+    }
+  },
+  "pictureOpen": "{name}, open",
+  "@pictureOpen": {
+    "description": "Screen reader label of a picture in a note.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "photo.jpg"
+      }
+    }
+  },
+  "groupPinned": "Pinned",
+  "@groupPinned": {
+    "description": "Heading of the pinned notes."
+  },
+  "groupOthers": "Others",
+  "@groupOthers": {
+    "description": "Heading of the notes that aren’t pinned."
+  },
+  "groupArchived": "Archived",
+  "@groupArchived": {
+    "description": "Heading of the archived notes listed below the others in search results and on a tag's page, with their count. On a tag's page it can be tapped to show or hide them."
+  },
+  "noteBackground": "Background",
+  "@noteBackground": {
+    "description": "The note’s color or pattern."
+  },
+  "notePattern": "Pattern",
+  "@notePattern": {
+    "description": "Section label for note backgrounds with a repeating pattern."
+  },
+  "noteColorDefault": "Default",
+  "@noteColorDefault": {
+    "description": "The note background with no color."
+  },
+  "patternDots": "Dots",
+  "@patternDots": {
+    "description": "Note background pattern made of small dots."
+  },
+  "patternGrid": "Grid",
+  "@patternGrid": {
+    "description": "Note background pattern of squares, like graph paper."
+  },
+  "patternLines": "Lines",
+  "@patternLines": {
+    "description": "Note background pattern of lines, like ruled paper."
+  },
+  "patternWaves": "Waves",
+  "@patternWaves": {
+    "description": "Note background pattern of wavy lines."
+  },
+  "patternGroceries": "Groceries",
+  "@patternGroceries": {
+    "description": "Note background pattern of small shopping bag drawings."
+  },
+  "patternMusic": "Music",
+  "@patternMusic": {
+    "description": "Note background pattern of small music note drawings."
+  },
+  "patternTravel": "Travel",
+  "@patternTravel": {
+    "description": "Note background pattern of small airplane drawings."
+  },
+  "patternCode": "Code",
+  "@patternCode": {
+    "description": "Note background pattern of small computer code symbols."
+  },
+  "viewLayout": "Layout",
+  "@viewLayout": {
+    "description": "Section label in the view options sheet for how notes are arranged."
+  },
+  "viewMasonry": "Masonry",
+  "@viewMasonry": {
+    "description": "A layout where cards of different heights stack in columns."
+  },
+  "viewGrid": "Grid",
+  "@viewGrid": {
+    "description": "Layout with cards of equal size in columns. Short: one of three tabs in a row."
+  },
+  "viewList": "List",
+  "@viewList": {
+    "description": "Layout with one note per row. Short: one of three tabs in a row."
+  },
+  "viewSortBy": "Sort by",
+  "@viewSortBy": {
+    "description": "Section label in the view options sheet for what decides the note order."
+  },
+  "viewDateEdited": "Date edited",
+  "@viewDateEdited": {
+    "description": "Sort option: orders notes by when they last changed."
+  },
+  "viewTitle": "Title",
+  "@viewTitle": {
+    "description": "Sort option: orders notes alphabetically by their title."
+  },
+  "viewAtoZ": "A to Z",
+  "@viewAtoZ": {
+    "description": "Sort direction for titles, alphabetical. Short: one of two tabs in a row."
+  },
+  "viewZtoA": "Z to A",
+  "@viewZtoA": {
+    "description": "Sort direction for titles, reverse alphabetical. Short: one of two tabs in a row."
+  },
+  "viewNewestFirst": "Newest first",
+  "@viewNewestFirst": {
+    "description": "Sort direction for dates, latest first. Short: one of two tabs in a row."
+  },
+  "viewOldestFirst": "Oldest first",
+  "@viewOldestFirst": {
+    "description": "Sort direction for dates, earliest first. Short: one of two tabs in a row."
+  },
+  "noteUnsynced": "Changes not synced yet",
+  "@noteUnsynced": {
+    "description": "Screen reader label of the mark on a note that has changes only on this phone."
+  },
+  "noteOnThisPhone": "On this phone",
+  "@noteOnThisPhone": {
+    "description": "Short label in the note’s top bar while its changes haven’t synced yet."
+  },
+  "noteGone": "This note is no longer available",
+  "@noteGone": {
+    "description": "Toast when the open note was deleted or unshared elsewhere."
+  },
+  "reminderRemoved": "Reminder removed",
+  "@reminderRemoved": {
+    "description": "Toast after a note’s reminder was removed, with an Undo button."
+  },
+  "versionRestored": "Version restored",
+  "@versionRestored": {
+    "description": "Toast after an earlier version of the note was restored, with an Undo button."
+  },
+  "attachmentPictureAdded": "Picture added",
+  "@attachmentPictureAdded": {
+    "description": "Toast after a picture was added to a note."
+  },
+  "attachmentVoiceAdded": "Voice note added",
+  "@attachmentVoiceAdded": {
+    "description": "Toast after a voice note recorded in the app was added to a note."
+  },
+  "attachmentPictureAddedOffline": "Picture added. It will upload when you’re back online.",
+  "@attachmentPictureAddedOffline": {
+    "description": "Toast after a picture was added to a note while offline."
+  },
+  "attachmentVoiceAddedOffline": "Voice note added. It will upload when you’re back online.",
+  "@attachmentVoiceAddedOffline": {
+    "description": "Toast after a voice note recorded in the app was added to a note while offline."
+  },
+  "attachmentPictureAddFailed": "Couldn’t add the picture",
+  "@attachmentPictureAddFailed": {
+    "description": "Toast when a picture couldn’t be added to a note."
+  },
+  "attachmentVoiceAddFailed": "Couldn’t add the voice note",
+  "@attachmentVoiceAddFailed": {
+    "description": "Toast when a voice note recorded in the app couldn’t be added to a note."
+  },
+  "attachmentAudioAdded": "Audio file added",
+  "@attachmentAudioAdded": {
+    "description": "Toast after an audio file from the phone was added to a note."
+  },
+  "attachmentAudioAddedOffline": "Audio file added. It will upload when you’re back online.",
+  "@attachmentAudioAddedOffline": {
+    "description": "Toast after an audio file from the phone was added to a note while offline."
+  },
+  "attachmentAudioAddFailed": "Couldn’t add the audio file",
+  "@attachmentAudioAddFailed": {
+    "description": "Toast when an audio file from the phone couldn’t be added to a note."
+  },
+  "attachmentTooBig": "Can’t add files over 50 MB.",
+  "@attachmentTooBig": {
+    "description": "Error toast when a picture, voice note or audio file is bigger than the server takes, so it isn’t added to the note."
+  },
+  "attachmentAudioDeleted": "Audio file deleted",
+  "@attachmentAudioDeleted": {
+    "description": "Toast after an audio file was removed from a note, with an Undo button."
+  },
+  "audioFileOffline": "This audio file will play when you’re back online",
+  "@audioFileOffline": {
+    "description": "Toast when the person plays an audio file that hasn’t downloaded while offline."
+  },
+  "noteTitleHint": "Title",
+  "@noteTitleHint": {
+    "description": "Placeholder of the note title."
+  },
+  "viewOrder": "Order",
+  "@viewOrder": {
+    "description": "Section label in the view options sheet for the sort direction."
+  },
+  "editorDragHint": "Drag to reorder",
+  "@editorDragHint": {
+    "description": "Spoken hint on a checklist item that can be dragged."
+  },
+  "slashMenuLabel": "Insert",
+  "@slashMenuLabel": {
+    "description": "Spoken name of the slash menu."
+  },
+  "slashNoResults": "No results",
+  "@slashNoResults": {
+    "description": "Shown in the slash menu when nothing matches."
+  },
+  "noteColor": "Color",
+  "@noteColor": {
+    "description": "Section label for note background colors."
+  },
+  "cardChecked": "{count, plural, =1{1 done} other{{count} done}}",
+  "@cardChecked": {
+    "description": "Line on a note card that stands in for the checked items of a checklist.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "cardAllChecked": "{count, plural, =1{All 1 done} other{All {count} done}}",
+  "@cardAllChecked": {
+    "description": "Line on a note card when every item of a checklist is checked.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  "shareSheetTitle": "New note",
+  "@shareSheetTitle": {
+    "description": "Title of the sheet that opens over another app when something is shared to Anchor; it names the note the sheet makes."
+  },
+  "shareTag": "Tag {name}",
+  "@shareTag": {
+    "description": "Spoken label of a tag in the share sheet; tapping it adds the tag to the new note or takes it off.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Recipes"
+      }
+    }
+  },
+  "shareSignIn": "Sign in to Anchor to save what you share.",
+  "@shareSignIn": {
+    "description": "Shown in the sheet that opens when something is shared to Anchor from another app while no one is signed in."
+  },
+  "shareOpenApp": "Open Anchor",
+  "@shareOpenApp": {
+    "description": "Button in that sheet, beside Cancel, that opens the app to sign in."
+  },
+  "shareNothing": "There’s nothing here that Anchor can save.",
+  "@shareNothing": {
+    "description": "Shown in the share sheet when what another app shared has nothing Anchor can keep."
+  },
+  "shareNotAdded": "{count, plural, =1{1 file couldn’t be added.} other{{count} files couldn’t be added.}}",
+  "@shareNotAdded": {
+    "description": "Shown below the new note in the share sheet when some shared files can’t come in, for mixed or unknown reasons.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareUnsupported": "{count, plural, =1{1 file can’t be added. Anchor adds pictures and audio.} other{{count} files can’t be added. Anchor adds pictures and audio.}}",
+  "@shareUnsupported": {
+    "description": "Shown below the new note in the share sheet when shared files are of a kind Anchor doesn’t keep, such as a video or a PDF.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTooBig": "{count, plural, =1{1 file is over 50 MB, so it can’t be added.} other{{count} files are over 50 MB, so they can’t be added.}}",
+  "@shareTooBig": {
+    "description": "Shown below the new note in the share sheet when shared files are larger than a note’s file limit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareOverLimit": "Only the first 20 files are added.",
+  "@shareOverLimit": {
+    "description": "Shown below the new note in the share sheet when more than 20 files were shared at once."
+  },
+  "shareRemoveItem": "Remove {name}",
+  "@shareRemoveItem": {
+    "description": "Spoken label of the small x on a picture or audio file in the share sheet; it leaves that file out of the new note.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "IMG_2041.jpg"
+      }
+    }
+  }
+}

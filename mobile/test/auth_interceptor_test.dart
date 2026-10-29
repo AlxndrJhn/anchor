@@ -3,13 +3,12 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:anchor/core/network/auth_interceptor.dart';
-import 'package:anchor/core/providers/session_expired_provider.dart';
+import 'package:anchor/core/session/session_expired_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Answers every request with [respond], and remembers what it was sent.
 class _FakeServer implements HttpClientAdapter {
   _FakeServer(this.respond);
 
@@ -50,7 +49,6 @@ void main() {
   late _FakeServer auth;
   late Dio dio;
 
-  // The API accepts only the new access token.
   Future<ResponseBody> api401UntilRefreshed(RequestOptions options) async =>
       options.headers['Authorization'] == 'Bearer new-access'
       ? _json(200, {'ok': true})

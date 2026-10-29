@@ -23,11 +23,11 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.2275,
-            0.2471,
-            0.2941
+            0.2039,
+            0.2078,
+            0.2275
           ],
-          "hex": "#3a3f4b"
+          "hex": "#34353a"
         },
         "$description": "Borders of cards and menus"
       },
@@ -35,11 +35,11 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.1882,
-            0.2039,
-            0.2471
+            0.149,
+            0.1529,
+            0.1725
           ],
-          "hex": "#30343f"
+          "hex": "#26272c"
         },
         "$description": "Lines inside a card or list"
       },
@@ -47,11 +47,11 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.1765,
-            0.1922,
-            0.2588
+            0.149,
+            0.1529,
+            0.1725
           ],
-          "hex": "#2d3142"
+          "hex": "#26272c"
         },
         "$description": "Muted fills and hover"
       },
@@ -59,11 +59,11 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.0902,
-            0.098,
-            0.1216
+            0.0392,
+            0.0431,
+            0.0471
           ],
-          "hex": "#17191f"
+          "hex": "#0a0b0c"
         },
         "$description": "The sidebar, beside the page"
       },
@@ -271,11 +271,11 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.1098,
-            0.1176,
-            0.149
+            0.0667,
+            0.0706,
+            0.0784
           ],
-          "hex": "#1c1e26"
+          "hex": "#111214"
         },
         "$description": "Text on a red button"
       }

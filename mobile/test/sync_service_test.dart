@@ -14,8 +14,6 @@ class MockDio extends Mock implements Dio {}
 
 class MockAttachmentsRepo extends Mock implements NoteAttachmentsRepository {}
 
-/// SyncService against a real in-memory Drift database, with only the network
-/// and the attachment file store mocked.
 void main() {
   late AppDatabase db;
   late MockDio dio;
@@ -29,7 +27,7 @@ void main() {
     attachments = MockAttachmentsRepo();
     requests = [];
 
-    // Start up to date, so only the tests that want a full download get one.
+    // Starts up to date.
     await db
         .into(db.syncState)
         .insert(SyncStateCompanion.insert(cursor: const Value('cursor-0')));
@@ -53,7 +51,8 @@ void main() {
       attachments,
       NoteRevisionsStore(
         db,
-        () => const User(id: 'user-1', email: 'me@example.com', name: 'Me'),
+        () async =>
+            const User(id: 'user-1', email: 'me@example.com', name: 'Me'),
       ),
     );
   });
@@ -244,11 +243,11 @@ void main() {
         );
   }
 
-  Future<Note?> note(String id) => (db.select(
+  Future<NoteRow?> note(String id) => (db.select(
     db.notes,
   )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
 
-  Future<Tag?> tag(String id) =>
+  Future<TagRow?> tag(String id) =>
       (db.select(db.tags)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
 
   test(
@@ -305,6 +304,17 @@ void main() {
   Future<NoteRevisionRow?> revision(String id) => (db.select(
     db.noteRevisions,
   )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+
+  test('a new note goes up before its pictures', () async {
+    final calls = <String>[];
+    when(() => attachments.sync()).thenAnswer((_) async => calls.add('files'));
+    stub([], whileInFlight: () async => calls.add('notes'));
+    await insertNote(id: 'n1', title: 'Made offline');
+
+    await service.run();
+
+    expect(calls, ['notes', 'files']);
+  });
 
   test('carries the versions recorded on the device', () async {
     await insertNote(id: 'n1', title: 'Edited', version: 4);
@@ -473,8 +483,6 @@ void main() {
     expect((change['revisions'] as List).single['id'], 'r1');
     expect((await revision('r1'))!.isSynced, isTrue);
 
-    // The ack names a version this row's text does not hold yet; only the
-    // feed moves the note.
     final row = await note('n1');
     expect(row!.version, 4);
     expect(row.title, 'Local title');
@@ -493,7 +501,10 @@ void main() {
 
     await service.run();
 
-    final position = await NoteRevisionsStore(db, () => null).position('n1');
+    final position = await NoteRevisionsStore(
+      db,
+      () async => null,
+    ).position('n1');
     expect(position.isComplete, isFalse);
   });
 
@@ -1233,7 +1244,7 @@ void main() {
           );
     }
 
-    Future<Note> noteRow(String id) =>
+    Future<NoteRow> noteRow(String id) =>
         (db.select(db.notes)..where((t) => t.id.equals(id))).getSingle();
 
     test('pushes a dirty reminder after the note and pin changes', () async {

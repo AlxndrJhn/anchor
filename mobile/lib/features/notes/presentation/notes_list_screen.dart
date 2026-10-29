@@ -1,33 +1,47 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:anchor/core/network/connectivity_provider.dart';
-import 'package:anchor/core/notifications/reminder_permission_prompt.dart';
-import 'package:anchor/core/notifications/reminder_permissions.dart';
-import 'package:anchor/core/widgets/quill_preview.dart';
-import 'package:anchor/core/widgets/app_drawer.dart';
-import 'package:anchor/features/tags/presentation/tags_controller.dart';
-import 'package:anchor/features/tags/domain/tag.dart';
-import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
-import 'package:anchor/features/notes/presentation/widgets/notes_search_bar.dart';
-import 'package:anchor/features/notes/presentation/widgets/selection_app_bar_actions.dart';
-import 'package:anchor/core/widgets/app_empty_state.dart';
-import 'package:anchor/core/widgets/gradient_background.dart';
-import 'package:anchor/features/notes/domain/note.dart';
-import 'package:anchor/features/sync/presentation/sync_warning.dart';
-import 'notes_controller.dart';
-import 'notes_view_options.dart';
-import 'widgets/view_options_sheet.dart';
+
+import '../../../app/router/app_routes.dart';
+import '../../../core/motion/reorder_animation.dart';
+import '../../../core/motion/springs.dart';
+import '../../../core/network/connectivity_provider.dart';
 import '../../../core/theme/context_extensions.dart';
-import '../../../core/theme/tokens/app_icon_sizes.dart';
-import '../../../core/theme/tokens/app_radius.dart';
-import 'package:anchor/core/widgets/app_bottom_sheet.dart';
-import 'package:anchor/core/widgets/app_bar_scrim.dart';
-import 'package:anchor/core/widgets/large_title_app_bar.dart';
+import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_scaffold.dart';
+import '../../../core/widgets/bar_title.dart';
+import '../../../core/widgets/selection_bar.dart';
+import '../../../l10n/l10n.dart';
+import '../../reminders/data/reminder_permissions.dart';
+import '../../reminders/presentation/reminder_permission_prompt.dart';
+import '../../sync/data/sync_manager.dart';
+import '../../sync/presentation/sync_warning.dart';
+import '../../tags/domain/tag.dart';
+import '../../tags/presentation/tags_controller.dart';
+import '../../tags/presentation/widgets/tag_sheets.dart';
+import '../domain/note.dart';
+import '../domain/note_dates.dart';
+import 'note_actions.dart';
+import 'note_folder.dart';
+import 'note_labels.dart';
+import 'notes_controller.dart';
+import 'notes_list_controller.dart';
+import 'notes_view_options.dart';
+import 'widgets/app_drawer.dart';
+import 'widgets/card_body.dart';
+import 'widgets/card_registry.dart';
+import 'widgets/drawer_host.dart';
+import 'widgets/list_title.dart';
+import 'widgets/note_card.dart';
+import 'widgets/note_cards_loading.dart';
+import 'widgets/note_surface.dart';
+import 'widgets/notes_board.dart';
+import 'widgets/notes_bottom_bar.dart';
+import 'widgets/pull_to_refresh.dart';
+import 'widgets/view_options_sheet.dart';
 
 class NotesListScreen extends ConsumerStatefulWidget {
   const NotesListScreen({super.key});
@@ -37,490 +51,422 @@ class NotesListScreen extends ConsumerStatefulWidget {
 }
 
 class _NotesListScreenState extends ConsumerState<NotesListScreen> {
-  final _searchController = TextEditingController();
+  final _scroll = ScrollController();
+  final _scrollKey = GlobalKey();
+  final _drawerKey = GlobalKey<DrawerHostState>();
+  final _reorderPositions = ReorderPositions();
+  final _isBottomBarCompact = ValueNotifier(false);
+  double _scrollDistance = 0;
+  bool _searching = false;
 
-  /// Height of an extended FAB, which Material does not export.
-  static const double _extendedFabHeight = 56;
-
-  /// Room under the last card for the FAB floating over it.
-  static const double _fabClearance =
-      _extendedFabHeight + kFloatingActionButtonMargin;
+  NoteSelection get _selection => NoteSelection(ref);
 
   @override
   void initState() {
     super.initState();
-    // Sync controller with provider state if it exists
-    final currentQuery = ref.read(searchQueryProvider);
-    if (currentQuery.isNotEmpty) {
-      _searchController.text = currentQuery;
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) NoteSurfacePainter.precachePatterns(context);
+    });
+    ref.listenManual(
+      shouldAskForReminderPermissionsProvider,
+      (_, shouldAsk) => _askForReminderPermissions(shouldAsk),
+      fireImmediately: true,
+    );
   }
 
-  /// Asks for what a reminder needs the first time this device holds one.
-  void _maybeAskForReminderPermissions(List<Note> notes) {
+  @override
+  void dispose() {
+    _scroll.dispose();
+    _isBottomBarCompact.dispose();
+    super.dispose();
+  }
+
+  bool _onScroll(ScrollUpdateNotification update) {
+    final metrics = update.metrics;
+    if (update.depth != 0 || metrics.axis != Axis.vertical || _searching) {
+      return false;
+    }
+    if (metrics.pixels < 40) {
+      _scrollDistance = 0;
+      _isBottomBarCompact.value = false;
+      return false;
+    }
+    final delta = update.scrollDelta ?? 0;
+    if (delta == 0 || metrics.outOfRange) return false;
+    _scrollDistance = delta.sign == _scrollDistance.sign
+        ? _scrollDistance + delta
+        : delta;
+    if (_scrollDistance > 4) {
+      _isBottomBarCompact.value = true;
+    } else if (_scrollDistance < -4) {
+      _isBottomBarCompact.value = false;
+    }
+    return false;
+  }
+
+  void _askForReminderPermissions(bool shouldAsk) {
     final controller = ref.read(reminderPermissionsControllerProvider.notifier);
-    if (controller.promptedThisRun) return;
-
-    final permissions = ref.read(reminderPermissionsControllerProvider).value;
-    if (permissions == null || permissions.ringsOnTime) return;
-
-    final rings = notes.any(
-      (note) => note.hasReminder && note.isActive && !note.isArchived,
-    );
-    if (!rings) return;
-
-    controller.promptedThisRun = true;
+    if (!shouldAsk || controller.wasPromptedThisRun) return;
+    controller.wasPromptedThisRun = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ensureReminderPermissions(
-        context,
-        ref,
-        trigger: ReminderPermissionTrigger.synced,
-      );
+      if (mounted) {
+        ensureReminderPermissions(
+          context,
+          ref,
+          trigger: ReminderPermissionTrigger.synced,
+        );
+      }
+    });
+  }
+
+  void _endSearch() {
+    setState(() => _searching = false);
+    ref.read(searchQueryProvider.notifier).set('');
+  }
+
+  Future<void> _runOnSelection(
+    NoteAction action,
+    List<Note> selectedNotes,
+    VisibleNotes shown,
+  ) async {
+    if (selectedNotes.isEmpty) return;
+    if (action == NoteAction.tag) {
+      await showTagPicker(context, selectedNotes);
+      _selection.end();
+      return;
+    }
+    final fadeOut = context.motion(AnchorTokens.motionDurationExit);
+    final leaving = _leavingAfter(action, selectedNotes, shown);
+    await NoteActions(context, ref).run(
+      action,
+      selectedNotes,
+      beforeChange: () async {
+        _selection.end();
+        if (leaving.isEmpty) return;
+        CardRegistry.leave(leaving);
+        await Future<void>.delayed(fadeOut);
+      },
+    );
+  }
+
+  /// The notes [action] takes off the list.
+  List<String> _leavingAfter(
+    NoteAction action,
+    List<Note> selectedNotes,
+    VisibleNotes shown,
+  ) {
+    if (action == NoteAction.pin) return const [];
+    if (action != NoteAction.archive) {
+      return [for (final note in selectedNotes) note.id];
+    }
+    if (selectedNotes.every((note) => note.isArchived)) return const [];
+    final selectedIds = {for (final note in selectedNotes) note.id};
+    final hasOtherNotes = shown.notes.any(
+      (note) => !note.isArchived && !selectedIds.contains(note.id),
+    );
+    if (shown.showsArchived(hasOtherNotes: hasOtherNotes)) return const [];
+    return [
+      for (final note in selectedNotes)
+        if (!note.isArchived) note.id,
+    ];
+  }
+
+  void _open(Note note) {
+    if (_searching) FocusScope.of(context).unfocus();
+    context.go(AppRoutes.note(note.id), extra: note);
+  }
+
+  void _newNote() => context.go(AppRoutes.newNote);
+
+  void _openSettings() {
+    _drawerKey.currentState?.close();
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) context.push(AppRoutes.settings);
     });
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _exitSelectionMode() {
-    ref.read(selectionModeProvider.notifier).setEnabled(false);
-    ref.read(selectedNoteIdsProvider.notifier).clear();
-  }
-
-  Future<void> _onRefresh() async {
-    await ref.read(notesControllerProvider.notifier).sync();
-  }
-
-  Widget _buildNoteItem(
-    Note note,
-    bool isSelectionMode,
-    Set<String> selectedNoteIds,
-  ) {
-    return NoteCard(
-      note: note,
-      isSelectionMode: isSelectionMode,
-      isSelected: selectedNoteIds.contains(note.id),
-      onLongPress: () {
-        if (!isSelectionMode) {
-          ref.read(selectionModeProvider.notifier).setEnabled(true);
-        }
-        ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
-      },
-      onTap: () {
-        if (isSelectionMode) {
-          ref.read(selectedNoteIdsProvider.notifier).toggle(note.id);
-        } else {
-          context.go('/note/${note.id}', extra: note);
-        }
-      },
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final notesAsync = ref.watch(notesControllerProvider);
-    final searchQuery = ref.watch(searchQueryProvider);
-    ref.watch(reminderPermissionsControllerProvider);
-    final notes = notesAsync.value;
-    if (notes != null) _maybeAskForReminderPermissions(notes);
-    final selectedTagId = ref.watch(selectedTagFilterProvider);
-    final tagsAsync = ref.watch(tagsControllerProvider);
-    final isSyncing = ref.watch(syncManagerProvider);
-    final isSelectionMode = ref.watch(selectionModeProvider);
-    final selectedNoteIds = ref.watch(selectedNoteIdsProvider);
-    final viewOptionsAsync = ref.watch(notesViewOptionsProvider);
-    final viewOptions = viewOptionsAsync.value;
-    final theme = Theme.of(context);
-    final dims = context.dims;
-
-    // Get selected tag
-    Tag? selectedTag;
-    if (selectedTagId != null && tagsAsync.hasValue) {
-      selectedTag = tagsAsync.value
-          ?.where((t) => t.id == selectedTagId)
-          .firstOrNull;
+    final folder = ref.watch(noteFolderProvider);
+    final shown = ref.watch(visibleNotesProvider);
+    final visible = shown.notes;
+    final shownIds = {for (final note in visible) note.id};
+    if (CardRegistry.leaving.value.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => CardRegistry.forgetLeavingExcept(shownIds),
+      );
     }
+    final firstDownload = ref.watch(firstDownloadProvider);
+    final isLoading =
+        !shown.isLoaded ||
+        (visible.isEmpty && firstDownload == FirstDownload.running);
+    final allTags = ref.watch(tagsControllerProvider).value ?? const <Tag>[];
+    final tagsById = {for (final t in allTags) t.id: t};
+    final tagId = folder == NoteFolder.notes
+        ? ref.watch(selectedTagFilterProvider)
+        : null;
+    final tag = tagId == null ? null : tagsById[tagId];
+    _reorderPositions.keepShown((folder, tagId), shownIds);
+    final isSelecting = ref.watch(selectionModeProvider);
+    final selectedIds = ref.watch(selectedNoteIdsProvider);
+    final options =
+        ref.watch(notesViewOptionsProvider).value ?? const NotesViewOptions();
+    final query = ref.watch(searchQueryProvider);
+    final selectedNotes = visible
+        .where((n) => selectedIds.contains(n.id))
+        .toList();
+    final layout = switch (options.viewType) {
+      ViewType.masonry => CardLayout.masonry,
+      ViewType.grid => CardLayout.grid,
+      ViewType.list => CardLayout.list,
+    };
+    void openMenu() => _drawerKey.currentState?.open();
+    void clearTag() => ref.read(selectedTagFilterProvider.notifier).clear();
 
-    return PopScope(
-      canPop: !isSelectionMode,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && isSelectionMode) {
-          _exitSelectionMode();
-        }
-      },
-      child: Scaffold(
-        drawer: const AppDrawer(),
-        body: ContentBackground(
-          child: RefreshIndicator.adaptive(
-            onRefresh: _onRefresh,
-            displacement: 20,
-            edgeOffset: dims.appBarExpandedHeight,
-            color: theme.colorScheme.primary,
-            child: CustomScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverAppBar(
-                  backgroundColor: Colors.transparent,
-                  floating: true,
-                  pinned: true,
-                  expandedHeight: isSelectionMode
-                      ? kToolbarHeight
-                      : dims.appBarExpandedHeight,
-                  toolbarHeight: kToolbarHeight,
-                  scrolledUnderElevation: 0,
-                  leading: isSelectionMode
-                      ? IconButton(
-                          icon: const Icon(LucideIcons.x),
-                          onPressed: _exitSelectionMode,
-                          tooltip: 'Cancel',
-                        )
-                      : Builder(
-                          builder: (context) => IconButton(
-                            icon: const Icon(LucideIcons.menu),
-                            onPressed: () => Scaffold.of(context).openDrawer(),
-                            tooltip: 'Menu',
-                          ),
-                        ),
-                  flexibleSpace: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      const AppBarScrim(),
-                      if (!isSelectionMode)
-                        FlexibleSpaceBar(
-                          centerTitle: Platform.isIOS,
-                          expandedTitleScale:
-                              LargeTitleAppBar.expandedTitleScale,
-                          titlePadding: EdgeInsets.only(
-                            left: LargeTitleAppBar.titleInset,
-                            right: Platform.isIOS
-                                ? LargeTitleAppBar.titleInset
-                                : 0,
-                            bottom: dims.sm,
-                          ),
-                          title: Text(
-                            'Anchor',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  title: isSelectionMode
-                      ? Text(
-                          selectedNoteIds.isEmpty
-                              ? 'Select notes'
-                              : '${selectedNoteIds.length} ${selectedNoteIds.length == 1 ? 'note' : 'notes'}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        )
-                      : null,
-                  actions: [
-                    if (isSelectionMode)
-                      SelectionAppBarActions(
-                        selectedNoteIds: selectedNoteIds,
-                        onExitSelectionMode: _exitSelectionMode,
-                      )
-                    else ...[
-                      // Only show sync indicator when actively syncing
-                      if (isSyncing)
-                        Padding(
-                          padding: EdgeInsets.only(right: dims.xs),
-                          child: Center(child: _SyncIndicator(theme: theme)),
-                        ),
-                      if (viewOptions != null)
-                        IconButton(
-                          icon: Icon(
-                            viewOptions.viewType == ViewType.grid
-                                ? LucideIcons.layoutGrid
-                                : LucideIcons.list,
-                          ),
-                          tooltip: 'View options',
-                          onPressed: () {
-                            AppBottomSheet.show(
-                              context,
-                              builder: (context) => const ViewOptionsSheet(),
-                            );
-                          },
-                        ),
-                    ],
-                  ],
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    dims.screenGutter,
-                    dims.xs,
-                    dims.screenGutter,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SyncWarning(),
-                        NotesSearchBar(
-                          controller: _searchController,
-                          query: searchQuery,
-                          onChanged: (value) =>
-                              ref.read(searchQueryProvider.notifier).set(value),
-                          onClear: () {
-                            _searchController.clear();
-                            ref.read(searchQueryProvider.notifier).set('');
-                          },
-                        ),
-                        // Tag filter indicator
-                        if (selectedTag != null) ...[
-                          SizedBox(height: dims.sm),
-                          _TagFilterChip(
-                            tag: selectedTag,
-                            onClear: () {
-                              ref
-                                  .read(selectedTagFilterProvider.notifier)
-                                  .clear();
-                            },
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                notesAsync.when(
-                  data: (notes) {
-                    final filteredNotes = notes.where((note) {
-                      if (searchQuery.isEmpty) return true;
-                      final q = searchQuery.toLowerCase();
-                      final contentText = extractPlainTextFromQuillContent(
-                        note.content,
-                      ).toLowerCase();
-                      return note.title.toLowerCase().contains(q) ||
-                          contentText.contains(q);
-                    }).toList();
+    final actions = <Widget>[
+      if (isSelecting)
+        BarTextButton(
+          label:
+              selectedNotes.length == visible.length && selectedNotes.isNotEmpty
+              ? context.l10n.commonDeselectAll
+              : context.l10n.commonSelectAll,
+          onPressed: () => _selection.toggleAll(visible),
+        )
+      else ...[
+        if (folder == NoteFolder.trash)
+          BarButton(
+            icon: LucideIcons.ellipsis,
+            label: context.l10n.commonMore,
+            onPressed: () => NoteActions(context, ref).emptyTrash(),
+          )
+        else
+          BarButton(
+            icon: options.viewType == ViewType.list
+                ? LucideIcons.rows3
+                : LucideIcons.layoutGrid,
+            label: context.l10n.listViewOptions,
+            onPressed: () => showViewOptionsSheet(context),
+          ),
+      ],
+    ];
 
-                    if (filteredNotes.isEmpty) {
-                      if (searchQuery.isNotEmpty) {
-                        return const SliverAppEmptyState(
-                          icon: LucideIcons.search,
-                          message: 'No matching notes found',
-                        );
-                      }
-                      return const SliverAppEmptyState(
-                        icon: LucideIcons.sparkles,
-                        message: 'Capture your ideas here',
-                      );
-                    }
+    Widget card(Note note, int index) => ReorderAnimatedBox(
+      key: ValueKey(note.id),
+      id: note.id,
+      memory: _reorderPositions,
+      child: NoteCard(
+        note: note,
+        tags: tagsByName(note.tagIds, tagsById),
+        layout: layout,
+        isSelecting: isSelecting,
+        isSelected: selectedIds.contains(note.id),
+        index: index,
+        status: folder == NoteFolder.trash
+            ? trashDaysLeftLabel(note.updatedAt, context.l10n)
+            : null,
+        onTap: () => isSelecting ? _selection.toggle(note) : _open(note),
+        onLongPress: () =>
+            isSelecting ? _selection.toggle(note) : _selection.start(note),
+      ),
+    );
 
-                    if (viewOptions == null) {
-                      return const SliverToBoxAdapter(child: SizedBox.shrink());
-                    }
-
-                    filteredNotes.sort(noteComparator(viewOptions));
-
-                    return SliverPadding(
-                      padding: dims.screenInsets.copyWith(
-                        bottom:
-                            dims.screenGutter +
-                            (isSelectionMode ? 0 : _fabClearance),
-                      ),
-                      sliver: viewOptions.viewType == ViewType.grid
-                          ? SliverMasonryGrid.count(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: dims.gridSpacing,
-                              crossAxisSpacing: dims.gridSpacing,
-                              childCount: filteredNotes.length,
-                              itemBuilder: (context, index) {
-                                return _buildNoteItem(
-                                  filteredNotes[index],
-                                  isSelectionMode,
-                                  selectedNoteIds,
-                                );
-                              },
-                            )
-                          : SliverList(
-                              delegate: SliverChildBuilderDelegate((
-                                context,
-                                index,
-                              ) {
-                                return Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: dims.listItemSpacing,
-                                  ),
-                                  child: _buildNoteItem(
-                                    filteredNotes[index],
-                                    isSelectionMode,
-                                    selectedNoteIds,
-                                  ),
-                                );
-                              }, childCount: filteredNotes.length),
-                            ),
-                    );
-                  },
-                  loading: () => const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (err, stack) => SliverFillRemaining(
-                    child: Center(child: Text('Error: $err')),
-                  ),
-                ),
-              ],
+    final page = AppScaffold(
+      title: tag == null ? folder.titleIn(context.l10n) : '#${tag.name}',
+      isTall: true,
+      largeTitle: isSelecting
+          ? null
+          : ListLargeTitle(folder: folder, tag: tag, onOpenMenu: openMenu),
+      barTitle: isSelecting
+          ? Semantics(
+              liveRegion: true,
+              child: BarTitle(
+                selectedNotes.isEmpty
+                    ? context.l10n.notesSelectTitle
+                    : context.l10n.commonSelectedCount(selectedNotes.length),
+              ),
+            )
+          : ListBarTitle(folder: folder, tag: tag, onOpenMenu: openMenu),
+      leading: isSelecting
+          ? BarButton(
+              icon: LucideIcons.x,
+              label: context.l10n.commonCancel,
+              onPressed: _selection.end,
+            )
+          : null,
+      showBack: false,
+      actions: actions,
+      controller: _scroll,
+      scrollKey: _scrollKey,
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      refreshSliver: isSelecting || _searching
+          ? null
+          : PullToRefresh(
+              isOnline: () => ref.read(isOnlineProvider),
+              onSync: () =>
+                  ref.read(syncManagerProvider.notifier).requestSync(),
             ),
+      slivers: [
+        NotesBoard(
+          groups: shown.groups,
+          layout: layout,
+          generation: Object.hashAll([
+            folder,
+            layout,
+            tagId,
+            query,
+            ...visible.map((n) => n.id),
+            ...visible.map((n) => n.isPinned),
+            ...visible.map((n) => n.isArchived),
+          ]),
+          contentKey: _scrollKey,
+          cardBuilder: card,
+          onToggleFold: tagId == null
+              ? null
+              : () => ref.read(openArchivedTagsProvider.notifier).toggle(tagId),
+          header: [
+            if (folder == NoteFolder.notes)
+              SliverToBoxAdapter(
+                child: SyncWarning(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    context.density.space8,
+                    16,
+                    context.density.space8,
+                  ),
+                ),
+              ),
+          ],
+          empty: isLoading
+              ? NoteCardsLoading(layout: layout)
+              : visible.isEmpty
+              ? firstDownload == FirstDownload.done
+                    ? _empty(folder, query, tag)
+                    : _notDownloaded(firstDownload)
+              : null,
+        ),
+      ],
+      bottomBarFollowsKeyboard: _searching,
+      bottomBar: SelectionBarSwitcher(
+        isSelecting: isSelecting,
+        bottomBar: ValueListenableBuilder<bool>(
+          valueListenable: _isBottomBarCompact,
+          builder: (context, isCompact, _) => NotesBottomBar(
+            placeholder: tag != null
+                ? context.l10n.searchTag(tag.name)
+                : folder.searchHintIn(context.l10n),
+            compact: isCompact,
+            searching: _searching,
+            query: query,
+            onStartSearch: () => setState(() => _searching = true),
+            onQuery: (q) => ref.read(searchQueryProvider.notifier).set(q),
+            onCancel: _endSearch,
+            onNewNote: folder == NoteFolder.notes ? _newNote : null,
+            newNoteKey: CardRegistry.newNoteButton,
           ),
         ),
-        floatingActionButton: isSelectionMode
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: () => context.go('/note/new'),
-                icon: const Icon(LucideIcons.plus),
-                label: const Text('New Note'),
-              ),
+        selectionBar: SelectionBar(
+          enabled: selectedNotes.isNotEmpty,
+          actions: [
+            for (final action in folder.selectionActions)
+              if (action.iconAndLabelFor(selectedNotes, context.l10n)
+                  case final appearance)
+                SelectionAction(
+                  icon: appearance.icon,
+                  label: appearance.label,
+                  isDanger: action.isDanger,
+                  onPressed: () =>
+                      _runOnSelection(action, selectedNotes, shown),
+                ),
+          ],
+        ),
+      ),
+    );
+
+    return PopScope(
+      canPop:
+          !isSelecting &&
+          !_searching &&
+          folder == NoteFolder.notes &&
+          tagId == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // The drawer closes itself.
+        if (_drawerKey.currentState?.isCovered ?? false) return;
+        if (isSelecting) return _selection.end();
+        if (_searching) return _endSearch();
+        if (tagId != null) return clearTag();
+        ref.read(noteFolderProvider.notifier).go(NoteFolder.notes);
+      },
+      child: DrawerHost(
+        key: _drawerKey,
+        canSwipeOpen: !isSelecting,
+        drawerBuilder: (close) => AppDrawer(
+          onClose: close,
+          onOpenSettings: _openSettings,
+          onOpenList: () {
+            if (_searching) _endSearch();
+          },
+        ),
+        child: NotificationListener<ScrollUpdateNotification>(
+          onNotification: _onScroll,
+          child: page,
+        ),
       ),
     );
   }
-}
 
-class _TagFilterChip extends StatelessWidget {
-  final Tag tag;
-  final VoidCallback onClear;
-
-  const _TagFilterChip({required this.tag, required this.onClear});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dims = context.dims;
-    final tagColor = parseTagColor(
-      tag.color,
-      fallback: theme.colorScheme.primary,
-    );
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: dims.xxs, vertical: dims.xxs),
-      decoration: BoxDecoration(
-        color: tagColor.withValues(alpha: 0.1),
-        borderRadius: AppRadius.smBorder,
-        border: Border.all(color: tagColor.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.filter,
-                  size: AppIconSizes.xs,
-                  color: tagColor,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Filtering by',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: dims.xs,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: tagColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(LucideIcons.hash, size: 12, color: tagColor),
-                      const SizedBox(width: 2),
-                      Text(
-                        tag.name,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: tagColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Material(
-            color: Colors.transparent,
-            borderRadius: AppRadius.xsBorder,
-            child: InkWell(
-              onTap: onClear,
-              borderRadius: AppRadius.xsBorder,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Icon(
-                  LucideIcons.x,
-                  size: AppIconSizes.sm,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+  Widget _notDownloaded(FirstDownload firstDownload) {
+    final l10n = context.l10n;
+    final canRetry = firstDownload == FirstDownload.failed;
+    return AppEmptyState(
+      kind: EmptyStateKind.loadFailed,
+      title: l10n.notesLoadFailedTitle,
+      message: canRetry ? l10n.notesLoadFailedHelp : l10n.notesLoadPausedHelp,
+      action: canRetry
+          ? AppButton(
+              label: l10n.commonTryAgain,
+              isExpanded: false,
+              onPressed: () =>
+                  ref.read(syncManagerProvider.notifier).requestSync(),
+            )
+          : null,
     );
   }
-}
 
-class _SyncIndicator extends StatefulWidget {
-  final ThemeData theme;
-
-  const _SyncIndicator({required this.theme});
-
-  @override
-  State<_SyncIndicator> createState() => _SyncIndicatorState();
-}
-
-class _SyncIndicatorState extends State<_SyncIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _rotation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat();
-
-    _rotation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RotationTransition(
-      turns: _rotation,
-      child: Icon(
-        LucideIcons.refreshCw,
-        size: AppIconSizes.md,
-        color: widget.theme.colorScheme.onSurface,
+  Widget _empty(NoteFolder folder, String query, Tag? tag) {
+    final l10n = context.l10n;
+    if (query.trim().isNotEmpty) {
+      return AppEmptyState(
+        kind: EmptyStateKind.search,
+        title: l10n.searchNoResults(query.trim()),
+        message: l10n.searchNoResultsHelp,
+      );
+    }
+    return switch (folder) {
+      NoteFolder.archive => AppEmptyState(
+        kind: EmptyStateKind.archive,
+        title: l10n.archiveEmptyTitle,
+        message: l10n.archiveEmptyHelp,
       ),
-    );
+      NoteFolder.trash => AppEmptyState(
+        kind: EmptyStateKind.trash,
+        title: l10n.trashEmptyStateTitle,
+        message: l10n.trashEmpty(trashDays),
+      ),
+      NoteFolder.notes => AppEmptyState(
+        title: tag != null
+            ? l10n.tagEmptyTitle(tag.name)
+            : l10n.notesEmptyTitle,
+        message: tag != null ? l10n.tagEmptyHelp : l10n.notesEmptyHelp,
+        action: AppButton(
+          label: l10n.noteNew,
+          icon: LucideIcons.plus,
+          isExpanded: false,
+          onPressed: _newNote,
+        ),
+      ),
+    };
   }
 }

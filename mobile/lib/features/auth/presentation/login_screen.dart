@@ -1,17 +1,28 @@
-import 'package:anchor/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:anchor/core/network/server_config_provider.dart';
-import 'package:anchor/core/theme/context_extensions.dart';
-import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
-import 'package:anchor/core/theme/tokens/app_radius.dart';
-import 'package:anchor/core/widgets/app_snackbar.dart';
-import 'package:anchor/features/auth/presentation/providers/oidc_config_provider.dart';
-import 'package:anchor/features/auth/presentation/providers/registration_mode_provider.dart';
+
+import '../../../app/router/app_routes.dart';
+import '../../../core/motion/haptics.dart';
+import '../../../core/network/server_config_provider.dart';
+import '../../../core/theme/context_extensions.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/form_page.dart';
+import '../../../core/widgets/form_submit.dart';
+import '../../../core/widgets/page_heading.dart';
+import '../../../l10n/l10n.dart';
+import '../../server/presentation/server_link.dart';
+import '../domain/auth_failure.dart';
+import '../domain/registration_mode.dart';
 import 'auth_controller.dart';
-import 'package:anchor/core/theme/tokens/app_opacity.dart';
+import 'auth_error_message.dart';
+import 'oidc_config_provider.dart';
+import 'registration_mode_provider.dart';
+import 'widgets/auth_widgets.dart';
+
+enum _SignInMethod { password, provider }
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,306 +31,168 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _isPasswordVisible = false;
+class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _email.dispose();
+    _password.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      await ref
-          .read(authControllerProvider.notifier)
-          .login(_emailController.text, _passwordController.text);
+  void _failed(Object error) {
+    final errorMessage = authErrorMessageOf(error, context.l10n);
+    showError(errorMessage.text, field: errorMessage.field);
+    if (error is InvalidCredentialsFailure) {
+      _password.clear();
+      _passwordFocus.requestFocus();
     }
   }
 
-  Future<void> _loginWithOidc() async {
-    await ref.read(authControllerProvider.notifier).loginWithOidc();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(authControllerProvider);
-    final oidcConfigAsync = ref.watch(oidcConfigProvider);
-    final registrationModeAsync = ref.watch(registrationModeProvider);
-    final isLoading = state.isLoading;
-
-    ref.listen(authControllerProvider, (previous, next) {
-      if (next.hasError && previous?.isLoading == true) {
-        AppSnackbar.showError(context, message: next.error.toString());
-      }
-    });
-
-    final serverUrl = ref.watch(serverUrlProvider);
-    final oidcConfig = oidcConfigAsync.hasValue ? oidcConfigAsync.value : null;
-    final oidcConfigLoading = oidcConfigAsync.isLoading;
-    final showLocalLogin =
-        oidcConfig == null || !oidcConfig.disableInternalAuth;
-    final signupDisabled =
-        registrationModeAsync.hasValue &&
-        registrationModeAsync.value == 'disabled';
-    final dims = context.dims;
-
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(dims.xl),
-          child: AutofillGroup(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Server URL indicator
-                  _ServerUrlChip(
-                    serverUrl: serverUrl,
-                    onChangeServer: () {
-                      context.push(AppRoutes.serverConfig, extra: serverUrl);
-                    },
-                  ),
-                  SizedBox(height: dims.xl),
-                  Text(
-                    'Welcome Back',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: dims.xs),
-                  Text(
-                    'Sign in to continue',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(
-                        alpha: AppOpacity.secondary,
-                      ),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-                  // OIDC Login button
-                  if (oidcConfigLoading)
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(dims.xl),
-                        child: const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    )
-                  else if (oidcConfig?.enabled == true) ...[
-                    FilledButton.icon(
-                      onPressed: isLoading ? null : _loginWithOidc,
-                      icon: const Icon(
-                        LucideIcons.logIn,
-                        size: AppIconSizes.md,
-                      ),
-                      label: Text('Login with ${oidcConfig!.providerName}'),
-                      style: FilledButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: dims.md),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: AppRadius.buttonBorder,
-                        ),
-                      ),
-                    ),
-                    if (showLocalLogin) ...[
-                      SizedBox(height: dims.md),
-                      const _OrDivider(),
-                      SizedBox(height: dims.md),
-                    ],
-                  ],
-                  if (showLocalLogin) ...[
-                    TextFormField(
-                      controller: _emailController,
-                      autofillHints: const [AutofillHints.email],
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: const Icon(LucideIcons.mail),
-                        border: const OutlineInputBorder(
-                          borderRadius: AppRadius.mdBorder,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter email';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: dims.md),
-                    TextFormField(
-                      controller: _passwordController,
-                      onChanged: (_) => setState(() {}),
-                      autofillHints: const [AutofillHints.password],
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _login(),
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(LucideIcons.lock),
-                        suffixIcon: _passwordController.text.isEmpty
-                            ? null
-                            : IconButton(
-                                icon: Icon(
-                                  _isPasswordVisible
-                                      ? LucideIcons.eyeOff
-                                      : LucideIcons.eye,
-                                  color: Theme.of(context).colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
-                              ),
-                        border: const OutlineInputBorder(
-                          borderRadius: AppRadius.mdBorder,
-                        ),
-                      ),
-                      obscureText: !_isPasswordVisible,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter password';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: dims.xl),
-                    FilledButton(
-                      onPressed: isLoading ? null : _login,
-                      style: FilledButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: dims.md),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: AppRadius.buttonBorder,
-                        ),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Sign In'),
-                    ),
-                    if (!signupDisabled) ...[
-                      SizedBox(height: dims.md),
-                      TextButton(
-                        onPressed: () => context.push(AppRoutes.register),
-                        child: const Text('Create an account'),
-                      ),
-                    ],
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
+  Future<void> _signIn() async {
+    if (!checkFields([
+      (AuthField.email, _emailFocus, emailError(_email.text, context.l10n)),
+      (
+        AuthField.password,
+        _passwordFocus,
+        passwordError(_password.text, context.l10n),
       ),
+    ])) {
+      return;
+    }
+    await submit(
+      () => ref
+          .read(authControllerProvider.notifier)
+          .login(_email.text.trim(), _password.text),
+      tag: _SignInMethod.password,
+      onSuccess: Haptics.success,
+      onFailure: _failed,
     );
   }
-}
 
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
+  Future<void> _signInWithProvider() => submit(
+    () => ref.read(authControllerProvider.notifier).loginWithOidc(),
+    tag: _SignInMethod.provider,
+    onFailure: _failed,
+  );
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final isBusy = isSubmitting();
+    final server = ref.watch(serverUrlProvider);
+    final oidc = ref.watch(oidcConfigProvider).value;
+    final registration = ref.watch(registrationModeProvider).value;
+    final hasPasswords = oidc == null || !oidc.disableInternalAuth;
+    final provider = oidc?.enabled == true ? oidc!.providerName : null;
+    final density = context.density;
+    final l10n = context.l10n;
+
+    final providerButton = provider == null
+        ? null
+        : AppButton(
+            label: l10n.authContinueWith(provider),
+            busyLabel: l10n.authOpeningProvider(provider),
+            isBusy: isSubmitting(_SignInMethod.provider),
+            icon: LucideIcons.keyRound,
+            kind: hasPasswords
+                ? AppButtonKind.secondary
+                : AppButtonKind.primary,
+            hasShadow: !hasPasswords,
+            onPressed: isBusy ? null : _signInWithProvider,
+          );
+
+    return FormPage(
+      title: l10n.authSignIn,
+      isTitleShown: false,
+      showBack: false,
+      topPadding: density.space32,
+      bottomBar: hasPasswords
+          ? AppButton(
+              label: l10n.authSignIn,
+              busyLabel: l10n.authSigningIn,
+              isBusy: isSubmitting(_SignInMethod.password),
+              hasShadow: true,
+              onPressed: isBusy ? null : _signIn,
+            )
+          : providerButton,
       children: [
-        const Expanded(child: Divider()),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: context.dims.md),
-          child: Text(
-            'Or continue with',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: AppOpacity.secondary),
-            ),
-          ),
-        ),
-        const Expanded(child: Divider()),
-      ],
-    );
-  }
-}
-
-class _ServerUrlChip extends StatelessWidget {
-  final String? serverUrl;
-  final VoidCallback onChangeServer;
-
-  const _ServerUrlChip({required this.serverUrl, required this.onChangeServer});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dims = context.dims;
-
-    if (serverUrl == null) return const SizedBox.shrink();
-
-    // Extract host from URL for display
-    String displayUrl = serverUrl!;
-    try {
-      final uri = Uri.parse(serverUrl!);
-      displayUrl = uri.host;
-      if (uri.port != 80 && uri.port != 443) {
-        displayUrl += ':${uri.port}';
-      }
-    } catch (_) {}
-
-    return Center(
-      child: InkWell(
-        onTap: onChangeServer,
-        borderRadius: AppRadius.lgBorder,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: dims.sm, vertical: dims.xs),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.5,
-            ),
-            borderRadius: AppRadius.lgBorder,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.server,
-                size: AppIconSizes.xs,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                displayUrl,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+        PageHeading(
+          title: l10n.authWelcomeBack,
+          subtitle: server == null
+              ? l10n.authSignInToAnchor
+              : l10n.authSignInTo(PageHeading.linkSlot),
+          subtitleLink: server == null
+              ? null
+              : ServerLink(
+                  url: server,
+                  onTap: () =>
+                      context.push(AppRoutes.serverConfig, extra: server),
                 ),
-              ),
-              SizedBox(width: dims.xxs),
-              Icon(
-                LucideIcons.chevronDown,
-                size: AppIconSizes.xs,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ],
-          ),
+          hasIcon: true,
         ),
-      ),
+        SizedBox(height: density.space24),
+        FormNotices(
+          errorMessage: errorMessage,
+          offlineText: l10n.authOfflineSignIn,
+        ),
+        if (providerButton != null && hasPasswords) ...[
+          SizedBox(height: density.space8),
+          providerButton,
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: density.space16),
+            child: const OrDivider(),
+          ),
+        ],
+        if (hasPasswords) ...[
+          AutofillGroup(
+            child: Column(
+              spacing: density.space16,
+              children: [
+                AppTextField(
+                  controller: _email,
+                  focusNode: _emailFocus,
+                  label: l10n.fieldEmail,
+                  error: errorOf(AuthField.email),
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  autofillHints: const [
+                    AutofillHints.email,
+                    AutofillHints.username,
+                  ],
+                  textInputAction: TextInputAction.next,
+                  onChanged: (_) => clearError(AuthField.email),
+                  onSubmitted: (_) => _passwordFocus.requestFocus(),
+                ),
+                AppTextField(
+                  controller: _password,
+                  focusNode: _passwordFocus,
+                  label: l10n.fieldPassword,
+                  isPassword: true,
+                  error: errorOf(AuthField.password),
+                  autofillHints: const [AutofillHints.password],
+                  textInputAction: TextInputAction.go,
+                  onChanged: (_) => clearError(AuthField.password),
+                  onSubmitted: (_) => _signIn(),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (registration != RegistrationMode.disabled) ...[
+          SizedBox(height: density.space16),
+          AuthSwitchLink(
+            text: l10n.authNewToAnchor,
+            action: l10n.authCreateAnAccount,
+            onTap: () => context.push(AppRoutes.register),
+          ),
+        ],
+      ],
     );
   }
 }

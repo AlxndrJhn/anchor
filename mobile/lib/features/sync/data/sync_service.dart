@@ -1,24 +1,23 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_tags.dart';
 import '../../../core/network/dio_provider.dart';
-import '../../notes/data/local/reminder_slots.dart';
+import '../../notes/data/local/note_rows.dart';
 import '../../notes/data/repository/note_attachments_repository.dart';
 import '../../notes/data/repository/note_revisions_store.dart';
-import '../../notes/domain/note.dart' as domain;
-import '../../notes/domain/note_attachment.dart' as domain;
+import '../../notes/domain/note.dart';
+import '../../notes/domain/note_attachment.dart';
 import '../../notes/domain/note_revision.dart';
+import '../../reminders/data/reminder_slots.dart';
+import '../../tags/data/local/tag_rows.dart';
 import 'sync_api.dart';
+import 'sync_cursor.dart';
 
 part 'sync_service.g.dart';
 
-const String _tag = 'Sync';
-
-/// Stops the paging loop if the server never runs out.
 const int _maxRequestsPerCycle = 500;
 
 /// How often a rejected change is re-sent before it waits for the next sync.
@@ -33,33 +32,46 @@ SyncService syncService(Ref ref) {
   return SyncService(db, SyncApi(dio), attachments, revisions);
 }
 
-/// Sends up everything that changed on this device, brings down everything that
-/// changed elsewhere, and leaves the local database matching the server.
-///
-/// Nothing here compares timestamps: every change says which server version it
-/// was written against, and the server takes it or rejects it.
+/// Never compares timestamps: each change names the server version it was
+/// written against.
 class SyncService {
-  SyncService(this._db, this._api, this._attachments, this._revisions);
+  SyncService(this._db, this._api, this._attachments, this._revisions)
+    : _cursor = SyncCursor(_db);
 
   final AppDatabase _db;
   final SyncApi _api;
   final NoteAttachmentsRepository _attachments;
   final NoteRevisionsStore _revisions;
+  final SyncCursor _cursor;
 
   Future<void> run() async {
     final start = DateTime.now();
+    final counts = await _exchange();
     await _uploadAttachments();
+    if (counts == null) return;
+    await _attachments.evictCache();
+    AppLogger.instance.info(
+      LogTags.sync,
+      'Sync done in ${DateTime.now().difference(start).inMilliseconds}ms: '
+      'pushed=${counts.pushed} pulled=${counts.pulled}',
+    );
+  }
 
+  /// Pushes and pulls until the feed runs out; null when it stops early.
+  Future<({int pushed, int pulled})?> _exchange() async {
     var pending = await _collectChanges();
     var rebaseRounds = 0;
     var didReset = false;
     var pushed = 0;
     var pulled = 0;
 
-    AppLogger.instance.info(_tag, 'Sync start: queued=${pending.length}');
+    AppLogger.instance.info(
+      LogTags.sync,
+      'Sync start: queued=${pending.length}',
+    );
 
     for (var request = 0; request < _maxRequestsPerCycle; request++) {
-      final cursor = await _prepareCursor();
+      final cursor = await _cursor.prepare();
       final batch = takeUnderBudget(
         pending.take(maxChangesPerRequest),
         (change) => change.approximateBytes,
@@ -77,7 +89,7 @@ class SyncService {
           pending = [...pending, ...rebased];
         } else {
           AppLogger.instance.warn(
-            _tag,
+            LogTags.sync,
             '${rebased.length} change(s) still conflicting; retrying next cycle',
           );
         }
@@ -86,32 +98,30 @@ class SyncService {
       if (response.resetRequired) {
         if (didReset) {
           AppLogger.instance.warn(
-            _tag,
+            LogTags.sync,
             'Server asked to reset twice; stopping',
           );
-          return;
+          return null;
         }
         didReset = true;
-        AppLogger.instance.info(_tag, 'Cursor is too old, taking a snapshot');
-        await _resetCursor();
+        AppLogger.instance.info(
+          LogTags.sync,
+          'Cursor is too old, taking a snapshot',
+        );
+        await _cursor.reset();
         continue;
       }
 
       if (!response.hasMore && pending.isEmpty) {
-        await _attachments.evictCache();
-        AppLogger.instance.info(
-          _tag,
-          'Sync done in ${DateTime.now().difference(start).inMilliseconds}ms: '
-          'pushed=$pushed pulled=$pulled',
-        );
-        return;
+        return (pushed: pushed, pulled: pulled);
       }
     }
 
     AppLogger.instance.warn(
-      _tag,
+      LogTags.sync,
       'Sync stopped after $_maxRequestsPerCycle requests',
     );
+    return null;
   }
 
   Future<void> _uploadAttachments() async {
@@ -119,7 +129,7 @@ class SyncService {
       await _attachments.sync();
     } catch (error, stack) {
       AppLogger.instance.error(
-        _tag,
+        LogTags.sync,
         'Attachment upload failed, retrying next cycle',
         error: error,
         stackTrace: stack,
@@ -130,7 +140,7 @@ class SyncService {
   Future<List<SyncChange>> _collectChanges() async {
     final changes = <SyncChange>[];
 
-    // Tags go first, so a note never arrives before a tag it uses.
+    // Tags must go before the notes that use them.
     final tags = await (_db.select(
       _db.tags,
     )..where((tbl) => tbl.isSynced.equals(false))).get();
@@ -147,7 +157,7 @@ class SyncService {
     final dirtyNoteIds = {for (final note in notes) note.id};
     for (final noteId in await _revisions.noteIdsWithPending()) {
       if (dirtyNoteIds.contains(noteId)) continue;
-      final row = await _noteRow(noteId);
+      final row = await _db.noteRow(noteId);
       if (row == null || !row.isSynced) continue;
       changes.add(await _noteChangeOf(row, isRevisionsOnly: true));
     }
@@ -168,7 +178,7 @@ class SyncService {
   }
 
   Future<SyncNoteChange> _noteChangeOf(
-    Note note, {
+    NoteRow note, {
     bool isRevisionsOnly = false,
   }) async {
     final tagIds =
@@ -205,7 +215,9 @@ class SyncService {
       content: note.content,
       isArchived: note.isArchived,
       background: note.background,
-      state: note.permission == 'owner' || note.state == 'deleted'
+      state:
+          note.permission == NotePermission.owner.name ||
+              note.state == NoteState.deleted.name
           ? note.state
           : null,
       tagIds: tagIds,
@@ -214,14 +226,14 @@ class SyncService {
     );
   }
 
-  SyncReminderChange _reminderChangeOf(Note note) => SyncReminderChange(
+  SyncReminderChange _reminderChangeOf(NoteRow note) => SyncReminderChange(
     id: note.id,
     remindAt: note.reminderAt,
-    recurrence: domain.ReminderRecurrence.fromString(note.reminderRecurrence),
+    recurrence: ReminderRecurrence.fromString(note.reminderRecurrence),
     baseVersion: note.reminderVersion,
   );
 
-  SyncTagChange _tagChangeOf(Tag tag) => SyncTagChange(
+  SyncTagChange _tagChangeOf(TagRow tag) => SyncTagChange(
     id: tag.id,
     localRev: tag.localRev,
     baseVersion: tag.version,
@@ -258,17 +270,14 @@ class SyncService {
         }
       }
 
-      // An expired cursor makes the entries meaningless; the upload results
-      // are still good.
+      // On reset the entries are void; the upload results still apply.
       if (response.resetRequired) return;
 
       for (final entry in response.entries) {
         await _applyEntry(entry, filesToClean, orphanedFiles);
       }
 
-      await _db
-          .update(_db.syncState)
-          .write(SyncStateCompanion(cursor: Value(response.nextCursor)));
+      await _cursor.save(response.nextCursor);
 
       if (!response.hasMore) {
         await _finishSweep(filesToClean, orphanedFiles);
@@ -291,19 +300,19 @@ class SyncService {
   ) async {
     switch (result.status) {
       case SyncStatus.applied:
-        if (change.state == 'deleted') {
+        if (change.state == NoteState.deleted.name) {
           await _dropNote(result.id, filesToClean);
           return;
         }
         await _revisions.markSynced(
           change.revisions.map((revision) => revision.id),
         );
-        final row = await _noteRow(result.id);
+        final row = await _db.noteRow(result.id);
         if (row == null) return;
-        // A revisions-only ack names a version this row's text may not hold
-        // yet; only the feed moves the note.
+        // A reply that only confirms versions must not move the note's
+        // version; only the feed does.
         if (!change.isRevisionsOnly) {
-          await _writeNote(
+          await _db.writeNote(
             result.id,
             NotesCompanion(
               version: Value(result.version),
@@ -318,7 +327,7 @@ class SyncService {
         // Versions that did not fit this push go again.
         if (row.localRev == change.localRev &&
             (await _revisions.pending(result.id, limit: 1)).isNotEmpty) {
-          final fresh = await _noteRow(result.id);
+          final fresh = await _db.noteRow(result.id);
           if (fresh != null) {
             rebased.add(await _noteChangeOf(fresh, isRevisionsOnly: true));
           }
@@ -333,10 +342,10 @@ class SyncService {
         }
         await _revisions.markStale(result.id);
         if (!server.canEdit) {
-          final prior = await _noteRow(result.id);
+          final prior = await _db.noteRow(result.id);
           if (prior != null &&
               !prior.isSynced &&
-              _textChangedHere(prior) &&
+              _hasLocalTextChange(prior) &&
               (prior.title != server.title ||
                   prior.content != server.content)) {
             // Local-only: the server refuses history from a viewer.
@@ -349,10 +358,10 @@ class SyncService {
           await _upsertServerNote(server, force: true);
           return;
         }
-        final prior = await _noteRow(result.id);
+        final prior = await _db.noteRow(result.id);
         if (prior == null) return;
-        await _writeNote(result.id, _rebasedOnto(prior, server));
-        final row = await _noteRow(result.id);
+        await _db.writeNote(result.id, _rebasedOnto(prior, server));
+        final row = await _db.noteRow(result.id);
         if (row != null) rebased.add(await _noteChangeOf(row));
 
       case SyncStatus.denied:
@@ -374,9 +383,9 @@ class SyncService {
           await _dropTag(result.id);
           return;
         }
-        final row = await _tagRow(result.id);
+        final row = await _db.tagRow(result.id);
         if (row == null) return;
-        await _writeTag(
+        await _db.writeTag(
           result.id,
           TagsCompanion(
             version: Value(result.version),
@@ -391,14 +400,14 @@ class SyncService {
           await _mergeTagInto(result.id, server);
           return;
         }
-        await _writeTag(
+        await _db.writeTag(
           result.id,
           TagsCompanion(
             version: Value(server.version),
             isSynced: const Value(false),
           ),
         );
-        final row = await _tagRow(result.id);
+        final row = await _db.tagRow(result.id);
         if (row != null) rebased.add(_tagChangeOf(row));
 
       case SyncStatus.denied:
@@ -412,16 +421,16 @@ class SyncService {
   Future<void> _applyPinResult(SyncResult result, SyncPinChange change) async {
     switch (result.status) {
       case SyncStatus.applied:
-        final row = await _noteRow(result.id);
+        final row = await _db.noteRow(result.id);
         if (row == null || row.isPinned != change.isPinned) return;
-        await _writeNote(
+        await _db.writeNote(
           result.id,
           const NotesCompanion(isPinSynced: Value(true)),
         );
 
       case SyncStatus.denied:
-        // The note is gone or unshared, so there is nothing left to pin.
-        await _writeNote(
+        // Denied means the note is gone or unshared.
+        await _db.writeNote(
           result.id,
           const NotesCompanion(isPinSynced: Value(true)),
         );
@@ -438,14 +447,14 @@ class SyncService {
   ) async {
     switch (result.status) {
       case SyncStatus.applied:
-        final row = await _noteRow(result.id);
+        final row = await _db.noteRow(result.id);
         if (row == null) return;
         // An edit made during the round trip stays queued, on the new version.
         final pending = _reminderChangeOf(row);
         final settled =
             pending.remindAt == change.remindAt &&
             pending.recurrence == change.recurrence;
-        await _writeNote(
+        await _db.writeNote(
           result.id,
           NotesCompanion(
             isReminderSynced: Value(settled),
@@ -454,27 +463,26 @@ class SyncService {
         );
 
       case SyncStatus.conflict:
-        // Nothing to adopt: leave the change queued and try again.
+        // No server copy: the change stays queued.
         if (!result.hasServerCopy) return;
-        // No conflict dialog for a reminder: adopt the server's copy.
-        await _writeNote(
+        // Reminder conflicts take the server's copy.
+        await _db.writeNote(
           result.id,
           await _reminderOf(result.id, result.serverReminder),
         );
 
       case SyncStatus.denied:
-        // A note the server has never seen may still be accepted later; one it
-        // has is gone or unshared, so the reminder has nothing to ring for.
-        final denied = await _noteRow(result.id);
+        // A note the server has never seen keeps its reminder; one it has seen
+        // is gone or unshared.
+        final denied = await _db.noteRow(result.id);
         if (denied == null || denied.version == null) return;
-        await _writeNote(result.id, await _reminderOf(result.id, null));
+        await _db.writeNote(result.id, await _reminderOf(result.id, null));
 
       case SyncStatus.failed:
         break;
     }
   }
 
-  /// The columns for a server reminder, or for having none.
   Future<NotesCompanion> _reminderOf(
     String noteId,
     SyncServerReminder? reminder,
@@ -499,7 +507,7 @@ class SyncService {
           await _dropNote(entry.entityId, filesToClean);
           return;
         }
-        await _clearSweep(SyncEntityType.note, entry.entityId);
+        await _cursor.removeFromSweep(SyncEntityType.note, entry.entityId);
         final note = entry.note;
         if (note == null) return;
         await _upsertServerNote(note);
@@ -510,23 +518,23 @@ class SyncService {
           await _dropTag(entry.entityId);
           return;
         }
-        await _clearSweep(SyncEntityType.tag, entry.entityId);
+        await _cursor.removeFromSweep(SyncEntityType.tag, entry.entityId);
         final tag = entry.tag;
         if (tag != null) await _upsertServerTag(tag);
 
       case SyncEntityType.pin:
-        final row = await _noteRow(entry.entityId);
+        final row = await _db.noteRow(entry.entityId);
         if (row == null || !row.isPinSynced) return;
-        await _writeNote(
+        await _db.writeNote(
           entry.entityId,
           NotesCompanion(isPinned: Value(!entry.isRemove)),
         );
 
       case SyncEntityType.reminder:
-        final row = await _noteRow(entry.entityId);
-        // An unsent local reminder wins; it rides up on the next push.
+        final row = await _db.noteRow(entry.entityId);
+        // An unsent local reminder wins.
         if (row == null || !row.isReminderSynced) return;
-        await _writeNote(
+        await _db.writeNote(
           entry.entityId,
           await _reminderOf(
             entry.entityId,
@@ -540,7 +548,10 @@ class SyncService {
           await _dropAttachments(entry.entityId);
           return;
         }
-        await _clearSweep(SyncEntityType.attachments, entry.entityId);
+        await _cursor.removeFromSweep(
+          SyncEntityType.attachments,
+          entry.entityId,
+        );
         orphanedFiles.addAll(
           await _attachments.applyServerAttachments(
             entry.entityId,
@@ -550,20 +561,19 @@ class SyncService {
     }
   }
 
-  /// Unsent local edits win: overwriting them would lose work the server never
-  /// saw. Sharing isn't part of an edit, so it lands either way.
+  /// Unsent local edits win unless [force]; sharing lands either way.
   Future<void> _upsertServerNote(
     SyncServerNote note, {
     bool force = false,
   }) async {
-    final row = await _noteRow(note.id);
+    final row = await _db.noteRow(note.id);
     final keepLocalReminder = row != null && !row.isReminderSynced;
     final serverReminder = !note.hasReminderField || keepLocalReminder
         ? const NotesCompanion()
         : await _reminderOf(note.id, note.reminder);
 
     if (!force && row != null && !row.isSynced) {
-      await _writeNote(
+      await _db.writeNote(
         note.id,
         _sharingOf(note).copyWith(
           reminderAt: serverReminder.reminderAt,
@@ -604,19 +614,22 @@ class SyncService {
             reminderSlot: serverReminder.reminderSlot,
           ),
         );
-    await _setNoteTags(note.id, note.tagIds);
+    await _db.setNoteTags(note.id, note.tagIds);
   }
 
   /// Moves [row] onto the server's newer copy, keeping only the fields
   /// changed on this device.
-  NotesCompanion _rebasedOnto(Note row, SyncServerNote server) {
-    bool changedHere(Object? local, Object? synced) =>
+  NotesCompanion _rebasedOnto(NoteRow row, SyncServerNote server) {
+    bool isChangedLocally(Object? local, Object? synced) =>
         !_hasSyncedCopy(row) || local != synced;
 
-    final keepTitle = changedHere(row.title, row.syncedTitle);
-    final keepContent = changedHere(row.content, row.syncedContent);
-    final keepBackground = changedHere(row.background, row.syncedBackground);
-    final keepState = changedHere(row.state, row.syncedState);
+    final keepTitle = isChangedLocally(row.title, row.syncedTitle);
+    final keepContent = isChangedLocally(row.content, row.syncedContent);
+    final keepBackground = isChangedLocally(
+      row.background,
+      row.syncedBackground,
+    );
+    final keepState = isChangedLocally(row.state, row.syncedState);
     final keepsAny = keepTitle || keepContent || keepBackground || keepState;
 
     return _sharingOf(server).copyWith(
@@ -640,7 +653,7 @@ class SyncService {
 
   NotesCompanion _sharingOf(SyncServerNote note) => NotesCompanion(
     permission: Value(note.permission),
-    shareIds: Value(jsonEncode(note.shareIds)),
+    shareIds: Value(encodeShareIds(note.shareIds)),
     sharedById: Value(note.sharedBy?.id),
     sharedByName: Value(note.sharedBy?.name),
     sharedByEmail: Value(note.sharedBy?.email),
@@ -648,7 +661,7 @@ class SyncService {
   );
 
   Future<void> _upsertServerTag(SyncServerTag tag) async {
-    final row = await _tagRow(tag.id);
+    final row = await _db.tagRow(tag.id);
     if (row != null && !row.isSynced) return;
 
     await _db
@@ -683,26 +696,7 @@ class SyncService {
           NoteTagsCompanion.insert(noteId: noteId, tagId: server.id),
       ], mode: InsertMode.insertOrReplace);
     });
-    await (_db.update(_db.notes)..where((tbl) => tbl.id.isIn(noteIds))).write(
-      NotesCompanion.custom(
-        isSynced: const Constant(false),
-        localRev: _db.notes.localRev + const Constant(1),
-      ),
-    );
-  }
-
-  Future<void> _setNoteTags(String noteId, List<String> tagIds) async {
-    await (_db.delete(
-      _db.noteTags,
-    )..where((tbl) => tbl.noteId.equals(noteId))).go();
-    if (tagIds.isEmpty) return;
-
-    await _db.batch((batch) {
-      batch.insertAll(_db.noteTags, [
-        for (final tagId in tagIds)
-          NoteTagsCompanion.insert(noteId: noteId, tagId: tagId),
-      ], mode: InsertMode.insertOrReplace);
-    });
+    await _db.markNotesUnsynced(noteIds);
   }
 
   Future<void> _dropNote(String id, Set<String> filesToClean) async {
@@ -712,15 +706,15 @@ class SyncService {
       _db.noteTags,
     )..where((tbl) => tbl.noteId.equals(id))).go();
     await (_db.delete(_db.notes)..where((tbl) => tbl.id.equals(id))).go();
-    await _clearSweep(SyncEntityType.note, id);
-    await _clearSweep(SyncEntityType.attachments, id);
+    await _cursor.removeFromSweep(SyncEntityType.note, id);
+    await _cursor.removeFromSweep(SyncEntityType.attachments, id);
     filesToClean.add(id);
   }
 
   Future<void> _dropTag(String id) async {
     await (_db.delete(_db.noteTags)..where((tbl) => tbl.tagId.equals(id))).go();
     await (_db.delete(_db.tags)..where((tbl) => tbl.id.equals(id))).go();
-    await _clearSweep(SyncEntityType.tag, id);
+    await _cursor.removeFromSweep(SyncEntityType.tag, id);
   }
 
   Future<void> _dropAttachments(String noteId) async {
@@ -734,7 +728,7 @@ class SyncService {
     List<String> orphanedFiles,
   ) async {
     final synced = _db.noteAttachments.syncStatus.equals(
-      domain.AttachmentSyncStatus.synced.dbValue,
+      AttachmentSyncStatus.synced.dbValue,
     );
     final rows = await (_db.select(
       _db.noteAttachments,
@@ -748,122 +742,13 @@ class SyncService {
     )..where((tbl) => tbl.noteId.equals(noteId) & synced)).go();
   }
 
-  Future<Note?> _noteRow(String id) => (_db.select(
-    _db.notes,
-  )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
-
-  Future<Tag?> _tagRow(String id) => (_db.select(
-    _db.tags,
-  )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
-
-  Future<void> _writeNote(String id, NotesCompanion values) async {
-    await (_db.update(
-      _db.notes,
-    )..where((tbl) => tbl.id.equals(id))).write(values);
-  }
-
-  Future<void> _writeTag(String id, TagsCompanion values) async {
-    await (_db.update(
-      _db.tags,
-    )..where((tbl) => tbl.id.equals(id))).write(values);
-  }
-
-  Future<SyncStateData> _state() async {
-    final row = await _db.select(_db.syncState).getSingleOrNull();
-    if (row != null) return row;
-    await _db.into(_db.syncState).insert(SyncStateCompanion.insert());
-    return _db.select(_db.syncState).getSingle();
-  }
-
-  Future<String?> _prepareCursor() async {
-    final state = await _state();
-    if (state.cursor == null && !state.isSweeping) {
-      await _beginSweep();
-    }
-    return state.cursor;
-  }
-
-  Future<void> _resetCursor() async {
-    await _db.transaction(() async {
-      await _db.delete(_db.syncSweep).go();
-      await _db
-          .update(_db.syncState)
-          .write(
-            const SyncStateCompanion(
-              cursor: Value(null),
-              isSweeping: Value(false),
-            ),
-          );
-    });
-  }
-
-  /// Lists what we hold before a full download, so anything the server never
-  /// sends back can be deleted once it finishes.
-  Future<void> _beginSweep() async {
-    await _db.transaction(() async {
-      await _db.delete(_db.syncSweep).go();
-
-      final noteIds =
-          await (_db.selectOnly(_db.notes)
-                ..addColumns([_db.notes.id])
-                ..where(_db.notes.isSynced.equals(true)))
-              .map((row) => row.read(_db.notes.id)!)
-              .get();
-      final tagIds =
-          await (_db.selectOnly(_db.tags)
-                ..addColumns([_db.tags.id])
-                ..where(_db.tags.isSynced.equals(true)))
-              .map((row) => row.read(_db.tags.id)!)
-              .get();
-      final attachedNoteIds =
-          await (_db.selectOnly(_db.noteAttachments, distinct: true)
-                ..addColumns([_db.noteAttachments.noteId])
-                ..where(
-                  _db.noteAttachments.syncStatus.equals(
-                    domain.AttachmentSyncStatus.synced.dbValue,
-                  ),
-                ))
-              .map((row) => row.read(_db.noteAttachments.noteId)!)
-              .get();
-
-      await _db.batch((batch) {
-        batch.insertAll(_db.syncSweep, [
-          for (final id in noteIds) _sweepRow(SyncEntityType.note, id),
-          for (final id in tagIds) _sweepRow(SyncEntityType.tag, id),
-          for (final id in attachedNoteIds)
-            _sweepRow(SyncEntityType.attachments, id),
-        ], mode: InsertMode.insertOrReplace);
-      });
-
-      await _db
-          .update(_db.syncState)
-          .write(const SyncStateCompanion(isSweeping: Value(true)));
-    });
-  }
-
-  SyncSweepCompanion _sweepRow(SyncEntityType entityType, String entityId) =>
-      SyncSweepCompanion.insert(
-        entityType: entityType.name,
-        entityId: entityId,
-      );
-
-  Future<void> _clearSweep(SyncEntityType entityType, String entityId) async {
-    await (_db.delete(_db.syncSweep)..where(
-          (tbl) =>
-              tbl.entityType.equals(entityType.name) &
-              tbl.entityId.equals(entityId),
-        ))
-        .go();
-  }
-
   Future<void> _finishSweep(
     Set<String> filesToClean,
     List<String> orphanedFiles,
   ) async {
-    final state = await _state();
-    if (!state.isSweeping) return;
+    if (!await _cursor.isSweeping()) return;
 
-    final leftovers = await _db.select(_db.syncSweep).get();
+    final leftovers = await _cursor.leftovers();
     for (final row in leftovers) {
       switch (SyncEntityType.fromString(row.entityType)) {
         case SyncEntityType.note:
@@ -872,7 +757,7 @@ class SyncService {
           await _dropTag(row.entityId);
         case SyncEntityType.attachments:
           await _dropSyncedAttachments(row.entityId, orphanedFiles);
-        // Both ride on the note payload and reconcile in the notes phase.
+        // Pins and reminders ride on the note payload.
         case SyncEntityType.pin:
         case SyncEntityType.reminder:
         case null:
@@ -880,23 +765,20 @@ class SyncService {
       }
     }
 
-    await _db.delete(_db.syncSweep).go();
-    await _db
-        .update(_db.syncState)
-        .write(const SyncStateCompanion(isSweeping: Value(false)));
+    await _cursor.endSweep();
 
     if (leftovers.isNotEmpty) {
       AppLogger.instance.info(
-        _tag,
+        LogTags.sync,
         'Snapshot complete: dropped ${leftovers.length} stale row(s)',
       );
     }
   }
 }
 
-bool _hasSyncedCopy(Note row) => row.syncedTitle != null;
+bool _hasSyncedCopy(NoteRow row) => row.syncedTitle != null;
 
-bool _textChangedHere(Note row) =>
+bool _hasLocalTextChange(NoteRow row) =>
     !_hasSyncedCopy(row) ||
     row.title != row.syncedTitle ||
     row.content != row.syncedContent;

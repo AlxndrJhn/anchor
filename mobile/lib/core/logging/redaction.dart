@@ -18,17 +18,21 @@ const _sensitiveKeys = <String>{
   'authorization',
   'secret',
   'email',
+  'title',
+  'content',
+  'name',
+  'q',
 };
 
 const _redacted = '***';
-const _maxStringLen = 2000;
+const _maxStringLength = 2000;
 
 bool _isSensitive(String key) => _sensitiveKeys.contains(key.toLowerCase());
 
 String _truncate(String value) {
-  if (value.length <= _maxStringLen) return value;
-  final trimmed = value.length - _maxStringLen;
-  return '${value.substring(0, _maxStringLen)}…[truncated $trimmed chars]';
+  if (value.length <= _maxStringLength) return value;
+  final trimmed = value.length - _maxStringLength;
+  return '${value.substring(0, _maxStringLength)}…[truncated $trimmed chars]';
 }
 
 Object? redactValue(Object? value) {
@@ -56,7 +60,6 @@ Map<String, dynamic> redactMap(Map<String, dynamic> input) {
   return out;
 }
 
-/// Redacts a body that may be a JSON string, Map, FormData, or other.
 String redactBody(Object? body) {
   if (body == null) return '';
   if (body is Map) {
@@ -66,7 +69,6 @@ String redactBody(Object? body) {
     return jsonEncode(body.map(redactValue).toList());
   }
   if (body is String) {
-    // Try JSON, fall back to raw with truncation
     try {
       final decoded = jsonDecode(body);
       if (decoded is Map) {
@@ -83,8 +85,7 @@ String redactBody(Object? body) {
   return _truncate(body.toString());
 }
 
-/// Redacts sensitive query parameters; returns query WITHOUT leading '?',
-/// or '' when there is none.
+/// Returns the query without a leading '?', or '' when there is none.
 String redactQuery(Uri uri) {
   if (uri.query.isEmpty) return '';
   final parts = <String>[];
@@ -92,8 +93,8 @@ String redactQuery(Uri uri) {
     if (_isSensitive(key)) {
       parts.add('$key=$_redacted');
     } else {
-      for (final v in values) {
-        parts.add('$key=${_truncate(v)}');
+      for (final value in values) {
+        parts.add('$key=${_truncate(value)}');
       }
     }
   });

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:anchor/core/widgets/app_snackbar.dart';
-import 'package:anchor/core/widgets/settings_card.dart';
-import '../../../core/widgets/large_title_app_bar.dart';
-import 'auth_controller.dart';
+
+import '../../../core/network/connectivity_provider.dart';
 import '../../../core/theme/context_extensions.dart';
-import '../../../core/theme/tokens/app_radius.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/form_page.dart';
+import '../../../core/widgets/form_submit.dart';
+import '../../../l10n/l10n.dart';
+import '../data/repository/auth_repository.dart';
+import '../domain/account_rules.dart';
+import 'auth_error_message.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -17,264 +21,101 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
       _ChangePasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _isCurrentPasswordVisible = false;
-  bool _isNewPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
+    with FormSubmit {
+  final _current = TextEditingController();
+  final _next = TextEditingController();
+  final _currentFocus = FocusNode();
+  final _nextFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _current.addListener(() => setState(() {}));
+    _next.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
+    _current.dispose();
+    _next.dispose();
+    _currentFocus.dispose();
+    _nextFocus.dispose();
     super.dispose();
   }
 
-  Future<void> _changePassword() async {
-    if (_formKey.currentState!.validate()) {
-      await ref
-          .read(authControllerProvider.notifier)
-          .changePassword(
-            _currentPasswordController.text,
-            _newPasswordController.text,
-          );
+  bool _canChange(bool isOnline) =>
+      isOnline &&
+      !isSubmitting() &&
+      _current.text.isNotEmpty &&
+      isNewPasswordValid(_next.text);
 
-      if (mounted) {
-        final state = ref.read(authControllerProvider);
-        if (!state.hasError) {
-          AppSnackbar.showSuccess(
-            context,
-            message: 'Password changed successfully',
-          );
-          context.pop();
-        }
+  Future<void> _change() => submit(
+    () => ref
+        .read(authRepositoryProvider)
+        .changePassword(_current.text, _next.text),
+    onSuccess: () => context.pop(),
+    successMessage: context.l10n.passwordChanged,
+    onFailure: (error) {
+      final errorMessage = authErrorMessageOf(error, context.l10n);
+      showError(errorMessage.text, field: errorMessage.field);
+      if (errorMessage.field == AuthField.currentPassword) {
+        _current.clear();
+        _currentFocus.requestFocus();
+      } else if (errorMessage.field == AuthField.newPassword) {
+        _nextFocus.requestFocus();
       }
-    }
-  }
+    },
+  );
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(authControllerProvider);
-    final isLoading = state.isLoading;
-
-    ref.listen(authControllerProvider, (previous, next) {
-      if (next.hasError) {
-        AppSnackbar.showError(context, message: next.error.toString());
-      }
-    });
-
-    final theme = Theme.of(context);
-    final dims = context.dims;
-
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: context.colorTokens.pageGradient),
-        child: CustomScrollView(
-          slivers: [
-            // App Bar
-            LargeTitleAppBar(title: 'Change Password'),
-
-            // Form Content
-            SliverPadding(
-              padding: EdgeInsets.all(dims.md),
-              sliver: SliverToBoxAdapter(
-                child: AutofillGroup(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SettingsCard(
-                          child: Padding(
-                            padding: EdgeInsets.all(dims.md),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(
-                                  'Update your password to keep your account secure',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                ),
-                                SizedBox(height: dims.xl),
-                                TextFormField(
-                                  controller: _currentPasswordController,
-                                  onChanged: (_) => setState(() {}),
-                                  autofillHints: const [AutofillHints.password],
-                                  textInputAction: TextInputAction.next,
-                                  decoration: InputDecoration(
-                                    labelText: 'Current Password',
-                                    prefixIcon: const Icon(LucideIcons.lock),
-                                    suffixIcon:
-                                        _currentPasswordController.text.isEmpty
-                                        ? null
-                                        : IconButton(
-                                            icon: Icon(
-                                              _isCurrentPasswordVisible
-                                                  ? LucideIcons.eyeOff
-                                                  : LucideIcons.eye,
-                                              color: theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.4),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _isCurrentPasswordVisible =
-                                                    !_isCurrentPasswordVisible;
-                                              });
-                                            },
-                                          ),
-                                    filled: true,
-                                    border: const OutlineInputBorder(
-                                      borderRadius: AppRadius.mdBorder,
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: EdgeInsets.all(dims.md),
-                                  ),
-                                  obscureText: !_isCurrentPasswordVisible,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your current password';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                SizedBox(height: dims.md),
-                                TextFormField(
-                                  controller: _newPasswordController,
-                                  onChanged: (_) => setState(() {}),
-                                  autofillHints: const [
-                                    AutofillHints.newPassword,
-                                  ],
-                                  textInputAction: TextInputAction.next,
-                                  decoration: InputDecoration(
-                                    labelText: 'New Password',
-                                    prefixIcon: const Icon(LucideIcons.lock),
-                                    suffixIcon:
-                                        _newPasswordController.text.isEmpty
-                                        ? null
-                                        : IconButton(
-                                            icon: Icon(
-                                              _isNewPasswordVisible
-                                                  ? LucideIcons.eyeOff
-                                                  : LucideIcons.eye,
-                                              color: theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.4),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _isNewPasswordVisible =
-                                                    !_isNewPasswordVisible;
-                                              });
-                                            },
-                                          ),
-                                    filled: true,
-                                    border: const OutlineInputBorder(
-                                      borderRadius: AppRadius.mdBorder,
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: EdgeInsets.all(dims.md),
-                                  ),
-                                  obscureText: !_isNewPasswordVisible,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter a new password';
-                                    }
-                                    if (value.length < 8) {
-                                      return 'Password must be at least 8 characters';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                SizedBox(height: dims.md),
-                                TextFormField(
-                                  controller: _confirmPasswordController,
-                                  onChanged: (_) => setState(() {}),
-                                  autofillHints: const [
-                                    AutofillHints.newPassword,
-                                  ],
-                                  textInputAction: TextInputAction.done,
-                                  onFieldSubmitted: (_) => _changePassword(),
-                                  decoration: InputDecoration(
-                                    labelText: 'Confirm New Password',
-                                    prefixIcon: const Icon(
-                                      LucideIcons.keyRound,
-                                    ),
-                                    suffixIcon:
-                                        _confirmPasswordController.text.isEmpty
-                                        ? null
-                                        : IconButton(
-                                            icon: Icon(
-                                              _isConfirmPasswordVisible
-                                                  ? LucideIcons.eyeOff
-                                                  : LucideIcons.eye,
-                                              color: theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.4),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _isConfirmPasswordVisible =
-                                                    !_isConfirmPasswordVisible;
-                                              });
-                                            },
-                                          ),
-                                    filled: true,
-                                    border: const OutlineInputBorder(
-                                      borderRadius: AppRadius.mdBorder,
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: EdgeInsets.all(dims.md),
-                                  ),
-                                  obscureText: !_isConfirmPasswordVisible,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please confirm your new password';
-                                    }
-                                    if (value != _newPasswordController.text) {
-                                      return 'Passwords do not match';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                SizedBox(height: dims.xxl),
-                                FilledButton(
-                                  onPressed: isLoading ? null : _changePassword,
-                                  style: FilledButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: dims.md,
-                                    ),
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: AppRadius.buttonBorder,
-                                    ),
-                                  ),
-                                  child: isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Text('Change Password'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+    final isOnline = ref.watch(isOnlineProvider);
+    final density = context.density;
+    final l10n = context.l10n;
+    return FormPage(
+      title: l10n.passwordTitle,
+      bottomBar: AppButton(
+        label: l10n.passwordChange,
+        busyLabel: l10n.passwordChanging,
+        isBusy: isSubmitting(),
+        hasShadow: true,
+        onPressed: _canChange(isOnline) ? _change : null,
       ),
+      children: [
+        FormNotices(
+          errorMessage: errorMessage,
+          offlineText: l10n.passwordOffline,
+        ),
+        AppTextField(
+          controller: _current,
+          focusNode: _currentFocus,
+          label: l10n.fieldCurrentPassword,
+          isPassword: true,
+          enabled: isOnline,
+          error: errorOf(AuthField.currentPassword),
+          autofillHints: const [AutofillHints.password],
+          textInputAction: TextInputAction.next,
+          onChanged: (_) => clearError(AuthField.currentPassword),
+          onSubmitted: (_) => _nextFocus.requestFocus(),
+        ),
+        SizedBox(height: density.space16),
+        AppTextField(
+          controller: _next,
+          focusNode: _nextFocus,
+          label: l10n.fieldNewPassword,
+          isPassword: true,
+          enabled: isOnline,
+          error: errorOf(AuthField.newPassword),
+          help: l10n.passwordHelp(minPasswordLength),
+          autofillHints: const [AutofillHints.newPassword],
+          textInputAction: TextInputAction.done,
+          onChanged: (_) => clearError(AuthField.newPassword),
+          onSubmitted: (_) {
+            if (_canChange(isOnline)) _change();
+          },
+        ),
+      ],
     );
   }
 }

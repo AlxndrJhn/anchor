@@ -1,1128 +1,919 @@
 import 'dart:async';
+import 'dart:math' as math;
 
-import 'package:anchor/core/logging/app_logger.dart';
-import 'package:anchor/core/network/server_config_provider.dart';
-import 'package:anchor/core/providers/active_user_id_provider.dart';
-import 'package:anchor/core/router/app_routes.dart';
-import 'package:anchor/core/widgets/app_snackbar.dart';
-import 'package:anchor/core/widgets/confirm_dialog.dart';
-import 'package:anchor/core/widgets/rich_text_editor.dart';
-import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
-import 'package:anchor/features/notes/domain/note.dart';
-import 'package:anchor/features/notes/presentation/widgets/note_attachments_gallery.dart';
-import 'package:anchor/features/notes/presentation/widgets/note_audio_recorder_sheet.dart';
-import 'package:anchor/features/notes/presentation/widgets/note_background.dart';
-import 'package:anchor/features/notes/presentation/widgets/note_background_picker.dart';
-import 'package:anchor/features/notes/presentation/widgets/note_options_sheet.dart';
-import 'package:anchor/features/notes/presentation/widgets/share_note_sheet.dart';
-import 'package:anchor/features/settings/presentation/controllers/editor_preferences_controller.dart';
-import 'package:anchor/features/tags/presentation/widgets/tag_selector.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:uuid/uuid.dart';
 
+import '../../../app/router/app_routes.dart';
+import '../../../core/motion/haptics.dart';
+import '../../../core/motion/springs.dart';
+import '../../../core/network/connectivity_provider.dart';
+import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/theme/context_extensions.dart';
+import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/bottom_bar_frame.dart';
+import '../../../core/widgets/page_bar.dart';
+import '../../../l10n/l10n.dart';
+import '../../reminders/presentation/reminder_permission_prompt.dart';
+import '../../reminders/presentation/reminder_sheet.dart';
+import '../../settings/presentation/editor_preferences_controller.dart';
+import '../../tags/domain/tag.dart';
+import '../../tags/presentation/tags_controller.dart';
+import '../../tags/presentation/widgets/tag_sheets.dart';
+import '../data/repository/note_attachments_repository.dart';
+import '../data/repository/note_shares_repository.dart';
 import '../data/repository/notes_repository.dart';
-import 'package:anchor/core/notifications/reminder_permission_prompt.dart';
-import 'widgets/reminder_chip.dart';
-import 'widgets/reminder_picker_sheet.dart';
-import 'package:anchor/core/theme/context_extensions.dart';
-import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
-import 'package:anchor/core/theme/tokens/app_radius.dart';
-import 'package:anchor/core/widgets/app_bottom_sheet.dart';
+import '../domain/note.dart';
+import '../domain/note_attachment.dart';
+import '../domain/note_history.dart';
+import 'checked_folds_controller.dart';
+import 'editor/editor_overlay.dart';
+import 'editor/editor_overlay_controller.dart';
+import 'editor/editor_palette.dart';
+import 'editor/line_kind.dart';
+import 'editor/rich_text_editor.dart';
+import 'note_actions.dart';
+import 'note_editor_controller.dart';
+import 'note_labels.dart';
+import 'note_morph_route.dart';
+import 'widgets/add_sheet.dart';
+import 'widgets/background_sheet.dart';
+import 'widgets/note_attachments_strip.dart';
+import 'widgets/note_bar.dart';
+import 'widgets/note_header.dart';
+import 'widgets/note_more_sheet.dart';
+import 'widgets/note_surface.dart';
+import 'widgets/read_only_bottom_bar.dart';
+import 'widgets/share_sheet.dart';
+import 'widgets/title_input_formatter.dart';
 
 class NoteEditScreen extends ConsumerStatefulWidget {
+  const NoteEditScreen({super.key, this.noteId, this.note});
+
   final String? noteId;
   final Note? note;
-  const NoteEditScreen({super.key, this.noteId, this.note});
 
   @override
   ConsumerState<NoteEditScreen> createState() => _NoteEditScreenState();
 }
 
 class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
-    with WidgetsBindingObserver {
-  final _titleController = TextEditingController();
-  final _titleFocusNode = FocusNode();
+    with WidgetsBindingObserver, TickerProviderStateMixin {
+  final _titleFocus = FocusNode();
+  final _editorFocus = FocusNode();
   final _editorKey = GlobalKey<RichTextEditorState>();
-  bool _isNew = true;
-  bool _isDeleted = false;
-  bool _isLoaded = false;
-  bool _isEditing = false;
-  bool _allowPop = false;
-  bool _isHandlingPop = false;
-  bool _isPinned = false;
-  bool _isArchived = false;
-  Note? _existingNote;
-  String? _initialContent;
-  List<String> _selectedTagIds = [];
-  String? _selectedBackground;
+  final _scroll = ScrollController();
+  final _corrections = ScrollCorrections();
+  late final _scrollOffset = ScrollOffset(_scroll, corrections: _corrections);
+  final _titleHistory = UndoHistoryController();
+  double _readOnlyBarHeight = 0;
+  late final AnimationController _nudge = AnimationController(
+    vsync: this,
+    duration: AnchorTokens.motionDurationNudge,
+  );
 
-  bool get _isActive => _existingNote?.isActive ?? true;
+  late final AnimationController _flash = AnimationController(
+    vsync: this,
+    duration: AnchorTokens.motionDurationFlash,
+  );
 
-  bool get _isReadOnly =>
-      !_isActive || _existingNote?.permission == NotePermission.viewer;
+  late final NoteEditorController _draft = NoteEditorController(
+    notes: ref.read(notesRepositoryProvider),
+    sharesOf: (noteId) =>
+        ref.read(noteSharesRepositoryProvider).getNoteShares(noteId),
+    editor: _EditorContent(_editorKey),
+    newNoteTagId: () => ref.read(selectedTagFilterProvider),
+    onNoteDeleted: _handleNoteDeleted,
+    note: widget.note,
+    noteId: widget.noteId,
+  );
 
-  bool get _savesOnlyPersonal => !(_existingNote?.canEdit ?? true);
+  late final EditorOverlayController _editorOverlay = EditorOverlayController(
+    _editorKey,
+  );
 
-  String? get _noteId => widget.noteId ?? _existingNote?.id;
+  late final bool _openedAsNew = widget.note == null && widget.noteId == null;
+  late final ValueNotifier<bool> _showsEmptyNoteActions = ValueNotifier(
+    _openedAsNew,
+  );
+  bool _isBodyBlank = true;
 
-  Timer? _autoSaveTimer;
-  StreamSubscription<Note?>? _noteWatch;
-  bool _hasUnsavedChanges = false;
-  bool _isSaving = false;
-  String _lastTitleText = '';
+  Animation<double>? _routeAnimation;
+  bool _isOpen = true;
 
-  String get _editorContent =>
-      _editorKey.currentState?.getContent() ?? _initialContent ?? '';
+  bool get _isReadOnly => _draft.isReadOnly;
+
+  bool get _writing => _titleFocus.hasFocus || _editorFocus.hasFocus;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    final watchedId = widget.note?.id ?? widget.noteId;
-    if (watchedId != null) {
-      _watchNote(watchedId);
-    }
-
-    if (widget.note != null) {
-      _isNew = false;
-      _existingNote = widget.note;
-      _isPinned = widget.note!.isPinned;
-      _isArchived = widget.note!.isArchived;
-      _lastTitleText = widget.note!.title;
-      _titleController.text = widget.note!.title;
-      _initialContent = widget.note!.content;
-      _selectedTagIds = List.from(widget.note!.tagIds);
-      _selectedBackground = widget.note!.background;
-      _isLoaded = true;
-      if (!widget.note!.isActive || !widget.note!.canEdit) {
-        _isEditing = false;
-      }
-    } else if (widget.noteId != null) {
-      _isNew = false;
-      _loadNote();
-    } else {
-      _isEditing = true;
-      _isPinned = false;
-      _isLoaded = true;
-    }
-
-    _titleFocusNode.addListener(_updateEditingState);
-    _titleController.addListener(_onTitleChanged);
-  }
-
-  void _updateEditingState() {
-    final titleEditing = _titleFocusNode.hasFocus;
-    final editorEditing = _editorKey.currentState?.isEditing ?? false;
-    final newEditingState = _isReadOnly
-        ? false
-        : (titleEditing || editorEditing);
-
-    if (_isEditing != newEditingState) {
-      setState(() {
-        _isEditing = newEditingState;
-      });
-    }
-  }
-
-  void _watchNote(String id) {
-    _noteWatch?.cancel();
-    _noteWatch = ref
-        .read(notesRepositoryProvider)
-        .watchNote(id)
-        .listen(_onStoredNoteChanged);
-  }
-
-  /// The stored note changed under us. It replaces what is on screen unless
-  /// there is an unsaved edit, which stays and goes up on the next save.
-  void _onStoredNoteChanged(Note? note) {
-    if (!mounted) return;
-
-    if (note == null) {
-      _handleNoteGone();
-      return;
-    }
-
-    final adopt = !_hasUnsavedChanges && !_isSaving && !_matchesEditor(note);
-
-    setState(() {
-      _existingNote = note;
-      _isLoaded = true;
-      if (!adopt) return;
-
-      if (_titleController.text != note.title) {
-        _lastTitleText = note.title;
-        _titleController.text = note.title;
-      }
-      _initialContent = note.content;
-      _isPinned = note.isPinned;
-      _isArchived = note.isArchived;
-      _selectedTagIds = List.from(note.tagIds);
-      _selectedBackground = note.background;
-      if (!note.isActive || !note.canEdit) {
-        _isEditing = false;
-      }
-    });
-  }
-
-  bool _matchesEditor(Note note) =>
-      storedTitleOf(note.title) == storedTitleOf(_titleController.text) &&
-      _editorHolds(note.content) &&
-      note.isPinned == _isPinned &&
-      note.isArchived == _isArchived &&
-      note.background == _selectedBackground &&
-      _listEquals(note.tagIds, _selectedTagIds);
-
-  bool _editorHolds(String? content) =>
-      _editorKey.currentState?.matchesContent(content) ??
-      (content ?? '') == _editorContent;
-
-  /// Deleted for good elsewhere, or a share that was revoked.
-  void _handleNoteGone() {
-    if (_isNew || _isDeleted) return;
-
-    _isDeleted = true;
-    _autoSaveTimer?.cancel();
-    AppSnackbar.showError(context, message: 'This note is no longer available');
-    _popOrExit();
-  }
-
-  Future<void> _loadNote() async {
-    final note = await ref
-        .read(notesRepositoryProvider)
-        .getNote(widget.noteId!);
-    if (note != null && mounted) {
-      _lastTitleText = note.title;
-      setState(() {
-        _existingNote = note;
-        _isPinned = note.isPinned;
-        _isArchived = note.isArchived;
-        _titleController.text = note.title;
-        _initialContent = note.content;
-        _selectedTagIds = List.from(note.tagIds);
-        _selectedBackground = note.background;
-        _isLoaded = true;
-        if (!note.isActive || !note.canEdit) {
-          _isEditing = false;
-        }
-      });
-    }
-  }
-
-  /// The title controller also notifies on selection changes; only text
-  /// changes mark the note dirty.
-  void _onTitleChanged() {
-    if (_titleController.text == _lastTitleText) return;
-    _lastTitleText = _titleController.text;
-    _onContentChanged();
-  }
-
-  void _onContentChanged() {
-    _hasUnsavedChanges = true;
-    _resetAutoSaveTimer();
-  }
-
-  bool _setEquals(Set<String> a, Set<String> b) {
-    if (a.length != b.length) return false;
-    return a.difference(b).isEmpty;
-  }
-
-  void _resetAutoSaveTimer() {
-    _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 2), () {
-      _autoSave();
-    });
-  }
-
-  Future<void> _autoSave() async {
-    if (!_hasUnsavedChanges) return;
-
-    await _savePendingChanges();
-  }
-
-  Future<void> _savePendingChanges() async {
-    // Cleared before saving so edits made during the await stay flagged.
-    _hasUnsavedChanges = false;
-    _isSaving = true;
-    try {
-      await _saveNote();
-    } finally {
-      _isSaving = false;
-    }
-  }
-
-  /// Leaves the editor: pops when there is a screen beneath, or exits the
-  /// app when the editor is the root (opened from the home widget).
-  void _popOrExit([Object? result]) {
-    if (context.canPop()) {
-      context.pop(result);
-    } else {
-      SystemNavigator.pop();
-    }
-  }
-
-  Future<void> _saveAndPop([Object? result]) async {
-    if (_isHandlingPop) return;
-
-    _isHandlingPop = true;
-    _autoSaveTimer?.cancel();
-
-    try {
-      // _saveNote skips when no field changed.
-      if (!_isDeleted) {
-        await _savePendingChanges();
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _allowPop = true;
+    _draft.addListener(_draftChanged);
+    _editorOverlay.addListener(_editorOverlayChanged);
+    if (_openedAsNew) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 280), () {
+          if (mounted) _titleFocus.requestFocus();
         });
-        _popOrExit(result);
+      });
+    }
+    _titleFocus.addListener(_focusChanged);
+    _editorFocus.addListener(_focusChanged);
+    if (_openedAsNew) _draft.title.addListener(_updateEmptyNoteActions);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    NoteMorphRoute.of(context)?.isBlank = () => _draft.isBlankNew;
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation != _routeAnimation) {
+      _routeAnimation?.removeStatusListener(_routeChanged);
+      _routeAnimation = animation?..addStatusListener(_routeChanged);
+      _isOpen =
+          animation == null || animation.status == AnimationStatus.completed;
+    }
+  }
+
+  void _routeChanged(AnimationStatus status) {
+    final isOpen = status == AnimationStatus.completed;
+    if (isOpen != _isOpen) setState(() => _isOpen = isOpen);
+  }
+
+  void _updateEmptyNoteActions() => _showsEmptyNoteActions.value =
+      _openedAsNew && _isBodyBlank && _draft.title.text.trim().isEmpty;
+
+  void _bodyBlankChanged(bool isBlank) {
+    _isBodyBlank = isBlank;
+    _updateEmptyNoteActions();
+  }
+
+  void _draftChanged() {
+    if (!mounted) return;
+    setState(() {});
+    final route = NoteMorphRoute.of(context);
+    if (route == null) return;
+    route.backgroundId = _draft.background;
+    if (_draft.note?.id case final id?) route.noteId.value = id;
+    NoteMorphRoute.refreshOf(context);
+  }
+
+  void _focusChanged() {
+    if (_editorFocus.hasFocus || _titleFocus.hasFocus) {
+      _editorOverlay.closeLink();
+    }
+    if (!_editorFocus.hasFocus) _editorOverlay.closeSubmenu();
+    setState(() {});
+  }
+
+  void _editorOverlayChanged() => setState(() {});
+
+  void _handleNoteDeleted() {
+    AppSnackbar.show(context, context.l10n.noteGone, kind: SnackbarKind.error);
+    _leave();
+  }
+
+  void _back() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.maybePop();
+    } else {
+      _leave();
+    }
+  }
+
+  void _leave() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      _draft.flushOnLeave();
+      if (context.isCupertino) {
+        context.go(AppRoutes.home);
+      } else {
+        SystemNavigator.pop();
       }
     }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      if (_hasUnsavedChanges) {
-        _autoSave();
-      }
+      _draft.saveIfChanged();
     }
   }
 
-  Future<void> _togglePinned() async {
-    final note = _existingNote;
-    if (note == null || !note.isActive) {
-      return;
-    }
-    setState(() {
-      _isPinned = !_isPinned;
-    });
-    await ref.read(notesRepositoryProvider).bulkSetPinned([note.id], _isPinned);
+  @override
+  void deactivate() {
+    _draft.flushOnLeave();
+    super.deactivate();
   }
 
-  Future<void> _toggleArchived() async {
-    if (_isNew) return;
-
-    final wasArchived = _isArchived;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.archive,
-        iconColor: Theme.of(context).colorScheme.primary,
-        title: wasArchived ? 'Unarchive note?' : 'Archive note?',
-        message: wasArchived
-            ? 'This note will be moved back to your notes.'
-            : 'This note will be moved to archive.',
-        cancelText: 'Cancel',
-        confirmText: wasArchived ? 'Unarchive' : 'Archive',
-        onConfirm: () {},
-      ),
-    );
-
-    if (confirm != true || !mounted) return;
-
-    final repository = ref.read(notesRepositoryProvider);
-    try {
-      if (wasArchived) {
-        await repository.unarchiveNote(_noteId!);
-      } else {
-        await repository.archiveNote(_noteId!);
-      }
-
-      await _loadNote();
-
-      if (mounted) {
-        AppSnackbar.showSuccess(
-          context,
-          message: wasArchived ? 'Note unarchived' : 'Note archived',
-        );
-
-        if (!wasArchived) {
-          // Small delay to ensure snackbar is visible
-          await Future.delayed(const Duration(milliseconds: 300));
-          if (mounted) {
-            _popOrExit();
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        AppSnackbar.showError(
-          context,
-          message: wasArchived
-              ? 'Failed to unarchive note'
-              : 'Failed to archive note',
-        );
-      }
-    }
-  }
-
-  void _showColorPicker() {
-    // New notes have no _existingNote yet but are always editable.
-    if (!_isNew && _existingNote?.isActive != true) {
-      return;
-    }
-    AppBottomSheet.show(
-      context,
-      builder: (context) => NoteBackgroundPicker(
-        selectedColor: _selectedBackground,
-        onColorChanged: (color) {
-          setState(() {
-            _selectedBackground = color;
-          });
-          _onContentChanged();
-        },
-      ),
-    );
-  }
-
-  void _showShareSheet() {
-    if (_isNew ||
-        _existingNote?.isActive != true ||
-        !(_existingNote?.isOwner ?? true)) {
-      return;
-    }
-    AppBottomSheet.show(
-      context,
-      builder: (context) =>
-          ShareNoteSheet(noteId: widget.noteId ?? _existingNote!.id),
-    ).then((_) {
-      if (widget.noteId != null || _existingNote != null) {
-        _reloadNote();
-      }
-    });
-  }
-
-  void _showReminderPicker() {
-    if (!_isActive) return;
-    AppBottomSheet.show(
-      context,
-      // The sheet pops before this runs, so the snackbar needs the screen's
-      // context.
-      builder: (_) => ReminderPickerSheet(
-        reminder: _existingNote?.reminder,
-        onReminderChanged: (reminder) async {
-          try {
-            var noteId = widget.noteId ?? _existingNote?.id;
-            noteId ??= await _createNote();
-
-            await ref
-                .read(notesRepositoryProvider)
-                .setReminder(noteId, reminder);
-            await _reloadNote();
-            if (!mounted) return;
-            AppSnackbar.showSuccess(
-              context,
-              message: reminder == null ? 'Reminder removed' : 'Reminder set',
-            );
-          } catch (_) {
-            if (!mounted) return;
-            AppSnackbar.showError(context, message: 'Failed to set reminder');
-            return;
-          }
-
-          if (reminder != null && mounted) {
-            await ensureReminderPermissions(
-              context,
-              ref,
-              trigger: ReminderPermissionTrigger.userSet,
-            );
-          }
-        },
-      ),
-    );
-  }
-
-  void _showAttachmentSheet() {
-    AppBottomSheet.show(
-      context,
-      builder: (context) => NoteAttachmentSheet(
-        onFileSelected: (filePath, mimeType, filename) async {
-          try {
-            // Attachments are keyed to a persisted note. For a brand-new note
-            // the user may start by adding an attachment, so create the note
-            // now that there's something to attach to.
-            var noteId = widget.noteId ?? _existingNote?.id;
-            noteId ??= await _createNote();
-            final repo = ref.read(noteAttachmentsRepositoryProvider);
-            await repo.addAttachment(noteId, filePath, mimeType, filename);
-            if (!context.mounted) return;
-            AppSnackbar.showSuccess(context, message: 'Attachment added');
-          } catch (_) {
-            if (!context.mounted) return;
-            AppSnackbar.showError(context, message: 'Failed to add attachment');
-          }
-        },
-      ),
-    );
-  }
-
-  void _showTagPicker() {
-    if (!_isActive) return;
-    AppBottomSheet.show(
-      context,
-      builder: (context) => TagPickerSheet(
-        selectedTagIds: _selectedTagIds,
-        onTagsChanged: (tagIds) {
-          if (!_isActive) return;
-          setState(() => _selectedTagIds = List.from(tagIds));
-          if (_savesOnlyPersonal) {
-            ref
-                .read(notesRepositoryProvider)
-                .setNoteTags(_existingNote!.id, tagIds);
-            return;
-          }
-          _onContentChanged();
-        },
-      ),
-    );
-  }
-
-  void _showOptionsSheet() {
-    AppBottomSheet.show(
-      context,
-      builder: (context) => NoteOptionsSheet(
-        isReadOnly: _isReadOnly,
-        isNew: _isNew,
-        isOwner: _existingNote?.isOwner ?? true,
-        isTrashed: _existingNote?.isTrashed ?? false,
-        isArchived: _isArchived,
-        onTagsTap: _showTagPicker,
-        onBackgroundTap: _showColorPicker,
-        onReminderTap: _showReminderPicker,
-        onAttachmentTap: _showAttachmentSheet,
-        onArchiveTap: _toggleArchived,
-        onDeleteTap: _deleteNote,
-        onHistoryTap: !_isNew && !_isReadOnly ? _openHistory : null,
-      ),
-    );
-  }
-
-  /// Sends what is typed so far before showing the versions.
-  Future<void> _openHistory() async {
-    final noteId = widget.noteId ?? _existingNote?.id;
-    if (noteId == null) return;
-
-    _autoSaveTimer?.cancel();
-    await _savePendingChanges();
-    if (!mounted) return;
-    context.push('/note/$noteId/${AppRoutes.noteHistory}');
-  }
-
-  Future<void> _reloadNote() async {
-    final noteId = widget.noteId ?? _existingNote?.id;
-    if (noteId == null) return;
-
-    final note = await ref.read(notesRepositoryProvider).getNote(noteId);
-    if (note != null && mounted) {
-      setState(() {
-        _existingNote = note;
-      });
-    }
+  @override
+  void activate() {
+    super.activate();
+    _draft.reopen();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _autoSaveTimer?.cancel();
-    unawaited(_noteWatch?.cancel());
-    _titleController.removeListener(_onTitleChanged);
-    _titleController.dispose();
-    _titleFocusNode.removeListener(_updateEditingState);
-    _titleFocusNode.dispose();
+    _routeAnimation?.removeStatusListener(_routeChanged);
+    _draft.removeListener(_draftChanged);
+    _draft.title.removeListener(_updateEmptyNoteActions);
+    _draft.dispose();
+    _showsEmptyNoteActions.dispose();
+    _editorOverlay.removeListener(_editorOverlayChanged);
+    _editorOverlay.dispose();
+    _titleFocus.removeListener(_focusChanged);
+    _editorFocus.removeListener(_focusChanged);
+    _titleFocus.dispose();
+    _editorFocus.dispose();
+    _scroll.dispose();
+    _corrections.dispose();
+    _titleHistory.dispose();
+    _nudge.dispose();
+    _flash.dispose();
     super.dispose();
   }
 
-  /// Creates and persists a note from the current editor fields, flipping the
-  /// screen out of "new" mode. Returns the created note's id.
-  Future<String> _createNote() async {
-    final title = storedTitleOf(_titleController.text);
-    final content = _editorKey.currentState?.getContent() ?? '';
-    final newNote = Note(
-      id: const Uuid().v4(),
-      title: title,
-      content: content,
-      isPinned: _isPinned,
-      tagIds: _selectedTagIds,
-      background: _selectedBackground,
-      isSynced: false,
+  void _showBackground() {
+    if (_isReadOnly) return;
+    showBackgroundSheet(
+      context,
+      current: _draft.background,
+      onChanged: _draft.setBackground,
     );
-    AppLogger.instance.info(
-      'NoteEdit',
-      '_createNote: id=${newNote.id} title.len=${newNote.title.length} '
-          'content.len=${content.length} tags=${_selectedTagIds.length}',
-    );
-    await ref.read(notesRepositoryProvider).createNote(newNote);
-    if (mounted) {
-      setState(() {
-        _isNew = false;
-        _existingNote = newNote;
-      });
-      _watchNote(newNote.id);
-    }
-    return newNote.id;
   }
 
-  Future<void> _saveNote() async {
-    // New notes (_existingNote == null) are always treated as active/editable.
-    final isActive =
-        _existingNote == null || (_existingNote?.isActive ?? false);
-    if (!isActive || !(_existingNote?.canEdit ?? true)) {
-      return;
-    }
-
-    final title = storedTitleOf(_titleController.text);
-    final editorState = _editorKey.currentState;
-    final content = editorState?.getContent() ?? '';
-    final plainText = editorState?.getPlainText() ?? '';
-
-    // A note that was never created is only worth persisting once it holds
-    // something.
-    if (_isNew &&
-        title.isEmpty &&
-        plainText.isEmpty &&
-        _selectedBackground == null &&
-        !_isPinned) {
-      AppLogger.instance.debug(
-        'NoteEdit',
-        '_saveNote: skipping empty new note',
-      );
-      return;
-    }
-
-    final repository = ref.read(notesRepositoryProvider);
-
-    if (_isNew) {
-      await _createNote();
-    } else if (_existingNote != null) {
-      final tagsChanged = !_listEquals(_existingNote!.tagIds, _selectedTagIds);
-      final titleChanged = storedTitleOf(_existingNote!.title) != title;
-      final contentChanged = !_editorHolds(_existingNote!.content);
-      final pinChanged = _existingNote!.isPinned != _isPinned;
-      final bgChanged = _existingNote!.background != _selectedBackground;
-      if (!titleChanged &&
-          !contentChanged &&
-          !pinChanged &&
-          !bgChanged &&
-          !tagsChanged) {
-        AppLogger.instance.debug(
-          'NoteEdit',
-          '_saveNote: no field changed for id=${_existingNote!.id}, skipping',
+  Future<void> _showReminder() async {
+    if (!_draft.isActive) return;
+    final previousReminder = _draft.note?.reminder;
+    final choice = await showReminderSheet(context, reminder: previousReminder);
+    if (choice == null || !mounted) return;
+    final reminder = choice.reminder;
+    final repo = ref.read(notesRepositoryProvider);
+    try {
+      final id = _draft.noteId ?? await _draft.createNote();
+      await repo.setReminder(id, reminder);
+      if (!mounted) return;
+      if (reminder == null) {
+        AppSnackbar.show(
+          context,
+          context.l10n.reminderRemoved,
+          actionLabel: context.l10n.commonUndo,
+          onAction: () => repo.setReminder(id, previousReminder),
         );
         return;
       }
-
-      AppLogger.instance.info(
-        'NoteEdit',
-        '_saveNote update: id=${_existingNote!.id} '
-            'title=$titleChanged content=$contentChanged '
-            '(${_existingNote!.content?.length ?? 0}→${content.length}) '
-            'pin=$pinChanged bg=$bgChanged tags=$tagsChanged',
-      );
-
-      final updatedNote = _existingNote!.copyWith(
-        title: titleChanged ? title : _existingNote!.title,
-        content: contentChanged ? content : _existingNote!.content,
-        isPinned: _isPinned,
-        isArchived: _isArchived,
-        tagIds: _selectedTagIds,
-        background: _selectedBackground,
-        isSynced: false,
-      );
-      await repository.updateNote(updatedNote);
+      Haptics.success();
+    } catch (_) {
       if (mounted) {
-        setState(() {
-          _existingNote = updatedNote;
-        });
+        AppSnackbar.show(
+          context,
+          context.l10n.reminderSetFailed,
+          kind: SnackbarKind.error,
+        );
       }
-    }
-  }
-
-  bool _listEquals(List<String> a, List<String> b) =>
-      _setEquals(a.toSet(), b.toSet());
-
-  Future<void> _deleteNote() async {
-    if (_isNew) {
-      _popOrExit();
       return;
     }
-
-    final isOwner = _existingNote?.isOwner ?? true;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.trash2,
-        iconColor: Theme.of(context).colorScheme.error,
-        title: isOwner ? 'Delete note?' : 'Remove note?',
-        message: isOwner
-            ? 'This note will be moved to trash.'
-            : 'This note will be removed from your notes.',
-        cancelText: 'Cancel',
-        confirmText: isOwner ? 'Delete' : 'Remove',
-        confirmColor: Theme.of(context).colorScheme.error,
-        onConfirm: () {},
-      ),
-    );
-
-    if (confirm == true && mounted) {
-      try {
-        await ref.read(notesRepositoryProvider).deleteNote(_noteId!);
-        _isDeleted = true;
-
-        if (mounted) {
-          AppSnackbar.showSuccess(
-            context,
-            message: isOwner ? 'Note moved to trash' : 'Note removed',
-          );
-          _popOrExit();
-        }
-      } catch (e) {
-        if (mounted) {
-          AppSnackbar.showError(context, message: 'Failed to delete note');
-        }
-      }
+    if (previousReminder == null && mounted) {
+      await ensureReminderPermissions(
+        context,
+        ref,
+        trigger: ReminderPermissionTrigger.userSet,
+      );
     }
   }
 
-  Future<void> _restoreNote() async {
-    if (_isNew || _existingNote == null) return;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.rotateCcw,
-        iconColor: Theme.of(context).colorScheme.primary,
-        title: 'Restore note?',
-        message: 'This note will be moved back to your notes.',
-        cancelText: 'Cancel',
-        confirmText: 'Restore',
-        onConfirm: () {},
-      ),
+  Future<void> _showMore() async {
+    final note = _draft.note;
+    if (note == null) {
+      return;
+    }
+    final checklist = _isReadOnly ? null : _editor?.checklistCount;
+    final action = await showNoteMoreSheet(
+      context,
+      isPinned: note.isPinned,
+      isOwner: note.isOwner,
+      isArchived: note.isArchived,
+      canSeeHistory: !_draft.isViewOnly,
+      shareCount: note.shareIds?.length ?? 0,
+      hasChecklist: (checklist?.items ?? 0) > 0,
+      hasCheckedItems: (checklist?.checked ?? 0) > 0,
     );
+    if (action == null || !mounted) return;
+    final actions = NoteActions(context, ref);
+    final l10n = context.l10n;
+    switch (action) {
+      case NoteAction.pin:
+        Haptics.selection();
+        await actions.pin([note]);
+      case NoteAction.share:
+        await showShareSheet(context, noteId: note.id);
+      case NoteAction.history:
+        await _openHistory();
+      case NoteAction.uncheckAll:
+        _offerUndo(_editor?.uncheckAll(), l10n.itemsUnchecked);
+      case NoteAction.deleteChecked:
+        _offerUndo(_editor?.deleteChecked(), l10n.checkedItemsDeleted);
+      case NoteAction.archive:
+        await actions.archive(
+          [note],
+          beforeChange: _draft.flushOnLeave,
+          afterChange: _leave,
+        );
+      case NoteAction.unarchive:
+        await actions.unarchive([note]);
+      case NoteAction.trash:
+        await actions.trash(
+          [note],
+          beforeChange: _draft.flushOnLeave,
+          afterChange: _leaveDeleted,
+        );
+      case NoteAction.tag || NoteAction.restore || NoteAction.deleteForever:
+        break;
+    }
+  }
 
-    if (confirm != true || !mounted) return;
+  void _offerUndo(UndoableEdit? edit, String Function(int count) message) {
+    final noteId = _draft.noteId;
+    if (edit == null || noteId == null) return;
+    final repo = ref.read(notesRepositoryProvider);
+    AppSnackbar.show(
+      context,
+      message(edit.count),
+      actionLabel: context.l10n.commonUndo,
+      onAction: () async {
+        if (edit.undo()) return;
+        final note = await repo.getNote(noteId);
+        final content = edit.undoneContent(note?.content);
+        if (note == null || content == null) return;
+        await repo.updateNote(note.copyWith(content: content, isSynced: false));
+      },
+    );
+  }
 
+  void _leaveDeleted() {
+    _draft.markDeleted();
+    _leave();
+  }
+
+  Future<void> _openHistory() async {
+    final id = _draft.noteId;
+    if (id == null) return;
+    await _draft.saveNow();
+    if (!mounted) return;
+    final restored = await context.push<RestoredVersion>(AppRoutes.history(id));
+    if (restored == null || !mounted) return;
+    if (!context.isMotionReduced) _flash.forward(from: 0);
+    final repo = ref.read(notesRepositoryProvider);
+    AppSnackbar.show(
+      context,
+      context.l10n.versionRestored,
+      kind: SnackbarKind.success,
+      actionLabel: context.l10n.commonUndo,
+      onAction: () async {
+        if (mounted) await _draft.saveNow();
+        await repo.undoRestore(id, restored);
+      },
+    );
+  }
+
+  Future<void> _restoreFromTrash() async {
+    final note = _draft.note;
+    if (note == null) return;
+    await NoteActions(context, ref).restore([note]);
+  }
+
+  Future<void> _deleteForever() async {
+    final note = _draft.note;
+    if (note == null) return;
+    await NoteActions(
+      context,
+      ref,
+    ).deleteForever([note], afterChange: _leaveDeleted);
+  }
+
+  Future<void> _addTags() async {
+    if (!_draft.isActive) return;
+    final isNew = _draft.isNew;
+    final id = _draft.noteId ?? await _draft.createNote();
+    if (!mounted) return;
+    final note =
+        _draft.note ?? await ref.read(notesRepositoryProvider).getNote(id);
+    if (note == null || !mounted) return;
+    await showTagPicker(context, [note]);
+    if (isNew) await _draft.discardIfBlank();
+  }
+
+  Future<void> _removeTag(Tag tag) async {
+    final note = _draft.note;
+    if (note == null) return;
+    Haptics.selection();
+    await ref.read(notesRepositoryProvider).removeTags([note.id], [tag.id]);
+  }
+
+  Future<void> _showAdd() async {
+    if (_isReadOnly) return;
+    final file = await showAddSheet(context);
+    if (file == null || !mounted) return;
+    final kind = AttachmentKind.of(mimeType: file.mime, filename: file.name);
+    final l10n = context.l10n;
+    final attachments = ref.read(noteAttachmentsRepositoryProvider);
     try {
-      await ref.read(notesRepositoryProvider).restoreNote(_noteId!);
-
-      await _loadNote();
-
+      await attachments.checkSize(file.path);
+      final id = _draft.noteId ?? await _draft.createNote();
+      await attachments.addAttachment(id, file.path, file.mime, file.name);
+      if (!mounted) return;
+      final online = ref.read(isOnlineProvider);
+      AppSnackbar.show(
+        context,
+        attachmentAddedLabel(kind, l10n, isOnline: online),
+        kind: SnackbarKind.success,
+      );
+    } on AttachmentTooBigException {
       if (mounted) {
-        AppSnackbar.showSuccess(context, message: 'Note restored');
+        AppSnackbar.show(
+          context,
+          l10n.attachmentTooBig,
+          kind: SnackbarKind.error,
+        );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        AppSnackbar.showError(context, message: 'Failed to restore note');
+        AppSnackbar.show(
+          context,
+          attachmentAddFailedLabel(kind, l10n),
+          kind: SnackbarKind.error,
+        );
       }
     }
   }
 
-  Future<void> _permanentDeleteNote() async {
-    if (_isNew || _existingNote == null) return;
+  RichTextEditorState? get _editor => _editorKey.currentState;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmDialog(
-        icon: LucideIcons.trash2,
-        iconColor: Theme.of(context).colorScheme.error,
-        title: 'Delete permanently?',
-        message: 'This note will be permanently deleted.',
-        cancelText: 'Cancel',
-        confirmText: 'Delete permanently',
-        confirmColor: Theme.of(context).colorScheme.error,
-        onConfirm: () {},
-      ),
-    );
-
-    if (confirm == true && mounted) {
-      try {
-        await ref.read(notesRepositoryProvider).permanentDelete(_noteId!);
-        _isDeleted = true;
-
-        if (mounted) {
-          AppSnackbar.showSuccess(context, message: 'Note permanently deleted');
-          _popOrExit();
-        }
-      } catch (e) {
-        if (mounted) {
-          AppSnackbar.showError(context, message: 'Failed to delete note');
-        }
-      }
-    }
+  void _focusEditorEnd() {
+    if (_isReadOnly) return _shakeReadOnly();
+    _editor?.focusEnd();
   }
 
-  Widget _buildSharedByBadge(ThemeData theme, String? serverUrl) {
-    final sharedBy = _existingNote!.sharedBy!;
-    final dims = context.dims;
-    return Padding(
-      padding: EdgeInsets.only(right: dims.xs),
-      child: Center(
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: dims.xs, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.secondaryContainer,
-            borderRadius: AppRadius.lgBorder,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _SharedByAvatar(
-                sharedBy: sharedBy,
-                serverUrl: serverUrl,
-                size: 20,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Shared by ${sharedBy.name}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSecondaryContainer,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  void _splitTitle() {
+    final editor = _editor;
+    if (editor == null) return;
+    final value = _draft.title.value;
+    final text = value.text;
+    final selection = value.selection.isValid
+        ? value.selection
+        : TextSelection.collapsed(offset: text.length);
+    final head = text.substring(0, selection.start);
+    _draft.title.value = TextEditingValue(
+      text: head,
+      selection: TextSelection.collapsed(offset: head.length),
+    );
+    editor.addFirstLine(text.substring(selection.end));
+  }
+
+  void _joinTitle(String words) {
+    final title = _draft.title.text;
+    _draft.title.value = TextEditingValue(
+      text: '$title$words',
+      selection: TextSelection.collapsed(offset: title.length),
+    );
+    _titleFocus.requestFocus();
+    Haptics.light();
+  }
+
+  Rect _visibleArea() {
+    final view = View.of(context);
+    final scale = view.devicePixelRatio;
+    final size = view.physicalSize / scale;
+    final keyboard = view.viewInsets.bottom / scale;
+    return Rect.fromLTRB(
+      0,
+      view.viewPadding.top / scale + PageBar.heightOf(context),
+      size.width,
+      keyboard > 0
+          ? size.height - keyboard - _editorOverlay.barHeight
+          : size.height,
     );
   }
 
-  Widget _buildPinButton(ThemeData theme) {
-    return IconButton(
-      icon: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(
-            LucideIcons.pin,
-            color: _isPinned
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface,
-          ),
-          if (_isPinned)
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.tertiary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
-      onPressed: _isLoaded ? _togglePinned : null,
-      tooltip: _isPinned ? 'Unpin Note' : 'Pin Note',
-    );
-  }
-
-  Widget _buildShareButton(ThemeData theme) {
-    return IconButton(
-      icon: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          const Icon(LucideIcons.userPlus),
-          if (_existingNote?.hasShares ?? false)
-            Positioned(
-              right: -4,
-              top: -8,
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-                child: Center(
-                  child: Text(
-                    '${_existingNote!.shareIds!.length}',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-      onPressed: _isLoaded && !_isNew ? _showShareSheet : null,
-      tooltip: 'Share Note',
-    );
-  }
-
-  Widget _buildReadOnlyBanner(ThemeData theme, bool isTrashed) {
-    final dims = context.dims;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: dims.editorPadding.left,
-        vertical: dims.sm,
-      ),
-      color: theme.colorScheme.surfaceContainerHighest,
-      child: Row(
-        children: [
-          Icon(
-            LucideIcons.lock,
-            size: AppIconSizes.sm,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          SizedBox(width: dims.xs),
-          Expanded(
-            child: Text(
-              isTrashed
-                  ? 'This note is in trash and cannot be edited. Restore it to make changes.'
-                  : 'You have viewer access. Only the owner can edit this note.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEditorHeader(ThemeData theme) {
-    final isReadOnly = _isReadOnly;
-    final dims = context.dims;
-    final showTags = (_isEditing && !isReadOnly) || _selectedTagIds.isNotEmpty;
-    final showAttachments =
-        !_isNew && (_existingNote != null || widget.noteId != null);
-    final reminder = _existingNote?.reminder;
-    final showTitle = !isReadOnly || hasTitleText(_titleController.text);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (showTitle)
-          Padding(
-            padding: EdgeInsets.only(
-              left: dims.editorPadding.left,
-              right: dims.editorPadding.right,
-              top: dims.xs,
-            ),
-            child: GestureDetector(
-              onTap: !isReadOnly
-                  ? () {
-                      if (!_titleFocusNode.hasFocus) {
-                        _titleFocusNode.requestFocus();
-                      }
-                    }
-                  : null,
-              child: TextField(
-                controller: _titleController,
-                focusNode: _titleFocusNode,
-                readOnly: isReadOnly,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Title',
-                  hintStyle: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                  filled: false,
-                ),
-                textCapitalization: TextCapitalization.sentences,
-                showCursor: _isEditing && !isReadOnly,
-              ),
-            ),
-          ),
-        if (showTags)
-          TagSelector(
-            selectedTagIds: _selectedTagIds,
-            readOnly: !_isEditing || isReadOnly,
-            onTagsChanged: (tagIds) {
-              if (!isReadOnly) {
-                setState(() => _selectedTagIds = tagIds);
-                _onContentChanged();
-              }
-            },
-          ),
-        if (reminder != null)
-          Padding(
-            padding: EdgeInsets.only(
-              left: dims.editorPadding.left,
-              right: dims.editorPadding.right,
-              top: dims.xs,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: ReminderChip(
-                reminder: reminder,
-                onTap: _isActive ? _showReminderPicker : null,
-              ),
-            ),
-          ),
-        if (showAttachments)
-          NoteAttachmentsGallery(
-            noteId: widget.noteId ?? _existingNote!.id,
-            isOwner: _existingNote?.isOwner ?? false,
-            canEdit:
-                (_existingNote?.canEdit ?? false) &&
-                (_existingNote?.isActive ?? false),
-            currentUserId: ref.read(activeUserIdProvider),
-          ),
-      ],
-    );
+  void _shakeReadOnly() {
+    Haptics.warning();
+    if (!context.isMotionReduced) _nudge.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final serverUrl = ref.watch(serverUrlProvider);
-    final isReadOnly = _isReadOnly;
-    final isTrashed = _existingNote?.isTrashed ?? false;
+    final colors = context.anchor;
+    final appearance = NoteAppearance.of(context, _draft.background);
+    final writing = _writing && !_isReadOnly;
+    final density = context.density;
+    final titleStyle = context.noteTypography.title;
+    final safeBottom = context.safeBottomAtRest;
+    final underText = _isReadOnly
+        ? safeBottom + 8 + _readOnlyBarHeight + density.space24
+        : writing
+        ? 2 * AnchorTokens.sizeControlMedium + AnchorTokens.space32
+        : safeBottom + density.space48;
+    final palette = EditorPalette(
+      muted: appearance.colors.muted,
+      surface: appearance.colors.surface,
+      border: appearance.colors.border,
+      background: appearance.colors.bg,
+      highlightFill: (name) => appearance.highlight(context, name),
+      highlightInk: (name) =>
+          colors.highlights[name]?.ink ?? colors.accentStrong,
+    );
+    final note = _draft.note;
+    final isNew = _draft.isNew;
+    final isTrashed = _draft.isTrashed;
+    final bar = NoteBar(
+      appearance: appearance,
+      scrollOffset: _scrollOffset,
+      reminder: note?.reminder,
+      isUnsynced: note != null && !note.isSynced && !_isReadOnly,
+      isTrashed: isTrashed,
+      isReadOnly: _isReadOnly,
+      onBack: _back,
+      onHistory: _openHistory,
+      onBackground: _showBackground,
+      onReminder: _showReminder,
+      onMore: isNew ? null : _showMore,
+    );
 
-    return PopScope(
-      canPop: _allowPop,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        await _saveAndPop(result);
-      },
-      child: NoteBackground(
-        styleId: _selectedBackground,
-        borderRadius: BorderRadius.zero,
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            leading: IconButton(
-              icon: const Icon(LucideIcons.chevronLeft),
-              onPressed: _saveAndPop,
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height:
+              MediaQuery.viewPaddingOf(context).top +
+              PageBar.heightOf(context) +
+              4,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AnchorTokens.spaceGutterPhone,
+          ),
+          child: _isReadOnly
+              ? GestureDetector(
+                  onTap: _shakeReadOnly,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: density.space8),
+                    child: Text(
+                      displayTitleOf(note?.title ?? '', context.l10n),
+                      style: titleStyle.copyWith(color: colors.appText),
+                    ),
+                  ),
+                )
+              : TextField(
+                  controller: _draft.title,
+                  focusNode: _titleFocus,
+                  showCursor: _isOpen,
+                  undoController: _titleHistory,
+                  maxLines: null,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [TitleInputFormatter(onEnter: _splitTitle)],
+                  onEditingComplete: _splitTitle,
+                  style: titleStyle.copyWith(color: colors.appText),
+                  cursorColor: colors.accentStrong,
+                  decoration: InputDecoration(
+                    hintText: context.l10n.noteTitleHint,
+                    hintStyle: titleStyle.copyWith(
+                      color: appearance.colors.muted,
+                    ),
+                    contentPadding: EdgeInsets.only(bottom: density.space8),
+                  ),
+                ),
+        ),
+        if (note != null)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AnchorTokens.spaceGutterPhone,
+              0,
+              AnchorTokens.spaceGutterPhone,
+              density.space12,
             ),
-            actions: [
-              if (isTrashed) ...[
-                IconButton(
-                  icon: const Icon(LucideIcons.rotateCcw),
-                  onPressed: _isLoaded && !_isNew ? _restoreNote : null,
-                  tooltip: 'Restore note',
+            child: NoteMetaLine(
+              note: note,
+              appearance: appearance,
+              words: _draft.words,
+              sharedWith: _draft.sharedWith,
+            ),
+          ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            AnchorTokens.spaceGutterPhone,
+            0,
+            AnchorTokens.spaceGutterPhone,
+            density.space16,
+          ),
+          child: NoteTagRow(
+            note: note,
+            appearance: appearance,
+            readOnly: isTrashed,
+            onAdd: _addTags,
+            onRemove: isTrashed ? null : _removeTag,
+            onReminder: _showReminder,
+          ),
+        ),
+        if (note != null)
+          NoteAttachmentsStrip(
+            noteId: note.id,
+            appearance: appearance,
+            isOwner: note.isOwner,
+            canEdit: note.canEdit && note.isActive,
+            currentUserId: ref.watch(activeUserIdProvider),
+            onAdd: _showAdd,
+          ),
+        ValueListenableBuilder(
+          valueListenable: _showsEmptyNoteActions,
+          builder: (context, showsEmptyNoteActions, editor) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AnchorTokens.spaceGutterPhone,
+                  AnchorTokens.space4,
+                  AnchorTokens.spaceGutterPhone,
+                  0,
                 ),
-                IconButton(
-                  icon: const Icon(LucideIcons.trash2),
-                  onPressed: _isLoaded && !_isNew ? _permanentDeleteNote : null,
-                  tooltip: 'Delete permanently',
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: showsEmptyNoteActions
+                        ? 40
+                        : 140, // off-scale: spacer
+                  ),
+                  child: editor,
                 ),
-              ] else ...[
-                if (_existingNote?.sharedBy != null)
-                  _buildSharedByBadge(theme, serverUrl),
-                _buildPinButton(theme),
-                if (_existingNote?.isOwner ?? true) _buildShareButton(theme),
-                IconButton(
-                  icon: const Icon(LucideIcons.moreVertical),
-                  tooltip: 'More options',
-                  onPressed: _showOptionsSheet,
+              ),
+              if (showsEmptyNoteActions)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AnchorTokens.spaceGutterPhone,
+                    density.space16,
+                    AnchorTokens.spaceGutterPhone,
+                    0,
+                  ),
+                  child: EmptyNoteActions(
+                    appearance: appearance,
+                    onChecklist: () =>
+                        _editor?.applyLineKind(LineKind.checklist),
+                    onList: () => _editor?.applyLineKind(LineKind.bullet),
+                    onAdd: _showAdd,
+                  ),
                 ),
-              ],
-              SizedBox(width: context.dims.xs),
             ],
           ),
-          body: Hero(
-            tag: 'note_${widget.noteId ?? 'new'}',
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                children: [
-                  if (isReadOnly) _buildReadOnlyBanner(theme, isTrashed),
-                  Expanded(
-                    child: _isLoaded
-                        ? RichTextEditor(
-                            key: _editorKey,
-                            initialContent: _initialContent,
-                            hintText: 'Start typing...',
-                            showToolbar: !isReadOnly,
-                            canEdit: !isReadOnly,
-                            onEditingChanged: (_) => _updateEditingState(),
-                            onChanged: _onContentChanged,
-                            sortChecklistItems: ref
-                                .watch(editorPreferencesControllerProvider)
-                                .sortChecklistItems,
-                            contentPadding: context.dims.editorPadding,
-                            header: _buildEditorHeader(theme),
-                          )
-                        : const Center(child: CircularProgressIndicator()),
+          child: AnimatedBuilder(
+            animation: _flash,
+            builder: (context, child) => DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: BoxDecoration(
+                color: colors.appText.withValues(
+                  alpha:
+                      0.07 *
+                      (1 -
+                          AnchorTokens.motionEaseStandard.transform(
+                            ((_flash.value - 0.4) / 0.6).clamp(0.0, 1.0),
+                          )) *
+                      (_flash.isAnimating ? 1 : 0),
+                ),
+                borderRadius: BorderRadius.circular(AnchorTokens.radiusLg),
+              ),
+              child: child,
+            ),
+            child: _draft.isLoaded
+                ? RichTextEditor(
+                    key: _editorKey,
+                    initialContent: _draft.initialContent,
+                    contentVersion: _draft.contentVersion,
+                    focusNode: _editorFocus,
+                    canEdit: !_isReadOnly,
+                    scrollController: _scroll,
+                    palette: palette,
+                    bottomInset: _editorOverlay.caretSpace,
+                    sortChecklistItems: ref.watch(
+                      editorPreferencesControllerProvider.select(
+                        (preferences) => preferences.sortChecklistItems,
+                      ),
+                    ),
+                    isCheckedFolded:
+                        note != null &&
+                        ref.watch(
+                          checkedFoldsProvider.select(
+                            (folds) => folds.contains(note.id),
+                          ),
+                        ),
+                    onCheckedFoldChanged: note == null
+                        ? null
+                        : (isFolded) => ref
+                              .read(checkedFoldsProvider.notifier)
+                              .setFolded(note.id, isFolded: isFolded),
+                    visibleArea: _visibleArea,
+                    hasSlashHint: _openedAsNew,
+                    onChanged: _draft.contentChanged,
+                    onSelectionChanged: _editorOverlay.selectionMoved,
+                    onBlankChanged: _bodyBlankChanged,
+                    onBackspaceAtStart: _isReadOnly ? null : _joinTitle,
+                    onLinkTap: _editorOverlay.showLink,
+                    onReadOnlyTap: _shakeReadOnly,
+                  )
+                : const SizedBox(height: 140), // off-scale: as above
+          ),
+        ),
+      ],
+    );
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _draft.flushOnLeave();
+      },
+      child: Material(
+        type: MaterialType.transparency,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: AnimatedSwitcher(
+                duration: context.motion(AnchorTokens.motionDurationFade),
+                layoutBuilder: (current, previous) => Stack(
+                  fit: StackFit.expand,
+                  children: [...previous, ?current],
+                ),
+                child: AnimatedBuilder(
+                  key: ValueKey(
+                    '${appearance.background.id}|${context.isDark}',
                   ),
-                ],
+                  animation: _scrollOffset,
+                  builder: (context, _) => NoteSurface(
+                    appearance: appearance,
+                    offset: Offset(0, -_scrollOffset.value),
+                  ),
+                ),
               ),
             ),
-          ),
+            Positioned.fill(
+              child: _AboveKeyboard(
+                child: NotificationListener<ScrollMetricsNotification>(
+                  onNotification: _corrections.onMetrics,
+                  child: CustomScrollView(
+                    controller: _scroll,
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.manual,
+                    slivers: [
+                      SliverToBoxAdapter(child: content),
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _focusEditorEnd,
+                          child: _BottomSpacer(
+                            height: underText,
+                            slashQuery: writing ? _editor?.slashQuery : null,
+                            slashHeight: _editorOverlay.slashMenuSpace,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(left: 0, right: 0, top: 0, child: bar),
+            Positioned.fill(
+              child: EditorOverlay(
+                controller: _editorOverlay,
+                palette: palette,
+                hasToolbar: !_isReadOnly && _draft.isLoaded,
+                canEdit: !_isReadOnly,
+                isWriting: writing,
+                isTitleFocused: _titleFocus.hasFocus,
+                titleHistory: _titleHistory,
+                onAddAttachment: _showAdd,
+              ),
+            ),
+            if (_isReadOnly && note != null && !note.isDeleted)
+              Positioned(
+                left: AnchorTokens.spaceGutterPhone,
+                right: AnchorTokens.spaceGutterPhone,
+                bottom: safeBottom + 8,
+                child: BottomBarFrame(
+                  bottom: safeBottom + 8,
+                  onHeightChanged: (height) =>
+                      setState(() => _readOnlyBarHeight = height),
+                  child: AnimatedBuilder(
+                    animation: _nudge,
+                    builder: (context, child) => Transform.translate(
+                      offset: Offset(
+                        math.sin(_nudge.value * math.pi * 6) *
+                            6 *
+                            (1 - _nudge.value),
+                        0,
+                      ),
+                      child: child,
+                    ),
+                    child: ReadOnlyBottomBar(
+                      note: note,
+                      appearance: appearance,
+                      onRestore: _restoreFromTrash,
+                      onDeleteForever: _deleteForever,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Avatar widget to display the profile image of the user who shared the note
-class _SharedByAvatar extends StatelessWidget {
-  final SharedByUser sharedBy;
-  final String? serverUrl;
-  final double size;
+class _EditorContent implements NoteEditorContent {
+  const _EditorContent(this._key);
 
-  const _SharedByAvatar({
-    required this.sharedBy,
-    this.serverUrl,
-    this.size = 20,
-  });
+  final GlobalKey<RichTextEditorState> _key;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final profileImage = sharedBy.profileImage;
+  String? get content => _key.currentState?.getContent();
 
-    if (profileImage != null && profileImage.isNotEmpty) {
-      String imageUrl = profileImage;
-      if (!imageUrl.startsWith('http') && serverUrl != null) {
-        imageUrl = '$serverUrl$imageUrl';
-      }
-      return ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => _buildFallbackAvatar(theme),
-          errorWidget: (context, url, error) => _buildFallbackAvatar(theme),
-        ),
-      );
-    }
-    return _buildFallbackAvatar(theme);
+  @override
+  String? get plainText => _key.currentState?.getPlainText();
+
+  @override
+  bool? matches(String? content) => _key.currentState?.matchesContent(content);
+}
+
+class _AboveKeyboard extends StatelessWidget {
+  const _AboveKeyboard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    child: child,
+  );
+}
+
+class _BottomSpacer extends StatefulWidget {
+  const _BottomSpacer({
+    required this.height,
+    required this.slashQuery,
+    required this.slashHeight,
+  });
+
+  final double height;
+  final ValueListenable<String?>? slashQuery;
+  final double slashHeight;
+
+  @override
+  State<_BottomSpacer> createState() => _BottomSpacerState();
+}
+
+class _BottomSpacerState extends State<_BottomSpacer> {
+  bool _hasSlash = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.slashQuery?.addListener(_slashChanged);
   }
 
-  Widget _buildFallbackAvatar(ThemeData theme) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Text(
-          sharedBy.name.isNotEmpty ? sharedBy.name[0].toUpperCase() : '?',
-          style: TextStyle(
-            color: theme.colorScheme.onSecondaryContainer,
-            fontWeight: FontWeight.w600,
-            fontSize: size * 0.5,
-          ),
-        ),
-      ),
-    );
+  @override
+  void didUpdateWidget(covariant _BottomSpacer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.slashQuery == widget.slashQuery) return;
+    oldWidget.slashQuery?.removeListener(_slashChanged);
+    widget.slashQuery?.addListener(_slashChanged);
+    if (widget.slashQuery == null) _hasSlash = false;
   }
+
+  @override
+  void dispose() {
+    widget.slashQuery?.removeListener(_slashChanged);
+    super.dispose();
+  }
+
+  void _slashChanged() {
+    if (_hasSlash || widget.slashQuery?.value == null) return;
+    setState(() => _hasSlash = true);
+  }
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: _hasSlash
+        ? math.max(widget.height, widget.slashHeight)
+        : widget.height,
+  );
 }

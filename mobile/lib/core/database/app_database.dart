@@ -1,16 +1,18 @@
 import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../features/notes/data/local/notes_table.dart';
+
 import '../../features/notes/data/local/attachments_table.dart';
 import '../../features/notes/data/local/note_history_state_table.dart';
 import '../../features/notes/data/local/note_revisions_table.dart';
+import '../../features/notes/data/local/notes_table.dart';
 import '../../features/sync/data/local/sync_tables.dart';
 import '../../features/tags/data/local/tags_table.dart';
-import '../providers/active_user_id_provider.dart';
+import '../session/active_user_id_provider.dart';
 
 part 'app_database.g.dart';
 
@@ -29,7 +31,6 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(String userId) : super(_openConnection(userId));
 
-  // For tests: pass e.g. NativeDatabase.memory().
   AppDatabase.forTesting(super.e);
 
   @override
@@ -37,37 +38,36 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (Migrator m) async {
-      await m.createAll();
+    onCreate: (Migrator migrator) async {
+      await migrator.createAll();
     },
-    onUpgrade: (Migrator m, int from, int to) async {
+    onUpgrade: (Migrator migrator, int from, int to) async {
       if (from < 4) {
-        await m.createTable(tags);
-        await m.createTable(noteTags);
+        await migrator.createTable(tags);
+        await migrator.createTable(noteTags);
       }
       if (from < 5) {
-        await m.renameColumn(notes, 'color', notes.background);
+        await migrator.renameColumn(notes, 'color', notes.background);
       }
       if (from < 6) {
-        // Add sharing columns
-        await m.addColumn(notes, notes.permission);
-        await m.addColumn(notes, notes.shareIds);
-        await m.addColumn(notes, notes.sharedById);
-        await m.addColumn(notes, notes.sharedByName);
-        await m.addColumn(notes, notes.sharedByEmail);
-        await m.addColumn(notes, notes.sharedByProfileImage);
+        await migrator.addColumn(notes, notes.permission);
+        await migrator.addColumn(notes, notes.shareIds);
+        await migrator.addColumn(notes, notes.sharedById);
+        await migrator.addColumn(notes, notes.sharedByName);
+        await migrator.addColumn(notes, notes.sharedByEmail);
+        await migrator.addColumn(notes, notes.sharedByProfileImage);
       }
       if (from < 7) {
-        await m.createTable(noteAttachments);
+        await migrator.createTable(noteAttachments);
       }
       if (from < 8) {
-        await m.addColumn(notes, notes.version);
-        await m.addColumn(notes, notes.localRev);
-        await m.addColumn(notes, notes.isPinSynced);
-        await m.addColumn(tags, tags.version);
-        await m.addColumn(tags, tags.localRev);
-        await m.createTable(syncState);
-        await m.createTable(syncSweep);
+        await migrator.addColumn(notes, notes.version);
+        await migrator.addColumn(notes, notes.localRev);
+        await migrator.addColumn(notes, notes.isPinSynced);
+        await migrator.addColumn(tags, tags.version);
+        await migrator.addColumn(tags, tags.localRev);
+        await migrator.createTable(syncState);
+        await migrator.createTable(syncSweep);
 
         await (update(notes)..where(
               (tbl) => tbl.isSynced.equals(false) & tbl.isPinned.equals(true),
@@ -75,22 +75,22 @@ class AppDatabase extends _$AppDatabase {
             .write(const NotesCompanion(isPinSynced: Value(false)));
       }
       if (from < 9) {
-        await m.createTable(noteRevisions);
-        await m.createTable(noteHistoryState);
-        await m.createIndex(noteRevisionsNoteCreated);
+        await migrator.createTable(noteRevisions);
+        await migrator.createTable(noteHistoryState);
+        await migrator.createIndex(noteRevisionsNoteCreated);
       }
       if (from < 10) {
-        await m.addColumn(notes, notes.reminderAt);
-        await m.addColumn(notes, notes.reminderRecurrence);
-        await m.addColumn(notes, notes.reminderVersion);
-        await m.addColumn(notes, notes.isReminderSynced);
-        await m.addColumn(notes, notes.reminderSlot);
+        await migrator.addColumn(notes, notes.reminderAt);
+        await migrator.addColumn(notes, notes.reminderRecurrence);
+        await migrator.addColumn(notes, notes.reminderVersion);
+        await migrator.addColumn(notes, notes.isReminderSynced);
+        await migrator.addColumn(notes, notes.reminderSlot);
       }
       if (from < 11) {
-        await m.addColumn(notes, notes.syncedTitle);
-        await m.addColumn(notes, notes.syncedContent);
-        await m.addColumn(notes, notes.syncedBackground);
-        await m.addColumn(notes, notes.syncedState);
+        await migrator.addColumn(notes, notes.syncedTitle);
+        await migrator.addColumn(notes, notes.syncedContent);
+        await migrator.addColumn(notes, notes.syncedBackground);
+        await migrator.addColumn(notes, notes.syncedState);
         await (update(notes)..where(
               (tbl) => tbl.isSynced.equals(true) & tbl.version.isNotNull(),
             ))

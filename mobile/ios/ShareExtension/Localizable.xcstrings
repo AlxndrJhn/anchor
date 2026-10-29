@@ -1,0 +1,210 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "shareSheetTitle": {
+      "comment": "Title of the sheet that opens over another app when something is shared to Anchor; it names the note the sheet makes.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New note"
+          }
+        }
+      }
+    },
+    "noteTitleHint": {
+      "comment": "Placeholder of the note title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title"
+          }
+        }
+      }
+    },
+    "editorPlaceholder": {
+      "comment": "Placeholder in an empty note.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start writing"
+          }
+        }
+      }
+    },
+    "commonCancel": {
+      "comment": "Button that closes a dialog, sheet, search or selection without making changes.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "commonSave": {
+      "comment": "Button that saves a form or the choice made in a sheet.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "commonClose": {
+      "comment": "Spoken label of the picture viewer’s close button and of the area outside a dialog, and the button that closes the share sheet when nothing in a share can be saved.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "shareSignIn": {
+      "comment": "Shown in the sheet that opens when something is shared to Anchor from another app while no one is signed in.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in to Anchor to save what you share."
+          }
+        }
+      }
+    },
+    "shareNothing": {
+      "comment": "Shown in the share sheet when what another app shared has nothing Anchor can keep.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There’s nothing here that Anchor can save."
+          }
+        }
+      }
+    },
+    "shareNotAdded": {
+      "comment": "Shown below the new note in the share sheet when some shared files can’t come in, for mixed or unknown reasons.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "1 file couldn’t be added."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld files couldn’t be added."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "shareUnsupported": {
+      "comment": "Shown below the new note in the share sheet when shared files are of a kind Anchor doesn’t keep, such as a video or a PDF.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "1 file can’t be added. Anchor adds pictures and audio."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld files can’t be added. Anchor adds pictures and audio."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "shareTooBig": {
+      "comment": "Shown below the new note in the share sheet when shared files are larger than a note’s file limit.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "1 file is over 50 MB, so it can’t be added."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld files are over 50 MB, so they can’t be added."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "shareOverLimit": {
+      "comment": "Shown below the new note in the share sheet when more than 20 files were shared at once.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the first 20 files are added."
+          }
+        }
+      }
+    },
+    "shareRemoveItem": {
+      "comment": "Spoken label of the small x on a picture or audio file in the share sheet; it leaves that file out of the new note.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %@"
+          }
+        }
+      }
+    },
+    "shareTag": {
+      "comment": "Spoken label of a tag in the share sheet; tapping it adds the tag to the new note or takes it off.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tag %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -1,5 +1,5 @@
-import 'package:anchor/core/notifications/notification_gateway.dart';
-import 'package:anchor/core/notifications/reminder_permissions.dart';
+import 'package:anchor/features/reminders/data/notification_gateway.dart';
+import 'package:anchor/features/reminders/data/reminder_permissions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -7,14 +7,14 @@ class FakeGateway implements NotificationGateway {
   FakeGateway({
     this.notifications = false,
     this.exact = false,
-    this.gatesExactAlarms = true,
+    this.requiresExactAlarmPermission = true,
   });
 
   bool notifications;
   bool exact;
 
   @override
-  final bool gatesExactAlarms;
+  final bool requiresExactAlarmPermission;
 
   int requests = 0;
   int exactScreensOpened = 0;
@@ -67,12 +67,12 @@ void main() {
   Future<ReminderPermissions> read(FakeGateway gateway) =>
       containerFor(gateway).read(reminderPermissionsControllerProvider.future);
 
-  group('ringsOnTime', () {
+  group('canRingOnTime', () {
     test('needs notifications before anything else', () async {
       final permissions = await read(
         FakeGateway(notifications: false, exact: true),
       );
-      expect(permissions.ringsOnTime, isFalse);
+      expect(permissions.canRingOnTime, isFalse);
     });
 
     test('is false while Android still gates exact alarms', () async {
@@ -80,14 +80,14 @@ void main() {
         FakeGateway(notifications: true, exact: false),
       );
       expect(permissions.canNotify, isTrue);
-      expect(permissions.ringsOnTime, isFalse);
+      expect(permissions.canRingOnTime, isFalse);
     });
 
     test('is true once both grants are in place', () async {
       final permissions = await read(
         FakeGateway(notifications: true, exact: true),
       );
-      expect(permissions.ringsOnTime, isTrue);
+      expect(permissions.canRingOnTime, isTrue);
     });
 
     test(
@@ -97,11 +97,11 @@ void main() {
           FakeGateway(
             notifications: true,
             exact: false,
-            gatesExactAlarms: false,
+            requiresExactAlarmPermission: false,
           ),
         );
-        expect(permissions.exactMatters, isFalse);
-        expect(permissions.ringsOnTime, isTrue);
+        expect(permissions.needsExactAlarmPermission, isFalse);
+        expect(permissions.canRingOnTime, isTrue);
       },
     );
   });

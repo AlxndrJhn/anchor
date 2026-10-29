@@ -55,10 +55,7 @@ dependencies:
   flutter_appauth: ^12.0.2
 
   # UI
-  google_fonts: ^8.2.1
   lucide_icons_flutter: ^3.1.14+2
-  flutter_staggered_grid_view: ^0.7.0
-  shimmer: ^4.0.0
 
   # Code Generation Annotations
   riverpod_annotation: ^4.0.6
@@ -68,10 +65,11 @@ dependencies:
   # Media
   image_picker: ^1.2.2
   cached_network_image: ^3.4.1
-  photo_view: ^0.15.0
   just_audio: ^0.10.0
   record: ^7.1.1
   file_picker: ^12.0.0
+  share_plus: ^13.3.1
+  gal: ^2.3.3
 
   # Reminders (device-local notifications)
   flutter_local_notifications: ^22.3.0
@@ -95,6 +93,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -113,9 +113,6 @@ dev_dependencies:
   freezed: ^4.0.0
   json_serializable: ^6.8.0
 
-  # Icons
-  flutter_launcher_icons: ^0.14.4
-
   # Native splash screens
   flutter_native_splash: ^2.4.6
 
@@ -124,14 +121,54 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/icons/anchor_icon.png
+  # Licenses (SIL OFL 1.1) sit next to the files.
+  fonts:
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/DMSans-Variable.ttf
+        - asset: assets/fonts/DMSans-VariableItalic.ttf
+          style: italic
+    - family: Playfair Display
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlayfairDisplay-Bold.ttf
+          weight: 700
+    # An italic of 500 or 600 falls back to the nearest italic file.
+    - family: Literata
+      fonts:
+        - asset: assets/fonts/Literata-Regular.ttf
+        - asset: assets/fonts/Literata-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Literata-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Literata-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Literata-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Literata-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono-Italic.ttf
+          style: italic
+        - asset: assets/fonts/JetBrainsMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/JetBrainsMono-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/JetBrainsMono-BoldItalic.ttf
+          weight: 700
+          style: italic
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

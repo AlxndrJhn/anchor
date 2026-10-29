@@ -2,49 +2,45 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'tag.freezed.dart';
-part 'tag.g.dart';
+import '../../../core/text/name_order.dart';
 
-/// Curated list of pleasant tag colors (standard hex format for cross-platform)
+part 'tag.freezed.dart';
+
 const List<String> _tagColors = [
-  '#E57373', // Red 300
-  '#F06292', // Pink 300
-  '#BA68C8', // Purple 300
-  '#9575CD', // Deep Purple 300
-  '#7986CB', // Indigo 300
-  '#64B5F6', // Blue 300
-  '#4FC3F7', // Light Blue 300
-  '#4DD0E1', // Cyan 300
-  '#4DB6AC', // Teal 300
-  '#81C784', // Green 300
-  '#AED581', // Light Green 300
-  '#DCE775', // Lime 300
-  '#FFD54F', // Amber 300
-  '#FFB74D', // Orange 300
-  '#FF8A65', // Deep Orange 300
-  '#A1887F', // Brown 300
-  '#90A4AE', // Blue Grey 300
+  '#E57373',
+  '#F06292',
+  '#BA68C8',
+  '#9575CD',
+  '#7986CB',
+  '#64B5F6',
+  '#4FC3F7',
+  '#4DD0E1',
+  '#4DB6AC',
+  '#81C784',
+  '#AED581',
+  '#DCE775',
+  '#FFD54F',
+  '#FFB74D',
+  '#FF8A65',
+  '#A1887F',
+  '#90A4AE',
 ];
 
-/// Generates a random tag color as a standard hex string (#RRGGBB)
 String generateRandomTagColor() {
   final random = Random();
   return _tagColors[random.nextInt(_tagColors.length)];
 }
 
-/// Parses a hex color string to Flutter Color
-/// Supports: #RGB, #RRGGBB, #AARRGGBB, 0xAARRGGBB
+/// Supports #RGB, #RRGGBB, #AARRGGBB and 0xAARRGGBB.
 Color parseTagColor(String? hexColor, {Color fallback = Colors.grey}) {
   if (hexColor == null || hexColor.isEmpty) return fallback;
 
   String hex = hexColor.replaceAll('#', '').replaceAll('0x', '');
 
-  // Handle short format #RGB -> #RRGGBB
   if (hex.length == 3) {
     hex = hex.split('').map((c) => '$c$c').join();
   }
 
-  // Add alpha if not present (6 chars -> 8 chars)
   if (hex.length == 6) {
     hex = 'FF$hex';
   }
@@ -56,35 +52,39 @@ Color parseTagColor(String? hexColor, {Color fallback = Colors.grey}) {
   }
 }
 
+/// Names are kept without the spaces around them and compared ignoring case.
+bool isTagNameTaken(Iterable<Tag> tags, String name, {String? exceptId}) {
+  final wanted = name.trim().toLowerCase();
+  return tags.any(
+    (tag) => tag.id != exceptId && tag.name.toLowerCase() == wanted,
+  );
+}
+
+/// Tags in name order, the order every tag list shows.
+List<Tag> sortTagsByName(Iterable<Tag> tags) =>
+    sortedByName(tags, (tag) => tag.name);
+
+/// A note's tags in the order they show.
+List<Tag> tagsByName(Iterable<String> ids, Map<String, Tag> byId) =>
+    sortTagsByName([for (final id in ids) ?byId[id]]);
+
+class TagNameTakenException implements Exception {
+  const TagNameTakenException(this.name);
+
+  final String name;
+
+  @override
+  String toString() => 'TagNameTakenException: $name';
+}
+
 @freezed
 abstract class Tag with _$Tag {
-  const Tag._();
-
   const factory Tag({
     required String id,
     required String name,
     String? color,
     DateTime? updatedAt,
-    // Note count from server (optional, not stored locally)
-    @JsonKey(name: '_count') TagCount? count,
-    // Local only - not serialized
-    @Default(true)
-    @JsonKey(includeFromJson: false, includeToJson: false)
-    bool isSynced,
-    @Default(false)
-    @JsonKey(includeFromJson: true, includeToJson: false)
-    bool isDeleted,
+    @Default(true) bool isSynced,
+    @Default(false) bool isDeleted,
   }) = _Tag;
-
-  factory Tag.fromJson(Map<String, dynamic> json) => _$TagFromJson(json);
-
-  int get noteCount => count?.notes ?? 0;
-}
-
-@freezed
-abstract class TagCount with _$TagCount {
-  const factory TagCount({required int notes}) = _TagCount;
-
-  factory TagCount.fromJson(Map<String, dynamic> json) =>
-      _$TagCountFromJson(json);
 }

@@ -22,7 +22,7 @@ final class NotesRepositoryProvider
         argument: null,
         retry: null,
         name: r'notesRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -49,4 +49,4 @@ final class NotesRepositoryProvider
   }
 }
 
-String _$notesRepositoryHash() => r'bd14aa0ce6b5589774313ea89a2e2e80c5aaf17b';
+String _$notesRepositoryHash() => r'a5e4a57d2d7724de948a2de198fad7b087aabcdd';

@@ -2,7 +2,6 @@ import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Ordering of the notes list under each view option.
 void main() {
   Note note(
     String id, {

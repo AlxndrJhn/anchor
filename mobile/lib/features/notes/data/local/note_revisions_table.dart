@@ -1,7 +1,5 @@
 import 'package:drift/drift.dart';
 
-// Earlier versions of a note: the ones this device recorded and the ones it
-// has read from the server.
 @TableIndex(name: 'note_revisions_note_created', columns: {#noteId, #createdAt})
 @DataClassName('NoteRevisionRow')
 class NoteRevisions extends Table {

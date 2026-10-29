@@ -13,13 +13,42 @@ enum AttachmentType {
       orElse: () => AttachmentType.image,
     );
   }
+
+  static AttachmentType fromMimeType(String mimeType) =>
+      mimeType.startsWith('image/')
+      ? AttachmentType.image
+      : AttachmentType.audio;
 }
 
-/// Sync status for attachments (stored in DB as text).
-/// Values match DB column: 'synced', 'pending_upload', 'pending_delete'.
+const recordingFilePrefix = 'recording_';
+
+enum AttachmentKind {
+  picture,
+  voiceNote,
+  audioFile;
+
+  static AttachmentKind of({
+    required String mimeType,
+    required String filename,
+  }) => switch (AttachmentType.fromMimeType(mimeType)) {
+    AttachmentType.image => AttachmentKind.picture,
+    AttachmentType.audio when filename.startsWith(recordingFilePrefix) =>
+      AttachmentKind.voiceNote,
+    AttachmentType.audio => AttachmentKind.audioFile,
+  };
+}
+
+/// Must match the server's limit.
+const maxAttachmentBytes = 50 * 1024 * 1024;
+
+class AttachmentTooBigException implements Exception {
+  const AttachmentTooBigException();
+}
+
 enum AttachmentSyncStatus {
   synced('synced'),
   pendingUpload('pending_upload'),
+  uploadFailed('upload_failed'),
   pendingDelete('pending_delete');
 
   const AttachmentSyncStatus(this.dbValue);
@@ -46,11 +75,13 @@ abstract class NoteAttachment with _$NoteAttachment {
     required int fileSize,
     @Default(0) int position,
     String? uploadedByUserId,
-    // Local only - not from server
     @JsonKey(includeFromJson: false, includeToJson: false) String? localPath,
     @JsonKey(includeFromJson: false, includeToJson: false)
     @Default(false)
     bool isPendingUpload,
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(false)
+    bool isUploadFailed,
     String? createdAt,
   }) = _NoteAttachment;
 
@@ -59,4 +90,7 @@ abstract class NoteAttachment with _$NoteAttachment {
 
   bool get isImage => type == AttachmentType.image;
   bool get isAudio => type == AttachmentType.audio;
+
+  AttachmentKind get kind =>
+      AttachmentKind.of(mimeType: mimeType, filename: originalFilename);
 }

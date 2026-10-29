@@ -1,154 +1,138 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../../core/network/api_error.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../domain/auth_failure.dart';
 import '../../domain/oidc_config.dart';
 
 part 'auth_service.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 AuthService authService(Ref ref) {
   final dio = ref.watch(dioProvider);
   return AuthService(dio);
 }
 
+/// A request that fails throws an [AuthFailure].
 class AuthService {
   final Dio _dio;
 
   AuthService(this._dio);
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    try {
-      final response = await _dio.post(
-        '/api/auth/login',
-        data: {'email': email, 'password': password},
-      );
-      return response.data;
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Login failed';
-    }
-  }
+  Future<Map<String, dynamic>> login(String email, String password) => _send(
+    () => _dio.post(
+      '/api/auth/login',
+      data: {'email': email, 'password': password},
+    ),
+  );
 
+  /// The answer has tokens, or only the user while an admin still has to
+  /// approve the account.
   Future<Map<String, dynamic>> register(
     String email,
     String password,
     String name,
-  ) async {
-    try {
-      final response = await _dio.post(
-        '/api/auth/register',
-        data: {'email': email, 'password': password, 'name': name},
-      );
-      return response.data;
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Registration failed';
-    }
-  }
+  ) => _send(
+    () => _dio.post(
+      '/api/auth/register',
+      data: {'email': email, 'password': password, 'name': name},
+    ),
+  );
 
   Future<void> changePassword(
     String currentPassword,
     String newPassword,
   ) async {
-    try {
-      await _dio.post(
+    await _send<Object?>(
+      () => _dio.post(
         '/api/auth/change-password',
         data: {'currentPassword': currentPassword, 'newPassword': newPassword},
-      );
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Failed to change password';
-    }
+      ),
+    );
   }
 
-  Future<Map<String, dynamic>> updateProfile({String? name}) async {
-    try {
-      final data = <String, dynamic>{};
-      if (name != null) data['name'] = name;
+  Future<Map<String, dynamic>> updateProfile({String? name}) =>
+      _send(() => _dio.patch('/api/auth/profile', data: {'name': ?name}));
 
-      final response = await _dio.patch('/api/auth/profile', data: data);
-      return response.data;
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Failed to update profile';
-    }
-  }
-
-  Future<Map<String, dynamic>> uploadProfileImage(File imageFile) async {
-    try {
-      final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
-          imageFile.path,
-          filename: imageFile.path.split('/').last,
-        ),
+  Future<Map<String, dynamic>> uploadProfileImage(File imageFile) =>
+      _send(() async {
+        final formData = FormData.fromMap({
+          'image': await MultipartFile.fromFile(
+            imageFile.path,
+            filename: imageFile.path.split('/').last,
+          ),
+        });
+        return _dio.post('/api/auth/profile/image', data: formData);
       });
 
-      final response = await _dio.post(
-        '/api/auth/profile/image',
-        data: formData,
-      );
-      return response.data;
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Failed to upload profile image';
-    }
-  }
+  Future<Map<String, dynamic>> removeProfileImage() =>
+      _send(() => _dio.delete('/api/auth/profile/image'));
 
-  Future<Map<String, dynamic>> removeProfileImage() async {
-    try {
-      final response = await _dio.delete('/api/auth/profile/image');
-      return response.data;
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Failed to remove profile image';
-    }
-  }
-
-  Future<Map<String, dynamic>> getProfile() async {
-    try {
-      final response = await _dio.get('/api/auth/me');
-      return response.data;
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Failed to get profile';
-    }
-  }
+  Future<Map<String, dynamic>> getProfile() =>
+      _send(() => _dio.get('/api/auth/me'));
 
   Future<OidcConfig> getOidcConfig() async {
     try {
       final response = await _dio.get('/api/auth/oidc/config');
       return OidcConfig.fromJson(response.data as Map<String, dynamic>);
-    } on DioException catch (_) {
-      // Server may not have OIDC (old version)
-      return const OidcConfig();
+    } on DioException catch (error) {
+      // Older servers have no OIDC endpoint.
+      if (error.response?.statusCode == 404) return const OidcConfig();
+      throw authFailureOf(error);
     }
   }
 
-  Future<String> getRegistrationMode() async {
+  Future<String?> getRegistrationMode() async {
     try {
       final response = await _dio.get('/api/auth/registration-mode');
       final data = response.data as Map<String, dynamic>;
-      return data['mode'] as String? ?? 'enabled';
-    } on DioException catch (_) {
-      return 'enabled';
+      return data['mode'] as String?;
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) return null;
+      throw authFailureOf(error);
     }
   }
 
-  /// Revoke refresh token on server.
   Future<void> revokeRefreshToken(String? refreshToken) async {
     if (refreshToken == null || refreshToken.isEmpty) return;
     try {
       await _dio.post('/api/auth/logout', data: {'refreshToken': refreshToken});
     } on Exception {
-      // Ignore - ensure local logout always completes
+      // Local sign-out goes ahead anyway.
     }
   }
 
-  Future<Map<String, dynamic>> exchangeOidcMobileToken(
-    String accessToken,
-  ) async {
-    try {
-      final response = await _dio.post(
-        '/api/auth/oidc/exchange/mobile',
-        data: {'access_token': accessToken},
+  Future<Map<String, dynamic>> exchangeOidcMobileToken(String accessToken) =>
+      _send(
+        () => _dio.post(
+          '/api/auth/oidc/exchange/mobile',
+          data: {'access_token': accessToken},
+        ),
       );
-      return response.data;
-    } on DioException catch (e) {
-      throw e.response?.data['message'] ?? 'Failed to complete sign-in';
+
+  Future<T> _send<T>(Future<Response<dynamic>> Function() request) async {
+    try {
+      final response = await request();
+      return response.data as T;
+    } on DioException catch (error) {
+      throw authFailureOf(error);
     }
   }
+}
+
+AuthFailure authFailureOf(DioException exception) {
+  final apiError = exception.apiError;
+  if (apiError is OfflineApiError ||
+      apiError is TimeoutApiError ||
+      apiError is CertificateApiError ||
+      apiError is CancelledApiError) {
+    return const UnreachableFailure();
+  }
+  final data = exception.response?.data;
+  return AuthFailure.fromResponse(
+    exception.response?.statusCode,
+    data is Map ? data['message'] : null,
+    error: apiError,
+  );
 }

@@ -1,11 +1,12 @@
 import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/ids.dart';
+import '../../../auth/data/repository/auth_repository.dart';
 import '../../../auth/domain/user.dart';
-import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/note_revision.dart';
+import '../../domain/user_summary.dart';
 
 part 'note_revisions_store.g.dart';
 
@@ -14,15 +15,17 @@ part 'note_revisions_store.g.dart';
 const Duration _collapseWindow = Duration(minutes: 10);
 
 const Duration _retention = Duration(days: 90);
-const int _capPerNote = 200;
+const int _maxVersionsPerNote = 200;
 
-@riverpod
+@Riverpod(keepAlive: true)
 NoteRevisionsStore noteRevisionsStore(Ref ref) {
   final db = ref.watch(appDatabaseProvider);
-  return NoteRevisionsStore(db, () => ref.read(authControllerProvider).value);
+  return NoteRevisionsStore(
+    db,
+    () => ref.read(authRepositoryProvider).getCurrentUser(),
+  );
 }
 
-/// How far back a note's history has been read from the server.
 class NoteHistoryPosition {
   const NoteHistoryPosition({this.cursor, this.isRead = false});
 
@@ -32,22 +35,22 @@ class NoteHistoryPosition {
   bool get isComplete => isRead && cursor == null;
 }
 
-/// The earlier versions this device holds. Everything here is local: versions
-/// recorded as the note is edited, and versions read from the server.
+/// Local only: versions recorded here and versions read from the server.
 class NoteRevisionsStore {
   NoteRevisionsStore(this._db, this._currentUser);
 
   final AppDatabase _db;
-  final User? Function() _currentUser;
 
-  /// Keeps what a note said before this device changed it. Meant to run inside
-  /// the write's own transaction. [synced] keeps the version off the wire.
+  final Future<User?> Function() _currentUser;
+
+  /// Runs inside the caller's transaction. [synced] keeps the version off the
+  /// wire.
   Future<void> record(
-    Note prior, {
+    NoteRow prior, {
     RevisionCause cause = RevisionCause.edit,
     bool synced = false,
   }) async {
-    final author = _currentUser();
+    final author = await _currentUser();
     if (cause == RevisionCause.edit && await _collapsesInto(prior.id, author)) {
       return;
     }
@@ -56,7 +59,7 @@ class NoteRevisionsStore {
         .into(_db.noteRevisions)
         .insert(
           NoteRevisionsCompanion.insert(
-            id: const Uuid().v7(),
+            id: newTimeOrderedId(),
             noteId: prior.id,
             version: Value(prior.version ?? 0),
             title: prior.title,
@@ -88,8 +91,7 @@ class NoteRevisionsStore {
         .map((rows) => rows.map(_toDomain).toList());
   }
 
-  /// Versions recorded here that the server has not been told about, oldest
-  /// first.
+  /// Unsent versions, oldest first.
   Future<List<NoteRevision>> pending(
     String noteId, {
     required int limit,
@@ -108,8 +110,6 @@ class NoteRevisionsStore {
     return rows.map(_toDomain).toList();
   }
 
-  /// Notes with versions recorded here that the server has not been told
-  /// about.
   Future<List<String>> noteIdsWithPending() async {
     final rows =
         await (_db.selectOnly(_db.noteRevisions, distinct: true)
@@ -125,7 +125,6 @@ class NoteRevisionsStore {
         .write(const NoteRevisionsCompanion(isSynced: Value(true)));
   }
 
-  /// Where the next read of this note's history starts.
   Future<NoteHistoryPosition> position(String noteId) async {
     return _toPosition(await _positionRow(noteId).getSingleOrNull());
   }
@@ -141,8 +140,6 @@ class NoteRevisionsStore {
     )..where((tbl) => tbl.noteId.equals(noteId))).go();
   }
 
-  /// Keeps a page read from the server together with where the next one
-  /// starts.
   Future<void> savePage(
     String noteId,
     List<NoteRevision> revisions, {
@@ -220,7 +217,7 @@ class NoteRevisionsStore {
               ..where(_db.noteRevisions.noteId.equals(noteId)))
             .map((row) => row.read(countOf)!)
             .getSingle();
-    if (total <= _capPerNote) return;
+    if (total <= _maxVersionsPerNote) return;
 
     final rows =
         await (_db.selectOnly(_db.noteRevisions)
@@ -242,21 +239,21 @@ class NoteRevisionsStore {
                 ),
               ]))
             .get();
-    if (rows.length <= _capPerNote) return;
+    if (rows.length <= _maxVersionsPerNote) return;
 
-    final doomed = [
-      for (final row in rows.sublist(_capPerNote))
+    final toDelete = [
+      for (final row in rows.sublist(_maxVersionsPerNote))
         if (row.read(_db.noteRevisions.isSynced)! &&
             !(row.read(_db.noteRevisions.cause) ==
                     RevisionCause.conflict.name &&
                 row.read(_db.noteRevisions.createdAt)! >= cutoff))
           row.read(_db.noteRevisions.id)!,
     ];
-    if (doomed.isEmpty) return;
+    if (toDelete.isEmpty) return;
 
     await (_db.delete(
       _db.noteRevisions,
-    )..where((tbl) => tbl.id.isIn(doomed))).go();
+    )..where((tbl) => tbl.id.isIn(toDelete))).go();
   }
 
   SimpleSelectStatement<$NoteHistoryStateTable, NoteHistoryStateData>
@@ -326,7 +323,7 @@ class NoteRevisionsStore {
     createdAt: DateTime.fromMillisecondsSinceEpoch(row.createdAt, isUtc: true),
     author: row.authorId == null
         ? null
-        : NoteRevisionAuthor(
+        : UserSummary(
             id: row.authorId!,
             name: row.authorName ?? '',
             email: row.authorEmail ?? '',

@@ -1,57 +1,45 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/network/dio_provider.dart';
-import '../../domain/user_search_result.dart';
+import '../../domain/user_summary.dart';
 
 part 'users_repository.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 UsersRepository usersRepository(Ref ref) {
   final dio = ref.watch(dioProvider);
   return UsersRepository(dio);
 }
 
+/// Request errors reach the caller; the Dio logger has already recorded them.
 class UsersRepository {
   final Dio _dio;
 
   UsersRepository(this._dio);
 
-  /// Search for users by name or email for sharing purposes.
-  /// Returns empty list if query is less than 2 characters.
-  Future<List<UserSearchResult>> searchUsers(String query) async {
+  /// Returns an empty list for a query under 2 characters.
+  Future<List<UserSummary>> searchUsers(String query) async {
     if (query.trim().length < 2) {
       return [];
     }
 
-    try {
-      final response = await _dio.get(
-        '/api/users/search',
-        queryParameters: {'q': query.trim()},
-      );
+    final response = await _dio.get(
+      '/api/users/search',
+      queryParameters: {'q': query.trim()},
+    );
 
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data
-          .map((e) => UserSearchResult.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } on DioException {
-      // Return empty list on error - error handling done by Dio interceptor
-      return [];
-    }
+    final List<dynamic> data = response.data as List<dynamic>;
+    return data
+        .map((e) => UserSummary.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  /// Fetch the users the current user has most recently shared notes with.
-  /// Used to suggest contacts before the user starts typing a search.
-  Future<List<UserSearchResult>> getRecentContacts() async {
-    try {
-      final response = await _dio.get('/api/users/recent-contacts');
+  Future<List<UserSummary>> getRecentContacts() async {
+    final response = await _dio.get('/api/users/recent-contacts');
 
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data
-          .map((e) => UserSearchResult.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } on DioException {
-      // Return empty list on error - error handling done by Dio interceptor
-      return [];
-    }
+    final List<dynamic> data = response.data as List<dynamic>;
+    return data
+        .map((e) => UserSummary.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -1,8 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../../core/logging/app_logger.dart';
-import '../../../core/network/sync_requester.dart';
+import '../../../core/ids.dart';
+import '../../notes/presentation/notes_controller.dart';
 import '../data/repository/tags_repository.dart';
 import '../domain/tag.dart';
 
@@ -15,69 +14,34 @@ class TagsController extends _$TagsController {
     return ref.watch(tagsRepositoryProvider).watchTags();
   }
 
-  Future<void> sync() async {
-    try {
-      await requestAppSync(trigger: 'TagsController.sync');
-    } catch (e, stack) {
-      AppLogger.instance.error(
-        'Tags',
-        'Sync request failed',
-        error: e,
-        stackTrace: stack,
-      );
-    }
-  }
-
+  /// Throws [TagNameTakenException] when another tag has the name.
   Future<Tag> createTag(String name, {String? color}) async {
-    // Validate name is not empty
-    final trimmedName = name.trim();
-    if (trimmedName.isEmpty) {
-      throw ArgumentError('Tag name cannot be empty');
-    }
-
-    // Check for duplicate name
-    final existingTags = await ref.read(tagsRepositoryProvider).getTags();
-    final duplicateTag = existingTags.firstWhere(
-      (tag) => tag.name.toLowerCase() == trimmedName.toLowerCase(),
-      orElse: () => Tag(id: '', name: '', isSynced: false),
-    );
-
-    if (duplicateTag.id.isNotEmpty) {
-      throw Exception('A tag with this name already exists');
-    }
-
+    final tagName = await _checkedName(name);
     final tag = Tag(
-      id: const Uuid().v4(),
-      name: trimmedName,
+      id: newId(),
+      name: tagName,
       color: color ?? generateRandomTagColor(),
       isSynced: false,
     );
-    // This now waits for server response when online
     return ref.read(tagsRepositoryProvider).createTag(tag);
   }
 
+  /// Throws [TagNameTakenException] when another tag has the new name.
   Future<void> updateTag(Tag tag) async {
-    // Validate name is not empty
-    final trimmedName = tag.name.trim();
-    if (trimmedName.isEmpty) {
-      throw ArgumentError('Tag name cannot be empty');
-    }
-
-    // Check for duplicate name (excluding current tag)
-    final existingTags = await ref.read(tagsRepositoryProvider).getTags();
-    final duplicateTag = existingTags.firstWhere(
-      (t) =>
-          t.id != tag.id && t.name.toLowerCase() == trimmedName.toLowerCase(),
-      orElse: () => Tag(id: '', name: '', isSynced: false),
-    );
-
-    if (duplicateTag.id.isNotEmpty) {
-      throw Exception('A tag with this name already exists');
-    }
-
+    final tagName = await _checkedName(tag.name, tagId: tag.id);
     await ref
         .read(tagsRepositoryProvider)
-        .updateTag(tag.copyWith(name: trimmedName));
+        .updateTag(tag.copyWith(name: tagName));
+  }
+
+  Future<String> _checkedName(String name, {String? tagId}) async {
+    final tagName = name.trim();
+    if (tagName.isEmpty) throw ArgumentError('Tag name cannot be empty');
+    final tags = await ref.read(tagsRepositoryProvider).getTags();
+    if (isTagNameTaken(tags, tagName, exceptId: tagId)) {
+      throw TagNameTakenException(tagName);
+    }
+    return tagName;
   }
 
   Future<void> deleteTag(String id) async {
@@ -85,23 +49,44 @@ class TagsController extends _$TagsController {
   }
 }
 
-// Provider for tags on a specific note
+/// Counts archived notes too.
 @riverpod
-Stream<List<Tag>> noteTagsStream(Ref ref, String noteId) {
-  return ref.watch(tagsRepositoryProvider).watchTagsForNote(noteId);
+Map<String, int> tagNoteCounts(Ref ref) {
+  final notes = [
+    ...?ref.watch(allActiveNotesProvider).value,
+    ...?ref.watch(archivedNotesProvider).value,
+  ];
+  final counts = <String, int>{};
+  for (final note in notes) {
+    for (final tagId in note.tagIds) {
+      counts[tagId] = (counts[tagId] ?? 0) + 1;
+    }
+  }
+  return counts;
 }
 
-// Provider for available tags (all tags that exist)
-@riverpod
-Future<List<Tag>> availableTags(Ref ref) async {
-  return ref.watch(tagsRepositoryProvider).getTags();
-}
-
-// Selected tag for filtering
 @riverpod
 class SelectedTagFilter extends _$SelectedTagFilter {
   @override
-  String? build() => null;
+  String? build() {
+    ref.listen(tagsControllerProvider, (previous, next) {
+      final id = state;
+      final tags = next.value;
+      if (id == null || tags == null || tags.any((tag) => tag.id == id)) {
+        return;
+      }
+      final name = previous?.value
+          ?.where((tag) => tag.id == id)
+          .firstOrNull
+          ?.name
+          .toLowerCase();
+      state = tags
+          .where((tag) => tag.name.toLowerCase() == name)
+          .firstOrNull
+          ?.id;
+    });
+    return null;
+  }
 
   void select(String? tagId) {
     state = tagId;

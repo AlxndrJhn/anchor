@@ -1,11 +1,11 @@
 import 'package:anchor/core/database/app_database.dart';
 import 'package:anchor/features/auth/domain/user.dart';
+import 'package:anchor/features/notes/data/local/note_rows.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
-import 'package:anchor/features/notes/domain/note.dart' as domain;
+import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_revision.dart';
-import 'package:anchor/features/tags/data/repository/tags_repository.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,11 +13,8 @@ import 'package:mocktail/mocktail.dart';
 
 class MockAttachmentsRepo extends Mock implements NoteAttachmentsRepository {}
 
-/// Local query behavior of NotesRepository/TagsRepository against an
-/// in-memory Drift DB. No network involved.
 void main() {
   late AppDatabase db;
-  late TagsRepository tagsRepo;
   late NoteRevisionsStore revisions;
   late MockAttachmentsRepo attachments;
   late NotesRepository repo;
@@ -26,13 +23,16 @@ void main() {
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    tagsRepo = TagsRepository(db);
-    revisions = NoteRevisionsStore(db, () => author);
+    revisions = NoteRevisionsStore(db, () async => author);
     attachments = MockAttachmentsRepo();
-    repo = NotesRepository(db, tagsRepo, attachments, revisions);
+    repo = NotesRepository(db, attachments, revisions);
 
     when(
-      () => attachments.deleteAllLocalForNote(any()),
+      () => attachments.deleteRowsForNote(any()),
+    ).thenAnswer((_) async => <String>[]);
+    when(() => attachments.deleteFiles(any())).thenAnswer((_) async {});
+    when(
+      () => attachments.deleteLocalFilesForNote(any()),
     ).thenAnswer((_) async {});
   });
 
@@ -79,6 +79,8 @@ void main() {
     String noteId, {
     String syncStatus = 'synced',
     int position = 0,
+    String type = 'image',
+    String? serverId,
   }) {
     return db
         .into(db.noteAttachments)
@@ -86,15 +88,19 @@ void main() {
           NoteAttachmentsCompanion.insert(
             id: id,
             noteId: noteId,
-            type: 'image',
+            type: type,
             originalFilename: '$id.jpg',
             mimeType: 'image/jpeg',
             fileSize: 100,
             position: Value(position),
             syncStatus: Value(syncStatus),
+            serverAttachmentId: Value(serverId),
           ),
         );
   }
+
+  List<String> previewIds(Note note) =>
+      note.imagePreviewData.map((p) => p.attachmentId).toList();
 
   group('watchNotes', () {
     test('shows only active, non-archived notes', () async {
@@ -169,6 +175,134 @@ void main() {
         'img-2',
         'img-3',
       ]);
+      expect(note.attachmentCount, 6);
+    });
+  });
+
+  group('note lists with tags and pictures', () {
+    Future<void> tagAndPicture(String noteId) async {
+      // Linked out of order on purpose.
+      for (final tagId in ['t-c', 't-a', 't-b']) {
+        await linkTag(noteId, tagId);
+      }
+      await insertImageAttachment('$noteId-p2', noteId, position: 2);
+      await insertImageAttachment('$noteId-p0', noteId, position: 0);
+      await insertImageAttachment('$noteId-p1', noteId, position: 1);
+      await insertImageAttachment(
+        '$noteId-audio',
+        noteId,
+        type: 'audio',
+        position: 3,
+      );
+    }
+
+    setUp(() async {
+      for (final tagId in ['t-a', 't-b', 't-c']) {
+        await insertTag(tagId);
+      }
+    });
+
+    test('lists each note once with every tag and its pictures', () async {
+      await insertNote(id: 'n1', updatedAt: DateTime.utc(2026, 7, 2));
+      await insertNote(id: 'n2', updatedAt: DateTime.utc(2026, 7, 1));
+      await tagAndPicture('n1');
+      await tagAndPicture('n2');
+
+      final notes = await repo.watchNotes().first;
+
+      expect(notes.map((n) => n.id), ['n1', 'n2']);
+      for (final note in notes) {
+        expect(note.tagIds, ['t-a', 't-b', 't-c']);
+        expect(previewIds(note), [
+          '${note.id}-p0',
+          '${note.id}-p1',
+          '${note.id}-p2',
+        ]);
+        expect(note.imagePreviewData.every((p) => p.noteId == note.id), isTrue);
+        expect(note.attachmentCount, 4, reason: 'the voice note counts too');
+      }
+    });
+
+    test('keeps the order when notes carry different numbers of tags and '
+        'pictures', () async {
+      await insertNote(id: 'plain', updatedAt: DateTime.utc(2026, 7, 3));
+      await insertNote(id: 'busy', updatedAt: DateTime.utc(2026, 7, 2));
+      await insertNote(
+        id: 'pinned',
+        isPinned: true,
+        updatedAt: DateTime.utc(2026, 7, 1),
+      );
+      await tagAndPicture('busy');
+      await linkTag('pinned', 't-b');
+
+      final notes = await repo.watchNotes().first;
+
+      expect(notes.map((n) => n.id), ['pinned', 'plain', 'busy']);
+      expect(notes.first.tagIds, ['t-b']);
+      expect(notes[1].tagIds, isEmpty);
+      expect(notes[1].imagePreviewData, isEmpty);
+    });
+
+    test('a filtered list still carries every tag on its notes', () async {
+      await insertNote(id: 'n1');
+      await tagAndPicture('n1');
+
+      final notes = await repo.watchNotes(tagId: 't-c').first;
+
+      expect(notes.single.tagIds, ['t-a', 't-b', 't-c']);
+      expect(previewIds(notes.single), ['n1-p0', 'n1-p1', 'n1-p2']);
+    });
+
+    test('shows an uploaded picture once, under its server id', () async {
+      await insertNote(id: 'n1');
+      await insertImageAttachment('local-1', 'n1', serverId: 'srv-1');
+      await insertImageAttachment(
+        'srv-1',
+        'n1',
+        serverId: 'srv-1',
+        position: 1,
+      );
+
+      final note = (await repo.watchNotes().first).single;
+
+      expect(previewIds(note), ['srv-1']);
+    });
+
+    test('the trash and the archive carry tags and pictures too', () async {
+      await insertNote(id: 'trashed', state: 'trashed');
+      await insertNote(id: 'archived', isArchived: true);
+      await tagAndPicture('trashed');
+      await tagAndPicture('archived');
+
+      final trashed = (await repo.watchTrashedNotes().first).single;
+      final archived = (await repo.watchArchivedNotes().first).single;
+
+      expect(trashed.tagIds, ['t-a', 't-b', 't-c']);
+      expect(previewIds(trashed), ['trashed-p0', 'trashed-p1', 'trashed-p2']);
+      expect(archived.tagIds, ['t-a', 't-b', 't-c']);
+      expect(previewIds(archived), [
+        'archived-p0',
+        'archived-p1',
+        'archived-p2',
+      ]);
+    });
+
+    test('updates when a tag or a picture is added', () async {
+      await insertNote(id: 'n1');
+      final emitted = repo.watchNotes().take(3).toList();
+      await pumpEventQueue();
+
+      await linkTag('n1', 't-a');
+      await pumpEventQueue();
+      await insertImageAttachment('p0', 'n1');
+
+      final lists = await emitted;
+      expect(lists.map((notes) => notes.single.tagIds), [
+        isEmpty,
+        ['t-a'],
+        ['t-a'],
+      ]);
+      expect(previewIds(lists.last.single), ['p0']);
     });
   });
 
@@ -259,7 +393,7 @@ void main() {
       final edited = DateTime.utc(2026, 7, 1);
       await insertNote(id: 'n1', permission: 'viewer', updatedAt: edited);
 
-      await repo.bulkArchiveNotes(['n1']);
+      await repo.archive(['n1']);
 
       final note = (await repo.watchArchivedNotes().first).single;
       expect(note.id, 'n1');
@@ -273,7 +407,7 @@ void main() {
       await insertNote(id: 'mine');
       await insertNote(id: 'theirs', permission: 'editor');
 
-      await repo.bulkDeleteNotes(['mine', 'theirs']);
+      await repo.trash(['mine', 'theirs']);
 
       final rows = await db.select(db.notes).get();
       expect(
@@ -286,7 +420,7 @@ void main() {
   });
 
   group('edit time', () {
-    Future<domain.Note> stored(String id) async => (await repo.getNote(id))!;
+    Future<Note> stored(String id) async => (await repo.getNote(id))!;
     final edited = DateTime.utc(2026, 7, 1);
 
     test('a pin or tag change leaves it alone', () async {
@@ -326,32 +460,38 @@ void main() {
       expect(await revisions.watch('n1').first, isEmpty);
     });
 
-    test('setTagsForNote replaces the existing associations', () async {
+    test('adding and removing a tag on several notes keeps the rest', () async {
+      await insertTag('t1');
+      await insertTag('t2');
+      await insertNote(id: 'n1');
+      await insertNote(id: 'n2');
+      await db.setNoteTags('n1', ['t1']);
+
+      await repo.addTags(['n1', 'n2'], ['t2']);
+      expect(await db.tagIdsOfNote('n1'), unorderedEquals(['t1', 't2']));
+      expect(await db.tagIdsOfNote('n2'), ['t2']);
+
+      await repo.removeTags(['n1', 'n2'], ['t2']);
+      expect(await db.tagIdsOfNote('n1'), ['t1']);
+      expect(await db.tagIdsOfNote('n2'), isEmpty);
+      expect((await repo.getNote('n2'))!.isSynced, isFalse);
+    });
+
+    test('setting a note\'s tags replaces the ones it had', () async {
       await insertTag('t1');
       await insertTag('t2');
       await insertTag('t3');
       await insertNote(id: 'n1');
 
-      await tagsRepo.setTagsForNote('n1', ['t1', 't2']);
-      await tagsRepo.setTagsForNote('n1', ['t3']);
+      await db.setNoteTags('n1', ['t1', 't2']);
+      await db.setNoteTags('n1', ['t3']);
 
-      expect(await tagsRepo.getTagIdsForNote('n1'), ['t3']);
-    });
-
-    test('watchTagsForNote hides deleted tags', () async {
-      await insertTag('t1');
-      await insertNote(id: 'n1');
-      await tagsRepo.setTagsForNote('n1', ['t1']);
-      await (db.update(db.tags)..where((tbl) => tbl.id.equals('t1'))).write(
-        const TagsCompanion(isDeleted: Value(true)),
-      );
-
-      expect(await tagsRepo.watchTagsForNote('n1').first, isEmpty);
+      expect(await db.tagIdsOfNote('n1'), ['t3']);
     });
   });
 
   group('history', () {
-    Future<domain.Note> stored(String id) async => (await repo.getNote(id))!;
+    Future<Note> stored(String id) async => (await repo.getNote(id))!;
 
     test('an edit keeps what the note said before it', () async {
       await insertNote(id: 'n1', title: 'Groceries');
@@ -402,6 +542,43 @@ void main() {
       expect(kept.first.content, 'milk');
     });
 
+    test('undoing a restore keeps what was typed since as a version', () async {
+      await insertNote(id: 'n1', title: 'Groceries');
+      await repo.updateNote((await stored('n1')).copyWith(content: 'milk'));
+      final earlier = (await revisions.watch('n1').first).single;
+      await repo.restoreVersion('n1', earlier);
+      await repo.updateNote(
+        (await stored('n1')).copyWith(content: 'typed after'),
+      );
+
+      await repo.undoRestore('n1', (
+        previousTitle: 'Groceries',
+        previousContent: 'milk',
+        revision: earlier,
+      ));
+
+      expect((await stored('n1')).content, 'milk');
+      final kept = await revisions.watch('n1').first;
+      expect(kept.map((revision) => revision.content), contains('typed after'));
+    });
+
+    test('undoing a restore at once adds no version', () async {
+      await insertNote(id: 'n1', title: 'Groceries');
+      await repo.updateNote((await stored('n1')).copyWith(content: 'milk'));
+      final earlier = (await revisions.watch('n1').first).single;
+      await repo.restoreVersion('n1', earlier);
+      final versions = (await revisions.watch('n1').first).length;
+
+      await repo.undoRestore('n1', (
+        previousTitle: 'Groceries',
+        previousContent: 'milk',
+        revision: earlier,
+      ));
+
+      expect((await stored('n1')).content, 'milk');
+      expect(await revisions.watch('n1').first, hasLength(versions));
+    });
+
     test('a version waiting to go up is not pruned away', () async {
       await insertNote(id: 'n1', title: 'Groceries');
       await repo.updateNote((await stored('n1')).copyWith(content: 'milk'));
@@ -424,7 +601,7 @@ void main() {
       await insertNote(id: 'n1', title: 'Groceries');
       await repo.updateNote((await stored('n1')).copyWith(content: 'milk'));
 
-      await repo.permanentDelete('n1');
+      await repo.deleteForever(['n1']);
 
       expect(await revisions.watch('n1').first, isEmpty);
     });

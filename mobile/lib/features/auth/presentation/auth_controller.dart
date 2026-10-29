@@ -1,14 +1,20 @@
+import 'dart:io';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_tags.dart';
 import '../../../core/network/server_config_provider.dart';
-import '../../../core/providers/active_user_id_provider.dart';
-import '../../../core/providers/session_expired_provider.dart';
+import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/session/session_expired_provider.dart';
+import '../../sync/data/sync_manager.dart';
 import '../data/repository/auth_repository.dart';
+import '../domain/auth_failure.dart';
 import '../domain/user.dart';
 
 part 'auth_controller.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AuthController extends _$AuthController {
   @override
   Future<User?> build() async {
@@ -26,8 +32,7 @@ class AuthController extends _$AuthController {
       return null;
     }
 
-    // Offline-first: trust the cached profile so startup never waits on the
-    // network, then refresh it in the background.
+    // Startup never waits on the network.
     final cachedUser = await authRepo.getCurrentUser();
     if (cachedUser != null) {
       ref.read(activeUserIdProvider.notifier).set(cachedUser.id);
@@ -35,12 +40,16 @@ class AuthController extends _$AuthController {
       return cachedUser;
     }
 
-    // No cached profile (e.g. corrupt cache); fall back to the server.
     try {
       final freshUser = await authRepo.getProfile();
       ref.read(activeUserIdProvider.notifier).set(freshUser.id);
       return freshUser;
-    } catch (e) {
+    } catch (error) {
+      AppLogger.instance.warn(
+        LogTags.auth,
+        'Loading the profile failed',
+        error: error,
+      );
       return null;
     }
   }
@@ -53,67 +62,71 @@ class AuthController extends _$AuthController {
         if (state.value?.id == freshUser.id) {
           state = AsyncData(freshUser);
         }
-      } catch (_) {
-        // Server unreachable; keep the cached profile.
+      } catch (error) {
+        AppLogger.instance.warn(
+          LogTags.auth,
+          'Refreshing the profile failed',
+          error: error,
+        );
       }
     });
   }
 
+  /// Throws an [AuthFailure] when the server says no; the state stays
+  /// signed out.
   Future<void> login(String email, String password) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final user = await ref
-          .read(authRepositoryProvider)
-          .login(email, password);
-      // Set activeUserId so the per-user database is opened
-      ref.read(activeUserIdProvider.notifier).set(user.id);
-      return user;
-    });
+    _signedIn(await ref.read(authRepositoryProvider).login(email, password));
   }
 
-  Future<void> register(String email, String password, String name) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      await ref.read(authRepositoryProvider).register(email, password, name);
-      return null;
-    });
+  /// Returns false when an admin has to approve the account first.
+  Future<bool> register(String email, String password, String name) async {
+    final user = await ref
+        .read(authRepositoryProvider)
+        .register(email, password, name);
+    if (user == null) return false;
+    _signedIn(user);
+    return true;
   }
 
-  Future<void> loginWithOidc() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final user = await ref.read(authRepositoryProvider).loginWithOidc();
-      if (user == null) {
-        // User cancelled the OIDC flow; stay on login (state = AsyncData(null))
-        return null;
-      }
-      ref.read(activeUserIdProvider.notifier).set(user.id);
-      return user;
-    });
+  /// Returns false when the user cancelled.
+  Future<bool> loginWithOidc() async {
+    final user = await ref.read(authRepositoryProvider).loginWithOidc();
+    if (user == null) return false;
+    _signedIn(user);
+    return true;
+  }
+
+  void _signedIn(User user) {
+    // Opens the user's own database.
+    ref.read(activeUserIdProvider.notifier).set(user.id);
+    state = AsyncData(user);
+  }
+
+  Future<void> rename(String name) async => _profileChanged(
+    await ref.read(authRepositoryProvider).updateProfile(name: name),
+  );
+
+  Future<void> setPhoto(File image) async => _profileChanged(
+    await ref.read(authRepositoryProvider).uploadProfileImage(image),
+  );
+
+  Future<void> removePhoto() async => _profileChanged(
+    await ref.read(authRepositoryProvider).removeProfileImage(),
+  );
+
+  void _profileChanged(User user) {
+    if (state.value?.id == user.id) state = AsyncData(user);
   }
 
   Future<void> logout() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref.read(authRepositoryProvider).logout();
-      // Clear activeUserId - this closes the DB via provider invalidation
-      // Data stays safe in the per-user database file
+      await ref.read(syncManagerProvider.notifier).stop();
+      // Closes the user's database; its file stays on disk.
       ref.read(activeUserIdProvider.notifier).set(null);
       ref.read(sessionExpiredProvider.notifier).clear();
       return null;
-    });
-  }
-
-  Future<void> changePassword(
-    String currentPassword,
-    String newPassword,
-  ) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      await ref
-          .read(authRepositoryProvider)
-          .changePassword(currentPassword, newPassword);
-      return state.value; // Keep the current user state
     });
   }
 }

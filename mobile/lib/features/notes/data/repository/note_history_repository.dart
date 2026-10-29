@@ -9,7 +9,7 @@ part 'note_history_repository.g.dart';
 
 const int _pageSize = 30;
 
-@riverpod
+@Riverpod(keepAlive: true)
 NoteHistoryRepository noteHistoryRepository(Ref ref) {
   return NoteHistoryRepository(
     ref.watch(dioProvider),
@@ -17,15 +17,13 @@ NoteHistoryRepository noteHistoryRepository(Ref ref) {
   );
 }
 
-/// Brings the versions kept on the server down to the device.
 class NoteHistoryRepository {
   NoteHistoryRepository(this._dio, this._store);
 
   final Dio _dio;
   final NoteRevisionsStore _store;
 
-  /// Reads the page the device is missing next and keeps it. Does nothing
-  /// once the whole history is here.
+  /// Fetches one more page; does nothing once the whole history is here.
   Future<void> fetch(String noteId) async {
     final position = await _store.position(noteId);
     if (position.isComplete) return;
@@ -43,8 +41,8 @@ class NoteHistoryRepository {
       response.data as Map<String, dynamic>,
     );
 
-    // A cursor always has more versions behind it; an empty page means they
-    // are gone from the server.
+    // An empty page after a cursor means those versions are gone from the
+    // server.
     if (position.cursor != null && page.revisions.isEmpty) {
       await _store.markStale(noteId);
       return;

@@ -6,7 +6,6 @@ import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Local attachment bookkeeping against an in-memory Drift DB. No network.
 void main() {
   late AppDatabase db;
   late NoteAttachmentsRepository repo;
@@ -49,7 +48,7 @@ void main() {
         ),
       );
 
-  Future<Note> readNote(String id) =>
+  Future<NoteRow> readNote(String id) =>
       (db.select(db.notes)..where((tbl) => tbl.id.equals(id))).getSingle();
 
   test(
@@ -92,6 +91,29 @@ void main() {
       expect((await readNote('n1')).updatedAt!.isAfter(past), isTrue);
     },
   );
+
+  test('a delete not sent yet survives the server list coming in', () async {
+    await insertNote('n1');
+    await insertAttachment('a1', 'n1');
+    await repo.deleteAttachment('n1', 'a1');
+
+    await repo.applyServerAttachments('n1', const [
+      NoteAttachment(
+        id: 'a1',
+        noteId: 'n1',
+        type: AttachmentType.image,
+        originalFilename: 'a.png',
+        mimeType: 'image/png',
+        fileSize: 1,
+      ),
+    ]);
+
+    final row = await (db.select(
+      db.noteAttachments,
+    )..where((tbl) => tbl.id.equals('a1'))).getSingle();
+    expect(row.syncStatus, AttachmentSyncStatus.pendingDelete.dbValue);
+    expect(await repo.watchAttachments('n1').first, isEmpty);
+  });
 
   test('deleting an unknown attachment leaves the note alone', () async {
     await insertNote('n1');

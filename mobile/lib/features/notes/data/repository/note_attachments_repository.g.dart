@@ -26,7 +26,7 @@ final class NoteAttachmentsRepositoryProvider
         argument: null,
         retry: null,
         name: r'noteAttachmentsRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -55,4 +55,4 @@ final class NoteAttachmentsRepositoryProvider
 }
 
 String _$noteAttachmentsRepositoryHash() =>
-    r'3d26819b3df05e346f5638afc6801734a7174515';
+    r'3b5ae36991f659fc5307c618f89df3687a064b1d';

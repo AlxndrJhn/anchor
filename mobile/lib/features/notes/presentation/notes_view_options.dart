@@ -1,10 +1,14 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'package:anchor/features/notes/domain/note.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/log_tags.dart';
+import '../../../core/storage/preferences_repository.dart';
+import '../domain/note.dart';
 
-enum ViewType { grid, list }
+/// Saved as 'grid' (masonry) and 'uniform' (grid); stored options use these.
+enum ViewType { masonry, grid, list }
 
 enum SortOption { dateModified, title }
 
@@ -14,7 +18,7 @@ class NotesViewOptions {
   final bool isAscending;
 
   const NotesViewOptions({
-    this.viewType = ViewType.grid,
+    this.viewType = ViewType.masonry,
     this.sortOption = SortOption.dateModified,
     this.isAscending = false,
   });
@@ -32,7 +36,6 @@ class NotesViewOptions {
   }
 }
 
-/// Pinned notes stay on top, then the chosen sort, then the id.
 int Function(Note, Note) noteComparator(NotesViewOptions options) {
   return (a, b) {
     if (a.isPinned != b.isPinned) {
@@ -54,11 +57,6 @@ int Function(Note, Note) noteComparator(NotesViewOptions options) {
 }
 
 class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
-  static const _storage = FlutterSecureStorage();
-  static const _keyViewType = 'notes_view_type';
-  static const _keySortOption = 'notes_sort_option';
-  static const _keyIsAscending = 'notes_is_ascending';
-
   @override
   Future<NotesViewOptions> build() async {
     return _loadOptions();
@@ -66,75 +64,75 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
 
   Future<NotesViewOptions> _loadOptions() async {
     try {
-      final viewTypeStr = await _storage.read(key: _keyViewType);
-      final sortOptionStr = await _storage.read(key: _keySortOption);
-      final isAscendingStr = await _storage.read(key: _keyIsAscending);
+      final preferences = ref.read(preferencesRepositoryProvider);
+      final viewTypeStr = await preferences.getNotesViewType();
+      final sortOptionStr = await preferences.getNotesSortOption();
+      final isAscending = await preferences.getNotesSortAscending();
 
-      final viewType = viewTypeStr == 'list' ? ViewType.list : ViewType.grid;
+      final viewType = switch (viewTypeStr) {
+        'list' => ViewType.list,
+        'uniform' => ViewType.grid,
+        _ => ViewType.masonry,
+      };
 
       final sortOption = sortOptionStr == 'title'
           ? SortOption.title
           : SortOption.dateModified;
-
-      final isAscending = isAscendingStr == 'true';
 
       return NotesViewOptions(
         viewType: viewType,
         sortOption: sortOption,
         isAscending: isAscending,
       );
-    } catch (e) {
+    } catch (error) {
+      AppLogger.instance.warn(
+        LogTags.settings,
+        'Reading the view options failed',
+        error: error,
+      );
       return const NotesViewOptions();
     }
   }
 
   Future<void> _saveOptions(NotesViewOptions options) async {
     try {
-      await _storage.write(
-        key: _keyViewType,
-        value: options.viewType == ViewType.list ? 'list' : 'grid',
+      final preferences = ref.read(preferencesRepositoryProvider);
+      await preferences.setNotesViewType(switch (options.viewType) {
+        ViewType.list => 'list',
+        ViewType.grid => 'uniform',
+        ViewType.masonry => 'grid',
+      });
+      await preferences.setNotesSortOption(
+        options.sortOption == SortOption.title ? 'title' : 'dateModified',
       );
-      await _storage.write(
-        key: _keySortOption,
-        value: options.sortOption == SortOption.title
-            ? 'title'
-            : 'dateModified',
+      await preferences.setNotesSortAscending(options.isAscending);
+    } catch (error) {
+      AppLogger.instance.warn(
+        LogTags.settings,
+        'Saving the view options failed',
+        error: error,
       );
-      await _storage.write(
-        key: _keyIsAscending,
-        value: options.isAscending.toString(),
-      );
-    } catch (e) {
-      // Ignore storage errors
     }
   }
 
-  Future<void> setViewType(ViewType viewType) async {
-    final current = state.value ?? const NotesViewOptions();
-    final newOptions = current.copyWith(viewType: viewType);
-    state = AsyncData(newOptions);
-    await _saveOptions(newOptions);
-  }
+  Future<void> setViewType(ViewType viewType) =>
+      _update((options) => options.copyWith(viewType: viewType));
 
-  Future<void> setSortOption(SortOption sortOption) async {
-    final current = state.value ?? const NotesViewOptions();
-    final newOptions = current.copyWith(sortOption: sortOption);
-    state = AsyncData(newOptions);
-    await _saveOptions(newOptions);
-  }
+  Future<void> setSort(SortOption sortOption, {required bool isAscending}) =>
+      _update(
+        (options) =>
+            options.copyWith(sortOption: sortOption, isAscending: isAscending),
+      );
 
-  Future<void> toggleSortDirection() async {
-    final current = state.value ?? const NotesViewOptions();
-    final newOptions = current.copyWith(isAscending: !current.isAscending);
-    state = AsyncData(newOptions);
-    await _saveOptions(newOptions);
-  }
+  Future<void> setSortDirection(bool isAscending) =>
+      _update((options) => options.copyWith(isAscending: isAscending));
 
-  Future<void> setSortDirection(bool isAscending) async {
-    final current = state.value ?? const NotesViewOptions();
-    final newOptions = current.copyWith(isAscending: isAscending);
-    state = AsyncData(newOptions);
-    await _saveOptions(newOptions);
+  Future<void> _update(
+    NotesViewOptions Function(NotesViewOptions options) change,
+  ) async {
+    final options = change(state.value ?? const NotesViewOptions());
+    state = AsyncData(options);
+    await _saveOptions(options);
   }
 }
 

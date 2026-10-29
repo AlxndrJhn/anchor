@@ -1,4 +1,5 @@
-import 'package:anchor/core/widgets/editor/checklist_lines.dart';
+import 'package:anchor/features/notes/presentation/editor/checklist_lines.dart';
+import 'package:anchor/features/notes/presentation/editor/document_lines.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -202,7 +203,6 @@ void main() {
     });
 
     test('the toggled line goes to the end of its own section', () {
-      // Checking "a" must put it BELOW the already-checked "b".
       final doc = docFrom([
         ('a', 'checked'),
         ('b', 'checked'),
@@ -240,7 +240,6 @@ void main() {
       expect(checklistBlockEnd(lines, 0, 3), 2);
       expect(checklistBlockEnd(lines, 1, 3), 2);
       expect(checklistBlockEnd(lines, 3, 3), 3);
-      // A tighter range end bounds the block.
       expect(checklistBlockEnd(lines, 0, 1), 1);
     });
 
@@ -425,8 +424,7 @@ void main() {
           ChecklistGap(3, 0, 2),
           ChecklistGap(4, 0, 2),
         ]);
-        // Dragging a's block: the deepest child caps the range at
-        // maxListIndent - 1.
+        // Dragging a's block.
         expect(checklistDropGaps(lines, 0, 3, 0, 2), const [
           ChecklistGap(0, 0, 0),
           ChecklistGap(3, 0, 0),
@@ -627,5 +625,128 @@ void main() {
         ..compose(inverted, ChangeSource.local);
       expect(doc.toDelta(), before);
     });
+  });
+
+  group('uncheck all and delete checked', () {
+    Document applied(Document doc, Delta? Function(List<ParsedLine>) build) {
+      final before = doc.toDelta();
+      final delta = build(parseDocumentLines(doc))!;
+      doc.compose(delta, ChangeSource.local);
+      final after = doc.toDelta();
+      final undone = Document.fromDelta(after)
+        ..compose(delta.invert(before), ChangeSource.local);
+      expect(undone.toDelta(), before);
+      return doc;
+    }
+
+    test('both are null when nothing is checked', () {
+      final lines = parseDocumentLines(
+        docFrom([('a', 'unchecked'), ('b', null)]),
+      );
+      expect(buildUncheckAllDelta(lines), isNull);
+      expect(buildDeleteCheckedDelta(lines), isNull);
+    });
+
+    test('uncheck all clears every checklist and keeps nesting', () {
+      final doc = nestedDoc([
+        ('Shop', null, 0),
+        ('milk', 'checked', 0),
+        ('oat', 'checked', 1),
+        ('eggs', 'unchecked', 0),
+        ('Pack', null, 0),
+        ('socks', 'checked', 0),
+      ]);
+      expect(nestedLinesOf(applied(doc, buildUncheckAllDelta)), [
+        ('Shop', null, 0),
+        ('milk', 'unchecked', 0),
+        ('oat', 'unchecked', 1),
+        ('eggs', 'unchecked', 0),
+        ('Pack', null, 0),
+        ('socks', 'unchecked', 0),
+      ]);
+    });
+
+    test('delete checked keeps the open items and the text around them', () {
+      final doc = docFrom([
+        ('Shop', null),
+        ('milk', 'checked'),
+        ('eggs', 'unchecked'),
+        ('bread', 'checked'),
+        ('tea', 'unchecked'),
+        ('Thanks', null),
+      ]);
+      expect(linesOf(applied(doc, buildDeleteCheckedDelta)), [
+        ('Shop', null),
+        ('eggs', 'unchecked'),
+        ('tea', 'unchecked'),
+        ('Thanks', null),
+      ]);
+    });
+
+    test('checked items that end the note go, and the last line stays', () {
+      final doc = nestedDoc([
+        ('eggs', 'unchecked', 0),
+        ('large', 'unchecked', 1),
+        ('milk', 'checked', 0),
+        ('bread', 'checked', 0),
+      ]);
+      expect(nestedLinesOf(applied(doc, buildDeleteCheckedDelta)), [
+        ('eggs', 'unchecked', 0),
+        ('large', 'unchecked', 1),
+      ]);
+    });
+
+    test('a note of only checked items keeps one empty item', () {
+      final doc = nestedDoc([('milk', 'checked', 0), ('oat', 'checked', 1)]);
+      expect(nestedLinesOf(applied(doc, buildDeleteCheckedDelta)), [
+        ('', 'unchecked', 0),
+      ]);
+    });
+
+    test('open sub-items move up one level for each deleted item above', () {
+      final doc = nestedDoc([
+        ('trip', 'checked', 0),
+        ('bags', 'checked', 1),
+        ('passport', 'unchecked', 2),
+        ('tickets', 'unchecked', 1),
+        ('home', 'unchecked', 0),
+        ('plants', 'checked', 1),
+        ('water', 'unchecked', 2),
+        ('keys', 'unchecked', 1),
+      ]);
+      expect(nestedLinesOf(applied(doc, buildDeleteCheckedDelta)), [
+        ('passport', 'unchecked', 0),
+        ('tickets', 'unchecked', 0),
+        ('home', 'unchecked', 0),
+        ('water', 'unchecked', 1),
+        ('keys', 'unchecked', 1),
+      ]);
+    });
+
+    test('a bullet under a deleted item moves up with the open ones', () {
+      final doc = nestedDoc([
+        ('cake', 'checked', 0),
+        ('flour', 'bullet', 1),
+        ('jam', 'unchecked', 0),
+      ]);
+      expect(nestedLinesOf(applied(doc, buildDeleteCheckedDelta)), [
+        ('flour', 'bullet', 0),
+        ('jam', 'unchecked', 0),
+      ]);
+    });
+
+    test(
+      'the last kept line moves up when the items under it end the note',
+      () {
+        final doc = nestedDoc([
+          ('trip', 'checked', 0),
+          ('passport', 'unchecked', 1),
+          ('bags', 'checked', 1),
+        ]);
+        expect(nestedLinesOf(applied(doc, buildDeleteCheckedDelta)), [
+          ('passport', 'unchecked', 0),
+        ]);
+      },
+    );
   });
 }

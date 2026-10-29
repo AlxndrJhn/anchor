@@ -22,7 +22,7 @@ final class UsersRepositoryProvider
         argument: null,
         retry: null,
         name: r'usersRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -49,4 +49,4 @@ final class UsersRepositoryProvider
   }
 }
 
-String _$usersRepositoryHash() => r'9b4d908363770ff08d96ebb2a6ed63cbe63769d3';
+String _$usersRepositoryHash() => r'a55e74e8f71fbd6a7e186fd146debe22a5589521';

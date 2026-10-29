@@ -1,38 +1,39 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../app/router/app_routes.dart';
+import '../../../core/motion/haptics.dart';
 import '../../../core/network/connectivity_provider.dart';
-import '../../../core/providers/active_user_id_provider.dart';
-import '../../../core/router/app_routes.dart';
+import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/text/date_formats.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/context_extensions.dart';
-import '../../../core/theme/tokens/app_icon_sizes.dart';
-import '../../../core/theme/tokens/app_radius.dart';
-import '../../../core/widgets/app_section_header.dart';
-import '../../../core/widgets/settings_card.dart';
-import '../../../core/widgets/settings_row.dart';
+import '../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../core/widgets/app_buttons.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_scaffold.dart';
+import '../../../core/widgets/bar_title.dart';
+import '../../../core/widgets/grouped_list.dart';
+import '../../../core/widgets/notice.dart';
+import '../../../core/widgets/person_avatar.dart';
+import '../../../core/widgets/pressable.dart';
+import '../../../l10n/l10n.dart';
 import '../data/repository/note_history_repository.dart';
 import '../data/repository/note_revisions_store.dart';
-import '../data/repository/notes_repository.dart';
-import '../domain/note.dart';
+import '../domain/note_dates.dart';
 import '../domain/note_history.dart';
 import '../domain/note_revision.dart';
-import 'note_revision_screen.dart';
-import 'package:anchor/core/theme/tokens/app_opacity.dart';
-import 'package:anchor/core/widgets/app_page_scaffold.dart';
+import '../domain/user_summary.dart';
+import 'note_history_controller.dart';
+import 'note_labels.dart';
+import 'notes_controller.dart';
+import 'widgets/diff_bar.dart';
+import 'widgets/note_surface.dart';
 
-const double _minRowHeight = 48;
-const double _badgeSize = 32;
-
-const String _unreadMessage =
-    "Couldn't check for versions from your other devices.";
-
-/// Earlier versions of a note, newest first. Everything shown here is on the
-/// device; the server is only asked for versions this device has not seen.
 class NoteHistoryScreen extends ConsumerStatefulWidget {
   const NoteHistoryScreen({super.key, required this.noteId});
 
@@ -43,52 +44,30 @@ class NoteHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _NoteHistoryScreenState extends ConsumerState<NoteHistoryScreen> {
-  final _scrollController = ScrollController();
-
-  StreamSubscription<List<NoteRevision>>? _revisionsWatch;
-  StreamSubscription<NoteHistoryPosition>? _positionWatch;
-  StreamSubscription<Note?>? _noteWatch;
-
-  List<NoteRevision> _revisions = const [];
-  Note? _note;
-
-  NoteHistoryPosition? _position;
-  bool _isFetching = false;
+  final _scroll = ScrollController();
+  bool _fetching = false;
   bool _fetchQueued = false;
-  bool _fetchFailed = false;
+  bool _failed = false;
+
+  NoteHistoryPosition? get _position =>
+      ref.read(noteHistoryPositionProvider(widget.noteId)).value;
 
   @override
   void initState() {
     super.initState();
-    final store = ref.read(noteRevisionsStoreProvider);
-    _revisionsWatch = store.watch(widget.noteId).listen((revisions) {
-      if (mounted) setState(() => _revisions = revisions);
-    });
-    _positionWatch = store
-        .watchPosition(widget.noteId)
-        .listen(_onPositionChanged);
-    _noteWatch = ref
-        .read(notesRepositoryProvider)
-        .watchNote(widget.noteId)
-        .listen((note) {
-          if (mounted) setState(() => _note = note);
-        });
-    _scrollController.addListener(_onScroll);
+    _scroll.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    unawaited(_revisionsWatch?.cancel());
-    unawaited(_positionWatch?.cancel());
-    unawaited(_noteWatch?.cancel());
-    _scrollController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
-  void _onPositionChanged(NoteHistoryPosition position) {
-    if (!mounted) return;
-    final previous = _position;
-    setState(() => _position = position);
+  void _onPosition(
+    NoteHistoryPosition? previous,
+    NoteHistoryPosition position,
+  ) {
     final wentStale = previous != null && previous.isRead && !position.isRead;
     if ((previous == null || wentStale) && !position.isComplete) {
       unawaited(_fetch());
@@ -96,33 +75,28 @@ class _NoteHistoryScreenState extends ConsumerState<NoteHistoryScreen> {
   }
 
   void _onScroll() {
-    if (_fetchFailed) return;
-    final scroll = _scrollController.position;
-    if (scroll.pixels > scroll.maxScrollExtent - 300) unawaited(_fetch());
+    if (_failed || !_scroll.hasClients) return;
+    final position = _scroll.position;
+    if (position.pixels > position.maxScrollExtent - 300) unawaited(_fetch());
   }
 
   Future<void> _fetch({bool force = false}) async {
-    if (_isFetching) {
+    if (_fetching) {
       _fetchQueued = true;
       return;
     }
     if (!force && (_position?.isComplete ?? false)) return;
-    if (!ref.read(isOnlineProvider)) {
-      setState(() => _fetchFailed = true);
-      return;
-    }
-
+    if (!ref.read(isOnlineProvider)) return;
     setState(() {
-      _isFetching = true;
-      _fetchFailed = false;
+      _fetching = true;
+      _failed = false;
     });
-
     try {
       await ref.read(noteHistoryRepositoryProvider).fetch(widget.noteId);
     } catch (_) {
-      if (mounted) setState(() => _fetchFailed = true);
+      if (mounted) setState(() => _failed = true);
     } finally {
-      if (mounted) setState(() => _isFetching = false);
+      if (mounted) setState(() => _fetching = false);
       if (_fetchQueued) {
         _fetchQueued = false;
         if (mounted) unawaited(_fetch());
@@ -130,371 +104,405 @@ class _NoteHistoryScreenState extends ConsumerState<NoteHistoryScreen> {
     }
   }
 
-  /// Reads the history again from the newest version down.
-  Future<void> _refresh() async {
-    if (!ref.read(isOnlineProvider)) {
-      setState(() => _fetchFailed = true);
-      return;
-    }
+  Future<void> _retry() async {
+    Haptics.selection();
     await ref.read(noteRevisionsStoreProvider).markStale(widget.noteId);
     await _fetch(force: true);
+    if (mounted && !_failed) Haptics.success();
   }
 
-  Future<void> _open(String revisionId) async {
-    unawaited(HapticFeedback.selectionClick());
-    final restored = await context.push<bool>(
-      '/note/${widget.noteId}/${AppRoutes.noteHistory}/$revisionId',
+  Future<void> _open(String id) async {
+    Haptics.selection();
+    final restored = await context.push<RestoredVersion>(
+      AppRoutes.revision(widget.noteId, id),
     );
-    if (restored == true && mounted) context.pop();
+    if (restored != null && mounted) context.pop(restored);
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(isOnlineProvider, (previous, next) {
-      if (next && previous != true) {
-        unawaited(_fetchFailed ? _refresh() : _fetch());
+    ref.listen(isOnlineProvider, (was, now) {
+      if (now && was != true) unawaited(_failed ? _retry() : _fetch());
+    });
+    ref.listen(noteHistoryPositionProvider(widget.noteId), (previous, next) {
+      if (next.value case final position?) {
+        _onPosition(previous?.value, position);
       }
     });
+    final colors = context.anchor;
+    final density = context.density;
+    final note = ref.watch(noteProvider(widget.noteId)).value;
+    final revisions =
+        ref.watch(noteRevisionsProvider(widget.noteId)).value ?? const [];
+    final changes = ref.watch(versionChangesProvider(widget.noteId));
+    final online = ref.watch(isOnlineProvider);
+    final appearance = NoteAppearance.of(context, note?.background);
+    final showsAuthors = historyHasMultipleAuthors(revisions);
+    final me = ref.watch(activeUserIdProvider);
+    final days = groupRevisionsByDay(revisions);
+    final l10n = context.l10n;
+    final now = DateTime.now();
 
-    final theme = Theme.of(context);
-
-    return AppPageScaffold(
-      title: const Text('History'),
-      body: RefreshIndicator.adaptive(
-        onRefresh: _refresh,
-        edgeOffset: AppPageScaffold.topInset(context),
-        color: theme.colorScheme.primary,
-        child: _buildBody(theme),
-      ),
-    );
-  }
-
-  Widget _buildBody(ThemeData theme) {
-    if (_revisions.isEmpty) {
-      if (_isFetching) return const Center(child: CircularProgressIndicator());
-      return _EmptyHistory(
-        onRetry: _fetchFailed ? () => unawaited(_refresh()) : null,
+    Widget versionRow(NoteRevision revision) {
+      final counts = changes
+          .of(revisions, revision, note)
+          .lineCountsFrom(revision.title);
+      final showsAuthor = showsAuthors || revision.author != null;
+      final authorName = revisionAuthorName(revision, me, l10n);
+      final cause = revision.cause == RevisionCause.edit
+          ? null
+          : revisionLabel(revision.cause, l10n);
+      final spokenCounts = [
+        if (counts.added > 0) l10n.diffAdded(counts.added),
+        if (counts.removed > 0) l10n.diffRemoved(counts.removed),
+        if (counts.changed > 0) l10n.diffChanged(counts.changed),
+      ];
+      return _VersionRow(
+        author: revision.author,
+        time: clockLabel(revision.createdAtLocal),
+        cause: cause,
+        isWarning: revision.cause == RevisionCause.conflict,
+        summary: [
+          if (showsAuthor) authorName,
+          lineChangesLabel(counts, l10n),
+        ].join(' · '),
+        counts: counts,
+        semanticLabel: [
+          dayTimeLabel(revision.createdAtLocal, l10n, now: now),
+          if (showsAuthor) authorName,
+          ?cause,
+          spokenCounts.isEmpty
+              ? l10n.historyNoChanges
+              : spokenCounts.join(', '),
+        ].join(', '),
+        onTap: () => _open(revision.id),
       );
     }
 
-    final dims = context.dims;
-    final showAuthors = historyHasMultipleAuthors(_revisions);
-    final currentUserId = ref.read(activeUserIdProvider);
-    final note = _note;
-
-    return ListView(
-      controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        dims.screenGutter,
-        AppPageScaffold.topInset(context) + dims.md,
-        dims.screenGutter,
-        dims.xxl,
-      ),
-      children: [
-        if (note != null) ...[
-          _EntryCard(
-            children: [
-              _EntryTile(
-                title: 'Current version',
-                subtitle: note.updatedAt == null
-                    ? null
-                    : dayTimeLabel(note.updatedAt!),
-                isCurrent: true,
-                onTap: () => _open(currentVersionId),
-              ),
-            ],
+    final complete =
+        ref
+            .watch(noteHistoryPositionProvider(widget.noteId))
+            .value
+            ?.isComplete ??
+        false;
+    return AppScaffold(
+      title: l10n.actionHistory,
+      background: PageBackground.gradient,
+      controller: _scroll,
+      titleLine: BarTitleLine(
+        displayTitleOf(note?.title ?? '', l10n),
+        leading: Container(
+          width: 12, // off-scale: a swatch of the note's color
+          height: 12, // off-scale: as above
+          decoration: BoxDecoration(
+            color: appearance.colors.bg,
+            borderRadius: BorderRadius.circular(4), // off-scale: as above
+            border: Border.all(color: appearance.colors.border),
           ),
-          SizedBox(height: dims.lg),
-        ],
-        for (final day in groupRevisionsByDay(_revisions)) ...[
-          AppSectionHeader(title: day.label),
-          SizedBox(height: dims.xs),
-          _EntryCard(
-            children: [
-              for (final revision in day.revisions)
-                _EntryTile(
-                  title: revisionTime(revision),
-                  subtitle: _entrySubtitle(
-                    revision,
-                    showAuthors,
-                    currentUserId,
-                  ),
-                  author: showAuthors ? revision.author : null,
-                  onTap: () => _open(revision.id),
-                ),
-            ],
-          ),
-          SizedBox(height: dims.lg),
-        ],
-        if (_isFetching)
-          Padding(
-            padding: EdgeInsets.all(dims.md),
-            child: const Center(child: CircularProgressIndicator()),
-          )
-        else if (_fetchFailed)
-          _ListFooter(
-            text: _unreadMessage,
-            onRetry: () => unawaited(_refresh()),
-          )
-        else if (_position?.isComplete ?? false)
-          const _ListFooter(text: 'Edits older than 90 days are removed.'),
-      ],
-    );
-  }
-}
-
-String? _entrySubtitle(
-  NoteRevision revision,
-  bool showAuthors,
-  String? currentUserId,
-) {
-  final parts = [
-    if (revision.cause != RevisionCause.edit) revisionLabel(revision.cause),
-    if (showAuthors) revisionAuthorName(revision, currentUserId),
-  ];
-  return parts.isEmpty ? null : parts.join(' · ');
-}
-
-class _EntryCard extends StatelessWidget {
-  const _EntryCard({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return SettingsCard(
-      child: ClipRRect(
-        borderRadius: AppRadius.lgBorder,
-        child: Column(
-          children: [
-            for (var i = 0; i < children.length; i++) ...[
-              if (i > 0) const SettingsDivider(),
-              children[i],
-            ],
-          ],
         ),
       ),
-    );
-  }
-}
-
-class _EntryTile extends StatelessWidget {
-  const _EntryTile({
-    required this.title,
-    this.subtitle,
-    this.author,
-    this.isCurrent = false,
-    required this.onTap,
-  });
-
-  final String title;
-  final String? subtitle;
-  final NoteRevisionAuthor? author;
-  final bool isCurrent;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dims = context.dims;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: dims.lg, vertical: dims.sm),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: _minRowHeight),
-            child: Row(
-              children: [
-                if (isCurrent)
-                  const _NoteBadge()
-                else if (author != null)
-                  _AuthorBadge(author: author!),
-                if (isCurrent || author != null) SizedBox(width: dims.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(16, density.space16, 16, 0),
+          sliver: SliverList.list(
+            children: [
+              GroupedList(
+                children: [
+                  _CurrentVersionRow(
+                    subtitle: note?.updatedAt == null
+                        ? l10n.historySavedOnPhone
+                        : editedTimeLabel(note!.updatedAt!, l10n),
+                    onTap: () => _open(currentVersionId),
+                  ),
+                ],
+              ),
+              for (final day in days) ...[
+                SizedBox(height: Section.gapOf(context)),
+                Section(
+                  label: dayLabel(day.date, now, l10n),
+                  child: GroupedList(
                     children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (subtitle != null)
-                        Text(
-                          subtitle!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      for (final revision in day.revisions)
+                        versionRow(revision),
                     ],
                   ),
                 ),
-                Icon(
-                  LucideIcons.chevronRight,
-                  size: AppIconSizes.sm,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                ),
               ],
-            ),
+              if (revisions.isEmpty && !_fetching)
+                AppEmptyState(
+                  kind: EmptyStateKind.history,
+                  title: l10n.historyEmptyTitle,
+                  message: l10n.historyKept(historyDays),
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                ),
+              SizedBox(height: Section.gapOf(context)),
+              if (_fetching)
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Center(child: Spinner()),
+                )
+              else if (_failed)
+                Notice(
+                  kind: NoticeKind.warn,
+                  icon: LucideIcons.cloudAlert,
+                  text: l10n.historyFetchFailed,
+                  action: AppButton(
+                    label: l10n.commonTryAgain,
+                    kind: AppButtonKind.secondary,
+                    isExpanded: false,
+                    size: AppButtonSize.small,
+                    onPressed: _retry,
+                  ),
+                )
+              else if (!online)
+                Notice(icon: LucideIcons.cloudOff, text: l10n.historyOffline),
+              if (revisions.isNotEmpty && (complete || !online))
+                Padding(
+                  padding: EdgeInsets.only(top: density.space16),
+                  child: Text(
+                    l10n.historyLimit(historyDays),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.footnote.copyWith(
+                      color: colors.appMuted,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ListFooter extends StatelessWidget {
-  const _ListFooter({required this.text, this.onRetry});
-
-  final String text;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        Text(
-          text,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
-        ),
-        if (onRetry != null)
-          TextButton(onPressed: onRetry, child: const Text('Try again')),
       ],
     );
   }
 }
 
-class _NoteBadge extends StatelessWidget {
-  const _NoteBadge();
+/// A tappable row: a mark, two lines of text, then [trailing] before the
+/// chevron.
+class _HistoryRow extends GroupedListRow {
+  const _HistoryRow({
+    required this.mark,
+    required this.title,
+    required this.subtitle,
+    required this.semanticLabel,
+    required this.onTap,
+    this.trailing,
+  });
+
+  /// [PersonAvatar.list] wide.
+  final Widget mark;
+  final Widget title;
+  final String subtitle;
+  final String semanticLabel;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  static const double textStart =
+      GroupedListTile.inset + PersonAvatar.list + AnchorTokens.space12;
+
+  @override
+  double get dividerStart => textStart;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: _badgeSize,
-      height: _badgeSize,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.12),
-        borderRadius: AppRadius.smBorder,
-      ),
-      child: Icon(
-        LucideIcons.fileText,
-        size: AppIconSizes.sm,
-        color: theme.colorScheme.primary,
+    final colors = context.anchor;
+    final density = context.density;
+    return Pressable(
+      style: PressStyle.row,
+      onTap: onTap,
+      semanticLabel: semanticLabel,
+      tintRadius: BorderRadius.zero,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: density.control),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: GroupedListTile.inset,
+          ),
+          child: Row(
+            spacing: AnchorTokens.space12,
+            children: [
+              mark,
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: density.space12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      title,
+                      Text(
+                        subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.secondary.copyWith(
+                          color: colors.appMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ?trailing,
+              Icon(
+                LucideIcons.chevronRight,
+                size: AnchorTokens.sizeIconSmall,
+                color: colors.appMuted.withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _AuthorBadge extends StatelessWidget {
-  const _AuthorBadge({required this.author});
+class _CurrentVersionRow extends GroupedListRow {
+  const _CurrentVersionRow({required this.subtitle, required this.onTap});
 
-  final NoteRevisionAuthor author;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  double get dividerStart => _HistoryRow.textStart;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.anchor;
+    final label = context.l10n.historyCurrent;
+    return _HistoryRow(
+      mark: Container(
+        width: PersonAvatar.list,
+        height: PersonAvatar.list,
+        decoration: BoxDecoration(
+          color: colors.accentStrong.withValues(
+            alpha: context.isDark ? 0.2 : 0.14,
+          ),
+          borderRadius: BorderRadius.circular(
+            AnchorTokens.radiusSm, // off-scale: the mark's corner
+          ),
+        ),
+        child: Icon(
+          LucideIcons.penLine,
+          size: AnchorTokens.sizeIconSmall,
+          color: colors.accentInk,
+        ),
+      ),
+      title: Text(
+        label,
+        style: AppTypography.row.copyWith(
+          fontWeight: FontWeight.w600,
+          color: colors.appText,
+        ),
+      ),
+      subtitle: subtitle,
+      semanticLabel: label,
+      onTap: onTap,
+    );
+  }
+}
+
+class _VersionRow extends GroupedListRow {
+  const _VersionRow({
+    required this.author,
+    required this.time,
+    required this.cause,
+    required this.isWarning,
+    required this.summary,
+    required this.counts,
+    required this.semanticLabel,
+    required this.onTap,
+  });
+
+  final UserSummary? author;
+  final String time;
+  final String? cause;
+  final bool isWarning;
+  final String summary;
+  final LineCounts counts;
+  final String semanticLabel;
+  final VoidCallback onTap;
+
+  @override
+  double get dividerStart => _HistoryRow.textStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.anchor;
+    final author = this.author;
+    final cause = this.cause;
+    return _HistoryRow(
+      mark: author == null
+          ? Container(
+              width: PersonAvatar.list,
+              height: PersonAvatar.list,
+              decoration: BoxDecoration(
+                color: colors.appText.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                LucideIcons.user,
+                size: AnchorTokens.sizeIconSmall,
+                color: colors.appMuted,
+              ),
+            )
+          : PersonAvatar(
+              name: author.name,
+              imageUrl: author.profileImage,
+              size: PersonAvatar.list,
+            ),
+      title: Row(
+        spacing: AnchorTokens.space8,
+        children: [
+          Text(
+            time,
+            style: AppTypography.row.tabular.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colors.appText,
+            ),
+          ),
+          if (cause != null)
+            Flexible(
+              child: _CauseTag(label: cause, isWarning: isWarning),
+            ),
+        ],
+      ),
+      subtitle: summary,
+      semanticLabel: semanticLabel,
+      onTap: onTap,
+      trailing: DiffBar(counts),
+    );
+  }
+}
+
+class _CauseTag extends StatelessWidget {
+  const _CauseTag({required this.label, required this.isWarning});
+
+  final String label;
+  final bool isWarning;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.anchor;
     return Container(
-      width: _badgeSize,
-      height: _badgeSize,
+      constraints: const BoxConstraints(minHeight: 20), // off-scale: a badge
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.12),
-        shape: BoxShape.circle,
+        color: isWarning
+            ? colors.statusWarnFill
+            : colors.appMuted.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(AnchorTokens.radiusPill),
       ),
       child: Center(
+        widthFactor: 1,
+        heightFactor: 1,
         child: Text(
-          revisionAuthorInitial(author),
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.primary,
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.footnote.copyWith(
             fontWeight: FontWeight.w600,
+            color: isWarning ? colors.statusWarnText : colors.appText,
           ),
         ),
       ),
-    );
-  }
-}
-
-class _EmptyHistory extends StatelessWidget {
-  const _EmptyHistory({this.onRetry});
-
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dims = context.dims;
-    final unread = onRetry != null;
-
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: dims.xl,
-              vertical: dims.lg,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  unread ? LucideIcons.cloudOff : LucideIcons.history,
-                  size: 64,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-                ),
-                SizedBox(height: dims.md),
-                Text(
-                  unread
-                      ? "Couldn't check for earlier versions"
-                      : 'No earlier versions yet',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(
-                      alpha: AppOpacity.secondary,
-                    ),
-                  ),
-                ),
-                SizedBox(height: dims.xs),
-                Text(
-                  unread
-                      ? 'Versions kept on your other devices need a connection.'
-                      : 'Edits to this note are kept here, so you can always '
-                            'go back.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                if (onRetry != null) ...[
-                  SizedBox(height: dims.md),
-                  TextButton.icon(
-                    onPressed: onRetry,
-                    icon: const Icon(
-                      LucideIcons.refreshCw,
-                      size: AppIconSizes.sm,
-                    ),
-                    label: const Text('Try again'),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

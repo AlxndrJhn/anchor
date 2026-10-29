@@ -9,7 +9,6 @@ import 'package:mocktail/mocktail.dart';
 
 class MockDio extends Mock implements Dio {}
 
-/// Reading a note's history down from the server, page by page.
 void main() {
   late AppDatabase db;
   late MockDio dio;
@@ -21,7 +20,7 @@ void main() {
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     dio = MockDio();
-    store = NoteRevisionsStore(db, () => author);
+    store = NoteRevisionsStore(db, () async => author);
     repository = NoteHistoryRepository(dio, store);
   });
 
@@ -38,7 +37,6 @@ void main() {
     'author': null,
   };
 
-  /// Replies with [pages] in order, keeping the query of each request.
   List<Map<String, dynamic>> stub(List<Map<String, dynamic>> pages) {
     final queries = <Map<String, dynamic>>[];
     var index = 0;

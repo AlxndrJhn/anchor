@@ -1,7 +1,12 @@
 import 'package:anchor/core/network/anchor_protocol.dart';
-import 'package:anchor/features/settings/data/server_info_provider.dart';
+import 'package:anchor/features/server/data/server_info_provider.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
+import 'package:anchor/features/sync/presentation/compatibility_messages.dart';
+import 'package:anchor/l10n/app_localizations.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+final _english = lookupAppLocalizations(const Locale('en'));
 
 void main() {
   group('compatibilityFor', () {
@@ -39,16 +44,29 @@ void main() {
     });
   });
 
-  group('SyncCompatibility copy', () {
-    test('a mismatch carries something to show the user', () {
+  group('compatibilityMessagesOf', () {
+    test('a mismatch has something to show the user', () {
       for (final state in [
         SyncCompatibility.serverOutdated,
         SyncCompatibility.appOutdated,
       ]) {
         expect(state.isMismatch, isTrue);
-        expect(state.title, isNotNull);
-        expect(state.message, isNotNull);
+        expect(compatibilityMessagesOf(state, _english), isNotNull);
       }
+    });
+
+    test('tells the side that is behind to update', () {
+      expect(
+        compatibilityMessagesOf(SyncCompatibility.appOutdated, _english)!.lead,
+        'Update Anchor.',
+      );
+      expect(
+        compatibilityMessagesOf(
+          SyncCompatibility.serverOutdated,
+          _english,
+        )!.lead,
+        'Update your server.',
+      );
     });
 
     test('a working or unknown server says nothing', () {
@@ -57,7 +75,7 @@ void main() {
         SyncCompatibility.unreachable,
       ]) {
         expect(state.isMismatch, isFalse);
-        expect(state.message, isNull);
+        expect(compatibilityMessagesOf(state, _english), isNull);
       }
     });
   });

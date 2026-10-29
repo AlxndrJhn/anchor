@@ -1,9 +1,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'user_summary.dart';
+
 part 'note_revision.freezed.dart';
 part 'note_revision.g.dart';
 
-/// Why a revision was kept.
 enum RevisionCause {
   edit,
   conflict,
@@ -13,20 +14,6 @@ enum RevisionCause {
       .firstWhere((cause) => cause.name == value, orElse: () => edit);
 }
 
-@freezed
-abstract class NoteRevisionAuthor with _$NoteRevisionAuthor {
-  const factory NoteRevisionAuthor({
-    required String id,
-    required String name,
-    required String email,
-    String? profileImage,
-  }) = _NoteRevisionAuthor;
-
-  factory NoteRevisionAuthor.fromJson(Map<String, dynamic> json) =>
-      _$NoteRevisionAuthorFromJson(json);
-}
-
-/// A version of a note, as recorded on this device or read from the server.
 @freezed
 abstract class NoteRevision with _$NoteRevision {
   const NoteRevision._();
@@ -38,7 +25,7 @@ abstract class NoteRevision with _$NoteRevision {
     required String title,
     @JsonKey(unknownEnumValue: RevisionCause.edit) required RevisionCause cause,
     required DateTime createdAt,
-    NoteRevisionAuthor? author,
+    UserSummary? author,
     String? content,
   }) = _NoteRevision;
 

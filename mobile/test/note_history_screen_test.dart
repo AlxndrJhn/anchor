@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:anchor/core/network/connectivity_provider.dart';
-import 'package:anchor/core/providers/active_user_id_provider.dart';
+import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/features/notes/data/repository/note_history_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:intl/intl.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockNotesRepository extends Mock implements NotesRepository {}
@@ -29,6 +29,14 @@ class FakeActiveUserId extends ActiveUserId {
 }
 
 class FakeNoteRevision extends Fake implements NoteRevision {}
+
+const offlineMessage =
+    'Connect to the internet to see versions from your other devices.';
+
+/// The phone's time format, with its narrow space before AM.
+final tenThirty = DateFormat.jm('en').format(DateTime(2026, 1, 1, 10, 30));
+
+const failedMessage = 'Couldn’t check for versions from your other devices.';
 
 String delta(List<String> lines) => jsonEncode({
   'ops': [
@@ -52,8 +60,6 @@ NoteRevision revisionOf({
   content: content,
 );
 
-/// The history screen off what the device holds: the list, opening a version
-/// on its own page, and putting one back without the server.
 void main() {
   late MockNotesRepository notesRepo;
   late MockNoteHistoryRepository historyRepo;
@@ -155,18 +161,39 @@ void main() {
     expect(find.text('Current version'), findsOneWidget);
     expect(find.text('TODAY'), findsOneWidget);
     expect(find.text('YESTERDAY'), findsOneWidget);
-    expect(find.text('10:30 AM'), findsOneWidget);
+    expect(find.text(tenThirty), findsOneWidget);
+  });
+
+  testWidgets('versions of one day are split by a line where the text starts', (
+    tester,
+  ) async {
+    when(() => store.watch(any())).thenAnswer(
+      (_) => Stream.value([
+        revisionOf(
+          id: 'r3',
+          createdAt: today.add(const Duration(hours: 11)),
+          content: delta(['milk', 'bread', 'eggs']),
+        ),
+        ...stored,
+      ]),
+    );
+    await pumpScreen(tester);
+
+    final lines = find.byWidgetPredicate(
+      (widget) => widget is PositionedDirectional && widget.start == 56,
+    );
+    expect(lines, findsOneWidget);
   });
 
   testWidgets('reads a version with no connection at all', (tester) async {
     await pumpScreen(tester, isOnline: false);
-    await tester.tap(find.text('10:30 AM'));
+    await tester.tap(find.text(tenThirty));
     await tester.pumpAndSettle();
 
-    expect(find.text('Today at 10:30 AM'), findsOneWidget);
-    expect(find.text('bread'), findsOneWidget);
-    expect(find.text('eggs'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Restore'), findsOneWidget);
+    expect(find.text('Today at $tenThirty'), findsOneWidget);
+    expect(find.text('bread', findRichText: true), findsOneWidget);
+    expect(find.text('eggs', findRichText: true), findsOneWidget);
+    expect(find.text('Restore'), findsOneWidget);
     verifyNever(() => historyRepo.fetch(any()));
   });
 
@@ -174,21 +201,17 @@ void main() {
     tester,
   ) async {
     await pumpScreen(tester);
-    await tester.tap(find.text('10:30 AM'));
+    await tester.tap(find.text(tenThirty));
     await tester.pumpAndSettle();
 
-    expect(find.text('Today at 10:30 AM'), findsOneWidget);
+    expect(find.text('Today at $tenThirty'), findsOneWidget);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NoteRevisionScreen),
-        matching: find.byIcon(LucideIcons.chevronLeft),
-      ),
-    );
+    await tester.tap(find.bySemanticsLabel('Back to the version list'));
     await tester.pumpAndSettle();
 
-    expect(find.text('History'), findsOneWidget);
-    expect(find.text('10:30 AM'), findsOneWidget);
+    expect(find.byType(NoteRevisionScreen), findsNothing);
+    expect(find.text('Version history'), findsWidgets);
+    expect(find.text(tenThirty), findsOneWidget);
   });
 
   testWidgets('the note as it is now opens on its own page', (tester) async {
@@ -196,20 +219,26 @@ void main() {
     await tester.tap(find.text('Current version'));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(AppBar, 'Current version'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Restore'), findsNothing);
+    expect(find.byType(NoteRevisionScreen), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NoteRevisionScreen),
+        matching: find.text('Current version'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('1 of 3'), findsOneWidget);
+    expect(find.text('Restore'), findsNothing);
   });
 
   testWidgets('puts a version back without waiting for the server', (
     tester,
   ) async {
     await pumpScreen(tester, isOnline: false);
-    await tester.tap(find.text('10:30 AM'));
+    await tester.tap(find.text(tenThirty));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(TextButton, 'Restore'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Restore'));
+    await tester.tap(find.text('Restore'));
     await tester.pumpAndSettle();
 
     final restored =
@@ -222,29 +251,34 @@ void main() {
     expect(find.text('Editor'), findsOneWidget);
   });
 
-  testWidgets('says so when versions kept elsewhere could not be read', (
+  testWidgets('says versions kept elsewhere wait for a connection', (
     tester,
   ) async {
     await pumpScreen(tester, isOnline: false);
 
-    expect(find.text('10:30 AM'), findsOneWidget);
-    expect(
-      find.text("Couldn't check for versions from your other devices."),
-      findsOneWidget,
-    );
+    expect(find.text(tenThirty), findsOneWidget);
+    expect(find.text(offlineMessage), findsOneWidget);
+    expect(find.text('Try again'), findsNothing);
+  });
+
+  testWidgets('says so when versions kept elsewhere could not be read', (
+    tester,
+  ) async {
+    when(() => historyRepo.fetch(any())).thenThrow(Exception('offline'));
+
+    await pumpScreen(tester);
+
+    expect(find.text(tenThirty), findsOneWidget);
+    expect(find.text(failedMessage), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
   });
 
   testWidgets('trying again after a failed read asks the server once more', (
     tester,
   ) async {
+    when(() => historyRepo.fetch(any())).thenThrow(Exception('offline'));
     await pumpScreen(tester);
     verify(() => historyRepo.fetch('n1')).called(1);
-
-    when(() => historyRepo.fetch(any())).thenThrow(Exception('offline'));
-    await tester.fling(find.byType(ListView), const Offset(0, 300), 1000);
-    await tester.pumpAndSettle();
-
     expect(find.text('Try again'), findsOneWidget);
 
     when(() => historyRepo.fetch(any())).thenAnswer((_) async {});
@@ -252,7 +286,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Try again'), findsNothing);
-    verify(() => historyRepo.fetch('n1')).called(2);
+    verify(() => store.markStale('n1')).called(1);
+    verify(() => historyRepo.fetch('n1')).called(1);
   });
 
   testWidgets('coming back online reads what the offline open could not', (
@@ -274,13 +309,13 @@ void main() {
     await pumpOnline(isOnline: false);
     await tester.pumpAndSettle();
 
-    expect(find.text('Try again'), findsOneWidget);
+    expect(find.text(offlineMessage), findsOneWidget);
     verifyNever(() => historyRepo.fetch(any()));
 
     await pumpOnline(isOnline: true);
     await tester.pumpAndSettle();
 
-    expect(find.text('Try again'), findsNothing);
+    expect(find.text(offlineMessage), findsNothing);
     verify(() => historyRepo.fetch('n1')).called(1);
   });
 
@@ -297,47 +332,28 @@ void main() {
     expect(find.text('Edits older than 90 days are removed.'), findsOneWidget);
   });
 
-  testWidgets('pulling down reads the history again from the top', (
-    tester,
-  ) async {
-    when(
-      () => store.watchPosition(any()),
-    ).thenAnswer((_) => Stream.value(const NoteHistoryPosition(isRead: true)));
-
-    await pumpScreen(tester);
-    verifyNever(() => historyRepo.fetch(any()));
-
-    await tester.fling(find.byType(ListView), const Offset(0, 300), 1000);
-    await tester.pumpAndSettle();
-
-    verify(() => store.markStale('n1')).called(1);
-    verify(() => historyRepo.fetch('n1')).called(1);
-  });
-
   testWidgets('a read-only note offers no restore', (tester) async {
     when(() => notesRepo.watchNote(any())).thenAnswer(
       (_) => Stream.value(note.copyWith(permission: NotePermission.viewer)),
     );
 
     await pumpScreen(tester);
-    await tester.tap(find.text('10:30 AM'));
+    await tester.tap(find.text(tenThirty));
     await tester.pumpAndSettle();
 
-    final restore = tester.widget<TextButton>(
-      find.widgetWithText(TextButton, 'Restore'),
-    );
-    expect(restore.onPressed, isNull);
+    expect(find.text('Today at $tenThirty'), findsOneWidget);
+    expect(find.text('Restore'), findsNothing);
   });
 
-  testWidgets('says so when there is nothing here and nothing to read', (
+  testWidgets('an empty history offline says the rest waits for a connection', (
     tester,
   ) async {
     when(() => store.watch(any())).thenAnswer((_) => Stream.value(const []));
 
     await pumpScreen(tester, isOnline: false);
 
-    expect(find.text("Couldn't check for earlier versions"), findsOneWidget);
-    expect(find.text('Try again'), findsOneWidget);
+    expect(find.text('No earlier versions yet'), findsOneWidget);
+    expect(find.text(offlineMessage), findsOneWidget);
   });
 
   testWidgets('an unedited note is empty, with nothing to try again', (

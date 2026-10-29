@@ -26,7 +26,7 @@ final class NoteSharesRepositoryProvider
         argument: null,
         retry: null,
         name: r'noteSharesRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -55,4 +55,4 @@ final class NoteSharesRepositoryProvider
 }
 
 String _$noteSharesRepositoryHash() =>
-    r'3a4b7c7c312f0994d7fb9fecd97bb252f39ea62b';
+    r'4b5b6424ef9b5a917e20bcb2e561aafb1959e288';

@@ -2,16 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../logging/app_logger.dart';
-import '../providers/session_expired_provider.dart';
+import '../logging/log_tags.dart';
+import '../session/session_expired_provider.dart';
+import '../storage/storage_keys.dart';
 
-const _accessTokenKey = 'access_token';
-const _refreshTokenKey = 'refresh_token';
 const _retriedKey = 'authRetried';
 
 // Shared by every Dio instance.
-Future<String?>? _refreshing;
+Future<String?>? _refreshInFlight;
 
-/// Adds the access token to requests and refreshes it on a 401.
 class AuthInterceptor extends Interceptor {
   AuthInterceptor({
     required Dio dio,
@@ -33,7 +32,7 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _storage.read(key: _accessTokenKey);
+    final token = await _storage.read(key: StorageKeys.accessToken);
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -47,7 +46,6 @@ class AuthInterceptor extends Interceptor {
   ) async {
     final options = err.requestOptions;
     final sentWith = options.headers['Authorization'];
-    // Requests sent signed out (like login) have nothing to refresh.
     if (err.response?.statusCode != 401 ||
         sentWith == null ||
         options.extra[_retriedKey] == true) {
@@ -67,15 +65,17 @@ class AuthInterceptor extends Interceptor {
   Future<String?> _freshAccessToken(Object sentWith) async {
     if (_session.isExpired) return null;
 
-    final stored = await _storage.read(key: _accessTokenKey);
+    final stored = await _storage.read(key: StorageKeys.accessToken);
     // Another request already refreshed after this one went out.
     if (stored != null && 'Bearer $stored' != sentWith) return stored;
 
-    return _refreshing ??= _refresh().whenComplete(() => _refreshing = null);
+    return _refreshInFlight ??= _refresh().whenComplete(
+      () => _refreshInFlight = null,
+    );
   }
 
   Future<String?> _refresh() async {
-    final refreshToken = await _storage.read(key: _refreshTokenKey);
+    final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
     if (refreshToken == null) return null;
 
     try {
@@ -87,22 +87,22 @@ class AuthInterceptor extends Interceptor {
       final accessToken = data['access_token'] as String;
 
       await _storage.write(
-        key: _refreshTokenKey,
+        key: StorageKeys.refreshToken,
         value: data['refresh_token'] as String,
       );
-      await _storage.write(key: _accessTokenKey, value: accessToken);
+      await _storage.write(key: StorageKeys.accessToken, value: accessToken);
       return accessToken;
     } on DioException catch (error, stack) {
       if (error.response?.statusCode == 401) {
         AppLogger.instance.warn(
-          'Auth',
+          LogTags.auth,
           'Server refused our sign-in; the user needs to sign in again',
           error: error,
         );
         _session.expire();
       } else {
         AppLogger.instance.error(
-          'Auth',
+          LogTags.auth,
           'Token refresh failed',
           error: error,
           stackTrace: stack,
@@ -111,7 +111,7 @@ class AuthInterceptor extends Interceptor {
       return null;
     } catch (error, stack) {
       AppLogger.instance.error(
-        'Auth',
+        LogTags.auth,
         'Token refresh failed',
         error: error,
         stackTrace: stack,

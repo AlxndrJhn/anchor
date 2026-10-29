@@ -1,683 +1,235 @@
-import 'dart:io';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:math' as math;
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:anchor/features/notes/domain/note.dart';
-import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
-import 'package:anchor/core/theme/context_extensions.dart';
-import 'package:anchor/core/theme/tokens/app_icon_sizes.dart';
-import 'package:anchor/core/theme/tokens/app_radius.dart';
-import 'package:anchor/core/widgets/image_shimmer.dart';
-import 'package:anchor/core/widgets/quill_preview.dart';
-import 'package:anchor/core/network/connectivity_provider.dart';
-import 'package:anchor/core/network/server_config_provider.dart';
-import 'package:anchor/features/tags/presentation/tags_controller.dart';
-import 'package:anchor/features/tags/presentation/widgets/tag_chip.dart';
-import 'package:anchor/features/notes/presentation/widgets/note_background.dart';
-import 'package:anchor/features/notes/presentation/widgets/reminder_chip.dart';
-import 'package:anchor/features/notes/presentation/widgets/share_note_sheet.dart';
-import 'package:anchor/core/widgets/app_bottom_sheet.dart';
-import 'package:anchor/core/theme/tokens/app_opacity.dart';
 
-/// Lines of body text shown under the title.
-const _previewMaxLines = 6;
+import '../../../../core/motion/springs.dart';
+import '../../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../../core/widgets/check_circle.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../reminders/presentation/reminder_labels.dart';
+import '../../../tags/domain/tag.dart';
+import '../../domain/note.dart';
+import '../../domain/note_blocks.dart';
+import '../note_labels.dart';
+import 'card_body.dart';
+import 'card_registry.dart';
+import 'note_card_content.dart';
+import 'note_surface.dart';
 
-/// Aspect ratio of a note card carrying exactly one image.
-const _singleImageAspect = 16 / 9;
-
-class NoteCard extends ConsumerWidget {
-  final Note note;
-  final bool isSelectionMode;
-  final bool isSelected;
-  final VoidCallback? onLongPress;
-  final VoidCallback? onTap;
-  final String? datePrefix;
-  final List<Widget>? trailingActions;
-
+class NoteCard extends StatefulWidget {
   const NoteCard({
     super.key,
     required this.note,
-    this.isSelectionMode = false,
+    required this.tags,
+    this.layout = CardLayout.masonry,
+    this.isSelecting = false,
     this.isSelected = false,
-    this.onLongPress,
+    this.index = 0,
+    this.status,
     this.onTap,
-    this.datePrefix,
-    this.trailingActions,
+    this.onLongPress,
   });
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tagsAsync = ref.watch(tagsControllerProvider);
-    final serverUrl = ref.watch(serverUrlProvider);
-    final theme = Theme.of(context);
-    final dims = context.dims;
-    final hasImages = note.imagePreviewData.isNotEmpty;
-    final hasContent = note.content != null && note.content!.isNotEmpty;
-    final showBadge = isSelectionMode && !hasImages;
-    final showPin = !isSelectionMode && !hasImages && note.isPinned;
-    final showTopRow = note.hasTitle || hasContent || showBadge || showPin;
-    final preview = QuillPreview(
-      content: note.content,
-      maxLines: _previewMaxLines,
-    );
+  final Note note;
 
-    final cardColor = note.background != null
-        ? NoteBackground.resolveColor(context, note.background)
-        : theme.cardTheme.color ?? theme.colorScheme.surface;
-
-    return Hero(
-      tag: 'note_${note.id}',
-      child: Material(
-        color: Colors.transparent,
-        child: Card(
-          color: cardColor,
-          clipBehavior: Clip.antiAlias,
-          elevation: isSelected ? 2 : 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppRadius.lgBorder,
-            side: isSelected
-                ? BorderSide(color: theme.colorScheme.primary, width: 2)
-                : BorderSide.none,
-          ),
-          child: InkWell(
-            onTap: onTap ?? () => context.go('/note/${note.id}', extra: note),
-            onLongPress: onLongPress,
-            borderRadius: AppRadius.lgBorder,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (hasImages)
-                  Stack(
-                    children: [
-                      _NoteImagePreviews(previews: note.imagePreviewData),
-                      if (isSelectionMode || note.isPinned)
-                        Positioned(
-                          top: 10,
-                          right: 10,
-                          child: isSelectionMode
-                              ? _SelectionBadge(isSelected: isSelected)
-                              : _PinBadge(),
-                        ),
-                    ],
-                  ),
-                NoteBackground(
-                  styleId: note.background,
-                  borderRadius: BorderRadius.zero,
-                  child: Padding(
-                    padding: dims.noteCardPadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showTopRow)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (showBadge) ...[
-                                _SelectionBadge(isSelected: isSelected),
-                                SizedBox(width: dims.sm),
-                              ],
-                              Expanded(
-                                child: note.hasTitle
-                                    ? Text(
-                                        note.title,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: -0.3,
-                                            ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      )
-                                    : preview,
-                              ),
-                              if (showPin) ...[
-                                SizedBox(width: dims.xs),
-                                Icon(
-                                  LucideIcons.pin,
-                                  size: AppIconSizes.sm,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ],
-                            ],
-                          ),
-                        if (note.hasTitle && hasContent) ...[
-                          SizedBox(height: dims.noteCardTitleGap),
-                          preview,
-                        ],
-                        if (note.tagIds.isNotEmpty) ...[
-                          if (showTopRow) SizedBox(height: dims.noteCardTagGap),
-                          tagsAsync.when(
-                            data: (allTags) {
-                              final userNoteTags = allTags
-                                  .where((t) => note.tagIds.contains(t.id))
-                                  .toList();
-                              if (userNoteTags.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-                              final displayedTags = userNoteTags
-                                  .take(3)
-                                  .toList();
-                              final remaining =
-                                  userNoteTags.length - displayedTags.length;
-                              return Wrap(
-                                spacing: dims.xxs,
-                                runSpacing: dims.xxs,
-                                children: [
-                                  ...displayedTags.map(
-                                    (tag) => TagChip(tag: tag, selected: false),
-                                  ),
-                                  if (remaining > 0)
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: dims.xs,
-                                        vertical: dims.xxs,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                        borderRadius: AppRadius.smBorder,
-                                      ),
-                                      child: Text(
-                                        '+$remaining',
-                                        style: theme.textTheme.labelSmall,
-                                      ),
-                                    ),
-                                ],
-                              );
-                            },
-                            loading: () => const SizedBox.shrink(),
-                            error: (_, _) => const SizedBox.shrink(),
-                          ),
-                        ],
-                        SizedBox(height: dims.noteCardFooterGap),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Bounds the row so the reminder chip can ellipsize.
-                            Expanded(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (note.sharedBy != null) ...[
-                                    Tooltip(
-                                      message:
-                                          'Shared by ${note.sharedBy!.name}',
-                                      child: _SharedByAvatar(
-                                        sharedBy: note.sharedBy!,
-                                        serverUrl: serverUrl,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    SizedBox(width: dims.xs),
-                                  ],
-                                  if (note.isOwner && note.hasShares) ...[
-                                    _SharedByMeIndicator(
-                                      count: note.shareIds!.length,
-                                      onTap: isSelectionMode
-                                          ? null
-                                          : () => AppBottomSheet.show(
-                                              context,
-                                              builder: (_) => ShareNoteSheet(
-                                                noteId: note.id,
-                                              ),
-                                            ),
-                                    ),
-                                    SizedBox(width: dims.xs),
-                                  ],
-                                  if (note.reminder != null) ...[
-                                    Flexible(
-                                      child: ReminderChip(
-                                        reminder: note.reminder!,
-                                        compact: true,
-                                      ),
-                                    ),
-                                    SizedBox(width: dims.xs),
-                                  ],
-                                  if (note.updatedAt != null)
-                                    Text(
-                                      datePrefix != null
-                                          ? '$datePrefix ${DateFormat.MMMd().format(note.updatedAt!)}'
-                                          : DateFormat.MMMd().format(
-                                              note.updatedAt!,
-                                            ),
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: theme.colorScheme.onSurface
-                                                .withValues(
-                                                  alpha: AppOpacity.secondary,
-                                                ),
-                                          ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            if (trailingActions != null)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: trailingActions!,
-                              ),
-                            if (trailingActions == null && !note.isSynced)
-                              Icon(
-                                LucideIcons.cloudOff,
-                                size: AppIconSizes.sm,
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: AppOpacity.secondary,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SelectionBadge extends StatelessWidget {
+  final List<Tag> tags;
+  final CardLayout layout;
+  final bool isSelecting;
   final bool isSelected;
-  const _SelectionBadge({required this.isSelected});
+
+  final int index;
+
+  /// Replaces the date, like "29 days left" in Trash.
+  final String? status;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isSelected ? theme.colorScheme.primary : Colors.black26,
-        border: Border.all(
-          color: isSelected
-              ? theme.colorScheme.primary
-              : Colors.white.withValues(alpha: 0.8),
-          width: 2,
-        ),
-      ),
-      child: isSelected
-          ? Icon(
-              LucideIcons.check,
-              size: AppIconSizes.xs,
-              color: theme.colorScheme.onPrimary,
-            )
-          : null,
-    );
-  }
+  State<NoteCard> createState() => _NoteCardState();
 }
 
-class _PinBadge extends StatelessWidget {
-  const _PinBadge();
+class _NoteCardState extends State<NoteCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _press = AnimationController(
+    vsync: this,
+    value: 1,
+  );
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.35),
-        borderRadius: AppRadius.lgBorder,
-      ),
-      child: const Icon(LucideIcons.pin, size: 13, color: Colors.white),
-    );
+  void dispose() {
+    _press.dispose();
+    super.dispose();
   }
-}
 
-/// Full-bleed image block at the top of a note card.
-class _NoteImagePreviews extends StatelessWidget {
-  final List<NoteImagePreview> previews;
+  void _pressTo(double scale) {
+    if (context.isMotionReduced) return;
+    _press.springTo(scale, spring: Spring.snappy);
+  }
 
-  const _NoteImagePreviews({required this.previews});
+  void _release() {
+    if (context.isMotionReduced) return;
+    _press.springTo(1, spring: Spring.snappy);
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (previews.isEmpty) return const SizedBox.shrink();
+    final note = widget.note;
+    final appearance = NoteAppearance.of(context, note.background);
+    final snippet = snippetTextOf(note.content);
+    final l10n = context.l10n;
+    final reminder = note.reminder;
+    final date =
+        widget.status ??
+        (widget.layout == CardLayout.list && note.updatedAt != null
+            ? shortDayLabel(note.updatedAt!.toLocal(), l10n)
+            : null);
+    final label = [
+      displayTitleOf(note.title, l10n),
+      if (snippet.isNotEmpty)
+        snippet.length > 120 ? '${snippet.substring(0, 120)}…' : snippet,
+      if (note.imagePreviewData.isNotEmpty)
+        l10n.cardPictures(note.imagePreviewData.length),
+      for (final tag in widget.tags) l10n.tagSheetLabel(tag.name),
+      if (reminder != null) reminderSpokenLabel(reminder, l10n),
+      if (note.sharedBy != null) l10n.shareSharedBy(note.sharedBy!.name),
+      if (note.isOwner && note.hasShares)
+        l10n.shareSharedWithCount(note.shareIds!.length),
+      if (!note.isSynced) l10n.cardNotSynced,
+      ?date,
+    ].join('. ');
 
-    final count = previews.length;
-
-    if (count == 1) {
-      return AspectRatio(
-        aspectRatio: _singleImageAspect,
-        child: _Thumb(
-          key: ValueKey(previews[0].attachmentId),
-          preview: previews[0],
-        ),
-      );
-    }
-
-    if (count == 2) {
-      return AspectRatio(
-        aspectRatio: 2,
-        child: Row(
-          children: [
-            Expanded(
-              child: _Thumb(
-                key: ValueKey(previews[0].attachmentId),
-                preview: previews[0],
-              ),
-            ),
-            const SizedBox(width: 3),
-            Expanded(
-              child: _Thumb(
-                key: ValueKey(previews[1].attachmentId),
-                preview: previews[1],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (count == 3) {
-      return AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _Thumb(
-                key: ValueKey(previews[0].attachmentId),
-                preview: previews[0],
-              ),
-            ),
-            const SizedBox(width: 3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: _Thumb(
-                      key: ValueKey(previews[1].attachmentId),
-                      preview: previews[1],
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Expanded(
-                    child: _Thumb(
-                      key: ValueKey(previews[2].attachmentId),
-                      preview: previews[2],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // 4-up grid
-    return AspectRatio(
-      aspectRatio: 1,
-      child: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[0].attachmentId),
-                    preview: previews[0],
-                  ),
-                ),
-                const SizedBox(width: 3),
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[1].attachmentId),
-                    preview: previews[1],
-                  ),
-                ),
-              ],
-            ),
+    final card = ValueListenableBuilder<Set<String>>(
+      valueListenable: CardRegistry.leaving,
+      builder: (context, leaving, child) => AnimatedOpacity(
+        opacity: leaving.contains(note.id) ? 0 : 1,
+        duration: context.motion(AnchorTokens.motionDurationExit),
+        child: child,
+      ),
+      child: ValueListenableBuilder<Set<String>>(
+        valueListenable: CardRegistry.hidden,
+        builder: (context, hidden, child) =>
+            Opacity(opacity: hidden.contains(note.id) ? 0 : 1, child: child),
+        child: RepaintBoundary(
+          key: CardRegistry.keyFor(note.id),
+          child: NoteCardContent(
+            note: note,
+            tags: widget.tags,
+            appearance: appearance,
+            layout: widget.layout,
+            status: widget.status,
+            isSelected: widget.isSelected,
+            check: widget.isSelecting
+                ? _SelectionCheck(
+                    isSelected: widget.isSelected,
+                    appearance: appearance,
+                    index: widget.index,
+                  )
+                : null,
           ),
-          const SizedBox(height: 3),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[2].attachmentId),
-                    preview: previews[2],
-                  ),
-                ),
-                const SizedBox(width: 3),
-                Expanded(
-                  child: _Thumb(
-                    key: ValueKey(previews[3].attachmentId),
-                    preview: previews[3],
-                  ),
-                ),
-              ],
+        ),
+      ),
+    );
+
+    final gestures = <Type, GestureRecognizerFactory>{
+      LongPressGestureRecognizer:
+          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+            () => LongPressGestureRecognizer(
+              duration: AnchorTokens.motionDurationLongPress,
             ),
+            (recognizer) {
+              recognizer.onLongPressStart = (_) {
+                _release();
+                widget.onLongPress?.call();
+              };
+            },
           ),
-        ],
+      TapGestureRecognizer:
+          GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+            TapGestureRecognizer.new,
+            (recognizer) {
+              recognizer
+                ..onTapDown = ((_) => _pressTo(0.97))
+                ..onTapCancel = _release
+                ..onTap = (() {
+                  _release();
+                  widget.onTap?.call();
+                });
+            },
+          ),
+    };
+
+    return Semantics(
+      container: true,
+      button: true,
+      excludeSemantics: true,
+      selected: widget.isSelecting ? widget.isSelected : null,
+      label: label,
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      child: RawGestureDetector(
+        gestures: gestures,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedBuilder(
+          animation: _press,
+          builder: (context, child) =>
+              Transform.scale(scale: _press.value, child: child),
+          child: card,
+        ),
       ),
     );
   }
 }
 
-/// Single thumbnail tile that downloads the image on demand if not cached locally.
-class _Thumb extends ConsumerStatefulWidget {
-  final NoteImagePreview preview;
+class _SelectionCheck extends StatefulWidget {
+  const _SelectionCheck({
+    required this.isSelected,
+    required this.appearance,
+    required this.index,
+  });
 
-  const _Thumb({super.key, required this.preview});
+  final bool isSelected;
+  final NoteAppearance appearance;
+  final int index;
 
   @override
-  ConsumerState<_Thumb> createState() => _ThumbState();
+  State<_SelectionCheck> createState() => _SelectionCheckState();
 }
 
-class _ThumbState extends ConsumerState<_Thumb> {
-  String? _resolvedPath;
-  bool _loading = false;
-  bool _error = false;
+class _SelectionCheckState extends State<_SelectionCheck>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _entrance = AnimationController(vsync: this);
 
   @override
   void initState() {
     super.initState();
-    _resolveImage();
-  }
-
-  @override
-  void didUpdateWidget(covariant _Thumb oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // If the local path appeared (e.g. after sync downloaded the file), use it
-    if (widget.preview.localPath != null &&
-        widget.preview.localPath != oldWidget.preview.localPath) {
-      setState(() {
-        _resolvedPath = widget.preview.localPath;
-        _error = false;
-      });
-    }
-  }
-
-  Future<void> _resolveImage() async {
-    final localPath = widget.preview.localPath;
-    if (localPath != null) {
-      final file = File(localPath);
-      if (file.existsSync() && file.lengthSync() > 0) {
-        if (mounted) setState(() => _resolvedPath = localPath);
-        return;
-      }
-    }
-
-    // Download from server
-    setState(() {
-      _loading = true;
-      _error = false;
+    Future.delayed(Duration(milliseconds: math.min(widget.index, 12) * 18), () {
+      if (mounted) _entrance.springTo(1, spring: Spring.pop);
     });
-    try {
-      final repo = ref.read(noteAttachmentsRepositoryProvider);
-      final path = await repo.downloadAttachment(
-        widget.preview.noteId,
-        widget.preview.attachmentId,
-        widget.preview.filename,
-      );
-      if (mounted) setState(() => _resolvedPath = path);
-    } catch (_) {
-      if (mounted) setState(() => _error = true);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+  }
+
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    ref.listen<AsyncValue<List<ConnectivityResult>>>(
-      connectivityStreamProvider,
-      (previous, next) {
-        next.whenData((results) {
-          if (isOnlineFromResults(results) && _error && mounted) {
-            _resolveImage();
-          }
-        });
-      },
-    );
-
-    if (_resolvedPath != null && File(_resolvedPath!).existsSync()) {
-      return Image.file(
-        File(_resolvedPath!),
-        fit: BoxFit.cover,
-        cacheWidth: 300,
-        errorBuilder: (_, _, _) => _placeholder(theme),
-      );
-    }
-
-    if (_loading) {
-      return const ImageShimmer();
-    }
-
-    if (_error) {
-      return _placeholder(theme);
-    }
-
-    return _placeholder(theme);
-  }
-
-  Widget _placeholder(ThemeData theme) {
-    return Container(
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-      child: Center(
-        child: Icon(
-          LucideIcons.image,
-          size: AppIconSizes.md,
-          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+    return ScaleTransition(
+      scale: Tween<double>(begin: 0.4, end: 1).animate(_entrance),
+      child: FadeTransition(
+        opacity: _entrance.drive(
+          Tween<double>(
+            begin: 0,
+            end: 1,
+          ).chain(CurveTween(curve: const Interval(0, 0.5))),
         ),
-      ),
-    );
-  }
-}
-
-/// Indicator shown on notes the current user owns and has shared with others.
-/// Displays a people icon with the collaborator count and opens the share
-/// sheet when tapped.
-class _SharedByMeIndicator extends StatelessWidget {
-  final int count;
-  final VoidCallback? onTap;
-
-  const _SharedByMeIndicator({required this.count, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final dims = context.dims;
-    return Tooltip(
-      message: 'Shared with $count ${count == 1 ? 'person' : 'people'}',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.xsBorder,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: dims.xxs, vertical: 2),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.users,
-                size: AppIconSizes.xs,
-                color: theme.colorScheme.onSurface.withValues(
-                  alpha: AppOpacity.secondary,
-                ),
-              ),
-              SizedBox(width: dims.xxs),
-              Text(
-                '$count',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(
-                    alpha: AppOpacity.secondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Avatar widget to display the profile image of the user who shared the note
-class _SharedByAvatar extends StatelessWidget {
-  final SharedByUser sharedBy;
-  final String? serverUrl;
-  final double size;
-
-  const _SharedByAvatar({
-    required this.sharedBy,
-    this.serverUrl,
-    this.size = 20,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final profileImage = sharedBy.profileImage;
-
-    if (profileImage != null && profileImage.isNotEmpty) {
-      String imageUrl = profileImage;
-      if (!imageUrl.startsWith('http') && serverUrl != null) {
-        imageUrl = '$serverUrl$imageUrl';
-      }
-      return ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => _buildFallbackAvatar(theme),
-          errorWidget: (context, url, error) => _buildFallbackAvatar(theme),
-        ),
-      );
-    }
-    return _buildFallbackAvatar(theme);
-  }
-
-  Widget _buildFallbackAvatar(ThemeData theme) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondary.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Text(
-          sharedBy.name.isNotEmpty ? sharedBy.name[0].toUpperCase() : '?',
-          style: TextStyle(
-            color: theme.colorScheme.secondary,
-            fontWeight: FontWeight.w600,
-            fontSize: size * 0.5,
-          ),
+        child: CheckCircle(
+          value: widget.isSelected,
+          background: widget.appearance.colors.bg,
+          ringColor: widget.appearance.colors.muted,
+          hasShadow: true,
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+@DataClassName('AttachmentRow')
 class NoteAttachments extends Table {
   TextColumn get id => text()();
   TextColumn get noteId => text()();
@@ -15,7 +16,7 @@ class NoteAttachments extends Table {
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
   // Server assigned ID (null before first upload)
   TextColumn get serverAttachmentId => text().nullable()();
-  // User who uploaded this attachment (null for local-only pending uploads)
+  // Null for local uploads not yet sent.
   TextColumn get uploadedByUserId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 

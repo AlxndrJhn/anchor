@@ -1,18 +1,19 @@
 import 'dart:async';
 
-import 'package:anchor/core/app_initializer.dart';
-import 'package:anchor/core/notifications/notification_gateway.dart';
-import 'package:anchor/core/notifications/reminder_scheduler.dart';
-import 'package:anchor/core/providers/active_user_id_provider.dart';
+import 'package:anchor/app/app_bootstrap.dart';
+import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/reminders/data/notification_gateway.dart';
+import 'package:anchor/features/reminders/data/reminder_scheduler.dart';
+import 'package:anchor/l10n/app_localizations.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Records what it was asked to hold, and can refuse one id.
 class RecordingGateway implements NotificationGateway {
   RecordingGateway({
     this.failsOnId,
@@ -24,7 +25,6 @@ class RecordingGateway implements NotificationGateway {
 
   final int? failsOnId;
 
-  /// Whether the refusal is only for the first attempt.
   final bool failsOnce;
   final List<int> pending;
 
@@ -37,7 +37,6 @@ class RecordingGateway implements NotificationGateway {
   final cancelled = <int>[];
   int cancelAllCalls = 0;
 
-  /// How many passes have reached [pendingIds].
   int passes = 0;
   int _refusals = 0;
 
@@ -77,7 +76,7 @@ class RecordingGateway implements NotificationGateway {
   Future<bool> requestPermission() async => true;
 
   @override
-  bool get gatesExactAlarms => false;
+  bool get requiresExactAlarmPermission => false;
 
   @override
   Future<bool> canScheduleExact() async => true;
@@ -86,14 +85,12 @@ class RecordingGateway implements NotificationGateway {
   Future<void> requestExactPermission() async {}
 }
 
-/// A signed-in user, without the real auth stack behind it.
 class StubAuthController extends AuthController {
   @override
   Future<User?> build() async =>
       const User(id: 'user-1', email: 'me@example.com', name: 'Me');
 }
 
-/// Serves one stream of notes; nothing else on the repository is reachable.
 class StubNotesRepository implements NotesRepository {
   StubNotesRepository(this._notes);
 
@@ -107,7 +104,8 @@ class StubNotesRepository implements NotesRepository {
       throw UnimplementedError(invocation.memberName.toString());
 }
 
-/// What the device should be holding, given the notes it has.
+final _english = lookupAppLocalizations(const Locale('en'));
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -135,9 +133,11 @@ void main() {
   );
 
   test('schedules a future reminder against its slot', () {
-    final desired = desiredReminders([
-      note(id: 'n1', slot: 7, remindAt: '2026-09-04T18:00'),
-    ], now: now);
+    final desired = desiredReminders(
+      [note(id: 'n1', slot: 7, remindAt: '2026-09-04T18:00')],
+      now: now,
+      l10n: _english,
+    );
 
     expect(desired, hasLength(1));
     expect(desired.single.id, 7);
@@ -147,63 +147,123 @@ void main() {
   });
 
   test('heads a note with no title with its first line of text', () {
-    final desired = desiredReminders([
-      note(
-        id: 'n1',
-        slot: 1,
-        remindAt: '2026-09-04T18:00',
-        title: '  ',
-        content: '{"ops":[{"insert":"\\nBuy milk\\nand eggs\\n"}]}',
-      ),
-    ], now: now);
+    final desired = desiredReminders(
+      [
+        note(
+          id: 'n1',
+          slot: 1,
+          remindAt: '2026-09-04T18:00',
+          title: '  ',
+          content: '{"ops":[{"insert":"\\nBuy milk\\nand eggs\\n"}]}',
+        ),
+      ],
+      now: now,
+      l10n: _english,
+    );
 
     expect(desired.single.title, 'Buy milk');
-    expect(desired.single.body, 'Reminder');
+    expect(desired.single.body, 'and eggs');
+  });
+
+  test("puts a titled note's first line of text under the title", () {
+    final desired = desiredReminders(
+      [
+        note(
+          id: 'n1',
+          slot: 1,
+          remindAt: '2026-09-04T18:00',
+          content: '{"ops":[{"insert":"\\nBuy milk\\nand eggs\\n"}]}',
+        ),
+      ],
+      now: now,
+      l10n: _english,
+    );
+
+    expect(desired.single.title, 'Groceries');
+    expect(desired.single.body, 'Buy milk');
+  });
+
+  test('leaves the body empty when the heading is the only line', () {
+    final desired = desiredReminders(
+      [
+        note(
+          id: 'n1',
+          slot: 1,
+          remindAt: '2026-09-04T18:00',
+          title: '',
+          content: '{"ops":[{"insert":"Buy milk\\n"}]}',
+        ),
+      ],
+      now: now,
+      l10n: _english,
+    );
+
+    expect(desired.single.title, 'Buy milk');
+    expect(desired.single.body, isEmpty);
   });
 
   test('heads a note with no title or text with just "Reminder"', () {
-    final desired = desiredReminders([
-      note(id: 'n1', slot: 1, remindAt: '2026-09-04T18:00', title: ''),
-    ], now: now);
+    final desired = desiredReminders(
+      [note(id: 'n1', slot: 1, remindAt: '2026-09-04T18:00', title: '')],
+      now: now,
+      l10n: _english,
+    );
 
     expect(desired.single.title, 'Reminder');
     expect(desired.single.body, isEmpty);
   });
 
   test('drops a note with no reminder', () {
-    expect(desiredReminders([note(id: 'n1', slot: 1)], now: now), isEmpty);
+    expect(
+      desiredReminders(
+        [note(id: 'n1', slot: 1)],
+        now: now,
+        l10n: _english,
+      ),
+      isEmpty,
+    );
   });
 
   test('drops a one-off whose time has passed', () {
-    final desired = desiredReminders([
-      note(id: 'n1', slot: 1, remindAt: '2026-09-04T09:00'),
-    ], now: now);
+    final desired = desiredReminders(
+      [note(id: 'n1', slot: 1, remindAt: '2026-09-04T09:00')],
+      now: now,
+      l10n: _english,
+    );
     expect(desired, isEmpty);
   });
 
   test('keeps a repeating reminder anchored in the past', () {
-    final desired = desiredReminders([
-      note(
-        id: 'n1',
-        slot: 1,
-        remindAt: '2026-09-01T09:00',
-        recurrence: ReminderRecurrence.daily,
-      ),
-    ], now: now);
+    final desired = desiredReminders(
+      [
+        note(
+          id: 'n1',
+          slot: 1,
+          remindAt: '2026-09-01T09:00',
+          recurrence: ReminderRecurrence.daily,
+        ),
+      ],
+      now: now,
+      l10n: _english,
+    );
     expect(desired.single.at, DateTime(2026, 9, 5, 9));
     expect(desired.single.repeat, DateTimeComponents.time);
   });
 
   test('drops trashed and archived notes', () {
-    final desired = desiredReminders([
-      note(
-        id: 'n1',
-        slot: 1,
-        remindAt: '2026-09-04T18:00',
-        state: NoteState.trashed,
-      ),
-      note(id: 'n2', slot: 2, remindAt: '2026-09-04T18:00', isArchived: true),
-    ], now: now);
+    final desired = desiredReminders(
+      [
+        note(
+          id: 'n1',
+          slot: 1,
+          remindAt: '2026-09-04T18:00',
+          state: NoteState.trashed,
+        ),
+        note(id: 'n2', slot: 2, remindAt: '2026-09-04T18:00', isArchived: true),
+      ],
+      now: now,
+      l10n: _english,
+    );
     expect(desired, isEmpty);
   });
 
@@ -213,15 +273,19 @@ void main() {
       title: 'no slot',
       reminder: const NoteReminder(remindAt: '2026-09-04T18:00'),
     );
-    expect(desiredReminders([orphan], now: now), isEmpty);
+    expect(desiredReminders([orphan], now: now, l10n: _english), isEmpty);
   });
 
   test('orders soonest first', () {
-    final desired = desiredReminders([
-      note(id: 'late', slot: 1, remindAt: '2026-09-06T09:00'),
-      note(id: 'soon', slot: 2, remindAt: '2026-09-04T18:00'),
-      note(id: 'mid', slot: 3, remindAt: '2026-09-05T09:00'),
-    ], now: now);
+    final desired = desiredReminders(
+      [
+        note(id: 'late', slot: 1, remindAt: '2026-09-06T09:00'),
+        note(id: 'soon', slot: 2, remindAt: '2026-09-04T18:00'),
+        note(id: 'mid', slot: 3, remindAt: '2026-09-05T09:00'),
+      ],
+      now: now,
+      l10n: _english,
+    );
 
     expect(desired.map((item) => item.noteId), ['soon', 'mid', 'late']);
   });
@@ -232,7 +296,10 @@ void main() {
         note(id: 'n$i', slot: i + 1, remindAt: '2026-09-04T18:00'),
     ];
 
-    expect(desiredReminders(notes, now: now), hasLength(maxScheduledReminders));
+    expect(
+      desiredReminders(notes, now: now, l10n: _english),
+      hasLength(maxScheduledReminders),
+    );
   });
 
   test('maps every recurrence onto an OS repeat', () {
@@ -304,19 +371,19 @@ void main() {
       Stream<List<Note>> notes, {
       String? userId = 'user-1',
     }) async {
-      initialUserId = userId;
       final container = ProviderContainer(
         overrides: [
+          appBootstrapProvider.overrideWithValue(AppBootstrap(userId: userId)),
           notificationGatewayProvider.overrideWithValue(gateway),
           notesRepositoryProvider.overrideWithValue(StubNotesRepository(notes)),
           authControllerProvider.overrideWith(StubAuthController.new),
         ],
       );
       addTearDown(container.dispose);
-      addTearDown(() => initialUserId = null);
 
       await container.read(authControllerProvider.future);
-      container.read(reminderSchedulerProvider);
+      // Riverpod pauses a provider nobody listens to.
+      container.listen(reminderSchedulerProvider, (_, _) {});
       return container;
     }
 
@@ -411,5 +478,4 @@ void main() {
   });
 }
 
-/// How many steps the backoff has before it levels off.
 const int _retryDelayCount = 5;

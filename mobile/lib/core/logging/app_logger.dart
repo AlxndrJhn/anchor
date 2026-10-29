@@ -57,17 +57,12 @@ class LogEntry {
   }
 }
 
-/// Singleton logger with in-memory ring buffer + rolling on-disk file.
-///
-/// File layout under `<app docs>/logs/`:
-///   anchor.log     (current, rotated when ≥ [_maxFileBytes])
-///   anchor.log.1   (previous)
 class AppLogger {
   AppLogger._();
   static final AppLogger instance = AppLogger._();
 
-  static const int _bufferCapacity = 1000;
-  static const int _maxFileBytes = 1024 * 1024; // 1 MB
+  static const int bufferCapacity = 1000;
+  static const int _maxFileBytes = 1024 * 1024;
   static const String _logDirName = 'logs';
   static const String _currentFileName = 'anchor.log';
   static const String _previousFileName = 'anchor.log.1';
@@ -77,7 +72,7 @@ class AppLogger {
       StreamController<LogEntry>.broadcast();
 
   /// Minimum level echoed to the console; buffer and file always get
-  /// everything. Tests raise this to [LogLevel.warn] to keep output quiet.
+  /// everything.
   LogLevel consoleLevel = LogLevel.debug;
 
   File? _file;
@@ -100,7 +95,6 @@ class AppLogger {
         await _file!.create();
       }
     } catch (e) {
-      // If we can't open the file we still keep in-memory logging.
       if (kDebugMode) debugPrint('AppLogger: failed to init file: $e');
       _file = null;
     }
@@ -160,7 +154,7 @@ class AppLogger {
       stackTrace: stackTrace,
     );
     _buffer.addLast(entry);
-    while (_buffer.length > _bufferCapacity) {
+    while (_buffer.length > bufferCapacity) {
       _buffer.removeFirst();
     }
     if (!_controller.isClosed) {
@@ -197,11 +191,11 @@ class AppLogger {
       }
       final size = await current.length();
       if (size < _maxFileBytes) return;
-      final prev = File(p.join(current.parent.path, _previousFileName));
-      if (await prev.exists()) {
-        await prev.delete();
+      final previous = File(p.join(current.parent.path, _previousFileName));
+      if (await previous.exists()) {
+        await previous.delete();
       }
-      await current.rename(prev.path);
+      await current.rename(previous.path);
       await File(p.join(current.parent.path, _currentFileName)).create();
       _file = File(p.join(current.parent.path, _currentFileName));
     } catch (e) {
@@ -209,24 +203,22 @@ class AppLogger {
     }
   }
 
-  /// Returns the full log contents: previous file (if any) + current file +
-  /// any in-memory entries that may not yet be flushed.
   Future<String> dumpAll() async {
     await _writeChain;
     final buf = StringBuffer();
     final file = _file;
     if (file != null) {
-      final prev = File(p.join(file.parent.path, _previousFileName));
-      if (await prev.exists()) {
-        buf.write(await prev.readAsString());
+      final previous = File(p.join(file.parent.path, _previousFileName));
+      if (await previous.exists()) {
+        buf.write(await previous.readAsString());
       }
       if (await file.exists()) {
         buf.write(await file.readAsString());
       }
     } else {
-      for (final e in _buffer) {
+      for (final entry in _buffer) {
         buf
-          ..write(e.format())
+          ..write(entry.format())
           ..write('\n');
       }
     }
@@ -239,8 +231,8 @@ class AppLogger {
     if (file != null) {
       _writeChain = _writeChain.then((_) async {
         try {
-          final prev = File(p.join(file.parent.path, _previousFileName));
-          if (await prev.exists()) await prev.delete();
+          final previous = File(p.join(file.parent.path, _previousFileName));
+          if (await previous.exists()) await previous.delete();
           if (await file.exists()) {
             await file.writeAsString('', mode: FileMode.write, flush: true);
           }

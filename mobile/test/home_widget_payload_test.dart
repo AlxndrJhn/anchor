@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'package:anchor/core/home_widget/home_widget_payload.dart';
+import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
+import 'package:anchor/features/home_widget/data/home_widget_payload.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,8 +10,26 @@ Note _note({
   String title = 'Title',
   String? content,
   bool isPinned = false,
+  String? background,
 }) {
-  return Note(id: id, title: title, content: content, isPinned: isPinned);
+  return Note(
+    id: id,
+    title: title,
+    content: content,
+    isPinned: isPinned,
+    background: background,
+  );
+}
+
+Map<String, int> _colors(String palette) {
+  final light = AnchorColors.light.notes[palette]!;
+  final dark = AnchorColors.dark.notes[palette]!;
+  return {
+    'fill': light.bg.toARGB32(),
+    'edge': light.border.toARGB32(),
+    'fillDark': dark.bg.toARGB32(),
+    'edgeDark': dark.border.toARGB32(),
+  };
 }
 
 String _quill(String text) => jsonEncode({
@@ -24,33 +43,52 @@ Map<String, dynamic> _decode(String payload) =>
 
 void main() {
   group('buildHomeWidgetPayload', () {
-    test('serializes notes with id, title, snippet and pinned flag', () {
+    test(
+      'serializes notes with id, title, snippet, pinned flag and colors',
+      () {
+        final payload = buildHomeWidgetPayload([
+          _note(
+            id: 'a',
+            title: 'Groceries',
+            content: _quill('Milk'),
+            isPinned: true,
+          ),
+          _note(id: 'b', title: 'Ideas'),
+        ], loggedIn: true);
+
+        final decoded = _decode(payload);
+        expect(decoded['loggedIn'], isTrue);
+        final notes = decoded['notes'] as List;
+        expect(notes, hasLength(2));
+        expect(notes[0], {
+          'id': 'a',
+          'title': 'Groceries',
+          'snippet': 'Milk',
+          'pinned': true,
+          ..._colors('none'),
+        });
+        expect(notes[1], {
+          'id': 'b',
+          'title': 'Ideas',
+          'snippet': '',
+          'pinned': false,
+          ..._colors('none'),
+        });
+      },
+    );
+
+    test('colors a note by its background in both themes', () {
       final payload = buildHomeWidgetPayload([
-        _note(
-          id: 'a',
-          title: 'Groceries',
-          content: _quill('Milk'),
-          isPinned: true,
-        ),
-        _note(id: 'b', title: 'Ideas'),
+        _note(id: 'yellow', background: 'color_yellow'),
+        _note(id: 'grid', background: 'pattern_grid'),
+        _note(id: 'unknown', background: 'color_nope'),
       ], loggedIn: true);
 
-      final decoded = _decode(payload);
-      expect(decoded['loggedIn'], isTrue);
-      final notes = decoded['notes'] as List;
-      expect(notes, hasLength(2));
-      expect(notes[0], {
-        'id': 'a',
-        'title': 'Groceries',
-        'snippet': 'Milk',
-        'pinned': true,
-      });
-      expect(notes[1], {
-        'id': 'b',
-        'title': 'Ideas',
-        'snippet': '',
-        'pinned': false,
-      });
+      final notes = _decode(payload)['notes'] as List;
+      expect(notes[0], containsPair('fill', _colors('yellow')['fill']));
+      expect(notes[0], containsPair('edgeDark', _colors('yellow')['edgeDark']));
+      expect(notes[1], containsPair('fill', _colors('yellow')['fill']));
+      expect(notes[2], containsPair('fill', _colors('none')['fill']));
     });
 
     test('preserves the given note order', () {
@@ -97,15 +135,20 @@ void main() {
       );
     });
 
-    test('produces an empty snippet for null or invalid content', () {
+    test('produces an empty snippet for no content', () {
       final payload = buildHomeWidgetPayload([
-        _note(id: 'a', content: null),
-        _note(id: 'b', content: 'not json'),
+        _note(content: null),
       ], loggedIn: true);
 
-      final notes = _decode(payload)['notes'] as List;
-      expect(notes[0]['snippet'], '');
-      expect(notes[1]['snippet'], '');
+      expect((_decode(payload)['notes'] as List).single['snippet'], '');
+    });
+
+    test('reads content that is not JSON as plain text', () {
+      final payload = buildHomeWidgetPayload([
+        _note(content: 'not json'),
+      ], loggedIn: true);
+
+      expect((_decode(payload)['notes'] as List).single['snippet'], 'not json');
     });
 
     test('truncates long snippets', () {

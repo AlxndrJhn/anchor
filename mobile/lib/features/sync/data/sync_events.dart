@@ -6,16 +6,15 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/logging/app_logger.dart';
-import '../../../core/network/dio_provider.dart';
+import '../../../core/logging/log_tags.dart';
 import '../../../core/network/anchor_protocol.dart';
+import '../../../core/network/dio_provider.dart';
 import '../../../core/network/sync_requester.dart';
 import 'sync_api.dart';
 
 part 'sync_events.g.dart';
 
-const String _tag = 'SyncEvents';
-
-/// The server sends a keep-alive every 25s; a longer gap means it has died.
+/// The server sends a keep-alive every 25s.
 const Duration _heartbeatTimeout = Duration(seconds: 60);
 
 const Duration _minRetryDelay = Duration(seconds: 1);
@@ -28,8 +27,6 @@ SyncEvents syncEvents(Ref ref) {
   return events;
 }
 
-/// Holds a live connection open and starts a sync whenever the server says
-/// something changed. The message carries no data of its own.
 class SyncEvents {
   SyncEvents(this._dio);
 
@@ -77,13 +74,18 @@ class SyncEvents {
       );
 
       final body = response.data;
+      // A disconnect or a newer attempt owns the channel now.
+      if (!identical(token, _cancelToken) || !_connected) {
+        if (body != null) unawaited(body.stream.listen(null).cancel());
+        return;
+      }
       if (body == null) {
         _scheduleRetry();
         return;
       }
 
       _resetWatchdog();
-      AppLogger.instance.info(_tag, 'Push channel open');
+      AppLogger.instance.info(LogTags.syncEvents, 'Push channel open');
 
       // Messages sent while we were disconnected are lost.
       if (_wasOpen) scheduleAppSync(trigger: 'reconnect');
@@ -116,14 +118,17 @@ class SyncEvents {
       if (CancelToken.isCancel(error)) return;
       if (error.response?.statusCode == 404) {
         AppLogger.instance.warn(
-          _tag,
+          LogTags.syncEvents,
           'Server has no push channel; falling back to polling',
         );
         disconnect();
         return;
       }
       if (error.response?.statusCode == upgradeRequiredStatus) {
-        AppLogger.instance.warn(_tag, 'Server refused our sync protocol');
+        AppLogger.instance.warn(
+          LogTags.syncEvents,
+          'Server refused our sync protocol',
+        );
         disconnect();
         scheduleAppSync(trigger: 'protocol');
         return;
@@ -141,7 +146,7 @@ class SyncEvents {
     final delay = _nextDelay();
     if (error != null) {
       AppLogger.instance.warn(
-        _tag,
+        LogTags.syncEvents,
         'Push channel dropped, retrying in ${delay.inMilliseconds}ms',
         error: error,
       );
@@ -156,7 +161,6 @@ class SyncEvents {
     final backoff = _minRetryDelay.inMilliseconds * (1 << _attempt);
     final capped = min(backoff, _maxRetryDelay.inMilliseconds);
     _attempt = min(_attempt + 1, 6);
-    // ±25% so reconnecting devices don't all arrive at once.
     final jitter = 0.75 + _random.nextDouble() * 0.5;
     return Duration(milliseconds: (capped * jitter).round());
   }

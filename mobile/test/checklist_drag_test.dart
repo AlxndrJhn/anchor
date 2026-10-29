@@ -1,9 +1,13 @@
 import 'dart:convert';
 
-import 'package:anchor/core/widgets/editor/checklist_lines.dart';
-import 'package:anchor/core/widgets/rich_text_editor.dart';
+import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
+import 'package:anchor/features/notes/presentation/editor/checklist_fold.dart';
+import 'package:anchor/features/notes/presentation/editor/document_lines.dart';
+import 'package:anchor/features/notes/presentation/editor/editor_palette.dart';
+import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -31,10 +35,46 @@ String nestedChecklist(List<(String, String, int)> items) => jsonEncode({
   ],
 });
 
-Widget wrap(Widget child) {
+final _plain = AnchorColors.light.notes['none']!;
+
+final palette = EditorPalette(
+  muted: _plain.muted,
+  surface: _plain.surface,
+  border: _plain.border,
+  background: _plain.bg,
+  highlightFill: (name) => AnchorColors.light.highlights[name]!.fill,
+  highlightInk: (name) => AnchorColors.light.highlights[name]!.ink!,
+);
+
+Widget wrap(Widget Function(ScrollController scroll) builder) {
   return MaterialApp(
     localizationsDelegates: FlutterQuillLocalizations.localizationsDelegates,
-    home: Scaffold(body: child),
+    home: Scaffold(body: _Scroller(builder: builder)),
+  );
+}
+
+class _Scroller extends StatefulWidget {
+  const _Scroller({required this.builder});
+
+  final Widget Function(ScrollController scroll) builder;
+
+  @override
+  State<_Scroller> createState() => _ScrollerState();
+}
+
+class _ScrollerState extends State<_Scroller> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    controller: _scroll,
+    child: widget.builder(_scroll),
   );
 }
 
@@ -44,18 +84,24 @@ void main() {
     required String content,
     bool canEdit = true,
     bool sortChecklistItems = false,
+    bool isCheckedFolded = false,
+    Rect? visibleArea,
     VoidCallback? onChanged,
   }) async {
     final focusNode = FocusNode();
     addTearDown(focusNode.dispose);
     await tester.pumpWidget(
       wrap(
-        RichTextEditor(
+        (scroll) => RichTextEditor(
           initialContent: content,
           focusNode: focusNode,
           canEdit: canEdit,
           sortChecklistItems: sortChecklistItems,
+          isCheckedFolded: isCheckedFolded,
+          visibleArea: visibleArea == null ? null : () => visibleArea,
           onChanged: onChanged,
+          scrollController: scroll,
+          palette: palette,
         ),
       ),
     );
@@ -67,11 +113,8 @@ void main() {
   }
 
   Finder checkboxSlot(int index) => find
-      .ancestor(
-        of: find.byType(QuillCheckboxPoint).at(index),
-        matching: find.byType(GestureDetector),
-      )
-      .first;
+      .byWidgetPredicate((w) => w is Semantics && w.properties.checked != null)
+      .at(index);
 
   List<(String, String?)> lines(RichTextEditorState state) {
     final doc = state.controller.document;
@@ -98,7 +141,7 @@ void main() {
     ];
   }
 
-  Future<TestGesture> lift(WidgetTester tester, Finder slot) async {
+  Future<TestGesture> startDrag(WidgetTester tester, Finder slot) async {
     final gesture = await tester.startGesture(tester.getCenter(slot));
     await tester.pump(kLongPressTimeout + const Duration(milliseconds: 20));
     return gesture;
@@ -120,37 +163,42 @@ void main() {
     ('d', 'unchecked'),
   ];
 
-  testWidgets('long-press lifts the item and shows its snapshot', (
+  testWidgets('holding the box lifts the item, dims it and shows its ghost', (
     tester,
   ) async {
     final (state, _) = await pumpEditor(tester, content: checklist(abcd));
 
-    final gesture = await lift(tester, checkboxSlot(1));
-    expect(state.isDraggingChecklistItem, isTrue);
-    expect(state.dragFeedbackText, 'b');
+    final gesture = await tester.startGesture(
+      tester.getCenter(checkboxSlot(1)),
+    );
+    await tester.pump(
+      AnchorTokens.motionDurationLongPress - const Duration(milliseconds: 20),
+    );
+    expect(state.checklistDrag.isDragging, isFalse);
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(state.checklistDrag.isDragging, isTrue);
+    expect(state.checklistDrag.text, 'b');
+    expect(
+      state.checklistDrag.dragged.value,
+      const TextRange(start: 2, end: 3),
+    );
 
-    final ghostWidth = tester
-        .getSize(find.byKey(const Key('checklist-drag-ghost')))
-        .width;
-    final editorWidth = tester.getSize(find.byType(RichTextEditor)).width;
-    expect(ghostWidth, lessThan(editorWidth / 2));
-
-    final dimRect = tester.getRect(find.byKey(const Key('checklist-drag-dim')));
-    // The ghost chip shows "b" too; measure the row inside the editor.
-    final bTop = tester
-        .getTopLeft(
-          find.descendant(
-            of: find.byType(QuillEditor),
-            matching: find.text('b', findRichText: true),
-          ),
-        )
-        .dy;
-    expect(dimRect.top, lessThanOrEqualTo(bTop));
-    expect(dimRect.bottom, greaterThan(bTop));
+    final ghost = tester.getRect(find.byKey(const Key('checklist-drag-ghost')));
+    final finger = tester.getCenter(checkboxSlot(1));
+    expect(ghost.height, AnchorTokens.sizeControlSmall);
+    expect(ghost.left, finger.dx - 24 < 8 ? 8 : finger.dx - 24);
+    expect(ghost.top, finger.dy - 56);
+    final bText = find.descendant(
+      of: find.byType(QuillEditor),
+      matching: find.text('b', findRichText: true),
+    );
+    expect(tester.widget<RichText>(bText).text.toPlainText(), 'b');
 
     await gesture.up();
     await tester.pump();
-    expect(state.isDraggingChecklistItem, isFalse);
+    expect(state.checklistDrag.isDragging, isFalse);
+    expect(state.checklistDrag.dragged.value, isNull);
+    expect(find.byKey(const Key('checklist-drag-ghost')), findsNothing);
   });
 
   testWidgets('dragging an item below a later line reorders the document', (
@@ -158,13 +206,13 @@ void main() {
   ) async {
     final (state, _) = await pumpEditor(tester, content: checklist(abcd));
 
-    final gesture = await lift(tester, checkboxSlot(0));
+    final gesture = await startDrag(tester, checkboxSlot(0));
     await dragTo(
       tester,
       gesture,
       tester.getCenter(checkboxSlot(2)) + const Offset(0, 5),
     );
-    expect(state.dragIndicatorTop, isNotNull);
+    expect(state.checklistDrag.indicatorY, isNotNull);
     expect(find.byKey(const Key('checklist-drag-indicator')), findsOneWidget);
     await gesture.up();
     await tester.pump();
@@ -175,7 +223,6 @@ void main() {
       ('a', 'unchecked'),
       ('d', 'unchecked'),
     ]);
-    // The screen must show the new order, not just the document.
     final aTop = tester.getTopLeft(find.text('a', findRichText: true)).dy;
     final cTop = tester.getTopLeft(find.text('c', findRichText: true)).dy;
     expect(aTop, greaterThan(cTop));
@@ -186,7 +233,7 @@ void main() {
   ) async {
     final (state, _) = await pumpEditor(tester, content: checklist(abcd));
 
-    final gesture = await lift(tester, checkboxSlot(3));
+    final gesture = await startDrag(tester, checkboxSlot(3));
     await dragTo(
       tester,
       gesture,
@@ -213,8 +260,8 @@ void main() {
       onChanged: () => changes++,
     );
 
-    final gesture = await lift(tester, checkboxSlot(1));
-    expect(state.dragIndicatorTop, isNull);
+    final gesture = await startDrag(tester, checkboxSlot(1));
+    expect(state.checklistDrag.indicatorY, isNull);
     expect(find.byKey(const Key('checklist-drag-indicator')), findsNothing);
     await gesture.up();
     await tester.pump();
@@ -236,7 +283,7 @@ void main() {
     );
     await tester.pump();
 
-    final gesture = await lift(tester, checkboxSlot(0));
+    final gesture = await startDrag(tester, checkboxSlot(0));
     await dragTo(
       tester,
       gesture,
@@ -267,7 +314,7 @@ void main() {
         sortChecklistItems: true,
       );
 
-      final gesture = await lift(tester, checkboxSlot(0));
+      final gesture = await startDrag(tester, checkboxSlot(0));
       await dragTo(
         tester,
         gesture,
@@ -299,7 +346,7 @@ void main() {
         sortChecklistItems: true,
       );
 
-      final gesture = await lift(tester, checkboxSlot(3));
+      final gesture = await startDrag(tester, checkboxSlot(3));
       await dragTo(
         tester,
         gesture,
@@ -330,7 +377,7 @@ void main() {
         sortChecklistItems: true,
       );
 
-      final gesture = await lift(tester, checkboxSlot(0));
+      final gesture = await startDrag(tester, checkboxSlot(0));
       await dragTo(
         tester,
         gesture,
@@ -362,20 +409,14 @@ void main() {
       content: nestedChecklist(nestedAbcd),
     );
 
-    final gesture = await lift(tester, checkboxSlot(0));
-    expect(state.dragFeedbackChildCount, 2);
+    final gesture = await startDrag(tester, checkboxSlot(0));
+    expect(state.checklistDrag.childCount, 2);
 
-    // The dim scrim covers the whole block, not just the parent line.
-    final dimRect = tester.getRect(find.byKey(const Key('checklist-drag-dim')));
-    final a2Top = tester
-        .getTopLeft(
-          find.descendant(
-            of: find.byType(QuillEditor),
-            matching: find.text('a2', findRichText: true),
-          ),
-        )
-        .dy;
-    expect(dimRect.bottom, greaterThan(a2Top));
+    final text = state.controller.document.toPlainText();
+    expect(
+      state.checklistDrag.dragged.value,
+      TextRange(start: 0, end: text.indexOf('b') - 1),
+    );
 
     await dragTo(
       tester,
@@ -401,20 +442,18 @@ void main() {
       content: nestedChecklist(nestedAbcd),
     );
 
-    final gesture = await lift(tester, checkboxSlot(1));
-    expect(state.dragFeedbackChildCount, 0);
+    final gesture = await startDrag(tester, checkboxSlot(1));
+    expect(state.checklistDrag.childCount, 0);
     await dragTo(
       tester,
       gesture,
       tester.getCenter(checkboxSlot(2)) + const Offset(0, 5),
     );
 
-    // Checkbox column of an indent-1 line: 36 slot + 24 nesting - 27 inset.
-    final editorLeft = tester.getTopLeft(find.byType(RichTextEditor)).dx;
-    final indicatorLeft = tester
-        .getTopLeft(find.byKey(const Key('checklist-drag-indicator')))
-        .dx;
-    expect(indicatorLeft, editorLeft + 36 + 24 - 27);
+    expect(
+      state.checklistDrag.indicatorLeft,
+      AnchorTokens.space32 + AnchorTokens.sizeListIndent,
+    );
 
     await gesture.up();
     await tester.pump();
@@ -430,21 +469,19 @@ void main() {
   testWidgets('dragging sideways re-indents the item in place', (tester) async {
     final (state, _) = await pumpEditor(tester, content: checklist(abcd));
 
-    final gesture = await lift(tester, checkboxSlot(1));
-    expect(state.dragIndicatorTop, isNull);
+    final gesture = await startDrag(tester, checkboxSlot(1));
+    expect(state.checklistDrag.indicatorY, isNull);
     await dragTo(
       tester,
       gesture,
       tester.getCenter(checkboxSlot(1)) + const Offset(30, 0),
     );
 
-    // The indicator previews the new level: the indent-1 checkbox column.
-    expect(state.dragIndicatorTop, isNotNull);
-    final editorLeft = tester.getTopLeft(find.byType(RichTextEditor)).dx;
-    final indicatorLeft = tester
-        .getTopLeft(find.byKey(const Key('checklist-drag-indicator')))
-        .dx;
-    expect(indicatorLeft, editorLeft + 36 + 24 - 27);
+    expect(state.checklistDrag.indicatorY, isNotNull);
+    expect(
+      state.checklistDrag.indicatorLeft,
+      AnchorTokens.space32 + AnchorTokens.sizeListIndent,
+    );
 
     await gesture.up();
     await tester.pump();
@@ -465,7 +502,7 @@ void main() {
       content: nestedChecklist(nestedAbcd),
     );
 
-    final gesture = await lift(tester, checkboxSlot(3));
+    final gesture = await startDrag(tester, checkboxSlot(3));
     final start = tester.getCenter(checkboxSlot(3));
     // The seam between a and a1, shifted one indent step to the right.
     final gapY = tester.getTopLeft(checkboxSlot(1)).dy;
@@ -493,8 +530,8 @@ void main() {
       ]),
     );
 
-    final gesture = await lift(tester, checkboxSlot(0));
-    expect(state.isDraggingChecklistItem, isFalse);
+    final gesture = await startDrag(tester, checkboxSlot(0));
+    expect(state.checklistDrag.isDragging, isFalse);
     await gesture.up();
     await tester.pump();
     expect(nestedLines(state).map((l) => l.$1), ['p', 'c1', 'c2']);
@@ -507,8 +544,8 @@ void main() {
         '{"insert":"outro\\n"}]}';
     final (state, _) = await pumpEditor(tester, content: loneItem);
 
-    final gesture = await lift(tester, checkboxSlot(0));
-    expect(state.isDraggingChecklistItem, isFalse);
+    final gesture = await startDrag(tester, checkboxSlot(0));
+    expect(state.checklistDrag.isDragging, isFalse);
     await gesture.up();
     await tester.pump();
 
@@ -522,8 +559,8 @@ void main() {
       canEdit: false,
     );
 
-    final gesture = await lift(tester, checkboxSlot(0));
-    expect(state.isDraggingChecklistItem, isFalse);
+    final gesture = await startDrag(tester, checkboxSlot(0));
+    expect(state.checklistDrag.isDragging, isFalse);
     await gesture.up();
     await tester.pump();
     expect(lines(state), abcd);
@@ -534,7 +571,7 @@ void main() {
   ) async {
     final (state, _) = await pumpEditor(tester, content: checklist(abcd));
 
-    final gesture = await lift(tester, checkboxSlot(0));
+    final gesture = await startDrag(tester, checkboxSlot(0));
     await dragTo(
       tester,
       gesture,
@@ -552,7 +589,7 @@ void main() {
   testWidgets('checkbox taps still toggle after a drag', (tester) async {
     final (state, _) = await pumpEditor(tester, content: checklist(abcd));
 
-    final gesture = await lift(tester, checkboxSlot(0));
+    final gesture = await startDrag(tester, checkboxSlot(0));
     await dragTo(
       tester,
       gesture,
@@ -566,5 +603,210 @@ void main() {
     expect(lines(state).first, ('b', 'checked'));
     // Drain the tap recognizer's double-tap timer.
     await tester.pump(const Duration(milliseconds: 400));
+  });
+
+  List<(String, String)> numbered(int count) => [
+    for (var i = 0; i < count; i++) ('item $i', 'unchecked'),
+  ];
+
+  ScrollController scrollOf(WidgetTester tester) => tester
+      .widget<RichTextEditor>(find.byType(RichTextEditor))
+      .scrollController;
+
+  testWidgets('near the bottom of what you can see, the note scrolls down', (
+    tester,
+  ) async {
+    await pumpEditor(tester, content: checklist(numbered(60)));
+    final scroll = scrollOf(tester);
+    final view = tester.view.physicalSize / tester.view.devicePixelRatio;
+
+    final gesture = await startDrag(tester, checkboxSlot(2));
+    // 56 above the bottom is the edge; 16 past it scrolls 4 a frame.
+    await gesture.moveTo(Offset(40, view.height - 56 + 16));
+    await tester.pump();
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(microseconds: 16667));
+    }
+    expect(scroll.offset, moreOrLessEquals(40, epsilon: 5));
+
+    // Never faster than 14 a frame.
+    await gesture.moveTo(Offset(40, view.height + 400));
+    await tester.pump();
+    final from = scroll.offset;
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(microseconds: 16667));
+    }
+    expect(scroll.offset - from, moreOrLessEquals(140, epsilon: 15));
+
+    await gesture.moveTo(const Offset(40, 300));
+    await tester.pump();
+    final still = scroll.offset;
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(scroll.offset, still);
+    await gesture.up();
+    await tester.pump();
+  });
+
+  testWidgets('the edges follow the bars and the keyboard', (tester) async {
+    const area = Rect.fromLTRB(0, 100, 800, 400);
+    await pumpEditor(
+      tester,
+      content: checklist(numbered(60)),
+      visibleArea: area,
+    );
+    final scroll = scrollOf(tester);
+    scroll.jumpTo(200);
+    await tester.pump();
+
+    final gesture = await startDrag(tester, checkboxSlot(15));
+    await gesture.moveTo(const Offset(40, 300));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(scroll.offset, 200);
+
+    // 40 under the area's top is the edge.
+    await gesture.moveTo(const Offset(40, 100 + 40 - 20));
+    await tester.pump();
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(microseconds: 16667));
+    }
+    expect(scroll.offset, moreOrLessEquals(200 - 50, epsilon: 6));
+
+    await gesture.moveTo(const Offset(40, 400 - 56 + 20));
+    await tester.pump();
+    final from = scroll.offset;
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(microseconds: 16667));
+    }
+    expect(scroll.offset - from, moreOrLessEquals(50, epsilon: 6));
+    await gesture.up();
+    await tester.pump();
+  });
+
+  testWidgets('folded items are no place to drop: the item lands above the '
+      'row', (tester) async {
+    final (state, _) = await pumpEditor(
+      tester,
+      content: checklist(const [
+        ('a', 'unchecked'),
+        ('b', 'unchecked'),
+        ('c', 'checked'),
+        ('d', 'checked'),
+      ]),
+      sortChecklistItems: true,
+      isCheckedFolded: true,
+    );
+
+    final gesture = await startDrag(tester, checkboxSlot(0));
+    final row = tester.getRect(find.byType(CheckedFoldRow));
+    await dragTo(tester, gesture, Offset(40, row.bottom + 30));
+    expect(
+      state.checklistDrag.indicatorY,
+      moreOrLessEquals(
+        tester.getTopLeft(find.byType(CheckedFoldRow)).dy -
+            tester.getTopLeft(find.byType(RichTextEditor)).dy,
+        epsilon: 0.5,
+      ),
+    );
+    await gesture.up();
+    await tester.pump();
+
+    expect(lines(state), [
+      ('b', 'unchecked'),
+      ('a', 'unchecked'),
+      ('c', 'checked'),
+      ('d', 'checked'),
+    ]);
+  });
+
+  testWidgets('the ghost is a small chip up and left of the finger, kept off '
+      'the sides', (tester) async {
+    await pumpEditor(
+      tester,
+      content: nestedChecklist(const [
+        ('a', 'unchecked', 0),
+        (
+          'a long item that does not fit in the small chip at all',
+          'checked',
+          0,
+        ),
+        ('child', 'unchecked', 1),
+        ('b', 'unchecked', 0),
+      ]),
+    );
+    final view = tester.view.physicalSize / tester.view.devicePixelRatio;
+
+    final gesture = await startDrag(tester, checkboxSlot(1));
+    final ghost = find.byKey(const Key('checklist-drag-ghost'));
+    expect(find.text('+1'), findsOneWidget);
+    expect(tester.getSize(ghost).height, AnchorTokens.sizeControlSmall);
+    expect(tester.getSize(ghost).width, 240);
+    final text = tester.widget<Text>(
+      find.descendant(of: ghost, matching: find.textContaining('a long')),
+    );
+    expect(text.style?.decoration, isNot(TextDecoration.lineThrough));
+    expect(text.style?.fontSize, 14);
+
+    await gesture.moveTo(const Offset(4, 300));
+    await tester.pump();
+    expect(tester.getTopLeft(ghost), const Offset(8, 300 - 56));
+
+    await gesture.moveTo(Offset(view.width - 4, 300));
+    await tester.pump();
+    expect(tester.getTopRight(ghost).dx, view.width - 8);
+    await gesture.up();
+    await tester.pump();
+  });
+
+  testWidgets('the drop line starts at the text of the new indent and ends at '
+      'the edge', (tester) async {
+    await pumpEditor(tester, content: checklist(abcd));
+    final editor = tester.getRect(find.byType(RichTextEditor));
+
+    final gesture = await startDrag(tester, checkboxSlot(0));
+    await dragTo(
+      tester,
+      gesture,
+      tester.getCenter(checkboxSlot(2)) + const Offset(30, 5),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    final line = tester.getRect(
+      find.byKey(const Key('checklist-drag-indicator')),
+    );
+    expect(
+      line.left + 4,
+      editor.left + AnchorTokens.space32 + AnchorTokens.sizeListIndent,
+    );
+    expect(line.right, editor.right);
+    expect(line.height, 8);
+    await gesture.up();
+    await tester.pump();
+  });
+
+  testWidgets('Escape puts a dragged item back', (tester) async {
+    final (state, _) = await pumpEditor(tester, content: checklist(abcd));
+
+    final gesture = await startDrag(tester, checkboxSlot(0));
+    await dragTo(
+      tester,
+      gesture,
+      tester.getCenter(checkboxSlot(3)) + const Offset(0, 5),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    expect(state.checklistDrag.isDragging, isFalse);
+    await gesture.up();
+    await tester.pump();
+
+    expect(lines(state), abcd);
+  });
+
+  testWidgets('the box is named by its item and says how to drag it', (
+    tester,
+  ) async {
+    await pumpEditor(tester, content: checklist(abcd));
+    final box = tester.getSemantics(checkboxSlot(1));
+    expect(box.label, 'b');
+    expect(box.hint, 'Drag to reorder');
   });
 }

@@ -1,53 +1,41 @@
+import 'package:anchor/core/theme/app_theme.dart';
+import 'package:anchor/core/theme/tokens/anchor_tokens.dart';
+import 'package:anchor/features/notes/presentation/widgets/note_chips.dart';
+import 'package:anchor/features/notes/presentation/widgets/note_surface.dart';
+import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:anchor/features/tags/domain/tag.dart';
-import 'package:anchor/features/tags/presentation/widgets/tag_chip.dart';
-
-const _longTag = Tag(
-  id: 't1',
-  name: 'a-very-long-tag-name-that-will-not-fit',
-  color: '#64B5F6',
-);
-
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 void main() {
-  testWidgets('a long name is ellipsized inside a narrow parent', (
+  testWidgets('the remove button sits snug in the chip and is easy to hit', (
     tester,
   ) async {
+    var removed = 0;
     await tester.pumpWidget(
-      _wrap(
-        SizedBox(
-          width: 120,
-          child: Wrap(children: const [TagChip(tag: _longTag)]),
-        ),
-      ),
-    );
-
-    expect(tester.takeException(), isNull);
-
-    final text = tester.widget<Text>(find.text(_longTag.name));
-    expect(text.overflow, TextOverflow.ellipsis);
-    expect(tester.getSize(find.byType(TagChip)).width, lessThanOrEqualTo(120));
-  });
-
-  testWidgets('a long name keeps its full width when scrolled horizontally', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _wrap(
-        SizedBox(
-          width: 120,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: const [TagChip(tag: _longTag)],
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: Builder(
+              builder: (context) => TagChip(
+                tag: const Tag(id: 't1', name: 'family'),
+                appearance: NoteAppearance.of(context, null),
+                onRemove: () => removed++,
+              ),
+            ),
           ),
         ),
       ),
     );
 
-    expect(tester.takeException(), isNull);
-    expect(tester.getSize(find.byType(TagChip)).width, greaterThan(120));
+    final chip = tester.getRect(find.byType(TagChip));
+    final x = tester.getRect(find.byIcon(LucideIcons.x));
+    expect(chip.right - x.right, 8, reason: 'as the guide’s .pg-ed .chip .x');
+    expect(chip.height, AnchorTokens.sizeControlSmall);
+
+    // Above and left of the icon, still inside the chip.
+    await tester.tapAt(Offset(x.left - 6, chip.top + 2));
+    expect(removed, 1);
   });
 }

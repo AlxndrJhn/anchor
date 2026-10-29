@@ -6,22 +6,6 @@ part of 'note_revision.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_NoteRevisionAuthor _$NoteRevisionAuthorFromJson(Map<String, dynamic> json) =>
-    _NoteRevisionAuthor(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      profileImage: json['profileImage'] as String?,
-    );
-
-Map<String, dynamic> _$NoteRevisionAuthorToJson(_NoteRevisionAuthor instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'name': instance.name,
-      'email': instance.email,
-      'profileImage': instance.profileImage,
-    };
-
 _NoteRevision _$NoteRevisionFromJson(Map<String, dynamic> json) =>
     _NoteRevision(
       id: json['id'] as String,
@@ -36,7 +20,7 @@ _NoteRevision _$NoteRevisionFromJson(Map<String, dynamic> json) =>
       createdAt: DateTime.parse(json['createdAt'] as String),
       author: json['author'] == null
           ? null
-          : NoteRevisionAuthor.fromJson(json['author'] as Map<String, dynamic>),
+          : UserSummary.fromJson(json['author'] as Map<String, dynamic>),
       content: json['content'] as String?,
     );
 

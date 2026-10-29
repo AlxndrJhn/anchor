@@ -266,10 +266,10 @@
   --hl-purple: #eccfff;
 }
 .dark [data-note] {
-  --note: #1c1e26;
-  --note-surface: #262a36;
-  --note-border: #3a3f4b;
-  --note-pattern: #1c1e26;
+  --note: #111214;
+  --note-surface: #1c1d21;
+  --note-border: #34353a;
+  --note-pattern: #111214;
   --note-muted: #9ca8b8;
   --note-image: none;
   --note-image-size: auto;

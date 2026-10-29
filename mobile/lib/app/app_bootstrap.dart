@@ -1,0 +1,33 @@
+import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../core/theme/display_density.dart';
+import '../features/settings/domain/editor_preferences.dart';
+import 'router/app_routes.dart';
+
+part 'app_bootstrap.g.dart';
+
+class AppBootstrap {
+  const AppBootstrap({
+    this.themeMode = ThemeMode.system,
+    this.displayDensity = DisplayDensity.standard,
+    this.editorPreferences = const EditorPreferences(),
+    this.foldedChecklistNotes = const [],
+    this.openArchivedTags = const [],
+    this.userId,
+    this.initialRoute = AppRoutes.home,
+  });
+
+  final ThemeMode themeMode;
+  final DisplayDensity displayDensity;
+  final EditorPreferences editorPreferences;
+
+  final List<String> foldedChecklistNotes;
+  final List<String> openArchivedTags;
+  final String? userId;
+  final String initialRoute;
+}
+
+/// Overridden in `main` with what `initializeApp` read.
+@Riverpod(keepAlive: true)
+AppBootstrap appBootstrap(Ref ref) => const AppBootstrap();
