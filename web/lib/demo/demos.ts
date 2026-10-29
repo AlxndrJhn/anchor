@@ -9,6 +9,7 @@ import {
   pressKey,
   type Step,
   selectInEditor,
+  type Target,
   typeCharacter,
 } from "./runner";
 import { pictureBlob, type Seed } from "./seed";
@@ -128,6 +129,26 @@ const fromMoreMenu = (item: string, say?: string): Step[] => [
   { click: "More", say },
   { click: { css: "[role=menuitem]", text: item } },
 ];
+
+/** Right-clicks a control, as a mouse's other button does. */
+const rightClick = (target: Target, say?: string): Step => ({
+  say,
+  run: async (play) => {
+    const element = await play.find(target);
+    await play.moveTo(element);
+    const { x, y } = center(element);
+    element.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+        clientX: x,
+        clientY: y,
+        view: window,
+      }),
+    );
+  },
+});
 
 /** Opens a note from the notes list by its title. */
 const openNote = (title: string, say?: string): Step => ({
@@ -619,7 +640,7 @@ export const demos: Demo[] = [
     slug: "pictures-in-text",
     title: "Pictures in the text",
     summary:
-      "Pictures placed in the text on Android show at their size, with their captions.",
+      "Put pictures in the text; resize them by a corner, right-click to crop, mirror or caption them.",
     seed: withNotes({
       id: "n-garden",
       title: "Balcony garden",
@@ -627,7 +648,7 @@ export const demos: Demo[] = [
       lines: [
         "The tomatoes finally got some sun this week.",
         { picture: "p-tomatoes", width: 0.4, caption: "First ripe ones" },
-        "The basil, bigger:",
+        "The basil:",
         { picture: "p-basil", width: 0.7 },
         "Water every other evening.",
       ],
@@ -641,38 +662,80 @@ export const demos: Demo[] = [
       openNote("Balcony garden", "Open a note with pictures in its text."),
       { wait: 800 },
       {
-        hover: { css: ".ql-editor .note-image img", nth: 1 },
-        say: "Each one keeps the size and caption it was given on Android.",
+        hover: { css: ".ql-editor .note-image img" },
+        say: "Hover a picture: drag the dot at its corner to resize it.",
       },
-      { wait: 1200 },
       {
-        say: "Double-click one to see it full size.",
         run: async (play) => {
-          const picture = await play.find({
-            css: ".ql-editor .note-image img",
-          });
-          await play.moveTo(picture);
-          clickElement(picture);
-          const { x, y } = center(picture);
-          picture.dispatchEvent(
-            new MouseEvent("dblclick", {
-              bubbles: true,
-              cancelable: true,
-              clientX: x,
-              clientY: y,
-              view: window,
+          const grip = await play.find({ css: ".nit-grip" });
+          const start = center(grip);
+          await play.moveTo(grip);
+          const pointer = {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+            view: window,
+          };
+          play.cursor(start.x, start.y, true);
+          grip.dispatchEvent(
+            new PointerEvent("pointerdown", {
+              ...pointer,
+              button: 0,
+              buttons: 1,
+              clientX: start.x,
+              clientY: start.y,
             }),
           );
+          let x = start.x;
+          for (let i = 1; i <= 24; i++) {
+            x = start.x + i * 8;
+            play.cursor(x, start.y, true);
+            grip.dispatchEvent(
+              new PointerEvent("pointermove", {
+                ...pointer,
+                buttons: 1,
+                clientX: x,
+                clientY: start.y,
+              }),
+            );
+            await play.pause(40);
+          }
+          grip.dispatchEvent(
+            new PointerEvent("pointerup", {
+              ...pointer,
+              clientX: x,
+              clientY: start.y,
+            }),
+          );
+          play.cursor(x, start.y, false);
         },
       },
-      { wait: 1500 },
-      { click: "Close" },
+      { wait: 600 },
+      rightClick(
+        { css: ".ql-editor .note-image img", nth: 1 },
+        "Right-click one (or hold it) for more.",
+      ),
+      { wait: 800 },
+      { click: { css: "[role=menuitem]", text: "Mirror horizontally" } },
+      { say: "Mirrored, cropped or replaced, it keeps its size and caption." },
+      rightClick({ css: ".ql-editor .note-image img", nth: 1 }),
+      { click: { css: "[role=menuitem]", text: "Add caption…" } },
       {
-        say: "On Android, the camera and pictures buttons put them in the text; drag a corner to resize.",
+        type: "Basil, from the other side",
+        into: { css: "[role=dialog] input" },
+        say: "Give it a caption…",
+      },
+      { click: { css: "[role=dialog] button", text: "Save" } },
+      { wait: 1200 },
+      {
+        say: "…and the picture button left of the text styles puts new ones at the caret.",
       },
     ],
     outro:
-      "Try it: double-click a picture. On Android, hold one to crop, mirror or caption it.",
+      "Try it: right-click a picture to crop it, or put one in the text with the picture button.",
   },
   {
     slug: "image-text",

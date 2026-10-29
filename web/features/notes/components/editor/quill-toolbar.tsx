@@ -6,6 +6,7 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Image as ImageIcon,
   ImagePlus,
   IndentDecrease,
   IndentIncrease,
@@ -97,6 +98,8 @@ interface QuillToolbarProps {
   onOpenLinkDialog: () => void;
   onAddAttachment?: () => void;
   onRecordAudio?: () => void;
+  /** Puts pictures in the text at the caret. */
+  onPictureInText?: () => void;
 }
 
 export function QuillToolbar({
@@ -106,6 +109,7 @@ export function QuillToolbar({
   onOpenLinkDialog,
   onAddAttachment,
   onRecordAudio,
+  onPictureInText,
 }: QuillToolbarProps) {
   const [format, setFormat] = useState<Record<string, unknown>>({});
   const [canUndo, setCanUndo] = useState(false);
@@ -251,6 +255,17 @@ export function QuillToolbar({
         { disabled: !canRedo },
       )}
       {divider}
+      {/* Left of the text styles, as on Android. */}
+      {onPictureInText && (
+        <>
+          {toolButton(
+            "Put a picture in the text",
+            <ImageIcon />,
+            onPictureInText,
+          )}
+          {divider}
+        </>
+      )}
       {toolButton(
         `Bold (${modKey}B)`,
         <Bold />,
