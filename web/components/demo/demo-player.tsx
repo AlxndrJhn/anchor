@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Button, IconButton } from "@/components/ui/button";
 import { demoBySlug } from "@/lib/demo/demos";
@@ -19,6 +19,7 @@ import {
   caretToEnd,
   center,
   clickElement,
+  type Fallback,
   findTarget,
   hoverElement,
   leaveElement,
@@ -26,6 +27,7 @@ import {
   pressKey,
   type Step,
   Stopped,
+  type Target,
   typeCharacter,
 } from "@/lib/demo/runner";
 import { startDemo, useDemo } from "@/lib/demo/store";
@@ -56,6 +58,8 @@ export function DemoPlayer() {
   } | null>(null);
   const [isHidden, setIsHidden] = React.useState(false);
   const [isHurrying, setIsHurrying] = React.useState(false);
+  const pathname = usePathname();
+  const [isNudgeClosed, setIsNudgeClosed] = React.useState(false);
   // The panel moves to the top of the window while what the pointer goes
   // to is behind it at the bottom, and back down when that is behind it.
   const panel = React.useRef<HTMLElement>(null);
@@ -164,22 +168,62 @@ export function DemoPlayer() {
       setCursor({ ...position, pressed: false });
     };
 
-    const perform = async (step: Step) => {
+    /** How long to look for a control that may not be in this layout. */
+    const GLANCE_MS = 900;
+    /**
+     * The step's control, after opening what hides it on a phone; null when
+     * the step is to be skipped or replaced (see Fallback).
+     */
+    const reach = async (
+      target: Target,
+      step: Fallback,
+    ): Promise<HTMLElement | null> => {
+      if (!step.ifShown && !step.reveal?.length && !step.orElse)
+        return play.find(target);
+      const glance = async () => {
+        try {
+          return await play.find(target, hurry ? HURRY_MS : GLANCE_MS);
+        } catch (error) {
+          if (error instanceof Stopped) throw error;
+          return null;
+        }
+      };
+      let element = await glance();
+      if (!element && step.reveal?.length) {
+        for (const opener of step.reveal) {
+          const control = await play.find(opener);
+          await play.moveTo(control);
+          await press();
+          clickElement(control);
+          await pause(500);
+        }
+        element = step.orElse ? await glance() : await play.find(target);
+      }
+      if (element) return element;
+      if (step.orElse) await perform(step.orElse);
+      else if (!step.ifShown) return play.find(target);
+      return null;
+    };
+
+    const perform = async (step: Step): Promise<void> => {
       if ("say" in step && step.say) play.say(step.say);
       if ("click" in step) {
-        const element = await play.find(step.click);
+        const element = await reach(step.click, step);
+        if (!element) return;
         await play.moveTo(element);
         await press();
         clickElement(element);
         await pause(700);
       } else if ("hover" in step) {
-        const element = await play.find(step.hover);
+        const element = await reach(step.hover, step);
+        if (!element) return;
         await play.moveTo(element);
         hoverElement(element);
         await pause(600);
       } else if ("type" in step) {
         if (step.into) {
-          const element = await play.find(step.into);
+          const element = await reach(step.into, step);
+          if (!element) return;
           await play.moveTo(element);
           await press();
           clickElement(element);
@@ -313,6 +357,33 @@ export function DemoPlayer() {
           )}
         </div>
       )}
+      {status === "idle" &&
+        !isNudgeClosed &&
+        !pathname.startsWith("/settings") && (
+          // Above a phone's New note button.
+          <section
+            aria-label="Feature demos"
+            className="pointer-events-auto fixed bottom-4 left-1/2 z-[2147483001] flex w-[min(560px,calc(100vw-32px))] max-md:bottom-24 -translate-x-1/2 items-center gap-3 rounded-xl bg-popover p-3 pl-4 text-popover-foreground shadow-[0_0_0_1px_var(--border),var(--sh-lg,0_12px_32px_rgb(0_0_0/.25))] animate-pop-up"
+          >
+            <p className="m-0 min-w-0 flex-1 text-ui leading-snug">
+              Short demos show each feature, then it’s your turn.
+            </p>
+            <Button size="sm" asChild>
+              <Link href="/settings#set-demos">
+                <Play />
+                Open demo list
+              </Link>
+            </Button>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setIsNudgeClosed(true)}
+              className="grid size-7 flex-none cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-foreground/6"
+            >
+              <X className="size-4" />
+            </button>
+          </section>
+        )}
       {demo && status !== "idle" && !isHidden && (
         <section
           ref={panel}
