@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   BellRing,
@@ -21,19 +22,36 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { toast } from "@/components/ui/toast";
 import { Tip } from "@/components/ui/tooltip";
 import { usePreferencesStore } from "@/features/preferences";
 import { type Tag, TagChip, TagPicker } from "@/features/tags";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { useFlip } from "@/lib/use-flip";
 import { cn } from "@/lib/utils";
+import {
+  deleteAttachment,
+  fetchAttachmentBlob,
+  uploadAttachment,
+} from "../../api";
+import { MAX_ATTACHMENT_SIZE } from "../../constants";
 import { stampFor } from "../../date-stamp";
+import { inlineImageIds, primeInlineImage } from "../../inline-images";
 import { deltaToFullPlainText, isContentBlank } from "../../quill";
 import { isReminderPast, reminderLabel } from "../../reminder";
-import type { NoteReminder, ReminderRecurrence } from "../../types";
-import { AttachmentStrip, type AttachmentStripHandle } from "../attachments";
+import type {
+  NoteAttachment,
+  NoteReminder,
+  ReminderRecurrence,
+} from "../../types";
+import {
+  AttachmentStrip,
+  type AttachmentStripHandle,
+  holdAttachment,
+} from "../attachments";
 import { canRecordAudio, VoiceRecorder } from "../attachments/voice-recorder";
 import { RichTextEditor, type RichTextEditorHandle } from "../editor";
+import type { InlinePictureHost } from "../editor/inline-image-tools";
 import { formatCardDate } from "../note-card";
 import { useRingOnce } from "../reminder-chip";
 import { ReminderPopoverContent } from "../reminder-picker";
@@ -111,6 +129,16 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
   const record =
     props.canUpload && canRecord ? () => setRecording(true) : undefined;
   const startersRoving = useRovingFocus<HTMLDivElement>();
+  const inTextIds = React.useMemo(
+    () => inlineImageIds(props.content),
+    [props.content],
+  );
+  const pictures = useInlinePictures(
+    props.canUpload,
+    props.noteId,
+    props.onEnsureNoteIdForAttachmentUpload,
+    (id) => strip.current?.view(id),
+  );
 
   const starters = !props.readOnly &&
     !hasFiles &&
@@ -275,6 +303,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         onEnsureNoteId={props.onEnsureNoteIdForAttachmentUpload}
         dropping={!!dropping}
         onHasFiles={setHasFiles}
+        inTextIds={inTextIds}
         onGrabText={
           props.readOnly
             ? undefined
@@ -340,6 +369,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           onRecordAudio={record}
           below={starters}
           noteId={props.noteId}
+          pictures={pictures}
         />
       </div>
       <NoteOutline root={root} />
@@ -361,6 +391,76 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         )}
     </div>
   );
+}
+
+/**
+ * Uploads, loads and deletes the pictures placed in the text, keeping the
+ * attachment lists up to date, as the strip does for its own.
+ */
+function useInlinePictures(
+  canUpload: boolean,
+  noteId: string | undefined,
+  ensureNoteId: (() => Promise<string | null>) | undefined,
+  view: (id: string) => void,
+): InlinePictureHost | undefined {
+  const queryClient = useQueryClient();
+  const latest = React.useRef({ noteId, ensureNoteId, view });
+  latest.current = { noteId, ensureNoteId, view };
+  return React.useMemo(() => {
+    if (!canUpload) return undefined;
+    const listOf = (note: string) => ["attachments", note];
+    return {
+      upload: async (files) => {
+        const { noteId: known, ensureNoteId: ensure } = latest.current;
+        const note = known ?? (await ensure?.()) ?? null;
+        if (!note) throw new Error("The note isn’t saved");
+        const ids: string[] = [];
+        for (const file of files) {
+          if (file.size > MAX_ATTACHMENT_SIZE) {
+            toast.error(`Can’t add ${file.name}. Files can be up to 50 MB.`);
+            continue;
+          }
+          const saved = await uploadAttachment(note, file);
+          queryClient.setQueryData(["attachment-file", note, saved.id], file);
+          queryClient.setQueryData<NoteAttachment[]>(
+            listOf(note),
+            (list = []) => [saved, ...list.filter((a) => a.id !== saved.id)],
+          );
+          primeInlineImage(note, saved.id, file);
+          ids.push(saved.id);
+        }
+        queryClient.invalidateQueries({ queryKey: ["notes"] });
+        return ids;
+      },
+      load: (id) => {
+        const note = latest.current.noteId;
+        if (!note) return Promise.reject(new Error("The note isn’t saved"));
+        return queryClient.fetchQuery({
+          queryKey: ["attachment-file", note, id],
+          queryFn: () => fetchAttachmentBlob(note, id),
+          staleTime: Number.POSITIVE_INFINITY,
+        });
+      },
+      remove: (id, done) => {
+        const note = latest.current.noteId;
+        if (!note) return done?.();
+        deleteAttachment(note, id)
+          .then(
+            () => {
+              queryClient.setQueryData<NoteAttachment[]>(listOf(note), (list) =>
+                list?.filter((a) => a.id !== id),
+              );
+              queryClient.invalidateQueries({ queryKey: ["notes"] });
+            },
+            // Left in the strip, where it can still be deleted.
+            () => undefined,
+          )
+          .finally(done);
+      },
+      hold: holdAttachment,
+      view: (id) => latest.current.view(id),
+    };
+  }, [canUpload, queryClient]);
 }
 
 /** Pictures on the clipboard, named so a pasted screenshot reads well. */

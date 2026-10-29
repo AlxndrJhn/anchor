@@ -478,6 +478,26 @@
   /* Double-click opens it in the viewer. */
   cursor: zoom-in;
 }
+/* Being cropped, mirrored or replaced. */
+.ql-editor .note-image[data-busy] img {
+  opacity: 0.5;
+  cursor: progress;
+}
+/* The corner a picture in the text is resized by, shown on hover. */
+.nit-grip {
+  position: absolute;
+  z-index: 10;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid var(--card, #fff);
+  border-radius: 999px;
+  background: var(--accent-strong);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  cursor: ew-resize;
+  touch-action: none;
+  animation: fade-in var(--duration-hover) var(--ease-standard);
+}
 .ql-editor .note-image-caption {
   display: block;
   margin-top: 0.35em;

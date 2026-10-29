@@ -42,6 +42,11 @@ const usePendingDeletes = create<{
     }),
 }));
 
+/** Keeps an attachment out of the strip while its deletion can be undone. */
+export function holdAttachment(id: string, held: boolean) {
+  usePendingDeletes.getState().mark(id, held);
+}
+
 interface Drag {
   id: string;
   kind: Kind;
@@ -138,7 +143,11 @@ interface AttachmentStripProps {
   onHasFiles?: (has: boolean) => void;
   /** Takes text read from a picture into the note ("Grab image text"). */
   onGrabText?: (text: string) => void;
+  /** Pictures shown in the text: left out of the strip, as on Android. */
+  inTextIds?: ReadonlySet<string>;
 }
+
+const NONE: ReadonlySet<string> = new Set();
 
 export function AttachmentStrip({
   ref,
@@ -150,6 +159,7 @@ export function AttachmentStrip({
   dropping,
   onHasFiles,
   onGrabText,
+  inTextIds = NONE,
 }: AttachmentStripProps) {
   const queryClient = useQueryClient();
   const roving = useRovingFocus<HTMLDivElement>({
@@ -186,8 +196,16 @@ export function AttachmentStrip({
     queryFn: () => getNoteAttachments(noteId as string),
     enabled: !!noteId,
   });
-  const shown = attachments.filter((a) => !pending.has(a.id));
+  const kept = attachments.filter((a) => !pending.has(a.id));
+  const shown = kept.filter((a) => !inTextIds.has(a.id));
+  // The viewer steps through every picture, those in the text too.
+  const viewable = kept.filter((a) => a.type === "image");
   const pictures = shown.filter((a) => a.type === "image");
+  const inText = React.useRef(inTextIds);
+  inText.current = inTextIds;
+  /** Left out of the strip's order: being deleted, or shown in the text. */
+  const notInStrip = () =>
+    new Set([...usePendingDeletes.getState().ids, ...inText.current]);
   const voice = shown.filter((a) => a.type === "audio");
   const files = shown.filter((a) => a.type === "file");
   const hasFiles = shown.length + uploads.length > 0;
@@ -471,12 +489,7 @@ export function AttachmentStrip({
   const move = (id: string, to: number) => {
     if (!noteId) return;
     const before = latestAttachments();
-    const moved = moveAttachment(
-      before,
-      usePendingDeletes.getState().ids,
-      id,
-      to,
-    );
+    const moved = moveAttachment(before, notInStrip(), id, to);
     if (!moved) return;
     flip.prepare();
     // Without revert: a refetch cut short mustn't undo this move.
@@ -497,7 +510,7 @@ export function AttachmentStrip({
     )
       return;
     e.preventDefault();
-    const hidden = usePendingDeletes.getState().ids;
+    const hidden = notInStrip();
     const group = latestAttachments().filter(
       (a) => a.type === kind && !hidden.has(a.id),
     );
@@ -780,7 +793,7 @@ export function AttachmentStrip({
       {noteId && (
         <Viewer
           noteId={noteId}
-          pictures={pictures}
+          pictures={viewable}
           id={viewing}
           onShow={setViewing}
           canDelete={canDelete}
