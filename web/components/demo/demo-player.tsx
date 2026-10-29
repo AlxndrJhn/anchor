@@ -257,10 +257,12 @@ export function DemoPlayer() {
     void (async () => {
       try {
         const { skipTo } = useDemo.getState();
-        hurry = skipTo > 0;
-        setIsHurrying(hurry);
+        setIsHurrying(skipTo > 0);
         router.replace(playing.start);
+        // Not hurried: the page shows the notes loaded afresh by then, and
+        // a step taken before would act on what was there before.
         await pause(1600);
+        hurry = skipTo > 0;
         for (const [i, step] of playing.steps.entries()) {
           if (hurry && i >= skipTo) {
             hurry = false;
@@ -291,11 +293,15 @@ export function DemoPlayer() {
   const isPlaying = status === "playing" || status === "loading";
   const steps = demo?.steps.length ?? 0;
 
-  /** Back to before the step playing, or the one before while paused. */
+  /**
+   * Back to before the step playing, or the one before while paused; a wait
+   * shows nothing to go back to, so back past it.
+   */
   const stepBack = () => {
-    if (!slug) return;
-    const at =
+    if (!slug || !demo) return;
+    let at =
       status === "done" ? steps - 1 : Math.max(0, waiting ? step - 1 : step);
+    while (at > 0 && "wait" in demo.steps[at]) at--;
     void startDemo(slug, queryClient, at);
   };
   const stepOn = () => set({ paused: true, advance: true });
