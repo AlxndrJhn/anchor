@@ -1,8 +1,18 @@
 // The feature demos of the demo build: each opens at /<slug> (on GitHub
 // Pages, /anchor/demo/<slug>), loads its own notes and plays its steps.
 
-import { dragBetween, pressKey, type Step, selectInEditor } from "./runner";
-import type { Seed } from "./seed";
+import {
+  caretToEnd,
+  center,
+  clickElement,
+  dragBetween,
+  pressKey,
+  type Step,
+  selectInEditor,
+  type Target,
+  typeCharacter,
+} from "./runner";
+import { pictureBlob, type Seed } from "./seed";
 
 export interface Demo {
   slug: string;
@@ -98,6 +108,15 @@ const withNotes = (...notes: Seed["notes"]): Seed => ({
   notes: [...notes, ...everyday],
 });
 
+/** The notes list's search; behind a Search button on a phone. */
+const searchBox: Target = { css: 'input[aria-label="Search notes"]' };
+
+/** The sidebar's New note, or a phone's round button. */
+const newNote: Target = { css: 'a[href*="/notes/new"]' };
+
+/** Opens the sidebar on a phone, where the tags are; nothing wider. */
+const openSidebar: Step = { click: "Open menu", ifShown: true };
+
 /** A control inside the open popover or menu. */
 const inPopup = (text: string): Step => ({
   click: { css: "[data-radix-popper-content-wrapper] button", text },
@@ -120,11 +139,64 @@ const fromMoreMenu = (item: string, say?: string): Step[] => [
   { click: { css: "[role=menuitem]", text: item } },
 ];
 
+/** Right-clicks a control, as a mouse's other button does. */
+const rightClick = (target: Target, say?: string): Step => ({
+  say,
+  run: async (play) => {
+    const element = await play.find(target);
+    await play.moveTo(element);
+    const { x, y } = center(element);
+    element.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+        clientX: x,
+        clientY: y,
+        view: window,
+      }),
+    );
+  },
+});
+
 /** Opens a note from the notes list by its title. */
 const openNote = (title: string, say?: string): Step => ({
   click: { css: `a.nc-link[aria-label="${title}"]` },
   say,
 });
+
+/** Hands files to the open note's attachment picker, as choosing them would. */
+const attach = (files: () => File[], say?: string): Step => ({
+  say,
+  run: async (play) => {
+    const button = await play.find({ css: "button", text: "Picture or audio" });
+    await play.moveTo(button);
+    const input = document.querySelector<HTMLInputElement>(
+      ".note-in input[type=file]",
+    );
+    if (!input) throw new Error("Not found: the attachment picker");
+    const chosen = new DataTransfer();
+    for (const file of files()) chosen.items.add(file);
+    input.files = chosen.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  },
+});
+
+const customTheme = JSON.stringify(
+  {
+    name: "Ink",
+    light: {
+      background: "#f4f1ea",
+      card: "#fffdf8",
+      sidebar: "#ebe6db",
+      accent: "#2f6fdd",
+      border: "#d6cfc1",
+    },
+    dark: { background: "#000", card: "#111111", accent: "#7aa2f7" },
+  },
+  null,
+  2,
+);
 
 export const demos: Demo[] = [
   {
@@ -161,7 +233,8 @@ export const demos: Demo[] = [
       { wait: 1200 },
       {
         type: "plant",
-        into: { css: 'input[aria-label="Search notes"]' },
+        into: searchBox,
+        reveal: ["Search"],
         say: "…but a search still finds it.",
       },
       { wait: 1200 },
@@ -271,11 +344,13 @@ export const demos: Demo[] = [
       { wait: 1000 },
       {
         click: "Hide checkboxes",
+        reveal: ["More"],
         say: "Hide checkboxes turns it into plain lines…",
       },
       { wait: 1000 },
       {
         click: "Show checkboxes",
+        reveal: ["More"],
         say: "…and Show checkboxes back into a list.",
       },
       {
@@ -325,12 +400,17 @@ export const demos: Demo[] = [
     steps: [
       {
         type: "wifi",
-        into: { css: 'input[aria-label="Search notes"]' },
+        into: searchBox,
+        reveal: ["Search"],
         say: "A search on Notes also finds archived ones…",
       },
       { wait: 1500 },
       { go: "/archive", say: "…and Archive and Trash have their own search." },
-      { type: "cabin", into: { css: 'input[aria-label="Search archive"]' } },
+      {
+        type: "cabin",
+        into: { css: 'input[aria-label="Search archive"]' },
+        reveal: ["Search"],
+      },
       { wait: 1200 },
     ],
     outro: "Try it: archive a note, then search for it from Notes.",
@@ -344,7 +424,8 @@ export const demos: Demo[] = [
     steps: [
       {
         type: "Sam",
-        into: { css: 'input[aria-label="Search notes"]' },
+        into: searchBox,
+        reveal: ["Search"],
         say: "Search for a word…",
       },
       { wait: 600 },
@@ -355,12 +436,127 @@ export const demos: Demo[] = [
     outro: "Try it: search, then open a result.",
   },
   {
+    slug: "search-kept",
+    title: "Search kept on the way back",
+    summary: "Open a note from a search; Back returns to the same search.",
+    seed: base,
+    start: "/notes",
+    steps: [
+      {
+        type: "trip",
+        into: searchBox,
+        reveal: ["Search"],
+        say: "Search for something…",
+      },
+      { wait: 600 },
+      openNote("Lisbon trip", "…open a note it found…"),
+      { wait: 1000 },
+      { click: "Back", say: "…and go back: the search is still there." },
+      { wait: 1800 },
+    ],
+    outro: "Try it: search, open a note, then press Back.",
+  },
+  {
+    slug: "tag-archived",
+    title: "Tags count archived notes",
+    summary:
+      "A tag's count includes its archived notes, and the tag lists them.",
+    seed: withNotes({
+      id: "n-rome",
+      title: "Rome, last spring",
+      archived: true,
+      tags: ["Travel"],
+      age: 60 * 24 * 90,
+      lines: ["Trastevere at dusk", "Supplì from the corner shop"],
+    }),
+    start: "/notes",
+    steps: [
+      openSidebar,
+      {
+        hover: { css: "a", textStarts: "Travel" },
+        say: "Travel counts 2 notes: one of them is archived.",
+      },
+      { click: { css: "a", textStarts: "Travel" }, say: "The tag lists both…" },
+      { wait: 1200 },
+      { say: "…the archived one included, so nothing tagged goes missing." },
+    ],
+    outro: "Try it: archive a tagged note, then open its tag.",
+  },
+  {
+    slug: "paste-picture",
+    title: "Paste a picture",
+    summary: "Paste a picture into a note to add it as an attachment.",
+    seed: base,
+    start: "/notes",
+    steps: [
+      openNote("Lisbon trip", "Copy a picture, open a note…"),
+      { wait: 800 },
+      {
+        say: "…and paste it: it is added to the note.",
+        run: async (play) => {
+          const editor = await play.find({ css: ".ql-editor" });
+          await play.moveTo(editor);
+          caretToEnd(editor);
+          const clipboard = new DataTransfer();
+          clipboard.items.add(
+            new File([pictureBlob(190, "Tram 28")], "image.png", {
+              type: "image/png",
+            }),
+          );
+          editor.dispatchEvent(
+            new ClipboardEvent("paste", {
+              bubbles: true,
+              cancelable: true,
+              clipboardData: clipboard,
+            }),
+          );
+        },
+      },
+      { wait: 1500 },
+      { click: { label: "Back" }, say: "The card shows it, too." },
+      { wait: 1500 },
+    ],
+    outro:
+      "Try it: copy a picture or take a screenshot, then paste it in a note.",
+  },
+  {
+    slug: "attach-file",
+    title: "Attach any file",
+    summary: "Attach files of any kind to a note, not only pictures and audio.",
+    seed: base,
+    start: "/notes",
+    steps: [
+      {
+        click: newNote,
+        say: "In a note, Picture or audio…",
+      },
+      { type: "Tickets", into: "Title" },
+      attach(
+        () => [
+          new File(
+            ["Lisbon, 12–16 May\nFlight TP 1351, seat 14A\n"],
+            "boarding-pass.txt",
+            { type: "text/plain" },
+          ),
+          new File(["date,place\n2026-05-13,Belém\n"], "plan.csv", {
+            type: "text/csv",
+          }),
+        ],
+        "…takes any kind of file, not only pictures and recordings.",
+      ),
+      { wait: 2000 },
+      { say: "They sit with the note and download with a click." },
+    ],
+    outro: "Try it: attach a file to a note, or drop one on it.",
+  },
+  {
     slug: "tags",
     title: "Tag colours and order",
     summary: "Change a tag's colour from its menu; drag tags into any order.",
     seed: base,
     start: "/notes",
     steps: [
+      openSidebar,
       {
         click: { label: "Options for Work", hidden: true },
         say: "Each tag's menu has its colour.",
@@ -449,7 +645,12 @@ export const demos: Demo[] = [
         click: { label: "View picture" },
         say: "Click a card's picture to see it full size.",
       },
-      { click: "Next picture", say: "Step through the note's pictures." },
+      {
+        click: "Next picture",
+        // A phone swipes; the arrow keys work everywhere.
+        orElse: { key: "ArrowRight" },
+        say: "Step through the note's pictures.",
+      },
       { click: "Close" },
       {
         click: { css: "button", text: "View" },
@@ -460,6 +661,107 @@ export const demos: Demo[] = [
       { click: { css: "#cards-pictures" }, say: "And shows them again." },
     ],
     outro: "Try it: open a picture, or paste one into a note.",
+  },
+  {
+    slug: "pictures-in-text",
+    title: "Pictures in the text",
+    summary:
+      "Put pictures in the text; resize them by a corner, right-click to crop, mirror or caption them.",
+    seed: withNotes({
+      id: "n-garden",
+      title: "Balcony garden",
+      age: 1,
+      lines: [
+        "The tomatoes finally got some sun this week.",
+        { picture: "p-tomatoes", width: 0.4, caption: "First ripe ones" },
+        "The basil:",
+        { picture: "p-basil", width: 0.7 },
+        "Water every other evening.",
+      ],
+      pictures: [
+        { id: "p-tomatoes", name: "tomatoes.png", hue: 5, label: "Tomatoes" },
+        { id: "p-basil", name: "basil.png", hue: 110, label: "Basil" },
+      ],
+    }),
+    start: "/notes",
+    steps: [
+      openNote("Balcony garden", "Open a note with pictures in its text."),
+      { wait: 800 },
+      {
+        hover: { css: ".ql-editor .note-image img" },
+        say: "Hover a picture: drag the dot at its corner to resize it.",
+      },
+      {
+        run: async (play) => {
+          const grip = await play.find({ css: ".nit-grip" });
+          const start = center(grip);
+          await play.moveTo(grip);
+          const pointer = {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+            view: window,
+          };
+          play.cursor(start.x, start.y, true);
+          grip.dispatchEvent(
+            new PointerEvent("pointerdown", {
+              ...pointer,
+              button: 0,
+              buttons: 1,
+              clientX: start.x,
+              clientY: start.y,
+            }),
+          );
+          let x = start.x;
+          for (let i = 1; i <= 24; i++) {
+            x = start.x + i * 8;
+            play.cursor(x, start.y, true);
+            grip.dispatchEvent(
+              new PointerEvent("pointermove", {
+                ...pointer,
+                buttons: 1,
+                clientX: x,
+                clientY: start.y,
+              }),
+            );
+            await play.pause(40);
+          }
+          grip.dispatchEvent(
+            new PointerEvent("pointerup", {
+              ...pointer,
+              clientX: x,
+              clientY: start.y,
+            }),
+          );
+          play.cursor(x, start.y, false);
+        },
+      },
+      { wait: 600 },
+      rightClick(
+        { css: ".ql-editor .note-image img", nth: 1 },
+        "Right-click one (or hold it) for more.",
+      ),
+      { wait: 800 },
+      { click: { css: "[role=menuitem]", text: "Mirror horizontally" } },
+      { say: "Mirrored, cropped or replaced, it keeps its size and caption." },
+      rightClick({ css: ".ql-editor .note-image img", nth: 1 }),
+      { click: { css: "[role=menuitem]", text: "Add caption…" } },
+      {
+        type: "Basil, from the other side",
+        into: { css: "[role=dialog] input" },
+        say: "Give it a caption…",
+      },
+      { click: { css: "[role=dialog] button", text: "Save" } },
+      { wait: 1200 },
+      {
+        say: "…and the picture button left of the text styles puts new ones at the caret.",
+      },
+    ],
+    outro:
+      "Try it: right-click a picture to crop it, or put one in the text with the picture button.",
   },
   {
     slug: "image-text",
@@ -535,6 +837,7 @@ export const demos: Demo[] = [
         say: "Each version shows what was added (+) and removed (−).",
       },
       { wait: 1200 },
+      { click: "Back to the version list", ifShown: true },
       { click: { css: "button.hs-row", nth: 2 } },
       { wait: 1200 },
       {
@@ -596,6 +899,39 @@ export const demos: Demo[] = [
     outro: "Try it: Settings › Appearance. A reload goes back to the default.",
   },
   {
+    slug: "custom-theme",
+    title: "Custom theme from JSON",
+    summary: "Paste a theme as JSON; the same JSON works on Android.",
+    seed: base,
+    start: "/settings",
+    steps: [
+      {
+        say: "Settings › Appearance › Custom theme takes a theme as JSON.",
+        run: async (play) => {
+          const box = await play.find({ label: "Custom theme JSON" });
+          await play.moveTo(box);
+          clickElement(box);
+          caretToEnd(box);
+          // Pasted in one go, as from the clipboard.
+          typeCharacter(customTheme);
+          await play.pause(1200);
+        },
+      },
+      {
+        click: { css: "button", text: "Apply" },
+        say: "Apply, and its colours replace the scheme's.",
+      },
+      { wait: 1200 },
+      { go: "/notes" },
+      { wait: 1500 },
+      {
+        say: "Colours it leaves out are the scheme's. Reset removes it.",
+      },
+    ],
+    outro:
+      "Try it: Settings › Appearance › Copy current theme as JSON, then change a colour.",
+  },
+  {
     slug: "shortcuts",
     title: "Keyboard shortcuts",
     summary:
@@ -625,7 +961,7 @@ export const demos: Demo[] = [
     seed: base,
     start: "/notes",
     steps: [
-      { click: { css: "a", textStarts: "New note" }, say: "In a note…" },
+      { click: newNote, say: "In a note…" },
       { wait: 600 },
       { type: "Meeting on " },
       {
@@ -684,7 +1020,7 @@ export const demos: Demo[] = [
     start: "/notes",
     steps: [
       {
-        click: { css: "a", textStarts: "New note" },
+        click: newNote,
         say: "A new note opens ready to type.",
       },
       { wait: 500 },

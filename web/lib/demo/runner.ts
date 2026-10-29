@@ -19,13 +19,27 @@ export type Target =
       nth?: number;
     };
 
+/**
+ * How a step copes with the phone layout, where some controls sit behind
+ * another one (search behind Search, tags behind Open menu, actions in More)
+ * or aren't there at all.
+ */
+export interface Fallback {
+  /** Skipped when the target isn't on screen, e.g. a phone's Open menu. */
+  ifShown?: boolean;
+  /** Pressed in turn first when the target isn't on screen. */
+  reveal?: Target[];
+  /** Played instead when the target isn't on screen, even after `reveal`. */
+  orElse?: Step;
+}
+
 export type Step =
   /** Shows a caption. */
   | { say: string }
-  | { click: Target; say?: string }
-  | { hover: Target; say?: string }
+  | ({ click: Target; say?: string } & Fallback)
+  | ({ hover: Target; say?: string } & Fallback)
   /** Types into the target, or where the caret is. */
-  | { type: string; into?: Target; say?: string }
+  | ({ type: string; into?: Target; say?: string } & Fallback)
   | { key: string; code?: string; shift?: boolean; ctrl?: boolean }
   | { go: string; say?: string }
   | { wait: number }
@@ -58,6 +72,12 @@ function isShown(element: Element) {
   if (box.width === 0 || box.height === 0) return false;
   const style = getComputedStyle(element);
   return style.visibility !== "hidden" && style.display !== "none";
+}
+
+/** Takes up room on the page, though maybe not visible (shown on hover). */
+function isLaidOut(element: Element) {
+  const box = element.getBoundingClientRect();
+  return box.width > 0 && box.height > 0;
 }
 
 function matches(target: Target): HTMLElement[] {
@@ -97,6 +117,10 @@ function matches(target: Target): HTMLElement[] {
       found.push(element);
     }
   }
+  // A hidden one in this layout before one left out of it, e.g. the desktop
+  // sidebar's on a phone.
+  if (spec.hidden && found.some(isLaidOut))
+    found.splice(0, found.length, ...found.filter(isLaidOut));
   // The innermost control that matches, not the ones around it.
   return found.filter(
     (element) =>

@@ -54,6 +54,11 @@ import {
 } from "../../undo-shortcuts";
 import { CodeCopyButtons } from "./code-copy-buttons";
 import { SelectionToolbar } from "./highlight-tools";
+import {
+  InlineImageTools,
+  type InlineImageToolsHandle,
+  type InlinePictureHost,
+} from "./inline-image-tools";
 import { LinkBubble } from "./link-bubble";
 import { LinkPopover } from "./link-popover";
 import { QuillToolbar } from "./quill-toolbar";
@@ -161,6 +166,8 @@ interface RichTextEditorProps {
   below?: React.ReactNode;
   /** Loads the pictures placed in the text; none show without it. */
   noteId?: string;
+  /** Puts pictures in the text and edits them; without it they only show. */
+  pictures?: InlinePictureHost;
 }
 
 export interface RichTextEditorHandle {
@@ -196,10 +203,13 @@ export const RichTextEditor = forwardRef<
       onRecordAudio,
       below,
       noteId,
+      pictures,
     },
     ref,
   ) => {
     const quillRef = useRef<{ getEditor: () => QuillInstance }>(null);
+    const pictureTools = useRef<InlineImageToolsHandle>(null);
+    const canPlacePictures = !readOnly && !!pictures;
     const rootRef = useRef<HTMLDivElement>(null);
     const [editorContainerEl, setEditorContainerEl] =
       useState<HTMLDivElement | null>(null);
@@ -887,6 +897,9 @@ export const RichTextEditor = forwardRef<
             onOpenLinkDialog={openLinkDialog}
             onAddAttachment={onAddAttachment}
             onRecordAudio={onRecordAudio}
+            onPictureInText={
+              canPlacePictures ? () => pictureTools.current?.pick() : undefined
+            }
           />
         )}
         <div
@@ -969,6 +982,14 @@ export const RichTextEditor = forwardRef<
             </div>
           )}
           <CodeCopyButtons container={editorContainerEl} />
+          {canPlacePictures && (
+            <InlineImageTools
+              ref={pictureTools}
+              getQuill={getQuill}
+              container={editorContainerEl}
+              host={pictures}
+            />
+          )}
           {!readOnly && (
             <SelectionToolbar
               getQuill={getQuill}
