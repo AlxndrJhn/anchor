@@ -1,4 +1,5 @@
 // Layers of the skeuomorphic launcher icon, drawn on a 108x108 (dp) canvas.
+// The anchor carries a small "+" at its top right, for Anchor+.
 const anchor = (id, stroke) => `
   <g fill="none" stroke="${stroke}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="54" cy="55.5" r="3.4"/>
@@ -7,6 +8,7 @@ const anchor = (id, stroke) => `
     <path d="M40.5 73.5 C41.5 80 47 83 54 83 C61 83 66.5 80 67.5 73.5"/>
     <path d="M38 75.8 L40.5 73.2 L43.4 75.4"/>
     <path d="M64.6 75.4 L67.5 73.2 L70 75.8"/>
+    <path d="M74.5 47 V57 M69.5 52 H79.5"/>
   </g>`;
 
 const background = `
@@ -105,6 +107,7 @@ const foreground = `
     <g fill="none" stroke="#FFF3C8" stroke-width="0.9" stroke-linecap="round">
       <path d="M52.6 53.2 A3.4 3.4 0 0 1 56.6 53.6"/>
       <path d="M53.2 61 V78"/>
+      <path d="M73.7 48.4 V51.2"/>
     </g>
   </g>
   </g>
