@@ -19,13 +19,27 @@ export type Target =
       nth?: number;
     };
 
+/**
+ * How a step copes with the phone layout, where some controls sit behind
+ * another one (search behind Search, tags behind Open menu, actions in More)
+ * or aren't there at all.
+ */
+export interface Fallback {
+  /** Skipped when the target isn't on screen, e.g. a phone's Open menu. */
+  ifShown?: boolean;
+  /** Pressed in turn first when the target isn't on screen. */
+  reveal?: Target[];
+  /** Played instead when the target isn't on screen, even after `reveal`. */
+  orElse?: Step;
+}
+
 export type Step =
   /** Shows a caption. */
   | { say: string }
-  | { click: Target; say?: string }
-  | { hover: Target; say?: string }
+  | ({ click: Target; say?: string } & Fallback)
+  | ({ hover: Target; say?: string } & Fallback)
   /** Types into the target, or where the caret is. */
-  | { type: string; into?: Target; say?: string }
+  | ({ type: string; into?: Target; say?: string } & Fallback)
   | { key: string; code?: string; shift?: boolean; ctrl?: boolean }
   | { go: string; say?: string }
   | { wait: number }
@@ -60,6 +74,16 @@ function isShown(element: Element) {
   return style.visibility !== "hidden" && style.display !== "none";
 }
 
+/**
+ * On the page, though maybe not visible yet (shown on hover); not inside
+ * something left out of this layout, e.g. the desktop sidebar on a phone.
+ */
+function isLaidOut(element: Element) {
+  if (element.closest("[data-demo-player]")) return false;
+  const box = element.getBoundingClientRect();
+  return box.width > 0 && box.height > 0;
+}
+
 function matches(target: Target): HTMLElement[] {
   const spec = typeof target === "string" ? { label: target } : target;
   const roots = spec.within
@@ -71,10 +95,7 @@ function matches(target: Target): HTMLElement[] {
       root.querySelectorAll<HTMLElement>(spec.css ?? CONTROLS),
     );
     for (const element of candidates) {
-      if (
-        spec.hidden ? element.closest("[data-demo-player]") : !isShown(element)
-      )
-        continue;
+      if (spec.hidden ? !isLaidOut(element) : !isShown(element)) continue;
       if (spec.label !== undefined) {
         const label =
           element.getAttribute("aria-label") ?? element.getAttribute("title");

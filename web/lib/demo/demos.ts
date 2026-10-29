@@ -108,6 +108,15 @@ const withNotes = (...notes: Seed["notes"]): Seed => ({
   notes: [...notes, ...everyday],
 });
 
+/** The notes list's search; behind a Search button on a phone. */
+const searchBox: Target = { css: 'input[aria-label="Search notes"]' };
+
+/** The sidebar's New note, or a phone's round button. */
+const newNote: Target = { css: 'a[href*="/notes/new"]' };
+
+/** Opens the sidebar on a phone, where the tags are; nothing wider. */
+const openSidebar: Step = { click: "Open menu", ifShown: true };
+
 /** A control inside the open popover or menu. */
 const inPopup = (text: string): Step => ({
   click: { css: "[data-radix-popper-content-wrapper] button", text },
@@ -224,7 +233,8 @@ export const demos: Demo[] = [
       { wait: 1200 },
       {
         type: "plant",
-        into: { css: 'input[aria-label="Search notes"]' },
+        into: searchBox,
+        reveal: ["Search"],
         say: "…but a search still finds it.",
       },
       { wait: 1200 },
@@ -334,11 +344,13 @@ export const demos: Demo[] = [
       { wait: 1000 },
       {
         click: "Hide checkboxes",
+        reveal: ["More"],
         say: "Hide checkboxes turns it into plain lines…",
       },
       { wait: 1000 },
       {
         click: "Show checkboxes",
+        reveal: ["More"],
         say: "…and Show checkboxes back into a list.",
       },
       {
@@ -388,12 +400,17 @@ export const demos: Demo[] = [
     steps: [
       {
         type: "wifi",
-        into: { css: 'input[aria-label="Search notes"]' },
+        into: searchBox,
+        reveal: ["Search"],
         say: "A search on Notes also finds archived ones…",
       },
       { wait: 1500 },
       { go: "/archive", say: "…and Archive and Trash have their own search." },
-      { type: "cabin", into: { css: 'input[aria-label="Search archive"]' } },
+      {
+        type: "cabin",
+        into: { css: 'input[aria-label="Search archive"]' },
+        reveal: ["Search"],
+      },
       { wait: 1200 },
     ],
     outro: "Try it: archive a note, then search for it from Notes.",
@@ -407,7 +424,8 @@ export const demos: Demo[] = [
     steps: [
       {
         type: "Sam",
-        into: { css: 'input[aria-label="Search notes"]' },
+        into: searchBox,
+        reveal: ["Search"],
         say: "Search for a word…",
       },
       { wait: 600 },
@@ -426,7 +444,8 @@ export const demos: Demo[] = [
     steps: [
       {
         type: "trip",
-        into: { css: 'input[aria-label="Search notes"]' },
+        into: searchBox,
+        reveal: ["Search"],
         say: "Search for something…",
       },
       { wait: 600 },
@@ -452,6 +471,7 @@ export const demos: Demo[] = [
     }),
     start: "/notes",
     steps: [
+      openSidebar,
       {
         hover: { css: "a", textStarts: "Travel" },
         say: "Travel counts 2 notes: one of them is archived.",
@@ -507,7 +527,7 @@ export const demos: Demo[] = [
     start: "/notes",
     steps: [
       {
-        click: { css: "a", textStarts: "New note" },
+        click: newNote,
         say: "In a note, Picture or audio…",
       },
       { type: "Tickets", into: "Title" },
@@ -536,6 +556,7 @@ export const demos: Demo[] = [
     seed: base,
     start: "/notes",
     steps: [
+      openSidebar,
       {
         click: { label: "Options for Work", hidden: true },
         say: "Each tag's menu has its colour.",
@@ -624,7 +645,12 @@ export const demos: Demo[] = [
         click: { label: "View picture" },
         say: "Click a card's picture to see it full size.",
       },
-      { click: "Next picture", say: "Step through the note's pictures." },
+      {
+        click: "Next picture",
+        // A phone swipes; the arrow keys work everywhere.
+        orElse: { key: "ArrowRight" },
+        say: "Step through the note's pictures.",
+      },
       { click: "Close" },
       {
         click: { css: "button", text: "View" },
@@ -811,6 +837,7 @@ export const demos: Demo[] = [
         say: "Each version shows what was added (+) and removed (−).",
       },
       { wait: 1200 },
+      { click: "Back to the version list", ifShown: true },
       { click: { css: "button.hs-row", nth: 2 } },
       { wait: 1200 },
       {
@@ -934,7 +961,7 @@ export const demos: Demo[] = [
     seed: base,
     start: "/notes",
     steps: [
-      { click: { css: "a", textStarts: "New note" }, say: "In a note…" },
+      { click: newNote, say: "In a note…" },
       { wait: 600 },
       { type: "Meeting on " },
       {
@@ -993,7 +1020,7 @@ export const demos: Demo[] = [
     start: "/notes",
     steps: [
       {
-        click: { css: "a", textStarts: "New note" },
+        click: newNote,
         say: "A new note opens ready to type.",
       },
       { wait: 500 },
