@@ -100,10 +100,17 @@ class _PullIndicator extends StatefulWidget {
 }
 
 class _PullIndicatorState extends State<_PullIndicator>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  // Swings the anchor while syncing, and takes its sparks round once a swing.
   late final AnimationController _sway = AnimationController(
     vsync: this,
     duration: AnchorTokens.motionDurationSway,
+  );
+
+  // Sparks thrown out once as the pull arms.
+  late final AnimationController _burst = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
   );
 
   @override
@@ -116,11 +123,17 @@ class _PullIndicatorState extends State<_PullIndicator>
       _sway.stop();
       _sway.value = 0;
     }
+    if (widget.mode == RefreshIndicatorMode.armed &&
+        old.mode != RefreshIndicatorMode.armed &&
+        !context.isMotionReduced) {
+      _burst.forward(from: 0);
+    }
   }
 
   @override
   void dispose() {
     _sway.dispose();
+    _burst.dispose();
     super.dispose();
   }
 
@@ -180,38 +193,223 @@ class _PullIndicatorState extends State<_PullIndicator>
           child: Opacity(
             opacity: (pulled / 40).clamp(0.0, 1.0),
             child: AnimatedBuilder(
-              animation: _sway,
-              builder: (context, child) {
+              animation: Listenable.merge([_sway, _burst]),
+              builder: (context, _) {
                 final sway = syncing
                     ? math.sin(_sway.value * 2 * math.pi) * 9 * math.pi / 180
                     : tilt;
+                // As the + of Anchor+ (see AnchorPlusMark): a glow, sparks
+                // circling and a glint running across, all of which the
+                // pull winds up and the sync keeps going.
+                final reduced = context.isMotionReduced;
+                final charge = syncing
+                    ? 1.0
+                    : ((pulled - 24) / (78 - 24)).clamp(0.0, 1.0);
+                final phase = reduced ? 0.0 : pulled / 78 * 0.5 + _sway.value;
+                final glint = syncing
+                    ? _sway.value * 3 - 1
+                    : charge * 1.5 - 0.25;
+                final glyphColor = armed
+                    ? colors.appOnInverse
+                    : colors.appMuted;
                 return Transform.rotate(
                   angle: sway,
                   alignment: Alignment.topCenter,
-                  child: child,
+                  child: CustomPaint(
+                    painter: _AuraPainter(
+                      isFront: false,
+                      phase: phase,
+                      charge: charge,
+                      burst: _burst.value,
+                      glint: glint,
+                      accent: colors.accentStrong,
+                      ink: colors.accentInk,
+                    ),
+                    foregroundPainter: _AuraPainter(
+                      isFront: true,
+                      phase: phase,
+                      charge: charge,
+                      burst: _burst.value,
+                      glint: glint,
+                      accent: colors.accentStrong,
+                      ink: colors.accentInk,
+                    ),
+                    child: AnimatedContainer(
+                      duration: context.motion(AnchorTokens.motionDurationFade),
+                      width: AnchorTokens.sizeControlSmall,
+                      height: AnchorTokens.sizeControlSmall,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: armed
+                            ? colors.appInverse
+                            : colors.appInverse.withValues(alpha: 0),
+                      ),
+                      child: Center(
+                        child: ShaderMask(
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) => LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              glyphColor,
+                              glyphColor,
+                              reduced ? glyphColor : colors.accentStrong,
+                              glyphColor,
+                              glyphColor,
+                            ],
+                            stops: [
+                              0,
+                              (glint - 0.3).clamp(0.0, 1.0),
+                              glint.clamp(0.0, 1.0),
+                              (glint + 0.3).clamp(0.0, 1.0),
+                              1,
+                            ],
+                          ).createShader(bounds),
+                          child: AnchorGlyph(
+                            size: AnchorTokens.sizeIconMedium,
+                            color: glyphColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               },
-              child: AnimatedContainer(
-                duration: context.motion(AnchorTokens.motionDurationFade),
-                width: AnchorTokens.sizeControlSmall,
-                height: AnchorTokens.sizeControlSmall,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: armed
-                      ? colors.appInverse
-                      : colors.appInverse.withValues(alpha: 0),
-                ),
-                child: Center(
-                  child: AnchorGlyph(
-                    size: AnchorTokens.sizeIconMedium,
-                    color: armed ? colors.appOnInverse : colors.appMuted,
-                  ),
-                ),
-              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// The glow under the anchor and the three sparks circling it on a tilted
+/// ring, as around the + of Anchor+; the back paints the glow and the sparks
+/// behind, the front ([isFront]) the sparks before it and the ones thrown out
+/// as the pull arms.
+class _AuraPainter extends CustomPainter {
+  _AuraPainter({
+    required this.isFront,
+    required this.phase,
+    required this.charge,
+    required this.burst,
+    required this.glint,
+    required this.accent,
+    required this.ink,
+  });
+
+  final bool isFront;
+  final double phase;
+
+  /// How far the pull has wound it up, 0 to 1.
+  final double charge;
+  final double burst;
+  final double glint;
+  final Color accent;
+  final Color ink;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final side = size.shortestSide;
+    final center = size.center(Offset.zero);
+    final wave = (math.sin(phase * 2 * math.pi) + 1) / 2;
+
+    if (!isFront && charge > 0) {
+      final radius = side * 1.1;
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              accent.withValues(alpha: (0.22 + 0.14 * wave) * charge),
+              accent.withValues(alpha: 0),
+            ],
+          ).createShader(Rect.fromCircle(center: center, radius: radius)),
+      );
+    }
+
+    if (charge > 0) {
+      for (var i = 0; i < 3; i++) {
+        final a = (phase + i / 3) * 2 * math.pi;
+        final depth = math.sin(a);
+        if ((depth >= 0) != isFront) continue;
+        final ring = Offset(math.cos(a) * side * 0.85, depth * side * 0.28);
+        final tilt = Offset(
+          ring.dx * math.cos(-0.5) - ring.dy * math.sin(-0.5),
+          ring.dx * math.sin(-0.5) + ring.dy * math.cos(-0.5),
+        );
+        final near = (depth + 1) / 2;
+        canvas.drawCircle(
+          center + tilt,
+          side * (0.04 + 0.04 * near) * (0.5 + 0.5 * charge),
+          Paint()..color = ink.withValues(alpha: (0.35 + 0.65 * near) * charge),
+        );
+      }
+    }
+
+    // The + of Anchor+ at the anchor's top right, as in the logo: it bobs
+    // with the sparks, pops as the pull arms, and the glint runs across it.
+    if (isFront) {
+      final pop = 1 + 0.45 * math.sin(burst * math.pi);
+      final arm = side * 0.15 * pop;
+      final bar = arm * 0.5;
+      final at =
+          center +
+          Offset(side * 0.3, -side * 0.3 + math.sin(phase * 2 * math.pi) * 1.2);
+      final cross = Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: at, width: arm * 2, height: bar),
+            Radius.circular(bar / 2),
+          ),
+        )
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: at, width: bar, height: arm * 2),
+            Radius.circular(bar / 2),
+          ),
+        );
+      canvas.drawPath(
+        cross,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [ink, accent, CupertinoColors.white, accent, ink],
+            stops: [
+              0,
+              (glint - 0.25).clamp(0.0, 1.0),
+              glint.clamp(0.0, 1.0),
+              (glint + 0.25).clamp(0.0, 1.0),
+              1,
+            ],
+          ).createShader(Rect.fromCircle(center: at, radius: arm)),
+      );
+    }
+
+    if (isFront && burst > 0 && burst < 1) {
+      final progress = Curves.easeOutCubic.transform(burst);
+      final paint = Paint()..color = ink.withValues(alpha: 1 - burst);
+      for (var i = 0; i < 8; i++) {
+        final angle = -math.pi / 2 + i * 2 * math.pi / 8;
+        final reach = side * (0.6 + 0.9 * progress);
+        canvas.drawCircle(
+          center + Offset(math.cos(angle), math.sin(angle)) * reach,
+          side * 0.06 * (1 - burst * 0.5),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_AuraPainter old) =>
+      old.isFront != isFront ||
+      old.phase != phase ||
+      old.charge != charge ||
+      old.burst != burst ||
+      old.glint != glint ||
+      old.accent != accent ||
+      old.ink != ink;
 }
