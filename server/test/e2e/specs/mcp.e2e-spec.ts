@@ -3,6 +3,7 @@ import request from 'supertest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Actor, createE2EApp, E2EApp } from '../support';
+import { PNG_1PX } from '../support/fixtures';
 
 /**
  * Claude's way in: the MCP endpoint, driven with the SDK's own client and
@@ -67,6 +68,7 @@ describe('mcp', () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'append_to_note',
       'create_note',
+      'get_attachment',
       'get_note',
       'list_notes',
       'list_tags',
@@ -207,6 +209,90 @@ describe('mcp', () => {
 
     const append = await call('append_to_note', { id: note.id, content: 'x' });
     expect(append.isError).toBe(true);
+  });
+
+  it('lists the attachments of a note', async () => {
+    const note = await user.notes.create({ title: 'Snap', content: null });
+    const picture = await user.attachments.upload(note.id, 'snap.png');
+
+    const read = await json<{ attachments: unknown[] }>('get_note', {
+      id: note.id,
+    });
+    expect(read.attachments).toEqual([
+      expect.objectContaining({
+        id: picture.id,
+        type: 'image',
+        filename: 'snap.png',
+        mimeType: 'image/png',
+      }),
+    ]);
+
+    const listed = await json<{ notes: { attachments?: number }[] }>(
+      'list_notes',
+    );
+    expect(listed.notes[0].attachments).toBe(1);
+  });
+
+  it('hands over a picture as an image', async () => {
+    const note = await user.notes.create({ title: 'Snap', content: null });
+    const picture = await user.attachments.upload(note.id, 'snap.png');
+
+    const result = await client.callTool({
+      name: 'get_attachment',
+      arguments: { noteId: note.id, id: picture.id },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.content).toEqual([
+      expect.objectContaining({ type: 'text' }),
+      {
+        type: 'image',
+        mimeType: 'image/png',
+        data: PNG_1PX.toString('base64'),
+      },
+    ]);
+  });
+
+  it('hands over a text file as its text', async () => {
+    const note = await user.notes.create({ title: 'Doc', content: null });
+    const res = await user.http
+      .post(`/api/notes/${note.id}/attachments`)
+      .attach('file', Buffer.from('hello'), {
+        filename: 'a.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    const file = res.body as { id: string };
+
+    const result = await client.callTool({
+      name: 'get_attachment',
+      arguments: { noteId: note.id, id: file.id },
+    });
+
+    expect(result.content).toContainEqual({
+      type: 'resource',
+      resource: expect.objectContaining({ text: 'hello' }) as unknown,
+    });
+  });
+
+  it('keeps the attachments of a locked note to itself', async () => {
+    const note = await user.notes.create({ title: 'Diary', content: null });
+    const picture = await user.attachments.upload(note.id);
+    await user.http
+      .patch(`/api/notes/${note.id}/lock`)
+      .send({ lock: 'pin' })
+      .expect(200);
+
+    const read = await json<{ attachments: unknown }>('get_note', {
+      id: note.id,
+    });
+    expect(read.attachments).toBe(1);
+
+    const fetched = await call('get_attachment', {
+      noteId: note.id,
+      id: picture.id,
+    });
+    expect(fetched.isError).toBe(true);
   });
 
   it('moves a note to the trash', async () => {

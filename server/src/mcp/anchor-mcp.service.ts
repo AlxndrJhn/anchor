@@ -8,7 +8,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { NotesService } from '../notes/services/notes.service';
+import { NoteAttachmentsService } from '../notes/services/note-attachments.service';
+import type { AttachmentResponseDto } from '../notes/dto/attachment-response.dto';
 import { TagsService } from '../tags/tags.service';
+import type { AttachmentType } from 'src/generated/prisma/enums';
 import type { TransformedNote } from '../notes/utils/note-transformer.util';
 import {
   appendMarkdownToContent,
@@ -16,26 +19,34 @@ import {
   markdownToNoteContent,
   noteContentToMarkdown,
 } from './note-markdown.util';
+import {
+  ATTACHMENT_MAX_SENT_BYTES,
+  attachmentContent,
+} from './attachment-content.util';
 
 const SNIPPET_LENGTH = 200;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
 
 type Tag = { id: string; name: string };
+type Content = CallToolResult['content'][number];
 
 const INSTRUCTIONS =
   "Anchor is the user's note taking app. Notes have a title and a body, " +
   'which these tools read and write as markdown: headings, lists, ' +
   'checklists ("- [ ] item", "- [x] done"), bold, italic, ~~strike~~, ' +
   '<u>underline</u>, ==highlight==, links, quotes and code blocks. ' +
-  'Read a note with get_note before changing it. Locked notes keep their ' +
-  'text to themselves, and frozen notes cannot be changed.';
+  'Read a note with get_note before changing it. Pictures, recordings and ' +
+  'files attached to a note are listed by get_note; get_attachment fetches ' +
+  'one, so you can look at a picture. Locked notes keep their text and ' +
+  'attachments to themselves, and frozen notes cannot be changed.';
 
 /** Builds the MCP server Claude talks to, acting as one Anchor user. */
 @Injectable()
 export class AnchorMcpService {
   constructor(
     private readonly notesService: NotesService,
+    private readonly attachmentsService: NoteAttachmentsService,
     private readonly tagsService: TagsService,
   ) {}
 
@@ -106,15 +117,82 @@ export class AnchorMcpService {
       {
         title: 'Read a note',
         description:
-          'Reads a note: its title, its text as markdown, its tags and ' +
-          'its version, which update_note takes to avoid overwriting edits.',
+          'Reads a note: its title, its text as markdown, its tags, its ' +
+          'attachments (pictures, recordings, files; newest first) and its ' +
+          'version, which update_note takes to avoid overwriting edits.',
         inputSchema: { id: z.string().describe('The note id') },
         annotations: { readOnlyHint: true },
       },
       ({ id }) =>
         this.run(async () => {
           const note = await this.notesService.findOne(userId, id);
-          return describe(note, await this.tags(userId));
+          const attachments =
+            note.attachmentCount && !note.lock
+              ? await this.attachmentsService.findAll(userId, id)
+              : undefined;
+          return describe(note, await this.tags(userId), attachments);
+        }),
+    );
+
+    server.registerTool(
+      'get_attachment',
+      {
+        title: 'Fetch an attachment',
+        description:
+          "Fetches one of a note's attachments, by the ids get_note lists: " +
+          'a picture comes back as an image to look at (scaled down if ' +
+          'large), a recording as audio, and a file as its contents.',
+        inputSchema: {
+          noteId: z.string().describe('The note id'),
+          id: z.string().describe('The attachment id, from get_note'),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      ({ noteId, id }) =>
+        this.runContent(async () => {
+          const note = await this.notesService.findOne(userId, noteId);
+          if (note.lock) {
+            throw new HttpException(
+              'This note is locked; unlock it in Anchor to see its ' +
+                'attachments.',
+              HttpStatus.FORBIDDEN,
+            );
+          }
+          const listed = await this.attachmentsService.findAll(userId, noteId);
+          const attachment = listed.find((a) => a.id === id);
+          if (!attachment) {
+            throw new HttpException(
+              'This note has no attachment with that id.',
+              HttpStatus.NOT_FOUND,
+            );
+          }
+          if (
+            attachment.type !== 'image' &&
+            attachment.fileSize > ATTACHMENT_MAX_SENT_BYTES
+          ) {
+            throw new HttpException(
+              `${attachment.originalFilename} is too big to send ` +
+                `(${megabytes(attachment.fileSize)}); open it in Anchor.`,
+              HttpStatus.PAYLOAD_TOO_LARGE,
+            );
+          }
+          const { data } = await this.attachmentsService.readFile(
+            userId,
+            noteId,
+            id,
+          );
+          return [
+            {
+              type: 'text',
+              text: JSON.stringify(attachmentSummary(attachment), null, 2),
+            },
+            await attachmentContent(
+              attachment.type as AttachmentType,
+              attachment.mimeType,
+              data,
+              `anchor://notes/${noteId}/attachments/${id}`,
+            ),
+          ];
         }),
     );
 
@@ -277,22 +355,27 @@ export class AnchorMcpService {
   }
 
   /** Runs a tool, turning what it returns or throws into its result. */
-  private async run(
-    tool: () => Promise<string | object>,
+  private run(tool: () => Promise<string | object>): Promise<CallToolResult> {
+    return this.runContent(async () => {
+      const result = await tool();
+      return [
+        {
+          type: 'text',
+          text:
+            typeof result === 'string'
+              ? result
+              : JSON.stringify(result, null, 2),
+        },
+      ];
+    });
+  }
+
+  /** Runs a tool that builds its own content, such as a picture. */
+  private async runContent(
+    tool: () => Promise<Content[]>,
   ): Promise<CallToolResult> {
     try {
-      const result = await tool();
-      return {
-        content: [
-          {
-            type: 'text',
-            text:
-              typeof result === 'string'
-                ? result
-                : JSON.stringify(result, null, 2),
-          },
-        ],
-      };
+      return { content: await tool() };
     } catch (error) {
       return {
         isError: true,
@@ -344,10 +427,15 @@ function summarize(note: TransformedNote, tags: Tag[]) {
     tags: tagNames(note, tags),
     updatedAt: note.updatedAt,
     ...flags(note),
+    ...(note.attachmentCount ? { attachments: note.attachmentCount } : {}),
   };
 }
 
-function describe(note: TransformedNote, tags: Tag[]) {
+function describe(
+  note: TransformedNote,
+  tags: Tag[],
+  attachments?: AttachmentResponseDto[],
+) {
   return {
     id: note.id,
     title: note.title,
@@ -356,12 +444,34 @@ function describe(note: TransformedNote, tags: Tag[]) {
     createdAt: note.createdAt,
     updatedAt: note.updatedAt,
     ...flags(note),
-    ...(note.attachmentCount ? { attachments: note.attachmentCount } : {}),
+    ...(attachments
+      ? { attachments: attachments.map(attachmentSummary) }
+      : note.attachmentCount
+        ? { attachments: note.attachmentCount }
+        : {}),
     content: note.lock ? null : noteContentToMarkdown(note.content),
     ...(note.lock
       ? { note: 'This note is locked; unlock it in Anchor to read it.' }
       : {}),
   };
+}
+
+function attachmentSummary(attachment: AttachmentResponseDto) {
+  return {
+    id: attachment.id,
+    type: attachment.type,
+    filename: attachment.originalFilename,
+    mimeType: attachment.mimeType,
+    size: megabytes(attachment.fileSize),
+    createdAt: attachment.createdAt,
+    ...(attachment.text ? { text: attachment.text } : {}),
+  };
+}
+
+function megabytes(bytes: number): string {
+  return bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function locked(): HttpException {
