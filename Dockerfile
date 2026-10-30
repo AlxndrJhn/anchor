@@ -83,8 +83,11 @@ COPY --from=web_builder /app/web/.next/static ./web/.next/static
 COPY --from=web_builder /app/web/public ./web/public
 
 COPY docker/docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY docker/anchor-env.sh /app/anchor-env.sh
 COPY docker/supervisord.conf /etc/supervisord.conf
-RUN chmod +x /app/docker-entrypoint.sh
+# `docker exec -it anchor reset-password <email>` for a locked-out account
+COPY docker/reset-password /usr/local/bin/reset-password
+RUN chmod +x /app/docker-entrypoint.sh /usr/local/bin/reset-password
 
 VOLUME ["/data"]
 
