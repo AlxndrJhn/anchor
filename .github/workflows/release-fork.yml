@@ -225,6 +225,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # For the build attestations: a Sigstore certificate (id-token), and
+      # storing the attestation with the repository.
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -242,6 +247,17 @@ jobs:
         with:
           pattern: anchor-desktop-*
           merge-multiple: true
+
+      # Signs a record that each file was built by this workflow from this
+      # commit, so anyone can check a download with `gh attestation verify`.
+      # The installers stay unsigned for Windows and macOS themselves.
+      - name: Attest the release files
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            anchor-fork*.apk
+            Anchor-*.exe
+            Anchor-*.dmg
 
       - name: Create the release
         env:
@@ -268,6 +284,14 @@ jobs:
               echo 'The installers are not signed. On Windows, if SmartScreen stops it, choose More info › Run anyway. On macOS, right-click the app and choose Open the first time, or allow it under System Settings › Privacy & Security.'
               echo
             fi
+            echo "## Verifying a download"
+            echo
+            echo "Each file attached here has a signed record that it was built by this repository's release workflow from ${GITHUB_SHA::7}. To check one, with the [GitHub CLI](https://cli.github.com):"
+            echo
+            echo '```bash'
+            echo "gh attestation verify <file> --repo $GITHUB_REPOSITORY"
+            echo '```'
+            echo
             echo "## Docker (amd64, arm64)"
             echo
             echo '```bash'
