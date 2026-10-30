@@ -827,9 +827,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final lockable = !_isNew && existing != null && !existing.isTrashed
         ? existing
         : null;
+    // The sheet closes before an option runs, so the options use this
+    // screen's context, not the sheet's: that one is gone by then.
     AppBottomSheet.show(
       context,
-      builder: (context) => NoteOptionsSheet(
+      builder: (_) => NoteOptionsSheet(
         isReadOnly: _isReadOnly,
         isTrashed: _existingNote?.isTrashed ?? false,
         shareCount: _existingNote?.shareIds?.length ?? 0,
