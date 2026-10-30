@@ -138,6 +138,21 @@ describe('mcp', () => {
       query: 'hid',
     });
     expect(found.notes.map((n) => n.title)).toEqual(['Hidden']);
+
+    // Nor does the archive list it until it is searched for.
+    await user.http
+      .post('/api/notes/bulk/archive')
+      .send({ noteIds: [hidden.id] })
+      .expect(201);
+    const archived = await json<{ notes: NoteResult[] }>('list_notes', {
+      scope: 'archive',
+    });
+    expect(archived.notes).toEqual([]);
+    const foundArchived = await json<{ notes: NoteResult[] }>('list_notes', {
+      scope: 'archive',
+      query: 'hid',
+    });
+    expect(foundArchived.notes.map((n) => n.title)).toEqual(['Hidden']);
   });
 
   it('changes a note, refusing a stale version', async () => {
@@ -206,6 +221,8 @@ describe('mcp', () => {
 
     const listed = await call('list_notes', { query: 'secret' });
     expect(listed.text).not.toContain('secret');
+    // Found by its title alone: a word of its text doesn't bring it up.
+    expect(listed.text).not.toContain('Diary');
 
     const append = await call('append_to_note', { id: note.id, content: 'x' });
     expect(append.isError).toBe(true);

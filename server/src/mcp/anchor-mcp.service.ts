@@ -92,7 +92,11 @@ export class AnchorMcpService {
               tagId,
               query ? limit : undefined,
             );
-            if (!query) notes = notes.filter((note) => !note.isInvisible);
+            // The server's search reads every note's text; a locked one is
+            // found by its title alone, as in the apps.
+            notes = query
+              ? notes.filter((n) => matches(n, query))
+              : notes.filter((note) => !note.isInvisible);
           } else {
             notes =
               scope === 'archive'
@@ -100,6 +104,11 @@ export class AnchorMcpService {
                 : await this.notesService.findTrashed(userId);
             if (tagId) notes = notes.filter((n) => n.tagIds.includes(tagId));
             if (query) notes = notes.filter((n) => matches(n, query));
+            // Invisible notes stay out of the archive unless searched for;
+            // the trash lists them, so they can be put back.
+            else if (scope === 'archive') {
+              notes = notes.filter((n) => !n.isInvisible);
+            }
           }
 
           const page = notes.slice(0, limit);
@@ -399,9 +408,12 @@ function tagNames(note: TransformedNote, tags: Tag[]): string[] {
 
 function matches(note: TransformedNote, query: string): boolean {
   const wanted = query.toLowerCase();
-  return [note.title, note.lock ? '' : note.content, note.pictureText].some(
-    (text) => text?.toLowerCase().includes(wanted),
-  );
+  // A locked note is found by its title alone: nothing of its text or its
+  // pictures' text is given away.
+  const texts = note.lock
+    ? [note.title]
+    : [note.title, note.content, note.pictureText];
+  return texts.some((text) => text?.toLowerCase().includes(wanted));
 }
 
 function flags(note: TransformedNote) {
@@ -411,6 +423,7 @@ function flags(note: TransformedNote) {
     ...(note.state === 'trashed' ? { trashed: true } : {}),
     ...(note.isFrozen ? { frozen: true } : {}),
     ...(note.lock ? { locked: true } : {}),
+    ...(note.isInvisible ? { invisible: true } : {}),
     ...(note.permission !== 'owner' ? { sharedWithYou: note.permission } : {}),
   };
 }
