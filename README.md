@@ -331,9 +331,9 @@ If you want to build from source or customize the image:
 Download the Android mobile app.
 
 1. **Visit the releases page:**
-   Go to [GitHub Releases](https://github.com/AlxndrJhn/anchor/releases), or
-   download the [latest APK](https://github.com/AlxndrJhn/anchor/releases/latest/download/anchor-fork.apk)
-   directly.
+   Go to [GitHub Releases](https://github.com/AlxndrJhn/anchor/releases).
+   A release that changed nothing for Android has no APK; its notes link to
+   the release with the current one.
 
 2. **Download the latest release:**
    Each release has one APK per kind of phone:
