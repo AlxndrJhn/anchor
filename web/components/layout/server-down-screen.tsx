@@ -99,7 +99,7 @@ export function ServerDownScreen({
           </summary>
           <ul className="m-0 grid gap-1.5 pr-4 pl-10 leading-normal">
             <li>Check your internet connection.</li>
-            <li>The server may be restarting. Anchor will keep trying.</li>
+            <li>The server may be restarting. Anchor+ will keep trying.</li>
             <li>
               If it’s still down after a few minutes, contact the person who
               runs <b className="font-semibold">{host}</b>.

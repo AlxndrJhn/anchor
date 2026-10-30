@@ -1,10 +1,10 @@
 {
   "name": "anchor-desktop",
-  "productName": "Anchor",
+  "productName": "Anchor+",
   "version": "0.17.2",
-  "description": "Anchor for Windows and macOS: your own Anchor server's web client in a window",
+  "description": "Anchor+ for Windows and macOS: your own Anchor server's web client in a window",
   "license": "AGPL-3.0",
-  "author": "Anchor",
+  "author": "Anchor+",
   "homepage": "https://github.com/AlxndrJhn/anchor",
   "private": true,
   "main": "src/main.js",

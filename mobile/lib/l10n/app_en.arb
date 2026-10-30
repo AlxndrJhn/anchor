@@ -720,7 +720,7 @@
   "@settingsColorSchemeLofi": {
     "description": "Under the Color scheme setting while the Lo-fi style is on, which ignores the scheme. Lo-fi is the style's name."
   },
-  "colorSchemeAnchor": "Anchor",
+  "colorSchemeAnchor": "Anchor+",
   "@colorSchemeAnchor": {
     "description": "Name of the app's own color scheme, listed with Nord, Dracula and others. The app's name."
   },

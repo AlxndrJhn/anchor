@@ -261,7 +261,7 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
                   <Field
                     label="Client secret"
                     aside="Optional"
-                    help="The Anchor phone app needs a public client, so leave this empty if people sign in from their phones."
+                    help="The Anchor+ phone app needs a public client, so leave this empty if people sign in from their phones."
                   >
                     <PasswordInput
                       value={form.clientSecret}

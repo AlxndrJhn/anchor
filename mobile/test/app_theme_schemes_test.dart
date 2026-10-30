@@ -446,7 +446,7 @@ void main() {
         matching: find.byType(GroupedList),
       );
       expect(
-        find.descendant(of: appearance, matching: find.text('Anchor')),
+        find.descendant(of: appearance, matching: find.text('Anchor+')),
         findsOneWidget,
       );
       expect(_groupOf(tester, appearance).color, AnchorColors.light.appSurface);

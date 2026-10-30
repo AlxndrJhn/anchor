@@ -973,7 +973,7 @@ abstract class AppLocalizations {
   /// Name of the app's own color scheme, listed with Nord, Dracula and others. The app's name.
   ///
   /// In en, this message translates to:
-  /// **'Anchor'**
+  /// **'Anchor+'**
   String get colorSchemeAnchor;
 
   /// Label of the Appearance setting where colors pasted as JSON override the color scheme's.

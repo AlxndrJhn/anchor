@@ -522,7 +522,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Lo-fi draws in pencil grays, whatever the scheme.';
 
   @override
-  String get colorSchemeAnchor => 'Anchor';
+  String get colorSchemeAnchor => 'Anchor+';
 
   @override
   String get settingsCustomTheme => 'Custom theme';
