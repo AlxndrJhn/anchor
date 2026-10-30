@@ -728,6 +728,31 @@ void main() {
     expect(find.byType(ReminderChip), findsOneWidget);
   });
 
+  testWidgets('Lock… locks the note once a lock is picked', (tester) async {
+    const note = Note(id: 'n1', title: 'Diary');
+    when(() => notesRepo.getNote('n1')).thenAnswer((_) async => note);
+    when(() => notesRepo.setLock(any(), any())).thenAnswer((_) async {});
+    // A phone's height, so Lock… is on screen in the options sheet.
+    tester.view.physicalSize = const Size(400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await pumpScreen(tester, note: note, fromList: true);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(LucideIcons.ellipsisVertical));
+    await tester.pumpAndSettle();
+    expect(find.text('Lock…'), findsOneWidget);
+    await tester.tap(find.byIcon(LucideIcons.lock));
+    await tester.pumpAndSettle();
+    // The options sheet has gone by the time a lock is picked.
+    await tester.tap(find.byKey(const ValueKey('pick-lock-tap')));
+    await tester.pumpAndSettle();
+
+    verify(() => notesRepo.setLock(['n1'], NoteLock.tap)).called(1);
+    expect(find.byType(NoteEditScreen), findsNothing);
+  });
+
   testWidgets('pinning saves only the pin', (tester) async {
     when(
       () => notesRepo.bulkSetPinned(any(), any()),
