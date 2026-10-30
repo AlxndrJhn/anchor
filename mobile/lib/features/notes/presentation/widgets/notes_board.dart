@@ -6,6 +6,7 @@ import '../../../../core/motion/reorder_animation.dart';
 import '../../../../core/motion/springs.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../../core/widgets/destruction/strike.dart';
 import '../../../../core/widgets/grouped_list.dart';
 import '../../../../core/widgets/pressable.dart';
 import '../../../../core/widgets/sliver_masonry.dart';
@@ -99,6 +100,9 @@ class NotesBoard extends StatelessWidget {
     return switch (layout) {
       CardLayout.masonry => SliverMasonry(
         itemKeys: [for (final note in notes) note.id],
+        // After a delete the other cards keep their columns: only those
+        // below the gap move up into it.
+        keepColumns: isCardStrikeArmed,
         mainAxisSpacing: gap,
         crossAxisSpacing: gap,
         itemBuilder: (context, i) => cardBuilder(notes[i], i),

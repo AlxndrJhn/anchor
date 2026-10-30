@@ -6,12 +6,15 @@ import 'package:flutter/widgets.dart';
 
 /// A lazy grid that puts each child in the shortest column. Heights it has
 /// measured, kept by [itemKeys], place the children above the ones shown.
+/// While [keepColumns], children that are only removed (deleted notes) leave
+/// the others in their columns: those below a gap move up into it.
 class SliverMasonry extends SliverMultiBoxAdaptorWidget {
   SliverMasonry({
     super.key,
     required this.itemKeys,
     required NullableIndexedWidgetBuilder itemBuilder,
     ChildIndexGetter? findChildIndexCallback,
+    this.keepColumns = false,
     this.columnCount = 2,
     this.mainAxisSpacing = 0,
     this.crossAxisSpacing = 0,
@@ -26,6 +29,7 @@ class SliverMasonry extends SliverMultiBoxAdaptorWidget {
   /// One per child, the same child keeping the same key across rebuilds.
   final List<Object> itemKeys;
 
+  final bool keepColumns;
   final int columnCount;
   final double mainAxisSpacing;
   final double crossAxisSpacing;
@@ -46,6 +50,7 @@ class SliverMasonry extends SliverMultiBoxAdaptorWidget {
     RenderSliverMasonry renderObject,
   ) {
     renderObject
+      ..keepColumns = keepColumns
       ..itemKeys = itemKeys
       ..columnCount = columnCount
       ..mainAxisSpacing = mainAxisSpacing
@@ -70,14 +75,40 @@ class RenderSliverMasonry extends RenderSliverMultiBoxAdaptor {
        _mainAxisSpacing = mainAxisSpacing,
        _crossAxisSpacing = crossAxisSpacing;
 
+  bool keepColumns = false;
+
   List<Object> _itemKeys;
   set itemKeys(List<Object> value) {
     if (listEquals(value, _itemKeys)) return;
+    _keepColumns(_itemKeys, value);
     _itemKeys = value;
     final kept = value.toSet();
     _extents.removeWhere((key, _) => !kept.contains(key));
     _isPlaced = false;
     markNeedsLayout();
+  }
+
+  /// The columns children keep, by key, since a delete, instead of going
+  /// into the shortest one.
+  final Map<Object, int> _kept = {};
+
+  /// After a delete ([keepColumns], [after] is [before] less some children)
+  /// the rest keep their columns. Otherwise moved and new children, and all
+  /// of them when the list was only narrowed (a search), are placed afresh.
+  void _keepColumns(List<Object> before, List<Object> after) {
+    final removal = isRemoval(before, after);
+    if (removal && keepColumns && _columns.length == before.length) {
+      for (var i = 0; i < before.length; i++) {
+        _kept[before[i]] = _columns[i];
+      }
+    } else if (removal) {
+      _kept.clear();
+    } else {
+      final moved = after.skip(firstDifference(before, after) ?? 0).toSet();
+      _kept.removeWhere((key, _) => moved.contains(key));
+    }
+    final current = after.toSet();
+    _kept.removeWhere((key, _) => !current.contains(key));
   }
 
   int _columnCount;
@@ -86,6 +117,7 @@ class RenderSliverMasonry extends RenderSliverMultiBoxAdaptor {
     assert(value > 0);
     if (value == _columnCount) return;
     _columnCount = value;
+    _kept.clear();
     markNeedsLayout();
   }
 
@@ -142,10 +174,12 @@ class RenderSliverMasonry extends RenderSliverMultiBoxAdaptor {
       _columns = List<int>.filled(count, 0);
     }
     for (var i = 0; i < count; i++) {
-      final lowest = ends.reduce(math.min);
-      var column = 0;
-      while (ends[column] > lowest + _mainAxisSpacing) {
-        column++;
+      var column = _kept[_itemKeys[i]] ?? 0;
+      if (!_kept.containsKey(_itemKeys[i])) {
+        final lowest = ends.reduce(math.min);
+        while (ends[column] > lowest + _mainAxisSpacing) {
+          column++;
+        }
       }
       _offsets[i] = ends[column];
       _columns[i] = column;
@@ -300,4 +334,29 @@ class RenderSliverMasonry extends RenderSliverMultiBoxAdaptor {
     );
     childManager.didFinishLayout();
   }
+}
+
+/// The first index at which [a] and [b] differ, or null when they're equal.
+@visibleForTesting
+int? firstDifference(List<Object> a, List<Object> b) {
+  final shorter = math.min(a.length, b.length);
+  for (var i = 0; i < shorter; i++) {
+    if (a[i] != b[i]) return i;
+  }
+  return a.length == b.length ? null : shorter;
+}
+
+/// Whether [b] is [a] with some of its items left out, the rest in order.
+@visibleForTesting
+bool isRemoval(List<Object> a, List<Object> b) {
+  if (b.length >= a.length) return false;
+  var i = 0;
+  for (final item in b) {
+    while (i < a.length && a[i] != item) {
+      i++;
+    }
+    if (i == a.length) return false;
+    i++;
+  }
+  return true;
 }

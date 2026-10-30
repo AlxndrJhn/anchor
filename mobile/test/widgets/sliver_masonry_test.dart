@@ -147,4 +147,85 @@ void main() {
     expect(tester.getTopLeft(find.byKey(const ValueKey(0))).dy, 150);
     expect(tester.getSize(find.byKey(const ValueKey(0))).height, 373);
   });
+
+  test('a removal leaves the rest in order', () {
+    expect(isRemoval(['a', 'b', 'c'], ['a', 'c']), isTrue);
+    expect(isRemoval(['a', 'b', 'c'], []), isTrue);
+    expect(isRemoval(['a', 'b', 'c'], ['c', 'a']), isFalse);
+    expect(isRemoval(['a', 'b', 'c'], ['a', 'b', 'c']), isFalse);
+    expect(isRemoval(['a', 'b'], ['a', 'd']), isFalse);
+  });
+
+  group('deleting a card', () {
+    final heights = {
+      for (var i = 0; i < 60; i++) 'note $i': 80.0 + (i * 37) % 220,
+    };
+    Widget notes(List<String> keys, {required bool keepColumns}) =>
+        SliverMasonry(
+          itemKeys: keys,
+          keepColumns: keepColumns,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          itemBuilder: (context, i) =>
+              SizedBox(key: ValueKey(keys[i]), height: heights[keys[i]]),
+          findChildIndexCallback: (key) {
+            final i = keys.indexWhere((k) => ValueKey(k) == key);
+            return i < 0 ? null : i;
+          },
+        );
+    Map<String, Offset> places(WidgetTester tester, List<String> keys) => {
+      for (final key in keys)
+        if (find.byKey(ValueKey(key)).evaluate().isNotEmpty)
+          key: tester.getTopLeft(find.byKey(ValueKey(key))),
+    };
+
+    for (final scroll in [0.0, 900.0]) {
+      testWidgets('at $scroll leaves the others in their columns', (
+        tester,
+      ) async {
+        var keys = heights.keys.toList();
+        final controller = await pumpBoard(tester, [
+          notes(keys, keepColumns: false),
+        ]);
+        controller.jumpTo(scroll);
+        await tester.pump();
+
+        for (var round = 0; round < 5; round++) {
+          final before = places(tester, keys);
+          final shown = before.keys
+              .where((k) => before[k]!.dy > 0 && before[k]!.dy < 600)
+              .toList();
+          final gone = shown[shown.length ~/ 3];
+          keys = [...keys]..remove(gone);
+          await tester.pumpWidget(
+            MaterialApp(
+              home: CustomScrollView(
+                controller: controller,
+                slivers: [
+                  const SliverToBoxAdapter(child: SizedBox(height: 150)),
+                  SliverMainAxisGroup(
+                    slivers: [notes(keys, keepColumns: true)],
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                ],
+              ),
+            ),
+          );
+          final after = places(tester, keys);
+          for (final key in after.keys.where(before.containsKey)) {
+            final was = before[key]!, now = after[key]!;
+            expect(now.dx, was.dx, reason: 'round $round: $key moved over');
+            // Only the cards below the gap, in its column, move: up.
+            final below =
+                was.dx == before[gone]!.dx && was.dy > before[gone]!.dy;
+            expect(
+              now.dy,
+              below ? lessThan(was.dy) : moreOrLessEquals(was.dy),
+              reason: 'round $round: $key after $gone left',
+            );
+          }
+        }
+      });
+    }
+  });
 }
