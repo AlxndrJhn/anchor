@@ -462,37 +462,77 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     }
   }
 
+  /// A new note, not written yet, offers what a saved one does; an option
+  /// that needs the note creates it first.
   Future<void> _showMore() async {
-    final note = _draft.note;
-    if (note == null) {
+    final opened = _draft.note;
+    if (opened == null && !_draft.isNew) {
       return;
     }
+    final isTrashed = opened?.isTrashed ?? false;
     final editor = _isReadOnly ? null : _editor;
     final checklist = editor?.checklistCount;
     final canShowCheckboxes = editor?.canShowCheckboxes ?? false;
     final action = await showNoteMoreSheet(
       context,
-      isPinned: note.isPinned,
-      isOwner: note.isOwner,
+      isPinned: opened?.isPinned ?? _draft.newPinned,
+      isOwner: opened?.isOwner ?? true,
       canSeeHistory: !_draft.isViewOnly,
-      canCopy: !note.isTrashed,
-      // Saved notes, not in the trash, can be locked.
-      canLock: !note.isTrashed,
-      lock: note.lock,
-      shareCount: note.shareIds?.length ?? 0,
+      canCopy: !isTrashed,
+      // Notes not in the trash can be locked.
+      canLock: !isTrashed,
+      lock: opened?.lock,
+      shareCount: opened?.shareIds?.length ?? 0,
       hasChecklist: (checklist?.items ?? 0) > 0,
       hasCheckedItems: (checklist?.checked ?? 0) > 0,
       canShowCheckboxes: canShowCheckboxes,
       canHideCheckboxes:
           !canShowCheckboxes && (editor?.isAllChecklist ?? false),
-      canAddPictures: editor != null && !note.isTrashed,
-      canFreeze: note.isOwner && note.isActive,
-      isFrozen: note.isFrozen,
-      // Saved notes, not in the trash, can be made invisible.
-      canMakeInvisible: !note.isTrashed,
-      isInvisible: note.isInvisible,
+      canAddPictures: editor != null && !isTrashed,
+      canFreeze: opened == null || (opened.isOwner && opened.isActive),
+      isFrozen: opened?.isFrozen ?? false,
+      // Notes not in the trash can be made invisible.
+      canMakeInvisible: !isTrashed,
+      isInvisible: opened?.isInvisible ?? false,
     );
     if (action == null || !mounted) return;
+    if (opened == null) {
+      switch (action) {
+        // A new note is then created pinned.
+        case NoteAction.pin:
+          Haptics.selection();
+          _draft.setNewPinned(!_draft.newPinned);
+          return;
+        // Nothing to save for these: Send says when there's nothing to
+        // send, and a picture saves the note as it goes in.
+        case NoteAction.send ||
+            NoteAction.addImage ||
+            NoteAction.takePicture ||
+            NoteAction.takeSeveral:
+          break;
+        default:
+          await _draft.createNote();
+          // Sharing asks the server about the note.
+          await requestAppSync(trigger: 'NoteEdit.createdForMore');
+          if (!mounted) return;
+      }
+    }
+    final note = _draft.note;
+    if (note == null) {
+      switch (action) {
+        case NoteAction.send:
+          await _send();
+        case NoteAction.addImage:
+          await _addImages();
+        case NoteAction.takePicture:
+          await _takePicture();
+        case NoteAction.takeSeveral:
+          await _takeSeveralPictures();
+        default:
+          break;
+      }
+      return;
+    }
     final actions = NoteActions(context, ref);
     final l10n = context.l10n;
     switch (action) {
@@ -576,22 +616,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         },
       );
     }
-  }
-
-  /// Pin in More for a new note, not written yet: it is then created
-  /// pinned.
-  Future<void> _showNewNoteMore() async {
-    final action = await showNoteMoreSheet(
-      context,
-      isPinned: _draft.newPinned,
-      isOwner: true,
-      canSeeHistory: false,
-      shareCount: 0,
-      isNewNote: true,
-    );
-    if (action != NoteAction.pin || !mounted) return;
-    Haptics.selection();
-    _draft.setNewPinned(!_draft.newPinned);
   }
 
   /// The bar's Delete: moves your note to the trash, or takes a note shared
@@ -1152,7 +1176,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       onArchive: isNew || note != null ? _toggleArchived : null,
       // A note this person froze can't be deleted until it's unfrozen.
       onTrash: isNew || note == null || note.isOwnFrozen ? null : _trash,
-      onMore: isNew ? _showNewNoteMore : _showMore,
+      onMore: _showMore,
     );
 
     final content = Column(

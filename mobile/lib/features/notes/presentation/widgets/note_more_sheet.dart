@@ -25,8 +25,6 @@ Future<NoteAction?> showNoteMoreSheet(
   bool isFrozen = false,
   bool canMakeInvisible = false,
   bool isInvisible = false,
-  // A new note, not written yet: only Pin.
-  bool isNewNote = false,
 }) {
   final l10n = context.l10n;
   final pin = SheetChoice(
@@ -34,13 +32,6 @@ Future<NoteAction?> showNoteMoreSheet(
     icon: isPinned ? LucideIcons.pinOff : LucideIcons.pin,
     label: isPinned ? l10n.actionUnpin : l10n.actionPin,
   );
-  if (isNewNote) {
-    return showChoiceSheet<NoteAction>(
-      context,
-      semanticLabel: l10n.commonMore,
-      choices: [pin],
-    );
-  }
   return showChoiceSheet<NoteAction>(
     context,
     semanticLabel: l10n.commonMore,

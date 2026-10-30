@@ -984,8 +984,15 @@ void main() {
 
       await tester.tap(barButton('More'));
       await tester.pumpAndSettle();
-      // Only Pin: the rest needs a saved note.
-      expect(find.text('Send'), findsNothing);
+      // The same options as a saved note.
+      for (final option in [
+        'Share',
+        'Version history',
+        'Send',
+        'Make a copy',
+      ]) {
+        expect(find.text(option), findsOneWidget);
+      }
       await tester.tap(find.text('Pin'));
       await tester.pumpAndSettle();
 
