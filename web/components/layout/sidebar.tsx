@@ -6,6 +6,7 @@ import {
   Archive,
   ChevronsUpDown,
   CloudOff,
+  Download,
   Ellipsis,
   GripVertical,
   Hash,
@@ -14,6 +15,7 @@ import {
   Moon,
   NotebookPen,
   Pencil,
+  Play,
   Plus,
   Settings,
   ShieldCheck,
@@ -55,7 +57,7 @@ import {
 } from "@/features/tags";
 import { TAG_COLORS } from "@/lib/design/tokens";
 import { useLastShown } from "@/lib/hooks/use-last-shown";
-import { isServerless } from "@/lib/local-backend/mode";
+import { isDemo, isServerless } from "@/lib/local-backend/mode";
 import { rememberNewNoteButton } from "@/lib/morph";
 import { glidePill, prefersReducedMotion } from "@/lib/motion";
 import { isMac } from "@/lib/platform";
@@ -70,6 +72,10 @@ interface SidebarProps {
   drawer?: boolean;
   onNavigate?: () => void;
 }
+
+/** The demo build's list of feature demos, above the account button. */
+const DEMOS_HREF = "/demos";
+const RELEASES_HREF = "https://github.com/AlxndrJhn/anchor/releases/latest";
 
 const PAGES = [
   { href: "/notes", label: "Notes", icon: NotebookPen },
@@ -187,7 +193,9 @@ export function Sidebar({
   const currentRow =
     pathname === "/notes" && tagId
       ? `tag:${tagId}`
-      : (PAGES.find((p) => pathname === p.href)?.href ?? "");
+      : pathname === DEMOS_HREF
+        ? DEMOS_HREF
+        : (PAGES.find((p) => pathname === p.href)?.href ?? "");
 
   const cachedTag = (id: string) =>
     queryClient.getQueryData<Tag[]>(["tags"])?.find((t) => t.id === id);
@@ -642,6 +650,43 @@ export function Sidebar({
                 {isMac() ? "⌘\\" : "Ctrl \\"}
               </kbd>
             </button>
+          </Tip>
+        )}
+        {isDemo && (
+          <Tip
+            label="Feature demos"
+            side="right"
+            isDisabled={!isNarrow}
+            isFocusOnly
+          >
+            <Link
+              href={DEMOS_HREF}
+              onClick={onNavigate}
+              data-row={DEMOS_HREF}
+              aria-current={currentRow === DEMOS_HREF ? "page" : undefined}
+              className={rowClass}
+            >
+              <Play aria-hidden />
+              <span className={labelClass}>Feature demos</span>
+            </Link>
+          </Tip>
+        )}
+        {isDemo && (
+          <Tip
+            label="Downloads"
+            side="right"
+            isDisabled={!isNarrow}
+            isFocusOnly
+          >
+            <a
+              href={RELEASES_HREF}
+              target="_blank"
+              rel="noreferrer"
+              className={rowClass}
+            >
+              <Download aria-hidden />
+              <span className={labelClass}>Downloads</span>
+            </a>
           </Tip>
         )}
         {user && (

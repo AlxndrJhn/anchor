@@ -17,7 +17,7 @@ import { pictureBlob, type Seed } from "./seed";
 export interface Demo {
   slug: string;
   title: string;
-  /** One line for the list in Settings. */
+  /** One line for the list at /demos. */
   summary: string;
   seed: Seed;
   /** The page it opens on. */
@@ -94,7 +94,7 @@ export const welcome: Seed = {
       background: "color_teal",
       lines: [
         "Everything here lives only in this tab: a reload starts over.",
-        "Settings › Feature demos plays a short demo of each feature.",
+        "Feature demos, in the sidebar, plays a short demo of each feature.",
       ],
     },
     ...everyday,

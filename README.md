@@ -26,7 +26,7 @@ Each release also publishes the web app on GitHub Pages, without a server:
   and never leave it; Settings › Import and export backs them up.
 - **[alxndrjhn.github.io/anchor/demo](https://alxndrjhn.github.io/anchor/demo/)**:
   a playground with sample notes, kept in memory only: a reload starts it
-  over. Settings › Feature demos plays a short demo of each feature, after
+  over. Feature demos, in the sidebar, plays a short demo of each feature, after
   which it's yours to try; each has its own address, such as
   [/demo/freeze](https://alxndrjhn.github.io/anchor/demo/freeze).
 
