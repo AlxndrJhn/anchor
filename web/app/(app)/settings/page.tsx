@@ -6,7 +6,6 @@ import { AnchorLogo } from "@/components/layout/brand";
 import {
   ApiTokenSection,
   AppearanceSection,
-  DemosSection,
   EditorSection,
   ImportExportSection,
   NoteLocksSection,
@@ -18,12 +17,7 @@ import {
   SettingsNav,
 } from "@/features/settings";
 import { api } from "@/lib/api/client";
-import {
-  appMode,
-  basePath,
-  isDemo,
-  isServerless,
-} from "@/lib/local-backend/mode";
+import { appMode, basePath, isServerless } from "@/lib/local-backend/mode";
 
 export default function SettingsPage() {
   // As in the Android app's About.
@@ -37,7 +31,6 @@ export default function SettingsPage() {
       <div className="grid grid-cols-[176px_minmax(0,640px)] items-start gap-10 pt-1 max-md:grid-cols-[minmax(0,1fr)] max-md:gap-5">
         <SettingsNav />
         <div className="grid min-w-0 gap-8">
-          {isDemo && <DemosSection />}
           <ProfileSection />
           <AppearanceSection />
           <EditorSection />
@@ -61,7 +54,7 @@ export default function SettingsPage() {
                     <span className="text-meta text-muted-foreground">
                       Your notes are kept in this browser only.{" "}
                       <a
-                        href={`${basePath}/demo/settings#set-demos`}
+                        href={`${basePath}/demo/demos`}
                         className="font-semibold text-accent-ink underline decoration-current/35 underline-offset-3 hover:decoration-current"
                       >
                         Watch the feature demos

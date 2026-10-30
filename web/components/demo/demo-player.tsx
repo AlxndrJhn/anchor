@@ -363,33 +363,31 @@ export function DemoPlayer() {
           )}
         </div>
       )}
-      {status === "idle" &&
-        !isNudgeClosed &&
-        !pathname.startsWith("/settings") && (
-          // Above a phone's New note button.
-          <section
-            aria-label="Feature demos"
-            className="pointer-events-auto fixed bottom-4 left-1/2 z-[2147483001] flex w-[min(560px,calc(100vw-32px))] max-md:bottom-24 -translate-x-1/2 items-center gap-3 rounded-xl bg-popover p-3 pl-4 text-popover-foreground shadow-[0_0_0_1px_var(--border),var(--sh-lg,0_12px_32px_rgb(0_0_0/.25))] animate-pop-up"
+      {status === "idle" && !isNudgeClosed && pathname !== "/demos" && (
+        // Above a phone's New note button.
+        <section
+          aria-label="Feature demos"
+          className="pointer-events-auto fixed bottom-4 left-1/2 z-[2147483001] flex w-[min(560px,calc(100vw-32px))] max-md:bottom-24 -translate-x-1/2 items-center gap-3 rounded-xl bg-popover p-3 pl-4 text-popover-foreground shadow-[0_0_0_1px_var(--border),var(--sh-lg,0_12px_32px_rgb(0_0_0/.25))] animate-pop-up"
+        >
+          <p className="m-0 min-w-0 flex-1 text-ui leading-snug">
+            Short demos show each feature, then it’s your turn.
+          </p>
+          <Button size="sm" asChild>
+            <Link href="/demos">
+              <Play />
+              Open demo list
+            </Link>
+          </Button>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={() => setIsNudgeClosed(true)}
+            className="grid size-7 flex-none cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-foreground/6"
           >
-            <p className="m-0 min-w-0 flex-1 text-ui leading-snug">
-              Short demos show each feature, then it’s your turn.
-            </p>
-            <Button size="sm" asChild>
-              <Link href="/settings#set-demos">
-                <Play />
-                Open demo list
-              </Link>
-            </Button>
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={() => setIsNudgeClosed(true)}
-              className="grid size-7 flex-none cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-foreground/6"
-            >
-              <X className="size-4" />
-            </button>
-          </section>
-        )}
+            <X className="size-4" />
+          </button>
+        </section>
+      )}
       {demo && status !== "idle" && !isHidden && (
         <section
           ref={panel}
@@ -499,7 +497,7 @@ export function DemoPlayer() {
                   Play again
                 </Button>
                 <Button variant="quiet" size="sm" asChild>
-                  <Link href="/settings#set-demos">
+                  <Link href="/demos" onClick={() => setIsHidden(true)}>
                     <Play />
                     All feature demos
                   </Link>
