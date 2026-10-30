@@ -30,6 +30,8 @@ import '../../../core/widgets/pressable.dart';
 import '../../../l10n/l10n.dart';
 import '../../notes/presentation/widgets/media_pill.dart';
 import '../data/debug_report.dart';
+import '../data/debug_video_encoder.dart';
+import '../data/mp4_muxer.dart';
 
 /// Where debug reports are filed: the fork this build updates from.
 String get debugReportRepository =>
@@ -159,7 +161,8 @@ class _DebugPlayerScreenState extends State<DebugPlayerScreen>
       'screen_height': media.size.height,
       'pixel_ratio': media.devicePixelRatio,
     };
-    return _buildInIsolate(_recording, List.of(_problems), app, device);
+    final h264 = await encodeH264(_recording.frames);
+    return _buildInIsolate(_recording, List.of(_problems), app, device, h264);
   }
 
   Future<void> _share(BuildContext button) async {
@@ -417,8 +420,15 @@ Future<Uint8List> _buildInIsolate(
   List<DebugProblem> problems,
   Map<String, Object?> app,
   Map<String, Object?> device,
+  H264Video? h264,
 ) => Isolate.run(
-  () => buildDebugReport(recording, problems, app: app, device: device),
+  () => buildDebugReport(
+    recording,
+    problems,
+    app: app,
+    device: device,
+    h264: h264,
+  ),
 );
 
 /// A marked problem: what was expected, and when; a tap goes there.

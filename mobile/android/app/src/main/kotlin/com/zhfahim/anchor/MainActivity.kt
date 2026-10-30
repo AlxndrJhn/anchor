@@ -7,6 +7,7 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import com.zhfahim.anchor.debug.DebugVideoPlugin
 import com.zhfahim.anchor.files.DeviceFilesPlugin
 import com.zhfahim.anchor.lock.ScreenOffPlugin
 import com.zhfahim.anchor.photos.PhotoConverterPlugin
@@ -99,6 +100,7 @@ class MainActivity : FlutterFragmentActivity() {
         flutterEngine.plugins.add(UpdateInstallerPlugin())
         flutterEngine.plugins.add(ScreenOffPlugin())
         flutterEngine.plugins.add(DeviceFilesPlugin())
+        flutterEngine.plugins.add(DebugVideoPlugin())
     }
 
     private fun preferFastestRefreshRate() {
