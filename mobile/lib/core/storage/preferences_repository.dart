@@ -52,6 +52,20 @@ class PreferencesRepository {
     await _storage.write(key: StorageKeys.burnDeleted, value: value.toString());
   }
 
+  /// The note bar's actions, in order; null until changed.
+  Future<String?> getQuickActions() => _read(StorageKeys.quickActions);
+
+  Future<void> setQuickActions(String value) async {
+    await _storage.write(key: StorageKeys.quickActions, value: value);
+  }
+
+  /// Actions offered neither in the bar nor in More.
+  Future<String?> getHiddenActions() => _read(StorageKeys.hiddenActions);
+
+  Future<void> setHiddenActions(String value) async {
+    await _storage.write(key: StorageKeys.hiddenActions, value: value);
+  }
+
   /// Most recent last.
   Future<List<String>> getFoldedChecklistNotes() =>
       _readIds(StorageKeys.foldedChecklistNotes);

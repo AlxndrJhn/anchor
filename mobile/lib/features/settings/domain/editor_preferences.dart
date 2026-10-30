@@ -1,4 +1,5 @@
 import '../../../core/theme/note_typography.dart';
+import '../../notes/domain/quick_action.dart';
 
 class EditorPreferences {
   /// Sorts checked items to the bottom.
@@ -10,11 +11,19 @@ class EditorPreferences {
   final NoteFont noteFont;
   final NoteTextSize noteTextSize;
 
+  /// The note bar's actions beside More, in order.
+  final List<QuickAction> quickActions;
+
+  /// Actions turned off: in neither the bar nor More.
+  final Set<QuickAction> hiddenActions;
+
   const EditorPreferences({
     this.sortChecklistItems = true,
     this.burnDeleted = true,
     this.noteFont = NoteFont.sans,
     this.noteTextSize = NoteTextSize.standard,
+    this.quickActions = QuickAction.defaults,
+    this.hiddenActions = const {},
   });
 
   EditorPreferences copyWith({
@@ -22,12 +31,16 @@ class EditorPreferences {
     bool? burnDeleted,
     NoteFont? noteFont,
     NoteTextSize? noteTextSize,
+    List<QuickAction>? quickActions,
+    Set<QuickAction>? hiddenActions,
   }) {
     return EditorPreferences(
       sortChecklistItems: sortChecklistItems ?? this.sortChecklistItems,
       burnDeleted: burnDeleted ?? this.burnDeleted,
       noteFont: noteFont ?? this.noteFont,
       noteTextSize: noteTextSize ?? this.noteTextSize,
+      quickActions: quickActions ?? this.quickActions,
+      hiddenActions: hiddenActions ?? this.hiddenActions,
     );
   }
 }

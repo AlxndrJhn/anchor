@@ -48,6 +48,7 @@ import '../domain/note.dart';
 import '../domain/note_attachment.dart';
 import '../domain/note_history.dart';
 import '../domain/note_text.dart';
+import '../domain/quick_action.dart';
 import 'checked_folds_controller.dart';
 import 'editor/editor_overlay.dart';
 import 'editor/editor_overlay_controller.dart';
@@ -64,6 +65,7 @@ import 'note_invisible_actions.dart';
 import 'note_labels.dart';
 import 'note_morph_route.dart';
 import 'notes_controller.dart';
+import 'quick_action_labels.dart';
 import 'widgets/add_sheet.dart';
 import 'widgets/background_sheet.dart';
 import 'widgets/card_registry.dart';
@@ -462,8 +464,40 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     }
   }
 
-  /// A new note, not written yet, offers what a saved one does; an option
-  /// that needs the note creates it first.
+  /// The More options the bar holds already, or that are turned off in
+  /// Settings. Remove lock stays in More while Lock is in the bar.
+  Set<NoteAction> _leftOutOfMore() {
+    final preferences = ref.read(editorPreferencesControllerProvider);
+    return {
+      for (final action in preferences.quickActions)
+        for (final option in action.noteActions)
+          if (option != NoteAction.removeLock) option,
+      for (final action in preferences.hiddenActions) ...action.noteActions,
+    };
+  }
+
+  /// The bar's quick actions this note can use.
+  List<QuickAction> _barActions(List<QuickAction> quickActions) {
+    final note = _draft.note;
+    return [
+      for (final action in quickActions)
+        if (switch (action) {
+          QuickAction.share => note?.isOwner ?? true,
+          QuickAction.history => !_draft.isViewOnly,
+          QuickAction.freeze => note == null || (note.isOwner && note.isActive),
+          QuickAction.addImage ||
+          QuickAction.takePicture ||
+          QuickAction.takeSeveral ||
+          QuickAction.checkboxes ||
+          QuickAction.uncheckAll ||
+          QuickAction.deleteChecked => !_isReadOnly,
+          _ => true,
+        })
+          action,
+    ];
+  }
+
+  /// A new note, not written yet, offers what a saved one does.
   Future<void> _showMore() async {
     final opened = _draft.note;
     if (opened == null && !_draft.isNew) {
@@ -475,9 +509,16 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final canShowCheckboxes = editor?.canShowCheckboxes ?? false;
     final action = await showNoteMoreSheet(
       context,
+      leaveOut: _leftOutOfMore(),
       isPinned: opened?.isPinned ?? _draft.newPinned,
       isOwner: opened?.isOwner ?? true,
       canSeeHistory: !_draft.isViewOnly,
+      canColor: !_isReadOnly,
+      canRemind: _draft.isActive,
+      canArchive: true,
+      isArchived: opened?.isArchived ?? _draft.newArchived,
+      // A note this person froze can't be deleted until it's unfrozen.
+      canTrash: opened != null && !opened.isOwnFrozen,
       canCopy: !isTrashed,
       // Notes not in the trash can be locked.
       canLock: !isTrashed,
@@ -496,55 +537,85 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       isInvisible: opened?.isInvisible ?? false,
     );
     if (action == null || !mounted) return;
-    if (opened == null) {
-      switch (action) {
-        // A new note is then created pinned.
-        case NoteAction.pin:
-          Haptics.selection();
-          _draft.setNewPinned(!_draft.newPinned);
-          return;
-        // Nothing to save for these: Send says when there's nothing to
-        // send, and a picture saves the note as it goes in.
-        case NoteAction.send ||
-            NoteAction.addImage ||
-            NoteAction.takePicture ||
-            NoteAction.takeSeveral:
-          break;
-        default:
-          await _draft.createNote();
-          // Sharing asks the server about the note.
-          await requestAppSync(trigger: 'NoteEdit.createdForMore');
-          if (!mounted) return;
-      }
+    await _run(action);
+  }
+
+  /// A quick action from the bar.
+  Future<void> _runQuick(QuickAction action) => _run(switch (action) {
+    QuickAction.checkboxes =>
+      _editor?.canShowCheckboxes ?? true
+          ? NoteAction.showCheckboxes
+          : NoteAction.hideCheckboxes,
+    _ => action.noteActions.first,
+  });
+
+  /// Runs [action], from the bar or More. One that needs the note creates a
+  /// new note first.
+  Future<void> _run(NoteAction action) async {
+    final l10n = context.l10n;
+    switch (action) {
+      // A new note is then created pinned.
+      case NoteAction.pin when _draft.isNew:
+        Haptics.selection();
+        _draft.setNewPinned(!_draft.newPinned);
+        return;
+      case NoteAction.background:
+        _showBackground();
+        return;
+      case NoteAction.reminder:
+        await _showReminder();
+        return;
+      case NoteAction.archive || NoteAction.unarchive:
+        await _toggleArchived();
+        return;
+      case NoteAction.editQuickActions:
+        await context.push(AppRoutes.settingsQuickActions);
+        return;
+      // Send says when there's nothing to send.
+      case NoteAction.send:
+        await _send();
+        return;
+      // A picture saves the note as it goes in.
+      case NoteAction.addImage:
+        await _addImages();
+        return;
+      case NoteAction.takePicture:
+        await _takePicture();
+        return;
+      case NoteAction.takeSeveral:
+        await _takeSeveralPictures();
+        return;
+      // Edits to the text, saved with it.
+      case NoteAction.showCheckboxes:
+        _offerUndo(_editor?.showCheckboxes(), l10n.checkboxesShown);
+        return;
+      case NoteAction.hideCheckboxes:
+        _offerUndo(_editor?.hideCheckboxes(), l10n.checkboxesHidden);
+        return;
+      case NoteAction.uncheckAll:
+        _offerUndo(_editor?.uncheckAll(), l10n.itemsUnchecked);
+        return;
+      case NoteAction.deleteChecked:
+        _offerUndo(_editor?.deleteChecked(), l10n.checkedItemsDeleted);
+        return;
+      default:
+        break;
+    }
+    if (_draft.isNew) {
+      await _draft.createNote();
+      // Sharing asks the server about the note.
+      await requestAppSync(trigger: 'NoteEdit.createdForMore');
     }
     final note = _draft.note;
-    if (note == null) {
-      switch (action) {
-        case NoteAction.send:
-          await _send();
-        case NoteAction.addImage:
-          await _addImages();
-        case NoteAction.takePicture:
-          await _takePicture();
-        case NoteAction.takeSeveral:
-          await _takeSeveralPictures();
-        default:
-          break;
-      }
-      return;
-    }
-    final actions = NoteActions(context, ref);
-    final l10n = context.l10n;
+    if (note == null || !mounted) return;
     switch (action) {
       case NoteAction.pin:
         Haptics.selection();
-        await actions.pin([note]);
+        await NoteActions(context, ref).pin([note]);
       case NoteAction.share:
         await showShareSheet(context, noteId: note.id);
       case NoteAction.history:
         await _openHistory();
-      case NoteAction.send:
-        await _send();
       case NoteAction.copy:
         await _makeCopy(note.id);
       case NoteAction.lock:
@@ -557,29 +628,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         await setNotesInvisible(context, ref, [
           note.id,
         ], isInvisible: !note.isInvisible);
-      case NoteAction.addImage:
-        await _addImages();
-      case NoteAction.takePicture:
-        await _takePicture();
-      case NoteAction.takeSeveral:
-        await _takeSeveralPictures();
-      case NoteAction.showCheckboxes:
-        _offerUndo(_editor?.showCheckboxes(), l10n.checkboxesShown);
-      case NoteAction.hideCheckboxes:
-        _offerUndo(_editor?.hideCheckboxes(), l10n.checkboxesHidden);
-      case NoteAction.uncheckAll:
-        _offerUndo(_editor?.uncheckAll(), l10n.itemsUnchecked);
-      case NoteAction.deleteChecked:
-        _offerUndo(_editor?.deleteChecked(), l10n.checkedItemsDeleted);
-      case NoteAction.archive || NoteAction.unarchive:
-        await _toggleArchived();
       case NoteAction.trash:
         await _trash();
-      case NoteAction.tag ||
-          NoteAction.background ||
-          NoteAction.restore ||
-          NoteAction.merge ||
-          NoteAction.deleteForever:
+      default:
         break;
     }
   }
@@ -1177,6 +1228,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       // A note this person froze can't be deleted until it's unfrozen.
       onTrash: isNew || note == null || note.isOwnFrozen ? null : _trash,
       onMore: _showMore,
+      quickActions: _barActions(
+        ref.watch(
+          editorPreferencesControllerProvider.select((p) => p.quickActions),
+        ),
+      ),
+      isPinned: note?.isPinned ?? _draft.newPinned,
+      onPin: () => _run(NoteAction.pin),
+      onQuickAction: _runQuick,
     );
 
     final content = Column(

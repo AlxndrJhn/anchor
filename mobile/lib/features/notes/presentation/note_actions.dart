@@ -51,7 +51,10 @@ enum NoteAction {
   unarchive,
   trash,
   restore,
-  deleteForever;
+  deleteForever,
+  // Only in an open note's More.
+  reminder,
+  editQuickActions;
 
   bool get isDanger =>
       this == deleteChecked || this == trash || this == deleteForever;
@@ -153,6 +156,11 @@ enum NoteAction {
     NoteAction.deleteForever => (
       icon: LucideIcons.trash2,
       label: l10n.actionDeletePermanently,
+    ),
+    NoteAction.reminder => (icon: LucideIcons.bell, label: l10n.actionReminder),
+    NoteAction.editQuickActions => (
+      icon: LucideIcons.settings2,
+      label: l10n.actionModifyQuickActions,
     ),
   };
 }
@@ -276,7 +284,9 @@ class NoteActions {
           NoteAction.showCheckboxes ||
           NoteAction.hideCheckboxes ||
           NoteAction.uncheckAll ||
-          NoteAction.deleteChecked:
+          NoteAction.deleteChecked ||
+          NoteAction.reminder ||
+          NoteAction.editQuickActions:
         break;
     }
   }

@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../app/app_bootstrap.dart';
 import '../../../core/storage/preferences_repository.dart';
 import '../../../core/theme/note_typography.dart';
+import '../../notes/domain/quick_action.dart';
 import '../domain/editor_preferences.dart';
 
 part 'editor_preferences_controller.g.dart';
@@ -35,5 +36,40 @@ class EditorPreferencesController extends _$EditorPreferencesController {
     state = state.copyWith(noteTextSize: textSize);
     final repository = ref.read(preferencesRepositoryProvider);
     await repository.setNoteTextSize(textSize.name);
+  }
+
+  /// The note bar's actions, in order; one put in the bar is on again.
+  Future<void> setQuickActions(List<QuickAction> actions) async {
+    final hidden = state.hiddenActions.difference(actions.toSet());
+    state = state.copyWith(quickActions: actions, hiddenActions: hidden);
+    final repository = ref.read(preferencesRepositoryProvider);
+    await repository.setQuickActions(QuickAction.encode(actions));
+    await repository.setHiddenActions(QuickAction.encode(hidden));
+  }
+
+  /// The bar and the actions turned off at once, as pasted or reset.
+  Future<void> setActions({
+    required List<QuickAction> bar,
+    required Set<QuickAction> hidden,
+  }) async {
+    final off = hidden.difference(bar.toSet());
+    state = state.copyWith(quickActions: bar, hiddenActions: off);
+    final repository = ref.read(preferencesRepositoryProvider);
+    await repository.setQuickActions(QuickAction.encode(bar));
+    await repository.setHiddenActions(QuickAction.encode(off));
+  }
+
+  /// Turns an action off, out of the bar and More, or on again, in More.
+  Future<void> setActionHidden(QuickAction action, bool isHidden) async {
+    final hidden = {...state.hiddenActions};
+    isHidden ? hidden.add(action) : hidden.remove(action);
+    final actions = [
+      for (final quick in state.quickActions)
+        if (!isHidden || quick != action) quick,
+    ];
+    state = state.copyWith(quickActions: actions, hiddenActions: hidden);
+    final repository = ref.read(preferencesRepositoryProvider);
+    await repository.setQuickActions(QuickAction.encode(actions));
+    await repository.setHiddenActions(QuickAction.encode(hidden));
   }
 }

@@ -167,7 +167,8 @@ GoRouter goRouter(Ref ref) {
           ),
           GoRoute(
             path: _settingsPath,
-            builder: (context, state) => const SettingsScreen(),
+            builder: (context, state) =>
+                SettingsScreen(section: state.uri.queryParameters['section']),
             routes: [
               GoRoute(
                 path: _changePasswordPath,

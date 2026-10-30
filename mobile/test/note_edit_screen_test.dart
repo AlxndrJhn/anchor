@@ -16,6 +16,7 @@ import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/inline_image.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
+import 'package:anchor/features/notes/domain/quick_action.dart';
 import 'package:anchor/features/notes/presentation/editor/document_lines.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_format.dart';
 import 'package:anchor/features/notes/presentation/editor/editor_tool_button.dart';
@@ -32,6 +33,7 @@ import 'package:anchor/features/notes/presentation/widgets/picture_tile.dart';
 import 'package:anchor/features/notes/presentation/widgets/read_only_bottom_bar.dart';
 import 'package:anchor/features/reminders/data/notification_gateway.dart';
 import 'package:anchor/features/reminders/domain/reminder_schedule.dart';
+import 'package:anchor/features/settings/presentation/editor_preferences_controller.dart';
 import 'package:anchor/features/tags/data/repository/tags_repository.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -835,7 +837,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pickFromMore(tester, 'Pin');
+    await tester.tap(barButton('Pin'));
     await tester.pump(const Duration(seconds: 3));
 
     verify(() => notesRepo.setPinned(['n1'], true)).called(1);
@@ -993,7 +995,11 @@ void main() {
       ]) {
         expect(find.text(option), findsOneWidget);
       }
-      await tester.tap(find.text('Pin'));
+      // Pin is in the bar, so not in More.
+      expect(find.text('Pin'), findsNothing);
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      await tester.tap(barButton('Pin'));
       await tester.pumpAndSettle();
 
       // Archiving unpins it.
@@ -1017,9 +1023,7 @@ void main() {
       await pumpScreen(tester);
       await tester.pump(const Duration(milliseconds: 300));
 
-      await tester.tap(barButton('More'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Pin'));
+      await tester.tap(barButton('Pin'));
       await tester.pump(const Duration(seconds: 3));
 
       final saved =
@@ -1440,7 +1444,8 @@ void main() {
       await pumpScreen(tester, note: note);
       await tester.pumpAndSettle();
 
-      await pickFromMore(tester, 'Pin');
+      await tester.tap(barButton('Pin'));
+      await tester.pumpAndSettle();
 
       verify(() => notesRepo.setPinned(['n1'], true)).called(1);
       verifyNever(() => notesRepo.updateNote(any()));
@@ -3270,6 +3275,61 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Unfreeze'), findsNothing);
+    });
+  });
+  group('quick actions', () {
+    setUp(() {
+      when(() => prefsRepo.setQuickActions(any())).thenAnswer((_) async {});
+      when(() => prefsRepo.setHiddenActions(any())).thenAnswer((_) async {});
+    });
+
+    testWidgets('the bar reads Delete, Color, Pin, Reminder, Archive, More', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        note: const Note(id: 'n1', title: 'Groceries'),
+      );
+      await tester.pumpAndSettle();
+
+      final lefts = [
+        for (final label in [
+          'Move to trash',
+          'Background',
+          'Pin',
+          'Add a reminder',
+          'Archive',
+          'More',
+        ])
+          tester.getRect(barButton(label)).left,
+      ];
+      expect(lefts, orderedEquals([...lefts]..sort()));
+    });
+
+    testWidgets('as set in Settings: in the bar, in More, or off', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        note: const Note(id: 'n1', title: 'Groceries'),
+      );
+      await tester.pumpAndSettle();
+      final preferences = ProviderScope.containerOf(
+        tester.element(find.byType(NoteEditScreen)),
+      ).read(editorPreferencesControllerProvider.notifier);
+      await preferences.setQuickActions([QuickAction.send, QuickAction.pin]);
+      await preferences.setActionHidden(QuickAction.copy, true);
+      await tester.pumpAndSettle();
+
+      expect(barButton('Send'), findsOneWidget);
+      expect(barButton('Archive'), findsNothing);
+      await tester.tap(barButton('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Archive'), findsOneWidget);
+      expect(find.text('Move to trash'), findsOneWidget);
+      expect(find.text('Send'), findsNothing);
+      expect(find.text('Make a copy'), findsNothing);
+      expect(find.text('Modify quick actions'), findsOneWidget);
     });
   });
 }

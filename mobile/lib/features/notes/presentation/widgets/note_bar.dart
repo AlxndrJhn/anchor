@@ -10,6 +10,8 @@ import '../../../../l10n/l10n.dart';
 import '../../../reminders/domain/reminder_times.dart';
 import '../../../reminders/presentation/reminder_labels.dart';
 import '../../domain/note.dart';
+import '../../domain/quick_action.dart';
+import '../quick_action_labels.dart';
 import 'note_surface.dart';
 
 class NoteBar extends StatelessWidget {
@@ -30,6 +32,10 @@ class NoteBar extends StatelessWidget {
     this.isOwner = true,
     this.onArchive,
     this.onTrash,
+    this.quickActions = QuickAction.defaults,
+    this.isPinned = false,
+    this.onPin,
+    this.onQuickAction,
   });
 
   final NoteAppearance appearance;
@@ -59,6 +65,16 @@ class NoteBar extends StatelessWidget {
   /// Delete; null (no button) while the note is new.
   final VoidCallback? onTrash;
 
+  /// The buttons beside More, in order; each shows only when it can act.
+  final List<QuickAction> quickActions;
+
+  /// Pin turns into Unpin on a pinned note.
+  final bool isPinned;
+  final VoidCallback? onPin;
+
+  /// The rest of [quickActions]; null leaves them out.
+  final ValueChanged<QuickAction>? onQuickAction;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -70,27 +86,7 @@ class NoteBar extends StatelessWidget {
           onPressed: onHistory,
         )
       else ...[
-        if (!isReadOnly)
-          BarButton(
-            icon: LucideIcons.palette,
-            label: l10n.noteBackground,
-            onPressed: onBackground,
-          ),
-        _ReminderButton(reminder: reminder, onPressed: onReminder),
-        if (onArchive case final onArchive?)
-          // Toggles in place, marked while archived, as a tool is.
-          BarButton(
-            icon: LucideIcons.archive,
-            label: isArchived ? l10n.actionUnarchive : l10n.actionArchive,
-            isOn: isArchived,
-            onPressed: onArchive,
-          ),
-        if (onTrash case final onTrash?)
-          BarButton(
-            icon: isOwner ? LucideIcons.trash2 : LucideIcons.logOut,
-            label: isOwner ? l10n.actionMoveToTrash : l10n.actionRemoveFromMine,
-            onPressed: onTrash,
-          ),
+        for (final action in quickActions) ?_buttonFor(action, l10n),
         BarButton(
           icon: LucideIcons.ellipsis,
           label: l10n.commonMore,
@@ -116,6 +112,58 @@ class NoteBar extends StatelessWidget {
       actions: actions,
     );
   }
+
+  Widget? _buttonFor(QuickAction action, AppLocalizations l10n) =>
+      switch (action) {
+        QuickAction.trash => switch (onTrash) {
+          final onTrash? => BarButton(
+            icon: isOwner ? LucideIcons.trash2 : LucideIcons.logOut,
+            label: isOwner ? l10n.actionMoveToTrash : l10n.actionRemoveFromMine,
+            onPressed: onTrash,
+          ),
+          null => null,
+        },
+        QuickAction.background =>
+          isReadOnly
+              ? null
+              : BarButton(
+                  icon: LucideIcons.palette,
+                  label: l10n.noteBackground,
+                  onPressed: onBackground,
+                ),
+        QuickAction.pin => switch (onPin) {
+          // Toggles in place, marked while pinned, as Archive does.
+          final onPin? => BarButton(
+            icon: LucideIcons.pin,
+            label: isPinned ? l10n.actionUnpin : l10n.actionPin,
+            isOn: isPinned,
+            onPressed: onPin,
+          ),
+          null => null,
+        },
+        QuickAction.reminder => _ReminderButton(
+          reminder: reminder,
+          onPressed: onReminder,
+        ),
+        QuickAction.archive => switch (onArchive) {
+          // Toggles in place, marked while archived, as a tool is.
+          final onArchive? => BarButton(
+            icon: LucideIcons.archive,
+            label: isArchived ? l10n.actionUnarchive : l10n.actionArchive,
+            isOn: isArchived,
+            onPressed: onArchive,
+          ),
+          null => null,
+        },
+        _ => switch (onQuickAction) {
+          final onQuickAction? => BarButton(
+            icon: action.iconAndLabel(l10n).icon,
+            label: action.iconAndLabel(l10n).label,
+            onPressed: () => onQuickAction(action),
+          ),
+          null => null,
+        },
+      };
 
   /// Whether the "On this phone" badge fits beside Back and [actionCount]
   /// buttons; on a narrow phone it shrinks to its icon.

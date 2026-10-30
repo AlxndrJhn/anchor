@@ -47,6 +47,10 @@ class AppRoutes {
       '${history(noteId)}/$revisionId';
 
   static const settings = '/settings';
+
+  /// Settings, scrolled to the note's quick actions.
+  static const settingsQuickActions = '$settings?section=$quickActionsSection';
+  static const quickActionsSection = 'quick-actions';
   static const changePassword = '$settings/change-password';
   static const editProfile = '$settings/edit-profile';
   static const logs = '$settings/logs';

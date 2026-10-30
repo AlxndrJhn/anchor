@@ -4022,4 +4022,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterInvisible => 'Invisible';
+
+  @override
+  String get actionReminder => 'Reminder';
+
+  @override
+  String get actionCheckboxes => 'Checkboxes';
+
+  @override
+  String get actionModifyQuickActions => 'Modify quick actions';
+
+  @override
+  String get settingsQuickActions => 'Quick actions';
+
+  @override
+  String get settingsQuickActionsHelp =>
+      'In a note\'s top bar, in this order. Up to 5 fit. Drag to reorder.';
+
+  @override
+  String get settingsQuickActionsEmpty => 'None. Everything is in More.';
+
+  @override
+  String get settingsMoreActions => 'In More';
+
+  @override
+  String get settingsMoreActionsHelp =>
+      'Turn one off to offer it nowhere. Tap + to put it in the top bar.';
+
+  @override
+  String get settingsQuickActionsReset => 'Reset quick actions';
+
+  @override
+  String settingsAddToBar(String action) {
+    return 'Put $action in the top bar';
+  }
+
+  @override
+  String settingsRemoveFromBar(String action) {
+    return 'Take $action out of the top bar';
+  }
+
+  @override
+  String get settingsCopySetup => 'Copy setup';
+
+  @override
+  String get settingsPasteSetup => 'Paste setup';
+
+  @override
+  String get settingsSetupCopied => 'Quick actions copied';
+
+  @override
+  String get settingsSetupPasted => 'Quick actions pasted';
+
+  @override
+  String get settingsSetupPasteFailed =>
+      'The clipboard holds no copied quick actions';
 }

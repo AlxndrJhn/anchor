@@ -5895,6 +5895,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invisible'**
   String get filterInvisible;
+
+  /// Menu item and quick action: sets or changes the note's reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get actionReminder;
+
+  /// Quick action in a note's top bar: shows the note's lines as a checklist, or hides the checkboxes again.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkboxes'**
+  String get actionCheckboxes;
+
+  /// Last item in a note's More menu: opens Settings at the note's quick actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Modify quick actions'**
+  String get actionModifyQuickActions;
+
+  /// Section in Settings: the buttons in a note's top bar, beside More.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions'**
+  String get settingsQuickActions;
+
+  /// Footer under Settings › Quick actions.
+  ///
+  /// In en, this message translates to:
+  /// **'In a note\'s top bar, in this order. Up to 5 fit. Drag to reorder.'**
+  String get settingsQuickActionsHelp;
+
+  /// Row in Settings › Quick actions when the bar holds no quick actions.
+  ///
+  /// In en, this message translates to:
+  /// **'None. Everything is in More.'**
+  String get settingsQuickActionsEmpty;
+
+  /// Section in Settings under Quick actions: the actions in a note's More menu, each with a switch.
+  ///
+  /// In en, this message translates to:
+  /// **'In More'**
+  String get settingsMoreActions;
+
+  /// Footer under Settings › In More.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn one off to offer it nowhere. Tap + to put it in the top bar.'**
+  String get settingsMoreActionsHelp;
+
+  /// Row in Settings: puts the note's top bar and More back as they first were.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset quick actions'**
+  String get settingsQuickActionsReset;
+
+  /// Screen reader label of the + button by an action in Settings › In More.
+  ///
+  /// In en, this message translates to:
+  /// **'Put {action} in the top bar'**
+  String settingsAddToBar(String action);
+
+  /// Screen reader label of the minus button by a quick action in Settings; it goes back to More.
+  ///
+  /// In en, this message translates to:
+  /// **'Take {action} out of the top bar'**
+  String settingsRemoveFromBar(String action);
+
+  /// Row in Settings under the quick actions: copies the top bar and the actions turned off, to paste on another phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy setup'**
+  String get settingsCopySetup;
+
+  /// Row in Settings under the quick actions: takes a copied setup from the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste setup'**
+  String get settingsPasteSetup;
+
+  /// Message after Copy setup in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions copied'**
+  String get settingsSetupCopied;
+
+  /// Message after Paste setup in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions pasted'**
+  String get settingsSetupPasted;
+
+  /// Error after Paste setup when the clipboard holds something else.
+  ///
+  /// In en, this message translates to:
+  /// **'The clipboard holds no copied quick actions'**
+  String get settingsSetupPasteFailed;
 }
 
 class _AppLocalizationsDelegate

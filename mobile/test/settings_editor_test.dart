@@ -253,7 +253,11 @@ void main() {
       isTrue,
     );
 
-    await tester.scrollUntilVisible(find.text('Burn deleted notes'), 100);
+    await tester.scrollUntilVisible(
+      find.text('Burn deleted notes'),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Burn deleted notes'));
     await tester.pumpAndSettle();
 

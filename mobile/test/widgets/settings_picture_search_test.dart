@@ -95,7 +95,11 @@ void main() {
     });
 
     await pumpSettings(tester, repo);
-    await tester.scrollUntilVisible(pictureSwitch(), 200);
+    await tester.scrollUntilVisible(
+      pictureSwitch(),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     expect(find.text('SEARCH'), findsOneWidget);
 
@@ -135,7 +139,11 @@ void main() {
     when(() => repo.setEnabled(true)).thenThrow(Exception('offline'));
 
     await pumpSettings(tester, repo);
-    await tester.scrollUntilVisible(pictureSwitch(), 200);
+    await tester.scrollUntilVisible(
+      pictureSwitch(),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(pictureSwitch());
     for (var i = 0; i < 5; i++) {

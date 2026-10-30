@@ -5221,5 +5221,71 @@
   "filterInvisible": "Invisible",
   "@filterInvisible": {
     "description": "Filter choice: only the notes this person made invisible (kept out of the lists)."
+  },
+  "actionReminder": "Reminder",
+  "@actionReminder": {
+    "description": "Menu item and quick action: sets or changes the note's reminder."
+  },
+  "actionCheckboxes": "Checkboxes",
+  "@actionCheckboxes": {
+    "description": "Quick action in a note's top bar: shows the note's lines as a checklist, or hides the checkboxes again."
+  },
+  "actionModifyQuickActions": "Modify quick actions",
+  "@actionModifyQuickActions": {
+    "description": "Last item in a note's More menu: opens Settings at the note's quick actions."
+  },
+  "settingsQuickActions": "Quick actions",
+  "@settingsQuickActions": {
+    "description": "Section in Settings: the buttons in a note's top bar, beside More."
+  },
+  "settingsQuickActionsHelp": "In a note's top bar, in this order. Up to 5 fit. Drag to reorder.",
+  "@settingsQuickActionsHelp": {
+    "description": "Footer under Settings › Quick actions."
+  },
+  "settingsQuickActionsEmpty": "None. Everything is in More.",
+  "@settingsQuickActionsEmpty": {
+    "description": "Row in Settings › Quick actions when the bar holds no quick actions."
+  },
+  "settingsMoreActions": "In More",
+  "@settingsMoreActions": {
+    "description": "Section in Settings under Quick actions: the actions in a note's More menu, each with a switch."
+  },
+  "settingsMoreActionsHelp": "Turn one off to offer it nowhere. Tap + to put it in the top bar.",
+  "@settingsMoreActionsHelp": {
+    "description": "Footer under Settings › In More."
+  },
+  "settingsQuickActionsReset": "Reset quick actions",
+  "@settingsQuickActionsReset": {
+    "description": "Row in Settings: puts the note's top bar and More back as they first were."
+  },
+  "settingsAddToBar": "Put {action} in the top bar",
+  "@settingsAddToBar": {
+    "description": "Screen reader label of the + button by an action in Settings › In More.",
+    "placeholders": { "action": { "type": "String" } }
+  },
+  "settingsRemoveFromBar": "Take {action} out of the top bar",
+  "@settingsRemoveFromBar": {
+    "description": "Screen reader label of the minus button by a quick action in Settings; it goes back to More.",
+    "placeholders": { "action": { "type": "String" } }
+  },
+  "settingsCopySetup": "Copy setup",
+  "@settingsCopySetup": {
+    "description": "Row in Settings under the quick actions: copies the top bar and the actions turned off, to paste on another phone."
+  },
+  "settingsPasteSetup": "Paste setup",
+  "@settingsPasteSetup": {
+    "description": "Row in Settings under the quick actions: takes a copied setup from the clipboard."
+  },
+  "settingsSetupCopied": "Quick actions copied",
+  "@settingsSetupCopied": {
+    "description": "Message after Copy setup in Settings."
+  },
+  "settingsSetupPasted": "Quick actions pasted",
+  "@settingsSetupPasted": {
+    "description": "Message after Paste setup in Settings."
+  },
+  "settingsSetupPasteFailed": "The clipboard holds no copied quick actions",
+  "@settingsSetupPasteFailed": {
+    "description": "Error after Paste setup when the clipboard holds something else."
   }
 }

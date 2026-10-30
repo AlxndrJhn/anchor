@@ -22,6 +22,7 @@ import '../core/theme/display_density.dart';
 import '../core/theme/note_typography.dart';
 import '../core/theme/tokens/app_style.dart';
 import '../features/home_widget/data/home_widget_payload.dart';
+import '../features/notes/domain/quick_action.dart';
 import '../features/notes/presentation/notes_view_options.dart';
 import '../features/reminders/presentation/notification_launch.dart';
 import '../features/settings/domain/editor_preferences.dart';
@@ -116,6 +117,10 @@ Future<AppBootstrap> initializeApp({
       (textSize) => textSize.name == savedTextSize,
       orElse: () => NoteTextSize.standard,
     ),
+    quickActions: QuickAction.decode(await preferences.getQuickActions()),
+    hiddenActions: QuickAction.decodeAll(
+      await preferences.getHiddenActions(),
+    ).toSet(),
   );
 
   String? userId;

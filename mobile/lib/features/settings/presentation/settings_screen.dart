@@ -56,10 +56,15 @@ import '../../sync/data/sync_compatibility.dart';
 import '../../sync/presentation/compatibility_messages.dart';
 import 'custom_theme_sheet.dart';
 import 'editor_preferences_controller.dart';
+import 'quick_actions_section.dart';
 import 'theme_preferences_controller.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.section});
+
+  /// The section to scroll to as it opens, like
+  /// [AppRoutes.quickActionsSection].
+  final String? section;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -67,10 +72,22 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _version = '';
+  final _quickActionsKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
+    if (widget.section == AppRoutes.quickActionsSection) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final section = _quickActionsKey.currentContext;
+        if (section == null || !section.mounted) return;
+        Scrollable.ensureVisible(
+          section,
+          duration: context.motion(AnchorTokens.motionDurationFade),
+          curve: AnchorTokens.motionEaseStandard,
+        );
+      });
+    }
     PackageInfo.fromPlatform().then((info) {
       if (mounted) setState(() => _version = info.version);
     });
@@ -93,6 +110,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _AppearanceSection(),
               gap,
               const _EditorSection(),
+              gap,
+              QuickActionsSection(key: _quickActionsKey),
               gap,
               const _PictureSearchSection(),
               const _NoteLocksSection(),
