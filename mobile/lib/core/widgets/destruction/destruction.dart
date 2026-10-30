@@ -129,6 +129,10 @@ class DestructibleState extends State<Destructible>
       return;
     }
     final origin = box.localToGlobal(Offset.zero, ancestor: overlayBox);
+    // Taken now: by the time the entry builds, the card may be shown again
+    // (the delete failed) and have let go of them.
+    final image = _image!.clone();
+    final pattern = _pattern!;
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => Positioned(
@@ -137,8 +141,8 @@ class DestructibleState extends State<Destructible>
         width: box.size.width + BurnPainter.margin * 2,
         height: box.size.height + BurnPainter.margin * 2,
         child: _BurnTail(
-          image: _image!.clone(),
-          pattern: _pattern!,
+          image: image,
+          pattern: pattern,
           onDone: () => entry.remove(),
         ),
       ),
