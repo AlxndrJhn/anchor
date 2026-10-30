@@ -9,9 +9,21 @@ name: Release (fork)
 # (pages.yml). Only what changed since the last release is built: a release
 # whose Android app, server or desktop app didn't change has no APKs, new
 # image or installers, and the apps only update to releases that have theirs.
+#
+# With "candidate" ticked (`gh workflow run release-fork.yml --ref main -f
+# candidate=true`) it is a release candidate instead: a GitHub prerelease,
+# and an image tagged :fork-preview (not :fork-latest) that names itself so
+# in /api/health. The apps only offer it when "Receive preview releases" is on
+# and their server runs that image. The web app on Pages stays as it is.
+# Releases also update :fork-preview, so preview servers never fall behind.
 
 on:
   workflow_dispatch:
+    inputs:
+      candidate:
+        description: Release candidate, for preview servers and apps only
+        type: boolean
+        default: false
 
 # Queue releases instead of cancelling one that is half published.
 concurrency:
@@ -27,6 +39,9 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
+      candidate: ${{ steps.version.outputs.candidate }}
+      preview_image: ${{ steps.version.outputs.preview_image }}
+      previous: ${{ steps.changes.outputs.previous }}
       apk: ${{ steps.changes.outputs.apk }}
       apk_tag: ${{ steps.changes.outputs.apk_tag }}
       docker: ${{ steps.changes.outputs.docker }}
@@ -45,6 +60,9 @@ jobs:
           VERSION=$(sed -n 's/^version: *\([^+]*\).*/\1/p' mobile/pubspec.yaml)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=fork-$VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "candidate=${{ inputs.candidate == true }}" >> "$GITHUB_OUTPUT"
+          IMAGE="ghcr.io/$GITHUB_REPOSITORY"
+          echo "preview_image=${IMAGE,,}:fork-preview" >> "$GITHUB_OUTPUT"
 
       # Every build gets a new build number, so the apps would offer each
       # release as an update. Build the APK, the Docker image and the desktop
@@ -52,19 +70,30 @@ jobs:
       # release that has them (a version bump alone doesn't count). Otherwise
       # the release goes out without them, the apps skip it, and the notes
       # point at the release whose build is still current. With nothing
-      # changed at all, there is no release.
+      # changed at all, there is no release. A release compares with the last
+      # release, which its users have; a candidate with the last of either.
       - name: Check what changed
         id: changes
         env:
           GH_TOKEN: ${{ github.token }}
+          CANDIDATE: ${{ steps.version.outputs.candidate }}
         run: |
           RELEASES=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=50")
+          if [ "$CANDIDATE" != true ]; then
+            RELEASES=$(jq '[.[] | select(.prerelease | not)]' <<< "$RELEASES")
+          fi
           last_with() { jq -r "[.[] | select(.draft | not) | $1][0] // \"\"" <<< "$RELEASES"; }
           # $1: the build's name, $2: the last release that has it, then the
           # files that go into it.
           check() {
             local name=$1 last=$2
             shift 2
+            # A candidate always has its own image: :fork-preview must name
+            # itself so, whatever went into the last one.
+            if [ "$name" = docker ] && [ "$CANDIDATE" = true ]; then
+              echo "docker=true" >> "$GITHUB_OUTPUT"
+              return
+            fi
             if [ -n "$last" ] && git rev-parse -q --verify "refs/tags/$last" >/dev/null &&
               git diff --quiet -I '^version:' "$last" HEAD -- "$@" .github/workflows/release-fork.yml; then
               echo "No $name changes since $last; not building it."
@@ -85,10 +114,12 @@ jobs:
           check desktop \
             "$(last_with 'select(any(.assets[]; .name | test("^Anchor-.*\\.(exe|dmg)$"))) | .tag_name')" \
             desktop web/public/web-app-manifest-512x512.png web/public/icons/anchor_icon.png
+          # The changes in the notes start from here.
+          echo "previous=$(last_with '.tag_name')" >> "$GITHUB_OUTPUT"
 
   docker:
     needs: version
-    if: needs.version.outputs.docker == 'true'
+    if: needs.version.outputs.docker == 'true' && needs.version.outputs.candidate != 'true'
     permissions:
       contents: read
       packages: write
@@ -99,6 +130,26 @@ jobs:
         type=raw,value=${{ needs.version.outputs.tag }}
         type=raw,value=fork-latest
         type=sha,prefix=fork-
+
+  # The image preview servers run: a candidate's own, or a new release's
+  # again, naming itself :fork-preview so the apps there offer candidates.
+  # Only the last layer differs, so the second build comes from the cache.
+  docker-preview:
+    needs: [version, docker]
+    if: >-
+      !cancelled() && needs.version.result == 'success' &&
+      (needs.version.outputs.candidate == 'true' || needs.docker.result == 'success')
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker-build.yml
+    with:
+      push: ${{ github.ref == 'refs/heads/main' }}
+      tags: |
+        type=raw,value=${{ needs.version.outputs.tag }},enable=${{ needs.version.outputs.candidate == 'true' }}
+        type=raw,value=fork-preview
+      build-args: |
+        ANCHOR_IMAGE=${{ needs.version.outputs.preview_image }}
 
   build-apk:
     needs: version
@@ -266,7 +317,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: [version, build-apk, build-desktop, docker]
+    needs: [version, build-apk, build-desktop, docker, docker-preview]
     # The desktop installers are welcome but optional: a release still goes
     # out with the APKs and the image when they fail to build. A build whose
     # files didn't change is skipped, and with nothing changed there is no
@@ -277,7 +328,9 @@ jobs:
       (needs.version.outputs.apk == 'true' || needs.version.outputs.docker == 'true' ||
         needs.version.outputs.desktop == 'true') &&
       (needs.build-apk.result == 'success' || needs.version.outputs.apk == 'false') &&
-      (needs.docker.result == 'success' || needs.version.outputs.docker == 'false')
+      (needs.version.outputs.candidate == 'true' && needs.docker-preview.result == 'success' ||
+        needs.version.outputs.candidate != 'true' &&
+          (needs.docker.result == 'success' || needs.version.outputs.docker == 'false'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -325,13 +378,19 @@ jobs:
           APK_TAG: ${{ needs.version.outputs.apk_tag }}
           DOCKER_TAG: ${{ needs.version.outputs.docker_tag }}
           DESKTOP_TAG: ${{ needs.version.outputs.desktop_tag }}
+          PREVIOUS: ${{ needs.version.outputs.previous }}
+          CANDIDATE: ${{ needs.version.outputs.candidate }}
+          PREVIEW_IMAGE: ${{ needs.version.outputs.preview_image }}
           IMAGE: ghcr.io/${{ github.repository }}
         run: |
           IMAGE=${IMAGE,,}
-          PREVIOUS=$(git describe --tags --abbrev=0 --match 'fork-*' HEAD^ 2>/dev/null || true)
           {
             echo "Built from ${GITHUB_SHA::7} on $(date -u +'%Y-%m-%d %H:%M UTC')."
             echo
+            if [ "$CANDIDATE" = true ]; then
+              echo "**Release candidate.** The apps offer it only with Receive preview releases on in their settings, and a server running \`$PREVIEW_IMAGE\`."
+              echo
+            fi
             echo "## Android"
             echo
             if ls anchor-fork*.apk >/dev/null 2>&1; then
@@ -372,7 +431,9 @@ jobs:
             echo "docker pull $IMAGE:${DOCKER_TAG:-$TAG}"
             echo '```'
             echo
-            if [ -n "$DOCKER_TAG" ]; then
+            if [ "$CANDIDATE" = true ]; then
+              echo "Also published as \`$PREVIEW_IMAGE\`, which preview servers run."
+            elif [ -n "$DOCKER_TAG" ]; then
               echo "Nothing changed for the server, so this release has no new image; the one above (also \`$IMAGE:fork-latest\`) is still current."
             else
               echo "Also published as \`$IMAGE:fork-latest\` and \`$IMAGE:fork-${GITHUB_SHA::7}\`."
@@ -389,17 +450,24 @@ jobs:
             fi
           } > notes.md
           shopt -s nullglob
+          if [ "$CANDIDATE" = true ]; then
+            KIND=(--prerelease --latest=false)
+            TITLE="Anchor+ $TAG (release candidate)"
+          else
+            KIND=(--latest)
+            TITLE="Anchor+ $TAG"
+          fi
           gh release create "$TAG" anchor-fork*.apk Anchor-*.exe Anchor-*.dmg \
             --target "$GITHUB_SHA" \
-            --title "Anchor+ $TAG" \
+            --title "$TITLE" \
             --notes-file notes.md \
-            --latest
+            "${KIND[@]}"
           # Superseded by the per-commit releases above.
           gh release delete android-latest --cleanup-tag --yes || true
 
   pages:
-    needs: release
-    if: github.ref == 'refs/heads/main'
+    needs: [version, release]
+    if: github.ref == 'refs/heads/main' && needs.version.outputs.candidate != 'true'
     permissions:
       contents: read
       pages: write

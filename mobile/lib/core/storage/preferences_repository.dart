@@ -106,6 +106,17 @@ class PreferencesRepository {
     );
   }
 
+  /// Whether release candidates are offered too (on a preview server).
+  Future<bool> getPreviewReleases() async =>
+      await _read(StorageKeys.previewReleases) == 'true';
+
+  Future<void> setPreviewReleases(bool value) async {
+    await _storage.write(
+      key: StorageKeys.previewReleases,
+      value: value.toString(),
+    );
+  }
+
   /// The release build the user said "Later" to.
   Future<int?> getDismissedUpdate() async =>
       int.tryParse(await _read(StorageKeys.dismissedUpdate) ?? '');

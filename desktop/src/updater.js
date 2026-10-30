@@ -3,6 +3,10 @@
 // than this one is downloaded in the background. Once it is ready, onReady
 // fires; install() quits, installs it and starts the new version.
 //
+// Release candidates (GitHub prereleases) are only taken when
+// wantsCandidates() says so: "Receive Preview Releases" is on and the server
+// runs the fork's :fork-preview image.
+//
 // The release workflow writes the build number and repository into
 // package.json (anchorBuild, anchorUpdateRepo); a build without them (local,
 // unpackaged) never updates itself.
@@ -36,11 +40,14 @@ function installerAsset(assets) {
   return (assets ?? []).find((asset) => pattern.test(asset?.name ?? "")) ?? null;
 }
 
-/** The newest published release newer than this build that has an installer. */
-function newestRelease(releases) {
+/**
+ * The newest published release newer than this build that has an installer;
+ * release candidates count only with `candidates`.
+ */
+function newestRelease(releases, candidates) {
   let best = null;
   for (const release of releases) {
-    if (!release || release.draft || release.prerelease) continue;
+    if (!release || release.draft || (release.prerelease && !candidates)) continue;
     const build = buildOfTag(release.tag_name);
     if (build === null || build <= installedBuild || (best && build <= best.build)) continue;
     const asset = installerAsset(release.assets);
@@ -85,10 +92,10 @@ async function download(asset, file) {
 
 /**
  * Starts checking for updates. onReady({ version }) fires when one can be
- * installed. Returns { current(), install() }, or null when this build does
- * not update itself.
+ * installed. Returns { current(), install(), check() }, or null when this
+ * build does not update itself.
  */
-function startUpdater({ onReady, openExternal }) {
+function startUpdater({ onReady, openExternal, wantsCandidates = async () => false }) {
   const supported = process.platform === "win32" || process.platform === "darwin";
   if (!app.isPackaged || !supported || !installedBuild || !repository) return null;
 
@@ -106,7 +113,7 @@ function startUpdater({ onReady, openExternal }) {
         headers: { Accept: "application/vnd.github+json" },
       });
       if (!res.ok) throw new Error(`GitHub answered ${res.status}`);
-      const release = newestRelease(await res.json());
+      const release = newestRelease(await res.json(), await wantsCandidates());
       if (!release) {
         // Up to date: an installer left from the last update is not needed.
         fs.rmSync(updatesDir(), { recursive: true, force: true });
@@ -190,7 +197,7 @@ function startUpdater({ onReady, openExternal }) {
 
   setTimeout(check, FIRST_CHECK_MS);
   setInterval(check, CHECK_EVERY_MS);
-  return { current, install };
+  return { current, install, check };
 }
 
 module.exports = { startUpdater };

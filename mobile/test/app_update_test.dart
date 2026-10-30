@@ -18,11 +18,12 @@ Map<String, Object?> _release(
   List<String> changes = const [],
   List<String> assets = const ['anchor-fork.apk', 'anchor-fork-x86_64.apk'],
   bool draft = false,
+  bool candidate = false,
 }) => {
   'tag_name': 'fork-0.17.2.$build',
   'html_url': 'https://github.com/o/r/releases/tag/fork-0.17.2.$build',
   'draft': draft,
-  'prerelease': false,
+  'prerelease': candidate,
   'body':
       'Built from abc1234.\n\n## Android\n\nInstall it.\n\n## Changes\n\n'
       '${changes.map((c) => '- $c (abc1234)\n').join()}\n'
@@ -130,6 +131,32 @@ void main() {
 
       expect(release?.build, 23);
     });
+
+    test('is a release candidate only when those are asked for', () {
+      final releases = [
+        _release(24, candidate: true, changes: ['rc']),
+        _release(23, changes: ['release']),
+      ];
+
+      expect(
+        newestRelease(releases, installed: 22, asset: 'anchor-fork.apk')?.build,
+        23,
+      );
+      final candidate = newestRelease(
+        releases,
+        installed: 22,
+        asset: 'anchor-fork.apk',
+        candidates: true,
+      );
+      expect(candidate?.build, 24);
+      expect(candidate?.changes, ['rc', 'release']);
+    });
+
+    test('candidates are for servers on the preview image', () {
+      expect(isPreviewImage('ghcr.io/o/anchor:fork-preview'), isTrue);
+      expect(isPreviewImage('ghcr.io/o/anchor:fork-latest'), isFalse);
+      expect(isPreviewImage(null), isFalse);
+    });
   });
 
   group('the update controller', () {
@@ -138,20 +165,23 @@ void main() {
 
     setUp(() {
       source = FakeSource([
+        _release(24, candidate: true),
         _release(23, changes: ['feat: new']),
         _release(22),
       ]);
       prefs = MockPreferences();
       when(() => prefs.getDismissedUpdate()).thenAnswer((_) async => null);
+      when(() => prefs.getPreviewReleases()).thenAnswer((_) async => false);
       when(() => prefs.setDismissedUpdate(any())).thenAnswer((_) async {});
     });
 
-    ProviderContainer container({int installed = 22}) {
+    ProviderContainer container({int installed = 22, bool preview = false}) {
       final c = ProviderContainer(
         overrides: [
           updateSourceProvider.overrideWithValue(source),
           installedBuildNumberProvider.overrideWithValue(installed),
           preferencesRepositoryProvider.overrideWithValue(prefs),
+          onPreviewServerProvider.overrideWith((ref) async => preview),
         ],
       );
       addTearDown(c.dispose);
@@ -168,6 +198,25 @@ void main() {
       expect(state.status, UpdateStatus.available);
       expect(state.showBanner, isTrue);
     });
+
+    test(
+      'offers a release candidate only when asked, on a preview server',
+      () async {
+        Future<int?> newest({required bool asked, required bool preview}) {
+          when(() => prefs.getPreviewReleases()).thenAnswer((_) async => asked);
+          final c = container(preview: preview);
+          return c
+              .read(updateControllerProvider.notifier)
+              .check()
+              .then((r) => r?.build);
+        }
+
+        expect(await newest(asked: false, preview: false), 23);
+        expect(await newest(asked: true, preview: false), 23);
+        expect(await newest(asked: false, preview: true), 23);
+        expect(await newest(asked: true, preview: true), 24);
+      },
+    );
 
     test('says so when this is the newest build', () async {
       final c = container(installed: 23);

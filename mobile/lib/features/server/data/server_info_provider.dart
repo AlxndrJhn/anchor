@@ -13,7 +13,16 @@ class ServerInfo {
   /// Empty for servers too old to advertise them.
   final List<int> protocols;
 
-  ServerInfo({this.version, required this.app, this.protocols = const []});
+  /// The Docker image the server runs from, when it says
+  /// (`ghcr.io/<owner>/anchor:fork-preview` for the fork's preview servers).
+  final String? image;
+
+  ServerInfo({
+    this.version,
+    required this.app,
+    this.protocols = const [],
+    this.image,
+  });
 
   factory ServerInfo.fromJson(Map<String, dynamic> json) {
     return ServerInfo(
@@ -21,6 +30,7 @@ class ServerInfo {
       app: json['app'] as String? ?? 'Unknown',
       protocols:
           (json['protocols'] as List?)?.whereType<int>().toList() ?? const [],
+      image: json['image'] as String?,
     );
   }
 }

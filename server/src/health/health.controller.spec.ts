@@ -20,4 +20,19 @@ describe('HealthController', () => {
     );
     expect(SUPPORTED_PROTOCOLS).toContain(ANCHOR_PROTOCOL);
   });
+
+  it('names the image it runs from, when the image says', () => {
+    const before = process.env.ANCHOR_IMAGE;
+    try {
+      delete process.env.ANCHOR_IMAGE;
+      expect(new HealthController().check().image).toBeUndefined();
+      process.env.ANCHOR_IMAGE = 'ghcr.io/o/anchor:fork-preview';
+      expect(new HealthController().check().image).toBe(
+        'ghcr.io/o/anchor:fork-preview',
+      );
+    } finally {
+      if (before === undefined) delete process.env.ANCHOR_IMAGE;
+      else process.env.ANCHOR_IMAGE = before;
+    }
+  });
 });

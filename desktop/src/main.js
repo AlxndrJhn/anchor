@@ -114,7 +114,11 @@ async function checkServer(serverUrl, { isSchemeAdded = false } = {}) {
     if (!body || body.app !== "anchor") {
       return { ok: false, error: `${host} isn’t an Anchor server. Check the address.` };
     }
-    return { ok: true, version: typeof body.version === "string" ? body.version : null };
+    return {
+      ok: true,
+      version: typeof body.version === "string" ? body.version : null,
+      image: typeof body.image === "string" ? body.image : null,
+    };
   } catch (err) {
     const reason = controller.signal.aborted ? "It did not answer in time." : `${err.message}.`;
     const advice = isSchemeAdded
@@ -360,9 +364,34 @@ function changeServer() {
   showSetup({ canRetry: Boolean(settings.serverUrl) });
 }
 
+// Release candidates: only when asked for, and the server runs the fork's
+// preview image (ghcr.io/<owner>/anchor:fork-preview).
+async function wantsCandidates() {
+  if (!settings.previewReleases || !settings.serverUrl) return false;
+  const server = await checkServer(settings.serverUrl);
+  return server.ok && Boolean(server.image?.endsWith(":fork-preview"));
+}
+
+function setPreviewReleases(on) {
+  settings.previewReleases = on;
+  saveSettings();
+  buildMenu();
+  updater?.check();
+}
+
 function buildMenu() {
   const isMac = process.platform === "darwin";
   const changeServerItem = { label: "Change server…", click: changeServer };
+  const previewItems = updater
+    ? [
+        {
+          label: "Receive Preview Releases",
+          type: "checkbox",
+          checked: Boolean(settings.previewReleases),
+          click: (item) => setPreviewReleases(item.checked),
+        },
+      ]
+    : [];
   const update = updater?.current();
   const updateItems = update
     ? [{ label: `Restart to Update (${update.version})`, click: () => updater.install() }, { type: "separator" }]
@@ -377,6 +406,7 @@ function buildMenu() {
               { type: "separator" },
               ...updateItems,
               changeServerItem,
+              ...previewItems,
               { type: "separator" },
               { role: "services" },
               { type: "separator" },
@@ -388,7 +418,12 @@ function buildMenu() {
             ],
           },
         ]
-      : [{ label: "&File", submenu: [...updateItems, changeServerItem, { type: "separator" }, { role: "quit" }] }]),
+      : [
+          {
+            label: "&File",
+            submenu: [...updateItems, changeServerItem, ...previewItems, { type: "separator" }, { role: "quit" }],
+          },
+        ]),
     { role: "editMenu" },
     {
       label: "View",
@@ -427,7 +462,8 @@ if (!app.requestSingleInstanceLock()) {
     buildMenu();
     createWindow();
     start();
-    updater = startUpdater({ onReady: updateReady, openExternal });
+    updater = startUpdater({ onReady: updateReady, openExternal, wantsCandidates });
+    buildMenu();
 
     // Locking the computer ends the web client's unlock session: notes
     // unlocked since lock again, as on a phone.

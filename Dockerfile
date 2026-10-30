@@ -89,6 +89,12 @@ COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/reset-password /usr/local/bin/reset-password
 RUN chmod +x /app/docker-entrypoint.sh /usr/local/bin/reset-password
 
+# The image's own name, for /api/health: the apps offer release candidates
+# only to servers running ghcr.io/<owner>/anchor:fork-preview. Last, so a
+# preview image shares every other layer with the release's.
+ARG ANCHOR_IMAGE=
+ENV ANCHOR_IMAGE=$ANCHOR_IMAGE
+
 VOLUME ["/data"]
 
 EXPOSE 3000

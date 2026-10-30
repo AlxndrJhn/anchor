@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/server/data/server_info_provider.dart';
 import '../logging/app_logger.dart';
 import '../storage/preferences_repository.dart';
 import 'app_release.dart';
@@ -127,6 +128,12 @@ UpdateSource updateSource(Ref ref) => UpdateSource();
 @Riverpod(keepAlive: true)
 int installedBuildNumber(Ref ref) => installedBuild;
 
+/// Whether the server runs the fork's preview image, so release candidates
+/// may be offered.
+@riverpod
+Future<bool> onPreviewServer(Ref ref) async =>
+    isPreviewImage((await ref.watch(serverInfoProvider.future))?.image);
+
 /// Finds, downloads and installs newer releases of the fork from GitHub.
 @Riverpod(keepAlive: true)
 class UpdateController extends _$UpdateController {
@@ -146,16 +153,20 @@ class UpdateController extends _$UpdateController {
   Future<AppRelease?> check() async {
     state = state.copyWith(status: UpdateStatus.checking);
     final installed = ref.read(installedBuildNumberProvider);
+    final prefs = ref.read(preferencesRepositoryProvider);
     try {
+      // Release candidates: only for those who asked, on a preview server.
+      final candidates =
+          await prefs.getPreviewReleases() &&
+          await ref.read(onPreviewServerProvider.future);
       final releases = await ref.read(updateSourceProvider).releases();
       final release = newestRelease(
         releases,
         installed: installed,
         asset: apkAssetForThisPhone(),
+        candidates: candidates,
       );
-      final skipped = await ref
-          .read(preferencesRepositoryProvider)
-          .getDismissedUpdate();
+      final skipped = await prefs.getDismissedUpdate();
       AppLogger.instance.info(
         _logTag,
         release == null

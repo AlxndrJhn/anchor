@@ -11,6 +11,11 @@ on:
         description: Docker metadata tags configuration
         required: true
         type: string
+      build-args:
+        description: Docker build arguments, one NAME=value per line
+        required: false
+        type: string
+        default: ""
 
 env:
   REGISTRY: ghcr.io
@@ -63,5 +68,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ inputs.build-args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

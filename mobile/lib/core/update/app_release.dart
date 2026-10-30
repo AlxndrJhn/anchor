@@ -16,6 +16,11 @@ String apkAssetFor(Abi abi) => switch (abi) {
   _ => 'anchor-fork.apk',
 };
 
+/// Whether a server's image is the fork's preview one, whose users may get
+/// release candidates.
+bool isPreviewImage(String? image) =>
+    image != null && image.endsWith(':fork-preview');
+
 /// The build number in a release tag: `fork-0.17.2.22` is build 22.
 int? buildOfTag(String tag) {
   if (!tag.startsWith('fork-')) return null;
@@ -63,16 +68,19 @@ List<String> changesInNotes(String notes) {
 
 /// The newest release in GitHub's list that is newer than [installed] and
 /// has an APK named [asset]; null when there is none. Its changes gather
-/// those of every release in between.
+/// those of every release in between. Release candidates (prereleases) count
+/// only with [candidates].
 AppRelease? newestRelease(
   List<Object?> releases, {
   required int installed,
   required String asset,
+  bool candidates = false,
 }) {
   final newer = <({int build, Map<String, Object?> json})>[];
   for (final item in releases) {
     if (item is! Map<String, Object?>) continue;
-    if (item['draft'] == true || item['prerelease'] == true) continue;
+    if (item['draft'] == true) continue;
+    if (item['prerelease'] == true && !candidates) continue;
     final build = buildOfTag(item['tag_name'] as String? ?? '');
     if (build != null && build > installed) {
       newer.add((build: build, json: item));

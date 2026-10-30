@@ -1318,6 +1318,18 @@ abstract class AppLocalizations {
   /// **'Look for a new release when Anchor starts'**
   String get settingsCheckAutomaticallyHelp;
 
+  /// Switch in Settings › Updates: also offer release candidates, before they are released to everyone.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive preview releases'**
+  String get settingsPreviewReleases;
+
+  /// Help under the Receive preview releases switch: candidates are only offered when the server runs the fork's preview Docker image (ghcr.io/…/anchor:fork-preview).
+  ///
+  /// In en, this message translates to:
+  /// **'Release candidates, when your server runs the :fork-preview image'**
+  String get settingsPreviewReleasesHelp;
+
   /// Section label in Settings for search options. Shown only when the server offers picture search.
   ///
   /// In en, this message translates to:

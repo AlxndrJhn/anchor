@@ -97,6 +97,47 @@ final class InstalledBuildNumberProvider
 String _$installedBuildNumberHash() =>
     r'79a915a614372430471f40ce5a9823647e32d03e';
 
+/// Whether the server runs the fork's preview image, so release candidates
+/// may be offered.
+
+@ProviderFor(onPreviewServer)
+final onPreviewServerProvider = OnPreviewServerProvider._();
+
+/// Whether the server runs the fork's preview image, so release candidates
+/// may be offered.
+
+final class OnPreviewServerProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Whether the server runs the fork's preview image, so release candidates
+  /// may be offered.
+  OnPreviewServerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'onPreviewServerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$onPreviewServerHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return onPreviewServer(ref);
+  }
+}
+
+String _$onPreviewServerHash() => r'c0c6473e6f7940859aa49954768cf2bf7dc72a06';
+
 /// Finds, downloads and installs newer releases of the fork from GitHub.
 
 @ProviderFor(UpdateController)
@@ -133,7 +174,7 @@ final class UpdateControllerProvider
   }
 }
 
-String _$updateControllerHash() => r'1ff0031eefa9a1125e88f579a8999415e965352c';
+String _$updateControllerHash() => r'3b670a07d20b0c3e656146c2b2699ea86a75c0b0';
 
 /// Finds, downloads and installs newer releases of the fork from GitHub.
 

@@ -28,6 +28,8 @@ export class HealthController {
       app: 'anchor',
       version,
       protocols: SUPPORTED_PROTOCOLS,
+      // The Docker image this runs from (see the Dockerfile), when it says.
+      image: process.env.ANCHOR_IMAGE || undefined,
       timestamp: new Date().toISOString(),
     };
   }

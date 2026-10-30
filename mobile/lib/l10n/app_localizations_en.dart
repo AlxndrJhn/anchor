@@ -731,6 +731,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Look for a new release when Anchor starts';
 
   @override
+  String get settingsPreviewReleases => 'Receive preview releases';
+
+  @override
+  String get settingsPreviewReleasesHelp =>
+      'Release candidates, when your server runs the :fork-preview image';
+
+  @override
   String get settingsSearch => 'Search';
 
   @override

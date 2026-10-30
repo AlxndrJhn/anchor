@@ -645,11 +645,18 @@ class _UpdatesSectionState extends ConsumerState<_UpdatesSection> {
   /// "Check automatically", once read from storage.
   bool _checkAutomatically = true;
 
+  /// "Receive preview releases", once read from storage.
+  bool _previewReleases = false;
+
   @override
   void initState() {
     super.initState();
-    ref.read(preferencesRepositoryProvider).getCheckForUpdates().then((on) {
+    final prefs = ref.read(preferencesRepositoryProvider);
+    prefs.getCheckForUpdates().then((on) {
       if (mounted) setState(() => _checkAutomatically = on);
+    });
+    prefs.getPreviewReleases().then((on) {
+      if (mounted) setState(() => _previewReleases = on);
     });
   }
 
@@ -682,6 +689,11 @@ class _UpdatesSectionState extends ConsumerState<_UpdatesSection> {
     await ref.read(preferencesRepositoryProvider).setCheckForUpdates(on);
   }
 
+  Future<void> _setPreviewReleases(bool on) async {
+    setState(() => _previewReleases = on);
+    await ref.read(preferencesRepositoryProvider).setPreviewReleases(on);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -704,6 +716,12 @@ class _UpdatesSectionState extends ConsumerState<_UpdatesSection> {
             subtitle: l10n.settingsCheckAutomaticallyHelp,
             value: _checkAutomatically,
             onChanged: _setCheckAutomatically,
+          ),
+          SwitchRow(
+            label: l10n.settingsPreviewReleases,
+            subtitle: l10n.settingsPreviewReleasesHelp,
+            value: _previewReleases,
+            onChanged: _setPreviewReleases,
           ),
         ],
       ),
