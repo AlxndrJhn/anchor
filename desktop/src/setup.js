@@ -1,4 +1,4 @@
-// The built-in "Connect to your server" page.
+// The built-in "Welcome to Anchor+" page, which asks for the server.
 (async () => {
   const api = window.anchorDesktop;
   const form = document.getElementById("form");
@@ -16,11 +16,10 @@
     connect.disabled = on;
     retry.disabled = on;
     input.disabled = on;
-    connect.textContent = on ? label : "Connect";
+    connect.textContent = on ? label : "Continue";
   };
 
   const state = await api.getState();
-  document.getElementById("logo").src = state.iconUrl;
   document.getElementById("version").textContent = `Anchor+ desktop ${state.version}`;
   input.value = state.serverUrl;
   showError(state.error);
@@ -33,7 +32,7 @@
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     showError(null);
-    busy(true, "Checking…");
+    busy(true, "Connecting…");
     try {
       const result = await api.connect(input.value);
       if (!result.ok) {
@@ -64,7 +63,7 @@
 
   retry.addEventListener("click", async () => {
     showError(null);
-    busy(true, "Connect");
+    busy(true, "Continue");
     retry.textContent = "Connecting…";
     await api.retry();
   });

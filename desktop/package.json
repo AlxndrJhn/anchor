@@ -11,7 +11,7 @@
   "packageManager": "pnpm@12.16.1",
   "scripts": {
     "start": "electron .",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/setup.js && node --check src/updater.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/setup.js && node --check src/welcome.js && node --check src/updater.js",
     "build": "pnpm run check && electron-builder --dir --publish never",
     "dist:win": "electron-builder --win nsis --x64 --publish never",
     "dist:mac": "electron-builder --mac dmg --universal --publish never"

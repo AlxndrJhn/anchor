@@ -18,6 +18,14 @@ files:
     to: icons
     filter:
       - web-app-manifest-512x512.png
+  # The setup page's fonts: the Android app's, so it looks like its first page.
+  - from: ../mobile/assets/fonts
+    to: fonts
+    filter:
+      - DMSans-Variable.ttf
+      - PlayfairDisplay-Bold.ttf
+      - OFL-DMSans.txt
+      - OFL-PlayfairDisplay.txt
 # electron-builder makes the .ico and .icns from this.
 icon: ../web/public/icons/anchor_icon.png
 asar: true

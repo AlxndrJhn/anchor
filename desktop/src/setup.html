@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' file:; style-src 'self' file:; img-src 'self' file:"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' file:; img-src 'self' file:; font-src 'self' file:"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Anchor+</title>
@@ -12,34 +12,49 @@
   </head>
   <body>
     <button id="update" type="button" class="update" hidden>Update</button>
+    <canvas id="harbor" class="harbor" aria-hidden="true"></canvas>
     <main>
-      <img id="logo" alt="" width="88" height="88" />
-      <h1>Anchor+</h1>
-      <p class="lead">Connect to your Anchor server.</p>
+      <!-- The + is drawn by welcome.js; screen readers hear the label. -->
+      <h1 aria-label="Welcome to Anchor+">
+        <span aria-hidden="true">Welcome to Anchor</span><span class="plus" aria-hidden="true" title="What Anchor+ adds"
+          ><canvas id="plus"></canvas
+        ></span>
+      </h1>
+      <p class="lead">Enter your server address to get started.</p>
 
       <div id="error" class="error" role="alert" hidden></div>
       <button id="retry" type="button" class="secondary" hidden>Retry</button>
 
       <form id="form" novalidate>
         <label for="url">Server address</label>
-        <input
-          id="url"
-          name="url"
-          type="text"
-          inputmode="url"
-          autocomplete="url"
-          spellcheck="false"
-          placeholder="https://notes.example.com"
-          required
-        />
-        <button id="connect" type="submit">Connect</button>
+        <div class="field">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20" />
+          </svg>
+          <input
+            id="url"
+            name="url"
+            type="text"
+            inputmode="url"
+            autocomplete="url"
+            spellcheck="false"
+            placeholder="notes.example.com"
+            required
+          />
+        </div>
+        <button id="connect" type="submit" class="primary">Continue</button>
       </form>
       <p class="hint">
-        The address you open Anchor+ at in your browser. The app checks that it
-        answers before saving it.
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4M12 8h.01" />
+        </svg>
+        <span>Anchor requires a self-hosted server.</span>
       </p>
       <p id="version" class="version"></p>
     </main>
+    <script src="welcome.js"></script>
     <script src="setup.js"></script>
   </body>
 </html>
