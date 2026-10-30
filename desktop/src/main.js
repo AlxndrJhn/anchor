@@ -29,11 +29,13 @@ moveOldUserData();
 
 // Builds before the rename kept their settings and sign-in in an "Anchor"
 // folder. Copy it once, before Chromium opens the new one, so an update keeps
-// the saved server; a pending update installer is not worth the copy.
+// the saved server and sign-in; a pending update installer is not worth the
+// copy. getPath("userData") creates the folder, so it always exists here:
+// Chromium's "Local State" tells a folder that has been used before.
 function moveOldUserData() {
   const userData = app.getPath("userData");
   const old = path.join(app.getPath("appData"), "Anchor");
-  if (fs.existsSync(userData) || !fs.existsSync(old)) return;
+  if (fs.existsSync(path.join(userData, "Local State")) || !fs.existsSync(old)) return;
   try {
     fs.cpSync(old, userData, {
       recursive: true,
@@ -89,7 +91,9 @@ function normalizeServerUrl(input) {
   return url.toString().replace(/\/+$/, "");
 }
 
-async function checkServer(serverUrl) {
+// The messages are the Android app's (serverNotAnchor, serverUnreachable…).
+async function checkServer(serverUrl, { isSchemeAdded = false } = {}) {
+  const host = new URL(serverUrl).host;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
   try {
@@ -99,7 +103,7 @@ async function checkServer(serverUrl) {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) {
-      return { ok: false, error: `The server answered ${res.status} ${res.statusText}.` };
+      return { ok: false, error: `${host} answered ${res.status} ${res.statusText}. Check the address.` };
     }
     let body;
     try {
@@ -108,12 +112,15 @@ async function checkServer(serverUrl) {
       body = null;
     }
     if (!body || body.app !== "anchor") {
-      return { ok: false, error: "That address answers, but it is not an Anchor server." };
+      return { ok: false, error: `${host} isn’t an Anchor server. Check the address.` };
     }
     return { ok: true, version: typeof body.version === "string" ? body.version : null };
   } catch (err) {
-    const reason = controller.signal.aborted ? "it did not answer in time" : err.message;
-    return { ok: false, error: `Could not reach the server: ${reason}.` };
+    const reason = controller.signal.aborted ? "It did not answer in time." : `${err.message}.`;
+    const advice = isSchemeAdded
+      ? "Check the address, or add http:// if your server doesn’t use https."
+      : "Check the address and your connection.";
+    return { ok: false, error: `Couldn’t reach ${host}. ${advice} (${reason})` };
   } finally {
     clearTimeout(timer);
   }
@@ -293,7 +300,6 @@ ipcMain.handle("anchor:get-state", (event) => {
     serverUrl: settings.serverUrl ?? "",
     error: setupState.error,
     canRetry: setupState.canRetry,
-    iconUrl: pathToFileURL(iconPath()).toString(),
     version: app.getVersion(),
   };
 });
@@ -301,8 +307,10 @@ ipcMain.handle("anchor:get-state", (event) => {
 ipcMain.handle("anchor:connect", async (event, input) => {
   if (!fromSetupPage(event)) throw new Error("Not allowed");
   const serverUrl = normalizeServerUrl(input);
-  if (!serverUrl) return { ok: false, error: "Enter the address of your server, such as https://notes.example.com." };
-  const result = await checkServer(serverUrl);
+  if (!String(input ?? "").trim()) return { ok: false, error: "Enter a server address." };
+  if (!serverUrl) return { ok: false, error: "Enter a valid server address." };
+  const isSchemeAdded = !/^https?:\/\//i.test(String(input).trim());
+  const result = await checkServer(serverUrl, { isSchemeAdded });
   if (!result.ok) return result;
   settings.serverUrl = serverUrl;
   saveSettings();
