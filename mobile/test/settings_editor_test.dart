@@ -13,11 +13,13 @@ import 'package:anchor/features/auth/domain/oidc_config.dart';
 import 'package:anchor/features/auth/domain/user.dart';
 import 'package:anchor/features/auth/presentation/auth_controller.dart';
 import 'package:anchor/features/auth/presentation/oidc_config_provider.dart';
+import 'package:anchor/features/notes/domain/quick_action.dart';
 import 'package:anchor/features/server/data/server_info_provider.dart';
 import 'package:anchor/features/settings/presentation/editor_preferences_controller.dart';
 import 'package:anchor/features/settings/presentation/settings_screen.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
 import 'package:anchor/l10n/app_localizations.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -307,4 +309,55 @@ void main() {
     await tester.pump();
     expect(styleOf(tester, preview).fontSize, closeTo(16.5 * 0.88, 0.001));
   });
+
+  testWidgets(
+    'holding a quick action or dragging its grip moves it up the bar',
+    (tester) async {
+      final container = await pumpSettings(tester);
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Pin')),
+        alignment: 0.3,
+      );
+      await tester.pumpAndSettle();
+
+      Future<void> dragUp(Offset start, {required bool hold}) async {
+        final gesture = await tester.startGesture(start);
+        if (hold) await tester.pump(kLongPressTimeout * 2);
+        for (var i = 0; i < 30; i++) {
+          await gesture.moveBy(const Offset(0, -6));
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        await gesture.up();
+        await tester.pumpAndSettle();
+      }
+
+      List<QuickAction> bar() =>
+          container.read(editorPreferencesControllerProvider).quickActions;
+
+      await dragUp(tester.getCenter(find.text('Pin')), hold: true);
+      expect(bar(), [
+        QuickAction.pin,
+        QuickAction.trash,
+        QuickAction.background,
+        QuickAction.reminder,
+        QuickAction.archive,
+      ]);
+
+      final grip = find.descendant(
+        of: find.ancestor(
+          of: find.text('Reminder'),
+          matching: find.byType(ReorderableDelayedDragStartListener),
+        ),
+        matching: find.byType(ReorderableDragStartListener),
+      );
+      await dragUp(tester.getCenter(grip), hold: false);
+      expect(bar(), [
+        QuickAction.reminder,
+        QuickAction.pin,
+        QuickAction.trash,
+        QuickAction.background,
+        QuickAction.archive,
+      ]);
+    },
+  );
 }

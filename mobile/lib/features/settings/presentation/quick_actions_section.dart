@@ -60,8 +60,10 @@ class QuickActionsSection extends ConsumerWidget {
           ],
         ),
       );
-      return KeyedSubtree(
+      // Holding anywhere on the row lifts it too, not only the grip.
+      return ReorderableDelayedDragStartListener(
         key: ValueKey(action),
+        index: index,
         child: index == 0
             ? row
             : GroupedList.lineAbove(
