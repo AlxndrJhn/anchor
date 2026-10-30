@@ -14,6 +14,7 @@ class PageHeading extends StatelessWidget {
     this.subtitleLink,
     this.hasIcon = false,
     this.isCentered = false,
+    this.titleMark,
   });
 
   /// Marks where [subtitleLink] goes in [subtitle].
@@ -27,6 +28,10 @@ class PageHeading extends StatelessWidget {
 
   final bool hasIcon;
   final bool isCentered;
+
+  /// Drawn after the title's last word, in place of a trailing "+" that
+  /// the title keeps for screen readers (Anchor+'s animated plus).
+  final Widget? titleMark;
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +57,28 @@ class PageHeading extends StatelessWidget {
         ],
         Semantics(
           header: true,
-          child: Text(
-            title,
-            textAlign: align,
-            style: AppTypography.largeTitle.copyWith(color: colors.appText),
+          label: titleMark == null ? null : title,
+          child: ExcludeSemantics(
+            excluding: titleMark != null,
+            child: Text.rich(
+              TextSpan(
+                text: titleMark != null && title.endsWith('+')
+                    ? title.substring(0, title.length - 1)
+                    : title,
+                children: [
+                  if (titleMark case final mark?)
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.top,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: mark,
+                      ),
+                    ),
+                ],
+              ),
+              textAlign: align,
+              style: AppTypography.largeTitle.copyWith(color: colors.appText),
+            ),
           ),
         ),
         const SizedBox(height: 4),

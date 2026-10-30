@@ -546,9 +546,9 @@
   "@serverTitle": {
     "description": "Name of the server page, read by screen readers."
   },
-  "serverWelcome": "Welcome to Anchor",
+  "serverWelcome": "Welcome to Anchor+",
   "@serverWelcome": {
-    "description": "Title of the first page, where the person enters their server address."
+    "description": "Title of the first page, where the person enters their server address. Ends with the app's name, Anchor+; the trailing + is drawn as an animated plus."
   },
   "serverSubtitle": "Enter your server address to get started.",
   "@serverSubtitle": {

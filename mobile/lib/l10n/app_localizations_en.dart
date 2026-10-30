@@ -409,7 +409,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverTitle => 'Server';
 
   @override
-  String get serverWelcome => 'Welcome to Anchor';
+  String get serverWelcome => 'Welcome to Anchor+';
 
   @override
   String get serverSubtitle => 'Enter your server address to get started.';

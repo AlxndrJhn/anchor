@@ -778,10 +778,10 @@ abstract class AppLocalizations {
   /// **'Server'**
   String get serverTitle;
 
-  /// Title of the first page, where the person enters their server address.
+  /// Title of the first page, where the person enters their server address. Ends with the app's name, Anchor+; the trailing + is drawn as an animated plus.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to Anchor'**
+  /// **'Welcome to Anchor+'**
   String get serverWelcome;
 
   /// Under the title of the first page, where the server address is entered.

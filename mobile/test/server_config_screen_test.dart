@@ -27,7 +27,7 @@ void main() {
     await pumpApp(tester, const ServerConfigScreen());
 
     expect(find.byType(HarborIllustration), findsOneWidget);
-    expect(find.text('Welcome to Anchor'), findsOneWidget);
+    expect(find.textContaining('Welcome to Anchor'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
     expect(find.byType(PageBackButton), findsNothing);
     expect(addressOf(tester), isEmpty);
@@ -55,7 +55,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.byType(HarborIllustration), findsOneWidget);
-    expect(find.text('Welcome to Anchor'), findsOneWidget);
+    expect(find.textContaining('Welcome to Anchor'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
     expect(find.byType(PageBackButton), findsOneWidget);
     expect(addressOf(tester), 'anchor.example.com');

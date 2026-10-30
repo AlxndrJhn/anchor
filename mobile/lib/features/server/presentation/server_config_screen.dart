@@ -12,6 +12,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/anchor_dialog.dart';
+import '../../../core/widgets/anchor_plus_mark.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/form_page.dart';
@@ -155,7 +156,11 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
         onPressed: isBusy ? null : _connect,
       ),
       children: [
-        PageHeading(title: l10n.serverWelcome, subtitle: l10n.serverSubtitle),
+        PageHeading(
+          title: l10n.serverWelcome,
+          subtitle: l10n.serverSubtitle,
+          titleMark: const AnchorPlusMark(size: AnchorPlusMark.titleSize),
+        ),
         SizedBox(height: density.space24),
         FormNotices(errorMessage: errorMessage),
         AppTextField(
