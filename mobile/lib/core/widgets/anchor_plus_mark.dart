@@ -8,18 +8,29 @@ import '../motion/haptics.dart';
 import '../motion/springs.dart';
 import '../theme/context_extensions.dart';
 
-/// The "+" of Anchor+, set after a title: it hovers, glows, and has a few
-/// sparks circling it, for everything the + adds. A tap sends the features
+/// The "+" of Anchor+, set after a title: it hovers for a while, glows, and
+/// has a few sparks circling it, for everything the + adds. A tap sends the features
 /// out around it, as they do once when it first shows. Sits still with
 /// reduced motion.
 class AnchorPlusMark extends StatefulWidget {
-  const AnchorPlusMark({super.key, required this.size});
+  const AnchorPlusMark({
+    super.key,
+    required this.size,
+    this.isBurstOnShow = true,
+  });
 
   /// The height of the cross, about the cap height of the title next to it.
   final double size;
 
+  /// Plays the features once when it first shows; off where it shows
+  /// often, like the drawer, so only a tap plays them there.
+  final bool isBurstOnShow;
+
   /// Beside a large title.
   static const titleSize = 24.0;
+
+  /// Beside the app's name in the drawer.
+  static const drawerSize = 12.0;
 
   /// What a tap sends out: a few of the things Anchor+ adds.
   static const features = <IconData>[
@@ -44,6 +55,9 @@ class _AnchorPlusMarkState extends State<AnchorPlusMark>
     vsync: this,
     duration: const Duration(milliseconds: 3200),
   );
+  // About twenty seconds of hovering, then it rests until tapped.
+  static const _hoverCycles = 6;
+
   late final AnimationController _burst = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
@@ -57,13 +71,15 @@ class _AnchorPlusMarkState extends State<AnchorPlusMark>
     if (isSystemMotionReduced || MediaQuery.disableAnimationsOf(context)) {
       _hover.stop();
       _firstBurst?.cancel();
-    } else if (!_hover.isAnimating) {
-      _hover.repeat();
+    } else if (!_hover.isAnimating && _hover.value == 0) {
+      _hover.repeat(count: _hoverCycles);
       // Shows once what the + stands for, after the page has settled.
-      _firstBurst ??= Timer(
-        const Duration(milliseconds: 900),
-        () => _burst.forward(from: 0),
-      );
+      if (widget.isBurstOnShow) {
+        _firstBurst ??= Timer(
+          const Duration(milliseconds: 900),
+          () => _burst.forward(from: 0),
+        );
+      }
     }
   }
 
@@ -81,6 +97,7 @@ class _AnchorPlusMarkState extends State<AnchorPlusMark>
     }
     Haptics.light();
     _burst.forward(from: 0);
+    if (!_hover.isAnimating) _hover.repeat(count: _hoverCycles);
   }
 
   @override

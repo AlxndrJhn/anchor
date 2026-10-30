@@ -380,12 +380,12 @@ shortcuts). It does not store notes itself; it connects to your server.
    [releases page](https://github.com/AlxndrJhn/anchor/releases):
    - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
-     open it and drag Anchor to Applications
+     open it and drag Anchor+ to Applications
 
-2. **Connect:** on first launch, enter the address you open Anchor at in your
+2. **Connect:** on first launch, enter the address you open Anchor+ at in your
    browser, such as `https://notes.example.com`. The app checks that the server
    answers, then remembers it. **Change server…** (File menu on Windows, the
-   Anchor menu on macOS) switches to another one.
+   Anchor+ menu on macOS) switches to another one.
 
 The builds are not signed, so the system warns the first time:
 
@@ -397,9 +397,9 @@ The builds are not signed, so the system warns the first time:
 
 The app keeps itself up to date: it looks for a newer release now and then,
 downloads it in the background, and then shows a small **Update** button in
-the top right (also **Restart to Update** in the File menu, or the Anchor menu
-on macOS). Clicking it restarts Anchor on the new version. On macOS this needs
-Anchor in a folder you can write to, such as Applications; run from the disk
+the top right (also **Restart to Update** in the File menu, or the Anchor+ menu
+on macOS). Clicking it restarts Anchor+ on the new version. On macOS this needs
+Anchor+ in a folder you can write to, such as Applications; run from the disk
 image, the button opens the release page instead.
 
 Links to other websites open in your browser. To build it yourself:

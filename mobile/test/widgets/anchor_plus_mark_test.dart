@@ -57,6 +57,21 @@ void main() {
     expect(featureIcons(), findsNothing);
   });
 
+  testWidgets('it hovers for a while, then rests until tapped', (
+    tester,
+  ) async {
+    await pumpHeading(tester);
+    expect(tester.hasRunningAnimations, isTrue);
+
+    await tester.pumpAndSettle();
+    expect(tester.hasRunningAnimations, isFalse);
+
+    await tester.tap(find.byType(AnchorPlusMark));
+    await tester.pump();
+    expect(tester.hasRunningAnimations, isTrue);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('with reduced motion the + sits still', (tester) async {
     await pumpHeading(tester, reduced: true);
 

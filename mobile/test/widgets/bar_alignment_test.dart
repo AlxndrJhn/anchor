@@ -549,7 +549,7 @@ class _Probe {
     near(
       'drawer brand',
       mid(find.byType(AnchorLogo)),
-      caps(find.text('Anchor+')).mid,
+      caps(find.text('Anchor')).mid,
     );
     final plus = find.widgetWithIcon(BarButton, LucideIcons.plus);
     near(

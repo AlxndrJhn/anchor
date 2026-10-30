@@ -9,6 +9,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/anchor_logo.dart';
+import '../../../../core/widgets/anchor_plus_mark.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/cap_height_text.dart';
 import '../../../../core/widgets/grouped_list.dart';
@@ -142,15 +143,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 children: [
                   const AnchorLogo(size: AnchorLogo.drawer, isRaised: false),
                   const SizedBox(width: 12),
-                  Flexible(
-                    child: CapHeightText(
-                      context.l10n.settingsAppNameShort,
-                      style: AppTypography.serifText(
-                        fontSize: AppTypography.sheetTitle.fontSize,
-                        color: colors.appText,
-                      ).copyWith(letterSpacing: -0.1),
-                    ),
-                  ),
+                  Flexible(child: _AppName(color: colors.appText)),
                 ],
               ),
             ),
@@ -517,6 +510,46 @@ class _Account extends ConsumerWidget {
                 size: AnchorTokens.sizeIconSmall,
                 color: colors.appMuted,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Anchor+" with its + drawn by [AnchorPlusMark], which hovers there; a tap
+/// on it sends out the features.
+class _AppName extends StatelessWidget {
+  const _AppName({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = context.l10n.settingsAppNameShort;
+    final style = AppTypography.serifText(
+      fontSize: AppTypography.sheetTitle.fontSize,
+      color: color,
+    ).copyWith(letterSpacing: -0.1);
+    if (!name.endsWith('+')) return CapHeightText(name, style: style);
+    return Semantics(
+      label: name,
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              child: CapHeightText(
+                name.substring(0, name.length - 1),
+                style: style,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const AnchorPlusMark(
+              size: AnchorPlusMark.drawerSize,
+              isBurstOnShow: false,
+            ),
           ],
         ),
       ),
