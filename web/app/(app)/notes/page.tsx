@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Archive,
+  ArchiveRestore,
   Hash,
   Pin,
   PinOff,
@@ -18,7 +19,11 @@ import { AppPage, Fab, PageTitle } from "@/components/layout/app-page";
 import { newNoteHref } from "@/components/layout/sidebar";
 import { Button, IconButton } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { EmptyState, LoadFailedState } from "@/components/ui/empty-state";
+import {
+  EmptyState,
+  LoadFailedRow,
+  LoadFailedState,
+} from "@/components/ui/empty-state";
 import { SelectionBar } from "@/components/ui/selection-bar";
 import { toast } from "@/components/ui/toast";
 import { Tip } from "@/components/ui/tooltip";
@@ -40,6 +45,7 @@ import {
   NotesBoardSkeleton,
 } from "@/features/notes/components/notes-board";
 import { ShareDialog } from "@/features/notes/components/share-dialog";
+import { useArchivedNotes } from "@/features/notes/hooks/use-archived-notes";
 import { useNoteList } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
@@ -50,6 +56,41 @@ import { rememberNewNoteButton } from "@/lib/morph";
 import { plural } from "@/lib/utils";
 
 const NO_NOTES: Note[] = [];
+
+const UNDOABLE_ACTIONS = {
+  pin: {
+    run: (ids: string[]) => bulkPinNotes(ids, true),
+    undo: (ids: string[]) => bulkPinNotes(ids, false),
+    done: "pinned",
+  },
+  unpin: {
+    run: (ids: string[]) => bulkPinNotes(ids, false),
+    undo: (ids: string[]) => bulkPinNotes(ids, true),
+    done: "unpinned",
+  },
+  archive: {
+    run: (ids: string[]) => bulkArchiveNotes(ids),
+    undo: (ids: string[]) => eachLimited(ids, unarchiveNote),
+    done: "archived",
+    isArchived: true,
+  },
+  unarchive: {
+    run: (ids: string[]) => eachLimited(ids, unarchiveNote),
+    undo: (ids: string[]) => bulkArchiveNotes(ids),
+    done: "unarchived",
+    isArchived: false,
+  },
+} satisfies Record<
+  string,
+  {
+    run: (ids: string[]) => Promise<unknown>;
+    undo: (ids: string[]) => Promise<unknown>;
+    done: string;
+    isArchived?: boolean;
+  }
+>;
+
+type NoteActionKind = keyof typeof UNDOABLE_ACTIONS | "trash";
 
 export default function NotesPage() {
   const tagId = useSearchParams().get("tagId");
@@ -76,29 +117,38 @@ function NotesView({ tagId }: { tagId: string | null }) {
   });
   const notes = data ?? NO_NOTES;
   const loadFailed = isError && !data;
-  const list = useNoteList(notes, { pinnedFirst: true });
+
+  const archived = useArchivedNotes(tagId, notes);
+  const list = useNoteList(notes, {
+    pinnedFirst: true,
+    archived: archived.listOptions,
+  });
   const { visible, pinned, others, chosen } = list;
+  const isArchiveLoading = list.hasArchived && archived.query.isLoading;
+  const archiveFailed =
+    list.hasArchived && archived.query.isError && !archived.query.data;
 
   const allPinned = chosen.length > 0 && chosen.every((n) => n.isPinned);
+  const allArchived = chosen.length > 0 && chosen.every((n) => n.isArchived);
 
   const noteAction = useMutation({
     mutationFn: async ({
       kind,
       ids,
     }: {
-      kind: "pin" | "unpin" | "archive" | "trash";
+      kind: NoteActionKind;
       ids: string[];
     }) => {
-      if (kind === "pin" || kind === "unpin")
-        await bulkPinNotes(ids, kind === "pin");
-      else if (kind === "archive") await bulkArchiveNotes(ids);
-      else await bulkDeleteNotes(ids);
+      if (kind === "trash") await bulkDeleteNotes(ids);
+      else await UNDOABLE_ACTIONS[kind].run(ids);
     },
     onMutate: ({ ids }) => {
       list.prepareCardMotion();
       return {
         ownedIds: ids.filter(
-          (id) => notes.find((n) => n.id === id)?.permission === "owner",
+          (id) =>
+            [...notes, ...archived.all].find((n) => n.id === id)?.permission ===
+            "owner",
         ),
       };
     },
@@ -115,18 +165,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
         }
         refresh();
       };
-      if (kind === "pin" || kind === "unpin")
-        toast.success(
-          `${plural(ids.length, "note")} ${kind === "pin" ? "pinned" : "unpinned"}`,
-          {
-            undo: () => undo(() => bulkPinNotes(ids, kind !== "pin")),
-          },
-        );
-      else if (kind === "archive")
-        toast.success(`${plural(ids.length, "note")} archived`, {
-          undo: () => undo(() => eachLimited(ids, unarchiveNote)),
-        });
-      else {
+      if (kind === "trash") {
         const ownedIds = context?.ownedIds ?? [];
         toast.success(
           deletedNotesText(ownedIds.length, ids.length - ownedIds.length),
@@ -134,15 +173,22 @@ function NotesView({ tagId }: { tagId: string | null }) {
             ? { undo: () => undo(() => eachLimited(ownedIds, restoreNote)) }
             : undefined,
         );
+        return;
       }
+      const action = UNDOABLE_ACTIONS[kind];
+      const isArchived = "isArchived" in action ? action.isArchived : null;
+      if (isArchived !== null) archived.setArchivedInCache(ids, isArchived);
+      toast.success(`${plural(ids.length, "note")} ${action.done}`, {
+        undo: () =>
+          undo(async () => {
+            await action.undo(ids);
+            if (isArchived !== null)
+              archived.setArchivedInCache(ids, !isArchived);
+          }),
+      });
     },
     onError: (_, { kind, ids }) => {
-      const verb = {
-        pin: "pin",
-        unpin: "unpin",
-        archive: "archive",
-        trash: "delete",
-      }[kind];
+      const verb = kind === "trash" ? "delete" : kind;
       toast.error(`Couldn’t ${verb} ${ids.length === 1 ? "note" : "notes"}`, {
         retry: () => noteAction.mutate({ kind, ids }),
       });
@@ -157,9 +203,22 @@ function NotesView({ tagId }: { tagId: string | null }) {
   };
 
   const newNote = newNoteHref("/notes", tagId);
-  const noNotes = !isLoading && !loadFailed && notes.length === 0;
-  const noResults = notes.length > 0 && visible.length === 0;
-  const count = isLoading || loadFailed ? undefined : visible.length;
+  const noNotes =
+    !isLoading &&
+    !loadFailed &&
+    notes.length === 0 &&
+    !list.isSearching &&
+    !(tagId && (isArchiveLoading || archiveFailed || archived.tagged.length));
+  const hasArchivedSection = list.archived.length > 0 || archiveFailed;
+  const noResults =
+    list.isSearching &&
+    visible.length === 0 &&
+    !hasArchivedSection &&
+    !isArchiveLoading;
+  const count =
+    isLoading || loadFailed || isArchiveLoading
+      ? undefined
+      : visible.length + list.archived.length;
   const newNoteButton = (
     <Button asChild>
       <Link
@@ -217,11 +276,18 @@ function NotesView({ tagId }: { tagId: string | null }) {
               list={list}
               placeholder={tag ? `Search #${tag.name}` : "Search notes"}
               autoFocus={searchParams.has("search")}
+              onSearchFocus={archived.loadForSearch}
             />
           )
         }
       >
-        <NotesBoardSkeleton loading={isLoading} />
+        <NotesBoardSkeleton
+          loading={
+            isLoading ||
+            (isArchiveLoading &&
+              (list.isSearching ? !visible.length : !notes.length))
+          }
+        />
         {loadFailed && (
           <LoadFailedState
             title="Couldn’t load your notes"
@@ -249,7 +315,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             </EmptyState>
           ))}
         {noResults && <NoSearchResults list={list} />}
-        {visible.length > 0 && (
+        {(visible.length > 0 || (hasArchivedSection && !isLoading)) && (
           <NotesBoard
             ref={list.boardRef}
             layout={list.layout}
@@ -274,6 +340,32 @@ function NotesView({ tagId }: { tagId: string | null }) {
                       key: "others",
                       label: pinned.length ? "Others" : undefined,
                       notes: others,
+                    },
+                  ]
+                : []),
+              ...(hasArchivedSection
+                ? [
+                    {
+                      key: "archived",
+                      label: "Archived",
+                      icon: <Archive aria-hidden />,
+                      notes: list.archived,
+                      fold: list.isArchivedFoldable
+                        ? {
+                            isOpen: list.isArchivedOpen,
+                            onToggle: () => {
+                              list.prepareCardMotion();
+                              archived.toggleFold();
+                            },
+                          }
+                        : undefined,
+                      fallback: archiveFailed ? (
+                        <LoadFailedRow
+                          message="Couldn’t load archived notes."
+                          onRetry={() => archived.query.refetch()}
+                          isRetrying={archived.query.isFetching}
+                        />
+                      ) : undefined,
                     },
                   ]
                 : []),
@@ -329,16 +421,27 @@ function NotesView({ tagId }: { tagId: string | null }) {
                     ids: chosen.filter((n) => !n.isPinned).map((n) => n.id),
                   }),
               },
-          {
-            key: "archive",
-            label: "Archive",
-            icon: <Archive aria-hidden />,
-            onClick: () =>
-              noteAction.mutate({
-                kind: "archive",
-                ids: chosen.map((n) => n.id),
-              }),
-          },
+          allArchived
+            ? {
+                key: "unarchive",
+                label: "Unarchive",
+                icon: <ArchiveRestore aria-hidden />,
+                onClick: () =>
+                  noteAction.mutate({
+                    kind: "unarchive",
+                    ids: chosen.map((n) => n.id),
+                  }),
+              }
+            : {
+                key: "archive",
+                label: "Archive",
+                icon: <Archive aria-hidden />,
+                onClick: () =>
+                  noteAction.mutate({
+                    kind: "archive",
+                    ids: chosen.filter((n) => !n.isArchived).map((n) => n.id),
+                  }),
+              },
           {
             key: "delete",
             label: "Delete",
