@@ -15,6 +15,8 @@ import '../../../core/theme/tokens/app_icon_sizes.dart';
 /// so none is lost if the app is closed. Done (or Back) returns how many
 /// were taken, once the last has been handed over.
 class MultiShotCameraScreen extends StatefulWidget {
+  static const routeName = 'multi-shot camera';
+
   final Future<void> Function(XFile picture) onPicture;
 
   const MultiShotCameraScreen({super.key, required this.onPicture});
@@ -26,6 +28,7 @@ class MultiShotCameraScreen extends StatefulWidget {
     final count = await Navigator.of(context).push<int>(
       MaterialPageRoute(
         fullscreenDialog: true,
+        settings: const RouteSettings(name: routeName),
         builder: (_) => MultiShotCameraScreen(onPicture: onPicture),
       ),
     );
@@ -38,6 +41,8 @@ class MultiShotCameraScreen extends StatefulWidget {
 
 class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
+  static const _tag = 'Camera';
+
   List<CameraDescription> _cameras = const [];
   int _cameraIndex = 0;
   CameraController? _camera;
@@ -90,6 +95,7 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    AppLogger.instance.info(_tag, 'Closed, ${_shots.length} taken');
     _camera?.dispose();
     _flashFade.dispose();
     _flight.dispose();
@@ -101,6 +107,10 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // The camera is the system's; let go of it while away.
     final camera = _camera;
+    AppLogger.instance.info(
+      _tag,
+      'App ${state.name}, camera ${camera == null ? 'closed' : 'open'}',
+    );
     if (state == AppLifecycleState.inactive) {
       _camera = null;
       camera?.dispose();
@@ -115,8 +125,12 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
     try {
       _cameras = await availableCameras();
     } catch (e) {
-      AppLogger.instance.warn('Camera', 'No cameras: $e');
+      AppLogger.instance.warn(_tag, 'No cameras: $e');
     }
+    AppLogger.instance.info(
+      _tag,
+      'Cameras: ${_cameras.map((c) => '${c.name} ${c.lensDirection.name}').join(', ')}',
+    );
     if (_cameras.isEmpty) {
       if (mounted) setState(() => _error = 'No camera found');
       return;
@@ -129,7 +143,11 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
   }
 
   Future<void> _open() async {
-    if (_cameras.isEmpty || _isOpening) return;
+    if (_cameras.isEmpty) return;
+    if (_isOpening) {
+      AppLogger.instance.info(_tag, 'Already opening, not opening again');
+      return;
+    }
     _isOpening = true;
     try {
       await _openCamera();
@@ -139,8 +157,11 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
   }
 
   Future<void> _openCamera() async {
+    final description = _cameras[_cameraIndex];
+    AppLogger.instance.info(_tag, 'Opening ${description.name}');
+    final opening = Stopwatch()..start();
     final camera = CameraController(
-      _cameras[_cameraIndex],
+      description,
       ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
@@ -149,6 +170,11 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
       await camera.initialize();
       await camera.setFlashMode(_flash);
     } on CameraException catch (e) {
+      AppLogger.instance.warn(
+        _tag,
+        'Couldn’t open ${description.name} after '
+        '${opening.elapsedMilliseconds} ms: ${e.code} ${e.description}',
+      );
       await camera.dispose();
       if (!mounted) return;
       setState(
@@ -157,11 +183,35 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
             : 'Couldn’t start the camera',
       );
       return;
+    } catch (e) {
+      AppLogger.instance.warn(
+        _tag,
+        'Couldn’t open ${description.name} after '
+        '${opening.elapsedMilliseconds} ms: $e',
+      );
+      rethrow;
     }
+    final value = camera.value;
+    AppLogger.instance.info(
+      _tag,
+      'Opened ${description.name} in ${opening.elapsedMilliseconds} ms: '
+      'preview ${value.previewSize}, initialized ${value.isInitialized}, '
+      'preview paused ${value.isPreviewPaused}',
+    );
     if (!mounted) {
+      AppLogger.instance.info(_tag, 'Screen gone, closing the camera');
       await camera.dispose();
       return;
     }
+    // Errors once running, such as the camera being taken away.
+    String? lastError;
+    camera.addListener(() {
+      final error = camera.value.errorDescription;
+      if (error != null && error != lastError) {
+        AppLogger.instance.warn(_tag, '${description.name}: $error');
+      }
+      lastError = error;
+    });
     setState(() {
       _camera = camera;
       _error = null;
@@ -199,7 +249,7 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
       _flyIntoPile(shot.path);
       _handing = _handing.then((_) => _hand(shot));
     } on CameraException catch (e) {
-      AppLogger.instance.warn('Camera', 'Couldn’t take a picture: $e');
+      AppLogger.instance.warn(_tag, 'Couldn’t take a picture: $e');
     } finally {
       if (mounted) setState(() => _isShooting = false);
     }
@@ -209,7 +259,7 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
     try {
       await widget.onPicture(shot);
     } catch (e) {
-      AppLogger.instance.warn('Camera', 'Couldn’t keep a picture: $e');
+      AppLogger.instance.warn(_tag, 'Couldn’t keep a picture: $e');
     }
   }
 

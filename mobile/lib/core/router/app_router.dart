@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../search/search_pattern.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/change_password_screen.dart';
@@ -15,6 +17,7 @@ import '../../features/notes/presentation/note_revision_screen.dart';
 import '../../features/notes/presentation/trash_screen.dart';
 import '../../features/notes/presentation/archive_screen.dart';
 import '../../features/note_locks/presentation/note_lock_gate.dart';
+import '../../features/debug_recorder/data/debug_route_observer.dart';
 import '../app_initializer.dart';
 import '../presentation/server_config_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -61,6 +64,7 @@ GoRouter goRouter(Ref ref) {
     navigatorKey: routerKey,
     initialLocation: initialRoute,
     refreshListenable: listenable,
+    observers: [DebugRouteObserver()],
     debugLogDiagnostics: true,
     routes: [
       GoRoute(
