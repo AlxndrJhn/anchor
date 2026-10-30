@@ -10,6 +10,7 @@ import '../../features/auth/presentation/change_password_screen.dart';
 import '../../features/auth/presentation/edit_profile_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/debug_recorder/data/debug_route_observer.dart';
 import '../../features/note_locks/presentation/note_lock_gate.dart';
 import '../../features/notes/domain/note.dart';
 import '../../features/notes/presentation/note_edit_screen.dart';
@@ -74,6 +75,7 @@ GoRouter goRouter(Ref ref) {
     navigatorKey: routerKey,
     initialLocation: ref.read(appBootstrapProvider).initialRoute,
     refreshListenable: listenable,
+    observers: [DebugRouteObserver()],
     debugLogDiagnostics: kDebugMode,
     routes: [
       GoRoute(

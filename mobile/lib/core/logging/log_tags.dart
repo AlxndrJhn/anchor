@@ -12,6 +12,7 @@ class LogTags {
   static const noteLocks = 'NoteLocks';
   static const noteEdit = 'NoteEdit';
   static const attachments = 'Attachments';
+  static const camera = 'Camera';
   static const sharing = 'Sharing';
   static const shareTarget = 'ShareTarget';
   static const settings = 'Settings';

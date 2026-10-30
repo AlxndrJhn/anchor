@@ -43,6 +43,10 @@ class DebugRecorder extends ChangeNotifier {
   int _width = 0;
   int _height = 0;
 
+  /// What has been noted so far.
+  @visibleForTesting
+  List<DebugEvent> get events => List.unmodifiable(_events);
+
   /// Milliseconds since recording started.
   int get elapsedMs => _stopwatch.elapsedMilliseconds;
 
