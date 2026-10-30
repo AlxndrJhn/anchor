@@ -17,6 +17,37 @@ class Mp4MetaSample {
   final String json;
 }
 
+/// One coded picture of an H.264 stream: its NAL units, each prefixed
+/// with its length in 4 bytes, shown from [tMs] on.
+class H264Sample {
+  const H264Sample({required this.tMs, required this.data, required this.key});
+
+  final int tMs;
+  final Uint8List data;
+
+  /// Decodable on its own: where a player can start.
+  final bool key;
+}
+
+/// A recording encoded as H.264, the codec browsers play.
+class H264Video {
+  const H264Video({
+    required this.width,
+    required this.height,
+    required this.sps,
+    required this.pps,
+    required this.samples,
+  });
+
+  final int width;
+  final int height;
+
+  /// The sequence and picture parameter sets, without start codes.
+  final Uint8List sps;
+  final Uint8List pps;
+  final List<H264Sample> samples;
+}
+
 /// The key the summary document is stored under, in the file's metadata.
 /// `ffprobe` shows it as a format tag of that name.
 const debugSummaryKey = 'com.anchor.debug';
@@ -26,25 +57,28 @@ const debugEventsMime = 'application/json';
 
 /// Writes an MP4 (ISO-BMFF) file of two tracks:
 ///
-/// * video: the [frames] as Motion-JPEG (`jpeg` samples), each lasting
-///   until the next one, the last until [durationMs];
+/// * video: [h264] when given (`avc1`, which browsers play), else the
+///   [frames] as Motion-JPEG (`jpeg` samples, which they don't). Each
+///   sample lasts until the next one, the last until [durationMs];
 /// * timed metadata (`meta` handler, `mett` entry of [debugEventsMime]):
 ///   the [events], each sample a JSON document lasting until the next.
 ///
 /// [summary] goes into `moov/udta/meta` as a QuickTime `mdta` item under
 /// [debugSummaryKey], where ffmpeg reads it as a format tag.
 ///
-/// Layout is `ftyp`, `mdat`, `moov`: the samples first, so their offsets
-/// are known when the index is written. All times are in milliseconds.
+/// Layout is `ftyp`, `moov`, `mdat`: the index first, so a browser can
+/// start playing before it has the whole file. All times are in
+/// milliseconds.
 Uint8List muxDebugMp4({
   required List<Mp4Frame> frames,
   required int width,
   required int height,
   required int durationMs,
+  H264Video? h264,
   List<Mp4MetaSample> events = const [],
   String? summary,
 }) {
-  if (frames.isEmpty) {
+  if ((h264?.samples ?? frames).isEmpty) {
     throw ArgumentError.value(frames, 'frames', 'needs at least one frame');
   }
   final duration = durationMs < 1 ? 1 : durationMs;
@@ -55,76 +89,113 @@ Uint8List muxDebugMp4({
     _u32(0x200),
     _fourcc('isom'),
     _fourcc('iso2'),
+    if (h264 != null) _fourcc('avc1'),
     _fourcc('mp41'),
   ]);
+
+  final List<Uint8List> videoPayloads;
+  final List<int> videoStarts;
+  final Uint8List sampleEntry;
+  final int videoWidth;
+  final int videoHeight;
+  List<int>? syncSamples;
+  if (h264 != null) {
+    videoPayloads = [for (final s in h264.samples) s.data];
+    videoStarts = [for (final s in h264.samples) s.tMs];
+    videoWidth = h264.width;
+    videoHeight = h264.height;
+    sampleEntry = _avc1Entry(h264);
+    // Without an stss every sample counts as a key frame.
+    if (h264.samples.any((s) => !s.key)) {
+      syncSamples = [
+        for (final (i, s) in h264.samples.indexed)
+          if (s.key) i + 1,
+      ];
+    }
+  } else {
+    videoPayloads = [for (final f in frames) f.jpeg];
+    videoStarts = [for (final f in frames) f.tMs];
+    videoWidth = width;
+    videoHeight = height;
+    sampleEntry = _jpegEntry(width, height);
+  }
 
   // mdat: every frame, then every event, back to back.
   final metaPayloads = [for (final s in metaSamples) utf8.encode(s.json)];
   var mdatPayload = 0;
-  for (final f in frames) {
-    mdatPayload += f.jpeg.length;
+  for (final v in videoPayloads) {
+    mdatPayload += v.length;
   }
   for (final m in metaPayloads) {
     mdatPayload += m.length;
   }
-  final videoOffset = ftyp.length + 8;
-  var metaOffset = videoOffset;
-  for (final f in frames) {
-    metaOffset += f.jpeg.length;
-  }
-
-  final videoDurations = _durations([for (final f in frames) f.tMs], duration);
+  final videoDurations = _durations(videoStarts, duration);
   final metaDurations = _durations([
     for (final s in metaSamples) s.tMs,
   ], duration);
 
-  final moov = _box('moov', [
-    _mvhd(duration, nextTrackId: 3),
-    _trak(
-      trackId: 1,
-      duration: duration,
-      width: width,
-      height: height,
-      handler: 'vide',
-      handlerName: 'Anchor screen',
-      mediaHeader: _fullBox('vmhd', 0, 1, [_u16(0), _u16(0), _u16(0), _u16(0)]),
-      sampleEntry: _jpegEntry(width, height),
-      durations: videoDurations,
-      sizes: [for (final f in frames) f.jpeg.length],
-      chunkOffset: videoOffset,
-    ),
-    if (metaSamples.isNotEmpty)
+  // The offsets don't change the index's size: build it once to measure
+  // it, then again with the samples where they end up.
+  Uint8List moov(int videoOffset) {
+    var metaOffset = videoOffset;
+    for (final v in videoPayloads) {
+      metaOffset += v.length;
+    }
+    return _box('moov', [
+      _mvhd(duration, nextTrackId: 3),
       _trak(
-        trackId: 2,
+        trackId: 1,
         duration: duration,
-        width: 0,
-        height: 0,
-        handler: 'meta',
-        handlerName: 'Anchor state',
-        mediaHeader: _fullBox('nmhd', 0, 0, const []),
-        sampleEntry: _mettEntry(),
-        durations: metaDurations,
-        sizes: [for (final m in metaPayloads) m.length],
-        chunkOffset: metaOffset,
-        // The events describe the video track.
-        reference: _box('tref', [
-          _box('cdsc', [_u32(1)]),
+        width: videoWidth,
+        height: videoHeight,
+        handler: 'vide',
+        handlerName: 'Anchor screen',
+        mediaHeader: _fullBox('vmhd', 0, 1, [
+          _u16(0),
+          _u16(0),
+          _u16(0),
+          _u16(0),
         ]),
+        sampleEntry: sampleEntry,
+        durations: videoDurations,
+        sizes: [for (final v in videoPayloads) v.length],
+        chunkOffset: videoOffset,
+        syncSamples: syncSamples,
       ),
-    if (summary != null) _udta(summary),
-  ]);
+      if (metaSamples.isNotEmpty)
+        _trak(
+          trackId: 2,
+          duration: duration,
+          width: 0,
+          height: 0,
+          handler: 'meta',
+          handlerName: 'Anchor state',
+          mediaHeader: _fullBox('nmhd', 0, 0, const []),
+          sampleEntry: _mettEntry(),
+          durations: metaDurations,
+          sizes: [for (final m in metaPayloads) m.length],
+          chunkOffset: metaOffset,
+          // The events describe the video track.
+          reference: _box('tref', [
+            _box('cdsc', [_u32(1)]),
+          ]),
+        ),
+      if (summary != null) _udta(summary),
+    ]);
+  }
 
+  final index = moov(ftyp.length + moov(0).length + 8);
   final out = BytesBuilder(copy: false)
     ..add(ftyp)
+    ..add(index)
     ..add(_u32(mdatPayload + 8))
     ..add(_fourcc('mdat'));
-  for (final f in frames) {
-    out.add(f.jpeg);
+  for (final v in videoPayloads) {
+    out.add(v);
   }
   for (final m in metaPayloads) {
     out.add(m);
   }
-  out.add(moov);
   return out.takeBytes();
 }
 
@@ -174,6 +245,7 @@ Uint8List _trak({
   required List<int> sizes,
   required int chunkOffset,
   Uint8List? reference,
+  List<int>? syncSamples,
 }) {
   final mediaDuration = durations.fold<int>(0, (a, b) => a + b);
   return _box('trak', [
@@ -207,6 +279,11 @@ Uint8List _trak({
         _box('stbl', [
           _fullBox('stsd', 0, 0, [_u32(1), sampleEntry]),
           _stts(durations),
+          if (syncSamples != null)
+            _fullBox('stss', 0, 0, [
+              _u32(syncSamples.length),
+              for (final s in syncSamples) _u32(s),
+            ]),
           _fullBox('stsc', 0, 0, [
             _u32(1),
             _u32(1), // first chunk
@@ -290,6 +367,31 @@ Uint8List _jpegEntry(int width, int height) => _box('jpeg', [
   _pascal32('Photo - JPEG'),
   _u16(0x18), // depth
   _u16(0xFFFF), // no colour table
+]);
+
+Uint8List _avc1Entry(H264Video video) => _box('avc1', [
+  Uint8List(6),
+  _u16(1), // data reference index
+  Uint8List(16),
+  _u16(video.width),
+  _u16(video.height),
+  _u32(0x00480000), // 72 dpi
+  _u32(0x00480000),
+  _u32(0),
+  _u16(1), // frames per sample
+  _pascal32(''),
+  _u16(0x18), // depth
+  _u16(0xFFFF), // no colour table
+  _box('avcC', [
+    [1, video.sps[1], video.sps[2], video.sps[3]], // version, profile, level
+    [0xFF], // 4-byte NAL lengths
+    [0xE1], // one SPS
+    _u16(video.sps.length),
+    video.sps,
+    [1], // one PPS
+    _u16(video.pps.length),
+    video.pps,
+  ]),
 ]);
 
 Uint8List _mettEntry() => _box('mett', [

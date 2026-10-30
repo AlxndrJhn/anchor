@@ -191,6 +191,25 @@ class MainActivity : FlutterFragmentActivity() {
                     result.error("install", e.message, null)
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, VIDEO_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                if (call.method != "encodeH264") return@setMethodCallHandler result.notImplemented()
+                val jpegs = call.argument<List<ByteArray>>("jpegs")
+                val times = call.argument<List<Int>>("times")
+                if (jpegs == null || times == null) {
+                    return@setMethodCallHandler result.error("args", "No frames", null)
+                }
+                // Seconds of work for a long recording: not on the UI thread.
+                Thread {
+                    try {
+                        val video = DebugVideoEncoder.encode(jpegs, times)
+                        runOnUiThread { result.success(video) }
+                    } catch (e: Exception) {
+                        android.util.Log.w("AnchorVideo", "Couldn't encode H.264", e)
+                        runOnUiThread { result.error("encode", e.message, null) }
+                    }
+                }.start()
+            }
     }
 
     /**
@@ -414,6 +433,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val UPDATE_CHANNEL = "anchor/update"
         private const val LOCK_CHANNEL = "anchor/lock"
         private const val FILES_CHANNEL = "anchor/files"
+        private const val VIDEO_CHANNEL = "anchor/video"
         private const val PICK_FOLDER = 4711
     }
 }
