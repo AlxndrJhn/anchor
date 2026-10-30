@@ -11,20 +11,7 @@ set -eu
 # -----------------------------------------------------------------------------
 # Environment defaults
 # -----------------------------------------------------------------------------
-: "${PG_HOST:=}"
-: "${PG_PORT:=5432}"
-: "${PG_USER:=anchor}"
-: "${PG_PASSWORD:=password}"
-: "${PG_DATABASE:=anchor}"
-
-# Decide embedded vs external based on PG_HOST
-if [ -z "$PG_HOST" ]; then
-  USE_EMBEDDED_POSTGRES=1
-  DATABASE_URL="postgresql://${PG_USER}:${PG_PASSWORD}@127.0.0.1:${PG_PORT}/${PG_DATABASE}"
-else
-  USE_EMBEDDED_POSTGRES=0
-  DATABASE_URL="postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DATABASE}"
-fi
+. /app/anchor-env.sh
 
 # Generate JWT_SECRET if not provided (persisted in /data for consistency)
 JWT_SECRET_FILE="/data/.jwt_secret"
