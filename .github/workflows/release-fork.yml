@@ -6,8 +6,9 @@ name: Release (fork)
 # macOS) attached, and the Docker image
 # (amd64 + arm64) tagged with the same name plus :fork-latest and
 # :fork-<sha>. The web app is then published on GitHub Pages, with its demo
-# (pages.yml). The newest APK (arm64, for nearly every phone) is always at:
-#   https://github.com/<owner>/<repo>/releases/latest/download/anchor-fork.apk
+# (pages.yml). Only what changed since the last release is built: a release
+# whose Android app, server or desktop app didn't change has no APKs, new
+# image or installers, and the apps only update to releases that have theirs.
 
 on:
   workflow_dispatch:
@@ -26,9 +27,17 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
+      apk: ${{ steps.changes.outputs.apk }}
+      apk_tag: ${{ steps.changes.outputs.apk_tag }}
+      docker: ${{ steps.changes.outputs.docker }}
+      docker_tag: ${{ steps.changes.outputs.docker_tag }}
+      desktop: ${{ steps.changes.outputs.desktop }}
+      desktop_tag: ${{ steps.changes.outputs.desktop_tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Name the release
         id: version
@@ -37,8 +46,49 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=fork-$VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
 
+      # Every build gets a new build number, so the apps would offer each
+      # release as an update. Build the APK, the Docker image and the desktop
+      # installers only when what goes into them changed since the last
+      # release that has them (a version bump alone doesn't count). Otherwise
+      # the release goes out without them, the apps skip it, and the notes
+      # point at the release whose build is still current. With nothing
+      # changed at all, there is no release.
+      - name: Check what changed
+        id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASES=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=50")
+          last_with() { jq -r "[.[] | select(.draft | not) | $1][0] // \"\"" <<< "$RELEASES"; }
+          # $1: the build's name, $2: the last release that has it, then the
+          # files that go into it.
+          check() {
+            local name=$1 last=$2
+            shift 2
+            if [ -n "$last" ] && git rev-parse -q --verify "refs/tags/$last" >/dev/null &&
+              git diff --quiet -I '^version:' "$last" HEAD -- "$@" .github/workflows/release-fork.yml; then
+              echo "No $name changes since $last; not building it."
+              echo "$name=false" >> "$GITHUB_OUTPUT"
+              echo "${name}_tag=$last" >> "$GITHUB_OUTPUT"
+            else
+              echo "$name=true" >> "$GITHUB_OUTPUT"
+            fi
+          }
+          check apk \
+            "$(last_with 'select(any(.assets[]; .name == "anchor-fork.apk")) | .tag_name')" \
+            mobile/lib mobile/android mobile/assets mobile/pubspec.yaml mobile/pubspec.lock
+          # The image tag a release's notes say to pull: its own, or the one
+          # an unchanged release carried over.
+          check docker \
+            "$(last_with '.body // "" | capture("docker pull [^:\\s]+:(?<t>fork-[0-9.]+)").t')" \
+            Dockerfile .dockerignore server web docker .github/workflows/docker-build.yml
+          check desktop \
+            "$(last_with 'select(any(.assets[]; .name | test("^Anchor-.*\\.(exe|dmg)$"))) | .tag_name')" \
+            desktop web/public/web-app-manifest-512x512.png web/public/icons/anchor_icon.png
+
   docker:
     needs: version
+    if: needs.version.outputs.docker == 'true'
     permissions:
       contents: read
       packages: write
@@ -52,6 +102,7 @@ jobs:
 
   build-apk:
     needs: version
+    if: needs.version.outputs.apk == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -149,6 +200,7 @@ jobs:
 
   build-desktop:
     needs: version
+    if: needs.version.outputs.desktop == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -216,12 +268,16 @@ jobs:
   release:
     needs: [version, build-apk, build-desktop, docker]
     # The desktop installers are welcome but optional: a release still goes
-    # out with the APKs and the image when they fail to build.
+    # out with the APKs and the image when they fail to build. A build whose
+    # files didn't change is skipped, and with nothing changed there is no
+    # release.
     if: >-
       github.ref == 'refs/heads/main' && !cancelled() &&
       needs.version.result == 'success' &&
-      needs.build-apk.result == 'success' &&
-      needs.docker.result == 'success'
+      (needs.version.outputs.apk == 'true' || needs.version.outputs.docker == 'true' ||
+        needs.version.outputs.desktop == 'true') &&
+      (needs.build-apk.result == 'success' || needs.version.outputs.apk == 'false') &&
+      (needs.docker.result == 'success' || needs.version.outputs.docker == 'false')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -237,11 +293,13 @@ jobs:
           fetch-depth: 0
 
       - name: Download APK
+        if: needs.version.outputs.apk == 'true'
         uses: actions/download-artifact@v8
         with:
           name: anchor-fork-apk
 
       - name: Download desktop installers
+        if: needs.version.outputs.desktop == 'true'
         uses: actions/download-artifact@v8
         continue-on-error: true
         with:
@@ -252,6 +310,7 @@ jobs:
       # commit, so anyone can check a download with `gh attestation verify`.
       # The installers stay unsigned for Windows and macOS themselves.
       - name: Attest the release files
+        if: hashFiles('anchor-fork*.apk', 'Anchor-*.exe', 'Anchor-*.dmg') != ''
         uses: actions/attest@v4
         with:
           subject-path: |
@@ -263,6 +322,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.version.outputs.tag }}
+          APK_TAG: ${{ needs.version.outputs.apk_tag }}
+          DOCKER_TAG: ${{ needs.version.outputs.docker_tag }}
+          DESKTOP_TAG: ${{ needs.version.outputs.desktop_tag }}
           IMAGE: ghcr.io/${{ github.repository }}
         run: |
           IMAGE=${IMAGE,,}
@@ -272,9 +334,13 @@ jobs:
             echo
             echo "## Android"
             echo
-            echo 'Install `anchor-fork.apk`. It installs as "Anchor+", next to the official app, and updates the previous fork build.'
-            echo
-            echo 'It is for 64-bit ARM, which nearly every phone since 2017 is. For an older 32-bit phone take `anchor-fork-armeabi-v7a.apk`; for an emulator or x86 tablet, `anchor-fork-x86_64.apk`.'
+            if ls anchor-fork*.apk >/dev/null 2>&1; then
+              echo 'Install `anchor-fork.apk`. It installs as "Anchor+", next to the official app, and updates the previous fork build.'
+              echo
+              echo 'It is for 64-bit ARM, which nearly every phone since 2017 is. For an older 32-bit phone take `anchor-fork-armeabi-v7a.apk`; for an emulator or x86 tablet, `anchor-fork-x86_64.apk`.'
+            else
+              echo "Nothing changed for Android, so this release has no APK. The newest one is in [$APK_TAG](https://github.com/$GITHUB_REPOSITORY/releases/tag/$APK_TAG)."
+            fi
             echo
             if ls Anchor-*.exe Anchor-*.dmg >/dev/null 2>&1; then
               echo "## Desktop (Windows, macOS)"
@@ -283,22 +349,34 @@ jobs:
               echo
               echo 'The installers are not signed. On Windows, if SmartScreen stops it, choose More info › Run anyway. On macOS, right-click the app and choose Open the first time, or allow it under System Settings › Privacy & Security.'
               echo
+            elif [ -n "$DESKTOP_TAG" ]; then
+              echo "## Desktop (Windows, macOS)"
+              echo
+              echo "Nothing changed for the desktop app, so this release has no installers. The newest ones are in [$DESKTOP_TAG](https://github.com/$GITHUB_REPOSITORY/releases/tag/$DESKTOP_TAG)."
+              echo
             fi
-            echo "## Verifying a download"
-            echo
-            echo "Each file attached here has a signed record that it was built by this repository's release workflow from ${GITHUB_SHA::7}. To check one, with the [GitHub CLI](https://cli.github.com):"
-            echo
-            echo '```bash'
-            echo "gh attestation verify <file> --repo $GITHUB_REPOSITORY"
-            echo '```'
-            echo
+            if ls anchor-fork*.apk Anchor-*.exe Anchor-*.dmg >/dev/null 2>&1; then
+              echo "## Verifying a download"
+              echo
+              echo "Each file attached here has a signed record that it was built by this repository's release workflow from ${GITHUB_SHA::7}. To check one, with the [GitHub CLI](https://cli.github.com):"
+              echo
+              echo '```bash'
+              echo "gh attestation verify <file> --repo $GITHUB_REPOSITORY"
+              echo '```'
+              echo
+            fi
             echo "## Docker (amd64, arm64)"
             echo
+            # The "Check what changed" step reads the image tag from this line.
             echo '```bash'
-            echo "docker pull $IMAGE:$TAG"
+            echo "docker pull $IMAGE:${DOCKER_TAG:-$TAG}"
             echo '```'
             echo
-            echo "Also published as \`$IMAGE:fork-latest\` and \`$IMAGE:fork-${GITHUB_SHA::7}\`."
+            if [ -n "$DOCKER_TAG" ]; then
+              echo "Nothing changed for the server, so this release has no new image; the one above (also \`$IMAGE:fork-latest\`) is still current."
+            else
+              echo "Also published as \`$IMAGE:fork-latest\` and \`$IMAGE:fork-${GITHUB_SHA::7}\`."
+            fi
             echo
             echo "## Changes"
             echo
