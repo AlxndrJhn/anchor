@@ -118,6 +118,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Starts faster: settings are read in one go while the splash shows | | ✓ |
 | Debug mode: hold two fingers still for 3 s to film the app and its state, mark problems on a timeline and file them as a GitHub issue (see [mobile/README.md](mobile/README.md#debug-reports)) | | ✓ |
 | The server's version in Settings › About | ✓ | |
+| Claude, and other apps that speak MCP, can search, read and write your notes through your server (see [Claude (MCP)](#claude-mcp)) | ✓ | |
 | **Fixes** | | |
 | Copying and saving the logs on Android ([#187](https://github.com/ZhFahim/anchor/issues/187), [#188](https://github.com/ZhFahim/anchor/issues/188)) | | ✓ |
 | The notes list can scroll to the end with pinned notes and pictures | | ✓ |
@@ -377,6 +378,59 @@ image, the button opens the release page instead.
 
 Links to other websites open in your browser. To build it yourself:
 `cd desktop && pnpm install && pnpm run dist:win` (or `dist:mac`).
+
+## Claude (MCP)
+
+The server speaks the [Model Context Protocol](https://modelcontextprotocol.io)
+at `/api/mcp`, so Claude can search, read and write your notes. It signs in
+with your API token: copy it from Settings › API token in the web app.
+
+With [Claude Code](https://code.claude.com), replace the address and token:
+
+```bash
+claude mcp add --transport http anchor https://notes.example.com/api/mcp --header "Authorization: Bearer YOUR_API_TOKEN"
+```
+
+With Claude Desktop, add this to its `claude_desktop_config.json` (Settings ›
+Developer › Edit Config) and restart it; it needs Node.js for `npx`:
+
+```json
+{
+  "mcpServers": {
+    "anchor": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://notes.example.com/api/mcp",
+        "--header",
+        "Authorization:${ANCHOR_AUTH}"
+      ],
+      "env": { "ANCHOR_AUTH": "Bearer YOUR_API_TOKEN" }
+    }
+  }
+}
+```
+
+Claude gets these tools, and sees only what your account sees:
+
+| Tool | What it does |
+|---|---|
+| `list_notes` | Lists notes, archived ones or the trash, by search or tag |
+| `get_note` | Reads a note's title, tags and text as Markdown |
+| `list_tags` | Lists your tags |
+| `create_note` | Makes a note from Markdown, with tags (new ones are created) |
+| `update_note` | Changes a note's title, text, tags, pin or archive |
+| `append_to_note` | Adds lines to the end of a note, such as checklist items |
+| `trash_note` | Moves a note to the trash, from where it can be restored |
+
+Notes are written as Markdown: headings, lists, checklists (`- [ ] item`),
+bold, italic, `~~strike~~`, `<u>underline</u>`, `==highlight==`, links,
+quotes and code blocks. Locked notes keep their text from Claude, and the
+text of a note with pictures in it, colours or fonts is never replaced, only
+added to, so nothing Markdown can't carry is lost. A change made from a stale
+copy is refused, as in the apps, and every change shows in the note's history.
+Revoking the API token cuts Claude off.
 
 ## OIDC Authentication
 
