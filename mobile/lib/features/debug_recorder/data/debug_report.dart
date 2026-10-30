@@ -77,6 +77,7 @@ Map<String, Object?> debugSummary(
   List<DebugProblem> problems, {
   required Map<String, Object?> app,
   required Map<String, Object?> device,
+  H264Video? h264,
 }) {
   final sorted = [...problems]..sort((a, b) => a.tMs.compareTo(b.tMs));
   return {
@@ -86,9 +87,10 @@ Map<String, Object?> debugSummary(
     'recording': {
       'started_at': recording.startedAt.toUtc().toIso8601String(),
       'duration_ms': recording.durationMs,
-      'frame_count': recording.frames.length,
-      'video_width': recording.width,
-      'video_height': recording.height,
+      'frame_count': h264?.samples.length ?? recording.frames.length,
+      'video_codec': h264 == null ? 'mjpeg' : 'h264',
+      'video_width': h264?.width ?? recording.width,
+      'video_height': h264?.height ?? recording.height,
     },
     'problems': [for (final p in sorted) p.toJson()],
     'events': [for (final e in recording.events) e.toJson()],
@@ -96,19 +98,28 @@ Map<String, Object?> debugSummary(
 }
 
 /// The report as one MP4: the video, the events and problems as a timed
-/// metadata track, and [debugSummary] in the file's metadata.
+/// metadata track, and [debugSummary] in the file's metadata. The video
+/// is [h264] when the phone could encode it, else the frames' JPEGs.
 Uint8List buildDebugReport(
   DebugRecording recording,
   List<DebugProblem> problems, {
   required Map<String, Object?> app,
   required Map<String, Object?> device,
+  H264Video? h264,
 }) {
-  final summary = debugSummary(recording, problems, app: app, device: device);
+  final summary = debugSummary(
+    recording,
+    problems,
+    app: app,
+    device: device,
+    h264: h264,
+  );
   return muxDebugMp4(
     frames: recording.frames,
     width: recording.width,
     height: recording.height,
     durationMs: recording.durationMs,
+    h264: h264,
     events: [
       for (final e in recording.events)
         Mp4MetaSample(tMs: e.tMs, json: jsonEncode(e.toJson())),
