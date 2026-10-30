@@ -44,7 +44,10 @@ enum _Picker { date, time }
 const _presetIcons = {
   ReminderPresetKind.laterToday: LucideIcons.clock,
   ReminderPresetKind.tomorrow: LucideIcons.sunrise,
+  ReminderPresetKind.weekend: LucideIcons.coffee,
+  ReminderPresetKind.nextMonday: LucideIcons.briefcase,
   ReminderPresetKind.nextWeek: LucideIcons.calendarDays,
+  ReminderPresetKind.nextMonth: LucideIcons.calendar1,
 };
 
 class _ReminderSheet extends StatefulWidget {

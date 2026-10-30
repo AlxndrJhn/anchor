@@ -1786,6 +1786,24 @@ abstract class AppLocalizations {
   /// **'Next week'**
   String get reminderNextWeek;
 
+  /// Quick reminder choice for the coming Saturday, or Sunday when it is Saturday.
+  ///
+  /// In en, this message translates to:
+  /// **'On the weekend'**
+  String get reminderWeekend;
+
+  /// Quick reminder choice for the coming Monday.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Monday'**
+  String get reminderNextMonday;
+
+  /// Quick reminder choice for the same day next month.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get reminderNextMonth;
+
   /// Big summary line at the top of the reminder sheet before a time is picked.
   ///
   /// In en, this message translates to:

@@ -69,16 +69,25 @@ String presetLabel(ReminderPreset preset, AppLocalizations l10n) =>
     switch (preset.kind) {
       ReminderPresetKind.laterToday => l10n.reminderLaterToday,
       ReminderPresetKind.tomorrow => l10n.commonTomorrow,
+      ReminderPresetKind.weekend => l10n.reminderWeekend,
+      ReminderPresetKind.nextMonday => l10n.reminderNextMonday,
       ReminderPresetKind.nextWeek => l10n.reminderNextWeek,
+      ReminderPresetKind.nextMonth => l10n.reminderNextMonth,
     };
 
-String presetValueLabel(ReminderPreset preset, AppLocalizations l10n) =>
-    preset.kind == ReminderPresetKind.nextWeek
-    ? l10n.reminderDayTime(
-        DateFormat.E(dateLocale).format(preset.at),
-        clockLabel(preset.at),
-      )
-    : clockLabel(preset.at);
+/// The time, with the weekday or date where the label leaves the day open.
+String presetValueLabel(ReminderPreset preset, AppLocalizations l10n) {
+  final day = switch (preset.kind) {
+    ReminderPresetKind.laterToday || ReminderPresetKind.tomorrow => null,
+    ReminderPresetKind.weekend ||
+    ReminderPresetKind.nextWeek => DateFormat.E(dateLocale),
+    ReminderPresetKind.nextMonday ||
+    ReminderPresetKind.nextMonth => DateFormat.MMMd(dateLocale),
+  };
+  return day == null
+      ? clockLabel(preset.at)
+      : l10n.reminderDayTime(day.format(preset.at), clockLabel(preset.at));
+}
 
 typedef ReminderSummary = ({
   String headline,

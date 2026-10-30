@@ -1456,6 +1456,18 @@
   "@reminderNextWeek": {
     "description": "Quick reminder choice for a day in the coming week."
   },
+  "reminderWeekend": "On the weekend",
+  "@reminderWeekend": {
+    "description": "Quick reminder choice for the coming Saturday, or Sunday when it is Saturday."
+  },
+  "reminderNextMonday": "Next Monday",
+  "@reminderNextMonday": {
+    "description": "Quick reminder choice for the coming Monday."
+  },
+  "reminderNextMonth": "Next month",
+  "@reminderNextMonth": {
+    "description": "Quick reminder choice for the same day next month."
+  },
   "reminderNone": "No reminder",
   "@reminderNone": {
     "description": "Big summary line at the top of the reminder sheet before a time is picked."

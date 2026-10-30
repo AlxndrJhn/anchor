@@ -85,22 +85,60 @@ void main() {
   });
 
   group('the shortlist', () {
-    test('offers later today, tomorrow and next week', () {
+    test('offers each choice on the right day', () {
       final presets = reminderPresets(now);
       expect(presets.map((p) => p.kind), ReminderPresetKind.values);
-      expect(presets[0].at, DateTime(2026, 8, 18, 18, 5));
-      expect(presets[1].at, DateTime(2026, 8, 19, 9));
-      expect(presets[2].at, DateTime(2026, 8, 25, 9));
-      expect(presetValueLabel(presets[0], _english), time(18, 5));
-      expect(presetValueLabel(presets[2], _english), 'Tue, ${time(9)}');
+      expect(presets.map((p) => p.at), [
+        DateTime(2026, 8, 18, 18, 5),
+        DateTime(2026, 8, 19, 9),
+        DateTime(2026, 8, 22, 9),
+        DateTime(2026, 8, 24, 9),
+        DateTime(2026, 8, 25, 9),
+        DateTime(2026, 9, 18, 9),
+      ]);
+      expect(presets.map((p) => presetValueLabel(p, _english)), [
+        time(18, 5),
+        time(9),
+        'Sat, ${time(9)}',
+        'Aug 24, ${time(9)}',
+        'Tue, ${time(9)}',
+        'Sep 18, ${time(9)}',
+      ]);
     });
 
     test('drops later today once it would pass midnight', () {
       final presets = reminderPresets(DateTime(2026, 8, 18, 22));
-      expect(presets.map((p) => p.kind), [
-        ReminderPresetKind.tomorrow,
-        ReminderPresetKind.nextWeek,
-      ]);
+      expect(presets.first.kind, ReminderPresetKind.tomorrow);
+    });
+
+    test('drops the weekend or Monday where they would repeat a row', () {
+      List<ReminderPresetKind> kinds(DateTime now) =>
+          reminderPresets(now).map((p) => p.kind).toList();
+      // Friday and Saturday: the weekend is tomorrow.
+      for (final day in [21, 22]) {
+        expect(kinds(DateTime(2026, 8, day, 22)), [
+          ReminderPresetKind.tomorrow,
+          ReminderPresetKind.nextMonday,
+          ReminderPresetKind.nextWeek,
+          ReminderPresetKind.nextMonth,
+        ], reason: 'Aug $day');
+      }
+      // Sunday: Monday is tomorrow. Monday: next Monday is next week.
+      for (final day in [23, 24]) {
+        expect(kinds(DateTime(2026, 8, day, 22)), [
+          ReminderPresetKind.tomorrow,
+          ReminderPresetKind.weekend,
+          ReminderPresetKind.nextWeek,
+          ReminderPresetKind.nextMonth,
+        ], reason: 'Aug $day');
+      }
+    });
+
+    test('clamps next month to the end of a short one', () {
+      final month = reminderPresets(
+        DateTime(2026, 1, 31, 22),
+      ).firstWhere((p) => p.kind == ReminderPresetKind.nextMonth);
+      expect(month.at, DateTime(2026, 2, 28, 9));
     });
 
     test('rounds up to the next five minutes', () {

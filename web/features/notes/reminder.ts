@@ -27,7 +27,7 @@ export function parseWallClock(value: string): Date | null {
 }
 
 export interface ReminderPreset {
-  key: "later" | "tomorrow" | "week";
+  key: "later" | "tomorrow" | "weekend" | "monday" | "week" | "month";
   label: string;
   remindAt: string;
 }
@@ -55,6 +55,23 @@ export function presetReminders(now = new Date()): ReminderPreset[] {
   const nextWeek = new Date(now);
   nextWeek.setDate(nextWeek.getDate() + 7);
 
+  // The next Saturday, or Sunday when today is Saturday.
+  const weekend = new Date(now);
+  weekend.setDate(
+    weekend.getDate() + (now.getDay() === 6 ? 1 : 6 - now.getDay()),
+  );
+
+  // Always a day ahead, so on a Monday it is the one after.
+  const monday = new Date(now);
+  monday.setDate(monday.getDate() + ((8 - now.getDay()) % 7 || 7));
+
+  // The same day next month, clamped to the end of a short one.
+  const nextMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    Math.min(now.getDate(), daysInMonth(now.getFullYear(), now.getMonth() + 1)),
+  );
+
   return [
     ...(laterToday.toDateString() === now.toDateString()
       ? [
@@ -70,7 +87,31 @@ export function presetReminders(now = new Date()): ReminderPreset[] {
       label: "Tomorrow",
       remindAt: toWallClock(at(tomorrow, 9)),
     },
+    // Left out where they would repeat a row above or below.
+    ...(sameDay(weekend, tomorrow)
+      ? []
+      : [
+          {
+            key: "weekend" as const,
+            label: "On the weekend",
+            remindAt: toWallClock(at(weekend, 9)),
+          },
+        ]),
+    ...(sameDay(monday, tomorrow) || sameDay(monday, nextWeek)
+      ? []
+      : [
+          {
+            key: "monday" as const,
+            label: "Next Monday",
+            remindAt: toWallClock(at(monday, 9)),
+          },
+        ]),
     { key: "week", label: "Next week", remindAt: toWallClock(at(nextWeek, 9)) },
+    {
+      key: "month",
+      label: "Next month",
+      remindAt: toWallClock(at(nextMonth, 9)),
+    },
   ];
 }
 

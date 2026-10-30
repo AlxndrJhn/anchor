@@ -2,11 +2,14 @@
 
 import {
   BellOff,
+  Briefcase,
+  Calendar1,
   CalendarDays,
   Calendar as CalendarIcon,
   CalendarRange,
   Check,
   Clock,
+  Coffee,
   Repeat,
   Sun,
   X,
@@ -29,12 +32,13 @@ import {
   parseTimeInput,
   parseWallClock,
   presetReminders,
+  type ReminderPreset,
   reminderSummary,
   toWallClock,
 } from "../reminder";
 import type { NoteReminder, ReminderRecurrence } from "../types";
 
-type Choice = "later" | "tomorrow" | "week" | "custom";
+type Choice = ReminderPreset["key"] | "custom";
 type Repeating = Exclude<ReminderRecurrence, "none">;
 
 interface ReminderPickerProps {
@@ -48,7 +52,14 @@ interface ReminderPickerProps {
   now?: Date;
 }
 
-const ICONS = { later: Clock, tomorrow: Sun, week: CalendarRange } as const;
+const ICONS = {
+  later: Clock,
+  tomorrow: Sun,
+  weekend: Coffee,
+  monday: Briefcase,
+  week: CalendarRange,
+  month: Calendar1,
+} as const;
 const REPEAT_OPTIONS: { value: Repeating; label: string }[] = [
   { value: "daily", label: "Daily" },
   { value: "weekly", label: "Weekly" },
@@ -199,9 +210,11 @@ function ReminderPicker({
                     : "text-muted-foreground",
                 )}
               >
-                {preset.key === "week"
-                  ? `${formatDay(date).split(",")[0]}, ${formatTime(date)}`
-                  : formatTime(date)}
+                {preset.key === "later" || preset.key === "tomorrow"
+                  ? formatTime(date)
+                  : preset.key === "monday" || preset.key === "month"
+                    ? formatDay(date).split(", ")[1]
+                    : `${formatDay(date).split(",")[0]}, ${formatTime(date)}`}
               </span>
               <Tick checked={choice === preset.key} />
             </button>

@@ -1025,6 +1025,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderNextWeek => 'Next week';
 
   @override
+  String get reminderWeekend => 'On the weekend';
+
+  @override
+  String get reminderNextMonday => 'Next Monday';
+
+  @override
+  String get reminderNextMonth => 'Next month';
+
+  @override
   String get reminderNone => 'No reminder';
 
   @override

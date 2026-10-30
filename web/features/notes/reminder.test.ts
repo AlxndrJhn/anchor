@@ -69,11 +69,61 @@ describe("presetReminders", () => {
       label: "Tomorrow",
       remindAt: "2026-09-05T09:00",
     });
-    expect(presets[2]).toEqual({
+    expect(presets.find((p) => p.key === "week")).toEqual({
       key: "week",
       label: "Next week",
       remindAt: "2026-09-11T09:00",
     });
+  });
+
+  it("puts the weekend, next Monday and next month on the right days", () => {
+    // Wednesday, September 2.
+    const presets = presetReminders(new Date(2026, 8, 2, 12, 0));
+    expect(presets.map((p) => [p.key, p.remindAt])).toEqual([
+      ["later", "2026-09-02T15:00"],
+      ["tomorrow", "2026-09-03T09:00"],
+      ["weekend", "2026-09-05T09:00"],
+      ["monday", "2026-09-07T09:00"],
+      ["week", "2026-09-09T09:00"],
+      ["month", "2026-10-02T09:00"],
+    ]);
+  });
+
+  it("drops the weekend or Monday where they would repeat another row", () => {
+    const keys = (now: Date) => presetReminders(now).map((p) => p.key);
+    // Friday: the weekend is tomorrow.
+    expect(keys(new Date(2026, 8, 4, 22, 0))).toEqual([
+      "tomorrow",
+      "monday",
+      "week",
+      "month",
+    ]);
+    // Sunday: Monday is tomorrow, the weekend is the next one.
+    expect(keys(new Date(2026, 8, 6, 22, 0))).toEqual([
+      "tomorrow",
+      "weekend",
+      "week",
+      "month",
+    ]);
+    // Monday: next Monday is next week.
+    expect(keys(new Date(2026, 8, 7, 22, 0))).toEqual([
+      "tomorrow",
+      "weekend",
+      "week",
+      "month",
+    ]);
+  });
+
+  it("leaves the weekend out on a Saturday, as Sunday is tomorrow", () => {
+    const keys = presetReminders(new Date(2026, 8, 5, 22, 0)).map((p) => p.key);
+    expect(keys).toEqual(["tomorrow", "monday", "week", "month"]);
+  });
+
+  it("clamps next month to the end of a short one", () => {
+    const month = presetReminders(new Date(2026, 0, 31, 22, 0)).find(
+      (p) => p.key === "month",
+    );
+    expect(month?.remindAt).toBe("2026-02-28T09:00");
   });
 
   it("rounds later today up to the next five minutes", () => {
@@ -90,13 +140,9 @@ describe("presetReminders", () => {
 
   it("drops later today once it would pass midnight", () => {
     const keys = (now: Date) => presetReminders(now).map((p) => p.key);
-    expect(keys(new Date(2026, 8, 4, 20, 55))).toEqual([
-      "later",
-      "tomorrow",
-      "week",
-    ]);
-    expect(keys(new Date(2026, 8, 4, 20, 56))).toEqual(["tomorrow", "week"]);
-    expect(keys(new Date(2026, 8, 4, 22, 30))).toEqual(["tomorrow", "week"]);
+    expect(keys(new Date(2026, 8, 4, 20, 55))[0]).toBe("later");
+    expect(keys(new Date(2026, 8, 4, 20, 56))[0]).toBe("tomorrow");
+    expect(keys(new Date(2026, 8, 4, 22, 30))[0]).toBe("tomorrow");
   });
 });
 
