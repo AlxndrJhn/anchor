@@ -1,4 +1,4 @@
-// Anchor desktop: a window onto the web client of the user's own Anchor
+// Anchor+ desktop: a window onto the web client of the user's own Anchor
 // server. A built-in page asks for the server once; after that the app opens
 // it straight away.
 
@@ -17,15 +17,32 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { startUpdater } = require("./updater");
 
-// The name the window, menu and About panel show. app.setName keeps "Anchor":
-// it names the settings folder, and changing it would lose the saved server.
+// The name the window, menu and About panel show, and the settings folder's.
 const APP_NAME = "Anchor+";
 const SETUP_PAGE = path.join(__dirname, "setup.html");
 const SETUP_URL = pathToFileURL(SETUP_PAGE).toString();
 const HEALTH_TIMEOUT_MS = 10_000;
 
-app.setName("Anchor");
+app.setName(APP_NAME);
 if (process.platform === "win32") app.setAppUserModelId("io.github.alxndrjhn.anchor");
+moveOldUserData();
+
+// Builds before the rename kept their settings and sign-in in an "Anchor"
+// folder. Copy it once, before Chromium opens the new one, so an update keeps
+// the saved server; a pending update installer is not worth the copy.
+function moveOldUserData() {
+  const userData = app.getPath("userData");
+  const old = path.join(app.getPath("appData"), "Anchor");
+  if (fs.existsSync(userData) || !fs.existsSync(old)) return;
+  try {
+    fs.cpSync(old, userData, {
+      recursive: true,
+      filter: (src) => src !== path.join(old, "updates"),
+    });
+  } catch (err) {
+    console.error("Could not copy the old settings folder:", err);
+  }
+}
 
 // --- Settings (userData/settings.json) -------------------------------------
 
