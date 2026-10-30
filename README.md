@@ -326,6 +326,32 @@ If you want to build from source or customize the image:
    `--build` builds the image from your checkout; without it, the
    `docker-compose.yml` file pulls this fork's released image.
 
+### Resetting a Password
+
+Whoever can run `docker` on the host can set a new password for any
+account, admins included, without signing in. List the accounts:
+
+```bash
+docker exec -it anchor reset-password
+```
+
+Give one a new, generated password, which the command prints:
+
+```bash
+docker exec -it anchor reset-password user@example.com
+```
+
+Or type the new password yourself (at least 8 characters, not echoed):
+
+```bash
+docker exec -it anchor reset-password user@example.com --password
+```
+
+`anchor` is the `container_name`; with Docker Compose you can also run
+`docker compose exec anchor reset-password …` from the folder with the
+`docker-compose.yml`. The user signs in with the new password right away;
+devices that are already signed in stay signed in.
+
 ## Mobile App
 
 Download the Android mobile app.
