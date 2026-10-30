@@ -227,6 +227,26 @@ export class NoteAttachmentsService {
   }
 
   async serveFile(userId: string, noteId: string, attachmentId: string) {
+    const { attachment, filePath } = await this.findFile(
+      userId,
+      noteId,
+      attachmentId,
+    );
+    const stream = createReadStream(filePath);
+    return { stream, attachment };
+  }
+
+  /** An attachment's bytes, read whole; for files small enough to hold. */
+  async readFile(userId: string, noteId: string, attachmentId: string) {
+    const { attachment, filePath } = await this.findFile(
+      userId,
+      noteId,
+      attachmentId,
+    );
+    return { data: await fs.readFile(filePath), attachment };
+  }
+
+  private async findFile(userId: string, noteId: string, attachmentId: string) {
     const access = await this.noteAccessService.hasNoteAccess(userId, noteId);
     if (!access.hasAccess) {
       throw new NotFoundException('Note not found');
@@ -245,8 +265,7 @@ export class NoteAttachmentsService {
       throw new NotFoundException('Attachment file not found');
     }
 
-    const stream = createReadStream(filePath);
-    return { stream, attachment };
+    return { attachment, filePath };
   }
 
   async remove(userId: string, noteId: string, attachmentId: string) {

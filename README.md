@@ -417,7 +417,8 @@ Claude gets these tools, and sees only what your account sees:
 | Tool | What it does |
 |---|---|
 | `list_notes` | Lists notes, archived ones or the trash, by search or tag |
-| `get_note` | Reads a note's title, tags and text as Markdown |
+| `get_note` | Reads a note's title, tags and text as Markdown, and lists its attachments |
+| `get_attachment` | Fetches an attachment: a picture to look at (scaled down if large), a recording, or a file |
 | `list_tags` | Lists your tags |
 | `create_note` | Makes a note from Markdown, with tags (new ones are created) |
 | `update_note` | Changes a note's title, text, tags, pin or archive |
@@ -426,7 +427,8 @@ Claude gets these tools, and sees only what your account sees:
 
 Notes are written as Markdown: headings, lists, checklists (`- [ ] item`),
 bold, italic, `~~strike~~`, `<u>underline</u>`, `==highlight==`, links,
-quotes and code blocks. Locked notes keep their text from Claude, and the
+quotes and code blocks. Locked notes keep their text and attachments from
+Claude, and the
 text of a note with pictures in it, colours or fonts is never replaced, only
 added to, so nothing Markdown can't carry is lost. A change made from a stale
 copy is refused, as in the apps, and every change shows in the note's history.
