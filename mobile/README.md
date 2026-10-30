@@ -74,9 +74,16 @@ flutter build ios --release
 ## Debug Reports
 
 Hold two fingers still on the screen for 3 seconds to start debug mode: the
-app films itself (at most 15 s; tap the camera in the top left corner to stop
-sooner) and notes what happens meanwhile: screen changes, touches, provider
-updates and log lines. In the player that opens afterwards, move to where it
+app films itself and notes what happens meanwhile: screen changes, touches,
+provider updates and log lines.
+
+A recording lasts at most 20 seconds. The ring around the red camera in the top
+left corner shows the time left; when it closes, recording stops by itself. Tap
+the camera to stop sooner. The limit keeps the frames held in memory (5 per
+second) and the report file small; change it with `DebugRecorder.maxDuration`
+in `lib/features/debug_recorder/data/debug_recorder_controller.dart`.
+
+In the player that opens afterwards, move to where it
 went wrong, tap **Problem here** and say what you expected. **Create issue**
 saves `anchor-debug-<ISO time>.mp4` and opens a new GitHub issue on the fork,
 to attach it to.
