@@ -260,7 +260,7 @@ class _ImageTextViewState extends State<ImageTextView> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
-                                  vertical: 6,
+                                  vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AnchorTokens.colorMediaShadeStrong,
