@@ -10,6 +10,9 @@ plugins {
 // Fork builds (ORG_GRADLE_PROJECT_anchorFork=true) install next to the
 // official app instead of clashing with its signature.
 val isForkBuild = (project.findProperty("anchorFork") as String?) == "true"
+// Preview builds of a branch (ORG_GRADLE_PROJECT_anchorPreview=true, see
+// preview-v18rebase.yml) install next to the fork's releases.
+val isPreviewBuild = (project.findProperty("anchorPreview") as String?) == "true"
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -32,6 +35,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = if (isForkBuild) "com.zhfahim.anchor.fork" else "com.zhfahim.anchor"
+        if (isPreviewBuild) applicationIdSuffix = ".preview"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -39,7 +43,11 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["appAuthRedirectScheme"] = "anchor"
-        manifestPlaceholders["appLabel"] = if (isForkBuild) "Anchor (fork)" else "Anchor Notes"
+        manifestPlaceholders["appLabel"] = when {
+            isPreviewBuild -> "Anchor+ preview"
+            isForkBuild -> "Anchor (fork)"
+            else -> "Anchor Notes"
+        }
     }
 
     signingConfigs {
