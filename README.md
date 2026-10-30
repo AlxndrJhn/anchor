@@ -388,7 +388,7 @@ with your API token: copy it from Settings › API token in the web app.
 With [Claude Code](https://code.claude.com), replace the address and token:
 
 ```bash
-claude mcp add --transport http anchor https://notes.example.com/api/mcp --header "Authorization: Bearer YOUR_API_TOKEN"
+claude mcp add --transport http --scope user anchor https://notes.example.com/api/mcp --header "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
 With Claude Desktop, add this to its `claude_desktop_config.json` (Settings ›
