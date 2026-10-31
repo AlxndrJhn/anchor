@@ -13,6 +13,7 @@ import '../../../core/motion/haptics.dart';
 import '../../../core/motion/reorder_animation.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
+import '../../../core/search/search_pattern.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/update/update_sheet.dart';
@@ -709,7 +710,13 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
               ? NoteCardsLoading(layout: layout)
               : visible.isEmpty
               ? firstDownload == FirstDownload.done
-                    ? _empty(folder, query, tag, hasFilters: !filters.isEmpty)
+                    ? _empty(
+                        folder,
+                        query,
+                        tag,
+                        hasFilters: !filters.isEmpty,
+                        searchOptions: searchOptions,
+                      )
                     : _notDownloaded(firstDownload)
               : null,
         ),
@@ -855,13 +862,17 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     String query,
     Tag? tag, {
     required bool hasFilters,
+    required SearchOptions searchOptions,
   }) {
     final l10n = context.l10n;
     if (query.trim().isNotEmpty) {
+      final readable = SearchPattern(query, options: searchOptions).isValid;
       return AppEmptyState(
         kind: EmptyStateKind.search,
         title: l10n.searchNoResults(query.trim()),
-        message: hasFilters
+        message: !readable
+            ? l10n.searchRegexInvalidHelp
+            : hasFilters
             ? l10n.searchNoMatchesHelp
             : l10n.searchNoResultsHelp,
       );

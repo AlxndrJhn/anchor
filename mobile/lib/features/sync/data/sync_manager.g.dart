@@ -43,7 +43,7 @@ final class SyncManagerProvider extends $NotifierProvider<SyncManager, bool> {
   }
 }
 
-String _$syncManagerHash() => r'8c72d9960cf31375acd266f289d298fb4bcd0017';
+String _$syncManagerHash() => r'5242003ae861f0129ff3e44907cdab13c908dd1d';
 
 /// Runs syncs one at a time.
 
@@ -115,6 +115,68 @@ abstract class _$SyncFailed extends $Notifier<bool> {
             as $ClassProviderElement<
               AnyNotifier<bool, bool>,
               bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// Notes whose text from this device replaced text changed elsewhere, by id
+/// with their titles, until the person looks at what was replaced.
+
+@ProviderFor(OverwrittenNotes)
+final overwrittenNotesProvider = OverwrittenNotesProvider._();
+
+/// Notes whose text from this device replaced text changed elsewhere, by id
+/// with their titles, until the person looks at what was replaced.
+final class OverwrittenNotesProvider
+    extends $NotifierProvider<OverwrittenNotes, Map<String, String>> {
+  /// Notes whose text from this device replaced text changed elsewhere, by id
+  /// with their titles, until the person looks at what was replaced.
+  OverwrittenNotesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'overwrittenNotesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$overwrittenNotesHash();
+
+  @$internal
+  @override
+  OverwrittenNotes create() => OverwrittenNotes();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, String>>(value),
+    );
+  }
+}
+
+String _$overwrittenNotesHash() => r'd3561688dcfe93560c8ddeb3487d5ae2558d5ffe';
+
+/// Notes whose text from this device replaced text changed elsewhere, by id
+/// with their titles, until the person looks at what was replaced.
+
+abstract class _$OverwrittenNotes extends $Notifier<Map<String, String>> {
+  Map<String, String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Map<String, String>, Map<String, String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, String>, Map<String, String>>,
+              Map<String, String>,
               Object?,
               Object?
             >;

@@ -202,7 +202,15 @@ class SyncManager extends _$SyncManager {
     if (!await _isProtocolSupported()) return false;
 
     try {
-      await ref.read(syncServiceProvider).run();
+      final overwrote = await ref.read(syncServiceProvider).run();
+      if (overwrote.isNotEmpty) {
+        AppLogger.instance.info(
+          LogTags.sync,
+          'Text from here replaced text changed elsewhere in '
+          '${overwrote.length} note(s)',
+        );
+        ref.read(overwrittenNotesProvider.notifier).add(overwrote);
+      }
       return true;
     } on DioException catch (error) {
       if (error.response?.statusCode != upgradeRequiredStatus) rethrow;
@@ -242,6 +250,21 @@ class SyncFailed extends _$SyncFailed {
   bool build() => false;
 
   void set(bool value) => state = value;
+}
+
+/// Notes whose text from this device replaced text changed elsewhere, by id
+/// with their titles, until the person looks at what was replaced.
+@Riverpod(keepAlive: true)
+class OverwrittenNotes extends _$OverwrittenNotes {
+  @override
+  Map<String, String> build() {
+    ref.watch(activeUserIdProvider);
+    return const {};
+  }
+
+  void add(Map<String, String> notes) => state = {...state, ...notes};
+
+  void seen(String noteId) => state = {...state}..remove(noteId);
 }
 
 @riverpod

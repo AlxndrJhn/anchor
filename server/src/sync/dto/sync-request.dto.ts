@@ -11,6 +11,7 @@ import {
   IsOptional,
   IsString,
   IsEnum,
+  IsUUID,
   Matches,
   Max,
   Min,
@@ -43,7 +44,8 @@ class SyncChangeBaseDto {
   @IsIn(['note', 'tag', 'pin', 'reminder'])
   type: 'note' | 'tag' | 'pin' | 'reminder';
 
-  @IsString()
+  // A note id names its attachment folder on disk, so only UUIDs pass.
+  @IsUUID('loose')
   id: string;
 }
 

@@ -36,6 +36,29 @@ void main() {
     expect(SearchPattern('milk.and').hasMatch(text), isFalse);
   });
 
+  test('plain words ignore accents', () {
+    expect(SearchPattern('apfel').hasMatch('Äpfel kaufen'), isTrue);
+    expect(SearchPattern('äpfel').hasMatch('Apfelkuchen'), isTrue);
+    expect(SearchPattern('cafe').hasMatch('Café'), isTrue);
+    expect(SearchPattern('strasse').hasMatch('Hauptstraße'), isTrue);
+    expect(SearchPattern('straße').hasMatch('STRASSE'), isTrue);
+    expect(SearchPattern('apfel').hasMatch('Birne'), isFalse);
+    const matchCase = SearchOptions(matchCase: true);
+    expect(
+      SearchPattern('Apfel', options: matchCase).hasMatch('Äpfel'),
+      isTrue,
+    );
+    expect(
+      SearchPattern('Apfel', options: matchCase).hasMatch('äpfel'),
+      isFalse,
+    );
+    // Marks the accented word whole.
+    expect(
+      SearchPattern('apfel').allMatches('Ein Äpfel').map((m) => m[0]),
+      ['Äpfel'],
+    );
+  });
+
   test('a half-typed regex is looked for as typed meanwhile', () {
     final pattern = SearchPattern(
       '(milk',

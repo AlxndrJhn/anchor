@@ -1,6 +1,7 @@
 import {
   Inject,
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -13,8 +14,10 @@ import { deleteFileIfExists } from '../common/utils/file-system.util';
 import {
   assertValidAttachmentFile,
   attachmentTypeForMime,
+  noteAttachmentDir,
   writeAttachmentFile,
 } from '../notes/utils/attachment-storage.util';
+import { ERROR_MESSAGES } from '../notes/constants/notes.constants';
 import { toAttachmentResponse } from '../notes/dto/attachment-response.dto';
 import {
   SyncEmitterService,
@@ -33,7 +36,6 @@ import {
   ImportNotesDto,
   ImportNotesResponse,
 } from './dto/import-notes.dto';
-import * as path from 'path';
 
 /**
  * Truncate to whole seconds: mobile sync clients store timestamps with
@@ -345,10 +347,25 @@ export class ImportService {
     position: number,
   ) {
     await this.noteAccessService.verifyNoteOwnership(userId, noteId);
+    // Trashed and archived notes take their files; deleted and frozen ones
+    // take nothing, as on the regular upload route.
+    const note = await this.prisma.note.findUniqueOrThrow({
+      where: { id: noteId },
+      select: { state: true, isFrozen: true },
+    });
+    if (note.state === NoteState.deleted) {
+      throw new BadRequestException('This note was deleted');
+    }
+    if (note.isFrozen) {
+      throw new ForbiddenException(ERROR_MESSAGES.NOTE_FROZEN);
+    }
 
     assertValidAttachmentFile(file);
 
-    const noteDir = path.join(this.storageConfig.attachmentsDir, noteId);
+    const noteDir = noteAttachmentDir(
+      this.storageConfig.attachmentsDir,
+      noteId,
+    );
 
     let stored: { storedFilename: string; filePath: string } | null = null;
     try {

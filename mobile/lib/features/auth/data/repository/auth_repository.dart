@@ -95,7 +95,13 @@ class AuthRepository {
     String currentPassword,
     String newPassword,
   ) async {
-    await _authService.changePassword(currentPassword, newPassword);
+    // Keeps this session; the server signs out every other one.
+    final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
+    await _authService.changePassword(
+      currentPassword,
+      newPassword,
+      refreshToken: refreshToken,
+    );
   }
 
   /// Profile answers may leave out hasPassword; the stored value is kept then.

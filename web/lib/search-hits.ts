@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { searchPattern } from "./search-pattern";
 
 const NAME = "search-hit";
 
@@ -14,20 +15,20 @@ function registry(): HighlightRegistry | null {
   return css?.highlights && "Highlight" in globalThis ? css.highlights : null;
 }
 
-/** Ranges of every case-insensitive match of [term] in [root]'s text. */
+/** Ranges of every match of [term] in [root]'s text, in any case or accents. */
 export function findTextRanges(root: Node, term: string): Range[] {
-  const needle = term.trim().toLowerCase();
+  const needle = term.trim();
   if (!needle) return [];
+  const pattern = searchPattern(needle);
   const ranges: Range[] = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const text = (node.textContent ?? "").toLowerCase();
-    for (let at = text.indexOf(needle); at !== -1; ) {
+    pattern.lastIndex = 0;
+    for (const match of (node.textContent ?? "").matchAll(pattern)) {
       const range = document.createRange();
-      range.setStart(node, at);
-      range.setEnd(node, at + needle.length);
+      range.setStart(node, match.index);
+      range.setEnd(node, match.index + match[0].length);
       ranges.push(range);
-      at = text.indexOf(needle, at + needle.length);
     }
   }
   return ranges;

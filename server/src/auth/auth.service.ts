@@ -23,11 +23,15 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateApiToken } from './utils/generate-api-token';
 import { deleteFileIfExists } from '../common/utils/file-system.util';
+import { normalizeEmail, sameEmail } from '../common/utils/email.util';
+import { AttemptLimiter } from '../common/utils/attempt-limiter';
 import { StorageConfig } from '../config/configuration';
 import { PUBLIC_PROFILES_PREFIX } from '../config/storage.constants';
 import {
   API_TOKEN_MAX_GENERATION_RETRIES,
   BCRYPT_SALT_ROUNDS,
+  FAILED_GUESS_WINDOW_MS,
+  MAX_FAILED_GUESSES,
   REFRESH_TOKEN_BYTES,
   REFRESH_TOKEN_REUSE_WINDOW_MS,
   REFRESH_TOKEN_VALIDITY_DAYS,
@@ -36,6 +40,10 @@ import {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly failedLogins = new AttemptLimiter(
+    MAX_FAILED_GUESSES,
+    FAILED_GUESS_WINDOW_MS,
+  );
 
   constructor(
     private prisma: PrismaService,
@@ -66,8 +74,8 @@ export class AuthService {
       throw new ForbiddenException('Registration is disabled');
     }
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: registerDto.email },
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: sameEmail(registerDto.email) },
     });
 
     if (existingUser) {
@@ -90,7 +98,7 @@ export class AuthService {
 
     const user = await this.prisma.user.create({
       data: {
-        email: registerDto.email,
+        email: normalizeEmail(registerDto.email),
         password: hashedPassword,
         name: registerDto.name,
         isAdmin: adminCount === 0, // First user becomes admin
@@ -132,8 +140,13 @@ export class AuthService {
       );
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { email: loginDto.email },
+    const attemptKey = normalizeEmail(loginDto.email);
+    this.failedLogins.check(attemptKey);
+
+    // Accounts made before emails were matched without case may differ in
+    // case only; the one typed exactly comes first.
+    const candidates = await this.prisma.user.findMany({
+      where: { email: sameEmail(loginDto.email) },
       select: {
         id: true,
         email: true,
@@ -146,26 +159,39 @@ export class AuthService {
         updatedAt: true,
       },
     });
+    candidates.sort(
+      (a, b) =>
+        Number(b.email === loginDto.email) - Number(a.email === loginDto.email),
+    );
 
-    if (!user) {
+    if (candidates.length === 0) {
+      this.failedLogins.fail(attemptKey);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // OIDC users don't have passwords - they must use OIDC login
-    if (!user.password) {
+    if (candidates.every((candidate) => !candidate.password)) {
       throw new UnauthorizedException(
         'This account uses OIDC authentication. Please use the OIDC login option.',
       );
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
-      user.password,
-    );
+    let user: (typeof candidates)[number] | undefined;
+    for (const candidate of candidates) {
+      if (
+        candidate.password &&
+        (await bcrypt.compare(loginDto.password, candidate.password))
+      ) {
+        user = candidate;
+        break;
+      }
+    }
 
-    if (!isPasswordValid) {
+    if (!user) {
+      this.failedLogins.fail(attemptKey);
       throw new UnauthorizedException('Invalid credentials');
     }
+    this.failedLogins.succeed(attemptKey);
 
     // Check if user is pending approval
     if (user.status === UserStatus.pending) {
@@ -324,14 +350,17 @@ export class AuthService {
     }
 
     // Verify current password
+    this.failedLogins.check(`user:${userId}`);
     const isCurrentPasswordValid = await bcrypt.compare(
       changePasswordDto.currentPassword,
       user.password,
     );
 
     if (!isCurrentPasswordValid) {
+      this.failedLogins.fail(`user:${userId}`);
       throw new ForbiddenException('Current password is incorrect');
     }
+    this.failedLogins.succeed(`user:${userId}`);
 
     // Check if new password is different from current password
     const isSamePassword = await bcrypt.compare(
@@ -351,10 +380,21 @@ export class AuthService {
       BCRYPT_SALT_ROUNDS,
     );
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedPassword },
-    });
+    // Whoever knew the old password is signed out everywhere else.
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      }),
+      this.prisma.refreshToken.deleteMany({
+        where: {
+          userId,
+          ...(changePasswordDto.refreshToken
+            ? { token: { not: changePasswordDto.refreshToken } }
+            : {}),
+        },
+      }),
+    ]);
 
     return { message: 'Password changed successfully' };
   }

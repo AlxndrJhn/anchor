@@ -38,6 +38,22 @@ export function servedMimeType(type: AttachmentType, mimeType: string) {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * The folder a note's attachments live in. Note ids become a path segment,
+ * so anything but a UUID (`..`, a slash) is refused rather than let out of
+ * [attachmentsDir].
+ */
+export function noteAttachmentDir(attachmentsDir: string, noteId: string) {
+  if (!isStorableNoteId(noteId)) {
+    throw new BadRequestException('Invalid note id');
+  }
+  return path.join(attachmentsDir, noteId);
+}
+
+export function isStorableNoteId(noteId: string): boolean {
+  return UUID.test(noteId);
+}
+
 /** An id a client picked for its upload, if it is a usable one. */
 export function clientAttachmentId(id: unknown): string | undefined {
   return typeof id === 'string' && UUID.test(id) ? id : undefined;

@@ -54,7 +54,9 @@ describe('sync events', () => {
   it('pokes the stream on a sync push', async () => {
     const stream = await user.openEventStream();
 
-    await user.sync.push([{ type: 'note', id: 'sse-note-1', title: 'pushed' }]);
+    await user.sync.push([
+      { type: 'note', id: crypto.randomUUID(), title: 'pushed' },
+    ]);
 
     await stream.waitFor('event: sync');
   });

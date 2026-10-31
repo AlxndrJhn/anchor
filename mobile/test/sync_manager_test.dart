@@ -20,10 +20,11 @@ class HeldSyncService implements SyncService {
   final runs = <Completer<void>>[];
 
   @override
-  Future<void> run() {
+  Future<Map<String, String>> run() async {
     final run = Completer<void>();
     runs.add(run);
-    return run.future;
+    await run.future;
+    return const {};
   }
 
   @override

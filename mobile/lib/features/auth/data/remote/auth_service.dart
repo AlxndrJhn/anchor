@@ -42,12 +42,17 @@ class AuthService {
 
   Future<void> changePassword(
     String currentPassword,
-    String newPassword,
-  ) async {
+    String newPassword, {
+    String? refreshToken,
+  }) async {
     await _send<Object?>(
       () => _dio.post(
         '/api/auth/change-password',
-        data: {'currentPassword': currentPassword, 'newPassword': newPassword},
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          'refreshToken': ?refreshToken,
+        },
       ),
     );
   }

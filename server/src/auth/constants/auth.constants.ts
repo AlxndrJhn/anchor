@@ -11,4 +11,9 @@ export const REFRESH_TOKEN_BYTES = 64;
 
 export const API_TOKEN_MAX_GENERATION_RETRIES = 5;
 
+// Wrong passwords (sign-in, unlocking a note) allowed per account before it
+// has to wait for the window to pass.
+export const MAX_FAILED_GUESSES = 10;
+export const FAILED_GUESS_WINDOW_MS = 15 * 60 * 1000;
+
 export const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;

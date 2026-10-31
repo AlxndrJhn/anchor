@@ -901,6 +901,80 @@ void main() {
       expect(row.updatedAt!.toUtc(), DateTime.utc(2026, 8, 15, 10));
     });
 
+    test('reports text from here replacing text changed elsewhere', () async {
+      await insertNote(
+        id: 'n1',
+        title: 'Shopping',
+        content: 'milk, bread',
+        version: 3,
+        hasSyncedCopy: true,
+        syncedContent: 'milk',
+      );
+      stub([
+        conflict(
+          serverNoteJson(
+            'n1',
+            title: 'Shopping',
+            content: 'milk, eggs',
+            version: 7,
+          ),
+        ),
+        applied('n1', 8),
+      ]);
+
+      expect(await service.run(), {'n1': 'Shopping'});
+      expect(changesOf(1).single['content'], 'milk, bread');
+    });
+
+    test('names an untitled note by its first line', () async {
+      await insertNote(
+        id: 'n1',
+        title: '',
+        content: r'{"ops":[{"insert":"milk, bread\nbutter\n"}]}',
+        version: 3,
+        hasSyncedCopy: true,
+        syncedContent: r'{"ops":[{"insert":"milk\n"}]}',
+      );
+      stub([
+        conflict(
+          serverNoteJson(
+            'n1',
+            title: '',
+            content: r'{"ops":[{"insert":"milk, eggs\n"}]}',
+            version: 7,
+          ),
+        ),
+        applied('n1', 8),
+      ]);
+
+      expect(await service.run(), {'n1': 'milk, bread'});
+    });
+
+    test('reports nothing when only one side changed the text', () async {
+      await insertNote(
+        id: 'n1',
+        title: 'Shopping',
+        content: 'milk, bread',
+        version: 3,
+        hasSyncedCopy: true,
+        syncedContent: 'milk',
+      );
+      stub([
+        conflict(
+          serverNoteJson(
+            'n1',
+            title: 'Shopping',
+            content: 'milk',
+            background: 'color_red',
+            version: 7,
+          ),
+        ),
+        applied('n1', 8),
+      ]);
+
+      expect(await service.run(), isEmpty);
+    });
+
     test(
       'a title changed here stays while the text takes the server\'s',
       () async {

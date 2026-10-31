@@ -150,19 +150,24 @@ export class TagsService {
   async getNotesByTag(userId: string, tagId: string) {
     await this.findOne(userId, tagId);
 
+    // Tags are personal: a note shared with this person carries their tag
+    // too, and only their own tags are listed on each note.
     const notes = await this.prisma.note.findMany({
       where: {
-        userId,
         state: NoteState.active,
-        tags: {
-          some: {
-            id: tagId,
+        tags: { some: { id: tagId } },
+        OR: [
+          { userId },
+          {
+            sharedWith: {
+              some: { sharedWithUserId: userId, isDeleted: false },
+            },
           },
-        },
+        ],
       },
       orderBy: { updatedAt: 'desc' },
       include: {
-        tags: true,
+        tags: { where: { userId, isDeleted: false } },
       },
     });
 

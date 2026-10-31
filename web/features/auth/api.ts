@@ -1,5 +1,6 @@
 import type { Options } from "ky";
 import { api } from "@/lib/api/client";
+import { getRefreshToken } from "./store";
 import type {
   ApiTokenResponse,
   AuthResponse,
@@ -43,7 +44,10 @@ export async function changePassword(
   credentials: ChangePasswordCredentials,
 ): Promise<{ message: string }> {
   return api
-    .post("api/auth/change-password", { json: credentials })
+    .post("api/auth/change-password", {
+      // Keeps this session; the server signs out every other one.
+      json: { ...credentials, refreshToken: getRefreshToken() ?? undefined },
+    })
     .json<{ message: string }>();
 }
 

@@ -86,6 +86,8 @@ mark.hl {
 }
 .tb {
   display: flex;
+  /* Too narrow for one row: a second rather than buttons cut off. */
+  flex-wrap: wrap;
   align-items: center;
   gap: --spacing(0.5);
   overflow-x: auto;
@@ -449,6 +451,8 @@ textarea.n-title {
   }
   .ed .tb {
     order: 10;
+    /* The phone's bar scrolls sideways instead. */
+    flex-wrap: nowrap;
     top: auto;
     bottom: --spacing(2.5);
     z-index: 4;

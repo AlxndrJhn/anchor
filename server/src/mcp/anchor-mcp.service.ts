@@ -335,6 +335,16 @@ export class AnchorMcpService {
       },
       ({ id }) =>
         this.run(async () => {
+          // For a note shared with this person, remove() leaves the share
+          // instead: they would lose it, not trash it.
+          const note = await this.notesService.findOne(userId, id);
+          if (note.userId !== userId) {
+            throw new HttpException(
+              'This note was shared with you; only its owner can move it ' +
+                'to the trash.',
+              HttpStatus.FORBIDDEN,
+            );
+          }
           await this.notesService.remove(userId, id);
           return `Moved note ${id} to the trash.`;
         }),

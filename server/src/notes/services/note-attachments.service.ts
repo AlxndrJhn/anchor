@@ -21,6 +21,8 @@ import {
   assertValidAttachmentFile,
   attachmentTypeForMime,
   clientAttachmentId,
+  isStorableNoteId,
+  noteAttachmentDir,
   writeAttachmentFile,
 } from '../utils/attachment-storage.util';
 import { toAttachmentResponse } from '../dto/attachment-response.dto';
@@ -47,7 +49,7 @@ export class NoteAttachmentsService {
   ) {}
 
   private attachmentDir(noteId: string): string {
-    return path.join(this.storageConfig.attachmentsDir, noteId);
+    return noteAttachmentDir(this.storageConfig.attachmentsDir, noteId);
   }
 
   private async emitAttachmentChange(
@@ -66,7 +68,7 @@ export class NoteAttachmentsService {
   }
 
   private attachmentPath(noteId: string, storedFilename: string): string {
-    return path.join(this.storageConfig.attachmentsDir, noteId, storedFilename);
+    return path.join(this.attachmentDir(noteId), storedFilename);
   }
 
   /**
@@ -345,6 +347,12 @@ export class NoteAttachmentsService {
   }
 
   async deleteAllForNote(noteId: string) {
+    // A note saved with a non-UUID id (before ids were checked) has no
+    // folder of its own; removing its "folder" could reach outside.
+    if (!isStorableNoteId(noteId)) {
+      this.logger.warn(`Not deleting files for note with bad id ${noteId}`);
+      return;
+    }
     const noteDir = this.attachmentDir(noteId);
     try {
       await fs.rm(noteDir, { recursive: true, force: true });

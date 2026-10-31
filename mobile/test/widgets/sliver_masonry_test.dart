@@ -179,6 +179,28 @@ void main() {
           key: tester.getTopLeft(find.byKey(ValueKey(key))),
     };
 
+    testWidgets('leaves no column empty left of the rest', (tester) async {
+      final keys = heights.keys.take(4).toList();
+      Widget board(List<String> keys, {required bool keepColumns}) =>
+          MaterialApp(
+            home: CustomScrollView(
+              slivers: [notes(keys, keepColumns: keepColumns)],
+            ),
+          );
+      tester.view.physicalSize = const Size(360, 792);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(board(keys, keepColumns: false));
+      final columns = places(tester, keys);
+      final rightOnes = keys.where((k) => columns[k]!.dx > 0).toList();
+      expect(rightOnes, isNotEmpty);
+
+      // Every card on the left is deleted at once.
+      await tester.pumpWidget(board(rightOnes, keepColumns: true));
+      final first = tester.getTopLeft(find.byKey(ValueKey(rightOnes.first)));
+      expect(first.dx, 0);
+    });
+
     for (final scroll in [0.0, 900.0]) {
       testWidgets('at $scroll leaves the others in their columns', (
         tester,

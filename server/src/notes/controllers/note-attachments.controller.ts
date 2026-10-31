@@ -24,6 +24,7 @@ import { ATTACHMENT_MAX_FILE_SIZE } from '../constants/notes.constants';
 import { servedMimeType } from '../utils/attachment-storage.util';
 import { AttachmentType } from 'src/generated/prisma/enums';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { contentDisposition } from '../../common/utils/content-disposition.util';
 import { AuthGuard } from '../../auth/auth.guard';
 
 @Controller('api/notes/:noteId/attachments')
@@ -72,7 +73,10 @@ export class NoteAttachmentsController {
     const isFile = attachment.type === AttachmentType.file;
     res.set({
       'Content-Type': servedMimeType(attachment.type, attachment.mimeType),
-      'Content-Disposition': `${isFile ? 'attachment' : 'inline'}; filename="${encodeURIComponent(attachment.originalFilename)}"`,
+      'Content-Disposition': contentDisposition(
+        isFile ? 'attachment' : 'inline',
+        attachment.originalFilename,
+      ),
       'Content-Length': attachment.fileSize.toString(),
       'Cache-Control': 'private, max-age=31536000, immutable',
       'X-Content-Type-Options': 'nosniff',

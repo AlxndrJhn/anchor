@@ -84,8 +84,6 @@ const usePendingRevokes = create<{
     }),
 }));
 
-const firstName = (name: string) => name.split(" ")[0];
-
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -136,10 +134,9 @@ export function ShareDialog({
       ]);
       setAddedShareId(share.id);
       refresh();
-      toast.success(`Shared with ${firstName(user.name)}`);
+      toast.success(`Shared with ${user.name}`);
     },
-    onError: (_e, user) =>
-      toast.error(`Couldn’t share with ${firstName(user.name)}`),
+    onError: (_e, user) => toast.error(`Couldn’t share with ${user.name}`),
   });
 
   const changeAccess = useMutation({
@@ -158,19 +155,17 @@ export function ShareDialog({
     onSuccess: (_s, { share, permission }) => {
       refresh();
       toast.success(
-        `${firstName(share.sharedWithUser.name)} ${permission === "editor" ? "can now edit" : "can now view"}`,
+        `${share.sharedWithUser.name} ${permission === "editor" ? "can now edit" : "can now view"}`,
       );
     },
     onError: (_e, { share }) => {
       refresh();
-      toast.error(
-        `Couldn’t change access for ${firstName(share.sharedWithUser.name)}`,
-      );
+      toast.error(`Couldn’t change access for ${share.sharedWithUser.name}`);
     },
   });
 
   const removeAccess = (share: NoteShare) => {
-    const name = firstName(share.sharedWithUser.name);
+    const name = share.sharedWithUser.name;
     setPending(share.id, true);
     toast.success(`${name} no longer has access`, {
       undo: () => setPending(share.id, false),
