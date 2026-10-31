@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { publicPath } from "@/lib/local-backend/mode";
 import { cn } from "@/lib/utils";
+import { PlusMark } from "./plus-mark";
 
 /** The app's icon: a ruled pad with a brass anchor on slate cloth. */
 export function AnchorLogo({ className }: { className?: string }) {
@@ -22,18 +23,30 @@ export function Brand({
   href,
   className,
   nameClassName,
+  isBurstOnShow = false,
   onNavigate,
 }: {
   href?: string;
   className?: string;
   nameClassName?: string;
+  /** Plays the +'s features once when it first shows, where it shows
+   * seldom, like signing in. */
+  isBurstOnShow?: boolean;
   onNavigate?: () => void;
 }) {
   const content = (
     <>
       <AnchorLogo className="size-7" />
-      <span data-slot="brand-name" className={cn(wordmarkClass, nameClassName)}>
-        Anchor+
+      <span
+        data-slot="brand-name"
+        className={cn(wordmarkClass, "inline-flex items-start", nameClassName)}
+      >
+        Anchor<span className="sr-only">+</span>
+        <PlusMark
+          size={11}
+          isBurstOnShow={isBurstOnShow}
+          className="mt-[0.36em] ml-[3px]"
+        />
       </span>
     </>
   );

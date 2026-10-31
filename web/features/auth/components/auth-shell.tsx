@@ -341,7 +341,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
     <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] bg-card max-lg:grid-cols-1">
       <main className="grid content-center justify-items-center overflow-auto p-8 max-md:content-start max-md:px-6 max-md:pt-12">
         <div className="grid w-[min(360px,100%)] gap-5">
-          <Brand className="justify-self-start" />
+          <Brand className="justify-self-start" isBurstOnShow />
           {children}
         </div>
       </main>
