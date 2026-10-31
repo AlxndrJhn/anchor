@@ -44,7 +44,6 @@ jobs:
     env:
       ORG_GRADLE_PROJECT_anchorFork: "true"
       ORG_GRADLE_PROJECT_anchorPreview: "true"
-      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -65,14 +64,8 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      # The same key as the fork's releases (see release-fork.yml).
-      - name: Restore generated signing key
-        if: ${{ env.HAS_KEY != 'true' }}
-        uses: actions/cache@v6
-        with:
-          path: mobile/android/app/fork-keystore.jks
-          key: android-fork-signing-key-v1
-
+      # The same key as the fork's releases, from the repository's secrets
+      # (see release-fork.yml).
       - name: Set up signing
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -80,21 +73,13 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
-            STORE_FILE=./upload-keystore.jks
-          else
-            KEYSTORE_PASSWORD=anchor-fork
-            KEY_PASSWORD=anchor-fork
-            KEY_ALIAS=anchor-fork
-            STORE_FILE=./fork-keystore.jks
-            if [ ! -f android/app/fork-keystore.jks ]; then
-              keytool -genkeypair -v -keystore android/app/fork-keystore.jks \
-                -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
-                -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
-                -dname "CN=Anchor fork"
-            fi
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] ||
+            [ -z "$KEY_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::Set the ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD and ANDROID_KEY_ALIAS secrets to sign the APK."
+            exit 1
           fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          STORE_FILE=./upload-keystore.jks
           cat > android/key.properties << EOF
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEY_PASSWORD
