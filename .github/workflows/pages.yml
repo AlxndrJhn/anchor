@@ -10,6 +10,12 @@ name: GitHub Pages
 
 on:
   workflow_call:
+    inputs:
+      anchor-version:
+        description: The Anchor+ release the app shows, e.g. 0.17.2.62
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
 
 permissions:
@@ -56,6 +62,7 @@ jobs:
       - name: Build the app and the demo
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          ANCHOR_VERSION: ${{ inputs.anchor-version }}
         run: pnpm build:pages
 
       - name: Upload the site

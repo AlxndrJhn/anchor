@@ -6,12 +6,15 @@ import packageJson from "./package.json";
 const mode = process.env.ANCHOR_MODE;
 const isStatic = mode === "local" || mode === "demo";
 const basePath = process.env.BASE_PATH ?? "";
+// The Anchor+ release, e.g. 0.17.2.62 for fork-0.17.2.62, set by
+// release-fork.yml; a build outside a release shows the app version.
+const appVersion = process.env.ANCHOR_VERSION || packageJson.version;
 
 const nextConfig: NextConfig = {
   output: isStatic ? "export" : "standalone",
   ...(isStatic ? { basePath, images: { unoptimized: true } } : {}),
   env: {
-    NEXT_PUBLIC_APP_VERSION: packageJson.version,
+    NEXT_PUBLIC_APP_VERSION: appVersion,
     NEXT_PUBLIC_ANCHOR_MODE: isStatic ? mode : "server",
     NEXT_PUBLIC_BASE_PATH: isStatic ? basePath : "",
   },

@@ -39,6 +39,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
+      anchor_version: ${{ steps.version.outputs.anchor_version }}
       candidate: ${{ steps.version.outputs.candidate }}
       preview_image: ${{ steps.version.outputs.preview_image }}
       previous: ${{ steps.changes.outputs.previous }}
@@ -60,6 +61,7 @@ jobs:
           VERSION=$(sed -n 's/^version: *\([^+]*\).*/\1/p' mobile/pubspec.yaml)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=fork-$VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "anchor_version=$VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
           echo "candidate=${{ inputs.candidate == true }}" >> "$GITHUB_OUTPUT"
           IMAGE="ghcr.io/$GITHUB_REPOSITORY"
           echo "preview_image=${IMAGE,,}:fork-preview" >> "$GITHUB_OUTPUT"
@@ -130,6 +132,8 @@ jobs:
         type=raw,value=${{ needs.version.outputs.tag }}
         type=raw,value=fork-latest
         type=sha,prefix=fork-
+      build-args: |
+        ANCHOR_VERSION=${{ needs.version.outputs.anchor_version }}
 
   # The image preview servers run: a candidate's own, or a new release's
   # again, naming itself :fork-preview so the apps there offer candidates.
@@ -149,6 +153,7 @@ jobs:
         type=raw,value=${{ needs.version.outputs.tag }},enable=${{ needs.version.outputs.candidate == 'true' }}
         type=raw,value=fork-preview
       build-args: |
+        ANCHOR_VERSION=${{ needs.version.outputs.anchor_version }}
         ANCHOR_IMAGE=${{ needs.version.outputs.preview_image }}
 
   build-apk:
@@ -473,3 +478,5 @@ jobs:
       pages: write
       id-token: write
     uses: ./.github/workflows/pages.yml
+    with:
+      anchor-version: ${{ needs.version.outputs.anchor_version }}

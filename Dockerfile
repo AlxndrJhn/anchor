@@ -51,6 +51,9 @@ COPY web/ ./
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SERVER_URL=http://127.0.0.1:3001
+# The Anchor+ release the web app shows in Settings › About.
+ARG ANCHOR_VERSION=
+ENV ANCHOR_VERSION=$ANCHOR_VERSION
 RUN pnpm build
 
 #
