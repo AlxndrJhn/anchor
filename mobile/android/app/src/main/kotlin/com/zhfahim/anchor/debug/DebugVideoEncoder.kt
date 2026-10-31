@@ -55,9 +55,9 @@ object DebugVideoEncoder {
                 MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible,
             )
-            // Screen content at 5 fps: plenty for sharp text.
-            setInteger(MediaFormat.KEY_BIT_RATE, maxOf(1_000_000, width * height * 4))
-            setInteger(MediaFormat.KEY_FRAME_RATE, 5)
+            // Screen content at 25 fps: plenty for sharp text and smooth motion.
+            setInteger(MediaFormat.KEY_BIT_RATE, maxOf(2_000_000, width * height * 8))
+            setInteger(MediaFormat.KEY_FRAME_RATE, 25)
             // A key frame every second, for seeking.
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
             // Frames come out in the order they went in: the MP4 has no

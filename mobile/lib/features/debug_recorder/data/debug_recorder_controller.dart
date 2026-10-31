@@ -21,9 +21,9 @@ class DebugRecorder extends ChangeNotifier {
   static final DebugRecorder instance = DebugRecorder._();
 
   static const maxDuration = Duration(seconds: 20);
-  static const _frameInterval = Duration(milliseconds: 200); // 5 fps
+  static const _frameInterval = Duration(milliseconds: 40); // 25 fps
   static const _longSide = 960.0;
-  static const _maxEncoding = 3;
+  static const _maxEncoding = 6;
   static const _maxValueChars = 300;
   static const _tag = 'DebugRecorder';
 
