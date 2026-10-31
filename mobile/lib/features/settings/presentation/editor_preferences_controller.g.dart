@@ -43,7 +43,7 @@ final class EditorPreferencesControllerProvider
 }
 
 String _$editorPreferencesControllerHash() =>
-    r'324de1daf4a60f8b78506fa021e48910b5d435d3';
+    r'5ffbb1b9353bc7985e898c88195a4f69d2d40946';
 
 abstract class _$EditorPreferencesController
     extends $Notifier<EditorPreferences> {

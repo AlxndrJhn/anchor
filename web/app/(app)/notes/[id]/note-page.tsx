@@ -26,6 +26,7 @@ import {
   ReadOnlyBar,
   type SaveState,
   ShareDialog,
+  useChecklistActions,
   useEditorChrome,
   useNoteActions,
   useNoteEditor,
@@ -49,10 +50,7 @@ import {
 import { isLockHidden, useUnlockedNotes } from "@/features/notes/note-lock";
 import { sendNote } from "@/features/notes/note-text";
 import { parseStoredContent } from "@/features/notes/quill";
-import {
-  checkboxesAction,
-  countCheckedItems,
-} from "@/features/notes/quill-checklist";
+import { checkboxesAction } from "@/features/notes/quill-checklist";
 import { createTag, nextTagColor, type Tag, useTags } from "@/features/tags";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
 import {
@@ -119,6 +117,7 @@ function NoteEditor({
     save,
   } = editor;
   const contentEditorRef = useRef<RichTextEditorHandle | null>(null);
+  const checklist = useChecklistActions(noteId, contentEditorRef);
   // The field the caret was last in, which a menu or button may since have
   // taken focus from.
   const caretField = useRef<NoteCaret["field"] | null>(null);
@@ -165,13 +164,10 @@ function NoteEditor({
     string | null | false
   >(false);
   const [nudge, setNudge] = useState(0);
-  const { checkedCount, checkboxes } = useMemo(() => {
-    const delta = parseStoredContent(editor.content);
-    return {
-      checkedCount: countCheckedItems(delta),
-      checkboxes: checkboxesAction(delta),
-    };
-  }, [editor.content]);
+  const checkboxes = useMemo(
+    () => checkboxesAction(parseStoredContent(editor.content)),
+    [editor.content],
+  );
 
   const {
     data: allTags = [],
@@ -595,15 +591,7 @@ function NoteEditor({
                 ? contentEditorRef.current?.showCheckboxes()
                 : contentEditorRef.current?.hideCheckboxes()
             }
-            checkedCount={checkedCount}
-            onUncheckAll={() => contentEditorRef.current?.uncheckAll()}
-            onRemoveChecked={() => {
-              contentEditorRef.current?.removeChecked();
-              toast.success(
-                `${checkedCount === 1 ? "1 ticked item" : `${checkedCount} ticked items`} deleted`,
-                { undo: () => contentEditorRef.current?.undo() },
-              );
-            }}
+            checklist={readOnly ? undefined : checklist}
           />
           <NoteEditorContent
             noteId={!isNew ? noteId : undefined}

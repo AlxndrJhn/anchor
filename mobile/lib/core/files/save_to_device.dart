@@ -15,15 +15,12 @@ Future<bool> saveBytesToDevice({
   required Uint8List bytes,
   required String dialogTitle,
   String? mimeType,
-  List<String>? allowedExtensions,
 }) async {
   try {
     final saved = await FilePicker.saveFile(
       dialogTitle: dialogTitle,
       fileName: name,
       bytes: bytes,
-      type: allowedExtensions == null ? FileType.any : FileType.custom,
-      allowedExtensions: allowedExtensions,
     );
     return saved != null;
   } on PlatformException catch (error) {

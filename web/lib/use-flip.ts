@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { DURATION, EASE } from "@/lib/design/tokens";
-import { prefersReducedMotion } from "@/lib/motion";
+import { isNearScreen, prefersReducedMotion } from "@/lib/motion";
 import { strikeIntoPlace } from "@/lib/strike";
 
 /** Cards glide to their new places, or strike there, as after a delete. */
@@ -14,11 +14,6 @@ interface Snapshot {
   motion: FlipMotion;
   at: number;
 }
-
-const NEAR_SCREEN = 200;
-
-const isNearScreen = (rect: DOMRect) =>
-  rect.bottom > -NEAR_SCREEN && rect.top < window.innerHeight + NEAR_SCREEN;
 
 /** Call `prepare()` just before a list change; `prepare("strike")` before cards are deleted from it. */
 export function useFlip<T extends HTMLElement>(

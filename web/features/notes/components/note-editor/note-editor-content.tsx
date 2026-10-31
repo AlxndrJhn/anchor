@@ -25,7 +25,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { Tip } from "@/components/ui/tooltip";
 import { usePreferencesStore } from "@/features/preferences";
-import { type Tag, TagChip, TagPicker } from "@/features/tags";
+import { sortTagsByName, type Tag, TagChip, TagPicker } from "@/features/tags";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { useFlip } from "@/lib/use-flip";
 import { cn } from "@/lib/utils";
@@ -56,6 +56,7 @@ import { formatCardDate } from "../note-card";
 import { useRingOnce } from "../reminder-chip";
 import { ReminderPopoverContent } from "../reminder-picker";
 import { NoteOutline } from "./note-outline";
+import { useTitleLine, withoutLineBreaks } from "./use-title-line";
 
 export interface Person {
   id: string;
@@ -85,8 +86,8 @@ interface NoteEditorContentProps {
   canUpload: boolean;
   isOwner: boolean;
   currentUserId: string | null;
-  titleInputRef?: RefObject<HTMLInputElement | null>;
-  contentEditorRef?: RefObject<RichTextEditorHandle | null>;
+  titleInputRef: RefObject<HTMLTextAreaElement | null>;
+  contentEditorRef: RefObject<RichTextEditorHandle | null>;
   onEnsureNoteIdForAttachmentUpload?: () => Promise<string | null>;
   onTitleChange: (title: string) => void;
   onContentChange: (content: string) => void;
@@ -129,6 +130,11 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
   const record =
     props.canUpload && canRecord ? () => setRecording(true) : undefined;
   const startersRoving = useRovingFocus<HTMLDivElement>();
+  const titleLine = useTitleLine(
+    props.titleInputRef,
+    props.contentEditorRef,
+    props.onTitleChange,
+  );
   const inTextIds = React.useMemo(
     () => inlineImageIds(props.content),
     [props.content],
@@ -203,14 +209,10 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
       {props.readOnly ? (
         <h1 className="n-title">{props.title || "Untitled"}</h1>
       ) : (
-        <input
+        <TitleField
           ref={props.titleInputRef}
-          className="n-title"
           value={props.title}
-          aria-label="Title"
-          placeholder="Title"
-          spellCheck={false}
-          onChange={(e) => props.onTitleChange(e.target.value)}
+          onChange={(title) => props.onTitleChange(withoutLineBreaks(title))}
           onKeyDown={(e) => {
             const stamp = stampFor(
               e.nativeEvent,
@@ -225,22 +227,25 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
                 input.selectionEnd ?? input.value.length,
                 "end",
               );
-              props.onTitleChange(input.value);
+              props.onTitleChange(withoutLineBreaks(input.value));
               return;
             }
             // Tab skips the tag row, attachments and toolbar on the way.
-            const toBody =
-              e.key === "Enter" ||
-              (e.key === "Tab" &&
-                !e.shiftKey &&
-                !e.altKey &&
-                !e.ctrlKey &&
-                !e.metaKey);
-            if (toBody && !e.nativeEvent.isComposing) {
+            if (
+              e.key === "Tab" &&
+              !e.shiftKey &&
+              !e.altKey &&
+              !e.ctrlKey &&
+              !e.metaKey &&
+              !e.nativeEvent.isComposing
+            ) {
               e.preventDefault();
               props.contentEditorRef?.current?.setSelection(0, 0);
+              return;
             }
+            titleLine.onKeyDown(e);
           }}
+          onPaste={titleLine.onPaste}
         />
       )}
       {!props.isNew && (edited || props.sharedBy || people.length > 0) && (
@@ -370,6 +375,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           below={starters}
           noteId={props.noteId}
           pictures={pictures}
+          firstLine={titleLine.firstLine}
         />
       </div>
       <NoteOutline root={root} />
@@ -482,6 +488,52 @@ function pastedImages(data: DataTransfer) {
     });
 }
 
+const supportsFieldSizing =
+  typeof CSS !== "undefined" && CSS.supports("field-sizing", "content");
+
+function TitleField({
+  ref,
+  value,
+  onChange,
+  onKeyDown,
+  onPaste,
+}: {
+  ref: RefObject<HTMLTextAreaElement | null>;
+  value: string;
+  onChange: (value: string) => void;
+  onKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement>;
+  onPaste: React.ClipboardEventHandler<HTMLTextAreaElement>;
+}) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the height follows the text.
+  React.useLayoutEffect(() => {
+    const field = ref.current;
+    if (!field || supportsFieldSizing) return;
+    const fitHeight = () => {
+      field.style.height = "auto";
+      field.style.height = `${field.scrollHeight}px`;
+    };
+    fitHeight();
+    const observer = new ResizeObserver(fitHeight);
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, [ref, value]);
+
+  return (
+    <textarea
+      ref={ref}
+      className="n-title"
+      rows={1}
+      value={value}
+      aria-label="Title"
+      placeholder="Title"
+      spellCheck={false}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={onKeyDown}
+      onPaste={onPaste}
+    />
+  );
+}
+
 /** Returns the note while files are over it. */
 function useFileDrop(
   root: React.RefObject<HTMLElement | null>,
@@ -545,8 +597,8 @@ function TagRow(props: NoteEditorContentProps) {
   const row = roving.ref;
   const flip = useFlip(row, { pop: true });
   const [reminderOpen, setReminderOpen] = React.useState(false);
-  const tags = props.tagIds.flatMap(
-    (id) => props.allTags.find((t) => t.id === id) ?? [],
+  const tags = sortTagsByName(
+    props.tagIds.flatMap((id) => props.allTags.find((t) => t.id === id) ?? []),
   );
   const late = !!props.reminder && isReminderPast(props.reminder);
   const ringBell = useRingOnce(

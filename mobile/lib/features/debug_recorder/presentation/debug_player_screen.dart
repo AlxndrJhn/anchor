@@ -214,7 +214,6 @@ class _DebugPlayerScreenState extends State<DebugPlayerScreen>
         bytes: bytes,
         dialogTitle: l10n.debugSaveReport,
         mimeType: 'video/mp4',
-        allowedExtensions: const ['mp4'],
       );
       if (!mounted || !saved) return;
       final info = await PackageInfo.fromPlatform();

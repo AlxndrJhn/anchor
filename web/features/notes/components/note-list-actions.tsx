@@ -14,6 +14,7 @@ export function NoteListActions({
   placeholder,
   autoFocus,
   showTagFilter,
+  onSearchFocus,
   children,
 }: {
   list: NoteList;
@@ -21,6 +22,7 @@ export function NoteListActions({
   autoFocus?: boolean;
   /** Off in a tag's own view. */
   showTagFilter?: boolean;
+  onSearchFocus?: () => void;
   children?: React.ReactNode;
 }) {
   return (
@@ -31,6 +33,7 @@ export function NoteListActions({
         onChange={list.setQuery}
         placeholder={placeholder}
         autoFocus={autoFocus}
+        onFocus={onSearchFocus}
       />
       <FilterMenu list={list} showTags={showTagFilter} />
       <ViewOptions

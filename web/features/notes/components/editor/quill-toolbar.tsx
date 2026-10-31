@@ -35,6 +35,7 @@ import {
   toggleTextFormat,
 } from "../../quill";
 import { buildListIndentDelta } from "../../quill-lines";
+import type { UndoRedoAction } from "../../undo-shortcuts";
 import {
   HighlightSplitButton,
   hasHighlight,
@@ -100,6 +101,7 @@ interface QuillToolbarProps {
   onRecordAudio?: () => void;
   /** Puts pictures in the text at the caret. */
   onPictureInText?: () => void;
+  onUndoRedo: (action: UndoRedoAction) => void;
 }
 
 export function QuillToolbar({
@@ -110,6 +112,7 @@ export function QuillToolbar({
   onAddAttachment,
   onRecordAudio,
   onPictureInText,
+  onUndoRedo,
 }: QuillToolbarProps) {
   const [format, setFormat] = useState<Record<string, unknown>>({});
   const [canUndo, setCanUndo] = useState(false);
@@ -240,18 +243,13 @@ export function QuillToolbar({
       onFocus={formatting.onFocus}
       onKeyDown={formatting.onKeyDown}
     >
-      {toolButton(
-        `Undo (${modKey}Z)`,
-        <Undo2 />,
-        () => quill?.history?.undo?.(),
-        {
-          disabled: !canUndo,
-        },
-      )}
+      {toolButton(`Undo (${modKey}Z)`, <Undo2 />, () => onUndoRedo("undo"), {
+        disabled: !canUndo,
+      })}
       {toolButton(
         `Redo (${isMac() ? "⇧⌘Z" : "Ctrl+Y"})`,
         <Redo2 />,
-        () => quill?.history?.redo?.(),
+        () => onUndoRedo("redo"),
         { disabled: !canRedo },
       )}
       {divider}

@@ -235,7 +235,7 @@ describe('note archive', () => {
     expect(ids(await sharee.notes.list())).toEqual([note.id]);
   });
 
-  it('tag counts include notes archived by either side', async () => {
+  it('tag counts keep archived notes, for whoever archived them', async () => {
     const { note } = await sharedNote('editor');
     const ownerTag = await owner.tags.create({ name: 'owner-tag' });
     const shareeTag = await sharee.tags.create({ name: 'sharee-tag' });
@@ -250,6 +250,10 @@ describe('note archive', () => {
     };
     expect(await countOf(sharee)).toBe(1);
     expect(await countOf(owner)).toBe(1);
+
+    await owner.notes.trash(note.id);
+    expect(await countOf(sharee)).toBe(0);
+    expect(await countOf(owner)).toBe(0);
   });
 
   it("an export carries the exporter's own archive", async () => {
