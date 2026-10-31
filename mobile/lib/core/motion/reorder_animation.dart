@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../widgets/destruction/strike.dart';
 import 'springs.dart';
@@ -96,62 +97,38 @@ class _ReorderAnimatedBoxState extends State<ReorderAnimatedBox>
     super.dispose();
   }
 
-  Offset? _measure(ReorderAnimationScope scope) {
+  Offset? _measure(ReorderAnimationScope scope, ScrollableState? scrollable) {
     final box = context.findRenderObject() as RenderBox?;
     final root =
         scope.contentKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || root == null || !box.attached || !box.hasSize) {
       return null;
     }
-    final scroll = Scrollable.maybeOf(context)?.position.pixels ?? 0;
+    final scroll = scrollable?.position.pixels ?? 0;
     return box.localToGlobal(Offset.zero, ancestor: root) + Offset(0, scroll);
+  }
+
+  /// On the frame that finds the box moved, before its slide starts after
+  /// that frame: how far back to draw it, so it shows where it was rather
+  /// than for a frame in its new place.
+  Offset _heldBack(
+    ReorderAnimationScope scope,
+    ScrollableState? scrollable,
+    bool isMoving,
+  ) {
+    if (!isMoving || _seen == scope.generation || _isNew) return Offset.zero;
+    final previous = widget.memory.positions[widget.id];
+    final now = _measure(scope, scrollable);
+    if (previous == null || now == null || (previous - now).distance <= 1) {
+      return Offset.zero;
+    }
+    return previous - now;
   }
 
   @override
   Widget build(BuildContext context) {
     final scope = ReorderAnimationScope._of(context);
-    if (scope != null) {
-      final generation = scope.generation;
-      final isCovered = !TickerMode.valuesOf(context).enabled;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final now = _measure(scope);
-        if (now == null) return;
-        final previous = widget.memory.positions[widget.id];
-        widget.memory.positions[widget.id] = now;
-        if (isCovered) {
-          _isNew = false;
-          _seen = generation;
-          _progress.value = 1;
-          return;
-        }
-        if (_isNew) {
-          _isNew = false;
-          _progress.springTo(1, spring: Spring.snappy);
-          setState(() => _from = Offset.zero);
-          return;
-        }
-        if (_seen != generation &&
-            previous != null &&
-            (previous - now).distance > 1 &&
-            !context.isMotionReduced) {
-          _from = previous - now;
-          _progress.value = 0;
-          final size = (context.findRenderObject() as RenderBox?)?.size;
-          if (isCardStrikeArmed && size != null) {
-            _impact = StrikeImpact(_from, size);
-            _knocked = false;
-            _progress.animateTo(1, duration: strikeDuration);
-          } else {
-            _impact = null;
-            _progress.springTo(1, spring: Spring.snappy);
-          }
-          setState(() {});
-        }
-        _seen = generation;
-      });
-    }
-    return AnimatedBuilder(
+    final Widget box = AnimatedBuilder(
       animation: _progress,
       child: widget.child,
       builder: (context, child) {
@@ -180,5 +157,80 @@ class _ReorderAnimatedBoxState extends State<ReorderAnimatedBox>
         );
       },
     );
+    if (scope == null) return box;
+    final generation = scope.generation;
+    final isCovered = !TickerMode.valuesOf(context).enabled;
+    final isMoving = !isCovered && !context.isMotionReduced;
+    final scrollable = Scrollable.maybeOf(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final now = _measure(scope, scrollable);
+      if (now == null) return;
+      final previous = widget.memory.positions[widget.id];
+      widget.memory.positions[widget.id] = now;
+      if (isCovered) {
+        _isNew = false;
+        _seen = generation;
+        _progress.value = 1;
+        return;
+      }
+      if (_isNew) {
+        _isNew = false;
+        _progress.springTo(1, spring: Spring.snappy);
+        setState(() => _from = Offset.zero);
+        return;
+      }
+      if (_seen != generation &&
+          previous != null &&
+          (previous - now).distance > 1 &&
+          !context.isMotionReduced) {
+        _from = previous - now;
+        _progress.value = 0;
+        final size = (context.findRenderObject() as RenderBox?)?.size;
+        if (isCardStrikeArmed && size != null) {
+          _impact = StrikeImpact(_from, size);
+          _knocked = false;
+          _progress.animateTo(1, duration: strikeDuration);
+        } else {
+          _impact = null;
+          _progress.springTo(1, spring: Spring.snappy);
+        }
+        setState(() {});
+      }
+      _seen = generation;
+    });
+    return _HoldBack(
+      offset: () => _heldBack(scope, scrollable, isMoving),
+      child: box,
+    );
   }
+}
+
+/// Draws its child shifted by [offset], asked anew each time it paints.
+class _HoldBack extends SingleChildRenderObjectWidget {
+  const _HoldBack({required this.offset, super.child});
+
+  final Offset Function() offset;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderHoldBack(offset);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderHoldBack renderObject) =>
+      renderObject.offset = offset;
+}
+
+class _RenderHoldBack extends RenderProxyBox {
+  _RenderHoldBack(this._offset);
+
+  Offset Function() _offset;
+  set offset(Offset Function() value) {
+    _offset = value;
+    markNeedsPaint();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) =>
+      super.paint(context, offset + _offset());
 }
