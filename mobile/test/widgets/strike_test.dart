@@ -1,6 +1,7 @@
 import 'package:anchor/core/motion/reorder_animation.dart';
 import 'package:anchor/core/widgets/destruction/strike.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -41,6 +42,7 @@ void main() {
     final ids = ValueNotifier(['a', 'b', 'c']);
     final memory = ReorderPositions();
     final listKey = GlobalKey();
+    final painted = <String, Offset>{};
     await tester.pumpWidget(
       MaterialApp(
         home: ValueListenableBuilder(
@@ -50,13 +52,21 @@ void main() {
             contentKey: listKey,
             child: ListView(
               key: listKey,
+              // So each card paints at its place on the screen.
+              addRepaintBoundaries: false,
               children: [
                 for (final id in shown)
                   ReorderAnimatedBox(
                     key: ValueKey(id),
                     id: id,
                     memory: memory,
-                    child: SizedBox(height: 80, child: Text(id)),
+                    child: SizedBox(
+                      height: 80,
+                      child: _PaintedAt(
+                        onPaint: (at) => painted[id] = at,
+                        child: Text(id),
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -65,11 +75,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    final wasAt = tester.getTopLeft(find.text('b'));
     if (armed) armCardStrike();
     ids.value = ['b', 'c'];
     // The frame that finds the cards moved shows them where they were, and
     // the strike starts after it.
     await tester.pump();
+    expect(painted['b'], wasAt);
     await tester.pump(strikeTravel + const Duration(milliseconds: 50));
     final sparked = find
         .byWidgetPredicate(
@@ -96,4 +108,27 @@ void main() {
     expect(slide.sparked, isFalse);
     expect(slide.knocks, 0);
   });
+}
+
+/// Tells where its child is drawn, each time it paints.
+class _PaintedAt extends SingleChildRenderObjectWidget {
+  const _PaintedAt({required this.onPaint, super.child});
+
+  final ValueChanged<Offset> onPaint;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderPaintedAt(onPaint);
+}
+
+class _RenderPaintedAt extends RenderProxyBox {
+  _RenderPaintedAt(this.onPaint);
+
+  final ValueChanged<Offset> onPaint;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    onPaint(offset);
+    super.paint(context, offset);
+  }
 }
