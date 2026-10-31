@@ -26,11 +26,13 @@ class BottomBarFrame extends SingleChildRenderObjectWidget {
   static final Map<Route<Object?>, Map<_RenderBottomBarFrame, double>>
   _barHeights = {};
 
-  /// While [page] is closing, the inset on the page under it.
+  /// While [page] is closing, the inset on the page under it. With no
+  /// [page] (shown from the [navigator]'s own context, which outlives its
+  /// pages), the inset on the page the navigator shows.
   static double insetOn(Route<Object?>? page, NavigatorState? navigator) {
-    if (page == null) return 0;
+    if (page == null && navigator == null) return 0;
     var showing = page;
-    if (!page.isActive) {
+    if (showing == null || !showing.isActive) {
       final under = _barHeights.keys
           .where((route) => route.isCurrent && route.navigator == navigator)
           .firstOrNull;
