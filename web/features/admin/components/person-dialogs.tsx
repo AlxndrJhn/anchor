@@ -27,7 +27,6 @@ import {
 import { useAuthStore } from "@/features/auth/store";
 import { copyText } from "@/lib/clipboard";
 import { useLastShown } from "@/lib/hooks/use-last-shown";
-import { firstName } from "@/lib/utils";
 import { createUser, updateUser } from "../api";
 import type { AdminUser } from "../types";
 
@@ -73,7 +72,7 @@ export function AddPersonDialog({
     onSuccess: (user) => {
       onDone();
       onOpenChange(false);
-      toast.success(`${firstName(user.name)} can sign in now`);
+      toast.success(`${user.name} can sign in now`);
     },
     onError: (e: Error, dto) => {
       const field = refusedField(e);
@@ -81,7 +80,7 @@ export function AddPersonDialog({
       else if (field) showError(field, ACCOUNT_FIELD_HELP[field]);
       else
         toast.error(
-          `Couldn’t add ${firstName(dto.name)}`,
+          `Couldn’t add ${dto.name}`,
           couldWorkLater(e) ? { retry: () => create.mutate(dto) } : undefined,
         );
     },
@@ -319,7 +318,7 @@ export function NewPasswordDialog({
   const [copied, setCopied] = React.useState(false);
   // biome-ignore lint/correctness/useExhaustiveDependencies: each new password starts with Copy
   React.useEffect(() => setCopied(false), [shown]);
-  const name = firstName(shown?.user.name ?? "");
+  const name = shown?.user.name ?? "";
   return (
     <Dialog open={!!value} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>

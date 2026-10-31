@@ -7,6 +7,11 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LOCK_PATTERN, LOCK_PIN } from '../dto/note-lock.dto';
 import { hashLockSecret, lockSecretMatches } from '../utils/note-lock.util';
+import { AttemptLimiter } from '../../common/utils/attempt-limiter';
+import {
+  FAILED_GUESS_WINDOW_MS,
+  MAX_FAILED_GUESSES,
+} from '../../auth/constants/auth.constants';
 
 type SecretKind = 'pin' | 'pattern';
 
@@ -18,6 +23,12 @@ const FIELD = { pin: 'lockPin', pattern: 'lockPattern' } as const;
  */
 @Injectable()
 export class NoteLocksService {
+  // A PIN has few digits: without a limit it can be guessed through.
+  private readonly failedGuesses = new AttemptLimiter(
+    MAX_FAILED_GUESSES,
+    FAILED_GUESS_WINDOW_MS,
+  );
+
   constructor(private prisma: PrismaService) {}
 
   async secrets(userId: string) {
@@ -82,16 +93,21 @@ export class NoteLocksService {
     kind: SecretKind | 'password',
     secret: string,
   ): Promise<{ ok: boolean }> {
+    const attemptKey = `${userId}:${kind}`;
+    this.failedGuesses.check(attemptKey);
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: { lockPin: true, lockPattern: true, password: true },
     });
+    let ok: boolean;
     if (kind === 'password') {
-      return {
-        ok: !!user.password && (await bcrypt.compare(secret, user.password)),
-      };
+      ok = !!user.password && (await bcrypt.compare(secret, user.password));
+    } else {
+      const stored = user[FIELD[kind]];
+      ok = !!stored && lockSecretMatches(secret, stored);
     }
-    const stored = user[FIELD[kind]];
-    return { ok: !!stored && lockSecretMatches(secret, stored) };
+    if (ok) this.failedGuesses.succeed(attemptKey);
+    else this.failedGuesses.fail(attemptKey);
+    return { ok };
   }
 }

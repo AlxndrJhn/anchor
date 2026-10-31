@@ -14,6 +14,7 @@ import '../../notes/data/repository/note_attachments_repository.dart';
 import '../../notes/data/repository/note_revisions_store.dart';
 import '../../notes/domain/note.dart';
 import '../../notes/domain/note_attachment.dart';
+import '../../notes/domain/note_blocks.dart';
 import '../../notes/domain/note_revision.dart';
 import '../../reminders/data/reminder_slots.dart';
 import '../../tags/data/local/tag_rows.dart';
@@ -48,11 +49,19 @@ class SyncService {
   final NoteRevisionsStore _revisions;
   final SyncCursor _cursor;
 
-  Future<void> run() async {
+  /// Notes whose text from here replaced text changed elsewhere, by id, with
+  /// their names; reported by [run].
+  final Map<String, String> _overwrote = {};
+
+  /// Returns the notes whose text from here replaced text changed elsewhere
+  /// since this device last had it (the other text stays in their history).
+  Future<Map<String, String>> run() async {
+    _overwrote.clear();
     final start = DateTime.now();
     final counts = await _exchange();
     await _uploadAttachments();
-    if (counts == null) return;
+    final overwrote = Map.of(_overwrote);
+    if (counts == null) return overwrote;
     await _attachments.evictCache();
     // Every picture on the phone, so none waits for a connection.
     if (Platform.isAndroid) unawaited(_attachments.downloadMissingImages());
@@ -61,6 +70,7 @@ class SyncService {
       'Sync done in ${DateTime.now().difference(start).inMilliseconds}ms: '
       'pushed=${counts.pushed} pulled=${counts.pulled}',
     );
+    return overwrote;
   }
 
   /// Pushes and pulls until the feed runs out; null when it stops early.
@@ -377,6 +387,9 @@ class SyncService {
         }
         final prior = await _db.noteRow(result.id);
         if (prior == null) return;
+        if (_replacesOtherText(prior, server)) {
+          _overwrote[result.id] = _nameOf(prior);
+        }
         await _db.writeNote(result.id, _rebasedOnto(prior, server));
         final row = await _db.noteRow(result.id);
         if (row != null) rebased.add(await _noteChangeOf(row));
@@ -828,6 +841,21 @@ class SyncService {
 }
 
 bool _hasSyncedCopy(NoteRow row) => row.syncedTitle != null;
+
+/// Whether [row]'s title or text, changed here, differs from the server's
+/// [server] copy that was also changed since this device last had it.
+bool _replacesOtherText(NoteRow row, SyncServerNote server) {
+  if (!_hasSyncedCopy(row)) return false;
+  bool bothChanged(String? local, String? synced, String? remote) =>
+      local != synced && remote != synced && local != remote;
+  return bothChanged(row.title, row.syncedTitle, server.title) ||
+      bothChanged(row.content, row.syncedContent, server.content);
+}
+
+/// A note's title, or its first line when it has none.
+String _nameOf(NoteRow row) => hasTitleText(row.title)
+    ? row.title
+    : plainTextOf(row.content).split('\n').first;
 
 bool _hasLocalTextChange(NoteRow row) =>
     !_hasSyncedCopy(row) ||

@@ -2082,6 +2082,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get syncOverwroteLead => 'Changed in two places';
+
+  @override
+  String syncOverwroteText(String title) {
+    return 'Your changes to “$title” replaced ones made elsewhere. Tap to see them in its history.';
+  }
+
+  @override
+  String syncOverwroteManyText(int count) {
+    return 'Your changes to $count notes replaced ones made elsewhere. Tap to see the first one\'s history.';
+  }
+
+  @override
   String searchNoResults(String query) {
     return 'No results for “$query”';
   }
@@ -2089,6 +2102,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get searchNoResultsHelp =>
       'Check the spelling or try different words.';
+
+  @override
+  String get searchRegexInvalidHelp =>
+      'This isn\'t a valid regular expression, so it was looked for as typed. Check the pattern, or turn off Regular expression.';
 
   @override
   String get archiveEmptyTitle => 'No archived notes';

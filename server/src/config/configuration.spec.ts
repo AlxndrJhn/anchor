@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import * as path from 'path';
 import { AppConfig, StorageConfig } from './configuration';
 
 describe('configuration namespaces', () => {
@@ -21,9 +22,14 @@ describe('configuration namespaces', () => {
       const storageConfig = StorageConfig();
 
       expect(storageConfig.root).toBe('/data');
-      expect(storageConfig.uploadsDir).toBe('/data/uploads');
-      expect(storageConfig.profilesDir).toBe('/data/uploads/profiles');
-      expect(storageConfig.attachmentsDir).toBe('/data/uploads/attachments');
+      // Joined the way this system joins paths (backslashes on Windows).
+      expect(storageConfig.uploadsDir).toBe(path.join('/data', 'uploads'));
+      expect(storageConfig.profilesDir).toBe(
+        path.join('/data', 'uploads', 'profiles'),
+      );
+      expect(storageConfig.attachmentsDir).toBe(
+        path.join('/data', 'uploads', 'attachments'),
+      );
     });
 
     it('honors a DATA_DIR override', () => {
@@ -32,7 +38,9 @@ describe('configuration namespaces', () => {
       const storageConfig = StorageConfig();
 
       expect(storageConfig.root).toBe('/srv/anchor');
-      expect(storageConfig.profilesDir).toBe('/srv/anchor/uploads/profiles');
+      expect(storageConfig.profilesDir).toBe(
+        path.join('/srv/anchor', 'uploads', 'profiles'),
+      );
     });
   });
 

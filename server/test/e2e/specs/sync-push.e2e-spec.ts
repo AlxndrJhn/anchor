@@ -145,6 +145,16 @@ describe('sync push', () => {
     ).toMatchObject({ userId: user.id, title: 'device-born', version: 1 });
   });
 
+  it('refuses an id that is not a UUID, which would name a folder outside attachments', async () => {
+    await user.http
+      .post('/api/sync')
+      .send({ changes: [{ type: 'note', id: '../escape', title: 'x' }] })
+      .expect(400);
+    expect(
+      await ctx.prisma.note.findUnique({ where: { id: '../escape' } }),
+    ).toBeNull();
+  });
+
   it('a push carrying a baseVersion for a purged note is denied, not recreated', async () => {
     const id = crypto.randomUUID();
 

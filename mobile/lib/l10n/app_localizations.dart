@@ -3046,6 +3046,24 @@ abstract class AppLocalizations {
   /// **'Search #{tag}'**
   String searchTag(String tag);
 
+  /// Card title on the notes list when this device's edits replaced edits made to the same note elsewhere while offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed in two places'**
+  String get syncOverwroteLead;
+
+  /// Card text when this device's edits replaced edits made elsewhere to one note; tapping opens its version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes to “{title}” replaced ones made elsewhere. Tap to see them in its history.'**
+  String syncOverwroteText(String title);
+
+  /// Card text when this device's edits replaced edits made elsewhere to several notes; tapping opens the first one's version history.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes to {count} notes replaced ones made elsewhere. Tap to see the first one\'s history.'**
+  String syncOverwroteManyText(int count);
+
   /// Empty-screen title when a search finds no notes.
   ///
   /// In en, this message translates to:
@@ -3057,6 +3075,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check the spelling or try different words.'**
   String get searchNoResultsHelp;
+
+  /// Empty-screen help when a regex search can't be read as a regular expression and the text as typed finds no notes.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a valid regular expression, so it was looked for as typed. Check the pattern, or turn off Regular expression.'**
+  String get searchRegexInvalidHelp;
 
   /// Empty-screen title when the archive has no notes.
   ///

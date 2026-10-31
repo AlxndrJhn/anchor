@@ -185,8 +185,22 @@ class RenderSliverMasonry extends RenderSliverMultiBoxAdaptor {
       _columns[i] = column;
       ends[column] += _extentAt(i) + _mainAxisSpacing;
     }
+    if (_kept.isNotEmpty && _hasEmptyColumnFirst(ends)) {
+      // Kept columns left an empty column, like the one note left on the
+      // right after the rest were deleted: place afresh.
+      _kept.clear();
+      _place();
+      return;
+    }
     _endOffset = count == 0 ? 0 : ends.reduce(math.max) - _mainAxisSpacing;
     _isPlaced = true;
+  }
+
+  /// Whether a column is empty while one right of it has cards, which
+  /// placing each card in the shortest column never leaves.
+  static bool _hasEmptyColumnFirst(List<double> ends) {
+    final firstEmpty = ends.indexWhere((end) => end == 0);
+    return firstEmpty != -1 && ends.skip(firstEmpty).any((end) => end > 0);
   }
 
   /// True when [child]'s extent differs from the one placed.

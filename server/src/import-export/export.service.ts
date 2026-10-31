@@ -14,6 +14,7 @@ import {
 } from './export-manifest.util';
 import { ExportFormat } from './dto/export-query.dto';
 import { planMarkdownExport } from './markdown/markdown-export.util';
+import { isStorableNoteId } from '../notes/utils/attachment-storage.util';
 
 const NOTES_PAGE_SIZE = 500;
 
@@ -247,13 +248,15 @@ export class ExportService {
       const present: typeof note.attachments = [];
       for (const attachment of note.attachments) {
         const storedFilename = storedFilenames.get(attachment.id);
-        const filePath = storedFilename
-          ? path.join(
-              this.storageConfig.attachmentsDir,
-              note.id,
-              storedFilename,
-            )
-          : null;
+        // A note id that isn't a UUID would put `..` in the zip's paths.
+        const filePath =
+          storedFilename && isStorableNoteId(note.id)
+            ? path.join(
+                this.storageConfig.attachmentsDir,
+                note.id,
+                storedFilename,
+              )
+            : null;
         if (filePath && fs.existsSync(filePath)) {
           diskPaths.set(attachment.id, filePath);
           present.push(attachment);

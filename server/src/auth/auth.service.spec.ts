@@ -67,22 +67,36 @@ describe('AuthService', () => {
 
   interface UserWhere {
     id?: string;
-    email?: string;
+    email?: string | { equals: string; mode: 'insensitive' };
     apiToken?: string;
   }
 
-  const findUser = (where: UserWhere) =>
-    [...users.values()].find(
+  const emailMatches = (email: string, where: UserWhere['email']) =>
+    where === undefined ||
+    (typeof where === 'string'
+      ? email === where
+      : email.toLowerCase() === where.equals.toLowerCase());
+
+  const findUsers = (where: UserWhere) =>
+    [...users.values()].filter(
       (u) =>
         (where.id === undefined || u.id === where.id) &&
-        (where.email === undefined || u.email === where.email) &&
+        emailMatches(u.email, where.email) &&
         (where.apiToken === undefined || u.apiToken === where.apiToken),
-    ) ?? null;
+    );
+
+  const findUser = (where: UserWhere) => findUsers(where)[0] ?? null;
 
   const prisma = {
     user: {
       findUnique: vi.fn(({ where }: { where: UserWhere }) =>
         Promise.resolve(findUser(where)),
+      ),
+      findFirst: vi.fn(({ where }: { where: UserWhere }) =>
+        Promise.resolve(findUser(where)),
+      ),
+      findMany: vi.fn(({ where }: { where: UserWhere }) =>
+        Promise.resolve(findUsers(where)),
       ),
       count: vi.fn(({ where }: { where?: Partial<UserRecord> } = {}) =>
         Promise.resolve(
@@ -141,10 +155,23 @@ describe('AuthService', () => {
         return Promise.resolve(record);
       }),
       deleteMany: vi.fn(
-        ({ where }: { where: { token?: string; id?: string } }) => {
+        ({
+          where,
+        }: {
+          where: {
+            token?: string | { not: string };
+            id?: string;
+            userId?: string;
+          };
+        }) => {
           let count = 0;
           for (const [token, record] of refreshTokens) {
-            if (record.token === where.token || record.id === where.id) {
+            const matches = where.userId
+              ? record.userId === where.userId &&
+                (typeof where.token !== 'object' ||
+                  record.token !== where.token.not)
+              : record.token === where.token || record.id === where.id;
+            if (matches) {
               refreshTokens.delete(token);
               count++;
             }
@@ -174,6 +201,9 @@ describe('AuthService', () => {
         },
       ),
     },
+    $transaction: vi.fn((operations: Promise<unknown>[]) =>
+      Promise.all(operations),
+    ),
   } as unknown as PrismaService;
 
   const jwtService = {
@@ -243,6 +273,24 @@ describe('AuthService', () => {
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
     });
 
+    it('rejects an email that differs only in case, storing new ones lower-case', async () => {
+      addUser({ id: 'u1', email: 'taken@example.com' });
+      await expect(
+        service.register({
+          email: 'Taken@Example.com',
+          password: 'password1',
+          name: 'Twin',
+        }),
+      ).rejects.toThrow(ConflictException);
+
+      const result = await service.register({
+        email: 'New.Person@Example.com',
+        password: 'password1',
+        name: 'New',
+      });
+      expect(result.user.email).toBe('new.person@example.com');
+    });
+
     it('makes the first user an admin and returns tokens', async () => {
       const result = await service.register(dto);
       expect(result.user.isAdmin).toBe(true);
@@ -279,7 +327,7 @@ describe('AuthService', () => {
 
     it('never stores the plaintext password', async () => {
       await service.register(dto);
-      const stored = findUser({ email: dto.email })!;
+      const stored = findUser({ email: dto.email });
       expect(stored.password).not.toBe(dto.password);
       expect(await bcrypt.compare(dto.password, stored.password!)).toBe(true);
     });
@@ -323,6 +371,41 @@ describe('AuthService', () => {
           'Email and password sign-in is turned off. Sign in with Pocket ID.',
         ),
       );
+    });
+
+    it('matches the email in any case', async () => {
+      addUser({ id: 'u1', email: 'Mixed.Case@example.com' });
+      const result = await service.login({
+        email: 'mixed.case@EXAMPLE.com',
+        password: 'correct horse',
+      });
+      expect(result.user.id).toBe('u1');
+    });
+
+    it('picks the account whose password fits among case twins', async () => {
+      addUser({ id: 'u1', email: 'twin@example.com' });
+      addUser({
+        id: 'u2',
+        email: 'TWIN@example.com',
+        password: bcrypt.hashSync('other pw', 4),
+      });
+      const result = await service.login({
+        email: 'twin@example.com',
+        password: 'other pw',
+      });
+      expect(result.user.id).toBe('u2');
+    });
+
+    it('makes an account wait after ten wrong passwords', async () => {
+      addUser({ id: 'u1' });
+      for (let i = 0; i < 10; i++) {
+        await expect(
+          service.login({ email: 'u1@example.com', password: 'wrong' }),
+        ).rejects.toThrow(UnauthorizedException);
+      }
+      await expect(
+        service.login({ email: 'U1@example.com', password: 'correct horse' }),
+      ).rejects.toThrow(/Too many attempts/);
     });
 
     it('rejects a wrong password', async () => {
@@ -450,6 +533,33 @@ describe('AuthService', () => {
           newPassword: 'y',
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('signs out every other session, keeping the one that changed it', async () => {
+      addUser({ id: 'u1' });
+      addUser({ id: 'u2' });
+      const expiresAt = new Date(Date.now() + 60_000);
+      for (const [token, userId] of [
+        ['this-device', 'u1'],
+        ['stolen', 'u1'],
+        ['someone-else', 'u2'],
+      ]) {
+        refreshTokens.set(token, { id: token, token, userId, expiresAt });
+      }
+
+      await service.changePassword('u1', {
+        currentPassword: 'correct horse',
+        newPassword: 'brand new pw',
+        refreshToken: 'this-device',
+      });
+
+      expect([...refreshTokens.keys()].sort()).toEqual([
+        'someone-else',
+        'this-device',
+      ]);
+      await expect(service.refreshTokens('stolen')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('stores the new password hashed', async () => {

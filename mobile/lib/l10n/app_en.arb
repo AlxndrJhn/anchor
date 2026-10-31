@@ -2780,6 +2780,30 @@
       }
     }
   },
+  "syncOverwroteLead": "Changed in two places",
+  "@syncOverwroteLead": {
+    "description": "Card title on the notes list when this device's edits replaced edits made to the same note elsewhere while offline."
+  },
+  "syncOverwroteText": "Your changes to “{title}” replaced ones made elsewhere. Tap to see them in its history.",
+  "@syncOverwroteText": {
+    "description": "Card text when this device's edits replaced edits made elsewhere to one note; tapping opens its version history.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Shopping"
+      }
+    }
+  },
+  "syncOverwroteManyText": "Your changes to {count} notes replaced ones made elsewhere. Tap to see the first one's history.",
+  "@syncOverwroteManyText": {
+    "description": "Card text when this device's edits replaced edits made elsewhere to several notes; tapping opens the first one's version history.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
   "searchNoResults": "No results for “{query}”",
   "@searchNoResults": {
     "description": "Empty-screen title when a search finds no notes.",
@@ -2793,6 +2817,10 @@
   "searchNoResultsHelp": "Check the spelling or try different words.",
   "@searchNoResultsHelp": {
     "description": "Empty-screen help when a search finds no notes."
+  },
+  "searchRegexInvalidHelp": "This isn't a valid regular expression, so it was looked for as typed. Check the pattern, or turn off Regular expression.",
+  "@searchRegexInvalidHelp": {
+    "description": "Empty-screen help when a regex search can't be read as a regular expression and the text as typed finds no notes."
   },
   "archiveEmptyTitle": "No archived notes",
   "@archiveEmptyTitle": {

@@ -19,7 +19,10 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_BASE_PATH: isStatic ? basePath : "",
   },
   experimental: {
-    proxyClientMaxBodySize: "50mb",
+    // Above the server's 50 MB attachment limit, by the multipart wrapping
+    // and then some: a file over the limit reaches the server, which answers
+    // 413, instead of being cut off here and failing with a 500.
+    proxyClientMaxBodySize: "55mb",
   },
   ...(isStatic
     ? {}

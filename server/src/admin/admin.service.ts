@@ -15,6 +15,7 @@ import type { Prisma } from 'src/generated/prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { BCRYPT_SALT_ROUNDS } from '../auth/constants/auth.constants';
+import { normalizeEmail, sameEmail } from '../common/utils/email.util';
 
 @Injectable()
 export class AdminService {
@@ -141,8 +142,8 @@ export class AdminService {
   }
 
   async createUser(createUserDto: CreateUserDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: createUserDto.email },
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: sameEmail(createUserDto.email) },
     });
 
     if (existingUser) {
@@ -156,7 +157,7 @@ export class AdminService {
 
     const user = await this.prisma.user.create({
       data: {
-        email: createUserDto.email,
+        email: normalizeEmail(createUserDto.email),
         password: hashedPassword,
         name: createUserDto.name,
         isAdmin: false,
@@ -189,8 +190,8 @@ export class AdminService {
 
     // Check if email is being changed and if it's already taken
     if (updateUserDto.email && updateUserDto.email !== user.email) {
-      const existingUser = await this.prisma.user.findUnique({
-        where: { email: updateUserDto.email },
+      const existingUser = await this.prisma.user.findFirst({
+        where: { email: sameEmail(updateUserDto.email), id: { not: id } },
       });
 
       if (existingUser) {
@@ -214,7 +215,8 @@ export class AdminService {
     }
 
     const data: Partial<UpdateUserDto> = {};
-    if (updateUserDto.email !== undefined) data.email = updateUserDto.email;
+    if (updateUserDto.email !== undefined)
+      data.email = normalizeEmail(updateUserDto.email);
     if (updateUserDto.name !== undefined) data.name = updateUserDto.name;
     if (updateUserDto.isAdmin !== undefined)
       data.isAdmin = updateUserDto.isAdmin;

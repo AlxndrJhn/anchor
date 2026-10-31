@@ -28,7 +28,7 @@ import { usePreferencesStore } from "@/features/preferences";
 import { sortTagsByName, type Tag, TagChip, TagPicker } from "@/features/tags";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { useFlip } from "@/lib/use-flip";
-import { cn } from "@/lib/utils";
+import { cn, shortNames } from "@/lib/utils";
 import {
   deleteAttachment,
   fetchAttachmentBlob,
@@ -101,7 +101,7 @@ interface NoteEditorContentProps {
 
 /** “Sam”, “Sam and Maya”, “Sam, Maya and 2 others”. */
 function sharedLine(people: Person[]) {
-  const firstNames = people.map((person) => person.name.split(" ")[0]);
+  const firstNames = shortNames(people.map((person) => person.name));
   if (firstNames.length <= 2) return firstNames.join(" and ");
   if (firstNames.length === 3)
     return `${firstNames[0]}, ${firstNames[1]} and ${firstNames[2]}`;

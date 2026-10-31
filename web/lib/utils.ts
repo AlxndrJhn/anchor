@@ -24,3 +24,13 @@ export const plural = (count: number, one: string, many = `${one}s`) =>
   `${count} ${count === 1 ? one : many}`;
 
 export const firstName = (name: string) => name.split(" ")[0];
+
+/** First names, or the whole name where two people share a first name. */
+export function shortNames(names: string[]) {
+  const firsts = names.map(firstName);
+  return names.map((name, i) =>
+    firsts.indexOf(firsts[i]) === firsts.lastIndexOf(firsts[i])
+      ? firsts[i]
+      : name,
+  );
+}

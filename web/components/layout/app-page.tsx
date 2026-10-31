@@ -54,7 +54,10 @@ export function AppPage({
         className="sticky top-0 z-(--z-sticky) flex min-h-16 items-center gap-2.5 px-gutter pt-3 pb-2.5 transition-[background-color,box-shadow] duration-(--duration-fade) data-scrolled:bg-background/84 data-scrolled:shadow-[0_1px_0_color-mix(in_srgb,var(--border)_55%,transparent)] data-scrolled:backdrop-blur-[14px] data-scrolled:backdrop-saturate-130 max-md:min-h-14 max-md:gap-1 max-md:px-gutter-phone max-md:pt-2.5 max-md:pb-2"
       >
         <MenuButton />
-        {title}
+        {/* Whole up to half the bar; the search box gives way first. */}
+        <div className="flex min-w-0 max-w-1/2 flex-none items-center max-md:max-w-none max-md:flex-initial">
+          {title}
+        </div>
         {actions && (
           <div className="ml-auto flex min-w-0 items-center gap-1.5">
             {actions}
@@ -224,7 +227,7 @@ export const SearchField = React.forwardRef<
           data-search-field
           data-open={open || undefined}
           className={cn(
-            "group/search flex h-9.5 w-75 max-w-full items-center gap-2 rounded-md bg-card pr-2 pl-3 shadow-[inset_0_0_0_1px_var(--input),var(--sh-xs)] transition-[box-shadow,width] duration-(--duration-header) ease-standard focus-within:w-90 focus-within:shadow-[inset_0_0_0_2px_var(--ring)] max-md:hidden max-md:data-open:absolute max-md:data-open:inset-x-3 max-md:data-open:top-2 max-md:data-open:z-(--z-raised) max-md:data-open:flex max-md:data-open:w-auto [&>svg]:size-4 [&>svg]:text-muted-foreground",
+            "group/search flex h-9.5 w-75 min-w-0 max-w-full items-center gap-2 rounded-md bg-card pr-2 pl-3 shadow-[inset_0_0_0_1px_var(--input),var(--sh-xs)] transition-[box-shadow,width] duration-(--duration-header) ease-standard focus-within:w-90 focus-within:shadow-[inset_0_0_0_2px_var(--ring)] max-md:hidden max-md:data-open:absolute max-md:data-open:inset-x-3 max-md:data-open:top-2 max-md:data-open:z-(--z-raised) max-md:data-open:flex max-md:data-open:w-auto [&>svg]:size-4 [&>svg]:text-muted-foreground",
             className,
           )}
         >

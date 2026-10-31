@@ -50,7 +50,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth";
 import { useLastShown } from "@/lib/hooks/use-last-shown";
 import { useRetry } from "@/lib/hooks/use-retry";
-import { cn, firstName, plural } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 import {
   approveUser,
   deleteUser,
@@ -156,10 +156,10 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
     mutationFn: (user: AdminUser) => approveUser(user.id),
     onSuccess: async (_, user) => {
       await refresh();
-      toast.success(`${firstName(user.name)} can sign in now`);
+      toast.success(`${user.name} can sign in now`);
     },
     onError: (_, user) =>
-      toast.error(`Couldn’t approve ${firstName(user.name)}`, {
+      toast.error(`Couldn’t approve ${user.name}`, {
         retry: () => approve.mutate(user),
       }),
   });
@@ -168,23 +168,22 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
     onSuccess: async (_, user) => {
       await refresh();
       setDeclining(null);
-      toast.success(`${firstName(user.name)}’s request declined`);
+      toast.success(`${user.name}’s request declined`);
     },
-    onError: (_, user) =>
-      toast.error(`Couldn’t decline ${firstName(user.name)}`),
+    onError: (_, user) => toast.error(`Couldn’t decline ${user.name}`),
   });
   const remove = useMutation({
     mutationFn: (user: AdminUser) => deleteUser(user.id),
     onSuccess: async (_, user) => {
       await refresh();
       setDeleting(null);
-      toast.success(`${firstName(user.name)}’s account deleted`);
+      toast.success(`${user.name}’s account deleted`);
     },
     onError: (e: Error, user) =>
       toast.error(
         e instanceof HTTPError && /last admin/i.test(e.message)
-          ? `Couldn’t delete ${firstName(user.name)}. They’re the only admin.`
-          : `Couldn’t delete ${firstName(user.name)}`,
+          ? `Couldn’t delete ${user.name}. They’re the only admin.`
+          : `Couldn’t delete ${user.name}`,
       ),
   });
   const reset = useMutation({
@@ -192,10 +191,9 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
     onSuccess: (res, user) => {
       setResetting(null);
       if (res.newPassword) setNewPassword({ user, password: res.newPassword });
-      else toast.success(`${firstName(user.name)}’s password was reset`);
+      else toast.success(`${user.name}’s password was reset`);
     },
-    onError: (_, user) =>
-      toast.error(`Couldn’t reset ${firstName(user.name)}’s password`),
+    onError: (_, user) => toast.error(`Couldn’t reset ${user.name}’s password`),
   });
 
   const rows = users.data?.users ?? [];
@@ -254,7 +252,10 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
         </div>
       )}
 
-      <div data-slot="card" className={cn(cardClass, "overflow-hidden")}>
+      <div
+        data-slot="card"
+        className={cn(cardClass, "@container overflow-hidden")}
+      >
         <div className="flex flex-wrap items-center gap-2.5 py-3 pr-3 pl-3.5">
           <Input
             type="search"
@@ -281,7 +282,8 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
         ) : users.isLoading ? (
           <SkeletonRows count={5} className="px-3.5 py-3" />
         ) : (
-          <Table className="max-md:min-w-0 max-md:[&_:is(th,td):nth-child(n+3):not(:last-child)]:hidden">
+          // Narrower, it leaves out sign-in and tags, then all but name and role.
+          <Table className="@max-3xl:min-w-0 @max-3xl:[&_:is(th,td):is(:nth-child(3),:nth-child(5))]:hidden max-md:[&_:is(th,td):nth-child(n+3):not(:last-child)]:hidden">
             <TableHeader>
               <tr>
                 <TableHead>Person</TableHead>
@@ -408,7 +410,7 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
       <ConfirmationDialog
         open={!!resetting}
         onOpenChange={(open) => !open && setResetting(null)}
-        title={`Reset ${firstName(shownResetting?.name ?? "")}’s password?`}
+        title={`Reset ${shownResetting?.name ?? ""}’s password?`}
         description="Their current password will stop working right away. You’ll see the new password next."
         confirmLabel="Reset password"
         busyLabel="Resetting…"
@@ -423,7 +425,7 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
       <ConfirmationDialog
         open={!!declining}
         onOpenChange={(open) => !open && setDeclining(null)}
-        title={`Decline ${firstName(shownDeclining?.name ?? "")}’s request?`}
+        title={`Decline ${shownDeclining?.name ?? ""}’s request?`}
         description="Their account will be deleted. They can ask again by signing up."
         confirmLabel="Decline"
         busyLabel="Declining…"
@@ -454,12 +456,12 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
             {shownDeleting?.isAdmin && (
               <span className="mt-3 flex items-center gap-2 rounded-lg bg-warn px-3 py-2.5 text-meta text-warn-foreground [&_svg]:size-4">
                 <ShieldAlert aria-hidden />
-                {firstName(shownDeleting.name)} is an admin.
+                {shownDeleting.name} is an admin.
               </span>
             )}
           </>
         }
-        confirmLabel={`Delete ${firstName(shownDeleting?.name ?? "")}`}
+        confirmLabel={`Delete ${shownDeleting?.name ?? ""}`}
         busyLabel="Deleting…"
         isPending={remove.isPending}
         onConfirm={() => deleting && remove.mutate(deleting)}

@@ -154,7 +154,14 @@ describe('protocol compatibility', () => {
       const res = await user.http
         .post('/api/sync')
         .send({
-          changes: [{ type: 'tag', id: 'tag-1', name: 'kept', someNewFlag: 1 }],
+          changes: [
+            {
+              type: 'tag',
+              id: crypto.randomUUID(),
+              name: 'kept',
+              someNewFlag: 1,
+            },
+          ],
         })
         .expect(200);
 
