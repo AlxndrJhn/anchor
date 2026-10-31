@@ -1,3 +1,5 @@
 # Shell scripts run in Linux containers: keep LF on Windows checkouts.
 *.sh text eol=lf
+docker/backup text eol=lf
+docker/restore text eol=lf
 docker/reset-password text eol=lf
