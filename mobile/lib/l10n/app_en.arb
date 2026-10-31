@@ -5110,7 +5110,7 @@
   },
   "actionUnfreeze": "Unfreeze",
   "@actionUnfreeze": {
-    "description": "Verb: option, and the button on a frozen note’s bar, that lets the note be changed and deleted again."
+    "description": "Verb: option, and the snowflake on a frozen note’s bar, that lets the note be changed and deleted again."
   },
   "noteFreezeHelp": "Nobody can change or delete it until you unfreeze it",
   "@noteFreezeHelp": {
@@ -5158,21 +5158,13 @@
   "@notesLockOrFreeze": {
     "description": "Title of the menu behind the Lock button of the selection bar."
   },
-  "readOnlyFrozen": "Frozen.",
-  "@readOnlyFrozen": {
-    "description": "Bold lead at the bottom of a frozen note, before a sentence about what that means."
-  },
-  "readOnlyFrozenOwn": "It can’t be changed or deleted until you unfreeze it.",
-  "@readOnlyFrozenOwn": {
-    "description": "Follows the bold “Frozen.” at the bottom of a note this person froze."
-  },
   "readOnlyFrozenByOwner": "Its owner froze it, so it can’t be changed.",
   "@readOnlyFrozenByOwner": {
-    "description": "Follows the bold “Frozen.” at the bottom of a note shared with this person that its owner froze."
+    "description": "Toast when the snowflake of a note shared with this person, that its owner froze, is tapped."
   },
   "cardFrozen": "Frozen",
   "@cardFrozen": {
-    "description": "Tooltip of the snowflake on a frozen note’s card, and read out with the card."
+    "description": "Tooltip of the snowflake on a frozen note’s card, read out with the card, and the label of the snowflake on the bar of a note its owner froze."
   },
   "noteNewCamera": "Camera note",
   "@noteNewCamera": {

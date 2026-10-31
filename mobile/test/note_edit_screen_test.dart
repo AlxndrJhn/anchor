@@ -3235,7 +3235,8 @@ void main() {
       isFrozen: true,
     );
 
-    testWidgets('reads only, has no Move to trash, and offers Unfreeze', (
+    testWidgets('reads only, has no Move to trash, and shows a marked '
+        'snowflake beside Pin that unfreezes it, with no bar at the bottom', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(1080, 2340);
@@ -3247,19 +3248,22 @@ void main() {
       expect(editorController(tester).readOnly, isTrue);
       expect(barButton('Move to trash'), findsNothing);
       expect(barButton('Archive'), findsOneWidget);
+      expect(find.byType(ReadOnlyBottomBar), findsNothing);
+      expect(barButton('Unfreeze'), findsOneWidget);
       expect(
-        find.textContaining('Frozen.', findRichText: true),
-        findsOneWidget,
+        tester.getCenter(barButton('Unfreeze')).dx,
+        lessThan(tester.getCenter(barButton('Pin')).dx),
       );
-      expect(find.text('Unfreeze'), findsOneWidget);
 
       await tester.tap(barButton('More'));
       await tester.pumpAndSettle();
-      expect(find.text('Unfreeze'), findsNWidgets(2));
+      expect(find.text('Unfreeze'), findsOneWidget);
       expect(find.text('Add image'), findsNothing);
     });
 
-    testWidgets('frozen by its owner, it has no Unfreeze', (tester) async {
+    testWidgets('frozen by its owner, its snowflake says why when tapped', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 2340);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -3270,11 +3274,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(editorController(tester).readOnly, isTrue);
+      expect(find.byType(ReadOnlyBottomBar), findsNothing);
+      expect(barButton('Unfreeze'), findsNothing);
+
+      await tester.tap(barButton('Frozen'));
+      await tester.pump();
       expect(
-        find.textContaining('Its owner froze it', findRichText: true),
+        find.text('Its owner froze it, so it can’t be changed.'),
         findsOneWidget,
       );
-      expect(find.text('Unfreeze'), findsNothing);
     });
   });
   group('quick actions', () {

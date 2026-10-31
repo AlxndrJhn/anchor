@@ -1183,6 +1183,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     if (!context.isMotionReduced) _nudge.forward(from: 0);
   }
 
+  /// The snowflake of a note its owner froze: shakes and says why.
+  void _frozenByOwner() {
+    _shakeReadOnly();
+    AppSnackbar.show(context, context.l10n.readOnlyFrozenByOwner);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
@@ -1191,7 +1197,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final density = context.density;
     final titleStyle = context.noteTypography.title;
     final safeBottom = context.safeBottomAtRest;
-    final underText = _isReadOnly
+    final note = _draft.note;
+    final isNew = _draft.isNew;
+    final isTrashed = _draft.isTrashed;
+    // Frozen reads from the snowflake in the bar, not a bar at the bottom.
+    final isFrozen = note != null && note.isFrozen && !note.isTrashed;
+    final hasReadOnlyBar =
+        _isReadOnly && note != null && !note.isDeleted && !isFrozen;
+    final underText = hasReadOnlyBar
         ? safeBottom + 8 + _readOnlyBarHeight + density.space24
         : writing
         ? 2 * AnchorTokens.sizeControlMedium + AnchorTokens.space32
@@ -1208,9 +1221,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
               ? appearance.highlight(context, name)
               : colors.accentStrong),
     );
-    final note = _draft.note;
-    final isNew = _draft.isNew;
-    final isTrashed = _draft.isTrashed;
     final bar = NoteBar(
       appearance: appearance,
       scrollOffset: _scrollOffset,
@@ -1236,6 +1246,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       isPinned: note?.isPinned ?? _draft.newPinned,
       onPin: () => _run(NoteAction.pin),
       onQuickAction: _runQuick,
+      isFrozen: isFrozen,
+      onFrozen: note != null && note.isOwnFrozen
+          ? () => _setFrozen(isFrozen: false)
+          : _frozenByOwner,
+      nudge: _nudge,
     );
 
     final content = Column(
@@ -1503,7 +1518,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 onPictureInText: _pictureInText,
               ),
             ),
-            if (_isReadOnly && note != null && !note.isDeleted)
+            if (hasReadOnlyBar)
               Positioned(
                 left: AnchorTokens.spaceGutterPhone,
                 right: AnchorTokens.spaceGutterPhone,
@@ -1526,9 +1541,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                     child: ReadOnlyBottomBar(
                       note: note,
                       appearance: appearance,
-                      onUnfreeze: note.isOwnFrozen
-                          ? () => _setFrozen(isFrozen: false)
-                          : null,
                       onRestore: _restoreFromTrash,
                       onDeleteForever: _deleteForever,
                     ),

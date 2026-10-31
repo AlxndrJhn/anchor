@@ -3968,13 +3968,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notesLockOrFreeze => 'Lock or freeze';
 
   @override
-  String get readOnlyFrozen => 'Frozen.';
-
-  @override
-  String get readOnlyFrozenOwn =>
-      'It can’t be changed or deleted until you unfreeze it.';
-
-  @override
   String get readOnlyFrozenByOwner =>
       'Its owner froze it, so it can’t be changed.';
 

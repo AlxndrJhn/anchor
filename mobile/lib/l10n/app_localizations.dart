@@ -5770,7 +5770,7 @@ abstract class AppLocalizations {
   /// **'Freeze'**
   String get actionFreeze;
 
-  /// Verb: option, and the button on a frozen note’s bar, that lets the note be changed and deleted again.
+  /// Verb: option, and the snowflake on a frozen note’s bar, that lets the note be changed and deleted again.
   ///
   /// In en, this message translates to:
   /// **'Unfreeze'**
@@ -5818,25 +5818,13 @@ abstract class AppLocalizations {
   /// **'Lock or freeze'**
   String get notesLockOrFreeze;
 
-  /// Bold lead at the bottom of a frozen note, before a sentence about what that means.
-  ///
-  /// In en, this message translates to:
-  /// **'Frozen.'**
-  String get readOnlyFrozen;
-
-  /// Follows the bold “Frozen.” at the bottom of a note this person froze.
-  ///
-  /// In en, this message translates to:
-  /// **'It can’t be changed or deleted until you unfreeze it.'**
-  String get readOnlyFrozenOwn;
-
-  /// Follows the bold “Frozen.” at the bottom of a note shared with this person that its owner froze.
+  /// Toast when the snowflake of a note shared with this person, that its owner froze, is tapped.
   ///
   /// In en, this message translates to:
   /// **'Its owner froze it, so it can’t be changed.'**
   String get readOnlyFrozenByOwner;
 
-  /// Tooltip of the snowflake on a frozen note’s card, and read out with the card.
+  /// Tooltip of the snowflake on a frozen note’s card, read out with the card, and the label of the snowflake on the bar of a note its owner froze.
   ///
   /// In en, this message translates to:
   /// **'Frozen'**

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -36,6 +38,9 @@ class NoteBar extends StatelessWidget {
     this.isPinned = false,
     this.onPin,
     this.onQuickAction,
+    this.isFrozen = false,
+    this.onFrozen,
+    this.nudge,
   });
 
   final NoteAppearance appearance;
@@ -75,6 +80,17 @@ class NoteBar extends StatelessWidget {
   /// The rest of [quickActions]; null leaves them out.
   final ValueChanged<QuickAction>? onQuickAction;
 
+  /// Frozen, and not in the trash: a marked snowflake stands beside Pin
+  /// (or in Freeze's place, when that's in the bar).
+  final bool isFrozen;
+
+  /// Tapping the snowflake: unfreezes a note this person froze, else says
+  /// why it can't be changed.
+  final VoidCallback? onFrozen;
+
+  /// Runs when a change was refused; the snowflake shakes along.
+  final Animation<double>? nudge;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -86,7 +102,12 @@ class NoteBar extends StatelessWidget {
           onPressed: onHistory,
         )
       else ...[
-        for (final action in quickActions) ?_buttonFor(action, l10n),
+        for (final action in quickActions) ...[
+          if (isFrozen && action == _frozenSlot) _frozenButton(l10n),
+          if (!isFrozen || action != QuickAction.freeze)
+            ?_buttonFor(action, l10n),
+        ],
+        if (isFrozen && _frozenSlot == null) _frozenButton(l10n),
         BarButton(
           icon: LucideIcons.ellipsis,
           label: l10n.commonMore,
@@ -112,6 +133,20 @@ class NoteBar extends StatelessWidget {
       actions: actions,
     );
   }
+
+  /// Where the snowflake of a frozen note goes: in Freeze's place when
+  /// that's in the bar, else before Pin, else (null) before More.
+  QuickAction? get _frozenSlot => quickActions.contains(QuickAction.freeze)
+      ? QuickAction.freeze
+      : quickActions.contains(QuickAction.pin) && onPin != null
+      ? QuickAction.pin
+      : null;
+
+  Widget _frozenButton(AppLocalizations l10n) => _FrozenButton(
+    label: onFrozen != null && isOwner ? l10n.actionUnfreeze : l10n.cardFrozen,
+    nudge: nudge,
+    onPressed: onFrozen,
+  );
 
   Widget? _buttonFor(QuickAction action, AppLocalizations l10n) =>
       switch (action) {
@@ -228,6 +263,34 @@ class _UnsyncedBadge extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FrozenButton extends StatelessWidget {
+  const _FrozenButton({required this.label, this.nudge, this.onPressed});
+
+  final String label;
+  final Animation<double>? nudge;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = BarButton(
+      icon: LucideIcons.snowflake,
+      label: label,
+      isOn: true,
+      onPressed: onPressed,
+    );
+    final nudge = this.nudge;
+    if (nudge == null) return button;
+    return AnimatedBuilder(
+      animation: nudge,
+      builder: (context, child) => Transform.rotate(
+        angle: math.sin(nudge.value * math.pi * 6) * 0.35 * (1 - nudge.value),
+        child: child,
+      ),
+      child: button,
     );
   }
 }
