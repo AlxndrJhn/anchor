@@ -1,7 +1,8 @@
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 
-# pnpm via corepack
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# pnpm from its official image
+COPY --from=ghcr.io/pnpm/pnpm:12.16.1-alpine /opt/pnpm /opt/pnpm
+RUN for bin in pnpm pn pnpx pnx; do ln -s "/opt/pnpm/$bin" "/usr/local/bin/$bin"; done
 
 # Next.js on Alpine can need libc compatibility
 RUN apk add --no-cache libc6-compat
