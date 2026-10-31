@@ -1,0 +1,44 @@
+#!/bin/sh
+# Writes a backup of the whole instance (database, pictures, recordings,
+# files, the sign-in secret) to stdout, as a .tar:
+#   docker compose exec -T anchor backup > anchor-backup.tar
+# `restore` reads it back, on this server or a fresh one of the same or a
+# later release. Anchor keeps running while it's made.
+set -eu
+. /app/anchor-env.sh
+
+DATA=/data
+STAGE="$DATA/.anchor-backup"
+
+if [ -t 1 ]; then
+  echo "backup writes a .tar to stdout; send it to a file, with -T:" >&2
+  echo "  docker compose exec -T anchor backup > anchor-backup.tar" >&2
+  exit 1
+fi
+
+rm -rf "$STAGE"
+trap 'rm -rf "$STAGE"' EXIT
+mkdir -p "$STAGE"
+
+# The database first: a file it names that's deleted while the rest is
+# copied is the only thing that can go missing.
+pg_dump --format=custom --no-owner --no-privileges \
+  --file="$STAGE/database.dump" "$DATABASE_URL"
+
+cat > "$STAGE/manifest.json" <<EOF
+{
+  "format": 1,
+  "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "server": "$(sed -n 's/^ *"version": *"\(.*\)".*/\1/p' /app/server/package.json | head -n 1)",
+  "image": "${ANCHOR_IMAGE:-}",
+  "postgres": "$(psql "$DATABASE_URL" -Atc 'SHOW server_version')"
+}
+EOF
+
+# Everything in /data but the database's own files (the dump stands in for
+# them, and works with a later Postgres) and the picture search model,
+# which is downloaded again when it's needed.
+cd "$DATA"
+tar -cf - --exclude ./postgres --exclude ./models .
+
+echo "[backup] done" >&2
