@@ -38,6 +38,8 @@ export class NoteAttachmentsController {
     FileInterceptor('file', {
       storage: memoryStorage(),
       limits: { fileSize: ATTACHMENT_MAX_FILE_SIZE },
+      // Browsers send file names as UTF-8; multer reads them as Latin-1.
+      defParamCharset: 'utf8',
     }),
   )
   upload(

@@ -5,6 +5,7 @@
 const {
   app,
   BrowserWindow,
+  dialog,
   Menu,
   ipcMain,
   net,
@@ -59,7 +60,22 @@ function readSettings() {
   }
 }
 
-let settings = {};
+// Read before Chromium starts: the server's address sets one of its switches.
+let settings = readSettings();
+
+// Offline use, recording and the service worker need a secure page, and a
+// server on the home network often has only http. Chromium's switch can only
+// be set at start, so a newly chosen http server needs a restart.
+function insecureOrigin(url) {
+  try {
+    const { origin, protocol } = new URL(url);
+    return protocol === "http:" ? origin : null;
+  } catch {
+    return null;
+  }
+}
+const secureAtStart = insecureOrigin(settings.serverUrl);
+if (secureAtStart) app.commandLine.appendSwitch("unsafely-treat-insecure-origin-as-secure", secureAtStart);
 
 function saveSettings() {
   try {
@@ -187,20 +203,27 @@ function visibleBounds(saved) {
   return bounds;
 }
 
+// At fractional display scaling the window comes out a few pixels off the
+// bounds it was given. Taking that back off when saving keeps it from
+// growing on every start.
+let boundsDrift = {};
+
 function rememberBounds() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const maximized = mainWindow.isMaximized();
   const fullScreen = mainWindow.isFullScreen();
   // Keep the normal size, so un-maximizing next time restores it.
   const bounds = maximized || fullScreen ? mainWindow.getNormalBounds() : mainWindow.getBounds();
+  for (const [key, drift] of Object.entries(boundsDrift)) bounds[key] -= drift;
   settings.window = { ...bounds, maximized };
   saveSettings();
 }
 
 function createWindow() {
   const saved = settings.window;
+  const asked = visibleBounds(saved);
   mainWindow = new BrowserWindow({
-    ...visibleBounds(saved),
+    ...asked,
     minWidth: 400,
     minHeight: 300,
     title: APP_NAME,
@@ -217,6 +240,8 @@ function createWindow() {
       spellcheck: true,
     },
   });
+  const got = mainWindow.getBounds();
+  boundsDrift = Object.fromEntries(Object.keys(asked).map((key) => [key, got[key] - asked[key]]));
   if (saved?.maximized) mainWindow.maximize();
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
@@ -243,10 +268,13 @@ function createWindow() {
   // A link to another site opens in the system browser. Navigating within
   // the current site stays (so a sign-in provider's own pages work), and
   // server redirects (OIDC sign-in) are not navigations, so they stay too.
+  // file: pages all have the origin "null", so the setup page is not a site
+  // other local pages may share.
   contents.on("will-navigate", (event, url) => {
     if (url === SETUP_URL) return;
     const target = originOf(url);
-    if (target && (target === serverOrigin() || target === originOf(contents.getURL()))) return;
+    const isSite = target && target !== "null";
+    if (isSite && (target === serverOrigin() || target === originOf(contents.getURL()))) return;
     event.preventDefault();
     openExternal(url);
   });
@@ -261,6 +289,22 @@ function createWindow() {
     }
     openExternal(url);
     return { action: "deny" };
+  });
+
+  // The web client asks before a close or reload would drop changes not
+  // saved yet. Electron then cancels it without a word, so ask here.
+  contents.on("will-prevent-unload", (event) => {
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: "warning",
+      buttons: ["Leave", "Stay"],
+      defaultId: 1,
+      cancelId: 1,
+      noLink: true,
+      title: APP_NAME,
+      message: "Leave with changes not saved yet?",
+      detail: "Changes that haven’t reached the server may be lost.",
+    });
+    if (choice === 0) event.preventDefault();
   });
 
   // Loading the server failed (and its service worker could not serve the
@@ -318,6 +362,12 @@ ipcMain.handle("anchor:connect", async (event, input) => {
   if (!result.ok) return result;
   settings.serverUrl = serverUrl;
   saveSettings();
+  const origin = insecureOrigin(serverUrl);
+  if (origin && origin !== secureAtStart) {
+    app.relaunch();
+    app.exit(0);
+    return { ok: true };
+  }
   openServer();
   return { ok: true };
 });
@@ -457,7 +507,6 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(() => {
-    settings = readSettings();
     app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
     buildMenu();
     createWindow();

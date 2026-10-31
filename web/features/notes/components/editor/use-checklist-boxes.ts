@@ -15,6 +15,20 @@ const BOX_ATTRIBUTES = [
   "aria-keyshortcuts",
 ];
 
+/** Ctrl+Enter here ticks the item: the selection is on a checklist item. */
+export function isOnChecklistItem(target: EventTarget | null) {
+  const root =
+    target instanceof Element
+      ? target.closest('.ql-editor[contenteditable="true"]')
+      : null;
+  const selection = window.getSelection();
+  if (!root || !selection?.rangeCount) return false;
+  const range = selection.getRangeAt(0);
+  return Array.from(root.querySelectorAll(CHECKLIST_ITEM)).some((item) =>
+    range.intersectsNode(item),
+  );
+}
+
 /** Only real changes: Quill observes every change to its root. */
 function setAttribute(el: Element, name: string, value: string | null) {
   if (el.getAttribute(name) === value) return;

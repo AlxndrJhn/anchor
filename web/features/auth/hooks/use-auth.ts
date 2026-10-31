@@ -15,6 +15,8 @@ import {
 import { getRefreshToken, hasAccessToken, useAuthStore } from "../store";
 import type { LoginCredentials, RegisterCredentials } from "../types";
 
+let recheckTimer: number | undefined;
+
 async function initialize() {
   const { isInitialized, setUser, setInitialized, setUnreachable, logout } =
     useAuthStore.getState();
@@ -34,7 +36,14 @@ async function initialize() {
   }
 
   try {
-    const user = await getMe();
+    // With a session kept on this device the app can start offline, so a
+    // server that doesn't answer shouldn't hold it up through every retry.
+    // The limit stays 1 for the retry after refreshing the access token.
+    const user = await getMe(
+      useAuthStore.getState().user
+        ? { timeout: 5000, retry: { limit: 1, shouldRetry: () => false } }
+        : undefined,
+    );
     setUnreachable(false);
     setUser(user);
     setInitialized(true);
@@ -47,12 +56,15 @@ async function initialize() {
     else {
       setUnreachable(true);
       // Offline with a session kept on this device: work from what it holds,
-      // and check the session again once the connection is back.
+      // and check the session again once the connection is back. The network
+      // can be up while the server is not, so also look again now and then.
       if (!(error instanceof HTTPError) && useAuthStore.getState().user) {
         setInitialized(true);
         window.addEventListener("online", () => void initialize(), {
           once: true,
         });
+        window.clearTimeout(recheckTimer);
+        recheckTimer = window.setTimeout(() => void initialize(), 30000);
       }
     }
   }
