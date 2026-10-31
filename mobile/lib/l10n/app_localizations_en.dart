@@ -2307,7 +2307,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debugProblemsHint =>
-      'Move to where it went wrong and tap Problem here.\nThe video and the app’s state can show your notes: check before sharing.';
+      'Move to where it went wrong and tap Problem here.\nThe video greys out text and pictures; the report leaves out what you wrote.';
 
   @override
   String get debugCreateIssue => 'Create issue';

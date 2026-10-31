@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/logging/redaction.dart';
+import 'debug_privacy.dart';
 import 'debug_recorder_controller.dart';
 
 /// Writes provider updates into the debug recording. Does nothing unless
@@ -46,7 +47,8 @@ final _sensitiveField = RegExp(
   caseSensitive: false,
 );
 
-/// [value] as a short, redacted line for the report. A list says how long
+/// [value] as a short, redacted line for the report, its shape without
+/// its words (see [keepShape]). A list says how long
 /// it is and shows its first item, rather than spelling out every one.
 String describeStateValue(Object? value) {
   var v = value;
@@ -66,5 +68,7 @@ String describeStateValue(Object? value) {
 }
 
 String _line(Object? value) => DebugRecorder.truncateValue(
-  '$value'.replaceAllMapped(_sensitiveField, (m) => '${m[1]}${m[2]}***'),
+  keepShape(
+    '$value'.replaceAllMapped(_sensitiveField, (m) => '${m[1]}${m[2]}***'),
+  ),
 );

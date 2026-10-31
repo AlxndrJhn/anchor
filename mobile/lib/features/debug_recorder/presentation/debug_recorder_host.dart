@@ -13,6 +13,7 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../l10n/l10n.dart';
+import '../data/debug_privacy.dart';
 import '../data/debug_recorder_controller.dart';
 import '../data/debug_report.dart';
 import 'debug_player_screen.dart';
@@ -118,7 +119,9 @@ class _DebugRecorderHostState extends ConsumerState<DebugRecorderHost> {
     final router = _router;
     if (router == null) return;
     _recorder.record('route', {
-      'location': router.routerDelegate.currentConfiguration.uri.toString(),
+      'location': scrubLocation(
+        router.routerDelegate.currentConfiguration.uri.toString(),
+      ),
     });
   }
 

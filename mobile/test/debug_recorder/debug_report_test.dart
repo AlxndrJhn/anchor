@@ -55,8 +55,20 @@ void main() {
       );
       expect(
         describeStateValue({'id': 'n', 'password': 'p'}),
-        '{id: n, password: ***}',
+        '{id: ***, password: ***}',
       );
+    });
+
+    test('keeps the shape of state, never its words', () {
+      expect(
+        describeStateValue(
+          'Note(id: 3, title: Shopping, list (milk), archived: true, '
+          'kind: NoteKind.text, at: 2026-10-28 14:03:22.000)',
+        ),
+        'Note(id: 3, title: ***, *** (***), archived: true, '
+        'kind: NoteKind.text, at: 2026-10-28 14:03:22.000)',
+      );
+      expect(describeStateValue('Ann Smith'), '***');
     });
 
     test('sums up lists and unwraps async values', () {
@@ -68,7 +80,7 @@ void main() {
     });
 
     test('cuts long values short', () {
-      expect(describeStateValue('x' * 1000).length, 301);
+      expect(describeStateValue('List(${'1, ' * 500})').length, 301);
     });
   });
 }

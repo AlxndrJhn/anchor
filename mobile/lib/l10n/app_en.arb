@@ -3079,7 +3079,7 @@
   "@debugNoExpectation": {
     "description": "Shown for a marked problem whose expectation was left empty."
   },
-  "debugProblemsHint": "Move to where it went wrong and tap Problem here.\nThe video and the app’s state can show your notes: check before sharing.",
+  "debugProblemsHint": "Move to where it went wrong and tap Problem here.\nThe video greys out text and pictures; the report leaves out what you wrote.",
   "@debugProblemsHint": {
     "description": "Shown in the debug player before any problem is marked."
   },

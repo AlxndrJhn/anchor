@@ -8,6 +8,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../../core/logging/app_logger.dart';
+import 'debug_censor.dart';
+import 'debug_privacy.dart';
 import 'debug_report.dart';
 import 'mp4_muxer.dart';
 
@@ -71,8 +73,8 @@ class DebugRecorder extends ChangeNotifier {
       (e) => record('log', {
         'level': e.level.name,
         'tag': e.tag,
-        'message': truncateValue(e.message),
-        if (e.error != null) 'error': truncateValue('${e.error}'),
+        'message': truncateValue(scrubLogLine(e.message)),
+        if (e.error != null) 'error': truncateValue(scrubLogLine('${e.error}')),
       }),
     );
     _captureFrame(boundary);
@@ -135,8 +137,15 @@ class DebugRecorder extends ChangeNotifier {
       : '${value.substring(0, _maxValueChars)}…';
 
   // Static, so the isolate's closure holds nothing but the pixels.
-  static Future<Uint8List> _encode(Uint8List rgba, int width, int height) =>
-      Isolate.run(() => encodeFrameJpeg(rgba, width, height));
+  static Future<Uint8List> _encode(
+    Uint8List rgba,
+    int width,
+    int height,
+    List<Rect> censored,
+  ) => Isolate.run(() {
+    censorPixels(rgba, width, height, censored);
+    return encodeFrameJpeg(rgba, width, height);
+  });
 
   Future<void> _captureFrame(RenderRepaintBoundary? Function() find) async {
     // Skip a beat rather than pile up work while encoding is behind.
@@ -154,6 +163,16 @@ class DebugRecorder extends ChangeNotifier {
         _longSide / math.max(size.width, size.height),
         ui.PlatformDispatcher.instance.implicitView?.devicePixelRatio ?? 1,
       );
+      // Found now, while the tree is the one about to be captured.
+      final censored = [
+        for (final r in findCensoredRects(boundary))
+          Rect.fromLTRB(
+            r.left * ratio,
+            r.top * ratio,
+            r.right * ratio,
+            r.bottom * ratio,
+          ),
+      ];
       final image = await boundary.toImage(pixelRatio: ratio);
       final width = image.width;
       final height = image.height;
@@ -172,7 +191,7 @@ class DebugRecorder extends ChangeNotifier {
         data.lengthInBytes,
       );
       late final Future<void> job;
-      job = _encode(rgba, width, height)
+      job = _encode(rgba, width, height, censored)
           .then((jpeg) => _frames.add(Mp4Frame(tMs: t, jpeg: jpeg)))
           .catchError((Object e) {
             AppLogger.instance.warn(_tag, 'Encoding a frame failed: $e');
