@@ -83,6 +83,15 @@ the camera to stop sooner. The limit keeps the frames held in memory (5 per
 second) and the report file small; change it with `DebugRecorder.maxDuration`
 in `lib/features/debug_recorder/data/debug_recorder_controller.dart`.
 
+Reports leave the phone, so nothing personal goes in them. Every frame has
+its text, pictures, camera and platform views painted over in grey before it
+is encoded; icons stay, so the film still shows what was tapped
+(`lib/features/debug_recorder/data/debug_censor.dart`). In the events,
+provider values keep only their shape (type and field names, numbers, flags,
+enums, times and ids), log lines only their first line without addresses or
+query strings, and routes hide their query values
+(`lib/features/debug_recorder/data/debug_privacy.dart`).
+
 In the player that opens afterwards, move to where it
 went wrong, tap **Problem here** and say what you expected. **Create issue**
 saves `anchor-debug-<ISO time>.mp4` and opens a new GitHub issue on the fork,

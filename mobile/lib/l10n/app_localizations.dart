@@ -3409,7 +3409,7 @@ abstract class AppLocalizations {
   /// Shown in the debug player before any problem is marked.
   ///
   /// In en, this message translates to:
-  /// **'Move to where it went wrong and tap Problem here.\nThe video and the app’s state can show your notes: check before sharing.'**
+  /// **'Move to where it went wrong and tap Problem here.\nThe video greys out text and pictures; the report leaves out what you wrote.'**
   String get debugProblemsHint;
 
   /// Saves the debug report and opens a new GitHub issue to attach it to.
