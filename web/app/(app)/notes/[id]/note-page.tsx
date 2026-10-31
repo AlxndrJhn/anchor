@@ -33,6 +33,7 @@ import {
 } from "@/features/notes";
 import { copyNote } from "@/features/notes/api";
 import type { RichTextEditorHandle } from "@/features/notes/components/editor";
+import { isOnChecklistItem } from "@/features/notes/components/editor/use-checklist-boxes";
 import { LockDialog } from "@/features/notes/components/lock/lock-dialog";
 import { LockGate } from "@/features/notes/components/lock/lock-gate";
 import { useApplyFreeze } from "@/features/notes/hooks/use-note-freeze";
@@ -253,7 +254,8 @@ function NoteEditor({
         },
     !editor.historyOpen,
   );
-  // Ctrl+Enter finishes from anywhere; Esc first leaves the text field.
+  // Ctrl+Enter finishes from anywhere but a checklist item, which it ticks;
+  // Esc first leaves the text field.
   useEffect(() => {
     if (editor.historyOpen) return;
     let overlayAtPress = false;
@@ -266,7 +268,8 @@ function NoteEditor({
         !e.altKey &&
         !e.shiftKey &&
         !e.isComposing &&
-        !overlayAtPress
+        !overlayAtPress &&
+        !isOnChecklistItem(e.target)
       ) {
         e.preventDefault();
         e.stopPropagation();

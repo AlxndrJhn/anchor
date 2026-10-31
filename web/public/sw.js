@@ -3,8 +3,9 @@
 // themselves come from the app's own store (IndexedDB), not from here.
 //
 // Moving between pages fetches a payload the browser can't keep usefully, so
-// those requests go straight to the network. When one fails, Next.js falls
-// back to loading the page itself, which this worker answers.
+// those requests go to the network, given up on when it doesn't answer. When
+// one fails, Next.js falls back to loading the page itself, which this worker
+// answers.
 
 const VERSION = "v1";
 const STATIC_CACHE = `anchor-static-${VERSION}`;
@@ -110,29 +111,61 @@ async function fromCacheFirst(request) {
   return response;
 }
 
+// A server that takes the connection but doesn't answer would hold the page
+// up until the browser gives up; after this long a kept page stands in.
+const PAGE_WAIT_MS = 5000;
+
 async function page(event, url) {
   const { request } = event;
   const path = shellPath(url.pathname);
-  try {
-    const response = await fetch(request);
-    if (
-      path &&
-      response.ok &&
-      !response.redirected &&
-      response.type === "basic"
-    )
-      event.waitUntil(
-        Promise.all([keepPage(path, response.clone()), keepBuild()]).catch(
-          () => {},
-        ),
-      );
-    return response;
-  } catch (error) {
+  const network = fetch(request);
+  // Kept for next time, also when a kept page answered first. This runs
+  // before the page takes the response's body.
+  event.waitUntil(
+    network
+      .then((response) => {
+        if (
+          path &&
+          response.ok &&
+          !response.redirected &&
+          response.type === "basic"
+        )
+          return Promise.all([keepPage(path, response.clone()), keepBuild()]);
+      })
+      .catch(() => {}),
+  );
+  const kept = async () => {
     const cache = await caches.open(PAGE_CACHE);
-    const kept =
-      (path && (await cache.match(path))) || (await cache.match("/notes"));
-    if (kept) return kept;
+    return (path && (await cache.match(path))) || (await cache.match("/notes"));
+  };
+  let timer;
+  const slow = new Promise((resolve) => {
+    timer = setTimeout(resolve, PAGE_WAIT_MS);
+  });
+  try {
+    const response = await Promise.race([network, slow]);
+    if (response) return response;
+    return (await kept()) ?? (await network);
+  } catch (error) {
+    const copy = await kept();
+    if (copy) return copy;
     throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Moving between pages: a server that doesn't answer fails like a missing
+// connection, so Next.js loads the page itself and a kept one stands in.
+async function payload(request) {
+  let timer;
+  const slow = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(Response.error()), PAGE_WAIT_MS);
+  });
+  try {
+    return await Promise.race([fetch(request), slow]);
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -148,4 +181,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   if (request.mode === "navigate") event.respondWith(page(event, url));
+  else if (request.headers.get("RSC") === "1")
+    event.respondWith(payload(request));
 });

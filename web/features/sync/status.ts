@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { create } from "zustand";
+import { useAuthStore } from "@/features/auth/store";
 
 interface SyncStatusState {
   online: boolean;
@@ -25,8 +26,10 @@ export const useSyncStatus = create<SyncStatusState>((set) => ({
 
 export function useOnlineStatus() {
   const setOnline = useSyncStatus((s) => s.setOnline);
+  // The network can be up while the server doesn't answer: that's offline too.
+  const unreachable = useAuthStore((s) => s.unreachable);
   useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
+    const update = () => setOnline(navigator.onLine && !unreachable);
     update();
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
@@ -34,7 +37,7 @@ export function useOnlineStatus() {
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
     };
-  }, [setOnline]);
+  }, [setOnline, unreachable]);
 }
 
 export function useUnsavedCount() {
