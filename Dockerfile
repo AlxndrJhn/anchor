@@ -64,7 +64,7 @@ ENV PGDATA=/data/postgres
 COPY --from=base /usr/local/bin/node /usr/local/bin/node
 
 # curl for HEALTHCHECK, supervisor for process management
-RUN apk add --no-cache curl supervisor libstdc++ libc6-compat
+RUN apk add --no-cache curl supervisor libstdc++ libatomic libc6-compat
 
 # Server runtime files
 COPY --from=server_builder /app/server/dist ./server/dist
