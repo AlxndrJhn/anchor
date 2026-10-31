@@ -60,6 +60,16 @@ class _Plain extends StatelessWidget {
                 },
                 child: const Text('Close'),
               ),
+              // As a note deleted from inside it: its message shows from
+              // the navigator, which outlives the page.
+              TextButton(
+                onPressed: () {
+                  final host = Navigator.of(context).context;
+                  Navigator.of(context).pop();
+                  AppSnackbar.show(host, 'Deleted there');
+                },
+                child: const Text('Close from host'),
+              ),
             ],
           ),
         ),
@@ -145,6 +155,31 @@ void main() {
       await pumpUntilSnackbarCloses(tester);
     },
   );
+
+  testWidgets('a snackbar shown from the navigator sits above the page dock', (
+    tester,
+  ) async {
+    await tester.pumpWidget(pageWithBottomBar());
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Close from host'));
+    await pumpSnackbarIn(tester);
+
+    final saveButton = tester.getRect(
+      find.ancestor(of: find.text('Save'), matching: find.byType(AppButton)),
+    );
+    final snackbar = tester.getRect(
+      find
+          .ancestor(
+            of: find.text('Deleted there'),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(saveButton.top - snackbar.bottom, closeTo(12, 0.5));
+    await pumpUntilSnackbarCloses(tester);
+  });
 
   testWidgets('the page ends 16 above its dock', (tester) async {
     await tester.pumpWidget(pageWithBottomBar());
