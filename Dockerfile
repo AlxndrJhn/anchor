@@ -90,7 +90,11 @@ COPY docker/anchor-env.sh /app/anchor-env.sh
 COPY docker/supervisord.conf /etc/supervisord.conf
 # `docker exec -it anchor reset-password <email>` for a locked-out account
 COPY docker/reset-password /usr/local/bin/reset-password
-RUN chmod +x /app/docker-entrypoint.sh /usr/local/bin/reset-password
+# `docker compose exec -T anchor backup > anchor-backup.tar`, and `restore <`
+COPY docker/backup /usr/local/bin/backup
+COPY docker/restore /usr/local/bin/restore
+RUN chmod +x /app/docker-entrypoint.sh /usr/local/bin/reset-password \
+  /usr/local/bin/backup /usr/local/bin/restore
 
 # The image's own name, for /api/health: the apps offer release candidates
 # only to servers running ghcr.io/<owner>/anchor:fork-preview. Last, so a
