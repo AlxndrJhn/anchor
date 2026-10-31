@@ -118,6 +118,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Starts faster: settings are read in one go while the splash shows | | ✓ |
 | Debug mode: hold two fingers still for 3 s to film the app and its state, mark problems on a timeline and file them as a GitHub issue (see [mobile/README.md](mobile/README.md#debug-reports)) | | ✓ |
 | The server's version in Settings › About | ✓ | |
+| Back up the whole server with one command and restore it with another, onto a fresh or newer server (see [Backing Up the Server](#backing-up-the-server)) | ✓ | |
 | Claude, and other apps that speak MCP, can search, read and write your notes through your server (see [Claude (MCP)](#claude-mcp)) | ✓ | |
 | **Fixes** | | |
 | Copying and saving the logs on Android ([#187](https://github.com/ZhFahim/anchor/issues/187), [#188](https://github.com/ZhFahim/anchor/issues/188)) | | ✓ |
@@ -304,8 +305,9 @@ multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 | `ghcr.io/alxndrjhn/anchor:fork-preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
 
 The original project's image is `ghcr.io/zhfahim/anchor:latest`; it has none
-of this fork's changes. Switching between them keeps your data, but back it
-up first: this fork adds database columns the original doesn't know.
+of this fork's changes. Switching between them keeps your data, but
+[back it up](#backing-up-the-server) first: this fork adds database columns
+the original doesn't know.
 
 ### Option 2: Building from Source
 
@@ -352,6 +354,33 @@ docker exec -it anchor reset-password user@example.com --password
 `docker compose exec anchor reset-password …` from the folder with the
 `docker-compose.yml`. The user signs in with the new password right away;
 devices that are already signed in stay signed in.
+
+### Backing Up the Server
+
+One command, in the folder with the `docker-compose.yml`, backs up the
+whole server: every account, note, tag, revision and setting, every
+picture, recording and file, and the secret sign-ins are signed with.
+Anchor keeps running while it's made, and it takes seconds:
+
+```bash
+docker compose exec -T anchor backup > anchor-backup-$(date +%F).tar
+```
+
+One command restores it, on this server or on a fresh one, even one on a
+later release, whose database it brings up to date. It replaces everything
+on that server, then Anchor restarts, and the apps stay signed in:
+
+```bash
+docker compose exec -T anchor restore < anchor-backup-2026-10-31.tar
+```
+
+On a new server, start Anchor first (`docker compose up -d`), then restore.
+Keep the `-T`: a terminal would garble the backup, so without it the
+commands stop and say so. The database is saved as a
+`pg_dump`, so a backup also works with a later Postgres. The picture search
+model is left out; it's downloaded again when it's needed. Keep backups
+somewhere safe: whoever has one can read every note and sign in as anyone.
+In PowerShell, `>` and `<` need PowerShell 7.4 or later.
 
 ## Mobile App
 
@@ -540,6 +569,9 @@ Modelled on Google Keep. Single keys work when no text field has focus.
 | | `Tab` in the title | Jump to the note text |
 
 ## Backup and Restore
+
+To back up the whole server (all accounts) and move it to another, see
+[Backing Up the Server](#backing-up-the-server). To export your own notes:
 
 Log into your Anchor deployment, go to **Settings**, scroll to **Export & Import** and export **Anchor backup (.zip)**.
 
