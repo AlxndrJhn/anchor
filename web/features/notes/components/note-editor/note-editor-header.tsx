@@ -48,6 +48,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { useSyncStatus } from "@/features/sync";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { cn } from "@/lib/utils";
+import type { ChecklistActions } from "../../hooks/use-checklist-actions";
 import { isReminderPast, reminderLabel } from "../../reminder";
 import type {
   NoteLockKind,
@@ -105,10 +106,8 @@ interface NoteEditorHeaderProps {
   /** Google Keep's "Show checkboxes" or "Hide checkboxes", whichever fits. */
   checkboxes: "show" | "hide" | null;
   onCheckboxes: () => void;
-  /** Ticked checklist items in the note. */
-  checkedCount: number;
-  onUncheckAll: () => void;
-  onRemoveChecked: () => void;
+  /** Only for a note you can edit. */
+  checklist?: ChecklistActions;
 }
 
 export function NoteEditorHeader(props: NoteEditorHeaderProps) {
@@ -287,19 +286,7 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
                     </DropdownMenuItem>
                   </div>
                 )}
-                {!props.readOnly && props.checkedCount > 0 && (
-                  <>
-                    <DropdownMenuItem onSelect={props.onUncheckAll}>
-                      <ListRestart />
-                      Untick all items
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={props.onRemoveChecked}>
-                      <ListX />
-                      Delete ticked items
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
+                {props.checklist && <ChecklistMenuItems {...props.checklist} />}
                 <DropdownMenuItem
                   onSelect={() => {
                     afterMenu.current = props.onSend;
@@ -379,6 +366,33 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
         </div>
       )}
     </div>
+  );
+}
+
+function ChecklistMenuItems({
+  getCounts,
+  uncheckAll,
+  deleteChecked,
+}: ChecklistActions) {
+  const [counts] = React.useState(getCounts);
+  if (!counts?.items) return null;
+  const isNoneChecked = counts.checked === 0;
+  return (
+    <>
+      <DropdownMenuItem disabled={isNoneChecked} onSelect={uncheckAll}>
+        <ListRestart />
+        Uncheck all
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        tone="danger"
+        disabled={isNoneChecked}
+        onSelect={deleteChecked}
+      >
+        <ListX />
+        Delete checked items
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+    </>
   );
 }
 

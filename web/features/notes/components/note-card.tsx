@@ -28,6 +28,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { usePreferencesStore } from "@/features/preferences";
 import { MoreChip, TagChip } from "@/features/tags/components/tag-chip";
 import type { TagLabel } from "@/features/tags/types";
+import { sortTagsByName } from "@/features/tags/utils";
 import { useHighlightPaint } from "@/lib/highlight-paint";
 import { useNearScreen } from "@/lib/hooks/use-near-screen";
 import { rememberCard } from "@/lib/morph";
@@ -141,7 +142,9 @@ export const NoteCard = React.memo(function NoteCard({
     showPictures && !lockHidden ? (note.imagePreviewIds ?? []) : [];
   const attachmentCount = note.attachmentCount ?? 0;
   const loadPictures = useNearScreen(cardRef, pictureIds.length > 0);
-  const tags = (note.tagIds ?? []).flatMap((id) => tagMap.get(id) ?? []);
+  const tags = sortTagsByName(
+    (note.tagIds ?? []).flatMap((id) => tagMap.get(id) ?? []),
+  );
   const actions = renderActions?.(note);
 
   const tagRow = tags.length > 0 && (

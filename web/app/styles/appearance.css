@@ -186,7 +186,7 @@ html[data-style="neo-brutalism"] [data-slot="button"]:active {
 }
 /* Card-filled with ink text: readable on every scheme; the accent shows on hover. */
 html[data-style="neo-brutalism"]
-:is([data-slot="button"][data-variant="primary"], [data-slot="new-note"]) {
+  :is([data-slot="button"][data-variant="primary"], [data-slot="new-note"]) {
   background: var(--card);
   color: var(--ink);
 }

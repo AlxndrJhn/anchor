@@ -17,6 +17,7 @@ import {
   indentOf,
   isCheckedLine,
   isChecklistLine,
+  lineFormatOps,
   MAX_LIST_INDENT,
 } from "./quill-lines";
 
@@ -444,71 +445,92 @@ export function buildChecklistDropDelta(
     (targetIndent ?? indentOf(lines[lineIndex])) - indentOf(lines[lineIndex]);
   if (gap >= lineIndex && gap <= blockEnd + 1) {
     if (indentDelta === 0) return null;
-    const ops: QuillOp[] = [];
-    let cursor = 0;
-    for (let i = lineIndex; i <= blockEnd; i++) {
-      const newlineOffset =
-        getLineStartPosition(lines, i) + getLineLength(lines[i]) - 1;
-      if (newlineOffset > cursor) {
-        ops.push({ retain: newlineOffset - cursor });
-      }
-      const indent = indentOf(lines[i]) + indentDelta;
-      ops.push({
-        retain: 1,
-        attributes: { indent: indent > 0 ? indent : null },
-      });
-      cursor = newlineOffset + 1;
-    }
-    return { ops };
+    return {
+      ops: lineFormatOps(lines.slice(0, blockEnd + 1), (line, i) => {
+        if (i < lineIndex) return null;
+        const indent = indentOf(line) + indentDelta;
+        return { indent: indent > 0 ? indent : null };
+      }),
+    };
   }
   return buildSpanMoveDelta(lines, lineIndex, blockEnd, gap, indentDelta);
 }
 
 // ============================================================================
-// Checklist Bulk Actions
+// Uncheck All and Delete Checked Items
 // ============================================================================
 
-export function countCheckedItems(delta: QuillDelta): number {
-  return deltaToLines(delta.ops).filter(isCheckedLine).length;
+export function countChecklistItems(contents: QuillDelta) {
+  let items = 0;
+  let checked = 0;
+  for (const line of deltaToLines(contents.ops)) {
+    if (!isChecklistLine(line)) continue;
+    items++;
+    if (isCheckedLine(line)) checked++;
+  }
+  return { items, checked };
 }
 
-/** Delta for `updateContents` that unticks every ticked item. Null if none. */
-export function createUncheckAllDelta(delta: QuillDelta): QuillDelta | null {
-  const change = new Delta();
-  let found = false;
-  for (const line of deltaToLines(delta.ops)) {
+/** Null when nothing is checked. */
+export function buildUncheckAllDelta(contents: QuillDelta): QuillDelta | null {
+  const ops = lineFormatOps(deltaToLines(contents.ops), (line) =>
+    isCheckedLine(line) ? { list: LIST_FORMATS.UNCHECKED } : null,
+  );
+  return ops.length ? { ops } : null;
+}
+
+/** Null when nothing is checked. */
+export function buildDeleteCheckedDelta(
+  contents: QuillDelta,
+): QuillDelta | null {
+  const lines = deltaToLines(contents.ops);
+  if (!lines.some(isCheckedLine)) return null;
+  const indents = indentsWithoutChecked(lines);
+  const ops: QuillOp[] = [];
+  if (lines.every(isCheckedLine))
+    ops.push({ insert: "\n", attributes: { list: LIST_FORMATS.UNCHECKED } });
+  let cursor = 0;
+  let position = 0;
+  const retainTo = (offset: number) => {
+    if (offset > cursor) ops.push({ retain: offset - cursor });
+    cursor = offset;
+  };
+  lines.forEach((line, i) => {
     const length = getLineLength(line);
     if (isCheckedLine(line)) {
-      found = true;
-      change.retain(length - 1).retain(1, { list: LIST_FORMATS.UNCHECKED });
-    } else {
-      change.retain(length);
+      retainTo(position);
+      ops.push({ delete: length });
+      cursor += length;
+    } else if (indents[i] !== indentOf(line)) {
+      retainTo(position + length - 1);
+      ops.push({ retain: 1, attributes: { indent: indents[i] || null } });
+      cursor++;
     }
-  }
-  return found ? { ops: change.chop().ops as QuillOp[] } : null;
+    position += length;
+  });
+  return { ops };
 }
 
-/** Delta for `updateContents` that deletes every ticked item. Null if none. */
-export function createRemoveCheckedDelta(delta: QuillDelta): QuillDelta | null {
-  const change = new Delta();
-  const lines = deltaToLines(delta.ops);
-  let kept = 0;
-  let found = false;
+function indentsWithoutChecked(lines: DeltaLine[]) {
+  const indents: number[] = [];
+  const above: DeltaLine[] = [];
   for (const line of lines) {
-    const length = getLineLength(line);
-    if (isCheckedLine(line)) {
-      found = true;
-      change.delete(length);
-    } else {
-      kept++;
-      change.retain(length);
+    if (line.newlineOp.attributes?.list === undefined) {
+      above.length = 0;
+      indents.push(indentOf(line));
+      continue;
     }
+    while (above.length && indentOf(above[above.length - 1]) >= indentOf(line))
+      above.pop();
+    indents.push(indentOf(line) - above.filter(isCheckedLine).length);
+    above.push(line);
   }
-  if (!found) return null;
-  // Quill needs a trailing line; keep an empty one when every line goes.
-  if (kept === 0) change.insert("\n");
-  return { ops: change.chop().ops as QuillOp[] };
+  return indents;
 }
+
+// ============================================================================
+// Checkboxes and Toggling
+// ============================================================================
 
 /**
  * Stored content with the checklist item on [lineIndex] ticked or unticked,

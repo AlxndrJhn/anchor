@@ -114,7 +114,6 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         bytes: Uint8List.fromList(utf8.encode(dump)),
         dialogTitle: l10n.logsSaveDialog,
         mimeType: 'text/plain',
-        allowedExtensions: const ['log'],
       );
       if (saved && mounted) {
         AppSnackbar.show(context, l10n.logsSaved(name));

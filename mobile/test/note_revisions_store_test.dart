@@ -11,19 +11,15 @@ void main() {
   late NoteRevisionsStore store;
 
   const author = User(id: 'user-1', email: 'me@example.com', name: 'Me');
+  final recentDay = DateTime.now().toUtc().subtract(const Duration(days: 7));
 
-  // A day in August 2026, shifted so the 18th falls 30 days ago: fixed dates
-  // would age out of the 90-day retention window.
-  final today = DateTime.now().toUtc();
-  DateTime august(int day, [int hour = 0, int minute = 0, int second = 0]) =>
-      DateTime.utc(
-        today.year,
-        today.month,
-        today.day - 48 + day,
-        hour,
-        minute,
-        second,
-      );
+  DateTime at(int hour, {int minute = 0, int daysBefore = 0}) => DateTime.utc(
+    recentDay.year,
+    recentDay.month,
+    recentDay.day - daysBefore,
+    hour,
+    minute,
+  );
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -43,7 +39,7 @@ void main() {
     version: 1,
     title: title,
     cause: RevisionCause.edit,
-    createdAt: createdAt ?? august(18, 10),
+    createdAt: createdAt ?? at(10),
     content: content,
   );
 
@@ -61,7 +57,7 @@ void main() {
             id: id,
             noteId: noteId,
             title: 'Groceries',
-            createdAt: (createdAt ?? august(18, 10)).millisecondsSinceEpoch,
+            createdAt: (createdAt ?? at(10)).millisecondsSinceEpoch,
             cause: Value(cause),
             isSynced: Value(isSynced),
           ),
@@ -72,8 +68,8 @@ void main() {
     await store.savePage(
       'n1',
       [
-        revisionOf('r2', createdAt: august(18, 11)),
-        revisionOf('r1', createdAt: august(18, 10)),
+        revisionOf('r2', createdAt: at(11)),
+        revisionOf('r1', createdAt: at(10)),
       ],
       cursor: null,
       nextCursor: null,
@@ -90,7 +86,7 @@ void main() {
 
     await store.savePage(
       'n1',
-      [revisionOf('r1', createdAt: august(18, 11))],
+      [revisionOf('r1', createdAt: at(11))],
       cursor: null,
       nextCursor: null,
     );
@@ -100,14 +96,18 @@ void main() {
   });
 
   test('a partial page only drops within the stretch it covers', () async {
-    await insertLocal('older', createdAt: august(1), isSynced: true);
-    await insertLocal('inside', createdAt: august(18, 11, 30), isSynced: true);
+    await insertLocal(
+      'older',
+      createdAt: at(0, daysBefore: 17),
+      isSynced: true,
+    );
+    await insertLocal('inside', createdAt: at(11, minute: 30), isSynced: true);
 
     await store.savePage(
       'n1',
       [
-        revisionOf('r2', createdAt: august(18, 12)),
-        revisionOf('r1', createdAt: august(18, 11)),
+        revisionOf('r2', createdAt: at(12)),
+        revisionOf('r1', createdAt: at(11)),
       ],
       cursor: null,
       nextCursor: 'older',
@@ -131,7 +131,7 @@ void main() {
 
     await store.savePage(
       'n1',
-      [revisionOf('r1', createdAt: august(17))],
+      [revisionOf('r1', createdAt: at(0, daysBefore: 1))],
       cursor: 'older',
       nextCursor: null,
     );
@@ -194,9 +194,7 @@ void main() {
             id: 'r$i',
             noteId: 'n1',
             title: 'Groceries',
-            createdAt: august(
-              18,
-            ).add(Duration(minutes: i)).millisecondsSinceEpoch,
+            createdAt: at(0).add(Duration(minutes: i)).millisecondsSinceEpoch,
             isSynced: const Value(true),
           ),
       ]);
@@ -210,8 +208,8 @@ void main() {
   });
 
   test('the cap never drops versions still to be sent', () async {
-    await insertLocal('waiting-1', createdAt: august(17, 1));
-    await insertLocal('waiting-2', createdAt: august(17, 2));
+    await insertLocal('waiting-1', createdAt: at(1, daysBefore: 1));
+    await insertLocal('waiting-2', createdAt: at(2, daysBefore: 1));
     await db.batch((batch) {
       batch.insertAll(db.noteRevisions, [
         for (var i = 0; i < 204; i++)
@@ -219,9 +217,7 @@ void main() {
             id: 'r$i',
             noteId: 'n1',
             title: 'Groceries',
-            createdAt: august(
-              18,
-            ).add(Duration(minutes: i)).millisecondsSinceEpoch,
+            createdAt: at(0).add(Duration(minutes: i)).millisecondsSinceEpoch,
             isSynced: const Value(true),
           ),
       ]);
@@ -274,7 +270,7 @@ void main() {
   });
 
   test('versions saved within the same second keep their order', () async {
-    final base = august(18, 10, 0, 0);
+    final base = at(10);
     await store.savePage(
       'n1',
       [

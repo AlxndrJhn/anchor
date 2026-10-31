@@ -157,6 +157,9 @@ interface SlashMenuProps {
   onAddLink: () => void;
 }
 
+export const isSlashMenuOpen = (root: HTMLElement) =>
+  root.hasAttribute("aria-controls");
+
 export function SlashMenu({
   getQuill,
   container,

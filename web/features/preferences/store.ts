@@ -24,6 +24,7 @@ interface NotesPreferences {
   sortOrder: SortOrder;
   /** Pictures across the top of note cards. Unset (older saves) means on. */
   showPictures?: boolean;
+  openArchivedTagIds: string[];
 }
 
 interface EditorPreferences {
@@ -36,6 +37,7 @@ interface EditorPreferences {
   dateTimeShortcut?: Shortcut;
   /** How an inserted date reads; unset means "Oct 28th 2026". */
   dateFormat?: DateFormat;
+  foldedChecklistNoteIds: string[];
 }
 
 interface PreferencesState {
@@ -54,6 +56,8 @@ interface PreferencesState {
     key: K,
     value: EditorPreferences[K],
   ) => void;
+  setChecklistFolded: (noteId: string, isFolded: boolean) => void;
+  setArchivedOpen: (tagId: string, isOpen: boolean) => void;
 }
 
 const defaultUIPreferences: UIPreferences = {
@@ -65,11 +69,26 @@ const defaultNotesPreferences: NotesPreferences = {
   sortBy: "updatedAt",
   sortOrder: "desc",
   showPictures: true,
+  openArchivedTagIds: [],
 };
 
 const defaultEditorPreferences: EditorPreferences = {
   sortChecklistItems: true,
   burnDeleted: true,
+  foldedChecklistNoteIds: [],
+};
+
+const MAX_FOLDED_NOTES = 500;
+const MAX_OPEN_TAGS = 200;
+
+const updateIdList = (
+  ids: string[],
+  id: string,
+  isIncluded: boolean,
+  max: number,
+) => {
+  const others = ids.filter((other) => other !== id);
+  return isIncluded ? [...others, id].slice(-max) : others;
 };
 
 const initialState = {
@@ -94,9 +113,43 @@ export const usePreferencesStore = create<PreferencesState>()(
         set((state) => ({
           editor: { ...state.editor, [key]: value },
         })),
+      setChecklistFolded: (noteId, isFolded) =>
+        set((state) => ({
+          editor: {
+            ...state.editor,
+            foldedChecklistNoteIds: updateIdList(
+              state.editor.foldedChecklistNoteIds,
+              noteId,
+              isFolded,
+              MAX_FOLDED_NOTES,
+            ),
+          },
+        })),
+      setArchivedOpen: (tagId, isOpen) =>
+        set((state) => ({
+          notes: {
+            ...state.notes,
+            openArchivedTagIds: updateIdList(
+              state.notes.openArchivedTagIds,
+              tagId,
+              isOpen,
+              MAX_OPEN_TAGS,
+            ),
+          },
+        })),
     }),
     {
       name: "preferences",
+      // Settings added later get their defaults.
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<PreferencesState>;
+        return {
+          ...current,
+          ui: { ...current.ui, ...saved.ui },
+          notes: { ...current.notes, ...saved.notes },
+          editor: { ...current.editor, ...saved.editor },
+        };
+      },
     },
   ),
 );

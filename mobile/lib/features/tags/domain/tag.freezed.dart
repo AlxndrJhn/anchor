@@ -26,16 +26,21 @@ $TagCopyWith<Tag> get copyWith => _$TagCopyWithImpl<Tag>(this as Tag, _$identity
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.color, color) || other.color == color)&&(identical(other.position, position) || other.position == position)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
+  final _this = this as Tag;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tag&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt)&&(identical(other.isSynced, _this.isSynced) || other.isSynced == _this.isSynced)&&(identical(other.isDeleted, _this.isDeleted) || other.isDeleted == _this.isDeleted));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,color,position,updatedAt,isSynced,isDeleted);
+int get hashCode {
+  final _this = this as Tag;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.color,_this.position,_this.updatedAt,_this.isSynced,_this.isDeleted);
+}
 
 @override
 String toString() {
-  return 'Tag(id: $id, name: $name, color: $color, position: $position, updatedAt: $updatedAt, isSynced: $isSynced, isDeleted: $isDeleted)';
+  final _this = this as Tag;
+  return 'Tag(id: ${_this.id}, name: ${_this.name}, color: ${_this.color}, position: ${_this.position}, updatedAt: ${_this.updatedAt}, isSynced: ${_this.isSynced}, isDeleted: ${_this.isDeleted})';
 }
 
 
@@ -234,16 +239,18 @@ _$TagCopyWith<_Tag> get copyWith => __$TagCopyWithImpl<_Tag>(this, _$identity);
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.color, color) || other.color == color)&&(identical(other.position, position) || other.position == position)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.color, color) || other.color == color)&&(identical(other.position, position) || other.position == position)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isSynced, isSynced) || other.isSynced == isSynced)&&(identical(other.isDeleted, isDeleted) || other.isDeleted == isDeleted));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,color,position,updatedAt,isSynced,isDeleted);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,color,position,updatedAt,isSynced,isDeleted);
+}
 
 @override
 String toString() {
-  return 'Tag(id: $id, name: $name, color: $color, position: $position, updatedAt: $updatedAt, isSynced: $isSynced, isDeleted: $isDeleted)';
+    return 'Tag(id: $id, name: $name, color: $color, position: $position, updatedAt: $updatedAt, isSynced: $isSynced, isDeleted: $isDeleted)';
 }
 
 

@@ -1,8 +1,8 @@
-# Node 24: Prisma 7 does not support Node 26 yet, and Node 25+ drops corepack.
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 
-# pnpm via corepack
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# pnpm from its official image
+COPY --from=ghcr.io/pnpm/pnpm:12.16.1-alpine /opt/pnpm /opt/pnpm
+RUN for bin in pnpm pn pnpx pnx; do ln -s "/opt/pnpm/$bin" "/usr/local/bin/$bin"; done
 
 # Next.js on Alpine can need libc compatibility
 RUN apk add --no-cache libc6-compat
@@ -71,7 +71,7 @@ ENV PGDATA=/data/postgres
 COPY --from=base /usr/local/bin/node /usr/local/bin/node
 
 # curl for HEALTHCHECK, supervisor for process management
-RUN apk add --no-cache curl supervisor libstdc++ libc6-compat
+RUN apk add --no-cache curl supervisor libstdc++ libatomic libc6-compat
 
 # Server runtime files
 COPY --from=server_builder /app/server/dist ./server/dist

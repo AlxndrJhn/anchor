@@ -29,12 +29,52 @@ export { matchesSearch };
 
 const SEARCH_PARAM = "q";
 
+const NO_NOTES: Note[] = [];
+
+interface Finding {
+  term: string;
+  filters: NoteFilters;
+  activeFilters: number;
+  unlocked: ReadonlySet<string>;
+  withInvisible: boolean;
+}
+
+function findAndSort(
+  notes: Note[],
+  { term, filters, activeFilters, unlocked, withInvisible }: Finding,
+  sortBy: SortBy,
+  sortOrder: SortOrder,
+) {
+  const found =
+    term || activeFilters
+      ? notes.filter(
+          (note) =>
+            matchesSearch(note, term, unlocked) &&
+            matchesFilters(note, filters),
+        )
+      : withInvisible
+        ? notes
+        : notes.filter((note) => showsInList(note, false));
+  return [...found].sort(compareNotes(sortBy, sortOrder));
+}
+
 export function useNoteList(
   notes: Note[],
   {
     pinnedFirst = false,
     // The trash lists invisible notes too, so they can be put back.
     withInvisible = false,
+    archived,
+  }: {
+    pinnedFirst?: boolean;
+    withInvisible?: boolean;
+    archived?: {
+      notes: Note[];
+      isSearchOnly: boolean;
+      canFold: boolean;
+      /** Ignored while searching. */
+      isFolded: boolean;
+    };
   } = {},
 ) {
   const {
@@ -87,28 +127,25 @@ export function useNoteList(
   const lastPick = React.useRef<string | null>(null);
 
   const unlocked = useUnlockedIds();
-  const visible = React.useMemo(() => {
-    const found =
-      term || activeFilters
-        ? notes.filter(
-            (note) =>
-              matchesSearch(note, term, unlocked) &&
-              matchesFilters(note, filters),
-          )
-        : withInvisible
-          ? notes
-          : notes.filter((note) => showsInList(note, false));
-    return [...found].sort(compareNotes(sortBy, sortOrder));
-  }, [
-    notes,
-    term,
-    filters,
-    activeFilters,
-    sortBy,
-    sortOrder,
-    unlocked,
-    withInvisible,
-  ]);
+  const finding = React.useMemo(
+    () => ({ term, filters, activeFilters, unlocked, withInvisible }),
+    [term, filters, activeFilters, unlocked, withInvisible],
+  );
+  const visible = React.useMemo(
+    () => findAndSort(notes, finding, sortBy, sortOrder),
+    [notes, finding, sortBy, sortOrder],
+  );
+  // Archived notes come into a search or a filter.
+  const isSearching = term !== "" || activeFilters > 0;
+  const hasArchived = !!archived && (isSearching || !archived.isSearchOnly);
+  const archivedNotes = (hasArchived && archived?.notes) || NO_NOTES;
+  const archivedVisible = React.useMemo(
+    () => findAndSort(archivedNotes, finding, sortBy, sortOrder),
+    [archivedNotes, finding, sortBy, sortOrder],
+  );
+  const isArchivedFoldable = hasArchived && !!archived?.canFold && !isSearching;
+  const isArchivedOpen =
+    hasArchived && !(isArchivedFoldable && archived?.isFolded);
   const pinned = React.useMemo(
     () => (pinnedFirst ? visible.filter((n) => n.isPinned) : []),
     [pinnedFirst, visible],
@@ -118,8 +155,11 @@ export function useNoteList(
     [pinnedFirst, visible],
   );
   const shown = React.useMemo(
-    () => (pinned.length ? [...pinned, ...others] : others),
-    [pinned, others],
+    () =>
+      pinned.length || isArchivedOpen
+        ? [...pinned, ...others, ...(isArchivedOpen ? archivedVisible : [])]
+        : others,
+    [pinned, others, isArchivedOpen, archivedVisible],
   );
   const shownRef = React.useRef(shown);
   React.useLayoutEffect(() => {
@@ -161,14 +201,14 @@ export function useNoteList(
   }, []);
 
   React.useEffect(() => {
-    const visibleIds = new Set(visible.map((note) => note.id));
+    const shownIds = new Set(shown.map((note) => note.id));
     setPicked((prev) => {
-      const kept = [...prev].filter((id) => visibleIds.has(id));
+      const kept = [...prev].filter((id) => shownIds.has(id));
       return kept.length === prev.size ? prev : new Set(kept);
     });
-  }, [visible]);
+  }, [shown]);
 
-  const isEmpty = notes.length === 0;
+  const isEmpty = notes.length === 0 && archivedNotes.length === 0;
   React.useEffect(() => {
     if (picking && isEmpty) stopPicking();
   }, [picking, isEmpty, stopPicking]);
@@ -220,7 +260,7 @@ export function useNoteList(
       setFiltersValue(next);
     },
     /** Whether a search or a filter narrows the list. */
-    searching: !!term || activeFilters > 0,
+    searching: isSearching,
     layout: viewMode,
     setLayout: (layout: ViewMode) => {
       flip.prepare();
@@ -241,6 +281,11 @@ export function useNoteList(
     visible,
     pinned,
     others,
+    isSearching,
+    hasArchived,
+    archived: archivedVisible,
+    isArchivedFoldable,
+    isArchivedOpen,
     shown,
     picking,
     togglePicking: () => (picking ? stopPicking() : setPicking(true)),

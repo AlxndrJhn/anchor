@@ -908,7 +908,6 @@ class _BackupSectionState extends ConsumerState<_BackupSection> {
         bytes: backup.bytes,
         dialogTitle: l10n.backupSaveTitle,
         mimeType: 'application/zip',
-        allowedExtensions: const ['zip'],
       );
       if (!saved || !mounted) return;
       AppSnackbar.show(

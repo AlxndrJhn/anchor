@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons_600.dart';
 
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
@@ -227,7 +228,7 @@ class _NoteFiltersSheet extends ConsumerWidget {
                       children: [
                         for (final tag in tags)
                           GroupedListTile(
-                            icon: LucideIcons.hash600,
+                            icon: LucideIcons600.hash,
                             label: tag.name,
                             maxLines: 1,
                             checked: tag.id == tagId,
