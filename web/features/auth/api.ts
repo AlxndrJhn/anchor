@@ -1,3 +1,4 @@
+import type { Options } from "ky";
 import { api } from "@/lib/api/client";
 import type {
   ApiTokenResponse,
@@ -26,8 +27,8 @@ export async function register(
     .json<AuthResponse>();
 }
 
-export async function getMe(): Promise<User> {
-  return api.get("api/auth/me").json<User>();
+export async function getMe(options?: Options): Promise<User> {
+  return api.get("api/auth/me", options).json<User>();
 }
 
 export async function getRegistrationMode(): Promise<{
