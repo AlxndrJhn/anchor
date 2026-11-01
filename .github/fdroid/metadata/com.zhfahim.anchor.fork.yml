@@ -1,0 +1,18 @@
+AuthorName: AlxndrJhn
+WebSite: https://github.com/AlxndrJhn/anchor
+SourceCode: https://github.com/AlxndrJhn/anchor
+IssueTracker: https://github.com/AlxndrJhn/anchor/issues
+Changelog: https://github.com/AlxndrJhn/anchor/releases
+License: AGPL-3.0-only
+Categories:
+  - Writing
+
+Name: Anchor+
+Summary: Offline first notes, synced with your own Anchor server
+Description: |-
+  Anchor+ is a fork of Anchor, an offline first, self hostable note taking app.
+  Notes are stored on your phone, editable offline, and synced with your Anchor
+  server when online.
+
+  It installs next to the official Anchor app and works with any Anchor server.
+  See the project page for what Anchor+ adds.

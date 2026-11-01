@@ -66,6 +66,10 @@ class UpdateSource {
     return path;
   }
 
+  /// The package of the app that installed this one, e.g. F-Droid's; null
+  /// when it was installed from a file.
+  Future<String?> installer() => _channel.invokeMethod<String>('installer');
+
   /// Hands the APK to Android's installer, which asks the user to confirm
   /// (and, the first time, to let Anchor install apps).
   Future<void> install(String path) =>
@@ -145,7 +149,18 @@ class UpdateController extends _$UpdateController {
 
   Future<void> _checkOnStart() async {
     final prefs = ref.read(preferencesRepositoryProvider);
-    if (await prefs.getCheckForUpdates()) await check();
+    if (!await prefs.getCheckForUpdates()) return;
+    // F-Droid offers the updates itself; a banner too would be twice. Settings
+    // › Updates still checks when asked.
+    final installer = await ref
+        .read(updateSourceProvider)
+        .installer()
+        .catchError((_) => null);
+    if (isFdroidClient(installer)) {
+      AppLogger.instance.info(_logTag, 'Installed by $installer; it updates');
+      return;
+    }
+    await check();
   }
 
   /// Looks for a newer release; returns it, or null when there is none or

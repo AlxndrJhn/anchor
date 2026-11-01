@@ -2,6 +2,7 @@ package com.zhfahim.anchor.update
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.content.FileProvider
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -11,7 +12,8 @@ import java.io.File
 /**
  * Opens Android's installer with an update of the fork downloaded from its
  * releases. Android asks the user to confirm, and the first time to let
- * Anchor install apps.
+ * Anchor install apps. Also tells which app installed Anchor+ (F-Droid
+ * updates it itself).
  */
 class UpdateInstallerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
@@ -29,6 +31,7 @@ class UpdateInstallerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        if (call.method == "installer") return result.success(installer())
         if (call.method != "install") return result.notImplemented()
         val path = call.argument<String>("path")
             ?: return result.error("args", "No APK path", null)
@@ -38,6 +41,17 @@ class UpdateInstallerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         } catch (e: Exception) {
             result.error("install", e.message, null)
         }
+    }
+
+    private fun installer(): String? = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            context.packageManager.getInstallSourceInfo(context.packageName).installingPackageName
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getInstallerPackageName(context.packageName)
+        }
+    } catch (e: Exception) {
+        null
     }
 
     private fun install(apk: File) {

@@ -112,6 +112,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Hold the New Note button for New list | | ✓ |
 | Double-tap the New Note button to paste the clipboard into a new note | | ✓ |
 | Updates itself from this fork's GitHub releases (Settings › Updates) | | ✓ |
+| Install and update it with F-Droid, from releases or also release candidates ([F-Droid](#f-droid)) | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |
 | Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)); with a tag or filter on, it first shows all notes again | | ✓ |
 | A chevron back to the top, two screens down the notes list | | ✓ |
@@ -405,6 +406,31 @@ Download the Android mobile app.
 
    Once installed, the app finds and installs new releases itself
    (Settings › Updates).
+
+### F-Droid
+
+This fork has two F-Droid repositories, on its GitHub Pages site. Open
+**[alxndrjhn.github.io/anchor/fdroid](https://alxndrjhn.github.io/anchor/fdroid/)**
+on your phone and tap the one you want, or add its address in F-Droid under
+Settings › Repositories › +:
+
+| Repository | Has |
+|---|---|
+| **Anchor+** (`…/anchor/fdroid/repo`) | The releases |
+| **Anchor+ preview** (`…/anchor/fdroid/preview/repo`) | The releases and release candidates, whichever is newer |
+
+Both are signed with the key whose SHA-256 fingerprint is
+`fa9401f1622731a89771e284c7b9df7676e55eab79fb5c6c009e3f2c9f873f24`; the links
+on that page carry it, so F-Droid accepts no other.
+
+Then install Anchor+ from it. To switch, turn one off and the other on under
+Settings › Repositories. Leaving preview waits for the next release, as F-Droid
+doesn't install an older version over a newer one.
+
+They hold the same APKs as the GitHub releases, signed with the same key, so
+F-Droid updates an Anchor+ installed from GitHub too, and the other way round.
+Installed by F-Droid, the app doesn't show its own Update available banner;
+Settings › Updates still checks when asked.
 
 ## Desktop App
 

@@ -5,14 +5,25 @@ name: GitHub Pages
 #   /       the app, keeping the notes in the visitor's browser
 #   /demo/  a playground with sample notes, kept in memory (a reload resets
 #           it), and a demo of each feature, e.g. /demo/freeze
-# Run by each release (release-fork.yml), or by hand. Needs Settings › Pages ›
-# Source set to "GitHub Actions".
+#   /fdroid/ the Android app's F-Droid repositories, one with the releases
+#           and one with release candidates too (.github/fdroid/build-repos.sh)
+# Run by each release and release candidate (release-fork.yml), or by hand.
+# Needs Settings › Pages › Source set to "GitHub Actions", and for F-Droid the
+# FDROID_KEYSTORE_BASE64 and FDROID_KEYSTORE_PASSWORD secrets: a PKCS12
+# keystore with the key "fdroid", which signs the repositories' index. Keep
+# it: F-Droid trusts the repositories by its fingerprint.
 
 on:
   workflow_call:
     inputs:
       anchor-version:
         description: The Anchor+ release the app shows, e.g. 0.17.2.62
+        required: false
+        type: string
+        default: ""
+      web-ref:
+        description: The commit or tag to build the web app from (a release
+          candidate keeps the last release's); its own when empty
         required: false
         type: string
         default: ""
@@ -38,6 +49,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.web-ref }}
+
+      # The F-Droid script, always this run's own, whichever web app is built.
+      - name: Checkout the F-Droid script
+        uses: actions/checkout@v7
+        with:
+          path: tools
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/fdroid
+            web/public/web-app-manifest-512x512.png
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -64,6 +87,22 @@ jobs:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}
           ANCHOR_VERSION: ${{ inputs.anchor-version }}
         run: pnpm build:pages
+
+      # Without the keystore the site goes out without them, and F-Droid
+      # can't refresh them until they're back.
+      - name: Build the F-Droid repositories
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+          FDROID_KEYSTORE_BASE64: ${{ secrets.FDROID_KEYSTORE_BASE64 }}
+          FDROID_KEYSTORE_PASSWORD: ${{ secrets.FDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$FDROID_KEYSTORE_BASE64" ] || [ -z "$FDROID_KEYSTORE_PASSWORD" ]; then
+            echo "::warning::Set the FDROID_KEYSTORE_BASE64 and FDROID_KEYSTORE_PASSWORD secrets to publish the F-Droid repositories."
+            exit 0
+          fi
+          pipx install fdroidserver==2.4.5
+          bash ../tools/.github/fdroid/build-repos.sh out
 
       - name: Upload the site
         uses: actions/upload-pages-artifact@v5
