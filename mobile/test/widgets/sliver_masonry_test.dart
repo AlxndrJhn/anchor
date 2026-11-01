@@ -201,6 +201,46 @@ void main() {
       expect(first.dx, 0);
     });
 
+    // A deleted note brought back (Undo) goes in among cards already built.
+    for (final scroll in [0.0, 900.0]) {
+      testWidgets('at $scroll a card put back among the others is built', (
+        tester,
+      ) async {
+        final keys = heights.keys.toList();
+        final controller = await pumpBoard(tester, [
+          notes(keys, keepColumns: false),
+        ]);
+        controller.jumpTo(scroll);
+        await tester.pump();
+        final before = places(tester, keys);
+        final shown = before.keys
+            .where((k) => before[k]!.dy > 0 && before[k]!.dy < 600)
+            .toList();
+        final back = shown[shown.length ~/ 2];
+        Widget board(List<String> keys, {required bool keepColumns}) =>
+            MaterialApp(
+              home: CustomScrollView(
+                controller: controller,
+                slivers: [
+                  const SliverToBoxAdapter(child: SizedBox(height: 150)),
+                  SliverMainAxisGroup(
+                    slivers: [notes(keys, keepColumns: keepColumns)],
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                ],
+              ),
+            );
+
+        await tester.pumpWidget(
+          board([...keys]..remove(back), keepColumns: true),
+        );
+        await tester.pumpWidget(board(keys, keepColumns: false));
+
+        expect(find.byKey(ValueKey(back)), findsOneWidget);
+        expect(places(tester, keys), before);
+      });
+    }
+
     for (final scroll in [0.0, 900.0]) {
       testWidgets('at $scroll leaves the others in their columns', (
         tester,
