@@ -260,6 +260,23 @@ class RenderSliverMasonry extends RenderSliverMultiBoxAdaptor {
       if (child == null) break;
       changed |= _measure(child);
     }
+    // A child put in among those kept (a deleted note brought back) leaves
+    // its index missing between them: build it there.
+    for (
+      var c = firstChild!, next = childAfter(c);
+      next != null;
+      c = next, next = childAfter(c)
+    ) {
+      if (indexOf(next) == indexOf(c) + 1) continue;
+      final child = insertAndLayoutChild(
+        childConstraints,
+        after: c,
+        parentUsesSize: true,
+      );
+      if (child == null) break;
+      changed |= _measure(child);
+      next = child;
+    }
     return changed;
   }
 
