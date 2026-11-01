@@ -4,14 +4,15 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:path/path.dart' as p;
 
 import '../logging/app_logger.dart';
+import 'image_text_reader.dart';
 
 /// Whether "Grab image text" can run here: ML Kit reads on the phone, and
-/// the fork ships it on Android.
-bool get canReadImageText => defaultTargetPlatform == TargetPlatform.android;
+/// the fork ships it on Android, but not in the F-Droid build.
+bool get canReadImageText =>
+    hasImageTextReader && defaultTargetPlatform == TargetPlatform.android;
 
 /// Finds the words in the picture at a path.
 typedef ImageTextReader = Future<ImageText> Function(String path);
@@ -20,17 +21,9 @@ typedef ImageTextReader = Future<ImageText> Function(String path);
 @visibleForTesting
 ImageTextReader? debugImageTextReader;
 
-/// Reads what ML Kit finds in the picture at a path; ML Kit's on the phone.
-typedef TextReader = Future<RecognizedText> Function(String path);
-
-Future<RecognizedText> _mlKitReader(String path) async {
-  final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
-  try {
-    return await recognizer.processImage(InputImage.fromFilePath(path));
-  } finally {
-    await recognizer.close();
-  }
-}
+/// Reads the text in the picture at a path (readImageText, unless a test
+/// has its own).
+typedef TextReader = Future<TextBlocks> Function(String path);
 
 const _logTag = 'ImageText';
 
@@ -122,8 +115,8 @@ List<int> imageWordsIn(List<ImageWord> words, Rect box) => [
     if (word.rect.overlaps(box)) i,
 ];
 
-/// "Grab image text": finds the words in a picture on the phone itself, with
-/// ML Kit's Latin-script model, so it also works offline.
+/// "Grab image text": finds the words in a picture on the phone itself (see
+/// readImageText), so it also works offline.
 ///
 /// Each read is logged (the picture, how long it took, what was found, or
 /// why it failed), so a failure on someone's phone shows in their logs.
@@ -138,16 +131,12 @@ Future<ImageText> recognizeImageText(String path, {TextReader? reader}) async {
   );
   final watch = Stopwatch()..start();
   try {
-    final result = await (reader ?? _mlKitReader)(path);
+    final blocks = await (reader ?? readImageText)(path);
     final words = <ImageWord>[];
     var line = 0;
-    for (final (block, textBlock) in result.blocks.indexed) {
-      for (final textLine in textBlock.lines) {
-        if (textLine.text.trim().isEmpty) continue;
-        // Each word on its own; a line ML Kit didn't split is one word.
-        final parts = textLine.elements.isEmpty
-            ? [(textLine.text, textLine.boundingBox)]
-            : [for (final e in textLine.elements) (e.text, e.boundingBox)];
+    for (final (block, lines) in blocks.indexed) {
+      for (final parts in lines) {
+        if (parts.every((w) => w.$1.trim().isEmpty)) continue;
         for (final (text, rect) in parts) {
           if (text.trim().isEmpty) continue;
           words.add(
@@ -161,7 +150,7 @@ Future<ImageText> recognizeImageText(String path, {TextReader? reader}) async {
     AppLogger.instance.info(
       _logTag,
       'Read ${p.basename(path)} in ${watch.elapsedMilliseconds} ms: '
-      '${result.blocks.length} blocks, $line lines, ${words.length} words, '
+      '${blocks.length} blocks, $line lines, ${words.length} words, '
       '${found.text.length} characters',
     );
     return found;
