@@ -464,10 +464,13 @@ jobs:
           gh release delete android-latest --cleanup-tag --yes || true
 
   # A candidate republishes Pages for the preview F-Droid repository, with
-  # the last release's web app.
+  # the last release's web app. It follows any release that went out, also
+  # one whose desktop installers failed to build.
   pages:
     needs: [version, release]
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' && !cancelled() &&
+      needs.release.result == 'success'
     permissions:
       contents: read
       pages: write
