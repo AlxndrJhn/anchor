@@ -64,7 +64,11 @@ android {
             applicationIdSuffix = ".debug"
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Without key.properties the APK is unsigned, as F-Droid builds
+            // it (it signs it itself).
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

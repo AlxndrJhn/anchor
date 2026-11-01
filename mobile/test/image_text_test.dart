@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:anchor/core/files/image_text.dart';
+import 'package:anchor/core/files/image_text_reader.dart';
 import 'package:anchor/core/logging/app_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -82,10 +83,10 @@ void main() {
     final before = AppLogger.instance.snapshot.length;
     final found = await recognizeImageText(
       path,
-      reader: (_) async => _recognized([
+      reader: (_) async => textBlocksOf(_recognized([
         ['Shopping list'],
         ['Milk and bread', 'Call the dentist'],
-      ]),
+      ])),
     );
 
     expect(found.words.map((w) => w.text), [

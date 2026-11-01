@@ -432,6 +432,11 @@ F-Droid updates an Anchor+ installed from GitHub too, and the other way round.
 Installed by F-Droid, the app doesn't show its own Update available banner;
 Settings › Updates still checks when asked.
 
+Anchor+ isn't in F-Droid's own store yet. For that F-Droid builds it from
+source, without Google's ML Kit and so without "Grab image text":
+`mobile/tool/fdroid_prebuild.sh` makes a checkout that build, and
+`.github/fdroid/fdroiddata/` has the recipe to send to F-Droid.
+
 ## Desktop App
 
 A Windows and macOS app that opens the web client of your own Anchor server in

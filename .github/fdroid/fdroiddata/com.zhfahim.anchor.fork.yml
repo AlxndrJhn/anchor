@@ -1,0 +1,99 @@
+# A draft of Anchor+'s recipe for F-Droid's own store, to send to
+# https://gitlab.com/fdroid/fdroiddata as metadata/com.zhfahim.anchor.fork.yml.
+# F-Droid builds it from source, without ML Kit (mobile/tool/fdroid_prebuild.sh)
+# and without the app's own updater (no FORK_BUILD / UPDATE_REPO), and signs
+# it with its own key.
+#
+# The builds are of a release tag fork-<version>.<build>: the version code is
+# the one the fork's release workflow gives it, 2000 + build, plus Flutter's
+# 1000 × the processor type (armeabi-v7a 1, arm64-v8a 2, x86_64 4). The tag
+# below is a placeholder: the first release that has the prebuild script.
+
+AuthorName: AlxndrJhn
+WebSite: https://github.com/AlxndrJhn/anchor
+SourceCode: https://github.com/AlxndrJhn/anchor
+IssueTracker: https://github.com/AlxndrJhn/anchor/issues
+Changelog: https://github.com/AlxndrJhn/anchor/releases
+License: AGPL-3.0-only
+Categories:
+  - Writing
+
+Name: Anchor+
+Summary: Offline first notes, synced with your own Anchor server
+Description: |-
+  Anchor+ is a fork of Anchor, an offline first, self hostable note taking app.
+  Notes are stored on your phone, editable offline, and synced with your Anchor
+  server when online.
+
+  It installs next to the official Anchor app and works with any Anchor server.
+  See the project page for what Anchor+ adds.
+
+  This build has no "Grab image text", which reads the text in pictures with
+  Google's ML Kit.
+
+RepoType: git
+Repo: https://github.com/AlxndrJhn/anchor.git
+
+Builds:
+  - versionName: 0.18.0-fork
+    versionCode: 3070
+    commit: fork-0.18.0.70
+    subdir: mobile
+    output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+    srclibs:
+      - flutter@3.47.9
+    rm:
+      - desktop
+      - mobile/ios
+      - mobile/macos
+    prebuild:
+      - bash tool/fdroid_prebuild.sh
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    build:
+      - export ORG_GRADLE_PROJECT_anchorFork=true
+      - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm
+        --build-name=0.18.0-fork --build-number=2070
+  - versionName: 0.18.0-fork
+    versionCode: 4070
+    commit: fork-0.18.0.70
+    subdir: mobile
+    output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+    srclibs:
+      - flutter@3.47.9
+    rm:
+      - desktop
+      - mobile/ios
+      - mobile/macos
+    prebuild:
+      - bash tool/fdroid_prebuild.sh
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    build:
+      - export ORG_GRADLE_PROJECT_anchorFork=true
+      - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm64
+        --build-name=0.18.0-fork --build-number=2070
+  - versionName: 0.18.0-fork
+    versionCode: 6070
+    commit: fork-0.18.0.70
+    subdir: mobile
+    output: build/app/outputs/flutter-apk/app-x86_64-release.apk
+    srclibs:
+      - flutter@3.47.9
+    rm:
+      - desktop
+      - mobile/ios
+      - mobile/macos
+    prebuild:
+      - bash tool/fdroid_prebuild.sh
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    build:
+      - export ORG_GRADLE_PROJECT_anchorFork=true
+      - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-x64
+        --build-name=0.18.0-fork --build-number=2070
+
+AutoUpdateMode: None
+UpdateCheckMode: Tags ^fork-[0-9.]+$
+CurrentVersion: 0.18.0-fork
+CurrentVersionCode: 6070
