@@ -74,6 +74,13 @@ void main() {
       expect(buildOfTag('android-latest'), isNull);
     });
 
+    test('F-Droid and its clients update the app themselves', () {
+      expect(isFdroidClient('org.fdroid.fdroid'), isTrue);
+      expect(isFdroidClient('com.looker.droidify'), isTrue);
+      expect(isFdroidClient('com.android.packageinstaller'), isFalse);
+      expect(isFdroidClient(null), isFalse);
+    });
+
     test('each phone gets the APK for its processor', () {
       expect(apkAssetFor(Abi.androidArm64), 'anchor-fork.apk');
       expect(apkAssetFor(Abi.androidArm), 'anchor-fork-armeabi-v7a.apk');

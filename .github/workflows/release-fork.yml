@@ -9,12 +9,14 @@ name: Release (fork)
 # (pages.yml). Only what changed since the last release is built: a release
 # whose Android app, server or desktop app didn't change has no APKs, new
 # image or installers, and the apps only update to releases that have theirs.
+# The APKs also go to the F-Droid repositories on Pages (pages.yml).
 #
 # With "candidate" ticked (`gh workflow run release-fork.yml --ref main -f
 # candidate=true`) it is a release candidate instead: a GitHub prerelease,
 # and an image tagged :fork-preview (not :fork-latest) that names itself so
 # in /api/health. The apps only offer it when "Receive preview releases" is on
-# and their server runs that image. The web app on Pages stays as it is.
+# and their server runs that image. The web app on Pages stays the last
+# release's; the preview F-Droid repository gets the candidate's APKs.
 # Releases also update :fork-preview, so preview servers never fall behind.
 
 on:
@@ -43,6 +45,8 @@ jobs:
       candidate: ${{ steps.version.outputs.candidate }}
       preview_image: ${{ steps.version.outputs.preview_image }}
       previous: ${{ steps.changes.outputs.previous }}
+      released: ${{ steps.changes.outputs.released }}
+      released_version: ${{ steps.changes.outputs.released_version }}
       apk: ${{ steps.changes.outputs.apk }}
       apk_tag: ${{ steps.changes.outputs.apk_tag }}
       docker: ${{ steps.changes.outputs.docker }}
@@ -81,6 +85,10 @@ jobs:
           CANDIDATE: ${{ steps.version.outputs.candidate }}
         run: |
           RELEASES=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=50")
+          # The last release, whose web app Pages keeps during a candidate.
+          RELEASED=$(jq -r '[.[] | select((.draft or .prerelease) | not)][0].tag_name // ""' <<< "$RELEASES")
+          echo "released=$RELEASED" >> "$GITHUB_OUTPUT"
+          echo "released_version=${RELEASED#fork-}" >> "$GITHUB_OUTPUT"
           if [ "$CANDIDATE" != true ]; then
             RELEASES=$(jq '[.[] | select(.prerelease | not)]' <<< "$RELEASES")
           fi
@@ -455,13 +463,19 @@ jobs:
           # Superseded by the per-commit releases above.
           gh release delete android-latest --cleanup-tag --yes || true
 
+  # A candidate republishes Pages for the preview F-Droid repository, with
+  # the last release's web app.
   pages:
     needs: [version, release]
-    if: github.ref == 'refs/heads/main' && needs.version.outputs.candidate != 'true'
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: read
       pages: write
       id-token: write
     uses: ./.github/workflows/pages.yml
+    secrets: inherit
     with:
-      anchor-version: ${{ needs.version.outputs.anchor_version }}
+      anchor-version: >-
+        ${{ needs.version.outputs.candidate == 'true' && needs.version.outputs.released_version
+          || needs.version.outputs.anchor_version }}
+      web-ref: ${{ needs.version.outputs.candidate == 'true' && needs.version.outputs.released || '' }}

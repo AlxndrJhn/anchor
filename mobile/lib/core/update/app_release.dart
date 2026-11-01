@@ -16,6 +16,19 @@ String apkAssetFor(Abi abi) => switch (abi) {
   _ => 'anchor-fork.apk',
 };
 
+/// F-Droid and the F-Droid clients, which keep an Anchor+ installed from the
+/// fork's F-Droid repositories up to date themselves.
+const fdroidClients = {
+  'org.fdroid.fdroid',
+  'org.fdroid.basic',
+  'com.looker.droidify',
+  'com.machiav3lli.fdroid',
+  'eu.bubu1.fdroidclassic',
+};
+
+/// Whether the app that installed this one is an F-Droid client.
+bool isFdroidClient(String? installer) => fdroidClients.contains(installer);
+
 /// Whether a server's image is the fork's preview one, whose users may get
 /// release candidates.
 bool isPreviewImage(String? image) =>
