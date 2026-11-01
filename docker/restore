@@ -49,7 +49,7 @@ cd "$DATA"
 for entry in .[!.]* ..?* *; do
   [ -e "$entry" ] || continue
   case "$entry" in
-    postgres | models | .anchor-restore) ;;
+    postgres | backups | models | .anchor-restore) ;;
     *) rm -rf "$entry" ;;
   esac
 done

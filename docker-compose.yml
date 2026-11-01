@@ -9,6 +9,9 @@ services:
       dockerfile: Dockerfile
     container_name: anchor
     restart: unless-stopped
+    # Time to shut Postgres down cleanly on `docker compose down` and on every
+    # `up --force-recreate`, before Docker kills what's left.
+    stop_grace_period: 1m
     ports:
       - "3000:3000"
     environment:
