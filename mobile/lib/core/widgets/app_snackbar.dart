@@ -18,13 +18,16 @@ enum SnackbarKind { done, success, error, info }
 abstract final class AppSnackbar {
   static _SnackbarController? _current;
 
-  /// [onClosed] gets whether the action button was pressed.
+  /// [onClosed] gets whether an action button was pressed. A
+  /// [secondaryActionLabel] shows before the action, as Undo before Follow it.
   static void show(
     BuildContext context,
     String message, {
     SnackbarKind kind = SnackbarKind.done,
     String? actionLabel,
     VoidCallback? onAction,
+    String? secondaryActionLabel,
+    VoidCallback? onSecondaryAction,
     ValueChanged<bool>? onClosed,
   }) {
     // A navigator's own context, which outlives its pages, has its overlay
@@ -45,6 +48,8 @@ abstract final class AppSnackbar {
       kind: kind,
       actionLabel: actionLabel,
       onAction: onAction,
+      secondaryActionLabel: secondaryActionLabel,
+      onSecondaryAction: onSecondaryAction,
       onClosed: onClosed,
       page: ModalRoute.of(context),
       navigator: Navigator.maybeOf(context),
@@ -64,6 +69,8 @@ class _SnackData {
     required this.kind,
     this.actionLabel,
     this.onAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
     this.onClosed,
     this.page,
     this.navigator,
@@ -73,6 +80,8 @@ class _SnackData {
   final SnackbarKind kind;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
   final ValueChanged<bool>? onClosed;
 
   final Route<Object?>? page;
@@ -158,7 +167,10 @@ class _SnackbarViewState extends State<_SnackbarView>
     _clock.duration = data.displayDuration;
     final isReaderOn =
         SemanticsBinding.instance.accessibilityFeatures.accessibleNavigation;
-    if (data.actionLabel != null && isReaderOn) return;
+    if ((data.actionLabel ?? data.secondaryActionLabel) != null &&
+        isReaderOn) {
+      return;
+    }
     _clock.forward();
   }
 
@@ -255,6 +267,11 @@ class _SnackbarViewState extends State<_SnackbarView>
                     leave();
                     data.onAction?.call();
                   },
+                  onSecondaryAction: () {
+                    data.isActionPressed = true;
+                    leave();
+                    data.onSecondaryAction?.call();
+                  },
                   onDismiss: leave,
                 ),
               ),
@@ -271,12 +288,14 @@ class _SnackbarBody extends StatelessWidget {
     required this.data,
     required this.clock,
     required this.onAction,
+    required this.onSecondaryAction,
     required this.onDismiss,
   });
 
   final _SnackData data;
   final Animation<double> clock;
   final VoidCallback onAction;
+  final VoidCallback onSecondaryAction;
   final VoidCallback onDismiss;
 
   @override
@@ -316,7 +335,9 @@ class _SnackbarBody extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(
                   16,
                   context.density.space8,
-                  data.actionLabel == null ? 16 : 8,
+                  data.actionLabel == null && data.secondaryActionLabel == null
+                      ? 16
+                      : 8,
                   context.density.space8,
                 ),
                 child: Row(
@@ -356,8 +377,18 @@ class _SnackbarBody extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (data.actionLabel != null) ...[
+                    if (data.secondaryActionLabel != null) ...[
                       const SizedBox(width: 12),
+                      _ActionButton(
+                        label: data.secondaryActionLabel!,
+                        color: colors.appOnInverse,
+                        onPressed: onSecondaryAction,
+                      ),
+                    ],
+                    if (data.actionLabel != null) ...[
+                      SizedBox(
+                        width: data.secondaryActionLabel == null ? 12 : 6,
+                      ),
                       _ActionButton(
                         label: data.actionLabel!,
                         color: accent,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
@@ -26,6 +27,7 @@ import '../../../core/widgets/bar_title.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/frosted_glass.dart';
 import '../../../core/widgets/pressable.dart';
+import '../../../core/widgets/revival.dart';
 import '../../../core/widgets/selection_bar.dart';
 import '../../../l10n/l10n.dart';
 import '../../reminders/data/reminder_permissions.dart';
@@ -214,6 +216,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) NoteSurfacePainter.precachePatterns(context);
     });
+    CardRegistry.following.addListener(_follow);
     ref.listenManual(
       shouldAskForReminderPermissionsProvider,
       (_, shouldAsk) => _askForReminderPermissions(shouldAsk),
@@ -224,6 +227,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
   @override
   void dispose() {
     _newNoteTap?.cancel();
+    CardRegistry.following.removeListener(_follow);
     _scroll.dispose();
     _isBottomBarCompact.dispose();
     _isFarDown.dispose();
@@ -267,6 +271,52 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       duration: AnchorTokens.motionDurationSlow,
       curve: Curves.easeOutCubic,
     );
+  }
+
+  /// Follows a restored note to its card, which greets you there. Cards
+  /// are only built near the screen, so the list looks a screen at a time.
+  Future<void> _follow() async {
+    final id = CardRegistry.following.value;
+    if (id == null) return;
+    CardRegistry.following.value = null;
+    // The list it's kept in comes up first.
+    for (var frame = 0; frame < 120; frame++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      final shown = ref.read(visibleNotesProvider);
+      if (shown.isLoaded && shown.notes.any((n) => n.id == id)) break;
+    }
+    var isFirst = true;
+    for (var screens = 0; screens < 200; screens++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || !_scroll.hasClients) return;
+      final position = _scroll.position;
+      if (isFirst) {
+        isFirst = false;
+        position.jumpTo(0);
+        continue;
+      }
+      final card = CardRegistry.keyFor(id).currentContext;
+      if (card != null && card.mounted) {
+        await Scrollable.ensureVisible(
+          card,
+          alignment: 0.3,
+          duration: context.motion(AnchorTokens.motionDurationSlow),
+          curve: Curves.easeOutCubic,
+        );
+        // Once the cards around it have made room for it.
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        if (mounted) welcomeNoteCard(id);
+        return;
+      }
+      if (position.pixels >= position.maxScrollExtent) return;
+      position.jumpTo(
+        math.min(
+          position.pixels + position.viewportDimension * 0.8,
+          position.maxScrollExtent,
+        ),
+      );
+    }
   }
 
   void _askForReminderPermissions(bool shouldAsk) {

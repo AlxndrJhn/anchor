@@ -38,6 +38,15 @@ abstract final class CardRegistry {
         _ => null,
       };
 
+  /// A restored note to follow to: the list it's kept in scrolls to its
+  /// card, then clears this.
+  static final ValueNotifier<String?> following = ValueNotifier(null);
+
+  static void follow(String noteId) {
+    following.value = null;
+    following.value = noteId;
+  }
+
   static final GlobalKey newNoteButton = GlobalKey(debugLabel: 'new note');
 
   static Rect? newNoteRect() => globalRectOf(newNoteButton.currentContext);

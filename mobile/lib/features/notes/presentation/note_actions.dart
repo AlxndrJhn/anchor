@@ -2,24 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../app/router/app_routes.dart';
 import '../../../core/motion/haptics.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/widgets/anchor_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/choice_sheet.dart';
 import '../../../core/widgets/destruction/destruction.dart';
+import '../../../core/widgets/revival.dart';
 import '../../../l10n/l10n.dart';
 import '../../note_locks/presentation/note_lock_actions.dart';
 import '../../note_locks/presentation/note_lock_session.dart';
 import '../../settings/presentation/editor_preferences_controller.dart';
+import '../../tags/presentation/tags_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_dates.dart';
 import '../domain/note_merge.dart';
 import 'editor/checklist_lines.dart';
+import 'note_folder.dart';
 import 'note_freeze_actions.dart';
 import 'note_invisible_actions.dart';
 import 'notes_controller.dart';
@@ -549,19 +554,63 @@ class NoteActions {
     );
   }
 
-  Future<void> restore(List<Note> notes) async {
+  /// With [canFollow] (one note), the message also offers to go where the
+  /// note is kept.
+  Future<void> restore(
+    List<Note> notes, {
+    FutureOr<void> Function()? beforeChange,
+    bool canFollow = false,
+  }) async {
     if (notes.isEmpty) return;
     final l10n = context.l10n;
     final repo = _repo;
     final ids = _idsOf(notes);
-    await repo.restore(ids);
+    // Outlive an open note that closes meanwhile.
+    final container = ProviderScope.containerOf(context);
+    final router = GoRouter.of(context);
+    await beforeChange?.call();
+    try {
+      await repo.restore(ids);
+    } catch (_) {
+      showRevivedNoteCards(ids);
+      rethrow;
+    }
     if (!context.mounted) return;
+    if (canFollow && notes.length == 1) {
+      final note = notes.single;
+      AppSnackbar.show(
+        context,
+        l10n.notesRestored(1),
+        secondaryActionLabel: l10n.commonUndo,
+        onSecondaryAction: () => repo.trash(ids),
+        actionLabel: l10n.noteRestoredFollow,
+        onAction: () => followNote(container, router, note),
+      );
+      return;
+    }
     AppSnackbar.show(
       context,
       l10n.notesRestored(ids.length),
       actionLabel: l10n.commonUndo,
       onAction: () => repo.trash(ids),
     );
+  }
+
+  /// Goes to the list [note] is kept in, all of it shown, which scrolls to
+  /// its card.
+  static void followNote(
+    ProviderContainer container,
+    GoRouter router,
+    Note note,
+  ) {
+    container
+        .read(noteFolderProvider.notifier)
+        .go(note.isArchived ? NoteFolder.archive : NoteFolder.notes);
+    container.read(selectedTagFilterProvider.notifier).clear();
+    container.read(searchQueryProvider.notifier).set('');
+    // An open note (opened from a widget) gives way to the list.
+    router.go(AppRoutes.home);
+    CardRegistry.follow(note.id);
   }
 
   Future<void> deleteForever(

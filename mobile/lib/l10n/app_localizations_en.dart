@@ -1916,6 +1916,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get noteRestoredFollow => 'Follow it';
+
+  @override
   String notesDeletedForever(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
