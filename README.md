@@ -435,7 +435,7 @@ Settings › Updates still checks when asked.
 Anchor+ isn't in F-Droid's own store yet. For that F-Droid builds it from
 source, without Google's ML Kit and so without "Grab image text":
 `mobile/tool/fdroid_prebuild.sh` makes a checkout that build, and
-`.github/fdroid/fdroiddata/` has the recipe to send to F-Droid.
+`.github/fdroid/fdroiddata/` has the recipe to send to F-Droid, and how it works.
 
 ## Desktop App
 
