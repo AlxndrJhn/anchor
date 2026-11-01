@@ -2,8 +2,9 @@ name: Audit
 
 # Fails when a production dependency has a known high or critical
 # vulnerability. Also runs weekly, since advisories are published without any
-# change here. To fix one in a transitive dependency whose parent pins a
-# vulnerable version, add an override to that package's pnpm-workspace.yaml.
+# change here, and then scans the published image too. To fix one in a
+# transitive dependency whose parent pins a vulnerable version, add an
+# override to that package's pnpm-workspace.yaml.
 
 on:
   push:
@@ -60,3 +61,25 @@ jobs:
       # Reads the lockfile only; nothing is installed.
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
+
+  # The image self-hosters pull, against this week's advisories. A failure
+  # here is fixed by a release built from main: Dependabot's base image bumps
+  # and the build's apk upgrade pick up the fixes.
+  image-scan:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:fork-latest" >> "$GITHUB_ENV"
+
+      # Same settings as the build's scan in docker-build.yml.
+      - name: Scan published image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.1
+          image-ref: ${{ env.IMAGE }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          skip-files: usr/local/bin/gosu
+          exit-code: "1"

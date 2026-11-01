@@ -1,0 +1,57 @@
+version: 2
+
+# Packages get pull requests only for known vulnerabilities (a limit of 0
+# turns their routine version bumps off), one per app and ecosystem. The base
+# images and actions get their routine bumps too: a pinned image's digest only
+# moves when someone bumps it, and that is how Alpine and Postgres fixes reach
+# the image.
+#
+# Security pull requests need "Dependabot security updates" turned on in the
+# repository's settings.
+
+updates:
+  - package-ecosystem: npm
+    directories: [/server, /web, /desktop]
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: pub
+    directory: /mobile
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: gradle
+    directory: /mobile/android
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      base-images:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
