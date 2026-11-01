@@ -3,12 +3,14 @@ import type { Response } from 'express';
 import helmet from 'helmet';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as fs from 'fs';
+import * as path from 'path';
 import { AppConfig, StorageConfig } from './config/configuration';
 import {
   PROFILE_IMAGE_CACHE_CONTROL,
   PUBLIC_PROFILES_PREFIX,
 } from './config/storage.constants';
 import { AppValidationPipe } from './common/pipes/app-validation.pipe';
+import { PROFILE_IMAGE_EXTENSIONS } from './auth/utils/profile-image.util';
 
 export function setupApp(app: NestExpressApplication): void {
   const appConfig = app.get<ConfigType<typeof AppConfig>>(AppConfig.KEY);
@@ -32,11 +34,19 @@ export function setupApp(app: NestExpressApplication): void {
     }
   }
 
-  // Serve profile images only
+  // Serve profile images only. Anything else in the folder (say, a file an
+  // older version saved under the uploaded name's extension) is handed out as
+  // a download, never rendered on our origin.
+  const imageExtensions = new Set(Object.values(PROFILE_IMAGE_EXTENSIONS));
   app.useStaticAssets(storageConfig.profilesDir, {
     prefix: PUBLIC_PROFILES_PREFIX,
-    setHeaders: (res: Response) =>
-      res.setHeader('Cache-Control', PROFILE_IMAGE_CACHE_CONTROL),
+    setHeaders: (res: Response, filePath: string) => {
+      res.setHeader('Cache-Control', PROFILE_IMAGE_CACHE_CONTROL);
+      if (!imageExtensions.has(path.extname(filePath).toLowerCase())) {
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Disposition', 'attachment');
+      }
+    },
   });
 
   app.useGlobalPipes(new AppValidationPipe());

@@ -73,6 +73,53 @@ describe('app setup', () => {
     expect(image.body).toEqual(PNG_1PX);
   });
 
+  it('names a profile image after its content, not the uploaded name', async () => {
+    const res = await user.http
+      .post('/api/auth/profile/image')
+      .attach('image', PNG_1PX, {
+        filename: 'me.html',
+        contentType: 'text/html',
+      })
+      .expect(201);
+    const { profileImage } = bodyOf<{ profileImage: string }>(res);
+
+    expect(profileImage).toMatch(/\.png$/);
+    const image = await request(ctx.http).get(profileImage).expect(200);
+    expect(image.headers['content-type']).toBe('image/png');
+  });
+
+  it('hands out anything but an image in the profiles folder as a download', async () => {
+    fs.mkdirSync(ctx.storage.profilesDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(ctx.storage.profilesDir, 'old-upload.html'),
+      '<script>alert(1)</script>',
+    );
+
+    const res = await request(ctx.http)
+      .get('/uploads/profiles/old-upload.html')
+      .expect(200);
+
+    expect(res.headers['content-type']).toBe('application/octet-stream');
+    expect(res.headers['content-disposition']).toBe('attachment');
+  });
+
+  it('never deletes outside the profiles folder when replacing a picture', async () => {
+    const outside = path.join(ctx.storage.root, 'keep-me.txt');
+    fs.writeFileSync(outside, 'keep');
+    // What a failed OIDC picture download used to store as is.
+    await ctx.prisma.user.update({
+      where: { id: user.id },
+      data: { profileImage: 'https://x.invalid/../../keep-me.txt' },
+    });
+
+    await user.http
+      .post('/api/auth/profile/image')
+      .attach('image', PNG_1PX, { filename: 'me.png' })
+      .expect(201);
+
+    expect(fs.existsSync(outside)).toBe(true);
+  });
+
   it('keeps note attachments private', async () => {
     const note = await user.notes.create({ title: 'private file' });
     const attachment = await user.attachments.upload(note.id);

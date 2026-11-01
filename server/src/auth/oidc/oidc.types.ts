@@ -7,6 +7,8 @@ export interface OidcUserClaims {
   name: string;
   subject: string;
   picture?: string;
+  /** The provider's `email_verified` claim was true. */
+  emailVerified: boolean;
 }
 
 export interface OidcConfig {

@@ -22,6 +22,10 @@ import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateApiToken } from './utils/generate-api-token';
+import {
+  PROFILE_IMAGE_EXTENSIONS,
+  storedProfileImageFile,
+} from './utils/profile-image.util';
 import { deleteFileIfExists } from '../common/utils/file-system.util';
 import { normalizeEmail, sameEmail } from '../common/utils/email.util';
 import { AttemptLimiter } from '../common/utils/attempt-limiter';
@@ -446,9 +450,14 @@ export class AuthService {
     const uploadsDir = this.storageConfig.profilesDir;
     await fs.mkdir(uploadsDir, { recursive: true });
 
-    // File validation is handled at controller level with ParseFilePipe
+    // File validation is handled at controller level with ParseFilePipe.
+    // The extension comes from the checked type, never the uploaded name, so
+    // the file is always served as an image.
+    const ext = PROFILE_IMAGE_EXTENSIONS[file.mimetype];
+    if (!ext) {
+      throw new BadRequestException('Profile image must be JPEG, PNG or WebP');
+    }
     const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
     const filename = `${userId}-${timestamp}${ext}`;
     const filePath = path.join(uploadsDir, filename);
     const imagePath = `${PUBLIC_PROFILES_PREFIX}/${filename}`;
@@ -536,8 +545,11 @@ export class AuthService {
   }
 
   private async deleteProfileImage(profileImagePath: string): Promise<void> {
-    if (!profileImagePath) return;
-    const fullPath = path.join(this.storageConfig.root, profileImagePath);
+    const fullPath = storedProfileImageFile(
+      this.storageConfig.profilesDir,
+      profileImagePath,
+    );
+    if (!fullPath) return;
     await deleteFileIfExists(fullPath, this.logger);
   }
 

@@ -105,7 +105,11 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('profile/image')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(
+    FileInterceptor('image', {
+      limits: { fileSize: PROFILE_IMAGE_MAX_BYTES, files: 1 },
+    }),
+  )
   async uploadProfileImage(
     @CurrentUser() user: User,
     @UploadedFile(
@@ -113,8 +117,11 @@ export class AuthController {
         fileIsRequired: true,
         validators: [
           new MaxFileSizeValidator({ maxSize: PROFILE_IMAGE_MAX_BYTES }),
+          // Checks the file's content; the detected type replaces the one
+          // the client declared, and decides the stored extension.
           new FileTypeValidator({
-            fileType: /(image\/jpeg|image\/png|image\/webp)/,
+            fileType: /^image\/(jpeg|png|webp)$/,
+            overrideMimeType: true,
           }),
         ],
       }),
