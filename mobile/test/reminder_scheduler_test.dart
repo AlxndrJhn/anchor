@@ -8,6 +8,7 @@ import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/reminders/data/notification_gateway.dart';
 import 'package:anchor/features/reminders/data/reminder_scheduler.dart';
+import 'package:anchor/features/reminders/domain/reminder_schedule.dart';
 import 'package:anchor/l10n/app_localizations.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -321,6 +322,78 @@ void main() {
       DateTimeComponents.dateAndTime,
     );
   });
+
+  group('repeating reminders that start later', () {
+    DesiredReminder only(
+      String remindAt,
+      ReminderRecurrence recurrence, {
+      required DateTime now,
+    }) => desiredReminders(
+      [note(id: 'n1', slot: 1, remindAt: remindAt, recurrence: recurrence)],
+      now: now,
+      l10n: _english,
+    ).single;
+
+    test('the OS alone would ring a monthly start in March today', () {
+      expect(
+        osFiring(
+          DateTime(2027, 3, 1, 9),
+          DateTimeComponents.dayOfMonthAndTime,
+          from: DateTime(2026, 11, 1, 7),
+        ),
+        DateTime(2026, 11, 1, 9),
+      );
+    });
+
+    test('rings a monthly reminder once on its start date', () {
+      final desired = only(
+        '2027-03-01T09:00',
+        ReminderRecurrence.monthly,
+        now: DateTime(2026, 11, 1, 7),
+      );
+
+      expect(desired.at, DateTime(2027, 3, 1, 9));
+      expect(desired.repeat, isNull);
+    });
+
+    test('hands the series to the OS once the start is a cycle away', () {
+      final desired = only(
+        '2027-03-01T09:00',
+        ReminderRecurrence.monthly,
+        now: DateTime(2027, 2, 15, 7),
+      );
+
+      expect(desired.at, DateTime(2027, 3, 1, 9));
+      expect(desired.repeat, DateTimeComponents.dayOfMonthAndTime);
+    });
+
+    test('rings once whenever the start is more than a cycle away', () {
+      final now = DateTime(2026, 11, 1, 7);
+      for (final (remindAt, recurrence) in [
+        ('2026-11-03T09:00', ReminderRecurrence.daily),
+        ('2026-11-15T09:00', ReminderRecurrence.weekly),
+        ('2028-11-01T09:00', ReminderRecurrence.yearly),
+      ]) {
+        final desired = only(remindAt, recurrence, now: now);
+        expect(desired.at, parseWallClock(remindAt), reason: '$recurrence');
+        expect(desired.repeat, isNull, reason: '$recurrence');
+      }
+    });
+
+    test('rings once on a short month the OS would keep repeating', () {
+      // Anchored on the 31st: September rings on the 30th, October on the
+      // 31st again, where the OS would repeat the 30th.
+      final desired = only(
+        '2026-08-31T09:00',
+        ReminderRecurrence.monthly,
+        now: now,
+      );
+
+      expect(desired.at, DateTime(2026, 9, 30, 9));
+      expect(desired.repeat, isNull);
+    });
+  });
+
   group('applyReminders', () {
     final soon = DateTime(2026, 9, 4, 18);
 
