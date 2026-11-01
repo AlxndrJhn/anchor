@@ -31,6 +31,7 @@ import '../../../core/widgets/bottom_bar_frame.dart';
 import '../../../core/widgets/choice_sheet.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/page_bar.dart';
+import '../../../core/widgets/revival.dart';
 import '../../../l10n/l10n.dart';
 import '../../note_locks/presentation/note_lock_actions.dart';
 import '../../reminders/presentation/reminder_permission_prompt.dart';
@@ -854,10 +855,34 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     );
   }
 
+  /// Restores the note; with a list to go back to, it closes into its card,
+  /// which rises out of the trash there.
   Future<void> _restoreFromTrash() async {
     final note = _draft.note;
     if (note == null) return;
-    await NoteActions(context, ref).restore([note]);
+    if (context.canPop() && !context.isMotionReduced) {
+      await NoteActions(_host, ref).restore(
+        [note],
+        beforeChange: () => _closeThenRevive(note.id),
+        canFollow: true,
+      );
+      return;
+    }
+    await NoteActions(context, ref).restore([note], canFollow: true);
+  }
+
+  /// Closes the note, then brings its card out of the trash where it stands.
+  Future<void> _closeThenRevive(String noteId) async {
+    _draft.flushOnLeave();
+    final closing =
+        ModalRoute.of(context)?.reverseTransitionDuration ?? Duration.zero;
+    context.pop();
+    await Future.wait([
+      Future<void>.delayed(closing),
+      CardRegistry.whenShown(noteId, timeout: const Duration(seconds: 2)),
+    ]);
+    await WidgetsBinding.instance.endOfFrame;
+    await reviveNoteCards([noteId]);
   }
 
   Future<void> _deleteForever() async {

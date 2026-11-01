@@ -2606,6 +2606,10 @@
       }
     }
   },
+  "noteRestoredFollow": "Follow it",
+  "@noteRestoredFollow": {
+    "description": "Button on the toast after a note opened from the trash was restored; it goes to the list the note is kept in and shows its card there."
+  },
   "notesDeletedForever": "{count, plural, =1{Note permanently deleted} other{{count} notes permanently deleted}}",
   "@notesDeletedForever": {
     "description": "Toast after notes were permanently deleted.",

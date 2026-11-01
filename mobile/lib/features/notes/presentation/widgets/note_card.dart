@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/motion/springs.dart';
+import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/check_circle.dart';
 import '../../../../core/widgets/destruction/destruction.dart';
+import '../../../../core/widgets/revival.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../note_locks/presentation/note_lock_session.dart';
 import '../../../reminders/presentation/reminder_labels.dart';
@@ -211,8 +213,16 @@ class _NoteCardState extends ConsumerState<NoteCard>
           animation: _press,
           builder: (context, child) =>
               Transform.scale(scale: _press.value, child: child),
-          // Deleted, the card burns away where it stands.
-          child: Destructible(id: note.id, child: card),
+          // Deleted, the card burns away where it stands; restored, it
+          // rises out of the trash.
+          child: Destructible(
+            id: note.id,
+            child: Revivable(
+              id: note.id,
+              borderRadius: context.appStyle.corners(AnchorTokens.radiusCard),
+              child: card,
+            ),
+          ),
         ),
       ),
     );

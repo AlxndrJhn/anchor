@@ -2908,6 +2908,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Note restored} other{{count} notes restored}}'**
   String notesRestored(int count);
 
+  /// Button on the toast after a note opened from the trash was restored; it goes to the list the note is kept in and shows its card there.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow it'**
+  String get noteRestoredFollow;
+
   /// Toast after notes were permanently deleted.
   ///
   /// In en, this message translates to:
