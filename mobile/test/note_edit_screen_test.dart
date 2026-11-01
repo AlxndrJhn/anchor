@@ -10,6 +10,7 @@ import 'package:anchor/core/theme/app_typography.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/core/widgets/grouped_list.dart';
+import 'package:anchor/core/widgets/revival.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_copies_repository.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
@@ -159,10 +160,14 @@ void main() {
                       if (withCard)
                         Destructible(
                           id: note!.id,
-                          child: const SizedBox(
-                            width: 160,
-                            height: 120,
-                            child: Text('The card'),
+                          child: Revivable(
+                            id: note.id,
+                            borderRadius: BorderRadius.zero,
+                            child: const SizedBox(
+                              width: 160,
+                              height: 120,
+                              child: Text('The card'),
+                            ),
                           ),
                         ),
                     ],
@@ -603,9 +608,8 @@ void main() {
     verifyNever(() => notesRepo.updateNote(any()));
   });
 
-  testWidgets('restoring a trashed note makes it editable again', (
-    tester,
-  ) async {
+  testWidgets('restoring a trashed note with no list behind it makes it '
+      'editable again', (tester) async {
     const trashed = Note(
       id: 'n1',
       title: 'T',
@@ -623,7 +627,7 @@ void main() {
       stored.add(restored);
     });
 
-    await pumpScreen(tester, note: trashed);
+    await pumpScreen(tester, note: trashed, isOnlyPage: true);
     expect(find.text('old content', findRichText: true), findsOneWidget);
     expect(titleField, findsNothing);
 
@@ -640,6 +644,42 @@ void main() {
 
     await drainSnackbar(tester);
     await stored.close();
+  });
+
+  testWidgets('a restored note closes at once; its card rises out of the '
+      'trash, then it comes back, with Undo and Follow it', (tester) async {
+    const trashed = Note(
+      id: 'n1',
+      title: 'T',
+      content: '{"ops":[{"insert":"old content\\n"}]}',
+      state: NoteState.trashed,
+    );
+    when(() => notesRepo.restore(['n1'])).thenAnswer((_) async {});
+    when(() => notesRepo.trash(['n1'])).thenAnswer((_) async => 1);
+
+    await pumpScreen(tester, note: trashed, withCard: true);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Restore'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    // Closed, back on the list, where the card rises out of the trash.
+    expect(find.byType(NoteEditScreen), findsNothing);
+    verifyNever(() => notesRepo.restore(any()));
+
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    verify(() => notesRepo.restore(['n1'])).called(1);
+    expect(find.text('Note restored'), findsOneWidget);
+    expect(find.text('Follow it'), findsOneWidget);
+
+    // The toast has come up.
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Undo'));
+    verify(() => notesRepo.trash(['n1'])).called(1);
+    await drainSnackbar(tester);
   });
 
   testWidgets('a note changed elsewhere replaces what is on screen', (

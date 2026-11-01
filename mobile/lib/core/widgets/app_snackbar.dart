@@ -386,9 +386,10 @@ class _SnackbarBody extends StatelessWidget {
                       ),
                     ],
                     if (data.actionLabel != null) ...[
-                      SizedBox(
-                        width: data.secondaryActionLabel == null ? 12 : 6,
-                      ),
+                      if (data.secondaryActionLabel == null)
+                        const SizedBox(width: 12)
+                      else
+                        const SizedBox(width: 8),
                       _ActionButton(
                         label: data.actionLabel!,
                         color: accent,
