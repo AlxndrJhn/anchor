@@ -5,6 +5,7 @@ import '../core/theme/custom_theme.dart';
 import '../core/theme/display_density.dart';
 import '../core/theme/tokens/app_style.dart';
 import '../features/notes/presentation/notes_view_options.dart';
+import '../features/reminders/domain/reminder_preferences.dart';
 import '../features/settings/domain/editor_preferences.dart';
 import 'router/app_routes.dart';
 
@@ -18,6 +19,7 @@ class AppBootstrap {
     this.appStyle = AppStyle.standard,
     this.customTheme,
     this.editorPreferences = const EditorPreferences(),
+    this.reminderPreferences = const ReminderPreferences(),
     this.foldedChecklistNotes = const [],
     this.openArchivedTags = const [],
     this.userId,
@@ -35,6 +37,7 @@ class AppBootstrap {
   /// The custom theme over the colour scheme, if one is saved.
   final CustomTheme? customTheme;
   final EditorPreferences editorPreferences;
+  final ReminderPreferences reminderPreferences;
 
   final List<String> foldedChecklistNotes;
   final List<String> openArchivedTags;

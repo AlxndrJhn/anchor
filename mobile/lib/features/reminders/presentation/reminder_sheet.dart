@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/motion/haptics.dart';
@@ -19,10 +20,12 @@ import '../../../core/widgets/segmented_control.dart';
 import '../../../core/widgets/switch_row.dart';
 import '../../../l10n/l10n.dart';
 import '../../notes/domain/note.dart';
+import '../domain/reminder_preferences.dart';
 import '../domain/reminder_schedule.dart';
 import '../domain/reminder_times.dart';
 import 'month_grid.dart';
 import 'reminder_labels.dart';
+import 'reminder_preferences_controller.dart';
 import 'time_wheel.dart';
 
 /// `reminder: null` means removed; a dismissed sheet returns null.
@@ -42,24 +45,25 @@ Future<ReminderChoice?> showReminderSheet(
 enum _Picker { date, time }
 
 const _presetIcons = {
-  ReminderPresetKind.laterToday: LucideIcons.clock,
-  ReminderPresetKind.tomorrow: LucideIcons.sunrise,
+  ReminderPresetKind.morning: LucideIcons.sunrise,
+  ReminderPresetKind.afternoon: LucideIcons.sun,
+  ReminderPresetKind.evening: LucideIcons.sunset,
+  ReminderPresetKind.night: LucideIcons.moon,
   ReminderPresetKind.weekend: LucideIcons.coffee,
-  ReminderPresetKind.nextMonday: LucideIcons.briefcase,
   ReminderPresetKind.nextWeek: LucideIcons.calendarDays,
   ReminderPresetKind.nextMonth: LucideIcons.calendar1,
 };
 
-class _ReminderSheet extends StatefulWidget {
+class _ReminderSheet extends ConsumerStatefulWidget {
   const _ReminderSheet({required this.reminder});
 
   final NoteReminder? reminder;
 
   @override
-  State<_ReminderSheet> createState() => _ReminderSheetState();
+  ConsumerState<_ReminderSheet> createState() => _ReminderSheetState();
 }
 
-class _ReminderSheetState extends State<_ReminderSheet> {
+class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
   final _pickerKey = GlobalKey();
   DateTime? _at;
   late ReminderRecurrence _repeat;
@@ -67,6 +71,7 @@ class _ReminderSheetState extends State<_ReminderSheet> {
   bool _isCustomTime = false;
   _Picker? _openPicker;
   late DateTime _month;
+  late final ReminderPreferences _times;
   late final List<ReminderPreset> _presets;
 
   @override
@@ -76,7 +81,8 @@ class _ReminderSheetState extends State<_ReminderSheet> {
     _at = parseWallClock(widget.reminder?.remindAt);
     _repeat = widget.reminder?.recurrence ?? ReminderRecurrence.none;
     if (_repeat.repeats) _lastRepeat = _repeat;
-    _presets = reminderPresets(now);
+    _times = ref.read(reminderPreferencesControllerProvider);
+    _presets = reminderPresets(now, _times);
     _isCustomTime =
         _at != null && !_presets.any((p) => isSameMinute(p.at, _at!));
     _month = DateTime((_at ?? now).year, (_at ?? now).month);
@@ -93,7 +99,7 @@ class _ReminderSheetState extends State<_ReminderSheet> {
   void _pickCustom() {
     setState(() {
       _isCustomTime = true;
-      _at ??= tomorrowAtNine(DateTime.now());
+      _at ??= tomorrowMorning(DateTime.now(), _times);
       _month = DateTime(_at!.year, _at!.month);
       _openPicker = null;
     });
@@ -119,7 +125,7 @@ class _ReminderSheetState extends State<_ReminderSheet> {
 
   void _pickDay(DateTime day) {
     Haptics.selection();
-    final base = _at ?? tomorrowAtNine(DateTime.now());
+    final base = _at ?? tomorrowMorning(DateTime.now(), _times);
     setState(() {
       _at = DateTime(day.year, day.month, day.day, base.hour, base.minute);
       _openPicker = _Picker.time;
@@ -204,7 +210,11 @@ class _ReminderSheetState extends State<_ReminderSheet> {
                   children: [
                     for (final preset in _presets)
                       GroupedListTile(
-                        icon: _presetIcons[preset.kind]!,
+                        icon:
+                            preset.kind == ReminderPresetKind.morning &&
+                                !preset.isTomorrow
+                            ? LucideIcons.clock
+                            : _presetIcons[preset.kind]!,
                         label: presetLabel(preset, l10n),
                         value: presetValueLabel(preset, l10n),
                         checked:
@@ -285,10 +295,11 @@ class _ReminderSheetState extends State<_ReminderSheet> {
                                       ),
                                       _Picker.time => TimeWheel(
                                         key: const ValueKey('time'),
-                                        at: _at ?? tomorrowAtNine(now),
+                                        at: _at ?? tomorrowMorning(now, _times),
                                         onChanged: (t) => setState(() {
                                           final day =
-                                              _at ?? tomorrowAtNine(now);
+                                              _at ??
+                                              tomorrowMorning(now, _times);
                                           _at = DateTime(
                                             day.year,
                                             day.month,

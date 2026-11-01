@@ -24,6 +24,7 @@ import '../core/theme/tokens/app_style.dart';
 import '../features/home_widget/data/home_widget_payload.dart';
 import '../features/notes/domain/quick_action.dart';
 import '../features/notes/presentation/notes_view_options.dart';
+import '../features/reminders/domain/reminder_preferences.dart';
 import '../features/reminders/presentation/notification_launch.dart';
 import '../features/settings/domain/editor_preferences.dart';
 import 'app_bootstrap.dart';
@@ -123,6 +124,23 @@ Future<AppBootstrap> initializeApp({
     ).toSet(),
   );
 
+  const defaults = ReminderPreferences();
+  final reminderPreferences = ReminderPreferences(
+    morning:
+        await preferences.getReminderMinutes(StorageKeys.reminderMorning) ??
+        defaults.morning,
+    afternoon:
+        await preferences.getReminderMinutes(StorageKeys.reminderAfternoon) ??
+        defaults.afternoon,
+    evening:
+        await preferences.getReminderMinutes(StorageKeys.reminderEvening) ??
+        defaults.evening,
+    night:
+        await preferences.getReminderMinutes(StorageKeys.reminderNight) ??
+        defaults.night,
+    weekStart: await preferences.getReminderWeekStart() ?? defaults.weekStart,
+  );
+
   String? userId;
   final userData = saved[StorageKeys.userData];
   if (userData != null) {
@@ -152,6 +170,7 @@ Future<AppBootstrap> initializeApp({
     appStyle: appStyle,
     customTheme: customTheme,
     editorPreferences: editorPreferences,
+    reminderPreferences: reminderPreferences,
     foldedChecklistNotes: await preferences.getFoldedChecklistNotes(),
     openArchivedTags: await preferences.getOpenArchivedTags(),
     userId: userId,

@@ -648,6 +648,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFont => 'Font';
 
   @override
+  String get settingsReminders => 'Reminders';
+
+  @override
+  String get settingsMorning => 'Morning';
+
+  @override
+  String get settingsAfternoon => 'Afternoon';
+
+  @override
+  String get settingsEvening => 'Evening';
+
+  @override
+  String get settingsNight => 'Night';
+
+  @override
+  String get settingsWeekStart => 'Week starts on';
+
+  @override
   String get settingsTextSize => 'Text size';
 
   @override
@@ -1029,13 +1047,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderLaterToday => 'Later today';
 
   @override
+  String get reminderThisAfternoon => 'This afternoon';
+
+  @override
+  String get reminderTonight => 'Tonight';
+
+  @override
+  String get reminderTomorrowNight => 'Tomorrow night';
+
+  @override
+  String get reminderTomorrowMorning => 'Tomorrow morning';
+
+  @override
+  String get reminderTomorrowAfternoon => 'Tomorrow afternoon';
+
+  @override
+  String get reminderTomorrowEvening => 'Tomorrow evening';
+
+  @override
+  String get reminderThisEvening => 'This evening';
+
+  @override
   String get reminderNextWeek => 'Next week';
 
   @override
   String get reminderWeekend => 'On the weekend';
-
-  @override
-  String get reminderNextMonday => 'Next Monday';
 
   @override
   String get reminderNextMonth => 'Next month';

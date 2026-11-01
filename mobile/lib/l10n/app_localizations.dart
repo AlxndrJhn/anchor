@@ -1192,6 +1192,42 @@ abstract class AppLocalizations {
   /// **'Font'**
   String get settingsFont;
 
+  /// Settings section heading for the reminder times of day and the first day of the week.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get settingsReminders;
+
+  /// Settings row: the time of day used by the Tomorrow, weekend, next week and next month reminder choices.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning'**
+  String get settingsMorning;
+
+  /// Settings row: the time of day the This afternoon reminder choice uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon'**
+  String get settingsAfternoon;
+
+  /// Settings row: the time of day the This evening reminder choice uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening'**
+  String get settingsEvening;
+
+  /// Settings row: the time of day the Tonight reminder choice uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get settingsNight;
+
+  /// Settings label above the choice of weekday the Next week reminder choice lands on.
+  ///
+  /// In en, this message translates to:
+  /// **'Week starts on'**
+  String get settingsWeekStart;
+
   /// Setting that picks how big the text in notes is.
   ///
   /// In en, this message translates to:
@@ -1786,13 +1822,55 @@ abstract class AppLocalizations {
   /// **'Overdue reminder: {when}'**
   String reminderSpokenLate(String when);
 
-  /// Quick reminder choice for a time later on the same day.
+  /// Quick reminder choice for the morning time on the same day, once the day has begun.
   ///
   /// In en, this message translates to:
   /// **'Later today'**
   String get reminderLaterToday;
 
-  /// Quick reminder choice for a day in the coming week.
+  /// Quick reminder choice for the afternoon time on the same day.
+  ///
+  /// In en, this message translates to:
+  /// **'This afternoon'**
+  String get reminderThisAfternoon;
+
+  /// Quick reminder choice for the night time on the same day.
+  ///
+  /// In en, this message translates to:
+  /// **'Tonight'**
+  String get reminderTonight;
+
+  /// Quick reminder choice for tomorrow's night time; in the small hours, before the day begins, the coming night.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow night'**
+  String get reminderTomorrowNight;
+
+  /// Quick reminder choice for tomorrow's morning time; in the small hours, before the day begins, the coming morning.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow morning'**
+  String get reminderTomorrowMorning;
+
+  /// Quick reminder choice for tomorrow's afternoon time; in the small hours, before the day begins, the coming afternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow afternoon'**
+  String get reminderTomorrowAfternoon;
+
+  /// Quick reminder choice for tomorrow's evening time; in the small hours, before the day begins, the coming evening.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow evening'**
+  String get reminderTomorrowEvening;
+
+  /// Quick reminder choice for the evening time on the same day.
+  ///
+  /// In en, this message translates to:
+  /// **'This evening'**
+  String get reminderThisEvening;
+
+  /// Quick reminder choice for the first day of next week, in the morning.
   ///
   /// In en, this message translates to:
   /// **'Next week'**
@@ -1804,13 +1882,7 @@ abstract class AppLocalizations {
   /// **'On the weekend'**
   String get reminderWeekend;
 
-  /// Quick reminder choice for the coming Monday.
-  ///
-  /// In en, this message translates to:
-  /// **'Next Monday'**
-  String get reminderNextMonday;
-
-  /// Quick reminder choice for the same day next month.
+  /// Quick reminder choice for the first day of next month, in the morning.
   ///
   /// In en, this message translates to:
   /// **'Next month'**

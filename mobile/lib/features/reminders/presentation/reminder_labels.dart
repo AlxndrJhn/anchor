@@ -65,23 +65,34 @@ String reminderSpokenLabel(
       : l10n.reminderSpoken(when);
 }
 
-String presetLabel(ReminderPreset preset, AppLocalizations l10n) =>
-    switch (preset.kind) {
-      ReminderPresetKind.laterToday => l10n.reminderLaterToday,
-      ReminderPresetKind.tomorrow => l10n.commonTomorrow,
-      ReminderPresetKind.weekend => l10n.reminderWeekend,
-      ReminderPresetKind.nextMonday => l10n.reminderNextMonday,
-      ReminderPresetKind.nextWeek => l10n.reminderNextWeek,
-      ReminderPresetKind.nextMonth => l10n.reminderNextMonth,
-    };
+String presetLabel(
+  ReminderPreset preset,
+  AppLocalizations l10n,
+) => switch (preset.kind) {
+  ReminderPresetKind.morning =>
+    preset.isTomorrow ? l10n.reminderTomorrowMorning : l10n.reminderLaterToday,
+  ReminderPresetKind.afternoon =>
+    preset.isTomorrow
+        ? l10n.reminderTomorrowAfternoon
+        : l10n.reminderThisAfternoon,
+  ReminderPresetKind.evening =>
+    preset.isTomorrow ? l10n.reminderTomorrowEvening : l10n.reminderThisEvening,
+  ReminderPresetKind.night =>
+    preset.isTomorrow ? l10n.reminderTomorrowNight : l10n.reminderTonight,
+  ReminderPresetKind.weekend => l10n.reminderWeekend,
+  ReminderPresetKind.nextWeek => l10n.reminderNextWeek,
+  ReminderPresetKind.nextMonth => l10n.reminderNextMonth,
+};
 
 /// The time, with the weekday or date where the label leaves the day open.
 String presetValueLabel(ReminderPreset preset, AppLocalizations l10n) {
   final day = switch (preset.kind) {
-    ReminderPresetKind.laterToday || ReminderPresetKind.tomorrow => null,
+    ReminderPresetKind.morning ||
+    ReminderPresetKind.afternoon ||
+    ReminderPresetKind.evening ||
+    ReminderPresetKind.night => null,
     ReminderPresetKind.weekend ||
     ReminderPresetKind.nextWeek => DateFormat.E(dateLocale),
-    ReminderPresetKind.nextMonday ||
     ReminderPresetKind.nextMonth => DateFormat.MMMd(dateLocale),
   };
   return day == null
