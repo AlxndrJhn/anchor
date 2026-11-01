@@ -136,9 +136,6 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  assets:
-    - assets/icons/anchor_logo.png
-
   # Licenses sit next to the files (SIL OFL 1.1; the note fonts' are listed in
   # assets/fonts/README.md).
   fonts:

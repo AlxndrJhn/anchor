@@ -1,20 +1,7 @@
 import Link from "next/link";
-import { publicPath } from "@/lib/local-backend/mode";
 import { cn } from "@/lib/utils";
+import { AnchorLogo } from "./anchor-logo";
 import { PlusMark } from "./plus-mark";
-
-/** The app's icon: a ruled pad with a brass anchor on slate cloth. */
-export function AnchorLogo({ className }: { className?: string }) {
-  return (
-    <img
-      src={publicPath("/anchor-mark.svg")}
-      alt=""
-      aria-hidden
-      draggable={false}
-      className={cn("flex-none rounded-sm shadow-edge", className)}
-    />
-  );
-}
 
 const wordmarkClass =
   "whitespace-nowrap font-bold font-serif text-[19px] tracking-[-.005em]";
