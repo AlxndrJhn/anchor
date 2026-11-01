@@ -178,9 +178,9 @@ let mainWindow = null;
 let setupState = { error: null, canRetry: false };
 
 function iconPath() {
-  const packaged = path.join(__dirname, "..", "icons", "web-app-manifest-512x512.png");
+  const packaged = path.join(__dirname, "..", "icons", "web-app-manifest-any-512x512.png");
   if (fs.existsSync(packaged)) return packaged;
-  return path.join(__dirname, "..", "..", "web", "public", "web-app-manifest-512x512.png");
+  return path.join(__dirname, "..", "..", "web", "public", "web-app-manifest-any-512x512.png");
 }
 
 function visibleBounds(saved) {

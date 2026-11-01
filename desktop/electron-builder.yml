@@ -17,7 +17,7 @@ files:
   - from: ../web/public
     to: icons
     filter:
-      - web-app-manifest-512x512.png
+      - web-app-manifest-any-512x512.png
   # The setup page's fonts: the Android app's, so it looks like its first page.
   - from: ../mobile/assets/fonts
     to: fonts

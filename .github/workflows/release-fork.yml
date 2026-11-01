@@ -123,7 +123,7 @@ jobs:
             Dockerfile .dockerignore server web docker .github/workflows/docker-build.yml
           check desktop \
             "$(last_with 'select(any(.assets[]; .name | test("^Anchor-.*\\.(exe|dmg)$"))) | .tag_name')" \
-            desktop web/public/web-app-manifest-512x512.png web/public/icons/anchor_icon.png
+            desktop web/public/web-app-manifest-any-512x512.png web/public/icons/anchor_icon.png
           # The changes in the notes start from here.
           echo "previous=$(last_with '.tag_name')" >> "$GITHUB_OUTPUT"
 
