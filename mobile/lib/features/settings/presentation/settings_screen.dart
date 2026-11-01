@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -20,6 +21,7 @@ import '../../../core/network/connectivity_provider.dart';
 import '../../../core/network/server_address.dart';
 import '../../../core/network/server_config_provider.dart';
 import '../../../core/storage/preferences_repository.dart';
+import '../../../core/text/date_formats.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/display_density.dart';
@@ -51,6 +53,9 @@ import '../../note_locks/data/note_lock_secrets.dart';
 import '../../note_locks/presentation/lock_secret_setup_screen.dart';
 import '../../notes/presentation/notes_controller.dart';
 import '../../picture_search/picture_search.dart';
+import '../../reminders/domain/reminder_preferences.dart';
+import '../../reminders/presentation/reminder_preferences_controller.dart';
+import '../../reminders/presentation/time_wheel.dart';
 import '../../server/data/server_info_provider.dart';
 import '../../sync/data/sync_compatibility.dart';
 import '../../sync/presentation/compatibility_messages.dart';
@@ -112,6 +117,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _EditorSection(),
               gap,
               QuickActionsSection(key: _quickActionsKey),
+              gap,
+              const _RemindersSection(),
               gap,
               const _PictureSearchSection(),
               const _NoteLocksSection(),
@@ -536,6 +543,120 @@ class _EditorSection extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RemindersSection extends ConsumerWidget {
+  const _RemindersSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final times = ref.watch(reminderPreferencesControllerProvider);
+    final controller = ref.read(reminderPreferencesControllerProvider.notifier);
+    final l10n = context.l10n;
+    // 1 January 2024 was a Monday, so its day of the month is the weekday.
+    String weekday(int day) =>
+        DateFormat.EEEE(dateLocale).format(DateTime(2024, 1, day));
+    Widget timeTile(
+      IconData icon,
+      String label,
+      int minutes,
+      Future<void> Function(int) onChanged,
+    ) => GroupedListTile(
+      icon: icon,
+      label: label,
+      value: clockLabel(atMinutes(DateTime(2024), minutes)),
+      onTap: () => showAnchorSheet<void>(
+        context,
+        semanticLabel: label,
+        builder: (_) =>
+            _DayTimeSheet(label: label, minutes: minutes, onChanged: onChanged),
+      ),
+    );
+    return Section(
+      label: l10n.settingsReminders,
+      child: GroupedList(
+        children: [
+          timeTile(
+            LucideIcons.sunrise,
+            l10n.settingsMorning,
+            times.morning,
+            controller.setMorning,
+          ),
+          timeTile(
+            LucideIcons.sun,
+            l10n.settingsAfternoon,
+            times.afternoon,
+            controller.setAfternoon,
+          ),
+          timeTile(
+            LucideIcons.sunset,
+            l10n.settingsEvening,
+            times.evening,
+            controller.setEvening,
+          ),
+          timeTile(
+            LucideIcons.moon,
+            l10n.settingsNight,
+            times.night,
+            controller.setNight,
+          ),
+          StackedListTile(
+            label: l10n.settingsWeekStart,
+            child: SegmentedControl<int>(
+              semanticLabel: l10n.settingsWeekStart,
+              value: times.weekStart,
+              segments: [
+                for (final day in ReminderPreferences.weekStarts)
+                  Segment(value: day, label: weekday(day)),
+              ],
+              onChanged: controller.setWeekStart,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DayTimeSheet extends StatefulWidget {
+  const _DayTimeSheet({
+    required this.label,
+    required this.minutes,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int minutes;
+  final Future<void> Function(int) onChanged;
+
+  @override
+  State<_DayTimeSheet> createState() => _DayTimeSheetState();
+}
+
+class _DayTimeSheetState extends State<_DayTimeSheet> {
+  late DateTime _at = atMinutes(DateTime(2024), widget.minutes);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SheetHeader(title: widget.label, showDone: true),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: TimeWheel(
+            at: _at,
+            onChanged: (at) {
+              setState(() => _at = at);
+              widget.onChanged(at.hour * 60 + at.minute);
+            },
+          ),
+        ),
+        const SheetBottomSpace(),
+      ],
     );
   }
 }

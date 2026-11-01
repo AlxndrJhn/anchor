@@ -152,6 +152,25 @@ class PreferencesRepository {
     );
   }
 
+  /// A reminder time of day, in minutes after midnight; null until changed.
+  Future<int?> getReminderMinutes(String key) async =>
+      int.tryParse(await _read(key) ?? '');
+
+  Future<void> setReminderMinutes(String key, int minutes) async {
+    await _storage.write(key: key, value: minutes.toString());
+  }
+
+  /// The weekday a week starts on; null until changed.
+  Future<int?> getReminderWeekStart() async =>
+      int.tryParse(await _read(StorageKeys.reminderWeekStart) ?? '');
+
+  Future<void> setReminderWeekStart(int weekday) async {
+    await _storage.write(
+      key: StorageKeys.reminderWeekStart,
+      value: weekday.toString(),
+    );
+  }
+
   Future<String?> getNoteFont() => _read(StorageKeys.noteFont);
 
   Future<void> setNoteFont(String font) async {

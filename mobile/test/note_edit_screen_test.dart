@@ -220,7 +220,7 @@ void main() {
   Future<void> remindTomorrow(WidgetTester tester) async {
     await tester.tap(barButton('Add a reminder'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tomorrow').first);
+    await tester.tap(find.text('Tomorrow morning').first);
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -858,7 +858,7 @@ void main() {
 
     await tester.tap(barButton(RegExp(r'^Reminder: ')).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tomorrow').first);
+    await tester.tap(find.text('Tomorrow morning').first);
     await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();

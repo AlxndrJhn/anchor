@@ -920,6 +920,30 @@
   "@settingsFont": {
     "description": "Setting that picks the typeface used in notes."
   },
+  "settingsReminders": "Reminders",
+  "@settingsReminders": {
+    "description": "Settings section heading for the reminder times of day and the first day of the week."
+  },
+  "settingsMorning": "Morning",
+  "@settingsMorning": {
+    "description": "Settings row: the time of day used by the Tomorrow, weekend, next week and next month reminder choices."
+  },
+  "settingsAfternoon": "Afternoon",
+  "@settingsAfternoon": {
+    "description": "Settings row: the time of day the This afternoon reminder choice uses."
+  },
+  "settingsEvening": "Evening",
+  "@settingsEvening": {
+    "description": "Settings row: the time of day the This evening reminder choice uses."
+  },
+  "settingsNight": "Night",
+  "@settingsNight": {
+    "description": "Settings row: the time of day the Tonight reminder choice uses."
+  },
+  "settingsWeekStart": "Week starts on",
+  "@settingsWeekStart": {
+    "description": "Settings label above the choice of weekday the Next week reminder choice lands on."
+  },
   "settingsTextSize": "Text size",
   "@settingsTextSize": {
     "description": "Setting that picks how big the text in notes is."
@@ -1458,23 +1482,47 @@
   },
   "reminderLaterToday": "Later today",
   "@reminderLaterToday": {
-    "description": "Quick reminder choice for a time later on the same day."
+    "description": "Quick reminder choice for the morning time on the same day, once the day has begun."
+  },
+  "reminderThisAfternoon": "This afternoon",
+  "@reminderThisAfternoon": {
+    "description": "Quick reminder choice for the afternoon time on the same day."
+  },
+  "reminderTonight": "Tonight",
+  "@reminderTonight": {
+    "description": "Quick reminder choice for the night time on the same day."
+  },
+  "reminderTomorrowNight": "Tomorrow night",
+  "@reminderTomorrowNight": {
+    "description": "Quick reminder choice for tomorrow's night time; in the small hours, before the day begins, the coming night."
+  },
+  "reminderTomorrowMorning": "Tomorrow morning",
+  "@reminderTomorrowMorning": {
+    "description": "Quick reminder choice for tomorrow's morning time; in the small hours, before the day begins, the coming morning."
+  },
+  "reminderTomorrowAfternoon": "Tomorrow afternoon",
+  "@reminderTomorrowAfternoon": {
+    "description": "Quick reminder choice for tomorrow's afternoon time; in the small hours, before the day begins, the coming afternoon."
+  },
+  "reminderTomorrowEvening": "Tomorrow evening",
+  "@reminderTomorrowEvening": {
+    "description": "Quick reminder choice for tomorrow's evening time; in the small hours, before the day begins, the coming evening."
+  },
+  "reminderThisEvening": "This evening",
+  "@reminderThisEvening": {
+    "description": "Quick reminder choice for the evening time on the same day."
   },
   "reminderNextWeek": "Next week",
   "@reminderNextWeek": {
-    "description": "Quick reminder choice for a day in the coming week."
+    "description": "Quick reminder choice for the first day of next week, in the morning."
   },
   "reminderWeekend": "On the weekend",
   "@reminderWeekend": {
     "description": "Quick reminder choice for the coming Saturday, or Sunday when it is Saturday."
   },
-  "reminderNextMonday": "Next Monday",
-  "@reminderNextMonday": {
-    "description": "Quick reminder choice for the coming Monday."
-  },
   "reminderNextMonth": "Next month",
   "@reminderNextMonth": {
-    "description": "Quick reminder choice for the same day next month."
+    "description": "Quick reminder choice for the first day of next month, in the morning."
   },
   "reminderNone": "No reminder",
   "@reminderNone": {

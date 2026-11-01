@@ -20,6 +20,11 @@ class StorageKeys {
   static const hiddenActions = 'editor_hidden_actions';
   static const notificationsAsked = 'reminders_notifications_asked';
   static const exactAlarmsOffered = 'reminders_exact_alarms_offered';
+  static const reminderMorning = 'reminders_morning';
+  static const reminderAfternoon = 'reminders_afternoon';
+  static const reminderEvening = 'reminders_evening';
+  static const reminderNight = 'reminders_night';
+  static const reminderWeekStart = 'reminders_week_start';
   static const notesViewType = 'notes_view_type';
   static const notesSortOption = 'notes_sort_option';
   static const notesSortAscending = 'notes_is_ascending';
@@ -48,6 +53,11 @@ class StorageKeys {
     noteTextSize,
     quickActions,
     hiddenActions,
+    reminderMorning,
+    reminderAfternoon,
+    reminderEvening,
+    reminderNight,
+    reminderWeekStart,
     notesViewType,
     notesSortOption,
     notesSortAscending,
