@@ -36,9 +36,9 @@ cat > "$STAGE/manifest.json" <<EOF
 EOF
 
 # Everything in /data but the database's own files (the dump stands in for
-# them, and works with a later Postgres) and the picture search model,
-# which is downloaded again when it's needed.
+# them, and works with a later Postgres), the dumps made before migrations,
+# and the picture search model, which is downloaded again when it's needed.
 cd "$DATA"
-tar -cf - --exclude ./postgres --exclude ./models .
+tar -cf - --exclude ./postgres --exclude ./backups --exclude ./models .
 
 echo "[backup] done" >&2

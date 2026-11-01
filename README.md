@@ -292,6 +292,12 @@ schemes in `design/schemes/schemes.json`; the parsers are
    docker compose pull && docker compose up -d
    ```
 
+   Your data lives in the `anchor_data` volume, which updates (and
+   `--force-recreate`) keep. Run them from the same folder each time: the
+   volume is named after it. Before a release changes the database, Anchor
+   saves it to `/data/backups` (the last 3 are kept). Only
+   `docker compose down -v` deletes the volume.
+
 ### Image Tags
 
 Every release of this fork is named `fork-<version>.<build>` and publishes a
