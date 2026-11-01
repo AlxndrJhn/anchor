@@ -244,6 +244,9 @@ export class OidcService {
     const subject = (userinfo?.sub ?? idTokenClaims.sub) as string;
     const picture = (userinfo?.picture ?? idTokenClaims.picture) as
       string | undefined;
+    // Some providers send it as the string "true".
+    const verified = userinfo?.email_verified ?? idTokenClaims.email_verified;
+    const emailVerified = verified === true || verified === 'true';
 
     if (!email || !subject) {
       throw new BadRequestException(
@@ -257,7 +260,7 @@ export class OidcService {
       );
     }
 
-    return { email, name, subject, picture };
+    return { email, name, subject, picture, emailVerified };
   }
 
   /**

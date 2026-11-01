@@ -13,11 +13,3 @@ export const OIDC_USER_SELECT = {
   createdAt: true,
   updatedAt: true,
 } as const;
-
-// Content type to file extension mapping for profile images
-export const CONTENT_TYPE_EXT_MAP: Record<string, string> = {
-  'image/jpeg': '.jpg',
-  'image/png': '.png',
-  'image/gif': '.gif',
-  'image/webp': '.webp',
-};
