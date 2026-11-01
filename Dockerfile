@@ -1,4 +1,4 @@
-FROM node:26-alpine AS base
+FROM node:26-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS base
 
 # pnpm from its official image
 COPY --from=ghcr.io/pnpm/pnpm:12.16.1-alpine /opt/pnpm /opt/pnpm
@@ -59,7 +59,7 @@ RUN pnpm build
 #
 # Runtime image (single container: postgres + api + web)
 #
-FROM postgres:18-alpine AS runner
+FROM postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -70,8 +70,9 @@ ENV PGDATA=/data/postgres
 # Copy only the Node binary so we don't overwrite Postgres' own entrypoint scripts.
 COPY --from=base /usr/local/bin/node /usr/local/bin/node
 
-# curl for HEALTHCHECK, supervisor for process management
-RUN apk add --no-cache curl supervisor libstdc++ libatomic libc6-compat
+# curl for HEALTHCHECK, supervisor for process management. Upgrading first
+# takes Alpine's fixes ahead of the base image's next rebuild.
+RUN apk upgrade --no-cache   && apk add --no-cache curl supervisor libstdc++ libatomic libc6-compat
 
 # Server runtime files
 COPY --from=server_builder /app/server/dist ./server/dist
