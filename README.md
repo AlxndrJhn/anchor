@@ -251,6 +251,19 @@ Encrypt certificate, through Caddy) on ports 80 and 443:
 curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=notes.example.com bash
 ```
 
+Without a domain of your own, `DOMAIN=sslip.io` takes a free hostname that
+maps to the server's IP, such as `203-0-113-7.sslip.io` for `203.0.113.7`
+(from [sslip.io](https://sslip.io)), and gets HTTPS for it the same way:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=sslip.io bash
+```
+
+The script finds the IP again on every run, so if the server gets a new one,
+running it again moves Anchor to the new hostname (the apps then need the new
+address). `DOMAIN=nip.io` does the same with nip.io, should Let's Encrypt's
+limit for sslip.io be reached.
+
 It works on Ubuntu, Debian, Oracle Linux, Rocky, Alma, RHEL, Fedora and Amazon
 Linux, on amd64 and arm64. It installs Docker if it's missing, adds 2 GB of
 swap when the server has less than 2 GB of memory (and turns off search by
@@ -259,7 +272,7 @@ own firewall, and runs Anchor from `/opt/anchor` with a random database
 password. Sign up right away: the first account is the admin.
 
 Your cloud's firewall has to let the port in too (3000, or 80 and 443 with a
-domain): on Oracle Cloud an ingress rule in the subnet's security list, on AWS
+domain or sslip.io): on Oracle Cloud an ingress rule in the subnet's security list, on AWS
 the instance's security group, on Google Cloud a VPC firewall rule.
 
 #### Through a Cloudflare Tunnel

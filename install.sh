@@ -15,6 +15,11 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=notes.example.com bash
 #
+# Without a domain of your own, DOMAIN=sslip.io takes a free hostname that
+# maps to the server's IP, e.g. 203-0-113-7.sslip.io, and gets HTTPS for it:
+#
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=sslip.io bash
+#
 # Or through a Cloudflare Tunnel, with no port open at all: make a tunnel in
 # Cloudflare's dashboard (Zero Trust > Networks > Tunnels), give it a public
 # hostname whose service is http://anchor:3000, and pass its token:
@@ -28,7 +33,9 @@
 #
 # Settings (environment variables, all optional; remembered for later runs):
 #   DOMAIN       serve https://DOMAIN, with Caddy on ports 80 and 443; with
-#                TUNNEL_TOKEN, the tunnel's public hostname
+#                TUNNEL_TOKEN, the tunnel's public hostname. sslip.io or nip.io:
+#                a free hostname for the server's IP (<ip>.sslip.io), found
+#                again on every run, so it follows a new IP
 #   TUNNEL_TOKEN serve through this Cloudflare Tunnel, with no open port
 #                (TUNNEL_TOKEN= stops using it)
 #   PORT         without either, the port Anchor listens on (default 3000)
@@ -179,8 +186,8 @@ load_settings() {
   ENV_FILE="$ANCHOR_DIR/anchor.env"
 
   # What an earlier run set, unless given again (DOMAIN= drops the domain)
-  OLD_DOMAIN=$(get_env "$CONF" DOMAIN)
-  DOMAIN=${DOMAIN-$OLD_DOMAIN}
+  OLD_HOST=$(get_env "$CONF" HOST)
+  DOMAIN=${DOMAIN-$(get_env "$CONF" DOMAIN)}
   PORT=${PORT:-$(get_env "$CONF" PORT)}
   PORT=${PORT:-3000}
   ANCHOR_TAG=${ANCHOR_TAG:-$(get_env "$CONF" ANCHOR_TAG)}
@@ -194,9 +201,22 @@ load_settings() {
   TUNNEL_TOKEN=${TUNNEL_TOKEN##* }
   PUBLIC_IP=$(public_ip)
 
+  # HOST is the name Anchor is served at: the domain, or for sslip.io and
+  # nip.io, the server's IP with dashes in front of it
+  HOST=$DOMAIN
+  case "$DOMAIN" in
+    sslip.io | nip.io)
+      [ -z "$TUNNEL_TOKEN" ] || die "DOMAIN=$DOMAIN is for a server with its own IP, not a tunnel"
+      is_public_ipv4 "$PUBLIC_IP" ||
+        die "DOMAIN=$DOMAIN needs the server's public IPv4 address, and '$PUBLIC_IP' isn't one"
+      HOST="$(printf '%s' "$PUBLIC_IP" | tr . -).$DOMAIN"
+      ;;
+  esac
+
   touch "$CONF"
   chmod 600 "$CONF"
   set_env "$CONF" DOMAIN "$DOMAIN"
+  set_env "$CONF" HOST "$HOST"
   set_env "$CONF" TUNNEL_TOKEN "$TUNNEL_TOKEN"
   set_env "$CONF" PORT "$PORT"
   set_env "$CONF" ANCHOR_TAG "$ANCHOR_TAG"
@@ -217,9 +237,9 @@ EOF
   fi
   local app_url
   app_url=$(get_env "$ENV_FILE" APP_URL)
-  if [ -n "$DOMAIN" ]; then
-    set_env "$ENV_FILE" APP_URL "https://$DOMAIN"
-  elif [ -z "$app_url" ] || { [ -n "$OLD_DOMAIN" ] && [ "$app_url" = "https://$OLD_DOMAIN" ]; }; then
+  if [ -n "$HOST" ]; then
+    set_env "$ENV_FILE" APP_URL "https://$HOST"
+  elif [ -z "$app_url" ] || { [ -n "$OLD_HOST" ] && [ "$app_url" = "https://$OLD_HOST" ]; }; then
     set_env "$ENV_FILE" APP_URL "http://$PUBLIC_IP:$PORT"
   fi
   # Search by what pictures show loads a ~380 MB model: too much for 1 GB
@@ -255,12 +275,12 @@ EOF
     caddy=$(
       cat <<'EOF'
 
-  # HTTPS for DOMAIN, with a certificate from Let's Encrypt
+  # HTTPS for HOST, with a certificate from Let's Encrypt
   caddy:
     image: caddy:2-alpine
     container_name: anchor-caddy
     restart: unless-stopped
-    command: caddy reverse-proxy --from ${DOMAIN} --to anchor:3000
+    command: caddy reverse-proxy --from ${HOST} --to anchor:3000
     ports:
       - "80:80"
       - "443:443"
@@ -285,7 +305,8 @@ EOF
   fi
   cat >"$ANCHOR_DIR/docker-compose.yml" <<EOF
 # Written by install.sh, which rewrites it on every run: settings go in
-# anchor.env (Anchor's own) and .env (DOMAIN, TUNNEL_TOKEN, PORT, ANCHOR_TAG).
+# anchor.env (Anchor's own) and .env (DOMAIN, TUNNEL_TOKEN, PORT, ANCHOR_TAG;
+# HOST follows from DOMAIN).
 name: anchor
 
 services:
@@ -344,6 +365,25 @@ public_ip() {
     hostname -I 2>/dev/null | awk '{print $1}'
 }
 
+# An IPv4 address the internet can reach: not private, shared (CGNAT),
+# loopback or link-local
+is_public_ipv4() {
+  local a b c d n
+  IFS=. read -r a b c d <<<"$1"
+  for n in "$a" "$b" "$c" "$d"; do
+    case "$n" in '' | *[!0-9]*) return 1 ;; esac
+    [ "$n" -le 255 ] || return 1
+  done
+  case "$a" in
+    0 | 10 | 127) return 1 ;;
+    100) [ "$b" -lt 64 ] || [ "$b" -gt 127 ] ;;
+    169) [ "$b" -ne 254 ] ;;
+    172) [ "$b" -lt 16 ] || [ "$b" -gt 31 ] ;;
+    192) [ "$b" -ne 168 ] ;;
+    *) [ "$a" -lt 224 ] ;;
+  esac
+}
+
 start_anchor() {
   cd "$ANCHOR_DIR"
   log "Downloading Anchor (ghcr.io/alxndrjhn/anchor:$ANCHOR_TAG)..."
@@ -382,10 +422,10 @@ check_tunnel() {
 report() {
   local url
   if [ -n "$TUNNEL_TOKEN" ]; then
-    url=${DOMAIN:+https://$DOMAIN}
+    url=${HOST:+https://$HOST}
     url=${url:-"the tunnel's public hostname"}
-  elif [ -n "$DOMAIN" ]; then
-    url="https://$DOMAIN"
+  elif [ -n "$HOST" ]; then
+    url="https://$HOST"
   else
     url="http://$PUBLIC_IP:$PORT"
   fi
@@ -402,13 +442,18 @@ report() {
     fi
     echo "  Cloudflare's free plan takes uploads of up to 100 MB."
   else
-    if [ -n "$DOMAIN" ]; then
-      echo "  The certificate comes once $DOMAIN points at $PUBLIC_IP and ports 80"
+    if [ "$HOST" != "$DOMAIN" ]; then
+      echo "  $HOST is a free hostname for $PUBLIC_IP. If the"
+      echo "  IP changes, run this again: Anchor moves to the new hostname, and the"
+      echo "  apps need it too."
+      echo "  The certificate comes once ports 80 and 443 are open."
+    elif [ -n "$HOST" ]; then
+      echo "  The certificate comes once $HOST points at $PUBLIC_IP and ports 80"
       echo "  and 443 are open."
     else
       echo "  Over plain HTTP, passwords and notes cross the internet unencrypted."
-      echo "  For HTTPS, point a domain at $PUBLIC_IP and run this again with DOMAIN=<it>,"
-      echo "  or use a Cloudflare Tunnel (TUNNEL_TOKEN=<its token>)."
+      echo "  For HTTPS, run this again with DOMAIN=sslip.io (a free hostname for"
+      echo "  $PUBLIC_IP), DOMAIN=<your domain>, or TUNNEL_TOKEN=<a Cloudflare Tunnel's token>."
     fi
     echo
     echo "  Your cloud's firewall must let the port in too (only the server's own"
