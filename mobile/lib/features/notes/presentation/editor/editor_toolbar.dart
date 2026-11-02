@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/motion/haptics.dart';
@@ -78,8 +80,11 @@ class _EditorToolbarState extends State<EditorToolbar> {
           ),
           child: LayoutBuilder(
             builder: (context, box) {
-              final slot = (box.maxWidth / 8).clamp(
-                AnchorTokens.sizeTargetPhone,
+              // Eight tools fill the bar; a ninth narrows them to fit.
+              final count = math.max(8, model.start.length + model.end.length);
+              final fit = box.maxWidth / count;
+              final slot = fit.clamp(
+                math.min<double>(AnchorTokens.sizeTargetPhone, fit),
                 AnchorTokens.sizeControlMedium,
               );
               Widget tool(EditorTool tool) {

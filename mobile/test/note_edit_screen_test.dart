@@ -1645,6 +1645,7 @@ void main() {
         'Strikethrough',
         'Highlight',
         'Link',
+        'Clear formatting',
         'Hide keyboard',
       ]);
     });

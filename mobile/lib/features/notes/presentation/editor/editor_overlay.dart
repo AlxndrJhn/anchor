@@ -174,6 +174,8 @@ class EditorOverlay extends StatelessWidget {
         this.controller.useHighlight();
       case EditorTool.link:
         _editLink(context);
+      case EditorTool.clearFormatting:
+        editor.clearFormatting();
       case EditorTool.textStyle:
         _editTextStyle(context);
       case EditorTool.yellow ||

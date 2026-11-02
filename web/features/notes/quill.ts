@@ -191,6 +191,39 @@ export function toggleTextFormat(
   quill.root.dispatchEvent(new Event("formatchange", { bubbles: true }));
 }
 
+/** What Clear formatting takes off; links stay. */
+const CLEARED_FORMATS = [
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "highlight",
+  "color",
+  "font",
+];
+
+/** Any of the formats Clear formatting takes off, in the selected text. */
+export function hasTextFormats(quill: QuillInstance, range: Range) {
+  if (!range.length) return false;
+  return quill
+    .getContents(range.index, range.length)
+    .ops.some((op) => CLEARED_FORMATS.some((key) => op.attributes?.[key]));
+}
+
+/** Takes the inline formats off the selected text in one undo step. */
+export function clearTextFormats(quill: QuillInstance, range: Range) {
+  if (!range.length || isInCodeBlock(quill, range)) return;
+  quill.updateContents(
+    new Delta()
+      .retain(range.index)
+      .retain(
+        range.length,
+        Object.fromEntries(CLEARED_FORMATS.map((key) => [key, null])),
+      ) as QuillDelta,
+    "user",
+  );
+}
+
 /**
  * Quill keeps a pending format's placeholder when a selection grows from it,
  * and typing then jumps to the line end. Call before the selection grows.

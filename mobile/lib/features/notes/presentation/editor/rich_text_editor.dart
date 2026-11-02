@@ -779,6 +779,10 @@ class RichTextEditorState extends State<RichTextEditor>
     if (hasSelection) _controller.setHighlight(null);
   }
 
+  void clearFormatting() {
+    if (hasSelection) _controller.clearInlineFormats();
+  }
+
   void setLink(TextRange range, String text, String url) => _apply(() {
     if (range.isCollapsed) {
       _controller.insertLink(range.start, text, url);
