@@ -4,6 +4,8 @@
   const api = window.anchorDesktop;
   const form = document.getElementById("form");
   const input = document.getElementById("url");
+  const advanced = document.getElementById("advanced");
+  const headers = document.getElementById("headers");
   const connect = document.getElementById("connect");
   const retry = document.getElementById("retry");
   const local = document.getElementById("local");
@@ -19,12 +21,16 @@
     retry.disabled = on;
     local.disabled = on;
     input.disabled = on;
+    headers.disabled = on;
     connect.textContent = on ? label : "Continue";
   };
 
   const state = await api.getState();
   document.getElementById("version").textContent = `Anchor+ desktop ${state.version}`;
   input.value = state.serverUrl;
+  headers.value = state.headers;
+  // Saved headers are never out of sight.
+  advanced.open = Boolean(state.headers);
   showError(state.error);
   retry.hidden = !state.canRetry;
   local.hidden = !state.hasServer && !state.isFirstStart;
@@ -38,11 +44,16 @@
     showError(null);
     busy(true, "Connecting…");
     try {
-      const result = await api.connect(input.value);
+      const result = await api.connect(input.value, headers.value);
       if (!result.ok) {
         showError(result.error);
         busy(false);
-        input.focus();
+        if (result.field === "headers") {
+          advanced.open = true;
+          headers.focus();
+        } else {
+          input.focus();
+        }
       }
     } catch (err) {
       showError(String(err?.message || err));

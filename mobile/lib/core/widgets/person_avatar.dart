@@ -69,6 +69,8 @@ class PersonAvatar extends ConsumerWidget {
         : serverUrl == null
         ? null
         : '$serverUrl$imageUrl';
+    final isOnServer =
+        url != null && serverUrl != null && url.startsWith(serverUrl);
     final initialsText = Text(
       size < 30 ? initials.substring(0, 1) : initials,
       textScaler: TextScaler.noScaling,
@@ -96,6 +98,7 @@ class PersonAvatar extends ConsumerWidget {
           ? initialsText
           : CachedNetworkImage(
               imageUrl: url,
+              httpHeaders: isOnServer ? ref.watch(serverHeadersProvider) : null,
               width: size,
               height: size,
               fit: BoxFit.cover,

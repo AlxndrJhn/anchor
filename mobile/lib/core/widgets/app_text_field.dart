@@ -34,6 +34,7 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.inputFormatters,
+    this.lines = 1,
   });
 
   final TextEditingController? controller;
@@ -63,6 +64,9 @@ class AppTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final List<TextInputFormatter>? inputFormatters;
+
+  /// Rows shown; above 1 the field takes several lines and grows to fit.
+  final int lines;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -116,6 +120,8 @@ class _AppTextFieldState extends State<AppTextField> {
       padding: EdgeInsets.only(
         left: 16,
         right: widget.isPassword || widget.trailing != null ? 4 : 16,
+        top: widget.lines > 1 ? 12 : 0,
+        bottom: widget.lines > 1 ? 12 : 0,
       ),
       decoration: BoxDecoration(
         color: fill,
@@ -153,6 +159,8 @@ class _AppTextFieldState extends State<AppTextField> {
                     autocorrect: widget.isPassword ? false : widget.autocorrect,
                     enableSuggestions: !widget.isPassword,
                     inputFormatters: widget.inputFormatters,
+                    minLines: widget.lines,
+                    maxLines: widget.lines == 1 ? 1 : null,
                     onChanged: widget.onChanged,
                     onSubmitted: widget.onSubmitted,
                     style: textStyle,

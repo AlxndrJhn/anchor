@@ -6,6 +6,7 @@ import '../storage/preferences_repository.dart';
 import '../storage/secure_storage_provider.dart';
 import '../storage/storage_keys.dart';
 import 'server_address.dart';
+import 'server_headers.dart';
 
 part 'server_config_provider.g.dart';
 
@@ -72,3 +73,47 @@ class AllowSelfSignedCert extends _$AllowSelfSignedCert {
     }
   }
 }
+
+/// The extra headers saved with a server, if any.
+@Riverpod(keepAlive: true)
+class SavedServerHeaders extends _$SavedServerHeaders {
+  @override
+  Future<ServerHeaders?> build() async {
+    try {
+      return await ref.watch(preferencesRepositoryProvider).getServerHeaders();
+    } catch (error) {
+      AppLogger.instance.warn(
+        LogTags.settings,
+        'Reading the server headers failed',
+        error: error,
+      );
+      return null;
+    }
+  }
+
+  /// Blank [text] forgets them.
+  Future<void> save(String server, String text) async {
+    final headers = text.trim().isEmpty
+        ? null
+        : ServerHeaders(server: server, text: text);
+    state = AsyncData(headers);
+    try {
+      await ref.read(preferencesRepositoryProvider).setServerHeaders(headers);
+    } catch (error) {
+      AppLogger.instance.warn(
+        LogTags.settings,
+        'Saving the server headers failed',
+        error: error,
+      );
+    }
+  }
+}
+
+/// The extra headers to send to the server in use.
+@Riverpod(keepAlive: true)
+Map<String, String> serverHeaders(Ref ref) =>
+    ref
+        .watch(savedServerHeadersProvider)
+        .value
+        ?.forServer(ref.watch(serverUrlProvider)) ??
+    const {};

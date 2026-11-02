@@ -27,16 +27,27 @@ final class ServerUnreachable extends ServerCheck {
 }
 
 class ServerConnector {
-  ServerConnector({required bool allowSelfSigned, Dio? dio})
-    : _allowSelfSigned = allowSelfSigned,
-      _dio = dio;
+  ServerConnector({
+    required bool allowSelfSigned,
+    Map<String, String> headers = const {},
+    Dio? dio,
+  }) : _allowSelfSigned = allowSelfSigned,
+       _headers = headers,
+       _dio = dio;
 
   final bool _allowSelfSigned;
+  final Map<String, String> _headers;
   final Dio? _dio;
 
   /// [url] must be a normalized address.
   Future<ServerCheck> check(String url) async {
-    final dio = _dio ?? createServerDio(url, allowSelfSigned: _allowSelfSigned);
+    final dio =
+        _dio ??
+        createServerDio(
+          url,
+          allowSelfSigned: _allowSelfSigned,
+          headers: _headers,
+        );
     try {
       final response = await dio.get<Object?>('$url/api/health');
       final data = response.data;

@@ -31,7 +31,12 @@ IOHttpClientAdapter createSelfSignedCertAdapter(String serverUrl) {
   );
 }
 
-Dio createServerDio(String? serverUrl, {required bool allowSelfSigned}) {
+/// [headers] go out with every request, besides the app's own.
+Dio createServerDio(
+  String? serverUrl, {
+  required bool allowSelfSigned,
+  Map<String, String> headers = const {},
+}) {
   final hasServer = serverUrl != null && serverUrl.isNotEmpty;
   final dio = Dio(
     BaseOptions(
@@ -43,6 +48,7 @@ Dio createServerDio(String? serverUrl, {required bool allowSelfSigned}) {
         'Accept': 'application/json',
         // Names this app in Settings' list of signed-in devices.
         'User-Agent': 'AnchorPlus/${Platform.operatingSystem}',
+        ...headers,
       },
     ),
   );
@@ -56,6 +62,7 @@ Dio createServerDio(String? serverUrl, {required bool allowSelfSigned}) {
 Dio dio(Ref ref) => createApiDio(
   ref.watch(serverUrlProvider),
   allowSelfSigned: ref.watch(allowSelfSignedCertProvider).value ?? false,
+  headers: ref.watch(serverHeadersProvider),
   storage: ref.watch(secureStorageProvider),
   session: ref.read(sessionExpiredProvider.notifier),
 );
@@ -64,16 +71,22 @@ Dio dio(Ref ref) => createApiDio(
 Dio createApiDio(
   String? serverUrl, {
   required bool allowSelfSigned,
+  Map<String, String> headers = const {},
   required FlutterSecureStorage storage,
   required SessionExpired session,
 }) {
-  final dio = createServerDio(serverUrl, allowSelfSigned: allowSelfSigned);
+  final dio = createServerDio(
+    serverUrl,
+    allowSelfSigned: allowSelfSigned,
+    headers: headers,
+  );
   dio.options.headers[anchorProtocolHeader] = '$anchorProtocol';
 
   // Refresh requests must skip the interceptors.
   final refreshDio = createServerDio(
     serverUrl,
     allowSelfSigned: allowSelfSigned,
+    headers: headers,
   );
 
   dio.interceptors.add(

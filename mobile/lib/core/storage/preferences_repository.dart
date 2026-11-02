@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../network/server_headers.dart';
 import 'secure_storage_provider.dart';
 import 'storage_keys.dart';
 
@@ -229,6 +230,21 @@ class PreferencesRepository {
       key: StorageKeys.allowSelfSignedCert,
       value: value.toString(),
     );
+  }
+
+  Future<ServerHeaders?> getServerHeaders() async =>
+      ServerHeaders.fromJson(await _read(StorageKeys.serverHeaders));
+
+  /// Null forgets them.
+  Future<void> setServerHeaders(ServerHeaders? headers) async {
+    if (headers == null) {
+      await _storage.delete(key: StorageKeys.serverHeaders);
+    } else {
+      await _storage.write(
+        key: StorageKeys.serverHeaders,
+        value: headers.toJson(),
+      );
+    }
   }
 
   Future<String?> getNotesViewType() => _read(StorageKeys.notesViewType);

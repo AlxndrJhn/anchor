@@ -138,3 +138,106 @@ abstract class _$AllowSelfSignedCert extends $AsyncNotifier<bool> {
     return element.handleCreate(ref, build);
   }
 }
+
+/// The extra headers saved with a server, if any.
+
+@ProviderFor(SavedServerHeaders)
+final savedServerHeadersProvider = SavedServerHeadersProvider._();
+
+/// The extra headers saved with a server, if any.
+final class SavedServerHeadersProvider
+    extends $AsyncNotifierProvider<SavedServerHeaders, ServerHeaders?> {
+  /// The extra headers saved with a server, if any.
+  SavedServerHeadersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'savedServerHeadersProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$savedServerHeadersHash();
+
+  @$internal
+  @override
+  SavedServerHeaders create() => SavedServerHeaders();
+}
+
+String _$savedServerHeadersHash() =>
+    r'532560d482e29011874f598ce9530244007145c2';
+
+/// The extra headers saved with a server, if any.
+
+abstract class _$SavedServerHeaders extends $AsyncNotifier<ServerHeaders?> {
+  FutureOr<ServerHeaders?> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<ServerHeaders?>, ServerHeaders?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<ServerHeaders?>, ServerHeaders?>,
+              AsyncValue<ServerHeaders?>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
+/// The extra headers to send to the server in use.
+
+@ProviderFor(serverHeaders)
+final serverHeadersProvider = ServerHeadersProvider._();
+
+/// The extra headers to send to the server in use.
+
+final class ServerHeadersProvider
+    extends
+        $FunctionalProvider<
+          Map<String, String>,
+          Map<String, String>,
+          Map<String, String>
+        >
+    with $Provider<Map<String, String>> {
+  /// The extra headers to send to the server in use.
+  ServerHeadersProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'serverHeadersProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverHeadersHash();
+
+  @$internal
+  @override
+  $ProviderElement<Map<String, String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<String, String> create(Ref ref) {
+    return serverHeaders(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, String>>(value),
+    );
+  }
+}
+
+String _$serverHeadersHash() => r'08f899bf284b3ad3830fd505d05f3e0169a7e252';

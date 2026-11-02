@@ -21,7 +21,7 @@ const update = {
 if (location.protocol === "file:") {
   contextBridge.exposeInMainWorld("anchorDesktop", {
     getState: () => ipcRenderer.invoke("anchor:get-state"),
-    connect: (url) => ipcRenderer.invoke("anchor:connect", url),
+    connect: (url, headers) => ipcRenderer.invoke("anchor:connect", url, headers),
     retry: () => ipcRenderer.invoke("anchor:retry"),
     useLocal: () => ipcRenderer.invoke("anchor:use-local"),
     ...update,

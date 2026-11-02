@@ -874,6 +874,54 @@ abstract class AppLocalizations {
   /// **'Use only with a server you manage. Anchor can’t verify its identity.'**
   String get serverSelfSignedWarning;
 
+  /// Label of the field, under Advanced, for headers sent with every request to the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra headers'**
+  String get serverHeaders;
+
+  /// Placeholder in the extra headers field: an example header name, as a proxy shows it. Leave the header name as is.
+  ///
+  /// In en, this message translates to:
+  /// **'CF-Access-Client-Id: …'**
+  String get serverHeadersHint;
+
+  /// Under the extra headers field. Keep “Name: value” in this form.
+  ///
+  /// In en, this message translates to:
+  /// **'For a proxy in front of your server, like Cloudflare Access. One per line, as Name: value. Sent only to this server.'**
+  String get serverHeadersHelp;
+
+  /// A line of the extra headers has no colon, or nothing after it.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line} needs a name and a value, as Name: value.'**
+  String serverHeaderNotNameValue(int line);
+
+  /// A header name with spaces or other characters headers can’t have.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: the name can have only letters, digits and - _ .'**
+  String serverHeaderBadName(int line);
+
+  /// A header value with characters outside what headers can carry, like emoji.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: the value has characters a header can’t carry.'**
+  String serverHeaderBadValue(int line);
+
+  /// A header the app already sends, like Authorization or Content-Type.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: Anchor sets this header itself.'**
+  String serverHeaderReserved(int line);
+
+  /// The same header name twice in the extra headers.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line} repeats a name from above.'**
+  String serverHeaderRepeated(int line);
+
   /// Note at the bottom of the server page: the notes kept on this phone without a server go into the account signed in to.
   ///
   /// In en, this message translates to:

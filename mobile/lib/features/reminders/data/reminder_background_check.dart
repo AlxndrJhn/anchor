@@ -14,6 +14,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../../core/network/server_headers.dart';
 import '../../../core/session/active_user_id_provider.dart';
 import '../../../core/session/session_expired_provider.dart';
 import '../../../core/storage/storage_keys.dart';
@@ -129,6 +130,11 @@ Future<void> runReminderCheck() async {
       createApiDio(
         serverUrl,
         allowSelfSigned: saved[StorageKeys.allowSelfSignedCert] == 'true',
+        headers:
+            ServerHeaders.fromJson(
+              saved[StorageKeys.serverHeaders],
+            )?.forServer(serverUrl) ??
+            const {},
         storage: storage,
         session: container.read(sessionExpiredProvider.notifier),
       ),
