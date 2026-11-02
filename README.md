@@ -203,18 +203,15 @@ schemes in `design/schemes/schemes.json`; the parsers are
 Your notes move with your server: switch the server, then the apps. Nothing
 is copied by hand.
 
-**1. The server.** Back up its data first. The original image has no
-`backup` command, so stop it and copy its volume, from the folder with its
-`docker-compose.yml`:
+**1. The server.** Back up your notes first: in the web app, open
+Settings › Import and export › Export and download **Anchor backup
+(.zip)**. It holds your notes, tags and attachments, and Anchor+ can import
+it under Settings › Import and export › Import. Each account exports its
+own notes.
 
-```bash
-docker compose stop
-docker run --rm --volumes-from anchor -v "$PWD":/backup alpine tar czf /backup/anchor-before-switch.tgz -C /data .
-```
-
-Then change only the `image:` line of that file and start it again. The
-data stays where it is; the fork adds its own tables and columns to it on
-the first start:
+Then change only the `image:` line of the `docker-compose.yml` and start it
+again. The data stays where it is; the fork adds its own tables and columns
+to it on the first start:
 
 ```yaml
     image: ghcr.io/alxndrjhn/anchor:fork-latest
