@@ -82,7 +82,10 @@ dependencies:
   flutter_timezone: ^5.1.1
 
   # Rich Text Editor
-  flutter_quill: ^11.6.0
+  # 11.6.0, patched to lay out each line in its own text direction
+  # (third_party/flutter_quill/README.md).
+  flutter_quill:
+    path: third_party/flutter_quill
   dart_quill_delta: ^10.8.3
 
   # Utilities

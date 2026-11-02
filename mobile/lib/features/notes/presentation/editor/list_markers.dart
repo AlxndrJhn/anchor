@@ -165,9 +165,12 @@ Widget? buildListMarker(
           drag: drag,
           line: line,
           child: Padding(
-            padding: EdgeInsets.only(left: boxLeft - targetLeft, top: boxTop),
+            padding: EdgeInsetsDirectional.only(
+              start: boxLeft - targetLeft,
+              top: boxTop,
+            ),
             child: Align(
-              alignment: Alignment.topLeft,
+              alignment: AlignmentDirectional.topStart,
               child: NoteCheckBox(
                 checked: checked,
                 isJustChecked: isJustChecked,
@@ -189,14 +192,16 @@ Widget? buildListMarker(
     final style = typography.listNumber.copyWith(color: muted);
     key = (number, left, lineHeight, style);
     marker = () => Padding(
-      padding: EdgeInsets.only(left: left),
+      padding: EdgeInsetsDirectional.only(start: left),
       child: SizedBox(
         width: 22, // off-scale: list marker column
         height: lineHeight,
         child: Align(
-          alignment: Alignment.topRight,
+          alignment: AlignmentDirectional.topEnd,
           child: Padding(
-            padding: const EdgeInsets.only(right: 3), // off-scale: list number
+            padding: const EdgeInsetsDirectional.only(
+              end: 3,
+            ), // off-scale: list number
             child: Text(
               number,
               maxLines: 1,
@@ -211,7 +216,7 @@ Widget? buildListMarker(
   } else if (config.attribute == Attribute.ul) {
     key = (level, left, lineHeight, muted);
     marker = () => Padding(
-      padding: EdgeInsets.only(left: left),
+      padding: EdgeInsetsDirectional.only(start: left),
       child: SizedBox(
         width: 22, // off-scale: list marker column
         height: lineHeight,
@@ -233,7 +238,7 @@ Widget? buildListMarker(
       cache._markers,
       line,
       key,
-      () => Align(alignment: Alignment.topLeft, child: marker()),
+      () => Align(alignment: AlignmentDirectional.topStart, child: marker()),
     ),
   );
 }
