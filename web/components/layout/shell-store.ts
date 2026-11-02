@@ -5,6 +5,10 @@ interface ShellState {
   setDrawer: (open: boolean) => void;
   barShown: boolean;
   setBarShown: (shown: boolean) => void;
+  shortcutsOpen: boolean;
+  setShortcuts: (open: boolean) => void;
+  tagJumpOpen: boolean;
+  setTagJump: (open: boolean) => void;
 }
 
 export const useShellStore = create<ShellState>((set) => ({
@@ -12,4 +16,8 @@ export const useShellStore = create<ShellState>((set) => ({
   setDrawer: (drawerOpen) => set({ drawerOpen }),
   barShown: false,
   setBarShown: (barShown) => set({ barShown }),
+  shortcutsOpen: false,
+  setShortcuts: (shortcutsOpen) => set({ shortcutsOpen }),
+  tagJumpOpen: false,
+  setTagJump: (tagJumpOpen) => set({ tagJumpOpen }),
 }));

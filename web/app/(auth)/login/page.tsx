@@ -37,6 +37,7 @@ import {
   signInError,
 } from "@/features/auth/utils/sign-in-error";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
+import { focusOnArrival } from "@/lib/platform";
 
 export default function LoginPage() {
   useDocumentTitle("Sign in");
@@ -274,6 +275,7 @@ export default function LoginPage() {
         >
           <Field label="Email">
             <Input
+              ref={focusOnArrival}
               type="email"
               autoComplete="email"
               value={email}

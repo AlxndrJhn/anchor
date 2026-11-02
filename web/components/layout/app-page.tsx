@@ -2,17 +2,36 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Menu, Search, X } from "lucide-react";
+import {
+  Archive,
+  Hash,
+  Menu,
+  NotebookPen,
+  Search,
+  Settings,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { IconButton } from "@/components/ui/button";
+import { menuSurface } from "@/components/ui/dropdown-menu";
 import { Tip } from "@/components/ui/tooltip";
+import { tagColorStyle } from "@/features/tags";
 import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { hasShortcutKey, isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { DesktopUpdateButton } from "./desktop-update";
+import { type GoToTarget, matchTargets, useGoToTargets } from "./go-to";
 import { useShellStore } from "./shell-store";
 
 const scrollMemory = new Map<string, number>();
+
+const PAGE_ICONS: Record<string, typeof Search> = {
+  "/notes": NotebookPen,
+  "/archive": Archive,
+  "/trash": Trash2,
+};
 
 interface AppPageProps {
   title: React.ReactNode;
@@ -182,6 +201,31 @@ export const SearchField = React.forwardRef<
     );
     // A search brought back from the address stays shown on phones.
     const [open, setOpen] = React.useState(() => !!value);
+    // Pages and tags whose names match, above the notes: Enter goes there,
+    // as a quick switcher does.
+    const router = useRouter();
+    const targets = useGoToTargets({ pages: true });
+    const [isFocused, setIsFocused] = React.useState(false);
+    const [active, setActive] = React.useState(0);
+    const listId = React.useId();
+    const places = isFocused ? matchTargets(targets, value).slice(0, 6) : [];
+    const place = places[Math.min(active, places.length - 1)];
+    const goTo = (target: GoToTarget) => {
+      input.current?.blur();
+      router.push(target.href);
+    };
+
+    // At once where the field is shown, so letters typed right after the key
+    // land in it; on a phone it shows first.
+    const openField = React.useCallback(() => {
+      setOpen(true);
+      const select = () => {
+        input.current?.focus();
+        input.current?.select();
+      };
+      if (input.current?.getClientRects().length) select();
+      else requestAnimationFrame(select);
+    }, []);
 
     React.useEffect(() => {
       const onKey = (e: KeyboardEvent) => {
@@ -189,30 +233,20 @@ export const SearchField = React.forwardRef<
         if (hasShortcutKey(e) && e.key.toLowerCase() === "k") {
           if (
             document.querySelector(
-              "[role=dialog], [role=alertdialog], [role=menu]",
+              ":is([role=dialog], [role=alertdialog], [role=menu]):not([data-state=closed])",
             )
           )
             return;
           e.preventDefault();
-          setOpen(true);
-          requestAnimationFrame(() => {
-            input.current?.focus();
-            input.current?.select();
-          });
+          openField();
         }
       };
       document.addEventListener("keydown", onKey);
       return () => document.removeEventListener("keydown", onKey);
-    }, []);
+    }, [openField]);
 
     useShortcuts({
-      "/": () => {
-        setOpen(true);
-        requestAnimationFrame(() => {
-          input.current?.focus();
-          input.current?.select();
-        });
-      },
+      "/": openField,
     });
 
     React.useEffect(() => {
@@ -227,7 +261,7 @@ export const SearchField = React.forwardRef<
           data-search-field
           data-open={open || undefined}
           className={cn(
-            "group/search flex h-9.5 w-75 min-w-0 max-w-full items-center gap-2 rounded-md bg-card pr-2 pl-3 shadow-[inset_0_0_0_1px_var(--input),var(--sh-xs)] transition-[box-shadow,width] duration-(--duration-header) ease-standard focus-within:w-90 focus-within:shadow-[inset_0_0_0_2px_var(--ring)] max-md:hidden max-md:data-open:absolute max-md:data-open:inset-x-3 max-md:data-open:top-2 max-md:data-open:z-(--z-raised) max-md:data-open:flex max-md:data-open:w-auto [&>svg]:size-4 [&>svg]:text-muted-foreground",
+            "group/search relative flex h-9.5 w-75 min-w-0 max-w-full items-center gap-2 rounded-md bg-card pr-2 pl-3 shadow-[inset_0_0_0_1px_var(--input),var(--sh-xs)] transition-[box-shadow,width] duration-(--duration-header) ease-standard focus-within:w-90 focus-within:shadow-[inset_0_0_0_2px_var(--ring)] max-md:hidden max-md:data-open:absolute max-md:data-open:inset-x-3 max-md:data-open:top-2 max-md:data-open:z-(--z-raised) max-md:data-open:flex max-md:data-open:w-auto [&>svg]:size-4 [&>svg]:text-muted-foreground",
             className,
           )}
         >
@@ -238,10 +272,34 @@ export const SearchField = React.forwardRef<
             value={value}
             placeholder={placeholder}
             aria-label={placeholder}
-            onChange={(e) => onChange(e.target.value)}
-            onFocus={onFocus}
-            onBlur={() => !value && setOpen(false)}
+            role="combobox"
+            aria-expanded={places.length > 0}
+            aria-controls={listId}
+            aria-activedescendant={place ? `${listId}-${place.id}` : undefined}
+            onChange={(e) => {
+              onChange(e.target.value);
+              setActive(0);
+            }}
+            onFocus={() => {
+              setIsFocused(true);
+              onFocus?.();
+            }}
+            onBlur={() => {
+              setIsFocused(false);
+              if (!value) setOpen(false);
+            }}
             onKeyDown={(e) => {
+              if (place && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+                e.preventDefault();
+                const step = e.key === "ArrowDown" ? 1 : -1;
+                setActive((i) => (i + step + places.length) % places.length);
+                return;
+              }
+              if (place && e.key === "Enter") {
+                e.preventDefault();
+                goTo(place);
+                return;
+              }
               if (e.key !== "Escape") return;
               if (value) {
                 e.preventDefault();
@@ -269,6 +327,51 @@ export const SearchField = React.forwardRef<
             <kbd aria-hidden className="group-focus-within/search:hidden">
               {isMac() ? "⌘K" : "Ctrl K"}
             </kbd>
+          )}
+          {places.length > 0 && (
+            <div
+              id={listId}
+              role="listbox"
+              aria-label="Go to"
+              className={cn(
+                menuSurface,
+                "absolute inset-x-0 top-full z-(--z-popover) mt-1.5 grid gap-px rounded-menu p-1.5",
+              )}
+            >
+              {places.map((target) => {
+                const Icon = target.isTag
+                  ? Hash
+                  : (PAGE_ICONS[target.href] ?? Settings);
+                return (
+                  // biome-ignore lint/a11y/useKeyWithClickEvents: the search field's arrows and Enter pick it (aria-activedescendant)
+                  <div
+                    key={target.id}
+                    id={`${listId}-${target.id}`}
+                    role="option"
+                    aria-selected={target === place}
+                    tabIndex={-1}
+                    style={
+                      target.isTag ? tagColorStyle(target.color) : undefined
+                    }
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => goTo(target)}
+                    className={cn(
+                      "flex min-h-8.5 cursor-pointer items-center gap-2.5 rounded-menu-item px-2.5 text-foreground text-ui [&>svg]:size-3.75 [&>svg]:flex-none",
+                      target.isTag
+                        ? "tag-color [&>svg]:stroke-[2.75] [&>svg]:text-(--hash)"
+                        : "[&>svg]:text-muted-foreground",
+                      target === place && "bg-foreground/6",
+                    )}
+                  >
+                    <Icon aria-hidden />
+                    <span className="truncate">{target.name}</span>
+                    <span className="ml-auto text-muted-foreground text-small">
+                      {target.isTag ? "Tag" : "Page"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </label>
         <IconButton
