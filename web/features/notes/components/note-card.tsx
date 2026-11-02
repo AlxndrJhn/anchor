@@ -34,6 +34,7 @@ import { useNearScreen } from "@/lib/hooks/use-near-screen";
 import { rememberCard } from "@/lib/morph";
 import { cn } from "@/lib/utils";
 import { getNoteAttachments } from "../api";
+import { noteOpenedByKey } from "../card-focus";
 import { useAttachmentBlob } from "../hooks/use-attachment-blob";
 import {
   canTickFromCard,
@@ -302,9 +303,15 @@ export const NoteCard = React.memo(function NoteCard({
           if (cardRef.current) rememberCard(note.id, cardRef.current);
         }}
         onKeyDown={(e) => {
-          if (e.key === " " && onPick) {
+          const isPlain = !e.ctrlKey && !e.metaKey && !e.altKey;
+          if (isPlain && (e.key === " " || e.key.toLowerCase() === "x")) {
+            if (!onPick) return;
             e.preventDefault();
             onPick(note.id, e.shiftKey);
+            return;
+          }
+          if (isPlain && (e.key === "Enter" || e.key === "o")) {
+            if (!picking) noteOpenedByKey(note.id);
             return;
           }
           if (!onMove || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
