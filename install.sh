@@ -422,6 +422,7 @@ report() {
   echo "  Update later:  run the same command again"
   echo "  Settings:      $ENV_FILE, then: cd $ANCHOR_DIR && docker compose up -d"
   echo "  Backup:        cd $ANCHOR_DIR && docker compose exec -T anchor-plus backup > anchor-backup-\$(date +%F).tar"
+  echo "  Daily backups: with borgmatic, see https://github.com/AlxndrJhn/anchor#backing-up-with-borgmatic"
   echo
   if [ -n "$OLD_VOLUME" ]; then
     echo "  The notes were copied to a new volume. Once you've checked that"

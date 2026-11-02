@@ -120,7 +120,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Starts faster: settings are read in one go while the splash shows | | ✓ |
 | Debug mode: hold two fingers still for 3 s to film the app and its state, mark problems on a timeline and file them as a GitHub issue (see [mobile/README.md](mobile/README.md#debug-reports)) | | ✓ |
 | The server's version in Settings › About | ✓ | |
-| Back up the whole server with one command and restore it with another, onto a fresh or newer server (see [Backing Up the Server](#backing-up-the-server)) | ✓ | |
+| Back up the whole server with one command and restore it with another, onto a fresh or newer server (see [Backing Up the Server](#backing-up-the-server)), and every day with borgmatic ([how](#backing-up-with-borgmatic)) | ✓ | |
 | Install the server with one command on a small Linux server, such as a free tier one, with HTTPS for your domain or a free hostname (see [One-Line Install on a Small Server](#one-line-install-on-a-small-server)) | ✓ | |
 | Claude, and other apps that speak MCP, can search, read and write your notes through your server (see [Claude (MCP)](#claude-mcp)) | ✓ | |
 | **Fixes** | | |
@@ -462,6 +462,50 @@ model is left out; it's downloaded again when it's needed. Keep backups
 somewhere safe: whoever has one can read every note and sign in as anyone.
 In PowerShell, `>` and `<` need PowerShell 7.4 or later.
 
+### Backing Up with borgmatic
+
+[borgmatic](https://torsion.org/borgmatic/) runs that backup every day and
+keeps it with [Borg](https://www.borgbackup.org/): encrypted, on another disk
+or a Borg server over SSH, with pictures and files that didn't change stored
+only once. The [`borgmatic.yaml`](borgmatic.yaml) in this repository is all
+it needs (borgmatic 2.0 or later). As root on the server:
+
+1. **Get the configuration** and set the repository and a passphrase in it:
+
+   ```bash
+   mkdir -p /etc/borgmatic.d
+   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/borgmatic.yaml -o /etc/borgmatic.d/anchor.yaml
+   chmod 600 /etc/borgmatic.d/anchor.yaml
+   nano /etc/borgmatic.d/anchor.yaml
+   ```
+
+2. **Create the repository**, then make the first backup:
+
+   ```bash
+   borgmatic repo-create --encryption repokey-blake2
+   borgmatic create --verbosity 1 --list --stats
+   ```
+
+3. **Back up every day**: borgmatic's packages come with a systemd timer
+   (`systemctl enable --now borgmatic.timer`); otherwise a cron line does
+   it, e.g. `0 3 * * * root borgmatic` in `/etc/cron.d/borgmatic`.
+
+Each run writes the backup to `/var/backups/anchor`, archives it and deletes
+it again, then drops the archives the `keep_` settings don't keep (7 daily,
+4 weekly, 6 monthly). Keep the passphrase and, with `repokey`, an export of
+the key (`borgmatic key export`) off the server: without them, the backups
+can't be read.
+
+To restore, take the backup out of the newest archive (or another, from
+`borgmatic repo-list`) and give it to `restore` as above:
+
+```bash
+mkdir -p /tmp/anchor-restore
+borgmatic extract --archive latest --path var/backups/anchor/anchor-backup.tar --destination /tmp/anchor-restore
+docker exec -i anchor-plus restore < /tmp/anchor-restore/var/backups/anchor/anchor-backup.tar
+rm -rf /tmp/anchor-restore
+```
+
 ### Monitoring the Server
 
 Uptime Kuma, Gatus, Healthchecks.io, Better Stack and the like can tell you
@@ -478,7 +522,7 @@ database doesn't answer, so the monitor goes down both when the server is
 unreachable and when it can't serve notes. In Uptime Kuma: *Add New Monitor ›
 HTTP(s)*, paste the URL, done. It needs no account or token and says nothing
 about your notes. If Uptime Kuma runs on the same Docker host, a *Docker
-Container* monitor on `anchor` works too: the image's health check uses the
+Container* monitor on `anchor-plus` works too: the image's health check uses the
 same endpoint.
 
 **Anchor checks in with the monitor.** When the monitor can't reach Anchor,
