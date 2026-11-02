@@ -71,6 +71,11 @@ export class E2EApp {
   async resetDb(): Promise<void> {
     await this.prisma
       .$executeRaw`TRUNCATE TABLE "User", "Settings" RESTART IDENTITY CASCADE`;
+    // Open sign-up, so registerUser makes active accounts. (A fresh server
+    // asks for approval of every account after the first.)
+    await this.prisma.settings.create({
+      data: { key: 'user_signup', value: 'enabled' },
+    });
   }
 
   // Backdates a note's clocks past Prisma, which would otherwise restamp

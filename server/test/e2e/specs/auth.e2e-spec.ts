@@ -168,3 +168,47 @@ describe('provider-only sign-in', () => {
     });
   });
 });
+
+describe('sign-up on a fresh server', () => {
+  let ctx: E2EApp;
+
+  beforeAll(async () => {
+    ctx = await createE2EApp();
+  });
+
+  afterAll(async () => {
+    await ctx.close();
+  });
+
+  beforeEach(async () => {
+    await ctx.resetDb();
+    // Nothing chosen yet, as on a new install.
+    await ctx.prisma.settings.deleteMany({ where: { key: 'user_signup' } });
+  });
+
+  const register = (email: string) =>
+    request(ctx.http)
+      .post('/api/auth/register')
+      .send({ email, password: 'password-123', name: 'Someone' })
+      .expect(201);
+
+  it('lets the first account in as an active admin, then asks for approval', async () => {
+    const mode = await request(ctx.http)
+      .get('/api/auth/registration-mode')
+      .expect(200);
+    expect(bodyOf<{ mode: string }>(mode).mode).toBe('enabled');
+
+    const admin = bodyOf<{
+      access_token?: string;
+      user: { isAdmin: boolean; status: string };
+    }>(await register('admin@e2e.test'));
+    expect(admin.user).toMatchObject({ isAdmin: true, status: 'active' });
+    expect(admin.access_token).toBeTruthy();
+
+    const next = bodyOf<{ access_token?: string; user: { status: string } }>(
+      await register('next@e2e.test'),
+    );
+    expect(next.user.status).toBe('pending');
+    expect(next.access_token).toBeUndefined();
+  });
+});
