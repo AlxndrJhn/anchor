@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { AuthGuard } from "@/features/auth";
+import { LocalNotesMove } from "@/features/import-export";
 import { useLockSession } from "@/features/notes/hooks/use-note-lock";
 import { OfflineSupport } from "@/lib/offline/offline-support";
 
@@ -11,6 +12,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <AuthGuard>
       <OfflineSupport />
       <LockSession />
+      <LocalNotesMove />
       <AppShell>{children}</AppShell>
     </AuthGuard>
   );

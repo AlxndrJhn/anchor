@@ -94,7 +94,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | **History** | | |
 | Each version shows its added (+) and removed (−) lines | ✓ | ✓ |
 | **Offline** | | |
-| Works without a server from the first start: notes stay on the device, and Settings › Connect to a server adds one later, moving them into the account at sign in (desktop: File › Connect to a server…; Settings › Import and export moves them) | | ✓ |
+| Works without a server from the first start: notes stay on the device, and Settings › Connect to a server adds one later, moving them into the account at sign in (desktop: File › Connect to a server…) | | ✓ |
 | Open, edit and create notes without a connection, even after a reload; changes sync when back online ([#202](https://github.com/ZhFahim/anchor/issues/202)) | ✓ | (upstream) |
 | Back up every note, tag, picture and recording to a .zip file, and restore one: missing notes come back and sync up, notes already there are left alone (Settings › Backup) | | ✓ |
 | **Reminders** | | |
@@ -691,14 +691,17 @@ which keeps the notes on this computer, as
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
      open it and drag Anchor+ to Applications
 
-2. **Connect (optional):** it opens on the notes kept on this computer.
-   **Connect to a server…** (File menu on Windows, the Anchor+ menu on macOS)
+2. **Connect (optional):** the first start asks for a server, or **Use
+   without a server** keeps the notes on this computer. **Connect to a
+   server…** (File menu on Windows, the Anchor+ menu on macOS)
    asks for the address you open Anchor+ at in your browser, such as
    `https://notes.example.com`. The app checks that the server answers, then
    remembers it; **Change server…** then switches to another one, and **Use
-   without a server** goes back to the notes on this computer. To take those
-   notes to the server, export them (Settings › Import and export) before
-   connecting and import them after.
+   without a server** goes back to the notes on this computer. Signing in
+   moves the notes kept on this computer into the account, next to the notes
+   already there; tags join the account's tags of the same name. (This needs
+   an Anchor+ server; with another one, move them with Settings › Import and
+   export.)
 
 The builds are not signed, so the system warns the first time:
 

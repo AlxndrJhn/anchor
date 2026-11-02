@@ -433,6 +433,8 @@ ipcMain.handle("anchor:connect", async (event, input) => {
   const isSchemeAdded = !/^https?:\/\//i.test(String(input).trim());
   const result = await checkServer(serverUrl, { isSchemeAdded });
   if (!result.ok) return result;
+  // The notes kept without a server move into the account once signed in.
+  if (!settings.serverUrl && settings.localOnly) await keepLocalNotesForMove();
   settings.serverUrl = serverUrl;
   saveSettings();
   buildMenu();
@@ -458,9 +460,54 @@ ipcMain.handle("anchor:use-local", (event) => {
   delete settings.serverUrl;
   settings.localOnly = true;
   saveSettings();
+  // They are still here; nothing is left to move.
+  fs.rmSync(localNotesFile(), { force: true });
   buildMenu();
   openServer();
   return { ok: true };
+});
+
+// --- Moving the built-in client's notes into an account ---------------------
+
+const localNotesFile = () => path.join(app.getPath("userData"), "local-notes.zip");
+
+// The built-in client's notes as an Anchor backup, read in a hidden window,
+// for the server's web client to import once signed in.
+async function keepLocalNotesForMove() {
+  const reader = new BrowserWindow({ show: false, webPreferences: { sandbox: true } });
+  try {
+    await reader.loadURL(LOCAL_URL);
+    const bytes = await reader.webContents.executeJavaScript(
+      `fetch("/api/export?format=anchor").then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => b && new Uint8Array(b))`,
+    );
+    if (bytes) fs.writeFileSync(localNotesFile(), Buffer.from(bytes));
+  } catch (err) {
+    console.error("Keeping the notes on this computer to move failed:", err);
+  } finally {
+    reader.destroy();
+  }
+}
+
+// The server's web client, signed in, asks for them.
+function fromServerPage(event) {
+  return fromAppPage(event) && Boolean(settings.serverUrl) && event.senderFrame.url !== SETUP_URL;
+}
+
+ipcMain.handle("anchor:take-local-notes", (event) => {
+  if (!fromServerPage(event)) throw new Error("Not allowed");
+  try {
+    return new Uint8Array(fs.readFileSync(localNotesFile()));
+  } catch {
+    return null;
+  }
+});
+
+// In the account now: the built-in client starts empty, as on Android.
+ipcMain.handle("anchor:local-notes-moved", async (event) => {
+  if (!fromServerPage(event)) throw new Error("Not allowed");
+  fs.rmSync(localNotesFile(), { force: true });
+  await mainWindow.webContents.session.clearStorageData({ origin: LOCAL_ORIGIN });
+  return true;
 });
 
 // --- Updates ---------------------------------------------------------------
