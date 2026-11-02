@@ -241,7 +241,7 @@ E2.1.Micro and Ampere A1, AWS t2/t3/t4g.micro, Google Cloud's e2-micro, a 1 GB
 VPS), one command, run over SSH, sets up everything:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3000 bash
 ```
 
 With a domain whose DNS points at the server, Anchor gets HTTPS (a Let's
@@ -283,8 +283,9 @@ is kept in `/opt/anchor/.env`, readable by root only. Cloudflare's free plan
 takes uploads of up to 100 MB. `TUNNEL_TOKEN=` (empty) stops using the tunnel.
 
 Running the same command again updates Anchor and keeps the notes, the
-domain and the tunnel. `DOMAIN=` (empty) goes back to plain HTTP, `PORT=8080` serves on
-another port, `ANCHOR_TAG=fork-preview` follows the release candidates.
+domain and the tunnel. `PORT` is the port Anchor listens on without a domain
+or tunnel, e.g. `PORT=8080`; `DOMAIN=` (empty) goes back to plain HTTP;
+`ANCHOR_TAG=fork-preview` follows the release candidates.
 Anchor's own settings (see the table below) go in `/opt/anchor/anchor.env`,
 followed by `docker compose up -d` in `/opt/anchor`.
 

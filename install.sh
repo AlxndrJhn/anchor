@@ -5,9 +5,10 @@
 # Made for the smallest (free tier) virtual servers: Oracle Cloud's
 # VM.Standard.E2.1.Micro and Ampere A1, AWS t2/t3/t4g.micro, Google Cloud's
 # e2-micro, a 1 GB VPS. Run as root on a fresh Ubuntu, Debian, Oracle Linux,
-# Rocky/Alma/RHEL, Fedora or Amazon Linux server (amd64 or arm64):
+# Rocky/Alma/RHEL, Fedora or Amazon Linux server (amd64 or arm64), with the
+# port Anchor listens on:
 #
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3000 bash
 #
 # With a domain whose DNS already points at the server, Anchor gets HTTPS
 # (a Let's Encrypt certificate, through Caddy) on ports 80 and 443:
@@ -65,7 +66,7 @@ get_env() {
 }
 
 check_system() {
-  [ "$(id -u)" -eq 0 ] || die "Run it as root: curl -fsSL <url> | sudo bash"
+  [ "$(id -u)" -eq 0 ] || die "Run it as root: curl -fsSL <url> | sudo PORT=3000 bash"
   [ "$(uname -s)" = Linux ] || die "This is for Linux servers"
   case "$(uname -m)" in
     x86_64 | amd64 | aarch64 | arm64) ;;
