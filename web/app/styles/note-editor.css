@@ -313,8 +313,7 @@ textarea.n-title {
 .ed-body ~ .n-tags {
   margin-top: --spacing(8);
   padding-top: --spacing(3);
-  border-top: 1px solid
-    color-mix(in srgb, var(--note-border) 60%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--note-border) 60%, transparent);
 }
 
 .save {

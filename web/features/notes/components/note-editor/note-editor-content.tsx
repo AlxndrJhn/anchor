@@ -132,9 +132,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
     props.canUpload && canRecord ? () => setRecording(true) : undefined;
   const startersRoving = useRovingFocus<HTMLDivElement>();
   const clean = usePreferencesStore((s) => s.editor.noteLayout === "clean");
-  const formattingOpen = usePreferencesStore(
-    (s) => !!s.editor.formattingOpen,
-  );
+  const formattingOpen = usePreferencesStore((s) => !!s.editor.formattingOpen);
   const titleLine = useTitleLine(
     props.titleInputRef,
     props.contentEditorRef,
@@ -197,37 +195,37 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
     );
 
   const onTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-              const stamp = stampFor(
-                e.nativeEvent,
-                usePreferencesStore.getState().editor,
-              );
-              if (stamp) {
-                e.preventDefault();
-                const input = e.currentTarget;
-                input.setRangeText(
-                  stamp,
-                  input.selectionStart ?? input.value.length,
-                  input.selectionEnd ?? input.value.length,
-                  "end",
-                );
-                props.onTitleChange(withoutLineBreaks(input.value));
-                return;
-              }
-              // Tab skips the tag row, attachments and toolbar on the way.
-              if (
-                e.key === "Tab" &&
-                !e.shiftKey &&
-                !e.altKey &&
-                !e.ctrlKey &&
-                !e.metaKey &&
-                !e.nativeEvent.isComposing
-              ) {
-                e.preventDefault();
-                props.contentEditorRef?.current?.setSelection(0, 0);
-                return;
-              }
-              titleLine.onKeyDown(e);
-            };
+    const stamp = stampFor(
+      e.nativeEvent,
+      usePreferencesStore.getState().editor,
+    );
+    if (stamp) {
+      e.preventDefault();
+      const input = e.currentTarget;
+      input.setRangeText(
+        stamp,
+        input.selectionStart ?? input.value.length,
+        input.selectionEnd ?? input.value.length,
+        "end",
+      );
+      props.onTitleChange(withoutLineBreaks(input.value));
+      return;
+    }
+    // Tab skips the tag row, attachments and toolbar on the way.
+    if (
+      e.key === "Tab" &&
+      !e.shiftKey &&
+      !e.altKey &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.nativeEvent.isComposing
+    ) {
+      e.preventDefault();
+      props.contentEditorRef?.current?.setSelection(0, 0);
+      return;
+    }
+    titleLine.onKeyDown(e);
+  };
 
   return (
     <div
@@ -690,8 +688,7 @@ function TagRow({
   const tags = sortTagsByName(
     props.tagIds.flatMap((id) => props.allTags.find((t) => t.id === id) ?? []),
   );
-  const showReminder =
-    withReminder && !!props.reminder && props.canSetReminder;
+  const showReminder = withReminder && !!props.reminder && props.canSetReminder;
   const tagsFailed = props.tagsLoadFailed && props.tagIds.length > 0;
   if (props.tagsLocked && !tags.length && !tagsFailed) return null;
 
