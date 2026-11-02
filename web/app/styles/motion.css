@@ -279,3 +279,273 @@
   }
 }
 /* biome-ignore-end lint/complexity/noImportantStyles: reduced motion beats every animation. */
+
+/* A device that just signed in, beamed into the Devices list (see TeleportFx):
+   the space opens, streaks of light rush in to the icon's spot and burst
+   there, a scanline draws the row in a hologram's colour fringes, and sparks
+   circle the icon on a tilted ring, like the +'s. The impact is at 650ms. */
+.teleport-in {
+  position: relative;
+  display: grid;
+  animation: teleport-open var(--duration-header) var(--ease-standard);
+}
+.teleport-in > :last-child {
+  min-height: 0;
+  overflow: hidden;
+  animation:
+    teleport-reveal 560ms var(--ease-in-out) 700ms backwards,
+    teleport-holo 900ms var(--ease-standard) 700ms,
+    teleport-flash var(--duration-flash) var(--ease-standard) 650ms;
+}
+.teleport-icon {
+  animation:
+    teleport-land 480ms var(--ease-pop) 650ms backwards,
+    teleport-ink 1400ms var(--ease-standard) 650ms;
+}
+.teleport-fx {
+  --spot-x: 29px;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+@media (width < 48rem) {
+  .teleport-fx {
+    --spot-x: 23px;
+  }
+}
+.teleport-fx > i {
+  position: absolute;
+  top: 50%;
+  left: var(--spot-x);
+  opacity: 0;
+}
+.teleport-fx > .teleport-scan {
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: white;
+  box-shadow:
+    0 0 6px 1px var(--accent-strong),
+    0 0 22px 4px color-mix(in srgb, var(--accent-strong) 55%, transparent);
+  animation: teleport-scan 560ms var(--ease-in-out) 700ms;
+}
+.teleport-streak {
+  width: 44px;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 2px;
+  filter: drop-shadow(0 0 3px var(--accent-strong));
+  background: linear-gradient(
+    90deg,
+    white,
+    var(--accent-strong) 35%,
+    transparent
+  );
+  transform-origin: 0 50%;
+  /* Each starts a little later and travels faster, so all land together. */
+  animation: teleport-streak calc(470ms - var(--i) * 11ms)
+    cubic-bezier(0.55, 0, 0.9, 0.35) calc(180ms + var(--i) * 11ms);
+}
+.teleport-portal {
+  width: 40px;
+  height: 14px;
+  margin: -7px -20px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--accent-strong),
+    0 0 14px 2px color-mix(in srgb, var(--accent-strong) 60%, transparent);
+  rotate: -28deg;
+  animation: teleport-portal 640ms var(--ease-in-out) 110ms;
+}
+.teleport-core {
+  width: 30px;
+  height: 30px;
+  margin: -15px;
+  border-radius: 50%;
+  background: radial-gradient(
+    white 10%,
+    var(--accent-strong) 35%,
+    transparent 70%
+  );
+  animation: teleport-core 820ms var(--ease-standard) 260ms;
+}
+.teleport-wave {
+  width: 24px;
+  height: 24px;
+  margin: -12px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-strong);
+  animation: teleport-wave 700ms cubic-bezier(0.1, 0.7, 0.3, 1) 650ms;
+}
+.teleport-wave-late {
+  border-width: 1px;
+  animation-delay: 760ms;
+}
+.teleport-fx > .teleport-orbit {
+  width: 0;
+  height: 0;
+  opacity: 1;
+  rotate: -28deg;
+}
+/* An ellipse from two eased swings, so the sparks stay round. */
+.teleport-orbit > b {
+  position: absolute;
+  opacity: 0;
+  animation:
+    teleport-swing-x 500ms var(--ease-in-out) calc(var(--i) * -333ms) alternate
+    infinite,
+    teleport-orbit-fade 1500ms var(--ease-standard) 800ms forwards;
+}
+.teleport-orbit > b > b {
+  display: block;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px;
+  border-radius: 50%;
+  background: var(--accent-ink);
+  box-shadow: 0 0 6px var(--accent-strong);
+  animation: teleport-swing-y 500ms var(--ease-in-out)
+    calc(var(--i) * -333ms - 250ms) alternate infinite;
+}
+
+@keyframes teleport-open {
+  from {
+    grid-template-rows: 0fr;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+@keyframes teleport-streak {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateX(var(--d)) scaleX(0.5);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateX(0) scaleX(1.4);
+  }
+}
+@keyframes teleport-portal {
+  0% {
+    opacity: 0;
+    scale: 0;
+  }
+  70% {
+    opacity: 1;
+    scale: 1.15;
+  }
+  100% {
+    opacity: 0;
+    scale: 0;
+  }
+}
+@keyframes teleport-core {
+  0% {
+    opacity: 0;
+    scale: 0.2;
+  }
+  45% {
+    opacity: 0.9;
+    scale: 0.8;
+  }
+  58% {
+    opacity: 1;
+    scale: 2.2;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.6;
+  }
+}
+@keyframes teleport-wave {
+  0% {
+    opacity: 1;
+    scale: 0.4;
+  }
+  100% {
+    opacity: 0;
+    scale: 4.5;
+  }
+}
+@keyframes teleport-scan {
+  0% {
+    left: 44px;
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+@keyframes teleport-reveal {
+  from {
+    clip-path: inset(0 calc(100% - 44px) 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+@keyframes teleport-holo {
+  from {
+    text-shadow:
+      -4px 0 color-mix(in srgb, var(--accent-strong) 85%, transparent),
+      4px 0 color-mix(in srgb, #3ab7e8 75%, transparent);
+  }
+}
+@keyframes teleport-flash {
+  12% {
+    background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+}
+@keyframes teleport-land {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-35deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.45) rotate(8deg);
+  }
+}
+@keyframes teleport-ink {
+  from {
+    color: var(--accent-ink);
+  }
+}
+@keyframes teleport-swing-x {
+  from {
+    translate: -17px 0;
+  }
+  to {
+    translate: 17px 0;
+  }
+}
+@keyframes teleport-swing-y {
+  from {
+    translate: 0 -6px;
+  }
+  to {
+    translate: 0 6px;
+  }
+}
+@keyframes teleport-orbit-fade {
+  0% {
+    opacity: 0;
+  }
+  15%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
