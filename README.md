@@ -819,13 +819,17 @@ Anchor supports OpenID Connect (OIDC) authentication for simplified credential m
 
 ### Pocket ID
 
-[Pocket ID](https://pocket-id.org) signs people in with passkeys, so pairing it with Anchor+ gives you passwordless sign-in on the web and the phone app. [`docker-compose.pocket-id.yml`](docker-compose.pocket-id.yml) runs both; its header lists the three steps, all on Pocket ID's side:
+To sign in with a [Pocket ID](https://pocket-id.org) you already run, whoever administers it adds an OIDC client for Anchor+ (**OIDC Clients → Add OIDC Client**) with:
 
-1. Add your passkey as the Pocket ID admin at `https://id.example.com/setup`.
-2. Under **OIDC Clients → Add OIDC Client**, tick **Public Client** and **PKCE**, and add both callback URLs: `https://notes.example.com/api/auth/oidc/callback` and `anchor://oidc/callback`.
-3. Put the client ID in `.env` as `POCKET_ID_CLIENT_ID`, or in **Admin → Settings → Single sign-on** with `https://id.example.com` as the issuer URL. **Test** there checks Anchor+ can reach it.
+- **Public Client** and **PKCE** ticked, so the phone app can sign in too
+- Callback URLs `https://notes.example.com/api/auth/oidc/callback` and `anchor://oidc/callback`
 
-The first account to sign in becomes the admin. If you already have an account with a password, sign in as usual and use **Connect** under **Settings → Sign-in security** to link it to Pocket ID, even if the emails differ.
+**Admin → Sign-in → Single sign-on** in Anchor+ lists both URLs and can copy this request, ready to send. With the client ID they give back, either:
+
+- fill in the issuer URL (your Pocket ID's address) and client ID there; **Test** checks Anchor+ can reach it, or
+- put `ANCHOR_URL`, `POCKET_ID_URL` and `POCKET_ID_CLIENT_ID` in `.env` and start with [`docker-compose.pocket-id.yml`](docker-compose.pocket-id.yml) on top: `docker compose -f docker-compose.yml -f docker-compose.pocket-id.yml up -d`.
+
+Anchor+ needs no secret or API key from Pocket ID. The first account to sign in becomes the admin. People who already have an account sign in as usual and use **Connect** under **Settings → Sign-in security** to link it to Pocket ID, even if the emails differ.
 
 ### Configuration
 

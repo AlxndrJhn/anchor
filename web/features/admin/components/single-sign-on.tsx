@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy } from "lucide-react";
 import * as React from "react";
 import { useShellStore } from "@/components/layout/shell-store";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,20 @@ function CopyAddress({ label, value }: { label: string; value: string }) {
       }
     />
   );
+}
+
+/** What to ask whoever runs the provider for, ready to paste in a message. */
+function providerRequest(providerName: string, callbackUrl: string) {
+  return [
+    `Could you add Anchor+ as an OIDC client in ${providerName}? In Pocket ID, that’s OIDC Clients → Add OIDC Client.`,
+    "",
+    "- Name: Anchor+",
+    `- Callback URLs: ${callbackUrl}`,
+    `  and ${PHONE_CALLBACK_URL} (for the phone app)`,
+    "- Public client: yes, with PKCE (the phone app can’t keep a secret)",
+    "",
+    "Then send me its client ID and the issuer URL (your Pocket ID’s address). Thanks!",
+  ].join("\n");
 }
 
 type OidcForm = Required<
@@ -385,6 +400,25 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
                   Public Client and PKCE so the phone app can sign in too, and
                   copy its client ID here.
                 </FieldDescription>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="justify-self-start"
+                  onClick={() =>
+                    copyText(
+                      providerRequest(providerName, settings.callbackUrl),
+                    ).then(
+                      () =>
+                        toast.success(
+                          `Copied. Send it to whoever runs ${providerName}.`,
+                        ),
+                      () => toast.error("Couldn’t copy the request"),
+                    )
+                  }
+                >
+                  <Copy aria-hidden />
+                  Copy a request for your {providerName} admin
+                </Button>
               </div>
             </Row>
           </>
