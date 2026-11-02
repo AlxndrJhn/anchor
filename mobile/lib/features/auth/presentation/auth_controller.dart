@@ -74,8 +74,12 @@ class AuthController extends _$AuthController {
 
   /// Throws an [AuthFailure] when the server says no; the state stays
   /// signed out.
-  Future<void> login(String email, String password) async {
-    _signedIn(await ref.read(authRepositoryProvider).login(email, password));
+  Future<void> login(String email, String password, {String? code}) async {
+    _signedIn(
+      await ref
+          .read(authRepositoryProvider)
+          .login(email, password, code: code),
+    );
   }
 
   /// A code from the web's magic login (its QR code or link).

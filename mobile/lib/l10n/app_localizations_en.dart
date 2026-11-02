@@ -200,6 +200,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fieldTwoStepCode => 'Code from your authenticator app';
+
+  @override
+  String get authTwoStepCodeHelp => 'Lost your phone? Enter one of your recovery codes instead.';
+
+  @override
+  String get authEnterTwoStepCode => 'Enter the code from your authenticator app.';
+
+  @override
+  String get authWrongTwoStepCode => 'That code isn’t right. Check your authenticator app and try again.';
+
+  @override
+  String get authPasskeyOnly => 'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.';
+
+  @override
   String get authIncorrectCredentials => 'Incorrect email or password.';
 
   @override

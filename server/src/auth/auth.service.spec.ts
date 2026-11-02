@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { OidcConfigService } from './oidc/oidc-config.service';
+import { TwoStepService } from './two-step.service';
 import { REFRESH_TOKEN_REUSE_WINDOW_MS } from './constants/auth.constants';
 
 /**
@@ -28,6 +29,7 @@ describe('AuthService', () => {
     isAdmin: boolean;
     status: 'active' | 'pending';
     apiToken: string | null;
+    passwordSignIn: boolean;
     createdAt: Date;
     updatedAt: Date;
   }
@@ -57,6 +59,7 @@ describe('AuthService', () => {
       isAdmin: false,
       status: 'active',
       apiToken: null,
+      passwordSignIn: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       ...overrides,
@@ -224,6 +227,9 @@ describe('AuthService', () => {
     ),
   } as unknown as OidcConfigService;
 
+  const checkSignIn = vi.fn(() => Promise.resolve());
+  const twoStepService = { checkSignIn } as unknown as TwoStepService;
+
   const storageConfig = {
     root: '/data',
     uploadsDir: '/data/uploads',
@@ -241,6 +247,7 @@ describe('AuthService', () => {
       jwtService,
       settingsService,
       oidcConfigService,
+      twoStepService,
       storageConfig,
     );
     vi.clearAllMocks();
@@ -394,6 +401,30 @@ describe('AuthService', () => {
         password: 'other pw',
       });
       expect(result.user.id).toBe('u2');
+    });
+
+    it('refuses the password once the account signs in with passkeys only', async () => {
+      addUser({ id: 'u1', passwordSignIn: false });
+      await expect(
+        service.login({ email: 'u1@example.com', password: 'correct horse' }),
+      ).rejects.toThrow(/Password sign-in is turned off/);
+      expect(checkSignIn).not.toHaveBeenCalled();
+    });
+
+    it('asks for the two-step code after the right password only', async () => {
+      addUser({ id: 'u1' });
+      await expect(
+        service.login({ email: 'u1@example.com', password: 'wrong' }),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(checkSignIn).not.toHaveBeenCalled();
+
+      const result = await service.login({
+        email: 'u1@example.com',
+        password: 'correct horse',
+        code: '123456',
+      });
+      expect(checkSignIn).toHaveBeenCalledWith('u1', '123456');
+      expect(result.user).not.toHaveProperty('passwordSignIn');
     });
 
     it('makes an account wait after ten wrong passwords', async () => {

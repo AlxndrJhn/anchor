@@ -112,6 +112,8 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Hold the New Note button for New list | | ✓ |
 | Double-tap the New Note button to paste the clipboard into a new note | | ✓ |
 | Sign in on your phone without a password: the web's Settings › Sign in on your phone shows a QR code to scan from the app's first screen, or copies a magic link that opens the app and signs in (each works once, within 10 minutes) | ✓ | ✓ |
+| Sign in with a passkey (fingerprint, face, screen lock or security key), and turn password sign-in off once you have one (Settings › Sign-in security; needs https) | ✓ | |
+| Two-step sign-in with an authenticator app (Aegis, Google Authenticator, 1Password…), with ten one-time recovery codes; the Android app asks for the code too | ✓ | ✓ |
 | Updates itself from this fork's GitHub releases (Settings › Updates) | | ✓ |
 | Install and update it with F-Droid, from releases or also release candidates ([F-Droid](#f-droid)) | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |

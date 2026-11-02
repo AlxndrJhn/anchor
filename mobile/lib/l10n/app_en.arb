@@ -256,6 +256,26 @@
       }
     }
   },
+  "fieldTwoStepCode": "Code from your authenticator app",
+  "@fieldTwoStepCode": {
+    "description": "Label of the field on the sign-in page for the six-digit code from an authenticator app, asked after the right password when the account has two-step sign-in on."
+  },
+  "authTwoStepCodeHelp": "Lost your phone? Enter one of your recovery codes instead.",
+  "@authTwoStepCodeHelp": {
+    "description": "Help under the authenticator code field on the sign-in page."
+  },
+  "authEnterTwoStepCode": "Enter the code from your authenticator app.",
+  "@authEnterTwoStepCode": {
+    "description": "Shown under the authenticator code field when the password was right but the account also needs a code."
+  },
+  "authWrongTwoStepCode": "That code isn’t right. Check your authenticator app and try again.",
+  "@authWrongTwoStepCode": {
+    "description": "Error under the authenticator code field when the code was wrong or already used."
+  },
+  "authPasskeyOnly": "This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.",
+  "@authPasskeyOnly": {
+    "description": "Error at the top of the sign-in form when the account turned password sign-in off and uses passkeys."
+  },
   "authIncorrectCredentials": "Incorrect email or password.",
   "@authIncorrectCredentials": {
     "description": "Error at the top of the sign-in form when the email or password is wrong."

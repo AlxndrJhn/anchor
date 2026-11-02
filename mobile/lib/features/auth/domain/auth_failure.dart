@@ -18,6 +18,14 @@ sealed class AuthFailure implements Exception {
     final serverMessage = message is String ? message : null;
     return switch ((status, serverMessage)) {
       (401, 'Invalid credentials') => const InvalidCredentialsFailure(),
+      (401, 'Enter the code from your authenticator app') =>
+        const TwoStepRequiredFailure(),
+      (401, 'That code isn’t right') => const TwoStepRequiredFailure(
+        wasWrong: true,
+      ),
+      (403, final text?)
+          when text.startsWith('Password sign-in is turned off') =>
+        const PasskeyOnlyFailure(),
       (401, final text?)
           when text.startsWith('This sign-in code has expired') =>
         const MagicCodeUsedFailure(),
@@ -49,6 +57,19 @@ final class InvalidCredentialsFailure extends AuthFailure {
 }
 
 /// A magic login code that ran out, or was used already.
+/// The password was right; the authenticator app's code is still needed, or
+/// the one sent was wrong.
+final class TwoStepRequiredFailure extends AuthFailure {
+  const TwoStepRequiredFailure({this.wasWrong = false});
+
+  final bool wasWrong;
+}
+
+/// The account turned password sign-in off and signs in with passkeys.
+final class PasskeyOnlyFailure extends AuthFailure {
+  const PasskeyOnlyFailure();
+}
+
 final class MagicCodeUsedFailure extends AuthFailure {
   const MagicCodeUsedFailure();
 }

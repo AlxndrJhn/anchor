@@ -74,6 +74,14 @@ model User {
   /// ("pbkdf2-sha256$iterations$salt$hash"); one of each for all notes.
   lockPin              String?
   lockPattern          String?
+  /// The authenticator app's shared secret (base32) once two-step sign-in is
+  /// on, the time step of the last code used, and the one-time recovery codes,
+  /// hashed (sha256 hex).
+  totpSecret           String?
+  totpLastStep         Int?
+  totpRecoveryCodes    String[]         @default([])
+  /// Off once the person signs in with passkeys only.
+  passwordSignIn       Boolean          @default(true)
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   notes                Note[]
@@ -92,6 +100,26 @@ model User {
   changeLog            ChangeLog[]
   noteRevisions        NoteRevision[]
   noteReminders        NoteReminder[]
+  passkeys             Passkey[]
+}
+
+/// A WebAuthn credential that signs its owner in without a password.
+model Passkey {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// base64url, as the browser reports it.
+  credentialId String    @unique
+  publicKey    Bytes
+  counter      BigInt    @default(0)
+  transports   String[]  @default([])
+  /// The host it was made for; it signs in there only.
+  rpId         String
+  name         String
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
 }
 
 model Settings {
