@@ -10,6 +10,7 @@ import 'package:anchor/features/notes/presentation/editor/highlight_underlay.dar
 import 'package:anchor/features/notes/presentation/editor/line_kind.dart';
 import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
+import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -207,6 +208,94 @@ void main() {
     state.controller.replaceText(0, 0, 'x', null);
     await tester.pump();
     expect(changes, 1);
+  });
+
+  group('accents sent apart from their letters', () {
+    // "Việt" with ệ as e, dot below, circumflex.
+    const apart = 'Vie\u0323\u0302t';
+    const joined = 'Vi\u1EC7t';
+
+    testWidgets('pasted text goes in joined, the caret after it', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester);
+      state.controller.replaceText(
+        2,
+        0,
+        ' $apart',
+        const TextSelection.collapsed(offset: 2 + 1 + apart.length),
+      );
+      await tester.pump();
+
+      expect(state.getPlainText(), 'hi $joined');
+      expect(
+        state.controller.selection,
+        const TextSelection.collapsed(offset: 2 + 1 + joined.length),
+      );
+    });
+
+    testWidgets('an accent typed after its letter joins it, undone at once', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester);
+      state.controller.replaceText(
+        2,
+        0,
+        'e',
+        const TextSelection.collapsed(offset: 3),
+      );
+      state.controller.document.history.lastRecorded = 0;
+      state.controller.replaceText(
+        3,
+        0,
+        '\u0301',
+        const TextSelection.collapsed(offset: 4),
+      );
+      await tester.pump();
+
+      expect(state.getPlainText(), 'hié');
+      expect(
+        state.controller.selection,
+        const TextSelection.collapsed(offset: 3),
+      );
+      state.controller.undo();
+      expect(state.getPlainText(), 'hie');
+    });
+
+    testWidgets('rich text pasted from elsewhere keeps its styles', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(tester);
+      state.controller.replaceText(
+        0,
+        0,
+        Delta()
+          ..insert(apart, {'bold': true})
+          ..insert(' '),
+        const TextSelection.collapsed(offset: 0),
+      );
+      await tester.pump();
+
+      expect(state.controller.document.toDelta().toJson().first, {
+        'insert': joined,
+        'attributes': {'bold': true},
+      });
+      expect(state.getPlainText(), '$joined hi');
+    });
+
+    testWidgets('a note stored with them opens and saves as it was', (
+      tester,
+    ) async {
+      final stored = jsonEncode({
+        'ops': [
+          {'insert': '$apart\n'},
+        ],
+      });
+      final (state, _) = await pumpEditor(tester, content: stored);
+
+      expect(state.getContent(), stored);
+      expect(state.matchesContent(stored), isTrue);
+    });
   });
 
   testWidgets('typing does not rebuild the editor subtree', (tester) async {

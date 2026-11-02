@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
+import '../../../core/text/composed_text.dart';
 import '../../notes/data/repository/note_attachments_repository.dart';
 import '../../notes/data/repository/notes_repository.dart';
 import '../../notes/domain/note.dart';
@@ -35,8 +36,12 @@ class ShareImporter {
           await notes.createNote(
             Note(
               id: entry.id,
-              title: storedTitleOf(entry.title),
-              content: shareNoteContent(entry.text, link: entry.link),
+              // The iOS share extension saves what was shared as it came.
+              title: storedTitleOf(composedText(entry.title)),
+              content: shareNoteContent(
+                composedText(entry.text),
+                link: entry.link,
+              ),
               tagIds: [
                 for (final tagId in entry.tagIds)
                   if (tagIds.contains(tagId)) tagId,

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/links/link_utils.dart';
+import '../../../core/text/composed_text.dart';
 
 /// A file of any other kind is attached as it is.
 enum SharedFileKind { picture, audio, file }
@@ -132,8 +133,8 @@ SharedIntake intakeFromMap(Map<String, Object?> share) {
   return SharedIntake(
     id: _string(share['id'], ''),
     staging: _string(share['staging'], ''),
-    title: _string(share['title'], ''),
-    text: _string(share['text'], ''),
+    title: composedText(_string(share['title'], '')),
+    text: composedText(_string(share['text'], '')),
     files: [
       if (files is List)
         for (final file in files)

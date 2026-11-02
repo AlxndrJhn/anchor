@@ -174,6 +174,15 @@ void main() {
       expect(intake.title, '');
     });
 
+    test('accents sent apart from their letters are joined', () {
+      final intake = intakeFromMap({
+        'title': 'Vie\u0323\u0302t',
+        'text': 'Pho\u031B\u0309 ngon',
+      });
+      expect(intake.title, 'Vi\u1EC7t');
+      expect(intake.text, 'Ph\u1EDF ngon');
+    });
+
     test('text with an address in it stays text', () {
       final intake = intakeFromMap({
         'title': 'Bread',
@@ -331,6 +340,27 @@ void main() {
       ).captured;
       expect([added[1], added[3]], ['two.png', 'one.jpg']);
       expect(folder.existsSync(), isFalse);
+    });
+
+    test('joins accents the share extension saved apart', () async {
+      await stage(
+        ShareEntry(
+          id: 'v1',
+          userId: 'u1',
+          savedAt: DateTime.utc(2026, 11, 2),
+          title: 'Vie\u0323\u0302t',
+          text: 'Pho\u031B\u0309',
+        ),
+      );
+
+      await importer.importAll(inbox, 'u1');
+
+      final note =
+          verify(() => notes.createNote(captureAny())).captured.single as Note;
+      expect(note.title, 'Vi\u1EC7t');
+      expect(_ops(note.content), [
+        {'insert': 'Ph\u1EDF\n'},
+      ]);
     });
 
     test('drops a share saved for another account', () async {

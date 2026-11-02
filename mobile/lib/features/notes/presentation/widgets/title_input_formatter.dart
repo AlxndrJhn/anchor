@@ -3,7 +3,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 
-/// A typed line break calls [onEnter]; pasted line breaks become one space.
+import '../../../../core/text/composed_text.dart';
+
+/// A typed line break calls [onEnter]; pasted line breaks become one space,
+/// and accents typed or pasted apart join their letters.
 class TitleInputFormatter extends TextInputFormatter {
   TitleInputFormatter({required this.onEnter});
 
@@ -31,7 +34,6 @@ class TitleInputFormatter extends TextInputFormatter {
       end++;
     }
     final added = after.substring(start, after.length - end);
-    if (!added.contains('\n') && !added.contains('\r')) return newValue;
     if (added == '\n' && after.length == before.length + 1) {
       // The field is still taking this edit.
       scheduleMicrotask(onEnter);
@@ -40,15 +42,18 @@ class TitleInputFormatter extends TextInputFormatter {
         selection: TextSelection.collapsed(offset: start),
       );
     }
-    final joined = added.replaceAll(_lineBreak, ' ');
+    final composed = composedInsert(after.substring(0, start), added);
+    final from = start - (composed?.joined ?? 0);
+    final joined = (composed?.text ?? added).replaceAll(_lineBreak, ' ');
+    if (from == start && joined == added) return newValue;
     final addedEnd = after.length - end;
-    int mapOffset(int offset) => offset <= start
+    int mapOffset(int offset) => offset <= from
         ? offset
         : offset >= addedEnd
-        ? offset - added.length + joined.length
-        : start + joined.length;
+        ? offset - (addedEnd - from) + joined.length
+        : from + joined.length;
     return TextEditingValue(
-      text: after.replaceRange(start, addedEnd, joined),
+      text: after.replaceRange(from, addedEnd, joined),
       selection: newValue.selection.copyWith(
         baseOffset: mapOffset(newValue.selection.baseOffset),
         extentOffset: mapOffset(newValue.selection.extentOffset),
