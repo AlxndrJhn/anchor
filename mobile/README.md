@@ -75,7 +75,9 @@ flutter build ios --release
 
 Hold two fingers still on the screen for 3 seconds to start debug mode: the
 app films itself and notes what happens meanwhile: screen changes, touches,
-provider updates and log lines.
+provider updates and log lines. It starts with how things stood: with a
+server, without one or signed out, online, syncing, text size and reduced
+motion.
 
 A recording lasts at most 20 seconds. The ring around the red camera in the top
 left corner shows the time left; when it closes, recording stops by itself. Tap
