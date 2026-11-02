@@ -44,7 +44,13 @@ describe("matchTargets", () => {
 
   it("finds only tags after a #", () => {
     expect(names("#a")).toEqual(["tag1", "tag5"]);
-    expect(names("#")).toEqual(["workout", "work", "home-work", "tag1", "tag5"]);
+    expect(names("#")).toEqual([
+      "workout",
+      "work",
+      "home-work",
+      "tag1",
+      "tag5",
+    ]);
   });
 
   it("finds nothing for an empty query", () => {
