@@ -111,7 +111,8 @@ class _AppTextFieldState extends State<AppTextField> {
     final density = context.density;
     final field = AnimatedContainer(
       duration: context.motion(AnchorTokens.motionDurationHover),
-      height: density.control,
+      // Taller with large text.
+      constraints: BoxConstraints(minHeight: density.control),
       padding: EdgeInsets.only(
         left: 16,
         right: widget.isPassword || widget.trailing != null ? 4 : 16,

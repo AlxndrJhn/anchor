@@ -8,5 +8,6 @@ export { NoteLocksSection } from "./components/note-locks-section";
 export { PasswordSection } from "./components/password-section";
 export { ProfileSection } from "./components/profile-section";
 export { SearchSection } from "./components/search-section";
+export { SecuritySection } from "./components/security-section";
 export { Row, Section } from "./components/settings-blocks";
 export { SettingsNav } from "./components/settings-nav";

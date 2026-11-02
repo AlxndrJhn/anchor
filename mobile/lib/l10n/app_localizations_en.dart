@@ -200,6 +200,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fieldTwoStepCode => 'Code from your authenticator app';
+
+  @override
+  String get authTwoStepCodeHelp => 'Lost your phone? Enter one of your recovery codes instead.';
+
+  @override
+  String get authEnterTwoStepCode => 'Enter the code from your authenticator app.';
+
+  @override
+  String get authWrongTwoStepCode => 'That code isn’t right. Check your authenticator app and try again.';
+
+  @override
+  String get authPasskeyOnly => 'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.';
+
+  @override
   String get authIncorrectCredentials => 'Incorrect email or password.';
 
   @override
@@ -1332,6 +1347,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tagOptions => 'Tag options';
+
+  @override
   String get tagNamePreview => 'tag name';
 
   @override
@@ -2286,6 +2304,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteNew => 'New note';
 
   @override
+  String get noteNewKinds => 'New list or camera note';
+
+  @override
   String get cardNotSynced => 'Not synced yet';
 
   @override
@@ -2297,6 +2318,21 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 picture',
     );
     return '$_temp0';
+  }
+
+  @override
+  String cardTickItem(String item) {
+    return 'Tick $item';
+  }
+
+  @override
+  String cardUntickItem(String item) {
+    return 'Untick $item';
+  }
+
+  @override
+  String cardOpenPicture(int number) {
+    return 'Open picture $number';
   }
 
   @override
@@ -3019,6 +3055,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commonMoveUp => 'Move up';
+
+  @override
+  String get commonMoveDown => 'Move down';
+
+  @override
+  String get commonMoveToTop => 'Move to top';
+
+  @override
+  String get commonMoveToBottom => 'Move to bottom';
+
+  @override
   String commonPosition(int index, int count) {
     return '$index of $count';
   }
@@ -3363,9 +3411,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewCardPicturesHelp => 'Show a note’s pictures on its card';
-
-  @override
-  String get editorDragHint => 'Drag to reorder';
 
   @override
   String get slashMenuLabel => 'Insert';
@@ -4210,6 +4255,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String settingsAddToBar(String action) {
     return 'Put $action in the top bar';
+  }
+
+  @override
+  String settingsMoveAction(String action) {
+    return 'Move $action';
   }
 
   @override

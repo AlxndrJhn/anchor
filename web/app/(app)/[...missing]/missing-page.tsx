@@ -5,8 +5,10 @@ import Link from "next/link";
 import { AppPage } from "@/components/layout/app-page";
 import { ErrorScreen } from "@/components/layout/error-screen";
 import { Button } from "@/components/ui/button";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 
 export default function MissingPage() {
+  useDocumentTitle("Page not found");
   return (
     <AppPage title={null}>
       <ErrorScreen

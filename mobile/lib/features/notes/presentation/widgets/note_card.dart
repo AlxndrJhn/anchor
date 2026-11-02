@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/motion/springs.dart';
@@ -38,6 +39,7 @@ class NoteCard extends ConsumerStatefulWidget {
     this.onOpenPicture,
     this.showPictures = true,
     this.onToggleItem,
+    this.semanticActions = const {},
   });
 
   final Note note;
@@ -67,6 +69,9 @@ class NoteCard extends ConsumerStatefulWidget {
 
   /// Ticks a checklist item from the card, by its line in the note.
   final void Function(int line, String text)? onToggleItem;
+
+  /// More screen reader actions, such as moving the card.
+  final Map<CustomSemanticsAction, VoidCallback> semanticActions;
 
   @override
   ConsumerState<NoteCard> createState() => _NoteCardState();
@@ -129,6 +134,45 @@ class _NoteCardState extends ConsumerState<NoteCard>
       ?date,
     ].join('. ');
 
+    final onToggleItem = widget.isSelecting || isHidden
+        ? null
+        : widget.onToggleItem;
+    final onOpenPicture = widget.isSelecting || isHidden
+        ? null
+        : widget.onOpenPicture;
+    // What the card's own taps do, which its spoken label can't show.
+    final pictures = widget.showPictures && !isHidden
+        ? note.imagePreviewData
+              .take(
+                widget.layout == CardLayout.masonry
+                    ? context.density.previewPictures
+                    : 1,
+              )
+              .toList()
+        : const <NoteImagePreview>[];
+    final actions = <CustomSemanticsAction, VoidCallback>{
+      // VoiceOver has no hold.
+      if (!widget.isSelecting && widget.onLongPress != null)
+        CustomSemanticsAction(label: l10n.commonSelect): widget.onLongPress!,
+      if (onToggleItem != null)
+        for (final item in cardChecklistItems(
+          context,
+          note.content,
+          widget.layout,
+        ))
+          CustomSemanticsAction(
+            label: item.done
+                ? l10n.cardUntickItem(item.text)
+                : l10n.cardTickItem(item.text),
+          ): () =>
+              onToggleItem(item.line, item.text),
+      if (onOpenPicture != null)
+        for (final (i, picture) in pictures.indexed)
+          CustomSemanticsAction(label: l10n.cardOpenPicture(i + 1)): () =>
+              onOpenPicture(picture.attachmentId),
+      ...widget.semanticActions,
+    };
+
     final card = ValueListenableBuilder<Set<String>>(
       valueListenable: CardRegistry.leaving,
       builder: (context, leaving, child) => AnimatedOpacity(
@@ -151,12 +195,8 @@ class _NoteCardState extends ConsumerState<NoteCard>
             isSelected: widget.isSelected,
             isHidden: isHidden,
             showPictures: widget.showPictures,
-            onToggleItem: widget.isSelecting || isHidden
-                ? null
-                : widget.onToggleItem,
-            onOpenPicture: widget.isSelecting || isHidden
-                ? null
-                : widget.onOpenPicture,
+            onToggleItem: onToggleItem,
+            onOpenPicture: onOpenPicture,
             check: widget.isSelecting
                 ? _SelectionCheck(
                     isSelected: widget.isSelected,
@@ -206,6 +246,7 @@ class _NoteCardState extends ConsumerState<NoteCard>
       label: label,
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
+      customSemanticsActions: actions,
       child: RawGestureDetector(
         gestures: gestures,
         behavior: HitTestBehavior.opaque,

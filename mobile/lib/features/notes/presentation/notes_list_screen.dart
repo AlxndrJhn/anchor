@@ -26,6 +26,7 @@ import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bar_title.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/frosted_glass.dart';
+import '../../../core/widgets/move_actions.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/revival.dart';
 import '../../../core/widgets/selection_bar.dart';
@@ -168,6 +169,21 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         });
       }
     });
+  }
+
+  /// Moves [note] to place [to] in its [group], for screen readers, which
+  /// can't drag it.
+  void _moveNote(NoteGroup group, Note note, int to) {
+    final others = [
+      for (final n in group.notes)
+        if (n.id != note.id) n,
+    ];
+    final position = positionBetween(
+      to > 0 ? others[to - 1] : null,
+      to < others.length ? others[to] : null,
+    );
+    Haptics.selection();
+    ref.read(notesRepositoryProvider).setPosition(note.id, position);
   }
 
   /// [groups] in the order a drag is showing, if one is under way.
@@ -632,6 +648,7 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
 
     Widget card(Note note, int index) {
       final group = canReorder ? groupOf[note.id] : null;
+      final place = group?.notes.indexWhere((n) => n.id == note.id) ?? -1;
       final noteCard = NoteCard(
         note: note,
         tags: tagsByName(note.tagIds, tagsById),
@@ -654,6 +671,14 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             : null,
         onOpenPicture: (id) =>
             showNotePictures(context, ref, noteId: note.id, attachmentId: id),
+        semanticActions: group == null || place < 0 || _drag != null
+            ? const {}
+            : indexMoveActions(
+                context,
+                index: place,
+                count: group.notes.length,
+                onMove: (to) => _moveNote(group, note, to),
+              ),
       );
       return ReorderAnimatedBox(
         key: ValueKey(note.id),

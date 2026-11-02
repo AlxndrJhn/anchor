@@ -26,6 +26,7 @@ import {
   OrDivider,
   PendingApprovalScreen,
 } from "@/features/auth/components/auth-parts";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 
 type Errors = {
   name?: string;
@@ -35,6 +36,7 @@ type Errors = {
 };
 
 export default function RegisterPage() {
+  useDocumentTitle("Create account");
   const register = useRegister();
   const oidc = useOidcConfig();
   const { initiate } = useOidcLogin();

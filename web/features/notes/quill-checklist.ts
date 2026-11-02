@@ -456,6 +456,90 @@ export function buildChecklistDropDelta(
   return buildSpanMoveDelta(lines, lineIndex, blockEnd, gap, indentDelta);
 }
 
+export type ChecklistStepMove = {
+  delta: QuillDelta;
+  /** Where the moved block starts in the document, before and after. */
+  from: number;
+  to: number;
+  /** Its place among its siblings after the move, from 1, and how many. */
+  place: number;
+  siblings: number;
+};
+
+/**
+ * Moves the checklist item at [lineIndex], with its indented children, one
+ * place up ([step] -1) or down (1) among the items at its own level under
+ * the same parent: past the neighbouring item and that item's children.
+ * Null when it isn't a checklist item or is already first or last.
+ */
+export function buildChecklistStepMove(
+  currentDelta: QuillDelta,
+  lineIndex: number,
+  step: -1 | 1,
+): ChecklistStepMove | null {
+  const lines = deltaToLines(currentDelta.ops);
+  const line = lines[lineIndex];
+  if (!line || !isChecklistLine(line)) return null;
+  let groupStart = lineIndex;
+  while (groupStart > 0 && isChecklistLine(lines[groupStart - 1])) groupStart--;
+  let groupEnd = lineIndex;
+  while (groupEnd < lines.length - 1 && isChecklistLine(lines[groupEnd + 1]))
+    groupEnd++;
+  const indent = indentOf(line);
+  const blockEnd = blockEndIndex(lines, lineIndex, groupEnd);
+  const size = blockEnd - lineIndex + 1;
+
+  let gap: number;
+  let head: number;
+  if (step < 0) {
+    let above = lineIndex - 1;
+    while (above >= groupStart && indentOf(lines[above]) > indent) above--;
+    if (above < groupStart || indentOf(lines[above]) < indent) return null;
+    gap = above;
+    head = above;
+  } else {
+    const below = blockEnd + 1;
+    if (below > groupEnd || indentOf(lines[below]) !== indent) return null;
+    gap = blockEndIndex(lines, below, groupEnd) + 1;
+    head = gap - size;
+  }
+  const delta = buildChecklistDropDelta(currentDelta, lineIndex, gap);
+  if (!delta) return null;
+
+  // The siblings: the lines at this level until one shallower ends the run.
+  let place = 1;
+  let siblings = 1;
+  for (let i = lineIndex - 1; i >= groupStart; i--) {
+    const level = indentOf(lines[i]);
+    if (level < indent) break;
+    if (level === indent) siblings++;
+  }
+  for (let i = blockEnd + 1; i <= groupEnd; i++) {
+    const level = indentOf(lines[i]);
+    if (level < indent) break;
+    if (level === indent) siblings++;
+  }
+  for (let i = lineIndex - 1; i >= groupStart; i--) {
+    const level = indentOf(lines[i]);
+    if (level < indent) break;
+    if (level === indent) place++;
+  }
+  place += step;
+
+  const from = getLineStartPosition(lines, lineIndex);
+  const moved = deltaToLines(
+    new Delta(currentDelta.ops as never).compose(new Delta(delta.ops as never))
+      .ops as QuillOp[],
+  );
+  return {
+    delta,
+    from,
+    to: getLineStartPosition(moved, head),
+    place,
+    siblings,
+  };
+}
+
 // ============================================================================
 // Uncheck All and Delete Checked Items
 // ============================================================================

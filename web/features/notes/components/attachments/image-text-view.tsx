@@ -148,6 +148,7 @@ export function ImageTextView({
   };
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: Ctrl+A and Ctrl+C anywhere in the view act on its text
     <div
       ref={root}
       className="itv"

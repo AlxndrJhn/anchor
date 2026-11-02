@@ -141,8 +141,8 @@ export function useChecklistDrag({
       const itemRect = item.getBoundingClientRect();
       const containerRect = containerEl.getBoundingClientRect();
       const next = {
-        top: itemRect.top - containerRect.top + 1,
-        left: itemRect.left - containerRect.left - 28,
+        top: itemRect.top - containerRect.top,
+        left: itemRect.left - containerRect.left - 29,
       };
       setHandle((prev) =>
         prev && prev.top === next.top && prev.left === next.left ? prev : next,

@@ -5,7 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../domain/account_rules.dart';
 import '../domain/auth_failure.dart';
 
-enum AuthField { name, email, password, currentPassword, newPassword }
+enum AuthField { name, email, password, code, currentPassword, newPassword }
 
 /// A null [field] puts the text at the top of the form.
 typedef AuthErrorMessage = ({String text, AuthField? field});
@@ -19,6 +19,11 @@ AuthErrorMessage authErrorMessageOf(
     text: l10n.authIncorrectCredentials,
     field: null,
   ),
+  TwoStepRequiredFailure(:final wasWrong) => (
+    text: wasWrong ? l10n.authWrongTwoStepCode : l10n.authEnterTwoStepCode,
+    field: AuthField.code,
+  ),
+  PasskeyOnlyFailure() => (text: l10n.authPasskeyOnly, field: null),
   MagicCodeUsedFailure() => (text: l10n.authMagicCodeUsed, field: null),
   PasswordlessAccountFailure() => (text: l10n.authPasswordless, field: null),
   PendingApprovalFailure() => (text: l10n.authPendingApproval, field: null),

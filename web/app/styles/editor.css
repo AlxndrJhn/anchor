@@ -278,9 +278,13 @@
     border-color var(--duration-hover),
     transform var(--duration-press);
 }
+/* The box stays small; a press anywhere in 26px around it (inside its
+   1.5px border) reaches it, past the 24px minimum target (WCAG 2.5.8). */
 .anchor-quill .ql-editor li[data-list="checked"] > .ql-ui::before,
 .anchor-quill .ql-editor li[data-list="unchecked"] > .ql-ui::before {
-  content: none;
+  content: "";
+  position: absolute;
+  inset: calc((var(--box) - 29px) / 2);
 }
 .anchor-quill .ql-editor li[data-list="unchecked"] > .ql-ui:hover {
   border-color: var(--accent-strong);
@@ -372,8 +376,9 @@
   z-index: 10;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  /* The 24px minimum target size (WCAG 2.5.8). */
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-xs);

@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTagMap } from "@/features/tags/hooks";
+import { moveItem } from "@/features/tags/utils";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
 import { cn } from "@/lib/utils";
 import { type DragPreview, useCardDrag } from "../hooks/use-card-drag";
@@ -39,7 +40,8 @@ interface NotesBoardProps {
   searchTerm?: string;
   /**
    * Lets cards be dragged to new places within their group, as in Google
-   * Keep; called with the group's new order when one is let go.
+   * Keep; called with the group's new order when one is let go. Alt+Arrow
+   * keys on a card move it one place.
    */
   onReorder?: (draggedId: string, ids: string[]) => void;
 }
@@ -72,6 +74,37 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
       enabled: !!onReorder && !picking,
       onDrop: (draggedId, ids) => onReorder?.(draggedId, ids),
     });
+    // Keyboard moves: Alt+Arrow keys on a focused card.
+    const [announcement, setAnnouncement] = React.useState("");
+    const refocus = React.useRef<string | null>(null);
+    const live = React.useRef({ groups, onReorder });
+    live.current = { groups, onReorder };
+    const canMove = drag.enabled;
+    const moveCard = React.useCallback((noteId: string, step: -1 | 1) => {
+      const { groups, onReorder } = live.current;
+      const group = groups.find(
+        (g) => !g.isFixed && g.notes.some((n) => n.id === noteId),
+      );
+      if (!group || !onReorder) return;
+      const ids = group.notes.map((n) => n.id);
+      const to = ids.indexOf(noteId) + step;
+      if (to < 0 || to >= ids.length) return;
+      refocus.current = noteId;
+      onReorder(noteId, moveItem(ids, ids.indexOf(noteId), to));
+      setAnnouncement(`Moved to ${to + 1} of ${ids.length}`);
+    }, []);
+    // The moved card is put back in the list; focus goes with it.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the order changes
+    React.useEffect(() => {
+      const id = refocus.current;
+      if (!id) return;
+      refocus.current = null;
+      const link = boardRef.current?.querySelector<HTMLElement>(
+        `.nc[data-flip="${CSS.escape(id)}"] > .nc-link`,
+      );
+      if (link && document.activeElement !== link) link.focus();
+    }, [groups]);
+
     // A let-go order is held until the notes arrive in it.
     const { preview, settled } = drag;
     React.useEffect(() => {
@@ -140,6 +173,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
               )}
               {isShown && group.fallback}
               {isShown && !group.fallback && (
+                // biome-ignore lint/a11y/noStaticElementInteractions: the pointer drag surface; Alt+Arrow keys on each card move it
                 <div
                   id={cardsId}
                   className={cn("cards", layout, picking && "picking")}
@@ -173,6 +207,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
                       renderActions={renderActions}
                       dateLabel={dateLabel?.(note)}
                       searchTerm={searchTerm}
+                      onMove={canMove && !group.isFixed ? moveCard : undefined}
                     />
                   ))}
                 </div>
@@ -180,6 +215,9 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
             </React.Fragment>
           );
         })}
+        <div className="sr-only" aria-live="polite">
+          {announcement}
+        </div>
       </div>
     );
   },

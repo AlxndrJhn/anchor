@@ -29,6 +29,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../semantics_helpers.dart';
+
 class _MockNotesRepository extends Mock implements NotesRepository {}
 
 class _MockPictureSearchRepository extends Mock
@@ -580,6 +582,91 @@ void main() {
     expect(find.text('New list'), findsOneWidget);
     expect(find.text('Camera note'), findsOneWidget);
     expect(find.text('New note'), findsOneWidget);
+  });
+
+  testWidgets('screen readers open the New note menu without holding', (
+    tester,
+  ) async {
+    await pumpList(tester, notesNamed('Note', 2));
+
+    performCustomAction(
+      tester,
+      find.bySemanticsLabel('New note'),
+      'New list or camera note',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('New list'), findsOneWidget);
+  });
+
+  group('screen readers', () {
+    Finder card(String title) => find.text(title);
+
+    testWidgets('move a note among the others without dragging it', (
+      tester,
+    ) async {
+      final notes = notesNamed('Note', 4);
+      await pumpList(tester, notes);
+
+      expect(
+        customActionsOf(tester, card('Note 0')),
+        unorderedEquals(['Select', 'Move down', 'Move to bottom']),
+      );
+      expect(
+        customActionsOf(tester, card('Note 2')),
+        unorderedEquals(['Select', 'Move up', 'Move down', 'Move to top']),
+      );
+
+      performCustomAction(tester, card('Note 2'), 'Move up');
+      await tester.pump();
+
+      final captured = verify(
+        () => repo.setPosition('Note2', captureAny()),
+      ).captured;
+      // Between Note 0 and Note 1.
+      expect(
+        captured.single as double,
+        (noteSortKey(notes[0]) + noteSortKey(notes[1])) / 2,
+      );
+    });
+
+    testWidgets('select a note without holding it', (tester) async {
+      await pumpList(tester, notesNamed('Note', 3));
+
+      performCustomAction(tester, card('Note 1'), 'Select');
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 selected'), findsOneWidget);
+    });
+
+    testWidgets('sorted by title, a note offers no moves', (tester) async {
+      await pumpList(
+        tester,
+        notesNamed('Note', 3),
+        options: const NotesViewOptions(sortOption: SortOption.title),
+      );
+
+      expect(customActionsOf(tester, card('Note 1')), ['Select']);
+    });
+
+    testWidgets('the list title is a heading', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpList(tester, notesNamed('Note', 2));
+
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Notes, open menu')),
+        isSemantics(isHeader: true, isButton: true),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('the list meets the tap target and contrast guidelines', (
+      tester,
+    ) async {
+      await pumpList(tester, notesNamed('Note', 3));
+
+      await expectAccessibleScreen(tester);
+    });
   });
 
   testWidgets('Camera note opens a new note that takes a picture', (

@@ -6,6 +6,7 @@ import '../theme/app_typography.dart';
 import '../theme/context_extensions.dart';
 import '../theme/tokens/anchor_tokens.dart';
 import 'cap_height_text.dart';
+import 'expanded_hit_area.dart';
 import 'pressable.dart';
 
 IconData backIcon(BuildContext context) =>
@@ -56,48 +57,50 @@ class BarButton extends StatelessWidget {
     final colors = context.anchor;
     final enabled = onPressed != null;
     final on = isOn ?? false;
-    return Pressable(
-      style: pressStyle,
-      onTap: onPressed,
-      semanticLabel: label,
-      toggled: isOn,
-      hitPadding: hitPadding,
-      child: AnimatedContainer(
-        duration: context.motion(AnchorTokens.motionDurationHover),
-        width: size.box,
-        height: size.box,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: on ? colors.appText : null,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Opacity(
-              opacity: enabled ? 1 : DisabledOpacity.icon,
-              child: Icon(
-                icon,
-                size: size.icon,
-                color: on ? colors.appPage : color ?? colors.appText,
+    return MinTapTarget(
+      child: Pressable(
+        style: pressStyle,
+        onTap: onPressed,
+        semanticLabel: label,
+        toggled: isOn,
+        hitPadding: hitPadding,
+        child: AnimatedContainer(
+          duration: context.motion(AnchorTokens.motionDurationHover),
+          width: size.box,
+          height: size.box,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: on ? colors.appText : null,
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Opacity(
+                opacity: enabled ? 1 : DisabledOpacity.icon,
+                child: Icon(
+                  icon,
+                  size: size.icon,
+                  color: on ? colors.appPage : color ?? colors.appText,
+                ),
               ),
-            ),
-            if (indicatorColor case final indicator?)
-              Positioned(
-                left: 14, // off-scale: as wide as the icon's middle
-                right: 14, // off-scale: as above
-                bottom: 8,
-                child: AnimatedContainer(
-                  duration: context.motion(AnchorTokens.motionDurationFade),
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: indicator,
-                    borderRadius: BorderRadius.circular(
-                      AnchorTokens.radiusPill,
+              if (indicatorColor case final indicator?)
+                Positioned(
+                  left: 14, // off-scale: as wide as the icon's middle
+                  right: 14, // off-scale: as above
+                  bottom: 8,
+                  child: AnimatedContainer(
+                    duration: context.motion(AnchorTokens.motionDurationFade),
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: indicator,
+                      borderRadius: BorderRadius.circular(
+                        AnchorTokens.radiusPill,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -113,19 +116,27 @@ class BarTextButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
-    return Pressable(
-      style: PressStyle.barButton,
-      onTap: onPressed,
-      semanticLabel: label,
-      child: Container(
-        height: AnchorTokens.sizeControlMedium,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
-        child: CapHeightText(
-          label,
-          style: AppTypography.row.copyWith(
-            fontWeight: FontWeight.w600,
-            color: onPressed == null ? colors.appMuted : colors.appText,
+    return MinTapTarget(
+      child: Pressable(
+        style: PressStyle.barButton,
+        onTap: onPressed,
+        semanticLabel: label,
+        // Taller with large text.
+        child: Container(
+          constraints: const BoxConstraints(
+            minHeight: AnchorTokens.sizeControlMedium,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: CapHeightText(
+              label,
+              style: AppTypography.row.copyWith(
+                fontWeight: FontWeight.w600,
+                color: onPressed == null ? colors.appMuted : colors.appText,
+              ),
+            ),
           ),
         ),
       ),
@@ -224,32 +235,35 @@ class AppButton extends StatelessWidget {
         ),
       ],
     );
-    return Semantics(
-      liveRegion: isBusy,
-      child: Pressable(
-        style: PressStyle.button,
-        onTap: enabled ? onPressed : null,
-        semanticLabel: text,
-        hitPadding: hitPadding,
-        child: AnimatedOpacity(
-          opacity: enabled || isBusy ? 1 : DisabledOpacity.button,
-          duration: context.motion(AnchorTokens.motionDurationFade),
-          child: Container(
-            height: size.heightOf(context),
-            padding: EdgeInsets.symmetric(
-              horizontal: small
-                  ? 12
-                  : size == AppButtonSize.medium ||
-                        kind == AppButtonKind.dangerText
-                  ? 16
-                  : 24,
+    return MinTapTarget(
+      child: Semantics(
+        liveRegion: isBusy,
+        child: Pressable(
+          style: PressStyle.button,
+          onTap: enabled ? onPressed : null,
+          semanticLabel: text,
+          hitPadding: hitPadding,
+          child: AnimatedOpacity(
+            opacity: enabled || isBusy ? 1 : DisabledOpacity.button,
+            duration: context.motion(AnchorTokens.motionDurationFade),
+            child: Container(
+              // Taller with large text.
+              constraints: BoxConstraints(minHeight: size.heightOf(context)),
+              padding: EdgeInsets.symmetric(
+                horizontal: small
+                    ? 12
+                    : size == AppButtonSize.medium ||
+                          kind == AppButtonKind.dangerText
+                    ? 16
+                    : 24,
+              ),
+              decoration: BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.circular(AnchorTokens.radiusPill),
+                boxShadow: hasShadow && enabled ? colors.shadowFab : null,
+              ),
+              child: ExcludeSemantics(child: content),
             ),
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(AnchorTokens.radiusPill),
-              boxShadow: hasShadow && enabled ? colors.shadowFab : null,
-            ),
-            child: ExcludeSemantics(child: content),
           ),
         ),
       ),

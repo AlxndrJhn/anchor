@@ -42,6 +42,7 @@ import { useGlidingFill } from "@/components/ui/segmented-control";
 import { toast } from "@/components/ui/toast";
 import { Tip } from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth";
+import { usePreferencesStore } from "@/features/preferences";
 import { useSyncStatus, useUnsavedCount } from "@/features/sync";
 import {
   deleteTag,
@@ -247,6 +248,9 @@ export function Sidebar({
     folded && !drawer,
   );
   const isNarrow = folded && !isPeeking;
+  const singleKeys = usePreferencesStore(
+    (s) => s.editor.singleKeyShortcuts !== false,
+  );
   React.useEffect(() => {
     if (tagDialog || tagToDelete) stopPeeking();
   }, [tagDialog, tagToDelete, stopPeeking]);
@@ -352,7 +356,12 @@ export function Sidebar({
         />
       </div>
 
-      <Tip label="New note (N)" side="right" isDisabled={!isNarrow} isFocusOnly>
+      <Tip
+        label={singleKeys ? "New note (N)" : "New note"}
+        side="right"
+        isDisabled={!isNarrow}
+        isFocusOnly
+      >
         <Link
           href={newNoteHref(pathname, tagId)}
           onClick={(e) => {
@@ -360,14 +369,14 @@ export function Sidebar({
             stopPeeking();
             onNavigate?.();
           }}
-          aria-keyshortcuts="N"
+          aria-keyshortcuts={singleKeys ? "N" : undefined}
           data-slot="new-note"
           data-new-note="sidebar"
           className="mb-3 flex h-9.5 items-center gap-2 overflow-hidden whitespace-nowrap rounded-md bg-foreground pr-2.5 pl-[11.5px] font-semibold text-card text-ui no-underline shadow-control transition-[background-color,transform] duration-(--duration-hover) hover:bg-[color-mix(in_srgb,var(--foreground)_88%,var(--card))] active:scale-[.98] [&>svg]:size-4.25 [&>svg]:shrink-0"
         >
           <Plus aria-hidden />
           <span className={labelClass}>New note</span>
-          {!drawer && (
+          {!drawer && singleKeys && (
             <kbd
               aria-hidden
               className={cn("ml-auto bg-card/16 text-inherit", hideClass)}

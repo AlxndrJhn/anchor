@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 
@@ -516,6 +518,12 @@ class _InlineImageViewState extends State<_InlineImageView> {
                               child: _ShownWhile(
                                 editing: widget.images.editing,
                                 child: _ResizeHandle(
+                                  share: share,
+                                  onStep: (width) => widget.place.replace(
+                                    widget.image.copyWith(
+                                      width: () => width >= 0.99 ? null : width,
+                                    ),
+                                  ),
                                   onDrag: (dx) => setState(
                                     () => _resizing =
                                         ((_resizing ?? share) + dx / full)
@@ -648,16 +656,41 @@ class _ShownWhile extends StatelessWidget {
 
 /// The round grip in a picture's corner that changes its width.
 class _ResizeHandle extends StatelessWidget {
-  const _ResizeHandle({required this.onDrag, required this.onEnd});
+  const _ResizeHandle({
+    required this.share,
+    required this.onStep,
+    required this.onDrag,
+    required this.onEnd,
+  });
 
+  /// The picture's width, as a share of the text's.
+  final double share;
+
+  /// To a new [share], a step at a time, for screen readers.
+  final ValueChanged<double> onStep;
   final ValueChanged<double> onDrag;
   final VoidCallback onEnd;
+
+  /// A screen reader's step.
+  static const double _step = 0.1;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
+    final percent = NumberFormat.percentPattern(context.l10n.localeName);
+    final wider = math.min(1.0, share + _step);
+    final narrower = math.max(InlineImage.minWidth, share - _step);
+    final canWiden = share < 1;
+    final canNarrow = share > InlineImage.minWidth;
     return Semantics(
+      container: true,
       label: context.l10n.inlinePictureResize,
+      slider: true,
+      value: percent.format(share),
+      increasedValue: canWiden ? percent.format(wider) : null,
+      decreasedValue: canNarrow ? percent.format(narrower) : null,
+      onIncrease: canWiden ? () => onStep(wider) : null,
+      onDecrease: canNarrow ? () => onStep(narrower) : null,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onHorizontalDragStart: (_) => Haptics.selection(),

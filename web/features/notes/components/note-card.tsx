@@ -66,6 +66,8 @@ interface NoteCardProps {
   dateLabel?: string;
   /** A search the card was found by, marked in the note when it opens. */
   searchTerm?: string;
+  /** Alt+Arrow keys move the card one place earlier (-1) or later (1). */
+  onMove?: (noteId: string, step: -1 | 1) => void;
 }
 
 const ROW_LIMIT: Record<CardLayout, number> = { list: 2, grid: 4, masonry: 6 };
@@ -117,6 +119,7 @@ export const NoteCard = React.memo(function NoteCard({
   renderActions,
   dateLabel,
   searchTerm,
+  onMove,
 }: NoteCardProps) {
   // A note locked and not opened this session shows only its title.
   const lockHidden = isLockHidden(note, useUnlockedIds());
@@ -275,6 +278,11 @@ export const NoteCard = React.memo(function NoteCard({
             : `/notes/${note.id}`
         }
         aria-label={label}
+        aria-keyshortcuts={
+          onMove
+            ? "Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight"
+            : undefined
+        }
         className="nc-link absolute inset-0 z-1 rounded-[inherit] outline-none"
         onClick={(e) => {
           if (picking || e.metaKey || e.ctrlKey || e.shiftKey) {
@@ -297,7 +305,19 @@ export const NoteCard = React.memo(function NoteCard({
           if (e.key === " " && onPick) {
             e.preventDefault();
             onPick(note.id, e.shiftKey);
+            return;
           }
+          if (!onMove || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
+            return;
+          const step =
+            e.key === "ArrowUp" || e.key === "ArrowLeft"
+              ? -1
+              : e.key === "ArrowDown" || e.key === "ArrowRight"
+                ? 1
+                : 0;
+          if (!step) return;
+          e.preventDefault();
+          onMove(note.id, step);
         }}
       />
       {/* Picking (after Select) shows the check; otherwise the pin. */}

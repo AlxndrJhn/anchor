@@ -112,6 +112,8 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Hold the New Note button for New list | | ✓ |
 | Double-tap the New Note button to paste the clipboard into a new note | | ✓ |
 | Sign in on your phone without a password: the web's Settings › Sign in on your phone shows a QR code to scan from the app's first screen, or copies a magic link that opens the app and signs in (each works once, within 10 minutes) | ✓ | ✓ |
+| Sign in with a passkey (fingerprint, face, screen lock or security key), and turn password sign-in off once you have one (Settings › Sign-in security; needs https) | ✓ | |
+| Two-step sign-in with an authenticator app (Aegis, Google Authenticator, 1Password…), with ten one-time recovery codes; the Android app asks for the code too | ✓ | ✓ |
 | Updates itself from this fork's GitHub releases (Settings › Updates) | | ✓ |
 | Install and update it with F-Droid, from releases or also release candidates ([F-Droid](#f-droid)) | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |
@@ -282,12 +284,49 @@ rule. Or leave it closed and serve Anchor over HTTPS for free with a
 [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
 to `http://localhost:3000`.
 
+It also runs on a Linux desktop, such as [Omarchy](https://omarchy.org), for
+your own network: Anchor is at `http://localhost:3000` there, and other
+devices reach it at the desktop's local address, which the script prints. It
+lets them through ufw-docker, which Omarchy's firewall uses. Omarchy's Web
+App installer can then give Anchor+ its own window and launcher.
+
 Running the same command again updates Anchor and keeps the notes and the
 domain. `PORT` is the port Anchor listens on without a domain, e.g.
 `PORT=8080`; `DOMAIN=` (empty) goes back to plain HTTP;
 `ANCHOR_TAG=fork-preview` follows the release candidates.
 Anchor's own settings (see the table below) go in `/opt/anchor/anchor.env`,
 followed by `docker compose up -d` in `/opt/anchor`.
+
+To uninstall, run the same line with `UNINSTALL=1`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo UNINSTALL=1 bash
+```
+
+It lists what it will take away and offers a backup first, to
+`~/anchor-backup-<date>.tar` (`BACKUP_FILE=` puts it elsewhere): a
+[server backup](#backing-up-the-server) that installing again and `restore`
+bring back. It removes nothing until you type `uninstall`, and nothing if the
+backup fails. Then it removes Anchor+ with every note and account on it, its
+containers, images and `/opt/anchor`, the firewall rules and swap it added,
+and the [borgmatic](#backing-up-with-borgmatic) configuration, if you set
+that up (the Borg repository and its backups stay). Docker stays installed.
+Without a terminal to ask on, `YES=1` runs it without questions (still with
+the backup; `BACKUP=no` skips that).
+
+### On Windows
+
+The server runs in Docker, which winget installs:
+
+```bash
+winget install Docker.DockerDesktop
+```
+
+Start Docker Desktop once (it may ask to restart Windows for WSL 2), then
+follow Option 1 below in a folder of your own: `docker compose up -d` there
+starts Anchor+ at http://localhost:3000. Docker Desktop starts it again after
+a restart when **Start Docker Desktop when you sign in** is on in its settings.
+The [desktop app](#desktop-app) installs with winget too.
 
 ### Option 1: Using Pre-built Image (Recommended)
 
@@ -636,7 +675,14 @@ A Windows and macOS app that opens the web client of your own Anchor server in
 its own window, with everything the web app has (offline use, keyboard
 shortcuts). It does not store notes itself; it connects to your server.
 
-1. **Download it** from this fork's
+1. **Install it.** On Windows, with [winget](https://learn.microsoft.com/windows/package-manager/winget/):
+
+   ```bash
+   winget install AlxndrJhn.AnchorPlus
+   ```
+
+   It installs for you alone; add `--scope machine` to install it for every
+   user of the PC. Or download it from this fork's
    [releases page](https://github.com/AlxndrJhn/anchor/releases):
    - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
@@ -661,6 +707,10 @@ the top right (also **Restart to Update** in the File menu, or the Anchor+ menu
 on macOS). Clicking it restarts Anchor+ on the new version. On macOS this needs
 Anchor+ in a folder you can write to, such as Applications; run from the disk
 image, the button opens the release page instead.
+
+Installed with winget, `winget upgrade AlxndrJhn.AnchorPlus` updates it too.
+Each release sends its Windows installer to winget, where it shows up once
+Microsoft's checks have passed, usually within a day.
 
 Links to other websites open in your browser. To build it yourself:
 `cd desktop && pnpm install && pnpm run dist:win` (or `dist:mac`).

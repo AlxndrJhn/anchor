@@ -21,3 +21,12 @@ export const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 // A magic sign-in code (Settings' QR code and link) is used once, within this.
 export const MAGIC_LOGIN_VALIDITY_MS = 10 * 60 * 1000;
 export const MAGIC_LOGIN_CODE_BYTES = 32;
+
+// Setting up an authenticator app or a passkey has this long to finish.
+export const SECURITY_SETUP_VALIDITY_MS = 10 * 60 * 1000;
+// A passkey sign-in has this long between asking and answering.
+export const PASSKEY_SIGN_IN_VALIDITY_MS = 5 * 60 * 1000;
+export const RECOVERY_CODE_COUNT = 10;
+export const PASSKEY_NAME_MAX_LENGTH = 64;
+// Shown by authenticator apps next to the code, and by passkey managers.
+export const AUTH_ISSUER = 'Anchor+';

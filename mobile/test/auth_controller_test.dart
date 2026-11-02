@@ -33,8 +33,11 @@ class _FakeAuthService extends AuthService {
       : {'access_token': 'access', 'refresh_token': 'refresh', 'user': _ada};
 
   @override
-  Future<Map<String, dynamic>> login(String email, String password) async =>
-      throw const InvalidCredentialsFailure();
+  Future<Map<String, dynamic>> login(
+    String email,
+    String password, {
+    String? code,
+  }) async => throw const InvalidCredentialsFailure();
 
   @override
   Future<Map<String, dynamic>> getProfile() async {

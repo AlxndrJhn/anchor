@@ -8,6 +8,8 @@ import 'package:anchor/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'semantics_helpers.dart';
+
 final _plain = AnchorColors.light.notes['none']!;
 
 final palette = EditorPalette(
@@ -329,6 +331,29 @@ void main() {
 
       expect(tester.getSize(tool('Bold')).width, closeTo(320 / 9, 0.01));
       expect(tester.getTopRight(tool('Hide keyboard')).dx, closeTo(328, 0.01));
+    });
+
+    testWidgets('its tools keep full targets, even nine to a 360 phone', (
+      tester,
+    ) async {
+      await pumpBar(
+        tester,
+        modelOf(hasWords: true, lineKind: LineKind.checklist),
+        width: 360,
+      );
+      // Drawn narrower than a target, as it was.
+      expect(tester.getSize(tool('Bold')).width, closeTo(344 / 9, 0.01));
+
+      await expectAccessibleScreen(tester);
+    });
+
+    testWidgets('the line styles keep full targets too', (tester) async {
+      await pumpBar(
+        tester,
+        modelOf(hasWords: true, submenu: EditorSubmenu.styles),
+      );
+
+      await expectAccessibleScreen(tester);
     });
 
     testWidgets('Aa adds the line styles above, the caret line on a chip', (

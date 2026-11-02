@@ -4,6 +4,7 @@ import '../../../../core/motion/pop_in.dart';
 import '../../../../core/motion/springs.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../../core/widgets/expanded_hit_area.dart';
 import '../../../../core/widgets/pressable.dart';
 
 class EditorToolButton extends StatefulWidget {
@@ -123,12 +124,16 @@ class _EditorToolButtonState extends State<EditorToolButton> {
       child: content,
     );
     if (_popsIn) content = PopIn(from: 0.8, child: content);
-    return Pressable(
-      style: PressStyle.toolbar,
-      onTap: widget.isDisabled ? null : widget.onPressed,
-      semanticLabel: widget.label,
-      toggled: widget.isOn,
-      child: content,
+    // A full target even where nine tools narrow the slots: the room
+    // overlaps the tools beside it.
+    return MinTapTarget(
+      child: Pressable(
+        style: PressStyle.toolbar,
+        onTap: widget.isDisabled ? null : widget.onPressed,
+        semanticLabel: widget.label,
+        toggled: widget.isOn,
+        child: content,
+      ),
     );
   }
 }

@@ -168,8 +168,11 @@ class _Ghost extends StatelessWidget {
     );
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: _maxWidth),
+      // Taller with large text.
       child: Container(
-        height: AnchorTokens.sizeControlSmall,
+        constraints: const BoxConstraints(
+          minHeight: AnchorTokens.sizeControlSmall,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: colors.appSurface,

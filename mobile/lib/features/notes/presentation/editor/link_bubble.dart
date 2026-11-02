@@ -57,10 +57,11 @@ class LinkBubble extends StatelessWidget {
         },
         semanticLabel: label,
         tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
+        // Taller with large text.
         child: Container(
-          height: AnchorTokens.sizeControlMedium,
           constraints: const BoxConstraints(
             minWidth: AnchorTokens.sizeControlMedium,
+            minHeight: AnchorTokens.sizeControlMedium,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(

@@ -1,7 +1,13 @@
 "use client";
 
+import { browserSupportsWebAuthn } from "@simplewebauthn/browser";
 import { HTTPError } from "ky";
-import { ArrowLeft, KeyRound, LoaderCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  FingerprintPattern,
+  KeyRound,
+  LoaderCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -13,6 +19,7 @@ import {
   useOidcCallback,
   useOidcConfig,
   useOidcLogin,
+  usePasskeyLogin,
   useRegistrationMode,
 } from "@/features/auth";
 import {
@@ -25,13 +32,17 @@ import {
 } from "@/features/auth/components/auth-parts";
 import { getSafeRedirectUrl } from "@/features/auth/utils/redirect";
 import {
+  isTwoStepRequired,
   serverSignInError,
   signInError,
 } from "@/features/auth/utils/sign-in-error";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 
 export default function LoginPage() {
+  useDocumentTitle("Sign in");
   const searchParams = useSearchParams();
   const login = useLogin();
+  const passkeyLogin = usePasskeyLogin();
   const oidc = useOidcConfig();
   const { initiate } = useOidcLogin();
   const oidcCallback = useOidcCallback();
@@ -39,13 +50,21 @@ export default function LoginPage() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const passwordRef = React.useRef<HTMLInputElement>(null);
+  // Asked for once the password was right and two-step is on.
+  const [needsCode, setNeedsCode] = React.useState(false);
+  const [code, setCode] = React.useState("");
+  const codeRef = React.useRef<HTMLInputElement>(null);
+  const [canUsePasskey, setCanUsePasskey] = React.useState(false);
+  React.useEffect(() => setCanUsePasskey(browserSupportsWebAuthn()), []);
 
   const providerName = oidc.data?.providerName || "your provider";
   const providerNameAtStart =
     providerName[0].toUpperCase() + providerName.slice(1);
   const isProviderOnly =
     !!oidc.data?.enabled && !!oidc.data?.disableInternalAuth;
-  const errorMessage = signInError(login.error, providerName);
+  const errorMessage =
+    signInError(login.error, providerName) ??
+    signInError(passkeyLogin.error, providerName);
 
   const signInWithProvider = () => {
     const returnTo = getSafeRedirectUrl(searchParams.get("returnTo") || "/");
@@ -107,6 +126,7 @@ export default function LoginPage() {
       <PendingApprovalScreen
         onBack={() => {
           login.reset();
+          passkeyLogin.reset();
           oidcCallback.clearFailure();
         }}
       />
@@ -129,6 +149,24 @@ export default function LoginPage() {
           {!isProviderOnly && <OrDivider />}
         </>
       )}
+      {canUsePasskey && !isProviderOnly && !needsCode && (
+        <>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="w-full"
+            busy={passkeyLogin.isPending && "Waiting for your passkey…"}
+            onClick={() => {
+              login.reset();
+              passkeyLogin.mutate();
+            }}
+          >
+            <FingerprintPattern aria-hidden />
+            Sign in with a passkey
+          </Button>
+          <OrDivider />
+        </>
+      )}
       {oidc.isError && (
         <AuthMessage
           action={
@@ -146,16 +184,84 @@ export default function LoginPage() {
         </AuthMessage>
       )}
       {errorMessage && <AuthMessage>{errorMessage}</AuthMessage>}
-      {!isProviderOnly && (
+      {!isProviderOnly && needsCode && (
         <form
           className="grid gap-3.5"
           onSubmit={(e) => {
             e.preventDefault();
             if (login.isPending) return;
             login.mutate(
+              { email: email.trim(), password, code: code.trim() },
+              {
+                onError: (error) => {
+                  if (isTwoStepRequired(error)) {
+                    setCode("");
+                    codeRef.current?.focus();
+                  }
+                },
+              },
+            );
+          }}
+        >
+          <Field
+            label="Code from your authenticator app"
+            help="Lost your phone? Enter one of your recovery codes instead."
+          >
+            <Input
+              ref={codeRef}
+              autoFocus
+              autoComplete="one-time-code"
+              inputMode="text"
+              spellCheck={false}
+              value={code}
+              required
+              boxClassName="h-field-large"
+              onChange={(e) => {
+                setCode(e.target.value);
+                if (login.error) login.reset();
+              }}
+            />
+          </Field>
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            busy={login.isPending && "Signing in…"}
+          >
+            Sign in
+          </Button>
+          <Button
+            type="button"
+            size="lg"
+            variant="quiet"
+            className="w-full"
+            onClick={() => {
+              setNeedsCode(false);
+              setCode("");
+              setPassword("");
+              login.reset();
+            }}
+          >
+            <ArrowLeft aria-hidden />
+            Back
+          </Button>
+        </form>
+      )}
+      {!isProviderOnly && !needsCode && (
+        <form
+          className="grid gap-3.5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (login.isPending) return;
+            passkeyLogin.reset();
+            login.mutate(
               { email: email.trim(), password },
               {
                 onError: (error) => {
+                  if (isTwoStepRequired(error)) {
+                    setNeedsCode(true);
+                    return;
+                  }
                   if (!(error instanceof HTTPError)) return;
                   if (error.response.status === 401) {
                     setPassword("");
@@ -202,14 +308,16 @@ export default function LoginPage() {
           </Button>
         </form>
       )}
-      {!isProviderOnly && registrationMode.data?.mode !== "disabled" && (
-        <p className="m-0 text-center text-muted-foreground text-ui">
-          New to Anchor+?{" "}
-          <Link href="/register" className={linkButtonClass}>
-            Create an account
-          </Link>
-        </p>
-      )}
+      {!isProviderOnly &&
+        !needsCode &&
+        registrationMode.data?.mode !== "disabled" && (
+          <p className="m-0 text-center text-muted-foreground text-ui">
+            New to Anchor+?{" "}
+            <Link href="/register" className={linkButtonClass}>
+              Create an account
+            </Link>
+          </p>
+        )}
     </>
   );
 }

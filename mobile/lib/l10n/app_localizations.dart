@@ -424,6 +424,36 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Use at least 1 character.} other{Use at least {count} characters.}}'**
   String authPasswordTooShort(int count);
 
+  /// Label of the field on the sign-in page for the six-digit code from an authenticator app, asked after the right password when the account has two-step sign-in on.
+  ///
+  /// In en, this message translates to:
+  /// **'Code from your authenticator app'**
+  String get fieldTwoStepCode;
+
+  /// Help under the authenticator code field on the sign-in page.
+  ///
+  /// In en, this message translates to:
+  /// **'Lost your phone? Enter one of your recovery codes instead.'**
+  String get authTwoStepCodeHelp;
+
+  /// Shown under the authenticator code field when the password was right but the account also needs a code.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your authenticator app.'**
+  String get authEnterTwoStepCode;
+
+  /// Error under the authenticator code field when the code was wrong or already used.
+  ///
+  /// In en, this message translates to:
+  /// **'That code isn’t right. Check your authenticator app and try again.'**
+  String get authWrongTwoStepCode;
+
+  /// Error at the top of the sign-in form when the account turned password sign-in off and uses passkeys.
+  ///
+  /// In en, this message translates to:
+  /// **'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.'**
+  String get authPasskeyOnly;
+
   /// Error at the top of the sign-in form when the email or password is wrong.
   ///
   /// In en, this message translates to:
@@ -898,7 +928,7 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get commonCopy;
 
-  /// Menu item on the logs page that starts selecting logs.
+  /// Menu item on the logs page that starts selecting logs, and the screen reader action on a note card that starts selecting notes with it, as holding the card does.
   ///
   /// In en, this message translates to:
   /// **'Select'**
@@ -2254,6 +2284,12 @@ abstract class AppLocalizations {
   /// **'Move {name}'**
   String tagMove(String name);
 
+  /// Screen reader action on a tag in the side menu: opens the menu to rename, recolor or delete it, as holding the tag does.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag options'**
+  String get tagOptions;
+
   /// Placeholder in the tag preview while the name field is empty. Lowercase, like a tag.
   ///
   /// In en, this message translates to:
@@ -3400,6 +3436,12 @@ abstract class AppLocalizations {
   /// **'New note'**
   String get noteNew;
 
+  /// Screen reader action on the New note button: opens the menu with New list, Camera note and New note, as holding the button does.
+  ///
+  /// In en, this message translates to:
+  /// **'New list or camera note'**
+  String get noteNewKinds;
+
   /// Tooltip of the cloud icon on a note card with changes not yet sent. Screen readers also read it with the card.
   ///
   /// In en, this message translates to:
@@ -3411,6 +3453,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 picture} other{{count} pictures}}'**
   String cardPictures(int count);
+
+  /// Screen reader action on a note card in the list: ticks one of the checklist items shown on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick {item}'**
+  String cardTickItem(String item);
+
+  /// Screen reader action on a note card in the list: unticks one of the ticked checklist items shown on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Untick {item}'**
+  String cardUntickItem(String item);
+
+  /// Screen reader action on a note card in the list: opens one of the pictures shown on it full size.
+  ///
+  /// In en, this message translates to:
+  /// **'Open picture {number}'**
+  String cardOpenPicture(int number);
 
   /// Under a note’s title, or spoken on a card: who shared the note with the person.
   ///
@@ -4594,6 +4654,30 @@ abstract class AppLocalizations {
   /// **'Delete {name}'**
   String commonDeleteItem(String name);
 
+  /// Screen reader action on something that can be dragged into a new place (a note, tag, checklist item or quick action): moves it one place up.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get commonMoveUp;
+
+  /// Screen reader action on something that can be dragged into a new place: moves it one place down.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get commonMoveDown;
+
+  /// Screen reader action on something that can be dragged into a new place: moves it to the first place.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to top'**
+  String get commonMoveToTop;
+
+  /// Screen reader action on something that can be dragged into a new place: moves it to the last place.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to bottom'**
+  String get commonMoveToBottom;
+
   /// Which picture is shown, such as “2 of 5”.
   ///
   /// In en, this message translates to:
@@ -5199,12 +5283,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show a note’s pictures on its card'**
   String get viewCardPicturesHelp;
-
-  /// Spoken hint on a checklist item that can be dragged.
-  ///
-  /// In en, this message translates to:
-  /// **'Drag to reorder'**
-  String get editorDragHint;
 
   /// Spoken name of the slash menu.
   ///
@@ -6225,6 +6303,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Put {action} in the top bar'**
   String settingsAddToBar(String action);
+
+  /// Screen reader label of the grip beside a quick action in Settings, dragged to put the action elsewhere in the top bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Move {action}'**
+  String settingsMoveAction(String action);
 
   /// Screen reader label of the minus button by a quick action in Settings; it goes back to More.
   ///

@@ -359,6 +359,7 @@ export function HistoryView(props: HistoryViewProps) {
   if (!loading) settledViewRef.current = versionView;
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: Esc anywhere in the history closes it
     <div
       className="hist"
       data-view={view}

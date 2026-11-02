@@ -9,7 +9,8 @@ name: Release (fork)
 # (pages.yml). Only what changed since the last release is built: a release
 # whose Android app, server or desktop app didn't change has no APKs, new
 # image or installers, and the apps only update to releases that have theirs.
-# The APKs also go to the F-Droid repositories on Pages (pages.yml).
+# The APKs also go to the F-Droid repositories on Pages (pages.yml), and a
+# new Windows installer to winget (the winget job).
 #
 # With "candidate" ticked (`gh workflow run release-fork.yml --ref main -f
 # candidate=true`) it is a release candidate instead: a GitHub prerelease,
@@ -294,12 +295,16 @@ jobs:
       # (see electron-builder.yml) and nothing is notarized or published.
       # anchorBuild (the number ending the release tag) and anchorUpdateRepo
       # let the app find and install newer releases itself (src/updater.js).
+      # buildNumber, the same number, makes the app's file version
+      # <version>.<build>, which the Windows installer names in Apps &
+      # features for winget (build/installer.nsh).
       - name: Build installer
         env:
           VERSION: ${{ needs.version.outputs.version }}
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: |
           pnpm exec electron-builder ${{ matrix.targets }} --publish never \
+            -c.buildNumber="$GITHUB_RUN_NUMBER" \
             -c.extraMetadata.version="$VERSION" \
             -c.extraMetadata.anchorBuild="$GITHUB_RUN_NUMBER" \
             -c.extraMetadata.anchorUpdateRepo="$GITHUB_REPOSITORY"
@@ -402,7 +407,7 @@ jobs:
             if ls Anchor-*.exe Anchor-*.dmg >/dev/null 2>&1; then
               echo "## Desktop (Windows, macOS)"
               echo
-              echo "Windows: run \`$(ls Anchor-Setup-*.exe 2>/dev/null)\`. macOS (Apple silicon and Intel): open \`$(ls Anchor-*.dmg 2>/dev/null)\` and drag Anchor+ to Applications. On first launch it asks for your Anchor server's address."
+              echo "Windows: run \`$(ls Anchor-Setup-*.exe 2>/dev/null)\`, or \`winget install AlxndrJhn.AnchorPlus\` once winget has this version. macOS (Apple silicon and Intel): open \`$(ls Anchor-*.dmg 2>/dev/null)\` and drag Anchor+ to Applications. On first launch it asks for your Anchor server's address."
               echo
               echo 'The installers are not signed. On Windows, if SmartScreen stops it, choose More info › Run anyway. On macOS, right-click the app and choose Open the first time, or allow it under System Settings › Privacy & Security.'
               echo
@@ -462,6 +467,56 @@ jobs:
             "${KIND[@]}"
           # Superseded by the per-commit releases above.
           gh release delete android-latest --cleanup-tag --yes || true
+
+  # Sends a release's new Windows installer to winget: a pull request to
+  # microsoft/winget-pkgs with its manifests (desktop/winget/manifests.sh),
+  # opened from the WINGET_TOKEN owner's fork of it. Microsoft's checks and
+  # reviewers merge it, and `winget install AlxndrJhn.AnchorPlus` (or
+  # `winget upgrade`) then gets it. The first one adds the package. Without
+  # the secret (a classic token with public_repo) it is skipped. Candidates
+  # stay off winget, which has no previews.
+  winget:
+    needs: [version, build-desktop, release]
+    if: >-
+      github.ref == 'refs/heads/main' && !cancelled() &&
+      needs.release.result == 'success' && needs.version.outputs.desktop == 'true' &&
+      needs.version.outputs.candidate != 'true'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # Missing when only the macOS one built.
+      - name: Download Windows installer
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: anchor-desktop-windows
+          path: installer
+
+      - name: Submit to winget
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          VERSION: ${{ needs.version.outputs.anchor_version }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          if [ -z "$WINGET_TOKEN" ]; then
+            echo "::notice::No WINGET_TOKEN secret, so this release isn't sent to winget."
+            exit 0
+          fi
+          if ! ls installer/Anchor-Setup-*.exe >/dev/null 2>&1; then
+            echo "::warning::The Windows installer didn't build, so there is nothing to send to winget."
+            exit 0
+          fi
+          desktop/winget/manifests.sh "$VERSION" "$TAG" "$GITHUB_REPOSITORY" \
+            installer/Anchor-Setup-*.exe manifests
+          curl -fsSL -o wingetcreate.exe https://aka.ms/wingetcreate/latest
+          ./wingetcreate.exe submit --token "$WINGET_TOKEN" \
+            --prtitle "New version: AlxndrJhn.AnchorPlus version $VERSION" manifests
 
   # A candidate republishes Pages for the preview F-Droid repository, with
   # the last release's web app. It follows any release that went out, also

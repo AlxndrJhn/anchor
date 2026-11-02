@@ -16,9 +16,11 @@ import {
   SignInTab,
   StatCard,
 } from "@/features/admin";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { useRetry } from "@/lib/hooks/use-retry";
 
 export default function AdminPage() {
+  useDocumentTitle("Admin");
   return (
     <AdminGuard>
       <AdminPageContent />

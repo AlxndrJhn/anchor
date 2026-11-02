@@ -20,10 +20,16 @@ class AuthService {
 
   AuthService(this._dio);
 
-  Future<Map<String, dynamic>> login(String email, String password) => _send(
+  /// [code] is from the authenticator app, or a recovery code, once the
+  /// account has two-step sign-in on.
+  Future<Map<String, dynamic>> login(
+    String email,
+    String password, {
+    String? code,
+  }) => _send(
     () => _dio.post(
       '/api/auth/login',
-      data: {'email': email, 'password': password},
+      data: {'email': email, 'password': password, 'code': ?code},
     ),
   );
 

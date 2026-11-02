@@ -7,6 +7,7 @@ import '../theme/app_typography.dart';
 import '../theme/context_extensions.dart';
 import '../theme/tokens/anchor_tokens.dart';
 import 'cap_height_text.dart';
+import 'expanded_hit_area.dart';
 import 'pressable.dart';
 
 const double _lineGap = 8;
@@ -73,12 +74,18 @@ class BarTitle extends StatelessWidget {
       );
     }
     if (onTap != null) {
-      name = Pressable(
-        style: PressStyle.plain,
-        onTap: onTap,
-        semanticLabel: semanticLabel ?? title,
-        minSize: const Size(0, AnchorTokens.sizeTargetTouch),
-        child: name,
+      // One node, read as the screen's heading and a button.
+      name = MinTapTarget(
+        child: Semantics(
+          header: true,
+          child: Pressable(
+            style: PressStyle.plain,
+            onTap: onTap,
+            semanticLabel: semanticLabel ?? title,
+            minSize: const Size(0, AnchorTokens.sizeTargetTouch),
+            child: name,
+          ),
+        ),
       );
     }
     final block = line == null
@@ -193,19 +200,27 @@ class LargeBarTitle extends StatelessWidget {
                   height: AnchorTokens.sizeTargetTouch,
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: Pressable(
-                      style: PressStyle.plain,
-                      onTap: onTap,
-                      semanticLabel: semanticLabel,
-                      minSize: const Size(0, AnchorTokens.sizeTargetTouch),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ?leading,
-                          Flexible(child: CapHeightText(title, style: style)),
-                          const SizedBox(width: 8),
-                          const BarTitleChevron(),
-                        ],
+                    // One node, read as the screen's heading and a button.
+                    child: MinTapTarget(
+                      child: Semantics(
+                        header: true,
+                        child: Pressable(
+                          style: PressStyle.plain,
+                          onTap: onTap,
+                          semanticLabel: semanticLabel,
+                          minSize: const Size(0, AnchorTokens.sizeTargetTouch),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ?leading,
+                              Flexible(
+                                child: CapHeightText(title, style: style),
+                              ),
+                              const SizedBox(width: 8),
+                              const BarTitleChevron(),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

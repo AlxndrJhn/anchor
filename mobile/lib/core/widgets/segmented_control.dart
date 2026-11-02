@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../motion/haptics.dart';
@@ -5,6 +7,7 @@ import '../motion/springs.dart';
 import '../theme/app_typography.dart';
 import '../theme/context_extensions.dart';
 import '../theme/tokens/anchor_tokens.dart';
+import 'expanded_hit_area.dart';
 import 'pressable.dart';
 
 class Segment<T> {
@@ -40,7 +43,15 @@ class SegmentedControl<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final index = segments.indexWhere((s) => s.value == value);
-    const height = AnchorTokens.sizeControlMedium - 8;
+    // Taller with large text.
+    final height = math.max(
+      AnchorTokens.sizeControlMedium - 8,
+      MediaQuery.textScalerOf(
+                context,
+              ).scale(AppTypography.secondary.fontSize!) *
+              1.2 +
+          8,
+    );
     return Semantics(
       label: semanticLabel,
       container: true,
@@ -82,18 +93,21 @@ class SegmentedControl<T> extends StatelessWidget {
                       for (var i = 0; i < segments.length; i++) ...[
                         if (i > 0) const SizedBox(width: 4),
                         Expanded(
-                          child: Pressable(
-                            style: PressStyle.button,
-                            selected: i == index,
-                            semanticLabel: segments[i].label,
-                            onTap: () {
-                              if (segments[i].value == value) return;
-                              Haptics.selection();
-                              onChanged(segments[i].value);
-                            },
-                            child: _Label(
-                              segment: segments[i],
-                              isSelected: i == index,
+                          // Its target reaches over the control's edge.
+                          child: MinTapTarget(
+                            child: Pressable(
+                              style: PressStyle.button,
+                              selected: i == index,
+                              semanticLabel: segments[i].label,
+                              onTap: () {
+                                if (segments[i].value == value) return;
+                                Haptics.selection();
+                                onChanged(segments[i].value);
+                              },
+                              child: _Label(
+                                segment: segments[i],
+                                isSelected: i == index,
+                              ),
                             ),
                           ),
                         ),

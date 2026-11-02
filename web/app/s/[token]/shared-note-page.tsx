@@ -29,6 +29,7 @@ import { EditorSkeleton } from "@/features/notes/components/note-editor/editor-s
 import { useAttachmentBlob } from "@/features/notes/hooks/use-attachment-blob";
 import { inlineImageIds } from "@/features/notes/inline-images";
 import type { SharedNote } from "@/features/notes/types";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { cn } from "@/lib/utils";
 
 const SAVE_DELAY_MS = 800;
@@ -56,6 +57,13 @@ export default function SharedNotePage() {
     refetchInterval: REFRESH_MS,
     refetchOnWindowFocus: true,
   });
+  useDocumentTitle(
+    query.data
+      ? query.data.title?.trim() || "Shared note"
+      : query.isError
+        ? "Note not available"
+        : "Shared note",
+  );
 
   if (query.isPending) return <EditorSkeleton />;
   if (query.isError && !query.data) {

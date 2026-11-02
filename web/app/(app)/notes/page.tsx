@@ -71,6 +71,7 @@ import { usePictureMatches } from "@/features/picture-search/use-picture-matches
 import { tagColorStyle, useTagMap } from "@/features/tags";
 import { burnNoteCards } from "@/lib/destroy";
 import { eachLimited } from "@/lib/each";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { rememberNewNoteButton } from "@/lib/morph";
 import { plural } from "@/lib/utils";
@@ -425,6 +426,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
     </Button>
   );
 
+  useDocumentTitle(tag ? tag.name : "Notes");
   const title = tag ? (
     <div className="flex min-w-0 items-center gap-1">
       <PageTitle
