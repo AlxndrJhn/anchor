@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../motion/haptics.dart';
 import '../motion/springs.dart';
 import '../theme/context_extensions.dart';
+import 'expanded_hit_area.dart';
 
 /// The "+" of Anchor+, set after a title: it hovers for a while, glows, and
 /// has a few sparks circling it, for everything the + adds. A tap sends the features
@@ -50,7 +51,7 @@ class AnchorPlusMark extends StatefulWidget {
 
 class _AnchorPlusMarkState extends State<AnchorPlusMark>
     with TickerProviderStateMixin {
-  // One hover cycle; the sparks go round once in two.
+  // One hover cycle; the sparks go round once in a cycle and a half.
   late final AnimationController _hover = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 3200),
@@ -105,36 +106,38 @@ class _AnchorPlusMarkState extends State<AnchorPlusMark>
     final colors = context.anchor;
     final size = widget.size;
     // The sparks and the burst reach past the cross, so they paint outside
-    // the box the title leaves for it.
-    return GestureDetector(
-      onTap: _celebrate,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox.square(
-        dimension: size,
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_hover, _burst]),
-          builder: (context, _) {
-            final t = _hover.value;
-            final lift = math.sin(t * 2 * math.pi) * size * 0.09;
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _PlusPainter(
-                      phase: t,
-                      lift: lift,
-                      accent: colors.accentStrong,
-                      ink: colors.accentInk,
+    // the box the title leaves for it; taps land on it from as far.
+    return MinTapTarget(
+      child: GestureDetector(
+        onTap: _celebrate,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox.square(
+          dimension: size,
+          child: AnimatedBuilder(
+            animation: Listenable.merge([_hover, _burst]),
+            builder: (context, _) {
+              final t = _hover.value;
+              final lift = math.sin(t * 2 * math.pi) * size * 0.09;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _PlusPainter(
+                        phase: t,
+                        lift: lift,
+                        accent: colors.accentStrong,
+                        ink: colors.accentInk,
+                      ),
                     ),
                   ),
-                ),
-                if (_burst.isAnimating)
-                  for (var i = 0; i < AnchorPlusMark.features.length; i++)
-                    _feature(i, size, colors.accentInk),
-              ],
-            );
-          },
+                  if (_burst.isAnimating)
+                    for (var i = 0; i < AnchorPlusMark.features.length; i++)
+                      _feature(i, size, colors.accentInk),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -202,10 +205,11 @@ class _PlusPainter extends CustomPainter {
     );
 
     // Three sparks on a tilted ring: the ones behind are drawn first,
-    // smaller and fainter.
+    // smaller and fainter. Each cycle moves each spark two places on, so
+    // the next cycle starts where this one ends.
     final sparks = <(double, Offset)>[];
     for (var i = 0; i < 3; i++) {
-      final a = (phase / 2 + i / 3) * 2 * math.pi;
+      final a = (2 * phase + i) / 3 * 2 * math.pi;
       final depth = math.sin(a);
       final ring = Offset(math.cos(a) * side * 0.95, depth * side * 0.32);
       final tilt = Offset(
@@ -228,7 +232,9 @@ class _PlusPainter extends CustomPainter {
       spark(s);
     }
 
-    // The cross: rounded bars with a light running across them.
+    // The cross: rounded bars with a light running across them. The light
+    // starts and ends off the cross, over the same colours, so a cycle
+    // runs into the next without a jump.
     final bar = side * 0.24;
     final arm = side * 0.5;
     final cross = Path()
@@ -245,23 +251,34 @@ class _PlusPainter extends CustomPainter {
         ),
       );
     final bounds = Rect.fromCircle(center: center, radius: arm);
-    final sweep = phase * 3 - 1;
     canvas.drawPath(
       cross,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [ink, accent, Colors.white, accent, ink],
-          stops: [
-            0,
-            (sweep - 0.25).clamp(0.0, 1.0),
-            sweep.clamp(0.0, 1.0),
-            (sweep + 0.25).clamp(0.0, 1.0),
-            1,
-          ],
+          colors: [ink, accent, ink],
+          stops: const [0.2, 0.5, 0.8],
         ).createShader(bounds),
     );
+    final sweep = phase * 3 - 1;
+    if (sweep > -0.25 && sweep < 1.25) {
+      final clear = Colors.white.withValues(alpha: 0);
+      canvas.drawPath(
+        cross,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [clear, Colors.white, clear],
+            stops: [
+              (sweep - 0.25).clamp(0.0, 1.0),
+              sweep.clamp(0.0, 1.0),
+              (sweep + 0.25).clamp(0.0, 1.0),
+            ],
+          ).createShader(bounds),
+      );
+    }
 
     for (final s in sparks.where((s) => s.$1 >= 0)) {
       spark(s);

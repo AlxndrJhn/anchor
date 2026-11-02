@@ -12,10 +12,13 @@ void main() {
         home: MediaQuery(
           data: MediaQueryData(disableAnimations: reduced),
           child: const Scaffold(
-            body: PageHeading(
-              title: 'Welcome to Anchor+',
-              subtitle: 'Enter your server address to get started.',
-              titleMark: AnchorPlusMark(size: AnchorPlusMark.titleSize),
+            body: Padding(
+              padding: EdgeInsets.all(40),
+              child: PageHeading(
+                title: 'Welcome to Anchor+',
+                subtitle: 'Enter your server address to get started.',
+                titleMark: AnchorPlusMark(size: AnchorPlusMark.titleSize),
+              ),
             ),
           ),
         ),
@@ -57,9 +60,23 @@ void main() {
     expect(featureIcons(), findsNothing);
   });
 
-  testWidgets('it hovers for a while, then rests until tapped', (
-    tester,
-  ) async {
+  testWidgets('a tap just beside the small + still reaches it', (tester) async {
+    await pumpHeading(tester);
+    await tester.pumpAndSettle();
+    final center = tester.getCenter(find.byType(AnchorPlusMark));
+
+    // 24 wide, with room to 48 on Android: 20 off its centre is outside
+    // what's drawn, and outside the title's own box on the right, but
+    // inside the target.
+    for (final miss in const [Offset(20, 0), Offset(-20, 0), Offset(0, 20)]) {
+      await tester.tapAt(center + miss);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(featureIcons(), findsNWidgets(AnchorPlusMark.features.length));
+      await tester.pumpAndSettle();
+    }
+  });
+
+  testWidgets('it hovers for a while, then rests until tapped', (tester) async {
     await pumpHeading(tester);
     expect(tester.hasRunningAnimations, isTrue);
 
