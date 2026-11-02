@@ -12,6 +12,7 @@ import com.alxndrjhn.anchorplus.files.DeviceFilesPlugin
 import com.alxndrjhn.anchorplus.lock.ScreenOffPlugin
 import com.alxndrjhn.anchorplus.photos.PhotoConverterPlugin
 import com.alxndrjhn.anchorplus.share.ShareFolderPlugin
+import com.alxndrjhn.anchorplus.switching.OtherAnchorPlugin
 import com.alxndrjhn.anchorplus.update.UpdateInstallerPlugin
 import com.alxndrjhn.anchorplus.widget.NotesWidgetProvider
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
@@ -121,6 +122,7 @@ class MainActivity : FlutterFragmentActivity() {
         flutterEngine.plugins.add(ScreenOffPlugin())
         flutterEngine.plugins.add(DeviceFilesPlugin())
         flutterEngine.plugins.add(DebugVideoPlugin())
+        flutterEngine.plugins.add(OtherAnchorPlugin())
         magicLinkChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MAGIC_LINK_CHANNEL).apply {
             setMethodCallHandler { call, result ->
                 if (call.method != "takeLink") return@setMethodCallHandler result.notImplemented()

@@ -27,6 +27,7 @@ import '../../auth/domain/magic_link.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/auth_error_message.dart';
 import '../../auth/presentation/magic_login_scan_screen.dart';
+import '../../switching/presentation/switching_notices.dart';
 import '../../sync/data/sync_compatibility.dart';
 import '../../sync/presentation/compatibility_messages.dart';
 import '../data/server_connector.dart';
@@ -217,6 +218,7 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
           titleMark: const AnchorPlusMark(size: AnchorPlusMark.titleSize),
         ),
         SizedBox(height: density.space24),
+        SwitchingFromNotice(padding: EdgeInsets.only(bottom: density.space16)),
         FormNotices(errorMessage: errorMessage),
         AppTextField(
           controller: _address,

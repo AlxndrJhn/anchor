@@ -1112,6 +1112,58 @@
   "@pictureSearchChangeFailed": {
     "description": "Error snackbar when turning picture search on or off in Settings fails (e.g. offline)."
   },
+  "switchingFromTitle": "Moving from {app}?",
+  "@switchingFromTitle": {
+    "description": "Title of the notice on the server page while the Anchor app the user is switching from is still installed.",
+    "placeholders": {
+      "app": {
+        "type": "String",
+        "example": "Anchor"
+      }
+    }
+  },
+  "switchingFromText": "Open it once so it syncs your notes to your server, then sign in to the same server here.",
+  "@switchingFromText": {
+    "description": "Text of the notice on the server page: notes move between the apps only through the server."
+  },
+  "switchingOpen": "Open {app}",
+  "@switchingOpen": {
+    "description": "Button on the server page that opens the Anchor app the user is switching from.",
+    "placeholders": {
+      "app": {
+        "type": "String",
+        "example": "Anchor"
+      }
+    }
+  },
+  "switchingDoneTitle": "Your notes are here.",
+  "@switchingDoneTitle": {
+    "description": "Title of the banner above the notes once they've downloaded, while the app the user switched from is still installed."
+  },
+  "switchingDoneText": "Once you’ve checked nothing’s missing, you can uninstall {app}. Notes it never synced are only in it.",
+  "@switchingDoneText": {
+    "description": "Text of that banner.",
+    "placeholders": {
+      "app": {
+        "type": "String",
+        "example": "Anchor"
+      }
+    }
+  },
+  "switchingUninstall": "Uninstall {app}",
+  "@switchingUninstall": {
+    "description": "Banner button that opens the old app's page in Android's settings, to uninstall it.",
+    "placeholders": {
+      "app": {
+        "type": "String",
+        "example": "Anchor"
+      }
+    }
+  },
+  "switchingKeep": "Keep it",
+  "@switchingKeep": {
+    "description": "Banner button that hides the uninstall banner for good."
+  },
   "updateAvailable": "Update available",
   "@updateAvailable": {
     "description": "Title of the banner above the notes and of the sheet, when a newer release of the app is out."

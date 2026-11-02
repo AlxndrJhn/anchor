@@ -795,6 +795,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pictureSearchChangeFailed => 'Couldn’t change picture search';
 
   @override
+  String switchingFromTitle(String app) {
+    return 'Moving from $app?';
+  }
+
+  @override
+  String get switchingFromText =>
+      'Open it once so it syncs your notes to your server, then sign in to the same server here.';
+
+  @override
+  String switchingOpen(String app) {
+    return 'Open $app';
+  }
+
+  @override
+  String get switchingDoneTitle => 'Your notes are here.';
+
+  @override
+  String switchingDoneText(String app) {
+    return 'Once you’ve checked nothing’s missing, you can uninstall $app. Notes it never synced are only in it.';
+  }
+
+  @override
+  String switchingUninstall(String app) {
+    return 'Uninstall $app';
+  }
+
+  @override
+  String get switchingKeep => 'Keep it';
+
+  @override
   String get updateAvailable => 'Update available';
 
   @override
