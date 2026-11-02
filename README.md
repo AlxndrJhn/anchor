@@ -289,6 +289,20 @@ domain. `PORT` is the port Anchor listens on without a domain, e.g.
 Anchor's own settings (see the table below) go in `/opt/anchor/anchor.env`,
 followed by `docker compose up -d` in `/opt/anchor`.
 
+### On Windows
+
+The server runs in Docker, which winget installs:
+
+```bash
+winget install Docker.DockerDesktop
+```
+
+Start Docker Desktop once (it may ask to restart Windows for WSL 2), then
+follow Option 1 below in a folder of your own: `docker compose up -d` there
+starts Anchor+ at http://localhost:3000. Docker Desktop starts it again after
+a restart when **Start Docker Desktop when you sign in** is on in its settings.
+The [desktop app](#desktop-app) installs with winget too.
+
 ### Option 1: Using Pre-built Image (Recommended)
 
 1. **Create a `docker-compose.yml` file:**
@@ -636,7 +650,14 @@ A Windows and macOS app that opens the web client of your own Anchor server in
 its own window, with everything the web app has (offline use, keyboard
 shortcuts). It does not store notes itself; it connects to your server.
 
-1. **Download it** from this fork's
+1. **Install it.** On Windows, with [winget](https://learn.microsoft.com/windows/package-manager/winget/):
+
+   ```bash
+   winget install AlxndrJhn.AnchorPlus
+   ```
+
+   It installs for you alone; add `--scope machine` to install it for every
+   user of the PC. Or download it from this fork's
    [releases page](https://github.com/AlxndrJhn/anchor/releases):
    - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
@@ -661,6 +682,10 @@ the top right (also **Restart to Update** in the File menu, or the Anchor+ menu
 on macOS). Clicking it restarts Anchor+ on the new version. On macOS this needs
 Anchor+ in a folder you can write to, such as Applications; run from the disk
 image, the button opens the release page instead.
+
+Installed with winget, `winget upgrade AlxndrJhn.AnchorPlus` updates it too.
+Each release sends its Windows installer to winget, where it shows up once
+Microsoft's checks have passed, usually within a day.
 
 Links to other websites open in your browser. To build it yourself:
 `cd desktop && pnpm install && pnpm run dist:win` (or `dist:mac`).
