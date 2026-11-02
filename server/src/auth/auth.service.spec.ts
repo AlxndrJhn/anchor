@@ -306,8 +306,22 @@ describe('AuthService', () => {
     };
 
     it('is forbidden when registration is disabled', async () => {
+      addUser({ id: 'admin', isAdmin: true });
       registrationMode = 'disabled';
       await expect(service.register(dto)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lets the very first account in even when registration is disabled', async () => {
+      registrationMode = 'disabled';
+      const result = await service.register(dto);
+      expect(result.user).toMatchObject({ isAdmin: true, status: 'active' });
+    });
+
+    it('lets the very first account in without approval in review mode', async () => {
+      registrationMode = 'review';
+      const result = await service.register(dto);
+      expect(result.user).toMatchObject({ isAdmin: true, status: 'active' });
+      expect(result).toHaveProperty('access_token');
     });
 
     it('is forbidden when only provider sign-in is allowed', async () => {
@@ -382,6 +396,19 @@ describe('AuthService', () => {
       const stored = findUser({ email: dto.email });
       expect(stored.password).not.toBe(dto.password);
       expect(await bcrypt.compare(dto.password, stored.password!)).toBe(true);
+    });
+  });
+
+  describe('getRegistrationMode', () => {
+    it('is open while there are no accounts, for the admin', async () => {
+      registrationMode = 'review';
+      expect(await service.getRegistrationMode()).toEqual({ mode: 'enabled' });
+    });
+
+    it('follows the setting once someone has signed up', async () => {
+      addUser({ id: 'admin', isAdmin: true });
+      registrationMode = 'review';
+      expect(await service.getRegistrationMode()).toEqual({ mode: 'review' });
     });
   });
 

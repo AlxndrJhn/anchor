@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 
 export type RegistrationMode = 'disabled' | 'enabled' | 'review';
 
+export const DEFAULT_REGISTRATION_MODE: RegistrationMode = 'review';
+
 @Injectable()
 export class SettingsService {
   constructor(
@@ -17,7 +19,7 @@ export class SettingsService {
 
   /**
    * Get the current registration mode.
-   * Priority: env var > DB setting > default "enabled"
+   * Priority: env var > DB setting > default "review"
    */
   async getRegistrationMode(): Promise<RegistrationMode> {
     // Check environment variable first
@@ -35,8 +37,9 @@ export class SettingsService {
       return setting.value as RegistrationMode;
     }
 
-    // Default to enabled
-    return 'enabled';
+    // New accounts wait for an admin unless they say otherwise. The very
+    // first one, the admin's own, is let in regardless.
+    return DEFAULT_REGISTRATION_MODE;
   }
 
   /**
@@ -80,7 +83,7 @@ export class SettingsService {
     }
 
     return {
-      mode: 'enabled',
+      mode: DEFAULT_REGISTRATION_MODE,
       isLocked: false,
       source: 'default',
     };
