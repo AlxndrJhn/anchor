@@ -13,6 +13,10 @@ directories:
 files:
   - package.json
   - src/**/*
+  # The web client built without a server (in web: pnpm build:local), which
+  # keeps the notes on this computer until a server is set.
+  - from: ../web/out
+    to: web
   # The window and setup page icon.
   - from: ../web/public
     to: icons

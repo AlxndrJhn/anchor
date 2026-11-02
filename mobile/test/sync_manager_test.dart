@@ -62,6 +62,11 @@ class SignedOut extends ActiveUserId {
   String? build() => null;
 }
 
+class LocalOnly extends ActiveUserId {
+  @override
+  String? build() => localUserId;
+}
+
 class FixedSyncManager extends SyncManager {
   FixedSyncManager({required this.isSyncing});
 
@@ -79,6 +84,7 @@ void main() {
 
   ProviderContainer start([
     SyncCompatibility compatibility = SyncCompatibility.ok,
+    ActiveUserId Function() user = SignedIn.new,
   ]) {
     final started = ProviderContainer(
       overrides: [
@@ -90,7 +96,7 @@ void main() {
         connectivityStreamProvider.overrideWith(
           (ref) => const Stream<List<ConnectivityResult>>.empty(),
         ),
-        activeUserIdProvider.overrideWith(SignedIn.new),
+        activeUserIdProvider.overrideWith(user),
       ],
     );
     addTearDown(started.dispose);
@@ -181,10 +187,19 @@ void main() {
     expect(seen.last, isTrue);
   });
 
+  test('notes kept on this device only never sync, and nothing fails', () async {
+    container = start(SyncCompatibility.ok, LocalOnly.new);
+    expect(await manager().requestSync(), isTrue);
+    await pumpEventQueue();
+    expect(service.runs, isEmpty);
+    expect(container.read(syncFailedProvider), isFalse);
+  });
+
   group('the first download', () {
     Future<FirstDownload> firstDownload({
       Stream<bool>? hasDownloaded,
       bool isSignedIn = true,
+      bool isLocalOnly = false,
       bool isOnline = true,
       bool isSyncing = false,
       bool hasFailed = false,
@@ -194,7 +209,11 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           activeUserIdProvider.overrideWith(
-            isSignedIn ? SignedIn.new : SignedOut.new,
+            isLocalOnly
+                ? LocalOnly.new
+                : isSignedIn
+                ? SignedIn.new
+                : SignedOut.new,
           ),
           hasDownloadedProvider.overrideWith(
             (ref) => hasDownloaded ?? Stream.value(false),
@@ -254,6 +273,11 @@ void main() {
         FirstDownload.done,
       );
       expect(await firstDownload(isSignedIn: false), FirstDownload.done);
+      expect(
+        await firstDownload(isLocalOnly: true, isOnline: false),
+        FirstDownload.done,
+        reason: 'nothing to download without a server',
+      );
     });
   });
 }

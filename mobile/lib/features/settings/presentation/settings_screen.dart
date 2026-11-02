@@ -20,6 +20,7 @@ import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/network/server_address.dart';
 import '../../../core/network/server_config_provider.dart';
+import '../../../core/session/active_user_id_provider.dart';
 import '../../../core/storage/preferences_repository.dart';
 import '../../../core/text/date_formats.dart';
 import '../../../core/theme/app_typography.dart';
@@ -101,6 +102,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).value;
+    // The PIN, the pattern and picture search are kept on a server.
+    final isLocalOnly = ref.watch(isLocalOnlyProvider);
     final gap = SizedBox(height: Section.gapOf(context));
     return AppScaffold(
       title: context.l10n.settingsTitle,
@@ -120,12 +123,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               gap,
               const _RemindersSection(),
               gap,
-              const _PictureSearchSection(),
-              const _NoteLocksSection(),
-              gap,
+              if (!isLocalOnly) ...[
+                const _PictureSearchSection(),
+                const _NoteLocksSection(),
+                gap,
+              ],
               const _BackupSection(),
               gap,
-              _AccountSection(user: user),
+              if (isLocalOnly)
+                const _ServerSection()
+              else
+                _AccountSection(user: user),
               gap,
               if (canSelfUpdate) ...[const _UpdatesSection(), gap],
               const _HelpSection(),
@@ -760,6 +768,30 @@ class _AccountSection extends ConsumerWidget {
   }
 }
 
+/// Without a server: where to connect one, to sync and share.
+class _ServerSection extends StatelessWidget {
+  const _ServerSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Section(
+      label: l10n.settingsSync,
+      child: GroupedList(
+        children: [
+          GroupedListTile(
+            icon: LucideIcons.cloud,
+            label: l10n.settingsConnectServer,
+            subtitle: l10n.settingsConnectServerHelp,
+            showChevron: true,
+            onTap: () => context.push(AppRoutes.serverConfig),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// This fork's updates from its GitHub releases (release builds on Android).
 class _UpdatesSection extends ConsumerStatefulWidget {
   const _UpdatesSection();
@@ -1354,7 +1386,26 @@ class _About extends ConsumerWidget {
         : compatibilityMessagesOf(compatibility, context.l10n);
     final style = AppTypography.footnote.copyWith(color: colors.appMuted);
     final Widget server;
-    if (!isOnline) {
+    if (ref.watch(isLocalOnlyProvider)) {
+      server = Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 8,
+        children: [
+          Icon(
+            LucideIcons.smartphone,
+            size: AnchorTokens.sizeIconSmall,
+            color: colors.appMuted,
+          ),
+          Flexible(
+            child: Text(
+              context.l10n.settingsLocalOnly,
+              style: style,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      );
+    } else if (!isOnline) {
       server = Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 8,

@@ -6,6 +6,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/motion/springs.dart';
+import '../../../../core/session/active_user_id_provider.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/check_circle.dart';
@@ -130,7 +131,8 @@ class _NoteCardState extends ConsumerState<NoteCard>
       if (note.sharedBy != null) l10n.shareSharedBy(note.sharedBy!.name),
       if (note.isOwner && note.hasShares)
         l10n.shareSharedWithCount(note.shareIds!.length),
-      if (!note.isSynced) l10n.cardNotSynced,
+      if (!note.isSynced && !ref.watch(isLocalOnlyProvider))
+        l10n.cardNotSynced,
       ?date,
     ].join('. ');
 
@@ -195,6 +197,7 @@ class _NoteCardState extends ConsumerState<NoteCard>
             isSelected: widget.isSelected,
             isHidden: isHidden,
             showPictures: widget.showPictures,
+            showUnsynced: !ref.watch(isLocalOnlyProvider),
             onToggleItem: onToggleItem,
             onOpenPicture: onOpenPicture,
             check: widget.isSelecting

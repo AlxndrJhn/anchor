@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "next build && node scripts/sw-manifest.mjs",
     "build:pages": "node scripts/build-pages.mjs",
+    "build:local": "node scripts/build-pages.mjs --local",
     "start": "next start",
     "check": "biome check",
     "check:fix": "biome check --write",

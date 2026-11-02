@@ -94,6 +94,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | **History** | | |
 | Each version shows its added (+) and removed (−) lines | ✓ | ✓ |
 | **Offline** | | |
+| Works without a server from the first start: notes stay on the device, and Settings › Connect to a server adds one later, moving them into the account at sign in (desktop: File › Connect to a server…; Settings › Import and export moves them) | | ✓ |
 | Open, edit and create notes without a connection, even after a reload; changes sync when back online ([#202](https://github.com/ZhFahim/anchor/issues/202)) | ✓ | (upstream) |
 | Back up every note, tag, picture and recording to a .zip file, and restore one: missing notes come back and sync up, notes already there are left alone (Settings › Backup) | | ✓ |
 | **Reminders** | | |
@@ -673,7 +674,9 @@ source, without Google's ML Kit and so without "Grab image text":
 
 A Windows and macOS app that opens the web client of your own Anchor server in
 its own window, with everything the web app has (offline use, keyboard
-shortcuts). It does not store notes itself; it connects to your server.
+shortcuts). Until it has a server, it opens a copy of the web client built in,
+which keeps the notes on this computer, as
+[the one on GitHub Pages](#try-it-in-your-browser) keeps them in the browser.
 
 1. **Install it.** On Windows, with [winget](https://learn.microsoft.com/windows/package-manager/winget/):
 
@@ -688,10 +691,14 @@ shortcuts). It does not store notes itself; it connects to your server.
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
      open it and drag Anchor+ to Applications
 
-2. **Connect:** on first launch, enter the address you open Anchor+ at in your
-   browser, such as `https://notes.example.com`. The app checks that the server
-   answers, then remembers it. **Change server…** (File menu on Windows, the
-   Anchor+ menu on macOS) switches to another one.
+2. **Connect (optional):** it opens on the notes kept on this computer.
+   **Connect to a server…** (File menu on Windows, the Anchor+ menu on macOS)
+   asks for the address you open Anchor+ at in your browser, such as
+   `https://notes.example.com`. The app checks that the server answers, then
+   remembers it; **Change server…** then switches to another one, and **Use
+   without a server** goes back to the notes on this computer. To take those
+   notes to the server, export them (Settings › Import and export) before
+   connecting and import them after.
 
 The builds are not signed, so the system warns the first time:
 
@@ -713,6 +720,7 @@ Each release sends its Windows installer to winget, where it shows up once
 Microsoft's checks have passed, usually within a day.
 
 Links to other websites open in your browser. To build it yourself:
+`cd web && pnpm install && pnpm build:local`, then
 `cd desktop && pnpm install && pnpm run dist:win` (or `dist:mac`).
 
 ## Claude (MCP)

@@ -1,6 +1,8 @@
 // Builds the GitHub Pages site into out/: the app at BASE_PATH, keeping notes
 // in the browser, and the demo at BASE_PATH/demo, keeping them in memory.
 //   BASE_PATH=/anchor pnpm build:pages
+// With --local, only the app, at the root: the desktop app's built-in web
+// client (pnpm build:local).
 import { execFileSync } from "node:child_process";
 import { renameSync, rmSync } from "node:fs";
 import { join } from "node:path";
@@ -16,12 +18,20 @@ function build(mode, basePath) {
     cwd: web,
     env,
     stdio: "inherit",
+    // pnpm is a .cmd on Windows, where the desktop app is built too.
+    shell: process.platform === "win32",
   });
   execFileSync("node", [join(web, "scripts", "static-site.mjs")], {
     cwd: web,
     env,
     stdio: "inherit",
   });
+}
+
+if (process.argv.includes("--local")) {
+  build("local", base);
+  console.log(`Web client without a server in ${out}`);
+  process.exit(0);
 }
 
 rmSync(demoOut, { recursive: true, force: true });

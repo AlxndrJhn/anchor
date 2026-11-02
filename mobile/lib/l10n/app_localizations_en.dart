@@ -313,6 +313,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authNewToAnchor => 'New to Anchor?';
 
   @override
+  String get authNoAccountNeeded => 'Just taking notes?';
+
+  @override
+  String get authUseWithoutServer => 'Use without a server';
+
+  @override
   String get authCreateAnAccount => 'Create an account';
 
   @override
@@ -431,7 +437,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverWelcome => 'Welcome to Anchor+';
 
   @override
-  String get serverSubtitle => 'Enter your server address to get started.';
+  String get serverSubtitle => 'Enter your server address to sync your notes.';
 
   @override
   String get serverAddress => 'Server address';
@@ -453,7 +459,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use only with a server you manage. Anchor can’t verify its identity.';
 
   @override
-  String get serverSelfHosted => 'Anchor requires a self-hosted server.';
+  String get serverSelfHosted => 'Notes on this phone move into your account.';
 
   @override
   String get serverEnterAddress => 'Enter a server address.';
@@ -712,6 +718,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccount => 'Account';
 
   @override
+  String get settingsSync => 'Sync';
+
+  @override
+  String get settingsConnectServer => 'Connect to a server';
+
+  @override
+  String get settingsConnectServerHelp =>
+      'Sync and share your notes with your own Anchor server. The notes on this phone move into your account when you sign in.';
+
+  @override
   String get settingsPassword => 'Password';
 
   @override
@@ -931,6 +947,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsOffline => 'Offline. Changes are saved on this phone.';
+
+  @override
+  String get settingsLocalOnly => 'Notes are kept on this phone only.';
 
   @override
   String settingsSyncPaused(String reason) {

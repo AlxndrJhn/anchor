@@ -124,7 +124,7 @@ jobs:
             Dockerfile .dockerignore server web docker .github/workflows/docker-build.yml
           check desktop \
             "$(last_with 'select(any(.assets[]; .name | test("^Anchor-.*\\.(exe|dmg)$"))) | .tag_name')" \
-            desktop web/public/web-app-manifest-any-512x512.png web/public/icons/anchor_icon.png
+            desktop web
           # The changes in the notes start from here.
           echo "previous=$(last_with '.tag_name')" >> "$GITHUB_OUTPUT"
 
@@ -283,13 +283,25 @@ jobs:
         with:
           node-version: 26
           cache: pnpm
-          cache-dependency-path: desktop/pnpm-lock.yaml
+          cache-dependency-path: |
+            desktop/pnpm-lock.yaml
+            web/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Check
         run: pnpm run check
+
+      # The web client built in, which keeps the notes on the computer until
+      # a server is set; electron-builder.yml packages web/out.
+      - name: Build the web client without a server
+        working-directory: web
+        env:
+          ANCHOR_VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:local
 
       # Unsigned: no certificate is looked for, the macOS app is ad-hoc signed
       # (see electron-builder.yml) and nothing is notarized or published.

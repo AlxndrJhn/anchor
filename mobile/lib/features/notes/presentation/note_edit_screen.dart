@@ -470,6 +470,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   Set<NoteAction> _leftOutOfMore() {
     final preferences = ref.read(editorPreferencesControllerProvider);
     return {
+      // Sharing and freezing are the server's.
+      if (ref.read(isLocalOnlyProvider)) ...[
+        NoteAction.share,
+        NoteAction.freeze,
+      ],
       for (final action in preferences.quickActions)
         for (final option in action.noteActions)
           if (option != NoteAction.removeLock) option,
@@ -480,12 +485,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   /// The bar's quick actions this note can use.
   List<QuickAction> _barActions(List<QuickAction> quickActions) {
     final note = _draft.note;
+    final isLocalOnly = ref.watch(isLocalOnlyProvider);
     return [
       for (final action in quickActions)
         if (switch (action) {
-          QuickAction.share => note?.isOwner ?? true,
+          QuickAction.share => !isLocalOnly && (note?.isOwner ?? true),
           QuickAction.history => !_draft.isViewOnly,
-          QuickAction.freeze => note == null || (note.isOwner && note.isActive),
+          QuickAction.freeze =>
+            !isLocalOnly && (note == null || (note.isOwner && note.isActive)),
           QuickAction.addImage ||
           QuickAction.takePicture ||
           QuickAction.takeSeveral ||
@@ -1260,7 +1267,11 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       appearance: appearance,
       scrollOffset: _scrollOffset,
       reminder: note?.reminder,
-      isUnsynced: note != null && !note.isSynced && !_isReadOnly,
+      isUnsynced:
+          note != null &&
+          !note.isSynced &&
+          !_isReadOnly &&
+          !ref.watch(isLocalOnlyProvider),
       isTrashed: isTrashed,
       isReadOnly: _isReadOnly,
       isArchived: note?.isArchived ?? _draft.newArchived,

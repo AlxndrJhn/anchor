@@ -56,4 +56,4 @@ final class ReminderBackgroundCheckProvider
 }
 
 String _$reminderBackgroundCheckHash() =>
-    r'5e8fe5fd5df3f42f435e5ee22de7178862a1efba';
+    r'06dd5abdb856fe322177851c253d216b41e3130b';

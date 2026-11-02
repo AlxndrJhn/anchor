@@ -33,7 +33,7 @@ final class ServerConfigProvider
   ServerConfig create() => ServerConfig();
 }
 
-String _$serverConfigHash() => r'3105fddd460f89532136f1e6bc5bb65cb752e6df';
+String _$serverConfigHash() => r'9b3d428457be5e8eb3a9d688284353318bb9a84b';
 
 abstract class _$ServerConfig extends $AsyncNotifier<String?> {
   FutureOr<String?> build();

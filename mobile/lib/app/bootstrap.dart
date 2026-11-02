@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/logging/app_logger.dart';
 import '../core/logging/log_tags.dart';
+import '../core/session/active_user_id_provider.dart';
 import '../core/storage/clear_storage_on_new_install.dart';
 import '../core/storage/preferences_repository.dart';
 import '../core/storage/storage_keys.dart';
@@ -155,7 +156,12 @@ Future<AppBootstrap> initializeApp({
   final accessToken = saved[StorageKeys.accessToken];
   final String initialRoute;
   if (serverUrl == null || serverUrl.isEmpty) {
-    initialRoute = AppRoutes.serverConfig;
+    // Without a server the notes stay on this device. The first start
+    // welcomes, with the choice of a server or none.
+    userId = localUserId;
+    initialRoute = saved[StorageKeys.localOnly] == 'true'
+        ? await notificationRoute ?? await widgetRoute ?? AppRoutes.home
+        : AppRoutes.serverConfig;
   } else if (accessToken == null) {
     initialRoute = AppRoutes.login;
   } else {

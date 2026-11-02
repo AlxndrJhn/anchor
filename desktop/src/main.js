@@ -1,6 +1,7 @@
 // Anchor+ desktop: a window onto the web client of the user's own Anchor
-// server. A built-in page asks for the server once; after that the app opens
-// it straight away.
+// server. Until one is set, it opens the web client built in, which keeps the
+// notes on this computer; "Connect to a server…" asks for one, and after that
+// the app opens it straight away.
 
 const {
   app,
@@ -11,6 +12,7 @@ const {
   ipcMain,
   net,
   powerMonitor,
+  protocol,
   screen,
   shell,
 } = require("electron");
@@ -24,6 +26,20 @@ const APP_NAME = "Anchor+";
 const SETUP_PAGE = path.join(__dirname, "setup.html");
 const SETUP_URL = pathToFileURL(SETUP_PAGE).toString();
 const HEALTH_TIMEOUT_MS = 10_000;
+
+// The web client built without a server (web: pnpm build:local), packaged in
+// web/. It is served from its own origin, so its notes (IndexedDB) have one
+// to stay in.
+const LOCAL_SCHEME = "anchor-app";
+const LOCAL_ORIGIN = `${LOCAL_SCHEME}://notes`;
+const LOCAL_URL = `${LOCAL_ORIGIN}/`;
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: LOCAL_SCHEME,
+    privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true },
+  },
+]);
 
 app.setName(APP_NAME);
 if (process.platform === "win32") app.setAppUserModelId("io.github.alxndrjhn.anchor");
@@ -147,7 +163,9 @@ async function checkServer(serverUrl, { isSchemeAdded = false } = {}) {
   }
 }
 
+// Where the window's web client comes from: the server's, or the built-in one.
 const serverOrigin = () => {
+  if (!settings.serverUrl) return LOCAL_ORIGIN;
   try {
     return new URL(settings.serverUrl).origin;
   } catch {
@@ -155,9 +173,13 @@ const serverOrigin = () => {
   }
 };
 
+// Node gives a scheme of its own the origin "null"; Chromium gives the
+// built-in web client's its scheme and host.
 const originOf = (url) => {
   try {
-    return new URL(url).origin;
+    const parsed = new URL(url);
+    if (parsed.protocol === `${LOCAL_SCHEME}:`) return `${LOCAL_SCHEME}://${parsed.host}`;
+    return parsed.origin;
   } catch {
     return null;
   }
@@ -320,8 +342,10 @@ function createWindow() {
     // -3 is ERR_ABORTED: a navigation that was replaced by another one.
     if (!isMainFrame || code === -3 || url === SETUP_URL) return;
     showSetup({
-      error: `Could not open ${settings.serverUrl || url} (${description || `error ${code}`}). Check the connection and that the server is running.`,
-      canRetry: Boolean(settings.serverUrl),
+      error: settings.serverUrl
+        ? `Could not open ${settings.serverUrl} (${description || `error ${code}`}). Check the connection and that the server is running.`
+        : `Could not open the notes kept on this computer (${description || `error ${code}`}).`,
+      canRetry: true,
     });
   });
 
@@ -333,14 +357,52 @@ function showSetup(state = {}) {
   mainWindow.loadFile(SETUP_PAGE);
 }
 
+// The server's web client, or the built-in one while there is no server.
 function openServer() {
   setupState = { error: null, canRetry: false };
-  mainWindow.loadURL(settings.serverUrl);
+  mainWindow.loadURL(settings.serverUrl || LOCAL_URL);
 }
 
 function start() {
-  if (settings.serverUrl) openServer();
-  else showSetup();
+  openServer();
+}
+
+// --- The built-in web client (anchor-app://notes/) ---------------------------
+
+function localWebRoot() {
+  const packaged = path.join(__dirname, "..", "web");
+  if (fs.existsSync(packaged)) return packaged;
+  return path.join(__dirname, "..", "..", "web", "out");
+}
+
+function isFile(file) {
+  try {
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// A static export: /settings is settings.html, and a page it doesn't have
+// (a note's, /notes/<id>) is 404.html, which opens it.
+function localFileFor(pathname) {
+  const root = localWebRoot();
+  let relative;
+  try {
+    relative = decodeURIComponent(pathname).replace(/^\/+/, "");
+  } catch {
+    return null;
+  }
+  const file = path.resolve(root, relative);
+  if (file !== root && !file.startsWith(root + path.sep)) return null;
+  const candidates = [file, `${file}.html`, path.join(file, "index.html")];
+  return candidates.find(isFile) ?? path.join(root, "404.html");
+}
+
+function serveLocal(request) {
+  const file = localFileFor(new URL(request.url).pathname);
+  if (!file || !isFile(file)) return new Response("Not found", { status: 404 });
+  return net.fetch(pathToFileURL(file).toString());
 }
 
 // --- Setup page IPC (only the built-in page may use it) --------------------
@@ -353,6 +415,7 @@ ipcMain.handle("anchor:get-state", (event) => {
   if (!fromSetupPage(event)) throw new Error("Not allowed");
   return {
     serverUrl: settings.serverUrl ?? "",
+    hasServer: Boolean(settings.serverUrl),
     error: setupState.error,
     canRetry: setupState.canRetry,
     version: app.getVersion(),
@@ -369,6 +432,7 @@ ipcMain.handle("anchor:connect", async (event, input) => {
   if (!result.ok) return result;
   settings.serverUrl = serverUrl;
   saveSettings();
+  buildMenu();
   const origin = insecureOrigin(serverUrl);
   if (origin && origin !== secureAtStart) {
     app.relaunch();
@@ -381,7 +445,16 @@ ipcMain.handle("anchor:connect", async (event, input) => {
 
 ipcMain.handle("anchor:retry", (event) => {
   if (!fromSetupPage(event)) throw new Error("Not allowed");
-  if (!settings.serverUrl) return { ok: false };
+  openServer();
+  return { ok: true };
+});
+
+// Forgets the server: the built-in web client opens, with the notes it kept.
+ipcMain.handle("anchor:use-local", (event) => {
+  if (!fromSetupPage(event)) throw new Error("Not allowed");
+  delete settings.serverUrl;
+  saveSettings();
+  buildMenu();
   openServer();
   return { ok: true };
 });
@@ -459,7 +532,7 @@ function setQuickNote(on) {
 function changeServer() {
   if (!mainWindow) createWindow();
   mainWindow.show();
-  showSetup({ canRetry: Boolean(settings.serverUrl) });
+  showSetup({ canRetry: true });
 }
 
 // Release candidates: only when asked for, and the server runs the fork's
@@ -479,7 +552,10 @@ function setPreviewReleases(on) {
 
 function buildMenu() {
   const isMac = process.platform === "darwin";
-  const changeServerItem = { label: "Change server…", click: changeServer };
+  const changeServerItem = {
+    label: settings.serverUrl ? "Change server…" : "Connect to a server…",
+    click: changeServer,
+  };
   const previewItems = updater
     ? [
         {
@@ -574,6 +650,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(() => {
+    protocol.handle(LOCAL_SCHEME, serveLocal);
     app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
     buildMenu();
     createWindow();

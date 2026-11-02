@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons_500.dart';
 import 'package:lucide_icons_flutter/lucide_icons_600.dart';
 
 import '../../../../core/network/connectivity_provider.dart';
+import '../../../../core/session/active_user_id_provider.dart';
 import '../../../../core/session/session_expired_provider.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
@@ -57,14 +58,17 @@ class ListLargeTitle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.anchor;
     final tag = this.tag;
-    final isOnline = ref.watch(isOnlineProvider);
+    // Without a server there is nothing to sync, online or not.
+    final isLocalOnly = ref.watch(isLocalOnlyProvider);
+    final isOnline = isLocalOnly || ref.watch(isOnlineProvider);
     final compatibility = ref.watch(syncCompatibilityProvider).value;
     final line = listTitleLine(
       context.l10n,
       folder: folder,
       isOnline: isOnline,
-      unsynced: ref.watch(unsyncedNoteCountProvider),
+      unsynced: isLocalOnly ? 0 : ref.watch(unsyncedNoteCountProvider),
       hasSyncFailed:
+          !isLocalOnly &&
           ref.watch(syncFailedProvider) &&
           !ref.watch(sessionExpiredProvider) &&
           !(compatibility?.isMismatch ?? false),

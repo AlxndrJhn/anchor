@@ -1,5 +1,6 @@
-// The built-in setup page gets the whole bridge; the server's web client runs
-// as it does in a browser, plus a way to learn of an app update and install it.
+// The built-in setup page gets the whole bridge; the web client (the server's
+// or the built-in one) runs as it does in a browser, plus a way to learn of an
+// app update and install it.
 const { contextBridge, ipcRenderer } = require("electron");
 
 const update = {
@@ -22,6 +23,7 @@ if (location.protocol === "file:") {
     getState: () => ipcRenderer.invoke("anchor:get-state"),
     connect: (url) => ipcRenderer.invoke("anchor:connect", url),
     retry: () => ipcRenderer.invoke("anchor:retry"),
+    useLocal: () => ipcRenderer.invoke("anchor:use-local"),
     ...update,
   });
 } else if (window.top === window) {

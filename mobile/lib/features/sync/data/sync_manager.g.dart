@@ -43,7 +43,7 @@ final class SyncManagerProvider extends $NotifierProvider<SyncManager, bool> {
   }
 }
 
-String _$syncManagerHash() => r'5242003ae861f0129ff3e44907cdab13c908dd1d';
+String _$syncManagerHash() => r'd214a838c2c232cc0025806097234cc3a1ea600a';
 
 /// Runs syncs one at a time.
 
@@ -256,4 +256,4 @@ final class FirstDownloadProvider
   }
 }
 
-String _$firstDownloadHash() => r'fbe4a2ce04b04605663f5e53b8a51592033873a9';
+String _$firstDownloadHash() => r'490e7be26f26e2fa523821d06f5edc518b460d12';
