@@ -111,8 +111,8 @@ class _AccentDot extends StatelessWidget {
       dimension: AnchorTokens.sizeIconMedium,
       child: Center(
         child: Container(
-          width: 14,
-          height: 14,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: accent ?? colors.appBorder,
