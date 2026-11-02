@@ -66,8 +66,18 @@ class AuthRepository {
     return user;
   }
 
-  Future<User> login(String email, String password, {String? code}) async =>
-      _saveSession(await _authService.login(email, password, code: code));
+  Future<User> login(String email, String password, {String? code}) async {
+    final data = await _authService.login(email, password, code: code);
+    // Past the admin's deadline a password alone only sets up a passkey or
+    // authenticator app, which happens on the web.
+    final secondFactor =
+        (data['user'] as Map<String, dynamic>)['secondFactor'];
+    if (secondFactor is Map && secondFactor['blocked'] == true) {
+      await _authService.revokeRefreshToken(data['refresh_token'] as String?);
+      throw const SecondFactorSetupFailure();
+    }
+    return _saveSession(data);
+  }
 
   /// Returns null when an admin has to approve the account first.
   Future<User?> register(String email, String password, String name) async {

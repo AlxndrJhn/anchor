@@ -12,6 +12,8 @@ import { AuthGuard } from './auth.guard';
 import { MagicLoginService } from './magic-login.service';
 import { PasskeyService } from './passkey.service';
 import { TwoStepService } from './two-step.service';
+import { SecondFactorService } from './second-factor.service';
+import { SecondFactorInterceptor } from './second-factor.interceptor';
 import { SecurityController } from './security.controller';
 import { SettingsModule } from '../settings/settings.module';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -45,6 +47,8 @@ import { OidcUserService } from './oidc/oidc-user.service';
     MagicLoginService,
     PasskeyService,
     TwoStepService,
+    SecondFactorService,
+    SecondFactorInterceptor,
     OidcService,
     OidcConfigService,
     OidcClientService,
@@ -53,6 +57,8 @@ import { OidcUserService } from './oidc/oidc-user.service';
   ],
   exports: [
     AuthService,
+    SecondFactorService,
+    SecondFactorInterceptor,
     OidcConfigService,
     JwtModule,
     TokenResolverService,

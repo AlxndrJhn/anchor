@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { configurations } from './config/configuration';
 import { validate } from './config/env.validation';
@@ -7,6 +7,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { ProtocolGuard } from './common/protocol/protocol.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { SecondFactorInterceptor } from './auth/second-factor.interceptor';
 import { NotesModule } from './notes/notes.module';
 import { TagsModule } from './tags/tags.module';
 import { SyncApiModule } from './sync/sync-api.module';
@@ -47,6 +48,10 @@ import { McpModule } from './mcp/mcp.module';
     {
       provide: APP_GUARD,
       useClass: ProtocolGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useExisting: SecondFactorInterceptor,
     },
   ],
 })

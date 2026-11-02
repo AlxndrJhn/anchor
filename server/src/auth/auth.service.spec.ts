@@ -13,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { OidcConfigService } from './oidc/oidc-config.service';
 import { TwoStepService } from './two-step.service';
+import { SecondFactorService } from './second-factor.service';
 import { REFRESH_TOKEN_REUSE_WINDOW_MS } from './constants/auth.constants';
 
 /**
@@ -275,6 +276,12 @@ describe('AuthService', () => {
   const checkSignIn = vi.fn(() => Promise.resolve());
   const twoStepService = { checkSignIn } as unknown as TwoStepService;
 
+  const checkPasswordSignIn = vi.fn(() => Promise.resolve());
+  const secondFactorService = {
+    checkPasswordSignIn,
+    getStatus: vi.fn(() => Promise.resolve(null)),
+  } as unknown as SecondFactorService;
+
   const storageConfig = {
     root: '/data',
     uploadsDir: '/data/uploads',
@@ -293,6 +300,7 @@ describe('AuthService', () => {
       settingsService,
       oidcConfigService,
       twoStepService,
+      secondFactorService,
       storageConfig,
     );
     vi.clearAllMocks();
@@ -416,7 +424,12 @@ describe('AuthService', () => {
     it('says a person with a password has one, without sending it', async () => {
       addUser({ id: 'u1' });
       const me = await service.getMe({ id: 'u1', name: 'Test User' });
-      expect(me).toEqual({ id: 'u1', name: 'Test User', hasPassword: true });
+      expect(me).toEqual({
+        id: 'u1',
+        name: 'Test User',
+        hasPassword: true,
+        secondFactor: null,
+      });
     });
 
     it('says a person who signs in with a provider has none', async () => {

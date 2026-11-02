@@ -34,6 +34,7 @@ import {
   setPasswordSignIn,
   startTwoStep,
 } from "@/features/auth/api";
+import { useAuthStore } from "@/features/auth/store";
 import type { Passkey } from "@/features/auth/types";
 import { isPasskeyCancelled } from "@/features/auth/utils/sign-in-error";
 import { copyText } from "@/lib/clipboard";
@@ -129,6 +130,12 @@ export function SecuritySection() {
   });
 
   const status = security.data;
+  // Setting one up lifts the admin's reminder (or setup screen).
+  const mergeUser = useAuthStore((s) => s.mergeUser);
+  React.useEffect(() => {
+    if (status && "secondFactor" in status)
+      mergeUser({ secondFactor: status.secondFactor ?? null });
+  }, [status, mergeUser]);
 
   return (
     <Section

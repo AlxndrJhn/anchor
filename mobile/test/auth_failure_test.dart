@@ -148,6 +148,28 @@ void main() {
       expect(authErrorMessageOf(failure, _english).field, isNull);
     });
 
+    test("past the admin's deadline, with a passkey", () async {
+      expect(
+        await _loginFailure(
+          403,
+          'A password alone no longer signs you in. Sign in with your '
+          'passkey.',
+        ),
+        isA<PasskeyOnlyFailure>(),
+      );
+    });
+
+    test("past the admin's deadline, with a provider", () async {
+      expect(
+        await _loginFailure(
+          403,
+          'A password alone no longer signs you in. Sign in with your '
+          'sign-in provider.',
+        ),
+        isA<PasswordlessAccountFailure>(),
+      );
+    });
+
     test('an account waiting for approval', () async {
       expect(
         await _loginFailure(

@@ -24,6 +24,10 @@ AuthErrorMessage authErrorMessageOf(
     field: AuthField.code,
   ),
   PasskeyOnlyFailure() => (text: l10n.authPasskeyOnly, field: null),
+  SecondFactorSetupFailure() => (
+    text: l10n.authSecondFactorSetup,
+    field: null,
+  ),
   MagicCodeUsedFailure() => (text: l10n.authMagicCodeUsed, field: null),
   PasswordlessAccountFailure() => (text: l10n.authPasswordless, field: null),
   PendingApprovalFailure() => (text: l10n.authPendingApproval, field: null),

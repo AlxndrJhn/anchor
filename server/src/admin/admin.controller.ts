@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Put,
   Delete,
   Body,
   Param,
@@ -18,6 +19,7 @@ import { UserStatus } from 'src/generated/prisma/enums';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateRegistrationModeDto } from './dto/update-registration-mode.dto';
 import { UpdateOidcSettingsDto } from './dto/update-oidc-settings.dto';
+import { UpdateSecondFactorDto } from './dto/update-second-factor.dto';
 
 @Controller('api/admin')
 @UseGuards(AdminGuard)
@@ -109,5 +111,15 @@ export class AdminController {
   @Patch('settings/oidc')
   updateOidcSettings(@Body() dto: UpdateOidcSettingsDto) {
     return this.adminService.updateOidcSettings(dto);
+  }
+
+  @Get('settings/second-factor')
+  getSecondFactorSettings() {
+    return this.adminService.getSecondFactorSettings();
+  }
+
+  @Put('settings/second-factor')
+  updateSecondFactorSettings(@Body() dto: UpdateSecondFactorDto) {
+    return this.adminService.setSecondFactorRequired(dto.required);
   }
 }

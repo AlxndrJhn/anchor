@@ -1,3 +1,12 @@
+export interface SecondFactorStatus {
+  /** When a password alone stops working. */
+  deadline: string;
+  /** This person signs in with a password alone. */
+  needed: boolean;
+  /** The deadline has passed, so setting one up is all they can do. */
+  blocked: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -6,6 +15,8 @@ export interface User {
   isAdmin?: boolean;
   /** Older servers leave it out. */
   hasPassword?: boolean;
+  /** Set while the admin asks everyone for a passkey or authenticator app. */
+  secondFactor?: SecondFactorStatus | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -95,6 +106,7 @@ export interface SecurityStatus {
   twoStep: boolean;
   recoveryCodesLeft: number;
   passkeys: Passkey[];
+  secondFactor?: SecondFactorStatus | null;
 }
 
 export interface TwoStepSetup {

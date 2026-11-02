@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
+import { SecondFactorService } from '../auth/second-factor.service';
 import { OidcConfigService } from '../auth/oidc/oidc-config.service';
 
 describe('AdminService.findUsers', () => {
@@ -23,6 +24,7 @@ describe('AdminService.findUsers', () => {
       { user: { findMany, count } } as unknown as PrismaService,
       {} as SettingsService,
       {} as OidcConfigService,
+      {} as SecondFactorService,
     );
   });
 
@@ -106,6 +108,7 @@ describe('AdminService.getPendingUsers', () => {
       { user: { findMany } } as unknown as PrismaService,
       {} as SettingsService,
       {} as OidcConfigService,
+      {} as SecondFactorService,
     );
 
     const waiting = await service.getPendingUsers();

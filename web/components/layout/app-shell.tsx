@@ -4,6 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Toaster } from "@/components/ui/toast";
+import { SecondFactorReminder } from "@/features/auth/components/second-factor-reminder";
 import { focusEdgeCard } from "@/features/notes/card-focus";
 import { usePreferencesStore } from "@/features/preferences";
 import { useOnlineStatus, useSync, useWarnWhenUnsaved } from "@/features/sync";
@@ -193,6 +194,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         tabIndex={-1}
         className="relative flex min-w-0 flex-1 flex-col outline-none"
       >
+        <SecondFactorReminder />
         <PageTransition>{children}</PageTransition>
         <Toaster className={cn(barShown && "bottom-20")} />
       </main>

@@ -276,6 +276,10 @@
   "@authPasskeyOnly": {
     "description": "Error at the top of the sign-in form when the account turned password sign-in off and uses passkeys."
   },
+  "authSecondFactorSetup": "Your admin asks everyone to sign in with a passkey or an authenticator app. Set one up in Anchor+ on the web, then sign in here.",
+  "@authSecondFactorSetup": {
+    "description": "Error at the top of the sign-in form when the admin requires a passkey or authenticator app and this account has neither yet."
+  },
   "authIncorrectCredentials": "Incorrect email or password.",
   "@authIncorrectCredentials": {
     "description": "Error at the top of the sign-in form when the email or password is wrong."

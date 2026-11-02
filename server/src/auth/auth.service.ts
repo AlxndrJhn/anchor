@@ -24,6 +24,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateApiToken } from './utils/generate-api-token';
 import { TwoStepService } from './two-step.service';
+import { SecondFactorService } from './second-factor.service';
 import {
   PROFILE_IMAGE_EXTENSIONS,
   storedProfileImageFile,
@@ -59,6 +60,7 @@ export class AuthService {
     private settingsService: SettingsService,
     private oidcConfigService: OidcConfigService,
     private twoStepService: TwoStepService,
+    private secondFactorService: SecondFactorService,
     @Inject(StorageConfig.KEY)
     private storageConfig: ConfigType<typeof StorageConfig>,
   ) {}
@@ -224,6 +226,7 @@ export class AuthService {
       );
     }
     await this.twoStepService.checkSignIn(user.id, loginDto.code);
+    await this.secondFactorService.checkPasswordSignIn(user.id);
 
     // Remove password from user object
     const { password, passwordSignIn, ...userWithoutPassword } = user;
@@ -231,7 +234,11 @@ export class AuthService {
     const tokens = await this.createTokenPair(user.id, user.email);
     return {
       ...tokens,
-      user: { ...userWithoutPassword, hasPassword: true },
+      user: {
+        ...userWithoutPassword,
+        hasPassword: true,
+        secondFactor: await this.secondFactorService.getStatus(user.id),
+      },
     };
   }
 
@@ -240,7 +247,11 @@ export class AuthService {
       where: { id: user.id },
       select: { password: true },
     });
-    return { ...user, hasPassword: !!row?.password };
+    return {
+      ...user,
+      hasPassword: !!row?.password,
+      secondFactor: await this.secondFactorService.getStatus(user.id),
+    };
   }
 
   /** How this person signs in, for Settings. */
@@ -265,6 +276,7 @@ export class AuthService {
       twoStep: !!user.totpSecret,
       recoveryCodesLeft: user.totpRecoveryCodes.length,
       passkeys: user.passkeys,
+      secondFactor: await this.secondFactorService.getStatus(userId),
     };
   }
 

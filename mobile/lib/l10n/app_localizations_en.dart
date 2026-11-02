@@ -219,6 +219,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.';
 
   @override
+  String get authSecondFactorSetup =>
+      'Your admin asks everyone to sign in with a passkey or an authenticator app. Set one up in Anchor+ on the web, then sign in here.';
+
+  @override
   String get authIncorrectCredentials => 'Incorrect email or password.';
 
   @override

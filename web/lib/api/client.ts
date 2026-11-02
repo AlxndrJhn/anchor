@@ -42,6 +42,18 @@ function endSession(): void {
   }
 }
 
+/** The admin's deadline for a passkey or authenticator app has passed. */
+function notifySecondFactor(response: Response): void {
+  void response
+    .clone()
+    .json()
+    .then((body: { error?: string }) => {
+      if (body?.error === "second_factor_required")
+        window.dispatchEvent(new CustomEvent("auth:second-factor"));
+    })
+    .catch(() => {});
+}
+
 function signOut(): void {
   clearAccessToken();
   clearRefreshToken();
@@ -103,6 +115,7 @@ export const api = ky.create({
     ],
     afterResponse: [
       async ({ request, response, retryCount }) => {
+        if (response.status === 403) notifySecondFactor(response);
         if (response.status !== 401 || retryCount > 0) {
           return response;
         }
