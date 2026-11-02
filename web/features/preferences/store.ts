@@ -16,6 +16,11 @@ interface UIPreferences {
   style?: AppStyle;
   /** Colours pasted as JSON in Settings, over the colour scheme. */
   customTheme?: CustomTheme;
+  /**
+   * Darker text and heavier note text, over the scheme and custom theme.
+   * Unset (older saves) means on.
+   */
+  highContrast?: boolean;
 }
 
 interface NotesPreferences {
@@ -62,6 +67,7 @@ interface PreferencesState {
 
 const defaultUIPreferences: UIPreferences = {
   sidebarCollapsed: false,
+  highContrast: true,
 };
 
 const defaultNotesPreferences: NotesPreferences = {

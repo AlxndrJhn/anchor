@@ -227,6 +227,65 @@ abstract class _$AppStyleController extends $Notifier<AppStyle> {
   }
 }
 
+/// Darker text and heavier note text, over any scheme or custom theme.
+
+@ProviderFor(HighContrastController)
+final highContrastControllerProvider = HighContrastControllerProvider._();
+
+/// Darker text and heavier note text, over any scheme or custom theme.
+final class HighContrastControllerProvider
+    extends $NotifierProvider<HighContrastController, bool> {
+  /// Darker text and heavier note text, over any scheme or custom theme.
+  HighContrastControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'highContrastControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$highContrastControllerHash();
+
+  @$internal
+  @override
+  HighContrastController create() => HighContrastController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$highContrastControllerHash() =>
+    r'd251b354870b26bd6056617b1a1eb11beb832009';
+
+/// Darker text and heavier note text, over any scheme or custom theme.
+
+abstract class _$HighContrastController extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// The custom theme pasted in Settings, over the colour scheme; null for none.
 
 @ProviderFor(CustomThemeController)

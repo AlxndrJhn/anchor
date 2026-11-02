@@ -212,6 +212,7 @@ class _AppearanceSection extends ConsumerWidget {
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
     final customTheme = ref.watch(customThemeControllerProvider);
+    final highContrast = ref.watch(highContrastControllerProvider);
     final l10n = context.l10n;
     return Section(
       label: l10n.settingsAppearance,
@@ -248,6 +249,14 @@ class _AppearanceSection extends ConsumerWidget {
             value: style.labelIn(l10n),
             showChevron: true,
             onTap: () => _showStylePicker(context),
+          ),
+          SwitchRow(
+            label: l10n.settingsHighContrast,
+            subtitle: l10n.settingsHighContrastHelp,
+            value: highContrast,
+            onChanged: ref
+                .read(highContrastControllerProvider.notifier)
+                .setHighContrast,
           ),
           StackedListTile(
             label: l10n.settingsDensity,

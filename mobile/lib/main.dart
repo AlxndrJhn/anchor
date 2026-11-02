@@ -70,6 +70,7 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
     final customTheme = ref.watch(customThemeControllerProvider);
+    final highContrast = ref.watch(highContrastControllerProvider);
     final (font, textSize) = ref.watch(
       editorPreferencesControllerProvider.select(
         (editor) => (editor.noteFont, editor.noteTextSize),
@@ -100,6 +101,7 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
         scheme,
         style,
         customTheme,
+        highContrast,
       ),
       darkTheme: AppTheme.dark(
         density,
@@ -108,6 +110,7 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
         scheme,
         style,
         customTheme,
+        highContrast,
       ),
       themeMode: themeMode,
       themeAnimationStyle: isSystemMotionReduced

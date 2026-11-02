@@ -10,12 +10,14 @@ import 'tokens/app_style.dart';
 abstract final class AnchorAppearance {
   /// [palette] null keeps Anchor's own colours. [custom] is a custom
   /// theme's colours for this mode, by `SchemePalette` field, over the rest;
-  /// what it leaves out stays as Anchor's or the scheme's.
+  /// what it leaves out stays as Anchor's or the scheme's. [highContrast]
+  /// darkens text over all of that.
   static AnchorColors colors(
     Brightness brightness,
     SchemePalette? palette,
     AppStyle style, {
     Map<String, Color>? custom,
+    bool highContrast = false,
   }) {
     final isDark = brightness == Brightness.dark;
     var colors = isDark ? AnchorColors.dark : AnchorColors.light;
@@ -39,6 +41,7 @@ abstract final class AnchorAppearance {
         },
       );
     }
+    if (highContrast) colors = _heighten(colors, isDark);
     colors = _reshape(colors, style, isDark);
     if (style == AppStyle.standard && isTrueBlack(colors.appPage)) {
       // Shadows vanish on a black page (OLED): outline what they'd lift
@@ -82,6 +85,33 @@ abstract final class AnchorAppearance {
       appOnInverse: fields['background'],
       appInverseLink: fields['accent'],
       appInverseDanger: destructive,
+    );
+  }
+
+  /// High contrast: text most of the way to black (white when dark), and
+  /// secondary text most of the way to that text, on the page and on each
+  /// note colour. The web mixes the same in `appearance.css`.
+  static AnchorColors _heighten(AnchorColors colors, bool isDark) {
+    final text = Color.lerp(
+      colors.appText,
+      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000),
+      0.6,
+    )!;
+    Color secondaryOn(Color background) => Color.lerp(background, text, 0.82)!;
+    return colors.copyWith(
+      appText: text,
+      appMuted: secondaryOn(colors.appPage),
+      notes: {
+        for (final MapEntry(key: name, value: note) in colors.notes.entries)
+          name: AnchorNoteColors(
+            bg: note.bg,
+            surface: note.surface,
+            border: note.border,
+            pattern: note.pattern,
+            muted: secondaryOn(note.bg),
+            highlights: note.highlights,
+          ),
+      },
     );
   }
 

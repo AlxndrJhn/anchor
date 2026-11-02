@@ -208,9 +208,9 @@ void main() {
     expect(dividersIn('Font'), findsNWidgets(3));
     await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
     await tester.pumpAndSettle();
-    // Lines only between Color scheme, Custom theme, Style and Density; none
-    // under the theme tiles.
-    expect(dividersIn('Density'), findsNWidgets(3));
+    // Lines only between Color scheme, Custom theme, Style, High contrast and
+    // Density; none under the theme tiles.
+    expect(dividersIn('Density'), findsNWidgets(4));
     final themeTiles = tester.getRect(find.text('Light')).bottom;
     for (final line in tester.widgetList(dividersIn('Density'))) {
       final top = tester.getRect(find.byWidget(line)).top;

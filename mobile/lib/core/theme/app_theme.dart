@@ -22,13 +22,15 @@ abstract final class AppTheme {
       String,
       AppStyle,
       String?,
+      bool,
     ),
     ThemeData
   >
   _cache = {};
 
   /// [scheme] is a colour scheme id (Anchor's own or one of [appSchemes]);
-  /// [custom] is the custom theme over it, if any.
+  /// [custom] is the custom theme over it, if any. [highContrast] darkens
+  /// text over both and sets note text a little heavier.
   static ThemeData light([
     DisplayDensity density = DisplayDensity.standard,
     NoteFont font = NoteFont.sans,
@@ -36,8 +38,17 @@ abstract final class AppTheme {
     String scheme = anchorSchemeId,
     AppStyle style = AppStyle.standard,
     CustomTheme? custom,
-  ]) =>
-      _cached(Brightness.light, density, font, textSize, scheme, style, custom);
+    bool highContrast = false,
+  ]) => _cached(
+    Brightness.light,
+    density,
+    font,
+    textSize,
+    scheme,
+    style,
+    custom,
+    highContrast,
+  );
 
   static ThemeData dark([
     DisplayDensity density = DisplayDensity.standard,
@@ -46,8 +57,17 @@ abstract final class AppTheme {
     String scheme = anchorSchemeId,
     AppStyle style = AppStyle.standard,
     CustomTheme? custom,
-  ]) =>
-      _cached(Brightness.dark, density, font, textSize, scheme, style, custom);
+    bool highContrast = false,
+  ]) => _cached(
+    Brightness.dark,
+    density,
+    font,
+    textSize,
+    scheme,
+    style,
+    custom,
+    highContrast,
+  );
 
   static ThemeData _cached(
     Brightness brightness,
@@ -57,15 +77,29 @@ abstract final class AppTheme {
     String scheme,
     AppStyle style,
     CustomTheme? custom,
-  ) => _cache.putIfAbsent((
-    brightness,
-    density,
-    font,
-    textSize,
-    scheme,
-    style,
-    custom?.encode(),
-  ), () => _build(brightness, density, font, textSize, scheme, style, custom));
+    bool highContrast,
+  ) => _cache.putIfAbsent(
+    (
+      brightness,
+      density,
+      font,
+      textSize,
+      scheme,
+      style,
+      custom?.encode(),
+      highContrast,
+    ),
+    () => _build(
+      brightness,
+      density,
+      font,
+      textSize,
+      scheme,
+      style,
+      custom,
+      highContrast,
+    ),
+  );
 
   static ThemeData _build(
     Brightness brightness,
@@ -75,6 +109,7 @@ abstract final class AppTheme {
     String schemeId,
     AppStyle style,
     CustomTheme? customTheme,
+    bool highContrast,
   ) {
     final spacing = AnchorDensity.of(density);
     // Lo-fi draws in its own greys, whatever the scheme or custom theme; null
@@ -89,6 +124,7 @@ abstract final class AppTheme {
       palette,
       style,
       custom: custom,
+      highContrast: highContrast,
     );
     final recolored = palette != null || custom != null;
     final accentFill = recolored
@@ -217,6 +253,7 @@ abstract final class AppTheme {
           titleFamily: style == AppStyle.skeuomorphism
               ? AppTypography.serif
               : null,
+          bodyWeight: highContrast ? FontWeight.w500 : FontWeight.w400,
         ),
         colors,
         AnchorStyle.of(style, colors.appText, brightness),

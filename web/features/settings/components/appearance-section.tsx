@@ -3,6 +3,7 @@
 import { useTheme } from "next-themes";
 import type * as React from "react";
 import { RadioCards } from "@/components/ui/radio-cards";
+import { Switch } from "@/components/ui/switch";
 import { type AppStyle, usePreferencesStore } from "@/features/preferences";
 import { COLOR_SCHEMES, type SchemeSwatch } from "@/lib/design/schemes";
 import { switchTheme } from "@/lib/theme";
@@ -167,6 +168,7 @@ function SchemeAndStyle() {
   const mode = resolvedTheme === "dark" ? "dark" : "light";
   const scheme = usePreferencesStore((s) => s.ui.colorScheme ?? "anchor");
   const style = usePreferencesStore((s) => s.ui.style ?? "default");
+  const highContrast = usePreferencesStore((s) => s.ui.highContrast !== false);
   const setUI = usePreferencesStore((s) => s.setUIPreference);
   return (
     <>
@@ -200,6 +202,17 @@ function SchemeAndStyle() {
           onValueChange={(value) => setUI("style", value)}
           className="grid-cols-4 max-md:grid-cols-2"
           options={STYLES}
+        />
+      </Row>
+      <Row>
+        <RowText
+          title={<label htmlFor="high-contrast">High contrast</label>}
+          text="Darker text and a little bolder note text, with any colour scheme."
+        />
+        <Switch
+          id="high-contrast"
+          checked={highContrast}
+          onCheckedChange={(on) => setUI("highContrast", on)}
         />
       </Row>
     </>

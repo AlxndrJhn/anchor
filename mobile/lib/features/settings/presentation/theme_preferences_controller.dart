@@ -58,6 +58,18 @@ class AppStyleController extends _$AppStyleController {
   }
 }
 
+/// Darker text and heavier note text, over any scheme or custom theme.
+@Riverpod(keepAlive: true)
+class HighContrastController extends _$HighContrastController {
+  @override
+  bool build() => ref.watch(appBootstrapProvider).highContrast;
+
+  Future<void> setHighContrast(bool on) async {
+    state = on;
+    await ref.read(preferencesRepositoryProvider).setHighContrast(on);
+  }
+}
+
 /// The custom theme pasted in Settings, over the colour scheme; null for none.
 @Riverpod(keepAlive: true)
 class CustomThemeController extends _$CustomThemeController {

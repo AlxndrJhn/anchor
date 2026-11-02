@@ -1000,6 +1000,18 @@ abstract class AppLocalizations {
   /// **'Lo-fi keeps its pencil grays, so the custom theme waits for another style.'**
   String get settingsCustomThemeLofi;
 
+  /// Settings › Appearance switch that makes text darker and note text a little bolder
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast'**
+  String get settingsHighContrast;
+
+  /// Under the High contrast switch in Settings › Appearance
+  ///
+  /// In en, this message translates to:
+  /// **'Darker text and a little bolder note text, with any color scheme.'**
+  String get settingsHighContrastHelp;
+
   /// Explains the Custom theme sheet. JSON is a text format; light and dark are the app's two modes.
   ///
   /// In en, this message translates to:

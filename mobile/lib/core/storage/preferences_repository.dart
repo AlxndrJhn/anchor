@@ -219,6 +219,17 @@ class PreferencesRepository {
     }
   }
 
+  /// Darker, heavier text; on unless turned off.
+  Future<bool> getHighContrast() async =>
+      await _read(StorageKeys.highContrast) != 'false';
+
+  Future<void> setHighContrast(bool value) async {
+    await _storage.write(
+      key: StorageKeys.highContrast,
+      value: value.toString(),
+    );
+  }
+
   Future<bool> getAllowSelfSignedCert() async {
     final value = await _read(StorageKeys.allowSelfSignedCert);
     return value == 'true';

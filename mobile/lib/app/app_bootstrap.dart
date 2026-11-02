@@ -18,6 +18,7 @@ class AppBootstrap {
     this.colorScheme = anchorSchemeId,
     this.appStyle = AppStyle.standard,
     this.customTheme,
+    this.highContrast = true,
     this.editorPreferences = const EditorPreferences(),
     this.reminderPreferences = const ReminderPreferences(),
     this.foldedChecklistNotes = const [],
@@ -36,6 +37,7 @@ class AppBootstrap {
 
   /// The custom theme over the colour scheme, if one is saved.
   final CustomTheme? customTheme;
+  final bool highContrast;
   final EditorPreferences editorPreferences;
   final ReminderPreferences reminderPreferences;
 
