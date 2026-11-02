@@ -538,6 +538,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Lo-fi keeps its pencil grays, so the custom theme waits for another style.';
 
   @override
+  String get settingsHighContrast => 'High contrast';
+
+  @override
+  String get settingsHighContrastHelp =>
+      'Darker text and a little bolder note text, with any color scheme.';
+
+  @override
   String get customThemeHelp =>
       'Paste a theme as JSON: colors for light, dark or both. Anything left out keeps the color scheme\'s color. Kept on this device; the same JSON works on the web.';
 

@@ -104,6 +104,7 @@ Future<AppBootstrap> initializeApp({
       : savedScheme!;
   final appStyle = AppStyle.fromId(await preferences.getAppStyle());
   final customTheme = CustomTheme.decode(await preferences.getCustomTheme());
+  final highContrast = await preferences.getHighContrast();
 
   final savedFont = await preferences.getNoteFont();
   final savedTextSize = await preferences.getNoteTextSize();
@@ -169,6 +170,7 @@ Future<AppBootstrap> initializeApp({
     colorScheme: colorScheme,
     appStyle: appStyle,
     customTheme: customTheme,
+    highContrast: highContrast,
     editorPreferences: editorPreferences,
     reminderPreferences: reminderPreferences,
     foldedChecklistNotes: await preferences.getFoldedChecklistNotes(),

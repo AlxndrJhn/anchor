@@ -6,19 +6,23 @@ import { CUSTOM_THEME_STYLE_ID } from "@/lib/appearance-script";
 import { type CustomTheme, customThemeCss } from "@/lib/design/custom-theme";
 
 /**
- * Puts the colour scheme, style and custom theme on <html>, where the CSS
- * reads them. A custom theme's colours go in a <style> of their own.
+ * Puts the colour scheme, style, custom theme and high contrast on <html>,
+ * where the CSS reads them. A custom theme's colours go in a <style> of
+ * their own.
  */
 export function applyAppearance(
   scheme: string | undefined,
   style: AppStyle | undefined,
   customTheme?: CustomTheme,
+  highContrast?: boolean,
 ) {
   const html = document.documentElement;
   if (scheme && scheme !== "anchor") html.dataset.scheme = scheme;
   else delete html.dataset.scheme;
   if (style && style !== "default") html.dataset.style = style;
   else delete html.dataset.style;
+  if (highContrast) html.dataset.contrast = "high";
+  else delete html.dataset.contrast;
 
   let sheet = document.getElementById(CUSTOM_THEME_STYLE_ID);
   if (customTheme) {
@@ -40,8 +44,9 @@ export function useAppearance() {
   const scheme = usePreferencesStore((s) => s.ui.colorScheme);
   const style = usePreferencesStore((s) => s.ui.style);
   const customTheme = usePreferencesStore((s) => s.ui.customTheme);
+  const highContrast = usePreferencesStore((s) => s.ui.highContrast);
   useEffect(
-    () => applyAppearance(scheme, style, customTheme),
-    [scheme, style, customTheme],
+    () => applyAppearance(scheme, style, customTheme, highContrast),
+    [scheme, style, customTheme, highContrast],
   );
 }

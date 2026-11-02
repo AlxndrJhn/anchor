@@ -3,8 +3,8 @@
  * schemes.css; this file holds what they share and the three styles.
  * A custom theme (lib/design/custom-theme) puts data-custom-theme on <html>
  * and its colours in a <style id="custom-theme">.
- * <html> carries data-scheme (any but Anchor's own) and data-style (any but
- * Default).
+ * <html> carries data-scheme (any but Anchor's own), data-style (any but
+ * Default) and data-contrast="high" while High contrast is on.
  */
 
 /* A plain note takes the scheme's (or custom theme's) card colour instead of
@@ -317,4 +317,36 @@ html[data-style="neo-brutalism"] [data-slot="new-note"] {
   box-shadow:
     0 0 0 2px var(--ink),
     3px 3px 0 2px var(--ink);
+}
+
+/* ------------------------------------------------------------------------ */
+/* High contrast: text most of the way to black (white when dark) and       */
+/* secondary text most of the way to that, over any scheme, custom theme or */
+/* style; note text a little heavier. Mobile mixes the same in              */
+/* AnchorAppearance._heighten. data-contrast="high" sits on <html>.         */
+/* ------------------------------------------------------------------------ */
+
+/* Mixed on <html>, where the scheme sets --foreground, and handed down to
+   <body>: a variable can't be mixed from itself on one element. */
+html[data-contrast="high"] {
+  --hc-foreground: color-mix(in srgb, var(--foreground) 40%, black);
+  --hc-muted-foreground: color-mix(
+    in srgb,
+    var(--hc-foreground) 82%,
+    var(--background)
+  );
+}
+html.dark[data-contrast="high"] {
+  --hc-foreground: color-mix(in srgb, var(--foreground) 40%, white);
+}
+html[data-contrast="high"] body {
+  --foreground: var(--hc-foreground);
+  --muted-foreground: var(--hc-muted-foreground);
+  --note-muted: var(--hc-muted-foreground);
+}
+html[data-contrast="high"] [data-note] {
+  --note-muted: color-mix(in srgb, var(--foreground) 82%, var(--note));
+}
+html[data-contrast="high"] :is(.doc, .anchor-quill .ql-editor) {
+  font-weight: var(--font-weight-medium);
 }

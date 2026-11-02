@@ -94,6 +94,7 @@ class _SettingsApp extends ConsumerWidget {
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
     final custom = ref.watch(customThemeControllerProvider);
+    final highContrast = ref.watch(highContrastControllerProvider);
     return MaterialApp(
       theme: AppTheme.light(
         DisplayDensity.standard,
@@ -102,6 +103,7 @@ class _SettingsApp extends ConsumerWidget {
         scheme,
         style,
         custom,
+        highContrast,
       ),
       themeAnimationStyle: AnimationStyle.noAnimation,
       builder: (context, child) => StyleTypography(style: style, child: child!),
@@ -127,6 +129,14 @@ String? _familyOf(WidgetTester tester, String text) => tester
     .text
     .style
     ?.fontFamily;
+
+Color _textColorOf(WidgetTester tester, String text) => tester
+    .widget<RichText>(
+      find.descendant(of: find.text(text), matching: find.byType(RichText)),
+    )
+    .text
+    .style!
+    .color!;
 
 void main() {
   tearDown(() => AppTypography.useStyle(AppStyle.standard));
@@ -248,11 +258,69 @@ void main() {
     expect(pubspec, isNot(contains('google_fonts')));
   });
 
+  test('high contrast darkens text and secondary text on every scheme', () {
+    for (final scheme in [anchorSchemeId, ...appSchemes.map((s) => s.id)]) {
+      for (final dark in [false, true]) {
+        ThemeData theme(bool highContrast) =>
+            (dark ? AppTheme.dark : AppTheme.light)(
+              DisplayDensity.standard,
+              NoteFont.sans,
+              NoteTextSize.standard,
+              scheme,
+              AppStyle.standard,
+              null,
+              highContrast,
+            );
+        final plain = theme(false).extension<AnchorColors>()!;
+        final high = theme(true).extension<AnchorColors>()!;
+        final where = '$scheme ${dark ? 'dark' : 'light'}';
+        expect(
+          _contrast(high.appText, high.appPage),
+          greaterThanOrEqualTo(_contrast(plain.appText, plain.appPage)),
+          reason: where,
+        );
+        expect(
+          _contrast(high.appMuted, high.appPage),
+          greaterThan(_contrast(plain.appMuted, plain.appPage)),
+          reason: where,
+        );
+        for (final MapEntry(key: name, value: note) in high.notes.entries) {
+          expect(
+            _contrast(note.muted, note.bg),
+            greaterThan(_contrast(plain.notes[name]!.muted, note.bg)),
+            reason: '$where $name',
+          );
+        }
+      }
+    }
+  });
+
+  test('high contrast sets note text heavier', () {
+    NoteTypography typography(bool highContrast) =>
+        AppTheme.light(
+          DisplayDensity.standard,
+          NoteFont.sans,
+          NoteTextSize.standard,
+          anchorSchemeId,
+          AppStyle.standard,
+          null,
+          highContrast,
+        ).extension<NoteTypography>()!;
+    expect(typography(false).body.fontWeight, FontWeight.w400);
+    expect(typography(true).body.fontWeight, FontWeight.w500);
+    expect(typography(true).cardBody.fontWeight, FontWeight.w500);
+  });
+
   test('the share sheet keeps the scheme and style', () {
-    const context = ShareContext(colorScheme: 'nord', style: AppStyle.lofi);
+    const context = ShareContext(
+      colorScheme: 'nord',
+      style: AppStyle.lofi,
+      highContrast: true,
+    );
     final read = ShareContext.fromJson(context.toJson());
     expect(read.colorScheme, 'nord');
     expect(read.style, AppStyle.lofi);
+    expect(read.highContrast, isTrue);
     final unknown = ShareContext.fromJson({'scheme': 'nope', 'style': 1});
     expect(unknown.colorScheme, anchorSchemeId);
     expect(unknown.style, AppStyle.standard);
@@ -481,6 +549,26 @@ void main() {
         findsOneWidget,
       );
       expect(_familyOf(tester, 'Color scheme'), AppTypography.patrickHand);
+    });
+
+    testWidgets('turns on high contrast, and keeps it', (tester) async {
+      final container = await pumpSettings(tester);
+      final before = _textColorOf(tester, 'Color scheme');
+
+      await tester.ensureVisible(find.text('High contrast'));
+      await tester.tap(find.text('High contrast'));
+      await tester.pumpAndSettle();
+
+      expect(container.read(highContrastControllerProvider), isTrue);
+      expect(
+        await const FlutterSecureStorage().read(key: StorageKeys.highContrast),
+        'true',
+      );
+      final after = _textColorOf(tester, 'Color scheme');
+      expect(
+        _contrast(after, AnchorColors.light.appPage),
+        greaterThan(_contrast(before, AnchorColors.light.appPage)),
+      );
     });
 
     testWidgets('applies, checks, copies and resets a custom theme', (

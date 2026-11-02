@@ -14,6 +14,7 @@ class ShareContext {
     this.colorScheme = anchorSchemeId,
     this.style = AppStyle.standard,
     this.customTheme,
+    this.highContrast = false,
     this.tags = const [],
   });
 
@@ -26,6 +27,7 @@ class ShareContext {
   final String colorScheme;
   final AppStyle style;
   final CustomTheme? customTheme;
+  final bool highContrast;
 
   /// In name order.
   final List<Tag> tags;
@@ -38,6 +40,7 @@ class ShareContext {
     'scheme': colorScheme,
     'style': style.id,
     'customTheme': customTheme?.encode(),
+    'highContrast': highContrast,
     'tags': [
       for (final tag in tags)
         {'id': tag.id, 'name': tag.name, 'color': tag.color},
@@ -67,6 +70,7 @@ class ShareContext {
         final String stored => CustomTheme.decode(stored),
         _ => null,
       },
+      highContrast: json['highContrast'] == true,
       tags: [
         if (tags is List)
           for (final tag in tags)

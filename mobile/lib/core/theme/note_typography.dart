@@ -54,6 +54,7 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
     required this.lineHeight,
     this.sansFamily = AppTypography.sans,
     this.titleFamily,
+    this.bodyWeight = FontWeight.w400,
   });
 
   final NoteFont font;
@@ -66,6 +67,9 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
 
   /// The family titles are set in, when the style gives them their own.
   final String? titleFamily;
+
+  /// Body text's weight: heavier in high contrast.
+  final FontWeight bodyWeight;
 
   String get family => font == NoteFont.sans ? sansFamily : font.family;
 
@@ -94,6 +98,7 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
       .withSize(bodySize)
       .copyWith(
         fontFamily: family,
+        fontWeight: bodyWeight,
         height: lineHeight,
         leadingDistribution: TextLeadingDistribution.even,
       );
@@ -124,13 +129,19 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
   TextStyle get cardTitle =>
       AppTypography.cardTitle.copyWith(fontFamily: _titleFamily);
 
-  TextStyle get cardBody => AppTypography.cardBody.copyWith(fontFamily: family);
+  TextStyle get cardBody => AppTypography.cardBody.copyWith(
+    fontFamily: family,
+    fontWeight: bodyWeight,
+  );
 
   TextStyle get versionTitle =>
       AppTypography.noteTitle.copyWith(fontFamily: _titleFamily);
 
-  TextStyle get versionBody =>
-      AppTypography.noteBody.copyWith(fontFamily: family, height: lineHeight);
+  TextStyle get versionBody => AppTypography.noteBody.copyWith(
+    fontFamily: family,
+    fontWeight: bodyWeight,
+    height: lineHeight,
+  );
 
   TextStyle versionHeading(int level) =>
       AppTypography.noteHeading(level).copyWith(fontFamily: family);
@@ -142,12 +153,14 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
     double? lineHeight,
     String? sansFamily,
     String? titleFamily,
+    FontWeight? bodyWeight,
   }) => NoteTypography(
     font: font ?? this.font,
     textSize: textSize ?? this.textSize,
     lineHeight: lineHeight ?? this.lineHeight,
     sansFamily: sansFamily ?? this.sansFamily,
     titleFamily: titleFamily ?? this.titleFamily,
+    bodyWeight: bodyWeight ?? this.bodyWeight,
   );
 
   @override
@@ -163,9 +176,16 @@ class NoteTypography extends ThemeExtension<NoteTypography> {
       other.textSize == textSize &&
       other.lineHeight == lineHeight &&
       other.sansFamily == sansFamily &&
-      other.titleFamily == titleFamily;
+      other.titleFamily == titleFamily &&
+      other.bodyWeight == bodyWeight;
 
   @override
-  int get hashCode =>
-      Object.hash(font, textSize, lineHeight, sansFamily, titleFamily);
+  int get hashCode => Object.hash(
+    font,
+    textSize,
+    lineHeight,
+    sansFamily,
+    titleFamily,
+    bodyWeight,
+  );
 }

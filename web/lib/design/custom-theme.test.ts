@@ -165,6 +165,20 @@ describe("applying a custom theme", () => {
       { id: "custom-theme", textContent: customThemeCss(theme) },
     ]);
   });
+
+  it("turns high contrast on before the first paint", () => {
+    const run = (ui: object) => {
+      const html = { dataset: {} as Record<string, string> };
+      new Function("localStorage", "document", appearanceScript)(
+        { getItem: () => JSON.stringify({ state: { ui } }) },
+        { documentElement: html },
+      );
+      return html.dataset;
+    };
+    expect(run({ highContrast: true })).toEqual({ contrast: "high" });
+    expect(run({ highContrast: false })).toEqual({});
+    expect(run({ highContrast: "yes" })).toEqual({});
+  });
 });
 
 describe("schemes", () => {

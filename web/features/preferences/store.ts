@@ -16,6 +16,8 @@ interface UIPreferences {
   style?: AppStyle;
   /** Colours pasted as JSON in Settings, over the colour scheme. */
   customTheme?: CustomTheme;
+  /** Darker text and heavier note text, over the scheme and custom theme. */
+  highContrast?: boolean;
 }
 
 interface NotesPreferences {
