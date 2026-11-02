@@ -6,6 +6,7 @@ import '../../../core/network/connectivity_provider.dart';
 import '../data/repository/note_shares_repository.dart';
 import '../data/repository/users_repository.dart';
 import '../domain/note_share.dart';
+import '../domain/note_share_link.dart';
 import '../domain/note_share_permission.dart';
 import '../domain/user_summary.dart';
 
@@ -54,6 +55,34 @@ class NoteShares extends _$NoteShares {
   Future<void> revoke(NoteShare share) async {
     await _repository.revokeShare(noteId, share.id);
     _set([...?state.value?.where((s) => s.id != share.id)]);
+  }
+}
+
+/// The note's share link; null when it has none.
+@Riverpod(retry: _noRetry)
+class NoteShareLinkController extends _$NoteShareLinkController {
+  @override
+  Future<NoteShareLink?> build(String noteId) async {
+    // Offline, what it was stays; never asked, it's unknown, not off.
+    if (!ref.watch(isOnlineProvider)) {
+      if (state.hasValue) return state.value;
+      throw StateError('Offline');
+    }
+    return ref.watch(noteSharesRepositoryProvider).getLink(noteId);
+  }
+
+  /// Null [permission] turns the link off.
+  Future<NoteShareLink?> setAccess(NoteSharePermission? permission) async {
+    final repository = ref.read(noteSharesRepositoryProvider);
+    final NoteShareLink? link;
+    if (permission == null) {
+      await repository.removeLink(noteId);
+      link = null;
+    } else {
+      link = await repository.setLink(noteId, permission);
+    }
+    if (ref.mounted) state = AsyncData(link);
+    return link;
   }
 }
 

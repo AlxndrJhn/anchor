@@ -108,6 +108,108 @@ abstract class _$NoteShares extends $AsyncNotifier<List<NoteShare>?> {
   }
 }
 
+/// The note's share link; null when it has none.
+
+@ProviderFor(NoteShareLinkController)
+final noteShareLinkControllerProvider = NoteShareLinkControllerFamily._();
+
+/// The note's share link; null when it has none.
+final class NoteShareLinkControllerProvider
+    extends $AsyncNotifierProvider<NoteShareLinkController, NoteShareLink?> {
+  /// The note's share link; null when it has none.
+  NoteShareLinkControllerProvider._({
+    required NoteShareLinkControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'noteShareLinkControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$noteShareLinkControllerHash();
+
+  @override
+  String toString() {
+    return r'noteShareLinkControllerProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  NoteShareLinkController create() => NoteShareLinkController();
+
+  @override
+  bool operator ==(Object other) {
+    return other is NoteShareLinkControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$noteShareLinkControllerHash() =>
+    r'e89806f6d4efecdd817f1df8752b387512941311';
+
+/// The note's share link; null when it has none.
+
+final class NoteShareLinkControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          NoteShareLinkController,
+          AsyncValue<NoteShareLink?>,
+          NoteShareLink?,
+          FutureOr<NoteShareLink?>,
+          String
+        > {
+  NoteShareLinkControllerFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'noteShareLinkControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The note's share link; null when it has none.
+
+  NoteShareLinkControllerProvider call(String noteId) =>
+      NoteShareLinkControllerProvider._(argument: noteId, from: this);
+
+  @override
+  String toString() => r'noteShareLinkControllerProvider';
+}
+
+/// The note's share link; null when it has none.
+
+abstract class _$NoteShareLinkController
+    extends $AsyncNotifier<NoteShareLink?> {
+  late final _$args = ref.$arg as String;
+  String get noteId => _$args;
+
+  FutureOr<NoteShareLink?> build(String noteId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<NoteShareLink?>, NoteShareLink?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<NoteShareLink?>, NoteShareLink?>,
+              AsyncValue<NoteShareLink?>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}
+
 @ProviderFor(recentContacts)
 final recentContactsProvider = RecentContactsProvider._();
 

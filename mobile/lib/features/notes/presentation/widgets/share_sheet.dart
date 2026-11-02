@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/network/connectivity_provider.dart';
+import '../../../../core/network/server_config_provider.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../core/widgets/anchor_menu.dart';
@@ -19,6 +22,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/note_dates.dart';
 import '../../domain/note_share.dart';
+import '../../domain/note_share_link.dart';
 import '../../domain/note_share_permission.dart';
 import '../../domain/user_summary.dart';
 import '../note_labels.dart';
@@ -45,11 +49,13 @@ class _ShareSheet extends ConsumerStatefulWidget {
 }
 
 const _remove = 'remove';
+const _linkOff = 'off';
 
 class _ShareSheetState extends ConsumerState<_ShareSheet> {
   final _query = TextEditingController();
   final _focus = FocusNode();
   bool _adding = false;
+  bool _changingLink = false;
 
   /// Shares removed while their Undo snackbar shows.
   final Set<String> _pendingRemovalIds = {};
@@ -58,6 +64,7 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
   void initState() {
     super.initState();
     ref.invalidate(noteSharesProvider(widget.noteId));
+    ref.invalidate(noteShareLinkControllerProvider(widget.noteId));
     _query.addListener(_onQuery);
     _focus.addListener(() {
       if (_focus.hasFocus) expandSheet(context);
@@ -177,6 +184,95 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
     }
   }
 
+  Future<void> _linkAccess(NoteShareLink? link, BuildContext anchor) async {
+    final l10n = context.l10n;
+    final current = link?.permission.name ?? _linkOff;
+    final choice = await showAnchorMenu<String>(
+      anchor,
+      semanticLabel: l10n.shareLinkAccess,
+      items: [
+        for (final (value, icon, label) in [
+          (_linkOff, LucideIcons.lock, l10n.shareLinkOff),
+          (NoteSharePermission.viewer.name, LucideIcons.eye, l10n.shareCanView),
+          (
+            NoteSharePermission.editor.name,
+            LucideIcons.pencil,
+            l10n.shareCanEdit,
+          ),
+        ])
+          AnchorMenuItem(
+            value: value,
+            icon: icon,
+            label: label,
+            checked: current == value,
+          ),
+      ],
+    );
+    if (choice == null || choice == current || !mounted) return;
+    final permission = choice == _linkOff
+        ? null
+        : NoteSharePermission.fromString(choice);
+    setState(() => _changingLink = true);
+    try {
+      final made = await ref
+          .read(noteShareLinkControllerProvider(widget.noteId).notifier)
+          .setAccess(permission);
+      if (!mounted) return;
+      final url = _urlOf(made);
+      if (made == null) {
+        AppSnackbar.show(context, l10n.shareLinkTurnedOff);
+      } else if (link == null && url != null) {
+        await Clipboard.setData(ClipboardData(text: url));
+        if (mounted) {
+          AppSnackbar.show(
+            context,
+            l10n.shareLinkMade,
+            kind: SnackbarKind.success,
+          );
+        }
+      } else {
+        AppSnackbar.show(
+          context,
+          made.permission == NoteSharePermission.editor
+              ? l10n.shareLinkNowCanEdit
+              : l10n.shareLinkNowCanView,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          l10n.shareLinkFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _changingLink = false);
+    }
+  }
+
+  String? _urlOf(NoteShareLink? link) {
+    final server = ref.read(serverUrlProvider);
+    return link == null || server == null ? null : link.urlOn(server);
+  }
+
+  Future<void> _copyLink(String url) async {
+    await Clipboard.setData(ClipboardData(text: url));
+    if (mounted) AppSnackbar.show(context, context.l10n.shareLinkCopied);
+  }
+
+  Future<void> _sendLink(String url, BuildContext anchor) async {
+    final box = anchor.findRenderObject() as RenderBox?;
+    await SharePlus.instance.share(
+      ShareParams(
+        uri: Uri.parse(url),
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
@@ -209,13 +305,25 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
         online &&
         sharesState.hasError &&
         !sharesState.isLoading;
+    final linkState = ref.watch(noteShareLinkControllerProvider(widget.noteId));
+    final link = linkState.value;
+    final server = ref.watch(serverUrlProvider);
+    final linkUrl = link == null || server == null ? null : link.urlOn(server);
+    final isLinkLoadFailed =
+        online && linkState.hasError && !linkState.isLoading;
     final String? footnote;
     if (shares == null) {
       footnote = sharesState.isLoading || isLoadFailed
           ? null
           : sharedCountLabel(syncedCount, context.l10n, isOnline: online);
     } else {
-      footnote = shown.isEmpty ? context.l10n.shareOnlyYou : null;
+      footnote = shown.isNotEmpty
+          ? null
+          : link != null
+          ? context.l10n.shareLinkOpens
+          : linkState.hasValue
+          ? context.l10n.shareOnlyYou
+          : null;
     }
     final l10n = context.l10n;
 
@@ -368,6 +476,85 @@ class _ShareSheetState extends ConsumerState<_ShareSheet> {
                     SectionFooter(footnote)
                   else
                     const Center(child: Spinner()),
+                ],
+                if (online || linkState.hasValue) ...[
+                  SizedBox(height: Section.gapOf(context)),
+                  Section(
+                    label: l10n.shareLink,
+                    child: GroupedList(
+                      children: [
+                        GroupedListTile(
+                          icon: link == null
+                              ? LucideIcons.link2
+                              : LucideIcons.globe,
+                          label: l10n.shareLinkAnyone,
+                          subtitle: switch (link?.permission) {
+                            null => l10n.shareLinkOffHint,
+                            NoteSharePermission.viewer =>
+                              l10n.shareLinkViewHint,
+                            NoteSharePermission.editor =>
+                              l10n.shareLinkEditHint,
+                          },
+                          labelWeight: FontWeight.w500,
+                          trailing: linkState.isLoading || _changingLink
+                              ? const Spinner()
+                              : Builder(
+                                  builder: (anchor) {
+                                    final access = link == null
+                                        ? l10n.shareLinkOff
+                                        : permissionLabel(
+                                            link.permission,
+                                            l10n,
+                                          );
+                                    return PillButton(
+                                      label: access,
+                                      trailingIcon: LucideIcons.chevronDown,
+                                      semanticLabel: l10n.shareLinkChangeAccess(
+                                        access,
+                                      ),
+                                      onPressed: online && linkState.hasValue
+                                          ? () => _linkAccess(link, anchor)
+                                          : null,
+                                    );
+                                  },
+                                ),
+                        ),
+                        if (linkUrl != null) ...[
+                          GroupedListTile(
+                            icon: LucideIcons.copy,
+                            label: l10n.shareLinkCopy,
+                            subtitle: linkUrl,
+                            maxLines: 1,
+                            onTap: () => _copyLink(linkUrl),
+                          ),
+                          Builder(
+                            builder: (anchor) => GroupedListTile(
+                              icon: LucideIcons.send,
+                              label: l10n.shareLinkShareIt,
+                              onTap: () => _sendLink(linkUrl, anchor),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                if (isLinkLoadFailed) ...[
+                  SizedBox(height: density.space16),
+                  Notice(
+                    kind: NoticeKind.warn,
+                    icon: LucideIcons.cloudAlert,
+                    text: l10n.shareLinkLoadFailed,
+                    action: AppButton(
+                      label: l10n.commonTryAgain,
+                      kind: AppButtonKind.secondary,
+                      isExpanded: false,
+                      size: AppButtonSize.small,
+                      onPressed: () => ref.invalidate(
+                        noteShareLinkControllerProvider(widget.noteId),
+                      ),
+                    ),
+                  ),
                 ],
                 const SheetBottomSpace(),
               ],
