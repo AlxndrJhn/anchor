@@ -7,6 +7,7 @@ import {
   type ImportSkippedItem,
   type ParsedImport,
 } from "../types";
+import { composedDelta, composedText } from "./composed-text";
 import {
   type AttachmentRef,
   findAttachmentRefs,
@@ -259,14 +260,14 @@ export const markdownAdapter: ImportAdapter = {
 
       notes.push({
         ref: `markdown:${path}`,
-        title: /^untitled$/i.test(stem) ? "" : stem,
-        contentDelta,
+        title: /^untitled$/i.test(stem) ? "" : composedText(stem),
+        contentDelta: composedDelta(contentDelta),
         isPinned: false,
         isArchived,
         isTrashed: false,
         background: null,
         tagNames: [],
-        folderTags: segments,
+        folderTags: segments.map(composedText),
         attachments: extracted.attachments,
       });
     }

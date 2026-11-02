@@ -24,6 +24,7 @@ import '../../../core/network/connectivity_provider.dart';
 import '../../../core/network/sync_requester.dart';
 import '../../../core/search/search_pattern.dart';
 import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/text/composed_text.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -234,7 +235,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final editor = _editorKey.currentState;
     if (!mounted || editor == null) return;
     final text = data?.text?.trim();
-    if (text != null && text.isNotEmpty) editor.appendText(text);
+    if (text != null && text.isNotEmpty) editor.appendText(composedText(text));
     if (!_titleFocus.hasFocus) editor.focusEnd();
   }
 

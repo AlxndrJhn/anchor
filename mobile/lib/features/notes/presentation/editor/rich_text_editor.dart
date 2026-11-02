@@ -18,6 +18,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
 import '../../../../core/search/search_pattern.dart';
+import '../../../../core/text/composed_text.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../l10n/l10n.dart';
@@ -535,7 +536,9 @@ class RichTextEditorState extends State<RichTextEditor>
   /// Quill sends typing here one character at a time, a paste all at once,
   /// and a word the keyboard corrects as the part that changed.
   bool _noteTyping(int index, int length, Object? data) {
-    if (_isApplying || data is! String || data.isEmpty) return true;
+    if (_isApplying) return true;
+    if (_insertComposed(index, length, data)) return false;
+    if (data is! String || data.isEmpty) return true;
     if (data == '/') _typedSlashOffset = index;
     if (_typedBreak.hasMatch(data)) {
       final caret = index + data.length;
@@ -543,6 +546,56 @@ class RichTextEditorState extends State<RichTextEditor>
       scheduleMicrotask(() => _afterTyping(caret, isTyped: isTyped));
     }
     return true;
+  }
+
+  /// Puts text with separate accents in with them joined into their letters
+  /// (see [composedText]), in place of the edit Quill was making; true when
+  /// it did. A paste copied from this editor keeps its text as it is, as
+  /// Quill puts its styles back by offset.
+  bool _insertComposed(int index, int length, Object? data) {
+    if (data is Delta) {
+      final composed = _composedDelta(data);
+      if (composed == null) return false;
+      _controller.replaceText(
+        index,
+        length,
+        composed,
+        TextSelection.collapsed(offset: index + length),
+      );
+      return true;
+    }
+    if (data is! String || data.isEmpty) return false;
+    if (data == _controller.pastePlainText) return false;
+    final start = math.max(0, index - 16);
+    final before = _controller.document.getPlainText(start, index - start);
+    final composed = composedInsert(before, data);
+    if (composed == null) return false;
+    final from = index - composed.joined;
+    _controller.replaceText(
+      from,
+      length + composed.joined,
+      composed.text,
+      TextSelection.collapsed(offset: from + composed.text.length),
+    );
+    return true;
+  }
+
+  /// Rich text pasted from elsewhere, with its accents joined; null when
+  /// nothing joins.
+  Delta? _composedDelta(Delta delta) {
+    var changed = false;
+    final composed = Delta();
+    for (final op in delta.toList()) {
+      final data = op.data;
+      if (op.isInsert && data is String) {
+        final text = composedText(data);
+        changed |= text != data;
+        composed.insert(text, op.attributes);
+      } else {
+        composed.push(op);
+      }
+    }
+    return changed ? composed : null;
   }
 
   /// Runs once Quill has moved the caret past what was typed.

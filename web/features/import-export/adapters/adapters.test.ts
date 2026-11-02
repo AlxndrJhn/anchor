@@ -1,6 +1,7 @@
 import { strToU8, zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { anchorAdapter } from "./anchor";
+import { composedText } from "./composed-text";
 import { anchorManifestFixture } from "./fixtures/anchor-manifest";
 import {
   keepChecklistNote,
@@ -528,5 +529,54 @@ describe("detectFormat", () => {
       type: "application/zip",
     });
     await expect(detectFormat(picked([file]))).rejects.toThrow();
+  });
+});
+
+// "Việt" with ệ as e, dot below, circumflex, as macOS names files.
+const APART = "Vie\u0323\u0302t";
+const JOINED = "Vi\u1EC7t";
+
+describe("accents sent apart from their letters", () => {
+  it("markdown titles, folders and text come in joined", async () => {
+    const parsed = await markdownAdapter.parse(
+      markdownZip({
+        [`Notes/${APART}/${APART}.md`]: `${APART} trip\n`,
+        "Notes/Plain/Plain.md": "plain\n",
+      }),
+    );
+
+    const note = parsed.notes.find((each) => each.title !== "Plain");
+    expect(note?.title).toBe(JOINED);
+    expect(note?.folderTags).toEqual([JOINED]);
+    expect(parsed.tags).toContainEqual({ name: JOINED, color: null });
+    expect(note?.contentDelta.ops[0].insert).toBe(`${JOINED} trip`);
+  });
+
+  it("keep titles, labels and text come in joined", async () => {
+    const parsed = await googleKeepAdapter.parse(
+      readZip(
+        zipSync({
+          "Takeout/Keep/trip.json": strToU8(
+            JSON.stringify({
+              ...keepLabeledNote,
+              title: APART,
+              textContent: APART,
+              labels: [{ name: APART }],
+            }),
+          ),
+        }),
+      ),
+    );
+
+    const [note] = parsed.notes;
+    expect(note.title).toBe(JOINED);
+    expect(note.tagNames).toEqual([JOINED]);
+    expect(note.contentDelta.ops[0].insert).toBe(`${JOINED}\n`);
+  });
+
+  it("text without them stays as it came", () => {
+    // NFC would swap this compatibility ideograph.
+    expect(composedText("\uF900")).toBe("\uF900");
+    expect(composedText(JOINED)).toBe(JOINED);
   });
 });

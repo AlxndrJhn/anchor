@@ -5,6 +5,7 @@ import {
   type ImportSkippedItem,
   type ParsedImport,
 } from "../types";
+import { composedDelta, composedText } from "./composed-text";
 import {
   type KeepNote,
   keepColorToBackground,
@@ -126,14 +127,14 @@ export const googleKeepAdapter: ImportAdapter = {
 
       notes.push({
         ref: `keep:${entryPath}`,
-        title: keepNote.title ?? "",
-        contentDelta: keepContentToDelta(keepNote),
+        title: composedText(keepNote.title ?? ""),
+        contentDelta: composedDelta(keepContentToDelta(keepNote)),
         isPinned: keepNote.isPinned === true,
         isArchived: keepNote.isArchived === true,
         isTrashed: false,
         background: keepColorToBackground(keepNote.color),
         tagNames: (keepNote.labels ?? [])
-          .map((label) => label.name)
+          .map((label) => composedText(label.name))
           .filter(Boolean),
         createdAt: keepTimestampToIso(keepNote.createdTimestampUsec),
         updatedAt: keepTimestampToIso(keepNote.userEditedTimestampUsec),
