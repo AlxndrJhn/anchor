@@ -24,12 +24,12 @@ const ALL_SECTIONS = [
   { id: "appearance", label: "Appearance", icon: SunMoon },
   { id: "editor", label: "Editor", icon: PencilLine },
   { id: "search", label: "Search", icon: Search },
-  { id: "phone", label: "Phone sign-in", icon: Smartphone },
   { id: "token", label: "API token", icon: KeyRound },
   { id: "data", label: "Import and export", icon: HardDriveDownload },
   { id: "locks", label: "Note locks", icon: LockKeyhole },
   { id: "security", label: "Sign-in security", icon: ShieldCheck },
   { id: "password", label: "Password", icon: Lock },
+  { id: "phone", label: "Phone sign-in", icon: Smartphone },
   { id: "devices", label: "Devices", icon: MonitorSmartphone },
   { id: "about", label: "About", icon: Info },
 ] as const;

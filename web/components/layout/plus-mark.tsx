@@ -15,7 +15,7 @@ import { prefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /** What a click sends out: a few of the things Anchor+ adds. */
-const FEATURES = [
+export const FEATURES = [
   Lock,
   Snowflake,
   EyeOff,

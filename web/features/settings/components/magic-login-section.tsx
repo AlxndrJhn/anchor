@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link2, QrCode, RotateCw } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,17 @@ import {
 } from "@/components/ui/dialog";
 import { QrImage } from "@/components/ui/qr-image";
 import { toast } from "@/components/ui/toast";
-import { createMagicLogin } from "@/features/auth/api";
+import { createMagicLogin, listSessions } from "@/features/auth/api";
 import type { MagicLoginCode } from "@/features/auth/types";
 import { magicLinkUrl } from "@/features/auth/utils/magic-link";
 import { copyText } from "@/lib/clipboard";
+import { sessionsKey } from "./devices-section";
+import { flyQrTo, waitForScan } from "./scan-handoff";
 import { Row, RowText, Section } from "./settings-blocks";
+
+// Looks for the phone signing in more often while the QR code shows, so the
+// code flies to it soon after the scan.
+const SCAN_POLL_MS = 1500;
 
 const linkOf = (magicLogin: MagicLoginCode) =>
   magicLinkUrl(magicLogin.code, window.location.origin);
@@ -40,6 +46,29 @@ export function MagicLoginSection() {
   const [shown, setShown] = React.useState<MagicLoginCode | null>(null);
   const minutesLeft = useMinutesLeft(shown?.expiresAt);
   const isExpired = minutesLeft === 0;
+  const qrRef = React.useRef<HTMLDivElement>(null);
+  const showQrButton = React.useRef<HTMLButtonElement>(null);
+  const isScanned = React.useRef(false);
+  const isWaiting = isQrOpen && !!shown && !isExpired;
+
+  useQuery({
+    queryKey: sessionsKey,
+    queryFn: listSessions,
+    enabled: isWaiting,
+    refetchInterval: SCAN_POLL_MS,
+  });
+
+  // The Devices list hands over the phone that scans the code; the code
+  // leaves the dialog for its row there.
+  React.useEffect(() => {
+    if (!isWaiting) return;
+    return waitForScan((sessionId) => {
+      const qr = qrRef.current?.querySelector("svg");
+      if (qr) flyQrTo(qr, sessionId);
+      isScanned.current = true;
+      setIsQrOpen(false);
+    });
+  }, [isWaiting]);
 
   const showQr = useMutation({
     mutationFn: createMagicLogin,
@@ -85,6 +114,7 @@ export function MagicLoginSection() {
         />
         <div className="flex flex-wrap items-center gap-2">
           <Button
+            ref={showQrButton}
             variant="secondary"
             onClick={() => showQr.mutate()}
             busy={showQr.isPending && "Making…"}
@@ -103,7 +133,16 @@ export function MagicLoginSection() {
         </div>
       </Row>
       <Dialog open={isQrOpen} onOpenChange={setIsQrOpen}>
-        <DialogContent>
+        <DialogContent
+          onCloseAutoFocus={(e) => {
+            if (!isScanned.current) return;
+            // Back on its button without scrolling there, as the page goes
+            // to the phone's row in Devices.
+            isScanned.current = false;
+            e.preventDefault();
+            showQrButton.current?.focus({ preventScroll: true });
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Magic login</DialogTitle>
             <DialogDescription>
@@ -113,7 +152,7 @@ export function MagicLoginSection() {
           </DialogHeader>
           <DialogBody>
             {shown && (
-              <div className="relative">
+              <div ref={qrRef} className="relative">
                 <QrImage text={linkOf(shown)} label="QR code for magic login" />
                 {isExpired && (
                   <div className="absolute inset-0 grid place-items-center rounded-lg bg-card/90">

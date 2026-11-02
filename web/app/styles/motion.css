@@ -281,10 +281,14 @@
 /* biome-ignore-end lint/complexity/noImportantStyles: reduced motion beats every animation. */
 
 /* A device that just signed in, beamed into the Devices list (see TeleportFx):
-   the space opens, streaks of light rush in to the icon's spot and burst
-   there, a scanline draws the row in a hologram's colour fringes, and sparks
-   circle the icon on a tilted ring, like the +'s. The impact is at 650ms. */
+   the space opens, a portal charges at the icon's spot and bursts into the
+   + of Anchor+, which sends out the features it adds as the + does when
+   clicked; the icon lands as the + fades, a scanline draws the row in a
+   hologram's colour fringes, and sparks circle the icon on a tilted ring. The impact is at 650ms,
+   after --teleport-wait. */
 .teleport-in {
+  /* How long the burst waits for a scanned QR code to fly in (scan-handoff.ts). */
+  --teleport-wait: 0ms;
   position: relative;
   display: grid;
   animation: teleport-open var(--duration-header) var(--ease-standard);
@@ -293,14 +297,17 @@
   min-height: 0;
   overflow: hidden;
   animation:
-    teleport-reveal 560ms var(--ease-in-out) 700ms backwards,
-    teleport-holo 900ms var(--ease-standard) 700ms,
-    teleport-flash var(--duration-flash) var(--ease-standard) 650ms;
+    teleport-reveal 560ms var(--ease-in-out) calc(var(--teleport-wait) + 700ms)
+    backwards,
+    teleport-holo 900ms var(--ease-standard) calc(var(--teleport-wait) + 700ms),
+    teleport-flash var(--duration-flash) var(--ease-standard)
+    calc(var(--teleport-wait) + 650ms);
 }
 .teleport-icon {
   animation:
-    teleport-land 480ms var(--ease-pop) 650ms backwards,
-    teleport-ink 1400ms var(--ease-standard) 650ms;
+    teleport-land 480ms var(--ease-pop) calc(var(--teleport-wait) + 820ms)
+    backwards,
+    teleport-ink 1400ms var(--ease-standard) calc(var(--teleport-wait) + 820ms);
 }
 .teleport-fx {
   --spot-x: 29px;
@@ -329,24 +336,42 @@
   box-shadow:
     0 0 6px 1px var(--accent-strong),
     0 0 22px 4px color-mix(in srgb, var(--accent-strong) 55%, transparent);
-  animation: teleport-scan 560ms var(--ease-in-out) 700ms;
+  animation: teleport-scan 560ms var(--ease-in-out)
+    calc(var(--teleport-wait) + 700ms);
 }
-.teleport-streak {
-  width: 44px;
-  height: 3px;
-  margin-top: -1.5px;
-  border-radius: 2px;
-  filter: drop-shadow(0 0 3px var(--accent-strong));
+/* The + of Anchor+ (plus-mark.tsx): rounded bars with a light across them. */
+.teleport-fx > .teleport-plus {
+  width: 30px;
+  height: 30px;
+  margin: -15px;
   background: linear-gradient(
-    90deg,
-    white,
+    135deg,
+    var(--accent-ink),
     var(--accent-strong) 35%,
-    transparent
+    white 50%,
+    var(--accent-strong) 65%,
+    var(--accent-ink)
   );
-  transform-origin: 0 50%;
-  /* Each starts a little later and travels faster, so all land together. */
-  animation: teleport-streak calc(470ms - var(--i) * 11ms)
-    cubic-bezier(0.55, 0, 0.9, 0.35) calc(180ms + var(--i) * 11ms);
+  mask:
+    linear-gradient(#000 0 0) center / 100% 26% no-repeat,
+    linear-gradient(#000 0 0) center / 26% 100% no-repeat;
+  filter: drop-shadow(0 0 8px var(--accent-strong));
+  animation: teleport-plus 820ms var(--ease-standard)
+    calc(var(--teleport-wait) + 650ms);
+}
+.teleport-feature {
+  position: absolute;
+  top: 50%;
+  left: var(--spot-x);
+  margin: -9px;
+  color: var(--accent-ink);
+  opacity: 0;
+  filter: drop-shadow(0 0 3px var(--card));
+  animation: teleport-feature 1300ms cubic-bezier(0.33, 1, 0.68, 1)
+    calc(var(--teleport-wait) + 660ms);
+}
+.teleport-feature > svg {
+  display: block;
 }
 .teleport-portal {
   width: 40px;
@@ -357,7 +382,8 @@
     0 0 0 2px var(--accent-strong),
     0 0 14px 2px color-mix(in srgb, var(--accent-strong) 60%, transparent);
   rotate: -28deg;
-  animation: teleport-portal 640ms var(--ease-in-out) 110ms;
+  animation: teleport-portal 640ms var(--ease-in-out)
+    calc(var(--teleport-wait) + 110ms);
 }
 .teleport-core {
   width: 30px;
@@ -369,7 +395,9 @@
     var(--accent-strong) 35%,
     transparent 70%
   );
-  animation: teleport-core 820ms var(--ease-standard) 260ms;
+  /* Charges until the burst, then gives way to the +. */
+  animation: teleport-core 450ms var(--ease-in-out)
+    calc(var(--teleport-wait) + 230ms);
 }
 .teleport-wave {
   width: 24px;
@@ -377,11 +405,12 @@
   margin: -12px;
   border-radius: 50%;
   border: 2px solid var(--accent-strong);
-  animation: teleport-wave 700ms cubic-bezier(0.1, 0.7, 0.3, 1) 650ms;
+  animation: teleport-wave 700ms cubic-bezier(0.1, 0.7, 0.3, 1)
+    calc(var(--teleport-wait) + 650ms);
 }
 .teleport-wave-late {
   border-width: 1px;
-  animation-delay: 760ms;
+  animation-delay: calc(var(--teleport-wait) + 760ms);
 }
 .teleport-fx > .teleport-orbit {
   width: 0;
@@ -396,7 +425,8 @@
   animation:
     teleport-swing-x 500ms var(--ease-in-out) calc(var(--i) * -333ms) alternate
     infinite,
-    teleport-orbit-fade 1500ms var(--ease-standard) 800ms forwards;
+    teleport-orbit-fade 1500ms var(--ease-standard)
+    calc(var(--teleport-wait) + 800ms) forwards;
 }
 .teleport-orbit > b > b {
   display: block;
@@ -418,17 +448,41 @@
     grid-template-rows: 1fr;
   }
 }
-@keyframes teleport-streak {
+@keyframes teleport-plus {
   0% {
     opacity: 0;
-    transform: rotate(var(--a)) translateX(var(--d)) scaleX(0.5);
+    scale: 0.2;
+    rotate: -90deg;
   }
-  25% {
+  22% {
+    opacity: 1;
+    scale: 1.6;
+    rotate: 0deg;
+  }
+  55% {
+    opacity: 1;
+    scale: 1.25;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.4;
+    rotate: 45deg;
+  }
+}
+@keyframes teleport-feature {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    scale: 0.4;
+  }
+  12%,
+  55% {
     opacity: 1;
   }
   100% {
-    opacity: 1;
-    transform: rotate(var(--a)) translateX(0) scaleX(1.4);
+    opacity: 0;
+    translate: calc(cos(var(--a)) * 88px) calc(sin(var(--a)) * 88px);
+    scale: 1;
   }
 }
 @keyframes teleport-portal {
@@ -450,17 +504,13 @@
     opacity: 0;
     scale: 0.2;
   }
-  45% {
-    opacity: 0.9;
-    scale: 0.8;
-  }
-  58% {
+  90% {
     opacity: 1;
-    scale: 2.2;
+    scale: 1;
   }
   100% {
     opacity: 0;
-    scale: 2.6;
+    scale: 1.6;
   }
 }
 @keyframes teleport-wave {
@@ -547,5 +597,61 @@
   }
   100% {
     opacity: 0;
+  }
+}
+
+/* The magic login QR code on its way to the phone that scanned it
+   (scan-handoff.ts): the code blurs away as the anchor of Anchor+ glows up
+   in its place, then spins down to the phone's icon, shedding sparks. */
+.qr-flight {
+  --qr-morph: 0;
+  --qr-ring: 0px;
+  --qr-glow: 4px;
+  position: fixed;
+  z-index: var(--z-toast);
+  pointer-events: none;
+  will-change: transform;
+}
+.qr-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: white;
+  box-shadow:
+    0 0 0 var(--qr-ring)
+    color-mix(in srgb, var(--accent-strong) 45%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent-strong) 50%, transparent);
+  opacity: calc(1 - var(--qr-morph));
+  scale: calc(1 - var(--qr-morph) * 0.5);
+  filter: blur(calc(var(--qr-morph) * 6px));
+}
+.qr-card > svg {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  border-radius: 0;
+}
+.qr-anchor {
+  position: absolute;
+  inset: 15%;
+  color: var(--accent-strong);
+  opacity: var(--qr-morph);
+  scale: calc(0.4 + var(--qr-morph) * 0.6);
+  filter: drop-shadow(0 0 1px white)
+    drop-shadow(0 0 var(--qr-glow) var(--accent-strong));
+}
+.qr-trail {
+  position: fixed;
+  z-index: var(--z-toast);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(white, var(--accent-strong) 45%, transparent 70%);
+  animation: qr-trail 480ms var(--ease-standard) forwards;
+}
+@keyframes qr-trail {
+  to {
+    opacity: 0;
+    scale: 0.2;
   }
 }

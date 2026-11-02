@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { LogOut, Monitor, Smartphone } from "lucide-react";
 import * as React from "react";
+import { FEATURES } from "@/components/layout/plus-mark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -18,20 +19,15 @@ import {
 import type { DeviceSession } from "@/features/auth/types";
 import { useRetry } from "@/lib/hooks/use-retry";
 import { cn } from "@/lib/utils";
+import { handOffScan, TELEPORT_WAIT_MS } from "./scan-handoff";
 import { Row, RowText, Section } from "./settings-blocks";
 
-const sessionsKey = ["auth-sessions"];
+export const sessionsKey = ["auth-sessions"];
 // Checks for a device that just signed in, such as a phone joining, while
 // the page is open.
 const POLL_MS = 5000;
 // How long a new device's row keeps its arrival markup.
 const ARRIVAL_MS = 2800;
-// The streaks of light a new device arrives on: their direction in degrees
-// and how far out they start, in pixels.
-const STREAKS = Array.from({ length: 18 }, (_, i) => ({
-  angle: i * (360 / 18) + (i % 2 ? 7 : -5),
-  reach: 80 + ((i * 53) % 170),
-}));
 
 const isPhone = (session: DeviceSession) => /Android|iOS/.test(session.device);
 
@@ -138,7 +134,16 @@ export function DevicesSection() {
               </Row>
             );
             return isNew ? (
-              <div key={session.id} className="teleport-in">
+              <div
+                key={session.id}
+                data-arrival={session.id}
+                className="teleport-in"
+                style={
+                  {
+                    "--teleport-wait": `${arrived.get(session.id)}ms`,
+                  } as React.CSSProperties
+                }
+              >
                 <TeleportFx />
                 {row}
               </div>
@@ -175,27 +180,28 @@ export function DevicesSection() {
   );
 }
 
-/** A device's arrival: streaks of light rush in to where its icon goes and
- * burst there, a scanline draws the row, and sparks circle the icon a while,
- * as they do round the + of Anchor+. */
+/** A device's arrival: a portal charges where its icon goes and bursts into
+ * the + of Anchor+, sending out what it adds as the + does when clicked;
+ * then a scanline draws the row and sparks circle the icon a while. */
 function TeleportFx() {
   return (
     <div aria-hidden className="teleport-fx">
-      {STREAKS.map(({ angle, reach }, i) => (
-        <i
-          key={angle}
-          className="teleport-streak"
-          style={
-            {
-              "--a": `${angle}deg`,
-              "--d": `${reach}px`,
-              "--i": i,
-            } as React.CSSProperties
-          }
-        />
-      ))}
       <i className="teleport-portal" />
       <i className="teleport-core" />
+      <i className="teleport-plus" />
+      {FEATURES.map((Icon, i) => (
+        <span
+          key={Icon.displayName ?? i}
+          className="teleport-feature"
+          style={
+            {
+              "--a": `${-90 + (i * 360) / FEATURES.length}deg`,
+            } as React.CSSProperties
+          }
+        >
+          <Icon size={18} strokeWidth={2.25} />
+        </span>
+      ))}
       <i className="teleport-wave" />
       <i className="teleport-wave teleport-wave-late" />
       <i className="teleport-scan" />
@@ -211,12 +217,14 @@ function TeleportFx() {
 }
 
 /** The devices that turned up since the list first loaded, for a while after
- * each shows, so they can arrive with a flourish. */
+ * each shows, so they can arrive with a flourish: each with how long its
+ * teleport waits, for the phone that scanned the QR code while its code
+ * flies in. */
 function useArrivals(sessions: DeviceSession[] | undefined) {
   const seen = React.useRef<Set<string> | null>(null);
   const timers = React.useRef<number[]>([]);
-  const [arrived, setArrived] = React.useState<ReadonlySet<string>>(
-    () => new Set(),
+  const [arrived, setArrived] = React.useState<ReadonlyMap<string, number>>(
+    () => new Map(),
   );
 
   React.useEffect(() => {
@@ -230,16 +238,19 @@ function useArrivals(sessions: DeviceSession[] | undefined) {
     const fresh = ids.filter((id) => !known.has(id));
     if (!fresh.length) return;
     for (const id of fresh) known.add(id);
-    setArrived((current) => new Set([...current, ...fresh]));
+    const waits = fresh.map(
+      (id) => [id, handOffScan(id) ? TELEPORT_WAIT_MS : 0] as const,
+    );
+    setArrived((current) => new Map([...current, ...waits]));
     timers.current.push(
       window.setTimeout(
         () =>
           setArrived((current) => {
-            const next = new Set(current);
+            const next = new Map(current);
             for (const id of fresh) next.delete(id);
             return next;
           }),
-        ARRIVAL_MS,
+        ARRIVAL_MS + Math.max(...waits.map(([, wait]) => wait)),
       ),
     );
   }, [sessions]);
