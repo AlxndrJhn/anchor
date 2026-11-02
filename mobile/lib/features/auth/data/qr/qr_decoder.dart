@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:zxing2/qrcode.dart';
@@ -18,6 +19,19 @@ String? decodeQr(Uint8List grey, int width, int height) {
     return null;
   }
 }
+
+/// [decodeQr] on a camera plane ([packRows]), off the UI isolate.
+///
+/// Top level on purpose: a closure made inside a widget's method carries
+/// that widget's state along, which can't be sent to another isolate.
+Future<String?> decodeQrInBackground(
+  Uint8List plane,
+  int width,
+  int height,
+  int bytesPerRow,
+) => Isolate.run(
+  () => decodeQr(packRows(plane, width, height, bytesPerRow), width, height),
+);
 
 /// [plane] rows are [bytesPerRow] apart, which may be more than [width].
 Uint8List packRows(Uint8List plane, int width, int height, int bytesPerRow) {

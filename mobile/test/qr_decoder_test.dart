@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:anchor/features/auth/data/qr/qr_decoder.dart';
@@ -32,6 +33,24 @@ import 'package:zxing2/qrcode.dart';
   return (pixels: pixels, size: size);
 }
 
+/// Like the scan screen: holds something no isolate message can carry, and
+/// uses `this` in a closure next to the call, as setState does.
+class _Screen {
+  final _port = ReceivePort();
+  String? _text;
+
+  Future<String?> read(Uint8List pixels, int size) async {
+    try {
+      final text = await decodeQrInBackground(pixels, size, size, 256);
+      void remember() => _text = text;
+      remember();
+      return _text;
+    } finally {
+      _port.close();
+    }
+  }
+}
+
 void main() {
   const link = 'https://notes.example.com/magic-login?code=AbC-123_xyz';
 
@@ -44,6 +63,11 @@ void main() {
     final image = _render(link, bytesPerRow: 256);
     final packed = packRows(image.pixels, image.size, image.size, 256);
     expect(decodeQr(packed, image.size, image.size), link);
+  });
+
+  test('reads in the background, called from an object it can\'t send', () {
+    final image = _render(link, bytesPerRow: 256);
+    expect(_Screen().read(image.pixels, image.size), completion(link));
   });
 
   test('finds nothing in a blank picture', () {
