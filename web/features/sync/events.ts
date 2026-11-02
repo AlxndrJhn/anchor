@@ -8,6 +8,8 @@ const maxRetryDelayMs = 60_000;
 export interface SyncEventsOptions {
   onSync: () => void;
   onReconnect: () => void;
+  /** A live image's connection message, as the server passed it on. */
+  onLive?: (message: unknown) => void;
   getToken: () => string | null;
   refreshToken: () => Promise<boolean>;
   fetchFn?: typeof fetch;
@@ -29,6 +31,7 @@ export function connectSyncEvents(options: SyncEventsOptions): SyncEventStream {
   const {
     onSync,
     onReconnect,
+    onLive,
     getToken,
     refreshToken,
     fetchFn = fetch,
@@ -59,6 +62,7 @@ export function connectSyncEvents(options: SyncEventsOptions): SyncEventStream {
     const decoder = new TextDecoder();
     let buffer = "";
     let event = "";
+    let data = "";
     let watchdog = setTimeout(() => controller?.abort(), heartbeatMs);
 
     try {
@@ -81,9 +85,19 @@ export function connectSyncEvents(options: SyncEventsOptions): SyncEventStream {
 
           if (line.startsWith("event:")) {
             event = line.slice("event:".length).trim();
+          } else if (line.startsWith("data:")) {
+            data += (data ? "\n" : "") + line.slice("data:".length).trim();
           } else if (line === "") {
             if (event === "sync") onSync();
+            else if (event === "live" && onLive) {
+              try {
+                onLive(JSON.parse(data));
+              } catch {
+                // Not a message this version understands.
+              }
+            }
             event = "";
+            data = "";
           }
         }
       }

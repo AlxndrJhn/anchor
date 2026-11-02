@@ -17,6 +17,7 @@ import {
   ListOrdered,
   Mic,
   Quote,
+  Radio,
   Redo2,
   Strikethrough,
   Underline,
@@ -101,6 +102,8 @@ interface QuillToolbarProps {
   onRecordAudio?: () => void;
   /** Puts pictures in the text at the caret. */
   onPictureInText?: () => void;
+  /** Puts a live camera or screen in the text at the caret. */
+  onLiveImage?: () => void;
   onUndoRedo: (action: UndoRedoAction) => void;
 }
 
@@ -112,6 +115,7 @@ export function QuillToolbar({
   onAddAttachment,
   onRecordAudio,
   onPictureInText,
+  onLiveImage,
   onUndoRedo,
 }: QuillToolbarProps) {
   const [format, setFormat] = useState<Record<string, unknown>>({});
@@ -254,13 +258,20 @@ export function QuillToolbar({
       )}
       {divider}
       {/* Left of the text styles, as on Android. */}
-      {onPictureInText && (
+      {(onPictureInText || onLiveImage) && (
         <>
-          {toolButton(
-            "Put a picture in the text",
-            <ImageIcon />,
-            onPictureInText,
-          )}
+          {onPictureInText &&
+            toolButton(
+              "Put a picture in the text",
+              <ImageIcon />,
+              onPictureInText,
+            )}
+          {onLiveImage &&
+            toolButton(
+              "Add a live image: a camera or screen",
+              <Radio />,
+              onLiveImage,
+            )}
           {divider}
         </>
       )}

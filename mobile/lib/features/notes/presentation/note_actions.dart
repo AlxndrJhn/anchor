@@ -20,6 +20,7 @@ import '../../note_locks/presentation/note_lock_session.dart';
 import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
+import '../data/live_host.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_dates.dart';
@@ -457,6 +458,12 @@ class NoteActions {
     if (notes.isEmpty) {
       AppSnackbar.show(context, l10n.notesFrozenStay(frozen));
       return;
+    }
+    // The camera of a live image in them stops at once, before the server
+    // tells the other devices; restoring doesn't turn it on again.
+    final live = ref.read(liveHostProvider);
+    for (final note in notes) {
+      live.closeNote(note.id);
     }
     final repo = _repo;
     final shared = notes.where((n) => !n.isOwner).toList();

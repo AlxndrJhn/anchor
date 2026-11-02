@@ -83,6 +83,38 @@ describe('SyncEventsService', () => {
     expect(other.events).toEqual([]);
   });
 
+  it("passes a live image's message to every open connection of the user", () => {
+    const first = connect('user-1');
+    const second = connect('user-1');
+    const other = connect('user-2');
+
+    service.signal('user-1', { kind: 'want' });
+
+    expect(first.events).toEqual([{ type: 'live', data: { kind: 'want' } }]);
+    expect(second.events).toEqual([{ type: 'live', data: { kind: 'want' } }]);
+    expect(other.events).toEqual([]);
+  });
+
+  it("stops a note's live images once the change commits", () => {
+    const conn = connect('user-1');
+
+    service.scheduleLiveStop([{ userId: 'user-1', noteId: 'note-1' }]);
+    expect(conn.events).toEqual([]);
+
+    flushCommits();
+    expect(conn.events).toEqual([
+      {
+        type: 'live',
+        data: {
+          kind: 'stop',
+          noteId: 'note-1',
+          liveId: '*',
+          from: { device: 'server' },
+        },
+      },
+    ]);
+  });
+
   it('sends a ping every interval', () => {
     const conn = connect('user-1');
 

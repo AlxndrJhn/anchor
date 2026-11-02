@@ -551,6 +551,253 @@
   touch-action: none;
   animation: fade-in var(--duration-hover) var(--ease-standard);
 }
+/* A camera or screen shown live (see live-hub.ts). The frame keeps the
+   crop's shape; use-live-images.ts places the video in it. */
+.ql-editor .live-image {
+  display: block;
+  width: var(--note-image-width, 100%);
+  max-width: 100%;
+  margin: 0.5em 0;
+}
+.ql-editor .live-frame {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-tile, 12px);
+  background: color-mix(
+    in srgb,
+    var(--note-border, currentColor) 30%,
+    transparent
+  );
+}
+.ql-editor .live-frame video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
+}
+.ql-editor .live-image:not([data-status="live"]) video {
+  visibility: hidden;
+}
+.ql-editor .live-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6em;
+  padding: 1em;
+  font-size: 0.875em;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--note-muted, inherit);
+}
+.ql-editor .live-image[data-status="live"] .live-status {
+  display: none;
+}
+.ql-editor .live-action {
+  padding: 0.35em 0.9em;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: var(--card, #fff);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ql-editor .live-badge {
+  position: absolute;
+  top: 0.5em;
+  left: 0.5em;
+  display: none;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.15em 0.55em;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.ql-editor .live-image[data-status="live"] .live-badge {
+  display: inline-flex;
+}
+/* The red dot, with the anchor a tap turns it into in the same spot. */
+.ql-editor .live-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+}
+.ql-editor .live-dot,
+.ql-editor .live-anchor {
+  grid-area: 1 / 1;
+}
+.ql-editor .live-dot {
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 999px;
+  background: #ef4444;
+}
+.ql-editor .live-anchor {
+  width: 1.1em;
+  height: 1.1em;
+  color: #ef4444;
+  opacity: 0;
+  transform: scale(0);
+}
+.ql-editor .live-viewers {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  padding-left: 0.45em;
+  border-left: 1px solid rgb(255 255 255 / 0.35);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+.ql-editor .live-viewers[hidden] {
+  display: none;
+}
+.ql-editor .live-viewers svg {
+  width: 1.15em;
+  height: 1.15em;
+}
+/* A tap: two turns, growing to an anchor halfway and back to the dot. */
+.ql-editor .live-image[data-spin] .live-mark {
+  animation: live-spin 1.4s cubic-bezier(0.45, 0, 0.25, 1);
+}
+.ql-editor .live-image[data-spin] .live-dot {
+  animation: live-dot-away 1.4s ease-in-out;
+}
+.ql-editor .live-image[data-spin] .live-anchor {
+  animation: live-anchor-in 1.4s ease-in-out;
+}
+@keyframes live-spin {
+  0% {
+    transform: rotate(0) scale(1);
+  }
+  50% {
+    transform: rotate(360deg) scale(1.9);
+  }
+  100% {
+    transform: rotate(720deg) scale(1);
+  }
+}
+@keyframes live-dot-away {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  28%,
+  72% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes live-anchor-in {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  28%,
+  72% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ql-editor .live-image[data-spin] .live-mark {
+    animation-name: live-still;
+  }
+  @keyframes live-still {
+    from,
+    to {
+      transform: none;
+    }
+  }
+}
+/* A double tap kept a still of it. */
+.ql-editor .live-image[data-flash] .live-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  pointer-events: none;
+  animation: live-flash 0.4s ease-out forwards;
+}
+@keyframes live-flash {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
+}
+/* Its sound: mute the microphone here, or turn the sound on to listen. */
+.ql-editor .live-sound {
+  position: absolute;
+  right: 0.5em;
+  bottom: 0.5em;
+  display: flex;
+  gap: 0.35em;
+}
+.ql-editor .live-sound-button,
+.ql-editor .live-mic-muted {
+  display: grid;
+  place-items: center;
+  width: 2.1em;
+  height: 2.1em;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+}
+.ql-editor .live-sound-button {
+  cursor: pointer;
+}
+.ql-editor .live-sound-button:hover {
+  background: rgb(0 0 0 / 0.75);
+}
+.ql-editor .live-sound-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.ql-editor .live-mic[data-off],
+.ql-editor .live-mic-muted {
+  background: rgb(220 38 38 / 0.85);
+}
+.ql-editor .live-sound svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+/* The camera or screen being chosen for a new live image. */
+.live-preview {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-tile, 12px);
+  background: var(--muted, rgb(0 0 0 / 0.06));
+  color: var(--muted-foreground);
+  text-align: center;
+  padding: 0;
+}
+.live-preview > span {
+  padding: 1em;
+}
+.live-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
 .ql-editor .note-image-caption {
   display: block;
   margin-top: 0.35em;

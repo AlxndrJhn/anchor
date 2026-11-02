@@ -6543,6 +6543,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You’re already signed in. Sign out first to use a magic link.'**
   String get magicLoginAlreadySignedIn;
+
+  /// Over a live image in a note while the phone asks the device that added it for its video.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {device}…'**
+  String liveImageConnecting(String device);
+
+  /// Over a live image when the device that shows it doesn't answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {device}. Open Anchor there to show it.'**
+  String liveImageWaiting(String device);
+
+  /// Over a live screen when the device that added it isn't sharing it at the moment.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} isn’t sharing its screen right now.'**
+  String liveImageScreenPaused(String device);
+
+  /// Over a live camera when the device that added it has it turned off.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} can’t show its camera right now.'**
+  String liveImageCameraPaused(String device);
+
+  /// Names the device a live image comes from when its name isn't known, inside the live image status lines.
+  ///
+  /// In en, this message translates to:
+  /// **'the device that added it'**
+  String get liveImageSomeDevice;
+
+  /// Small badge on a live image while its video plays.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get liveImageBadge;
+
+  /// Screen reader label of a live image showing another device's camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Live camera'**
+  String get liveImageCamera;
+
+  /// Screen reader label of a live image showing another device's screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Live screen'**
+  String get liveImageScreen;
+
+  /// Button over a live image with sound, while its sound is off on this phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn sound on'**
+  String get liveImageSoundOn;
+
+  /// Button over a live image while its sound plays on this phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn sound off'**
+  String get liveImageSoundOff;
+
+  /// Screen reader label of the marker over a live image when the device that shows it has muted its microphone.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone muted'**
+  String get liveImageMicMuted;
+
+  /// Screen reader label of the number beside the red dot on a live image: how many devices watch it.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nobody watching} =1{1 watching} other{{count} watching}}'**
+  String liveImageViewers(int count);
+
+  /// Shown after a double tap on a live image kept a still of its video in the note's attachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Still added to the attachments'**
+  String get liveImageStillKept;
+
+  /// Shown when a double tap on a live image couldn't keep a still of its video.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t keep a still of the live image'**
+  String get liveImageStillFailed;
+
+  /// Over a live image this phone added, while its camera is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Your camera is off.'**
+  String get liveImageCameraOff;
+
+  /// Button over a live image this phone added, while its camera is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn camera on'**
+  String get liveImageTurnCameraOn;
+
+  /// Shown when the camera of a live image couldn't be turned on.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t turn the camera on'**
+  String get liveImageCameraFailed;
+
+  /// Button over a live image this phone shows, while its microphone is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute microphone'**
+  String get liveImageMute;
+
+  /// Button over a live image this phone shows, while its microphone is muted.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute microphone'**
+  String get liveImageUnmute;
+
+  /// Option in the add sheet that puts this phone's camera in the note, shown live on other devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Live camera'**
+  String get addLiveCamera;
+
+  /// Title of the sheet that chooses the camera for a new live image.
+  ///
+  /// In en, this message translates to:
+  /// **'Live camera'**
+  String get liveCameraTitle;
+
+  /// Under the title of the live camera sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows this phone’s camera in the note, live, on every device that opens it, while Anchor is open here.'**
+  String get liveCameraSubtitle;
+
+  /// Chooses the front camera for a new live image.
+  ///
+  /// In en, this message translates to:
+  /// **'Front'**
+  String get liveCameraFront;
+
+  /// Chooses the back camera for a new live image.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get liveCameraBack;
+
+  /// Switch in the live camera sheet that sends the phone's sound too.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone'**
+  String get liveCameraMic;
+
+  /// Under the Microphone switch in the live camera sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends this phone’s sound too; you can mute it while it’s live.'**
+  String get liveCameraMicHint;
+
+  /// Button that puts the chosen camera in the note as a live image.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to note'**
+  String get liveCameraAdd;
+
+  /// In the live camera sheet's preview when the camera couldn't be turned on.
+  ///
+  /// In en, this message translates to:
+  /// **'No camera could be turned on.'**
+  String get liveCameraNoCamera;
 }
 
 class _AppLocalizationsDelegate

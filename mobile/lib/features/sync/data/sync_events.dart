@@ -10,6 +10,7 @@ import '../../../core/logging/log_tags.dart';
 import '../../../core/network/anchor_protocol.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/network/sync_requester.dart';
+import '../../notes/data/live_signals.dart';
 import 'sync_api.dart';
 
 part 'sync_events.g.dart';
@@ -92,6 +93,7 @@ class SyncEvents {
       _wasOpen = true;
 
       var event = '';
+      var data = '';
       _lines = body.stream
           .cast<List<int>>()
           .transform(const Utf8Decoder(allowMalformed: true))
@@ -104,11 +106,19 @@ class SyncEvents {
                 event = line.substring('event:'.length).trim();
                 return;
               }
+              if (line.startsWith('data:')) {
+                final part = line.substring('data:'.length).trim();
+                data = data.isEmpty ? part : '$data\n$part';
+                return;
+              }
               if (line.isNotEmpty) return;
               if (event == 'sync') {
                 scheduleAppSync(trigger: 'push');
+              } else if (event == 'live') {
+                _passOnLive(data);
               }
               event = '';
+              data = '';
             },
             onError: (Object error) => _scheduleRetry(error: error),
             onDone: _scheduleRetry,
@@ -136,6 +146,15 @@ class SyncEvents {
       _scheduleRetry(error: error);
     } catch (error) {
       _scheduleRetry(error: error);
+    }
+  }
+
+  /// A message setting up a live image's video (see LiveSignals).
+  void _passOnLive(String data) {
+    try {
+      LiveSignals.receive(jsonDecode(data));
+    } catch (_) {
+      // Not a message this version understands.
     }
   }
 

@@ -56,7 +56,10 @@ describe('SyncEmitterService', () => {
 
   const changeLogDeleteMany = vi.fn().mockResolvedValue({ count: 0 });
 
+  const noteFindMany = vi.fn().mockResolvedValue([]);
+
   const tx = {
+    note: { findMany: noteFindMany },
     $queryRaw: queryRaw,
     $executeRaw: executeRaw,
     changeLog: { deleteMany: changeLogDeleteMany },
@@ -80,6 +83,30 @@ describe('SyncEmitterService', () => {
     expect(recipients).toEqual(['user-a']);
     expect(queryRaw).toHaveBeenCalledTimes(1);
     expect(upserted.map((row) => row.seq)).toEqual([1n, 2n, 3n]);
+  });
+
+  it('stops the live images of a note that left use, for all who see it', async () => {
+    noteFindMany.mockResolvedValueOnce([{ id: 'note-1' }]);
+
+    await service.emit(tx, [
+      ...noteEmissions(['user-a', 'user-b'], 'note-1'),
+      ...noteEmissions(['user-a'], 'note-2'),
+      pinEmission('user-a', 'note-3', true),
+    ]);
+
+    const [query] = noteFindMany.mock.calls[0] as [
+      { where: { id: { in: string[] } } },
+    ];
+    expect(query.where.id.in).toEqual(['note-1', 'note-2']);
+    expect(syncEvents.scheduleLiveStop).toHaveBeenCalledWith([
+      { userId: 'user-a', noteId: 'note-1' },
+      { userId: 'user-b', noteId: 'note-1' },
+    ]);
+  });
+
+  it('stops nothing while every note is in use', async () => {
+    await service.emit(tx, noteEmissions(['user-a'], 'note-1'));
+    expect(syncEvents.scheduleLiveStop).not.toHaveBeenCalled();
   });
 
   it('writes the whole batch in one statement', async () => {

@@ -19,6 +19,7 @@ import {
 
 interface EventStream {
   pokes: Subject<{ seq: string }>;
+  signals: Subject<object>;
   closed: Subject<void>;
 }
 
@@ -38,6 +39,7 @@ export class SyncEventsService implements OnModuleDestroy {
       const stream = this.register(userId);
       const session = merge(
         stream.pokes.pipe(map((poke) => ({ type: 'sync', data: poke }))),
+        stream.signals.pipe(map((signal) => ({ type: 'live', data: signal }))),
         interval(SYNC_EVENTS_PING_INTERVAL_MS).pipe(
           map(() => ({ type: 'ping', data: '' })),
         ),
@@ -74,6 +76,36 @@ export class SyncEventsService implements OnModuleDestroy {
     }
   }
 
+  // Tells the devices that a note's live images are to stop, once the change
+  // that took the note out of use commits.
+  scheduleLiveStop(stops: { userId: string; noteId: string }[]): void {
+    if (stops.length === 0) {
+      return;
+    }
+    this.prisma.afterCommit(() => {
+      for (const { userId, noteId } of stops) {
+        this.signal(userId, {
+          kind: 'stop',
+          noteId,
+          liveId: '*',
+          from: { device: 'server' },
+        });
+      }
+    });
+  }
+
+  // Passes a live image's connection message to every open stream of the
+  // user's; the devices pick out the ones addressed to them.
+  signal(userId: string, data: object): void {
+    const set = this.streams.get(userId);
+    if (!set) {
+      return;
+    }
+    for (const stream of set) {
+      stream.signals.next(data);
+    }
+  }
+
   connectionCount(userId: string): number {
     return this.streams.get(userId)?.size ?? 0;
   }
@@ -100,6 +132,7 @@ export class SyncEventsService implements OnModuleDestroy {
     }
     const stream: EventStream = {
       pokes: new Subject(),
+      signals: new Subject(),
       closed: new Subject(),
     };
     set.add(stream);

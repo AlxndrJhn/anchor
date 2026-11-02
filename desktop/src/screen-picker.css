@@ -1,0 +1,150 @@
+/* The screen picker, in the setup page's colours and fonts. */
+
+@font-face {
+  font-family: "DM Sans";
+  font-weight: 100 1000;
+  src:
+    url("../fonts/DMSans-Variable.ttf"),
+    url("../../mobile/assets/fonts/DMSans-Variable.ttf");
+}
+
+:root {
+  color-scheme: light dark;
+  --page: #f0f4f8;
+  --surface: #ffffff;
+  --text: #2d3142;
+  --muted: #4f5d75;
+  --border: #d8dee6;
+  --accent: #cc5f2d;
+  --on-accent: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #111214;
+    --surface: #1d1f23;
+    --text: #e8eaee;
+    --muted: #a7afbd;
+    --border: #33373e;
+    --accent: #e07a48;
+    --on-accent: #1a0d05;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100vh;
+  background: var(--page);
+  color: var(--text);
+  font: 14px/1.45 "DM Sans", system-ui, sans-serif;
+}
+
+main {
+  overflow: auto;
+  padding: 20px 20px 8px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.lead {
+  margin: 4px 0 12px;
+  color: var(--muted);
+}
+
+h2 {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tile[aria-selected="true"] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #0000001a;
+}
+
+.thumb img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+}
+
+footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+footer button {
+  min-width: 88px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+footer button.secondary {
+  background: transparent;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+footer button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

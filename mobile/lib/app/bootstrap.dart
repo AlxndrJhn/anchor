@@ -23,6 +23,7 @@ import '../core/theme/display_density.dart';
 import '../core/theme/note_typography.dart';
 import '../core/theme/tokens/app_style.dart';
 import '../features/home_widget/data/home_widget_payload.dart';
+import '../features/notes/data/live_signals.dart';
 import '../features/notes/domain/quick_action.dart';
 import '../features/notes/presentation/notes_view_options.dart';
 import '../features/reminders/domain/reminder_preferences.dart';
@@ -47,6 +48,7 @@ Future<AppBootstrap> initializeApp({
   final notificationRoute = _notificationLaunchRoute();
   final widgetRoute = _widgetLaunchRoute();
   await logging;
+  await LiveSignals.restoreDevice();
   FlutterError.onError = (details) {
     AppLogger.instance.error(
       LogTags.flutterError,

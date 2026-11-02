@@ -23,6 +23,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { headersError, headersFor, isToServer } = require("./headers");
 const { startUpdater } = require("./updater");
+const { allowScreenSharing } = require("./screen-picker");
 
 // The name the window, menu and About panel show, and the settings folder's.
 const APP_NAME = "Anchor+";
@@ -757,6 +758,8 @@ if (!app.requestSingleInstanceLock()) {
     protocol.handle(LOCAL_SCHEME, serveLocal);
     savedHeaders = readHeaders();
     sendHeaders(session.defaultSession);
+    // For live images: a screen or window shown in a note.
+    allowScreenSharing(session.defaultSession, () => mainWindow);
     app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
     buildMenu();
     createWindow();

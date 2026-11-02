@@ -18,6 +18,7 @@ import { SettingsModule } from './settings/settings.module';
 import { UsersModule } from './users/users.module';
 import { ImportExportModule } from './import-export/import-export.module';
 import { McpModule } from './mcp/mcp.module';
+import { LiveModule } from './live/live.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { McpModule } from './mcp/mcp.module';
     UsersModule,
     ImportExportModule,
     McpModule,
+    LiveModule,
   ],
   providers: [
     {
