@@ -120,7 +120,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Debug mode: hold two fingers still for 3 s to film the app and its state, mark problems on a timeline and file them as a GitHub issue (see [mobile/README.md](mobile/README.md#debug-reports)) | | ✓ |
 | The server's version in Settings › About | ✓ | |
 | Back up the whole server with one command and restore it with another, onto a fresh or newer server (see [Backing Up the Server](#backing-up-the-server)) | ✓ | |
-| Install the server with one command on a small Linux server, such as a free tier one, with HTTPS for your domain (see [One-Line Install on a Small Server](#one-line-install-on-a-small-server)) | ✓ | |
+| Install the server with one command on a small Linux server, such as a free tier one, with HTTPS for your domain or through a Cloudflare Tunnel (see [One-Line Install on a Small Server](#one-line-install-on-a-small-server)) | ✓ | |
 | Claude, and other apps that speak MCP, can search, read and write your notes through your server (see [Claude (MCP)](#claude-mcp)) | ✓ | |
 | **Fixes** | | |
 | Copying and saving the logs on Android ([#187](https://github.com/ZhFahim/anchor/issues/187), [#188](https://github.com/ZhFahim/anchor/issues/188)) | | ✓ |
@@ -262,8 +262,28 @@ Your cloud's firewall has to let the port in too (3000, or 80 and 443 with a
 domain): on Oracle Cloud an ingress rule in the subnet's security list, on AWS
 the instance's security group, on Google Cloud a VPC firewall rule.
 
-Running the same command again updates Anchor and keeps the notes and the
-domain. `DOMAIN=` (empty) goes back to plain HTTP, `PORT=8080` serves on
+#### Through a Cloudflare Tunnel
+
+A Cloudflare Tunnel gives HTTPS without opening any port, and works when the
+server has no public IP of its own:
+
+1. In Cloudflare's dashboard, under **Zero Trust › Networks › Tunnels**, create
+   a tunnel (type Cloudflared) and copy its token. Copying the whole
+   `cloudflared service install eyJ…` command works too.
+2. Add a public hostname to it, e.g. `notes.example.com`, with the service
+   `http://anchor:3000`.
+3. On the server:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo TUNNEL_TOKEN=eyJ... DOMAIN=notes.example.com bash
+   ```
+
+`DOMAIN` is the public hostname, which Anchor needs for OIDC sign in. The token
+is kept in `/opt/anchor/.env`, readable by root only. Cloudflare's free plan
+takes uploads of up to 100 MB. `TUNNEL_TOKEN=` (empty) stops using the tunnel.
+
+Running the same command again updates Anchor and keeps the notes, the
+domain and the tunnel. `DOMAIN=` (empty) goes back to plain HTTP, `PORT=8080` serves on
 another port, `ANCHOR_TAG=fork-preview` follows the release candidates.
 Anchor's own settings (see the table below) go in `/opt/anchor/anchor.env`,
 followed by `docker compose up -d` in `/opt/anchor`.
