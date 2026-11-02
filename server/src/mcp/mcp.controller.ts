@@ -1,7 +1,9 @@
 import {
-  All,
   Controller,
+  Delete,
+  Get,
   OnModuleDestroy,
+  Post,
   Req,
   Res,
   UseGuards,
@@ -33,10 +35,24 @@ export class McpController implements OnModuleDestroy {
     );
   }
 
+  @Post()
+  post(@Req() req: AuthenticatedRequest, @Res() res: Response) {
+    return this.handle(req, res);
+  }
+
   // GET and DELETE, the old session operations, are answered 405 by the
   // handler: there are no sessions to stream from or end.
-  @All()
-  async handle(@Req() req: AuthenticatedRequest, @Res() res: Response) {
+  @Get()
+  stream(@Req() req: AuthenticatedRequest, @Res() res: Response) {
+    return this.handle(req, res);
+  }
+
+  @Delete()
+  end(@Req() req: AuthenticatedRequest, @Res() res: Response) {
+    return this.handle(req, res);
+  }
+
+  private async handle(req: AuthenticatedRequest, res: Response) {
     const authInfo = {
       token: '',
       clientId: 'anchor',
