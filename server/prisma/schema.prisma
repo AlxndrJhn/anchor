@@ -303,9 +303,15 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  // One sign-in on one device: refreshing hands the new token the same
+  // session, with when it began and what the device said it was.
+  sessionId  String   @default(uuid())
+  signedInAt DateTime @default(now())
+  userAgent  String?
 
   @@index([userId])
   @@index([token])
+  @@index([sessionId])
 }
 
 model SyncState {

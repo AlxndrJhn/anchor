@@ -8,6 +8,7 @@ import '../../../../core/logging/log_tags.dart';
 import '../../../../core/storage/secure_storage_provider.dart';
 import '../../../../core/storage/storage_keys.dart';
 import '../../domain/auth_failure.dart';
+import '../../domain/device_session.dart';
 import '../../domain/user.dart';
 import '../remote/auth_service.dart';
 
@@ -106,6 +107,15 @@ class AuthRepository {
       refreshToken: refreshToken,
     );
   }
+
+  /// The devices signed in as this person, this phone first.
+  Future<List<DeviceSession>> listSessions() async {
+    final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
+    final sessions = await _authService.listSessions(refreshToken);
+    return sessions.map(DeviceSession.fromJson).toList();
+  }
+
+  Future<void> revokeSession(String id) => _authService.revokeSession(id);
 
   /// Signs out every other device; this one stays signed in.
   Future<void> logoutOtherDevices() async {

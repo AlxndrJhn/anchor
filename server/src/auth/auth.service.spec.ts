@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -39,7 +40,41 @@ describe('AuthService', () => {
     token: string;
     userId: string;
     expiresAt: Date;
+    sessionId: string;
+    signedInAt: Date;
+    userAgent: string | null;
+    createdAt: Date;
   }
+
+  type TokenWhere = Partial<
+    Record<'id' | 'token' | 'userId' | 'sessionId', string | { not: string }>
+  >;
+
+  const matchesWhere = (record: RefreshTokenRecord, where: TokenWhere) =>
+    Object.entries(where).every(([key, condition]) => {
+      const value = record[key as keyof TokenWhere];
+      return typeof condition === 'object'
+        ? value !== condition.not
+        : value === condition;
+    });
+
+  /** A signed-in token; [sessionId] defaults to one session per token. */
+  const addToken = (
+    token: string,
+    userId: string,
+    overrides: Partial<RefreshTokenRecord> = {},
+  ) =>
+    refreshTokens.set(token, {
+      id: token,
+      token,
+      userId,
+      expiresAt: new Date(Date.now() + 60_000),
+      sessionId: token,
+      signedInAt: new Date(),
+      userAgent: null,
+      createdAt: new Date(),
+      ...overrides,
+    });
 
   let users: Map<string, UserRecord>; // by id
   let refreshTokens: Map<string, RefreshTokenRecord>; // by token
@@ -152,36 +187,46 @@ describe('AuthService', () => {
         if (!stored) return Promise.resolve(null);
         return Promise.resolve({ ...stored, user: users.get(stored.userId) });
       }),
-      create: vi.fn(({ data }: { data: Omit<RefreshTokenRecord, 'id'> }) => {
-        const record = { id: `rt-${refreshTokens.size + 1}`, ...data };
-        refreshTokens.set(record.token, record);
-        return Promise.resolve(record);
-      }),
-      deleteMany: vi.fn(
+      create: vi.fn(
         ({
-          where,
+          data,
         }: {
-          where: {
-            token?: string | { not: string };
-            id?: string;
-            userId?: string;
-          };
+          data: Pick<RefreshTokenRecord, 'token' | 'userId' | 'expiresAt'> &
+            Partial<RefreshTokenRecord>;
         }) => {
-          let count = 0;
-          for (const [token, record] of refreshTokens) {
-            const matches = where.userId
-              ? record.userId === where.userId &&
-                (typeof where.token !== 'object' ||
-                  record.token !== where.token.not)
-              : record.token === where.token || record.id === where.id;
-            if (matches) {
-              refreshTokens.delete(token);
-              count++;
-            }
-          }
-          return Promise.resolve({ count });
+          const record: RefreshTokenRecord = {
+            id: `rt-${refreshTokens.size + 1}`,
+            sessionId: `session-${refreshTokens.size + 1}`,
+            signedInAt: new Date(),
+            userAgent: null,
+            createdAt: new Date(),
+            ...data,
+          };
+          refreshTokens.set(record.token, record);
+          return Promise.resolve(record);
         },
       ),
+      findMany: vi.fn(
+        ({ where }: { where: { userId: string; expiresAt: { gt: Date } } }) =>
+          Promise.resolve(
+            [...refreshTokens.values()]
+              .filter(
+                (r) =>
+                  r.userId === where.userId && r.expiresAt > where.expiresAt.gt,
+              )
+              .sort((a, b) => +b.createdAt - +a.createdAt),
+          ),
+      ),
+      deleteMany: vi.fn(({ where }: { where: TokenWhere }) => {
+        let count = 0;
+        for (const [token, record] of refreshTokens) {
+          if (matchesWhere(record, where)) {
+            refreshTokens.delete(token);
+            count++;
+          }
+        }
+        return Promise.resolve({ count });
+      }),
       updateMany: vi.fn(
         ({
           where,
@@ -539,14 +584,13 @@ describe('AuthService', () => {
     it('signs out every other session of that person only', async () => {
       addUser({ id: 'u1' });
       addUser({ id: 'u2' });
-      const expiresAt = new Date(Date.now() + 60_000);
       for (const [token, userId] of [
         ['this-device', 'u1'],
         ['laptop', 'u1'],
         ['phone', 'u1'],
         ['someone-else', 'u2'],
       ]) {
-        refreshTokens.set(token, { id: token, token, userId, expiresAt });
+        addToken(token, userId);
       }
 
       await service.revokeOtherRefreshTokens('u1', 'this-device');
@@ -558,6 +602,95 @@ describe('AuthService', () => {
       await expect(service.refreshTokens('laptop')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('sessions', () => {
+    it('carries the session on through a refresh', async () => {
+      addUser({ id: 'u1' });
+      const signedInAt = new Date('2026-01-01T00:00:00Z');
+      addToken('first', 'u1', { sessionId: 'phone', signedInAt });
+
+      const { refresh_token } = await service.refreshTokens('first');
+
+      expect(refreshTokens.get(refresh_token)).toMatchObject({
+        sessionId: 'phone',
+        signedInAt,
+      });
+    });
+
+    it('lists one row per session, the asking one first and marked', async () => {
+      addUser({ id: 'u1' });
+      addUser({ id: 'u2' });
+      const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000);
+      addToken('laptop-old', 'u1', {
+        sessionId: 'laptop',
+        createdAt: minutesAgo(30),
+      });
+      addToken('laptop-new', 'u1', {
+        sessionId: 'laptop',
+        createdAt: minutesAgo(1),
+        userAgent:
+          'Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0',
+      });
+      addToken('phone', 'u1', {
+        createdAt: minutesAgo(10),
+        userAgent: 'AnchorPlus/android',
+      });
+      addToken('gone', 'u1', { expiresAt: minutesAgo(1) });
+      addToken('someone-else', 'u2');
+
+      const sessions = await service.listSessions('u1', 'phone');
+
+      expect(sessions).toEqual([
+        expect.objectContaining({
+          id: 'phone',
+          device: 'Anchor+ app on Android',
+          current: true,
+        }),
+        expect.objectContaining({
+          id: 'laptop',
+          device: 'Firefox on Linux',
+          lastActiveAt: refreshTokens.get('laptop-new')!.createdAt,
+          current: false,
+        }),
+      ]);
+    });
+
+    it('signs out one session with all its tokens', async () => {
+      addUser({ id: 'u1' });
+      addToken('laptop-old', 'u1', { sessionId: 'laptop' });
+      addToken('laptop-new', 'u1', { sessionId: 'laptop' });
+      addToken('phone', 'u1');
+
+      await service.revokeSession('u1', 'laptop');
+
+      expect([...refreshTokens.keys()]).toEqual(['phone']);
+    });
+
+    it("won't sign out someone else's session", async () => {
+      addUser({ id: 'u1' });
+      addUser({ id: 'u2' });
+      addToken('theirs', 'u2');
+
+      await expect(service.revokeSession('u1', 'theirs')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(refreshTokens.has('theirs')).toBe(true);
+    });
+
+    it('signing out the others keeps every token of the asking session', async () => {
+      addUser({ id: 'u1' });
+      addToken('this-old', 'u1', { sessionId: 'this' });
+      addToken('this-new', 'u1', { sessionId: 'this' });
+      addToken('laptop', 'u1');
+
+      await service.revokeOtherRefreshTokens('u1', 'this-new');
+
+      expect([...refreshTokens.keys()].sort()).toEqual([
+        'this-new',
+        'this-old',
+      ]);
     });
   });
 
@@ -595,13 +728,12 @@ describe('AuthService', () => {
     it('signs out every other session, keeping the one that changed it', async () => {
       addUser({ id: 'u1' });
       addUser({ id: 'u2' });
-      const expiresAt = new Date(Date.now() + 60_000);
       for (const [token, userId] of [
         ['this-device', 'u1'],
         ['stolen', 'u1'],
         ['someone-else', 'u2'],
       ]) {
-        refreshTokens.set(token, { id: token, token, userId, expiresAt });
+        addToken(token, userId);
       }
 
       await service.changePassword('u1', {

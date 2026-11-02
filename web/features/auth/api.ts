@@ -9,6 +9,7 @@ import type {
   ApiTokenResponse,
   AuthResponse,
   ChangePasswordCredentials,
+  DeviceSession,
   LoginCredentials,
   MagicLoginCode,
   OidcConfig,
@@ -58,6 +59,19 @@ export async function changePassword(
       json: { ...credentials, refreshToken: getRefreshToken() ?? undefined },
     })
     .json<{ message: string }>();
+}
+
+/** The devices signed in as you, this one first. */
+export async function listSessions(): Promise<DeviceSession[]> {
+  return api
+    .post("api/auth/sessions", {
+      json: { refreshToken: getRefreshToken() ?? undefined },
+    })
+    .json<DeviceSession[]>();
+}
+
+export async function revokeSession(id: string): Promise<void> {
+  await api.delete(`api/auth/sessions/${encodeURIComponent(id)}`);
 }
 
 /** Signs out every other device; this one stays signed in. */

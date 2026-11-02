@@ -54,6 +54,7 @@ class AppRoutes {
   static const changePassword = '$settings/change-password';
   static const editProfile = '$settings/edit-profile';
   static const logs = '$settings/logs';
+  static const devices = '$settings/devices';
 
   // For home-widget and reminder taps: the editor opens as the only page.
   static const widgetNewNote = '/widget/note/new';

@@ -45,7 +45,6 @@ import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/segmented_control.dart';
 import '../../../core/widgets/switch_row.dart';
 import '../../../l10n/l10n.dart';
-import '../../auth/data/repository/auth_repository.dart';
 import '../../auth/domain/user.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/oidc_config_provider.dart';
@@ -719,38 +718,6 @@ class _AccountSection extends ConsumerWidget {
     );
   }
 
-  Future<void> _signOutOthers(BuildContext context, WidgetRef ref) async {
-    final l10n = context.l10n;
-    await showAnchorDialog(
-      context,
-      title: l10n.settingsSignOutOthersTitle,
-      message: l10n.settingsSignOutOthersMessage,
-      confirmLabel: l10n.settingsSignOutOthersConfirm,
-      busyLabel: l10n.settingsSigningOut,
-      isDanger: true,
-      onConfirm: () async {
-        try {
-          await ref.read(authRepositoryProvider).logoutOtherDevices();
-          if (context.mounted) {
-            AppSnackbar.show(
-              context,
-              l10n.settingsSignOutOthersDone,
-              kind: SnackbarKind.success,
-            );
-          }
-        } catch (_) {
-          if (context.mounted) {
-            AppSnackbar.show(
-              context,
-              l10n.settingsSignOutOthersFailed,
-              kind: SnackbarKind.error,
-            );
-          }
-        }
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final oidc = ref.watch(oidcConfigProvider).value;
@@ -777,8 +744,9 @@ class _AccountSection extends ConsumerWidget {
             ),
           GroupedListTile(
             icon: LucideIcons.monitorSmartphone,
-            label: l10n.settingsSignOutOthers,
-            onTap: () => _signOutOthers(context, ref),
+            label: l10n.settingsDevices,
+            showChevron: true,
+            onTap: () => context.push(AppRoutes.devices),
           ),
           GroupedListTile(
             icon: LucideIcons.logOut,

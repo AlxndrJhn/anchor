@@ -13,6 +13,8 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Param,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
@@ -77,6 +79,28 @@ export class AuthController {
       user.id,
       logoutOthersDto.refreshToken,
     );
+  }
+
+  /**
+   * The devices signed in as this person. A POST, as the asking device's
+   * refresh token, which marks it, has no place in a URL.
+   */
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('sessions')
+  listSessions(@CurrentUser() user: User, @Body() logoutDto: LogoutDto) {
+    return this.authService.listSessions(user.id, logoutDto.refreshToken);
+  }
+
+  /** Signs one device out. */
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete('sessions/:id')
+  revokeSession(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) sessionId: string,
+  ): Promise<void> {
+    return this.authService.revokeSession(user.id, sessionId);
   }
 
   /** A one-time code that signs another device in as this person. */

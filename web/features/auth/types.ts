@@ -70,6 +70,17 @@ export interface MagicLoginCode {
 
 export type RegistrationMode = "disabled" | "enabled" | "review";
 
+/** A device signed in as you, for Settings. */
+export interface DeviceSession {
+  id: string;
+  /** As "Chrome on Windows". */
+  device: string;
+  signedInAt: string;
+  lastActiveAt: string;
+  /** The device asking. */
+  current: boolean;
+}
+
 export interface Passkey {
   id: string;
   name: string;

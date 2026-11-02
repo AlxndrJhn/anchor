@@ -203,16 +203,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldTwoStepCode => 'Code from your authenticator app';
 
   @override
-  String get authTwoStepCodeHelp => 'Lost your phone? Enter one of your recovery codes instead.';
+  String get authTwoStepCodeHelp =>
+      'Lost your phone? Enter one of your recovery codes instead.';
 
   @override
-  String get authEnterTwoStepCode => 'Enter the code from your authenticator app.';
+  String get authEnterTwoStepCode =>
+      'Enter the code from your authenticator app.';
 
   @override
-  String get authWrongTwoStepCode => 'That code isn’t right. Check your authenticator app and try again.';
+  String get authWrongTwoStepCode =>
+      'That code isn’t right. Check your authenticator app and try again.';
 
   @override
-  String get authPasskeyOnly => 'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.';
+  String get authPasskeyOnly =>
+      'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.';
 
   @override
   String get authIncorrectCredentials => 'Incorrect email or password.';
@@ -741,6 +745,41 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get settingsDevices => 'Devices';
+
+  @override
+  String get devicesTitle => 'Devices';
+
+  @override
+  String get devicesThisPhone => 'This phone';
+
+  @override
+  String devicesSignedIn(String date) {
+    return 'Signed in $date';
+  }
+
+  @override
+  String devicesSignedInLastActive(String date, String active) {
+    return 'Signed in $date, last active $active';
+  }
+
+  @override
+  String devicesSignedOut(String device) {
+    return 'Signed out $device';
+  }
+
+  @override
+  String devicesSignOutFailed(String device) {
+    return 'Couldn’t sign out $device';
+  }
+
+  @override
+  String get devicesLoadFailed => 'Couldn’t load your devices';
+
+  @override
+  String get devicesLoadFailedHelp => 'Check your connection and try again.';
 
   @override
   String get settingsSignOutOthers => 'Sign out other devices';
