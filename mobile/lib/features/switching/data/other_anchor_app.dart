@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/storage/preferences_repository.dart';
-
 part 'other_anchor_app.g.dart';
 
 /// The Anchor app someone is switching from, still installed: the official
@@ -38,11 +36,6 @@ class OtherAnchorApp {
   Future<bool> open() async =>
       await _channel.invokeMethod<bool>('open', {'package': package}) ?? false;
 
-  /// Its page in Android's settings, where it can be uninstalled.
-  Future<bool> showDetails() async =>
-      await _channel.invokeMethod<bool>('showDetails', {'package': package}) ??
-      false;
-
   @override
   bool operator ==(Object other) =>
       other is OtherAnchorApp &&
@@ -54,7 +47,7 @@ class OtherAnchorApp {
 }
 
 /// The other Anchor app, looked for again whenever this one comes back to
-/// the front, so uninstalling it takes its notices away.
+/// the front, so the server page's note goes once it's uninstalled.
 @Riverpod(keepAlive: true)
 class OtherAnchorAppController extends _$OtherAnchorAppController {
   @override
@@ -66,19 +59,5 @@ class OtherAnchorAppController extends _$OtherAnchorAppController {
 
   Future<void> _refresh() async {
     state = AsyncData(await OtherAnchorApp.find());
-  }
-}
-
-/// Whether the user said they'd keep the other app, so the "you can
-/// uninstall it" banner stays away.
-@Riverpod(keepAlive: true)
-class OtherAppDismissed extends _$OtherAppDismissed {
-  @override
-  Future<bool> build() =>
-      ref.read(preferencesRepositoryProvider).getOtherAppDismissed();
-
-  Future<void> dismiss() async {
-    state = const AsyncData(true);
-    await ref.read(preferencesRepositoryProvider).setOtherAppDismissed();
   }
 }

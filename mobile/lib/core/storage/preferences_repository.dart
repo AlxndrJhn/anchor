@@ -128,14 +128,6 @@ class PreferencesRepository {
     );
   }
 
-  /// The user said they'd keep the Anchor app they switched from.
-  Future<bool> getOtherAppDismissed() async =>
-      await _read(StorageKeys.otherAppDismissed) == 'true';
-
-  Future<void> setOtherAppDismissed() async {
-    await _storage.write(key: StorageKeys.otherAppDismissed, value: 'true');
-  }
-
   Future<bool> getNotificationsAsked() async {
     final value = await _read(StorageKeys.notificationsAsked);
     return value == 'true';

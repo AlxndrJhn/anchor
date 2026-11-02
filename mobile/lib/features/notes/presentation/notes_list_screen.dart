@@ -33,7 +33,6 @@ import '../../../l10n/l10n.dart';
 import '../../reminders/data/reminder_permissions.dart';
 import '../../reminders/presentation/reminder_permission_prompt.dart';
 import '../../settings/presentation/editor_preferences_controller.dart';
-import '../../switching/presentation/switching_notices.dart';
 import '../../sync/data/sync_manager.dart';
 import '../../sync/presentation/sync_warning.dart';
 import '../../tags/domain/tag.dart';
@@ -737,16 +736,6 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             if (folder == NoteFolder.notes) ...[
               SliverToBoxAdapter(
                 child: SyncWarning(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    context.density.space8,
-                    16,
-                    context.density.space8,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: SwitchingDoneBanner(
                   padding: EdgeInsets.fromLTRB(
                     16,
                     context.density.space8,

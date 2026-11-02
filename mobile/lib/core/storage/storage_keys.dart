@@ -33,7 +33,6 @@ class StorageKeys {
   static const checkForUpdates = 'updates_check_automatically';
   static const dismissedUpdate = 'updates_dismissed_build';
   static const previewReleases = 'updates_preview_releases';
-  static const otherAppDismissed = 'switching_other_app_dismissed';
 
   /// What the app reads while it starts, when reading everything at once
   /// fails and it reads key by key.

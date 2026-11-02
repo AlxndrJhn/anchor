@@ -809,22 +809,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get switchingDoneTitle => 'Your notes are here.';
-
-  @override
-  String switchingDoneText(String app) {
-    return 'Once you’ve checked nothing’s missing, you can uninstall $app. Notes it never synced are only in it.';
-  }
-
-  @override
-  String switchingUninstall(String app) {
-    return 'Uninstall $app';
-  }
-
-  @override
-  String get switchingKeep => 'Keep it';
-
-  @override
   String get updateAvailable => 'Update available';
 
   @override

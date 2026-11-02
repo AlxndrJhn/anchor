@@ -4,8 +4,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.provider.Settings
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -13,9 +11,8 @@ import io.flutter.plugin.common.MethodChannel
 /**
  * The Anchor app someone is switching from, still on this phone (channel
  * anchor/other_app): "find" gives its {package, label}, or null when none is
- * installed; "open" starts it; "showDetails" opens its page in Android's
- * settings, where it can be uninstalled. The packages must be listed under
- * <queries> in the manifest, or Android hides them.
+ * installed; "open" starts it. The packages must be listed under <queries>
+ * in the manifest, or Android hides them.
  */
 class OtherAnchorPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
 
@@ -45,13 +42,6 @@ class OtherAnchorPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                 val launch = context.packageManager.getLaunchIntentForPackage(pkg)
                     ?: return result.success(false)
                 result.success(start(context, launch))
-            }
-            "showDetails" -> {
-                val pkg = call.argument<String>("package")
-                    ?.takeIf { it in PACKAGES } ?: return result.success(false)
-                val details = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .setData(Uri.fromParts("package", pkg, null))
-                result.success(start(context, details))
             }
             else -> result.notImplemented()
         }

@@ -114,7 +114,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Sign in on your phone without a password: the web's Settings › Sign in on your phone shows a QR code to scan from the app's first screen, or copies a magic link that opens the app and signs in (each works once, within 10 minutes) | ✓ | ✓ |
 | Updates itself from this fork's GitHub releases (Settings › Updates) | | ✓ |
 | Install and update it with F-Droid, from releases or also release candidates ([F-Droid](#f-droid)) | | ✓ |
-| Switching from the official app: Anchor+ reminds you to let it sync first, and offers to uninstall it once your notes are here (see [Switching from Anchor](#switching-from-anchor)) | | ✓ |
+| Switching from the official app: while it's installed, Anchor+ reminds you to let it sync first and can open it (see [Switching from Anchor](#switching-from-anchor)) | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |
 | Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)); with a tag or filter on, it first shows all notes again | | ✓ |
 | A chevron back to the top, two screens down the notes list | | ✓ |
@@ -254,9 +254,8 @@ Android lets neither read the other's notes. They meet on the server:
 2. Install Anchor+ (see [Mobile App](#mobile-app) or [F-Droid](#f-droid))
    and sign in to the same server. While the official app is installed, the
    first page reminds you to let it sync, with a button that opens it.
-3. Once your notes have downloaded, Anchor+ offers to uninstall the
-   official app. Check nothing is missing first: notes it never synced are
-   only in it.
+
+Both apps can stay installed and signed in to the same server.
 
 These stay on the phone and don't come along: the theme, density, font and
 text size, the notes view and sort order, folded checklists, home screen

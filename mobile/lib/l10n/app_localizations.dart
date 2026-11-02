@@ -1432,30 +1432,6 @@ abstract class AppLocalizations {
   /// **'Open {app}'**
   String switchingOpen(String app);
 
-  /// Title of the banner above the notes once they've downloaded, while the app the user switched from is still installed.
-  ///
-  /// In en, this message translates to:
-  /// **'Your notes are here.'**
-  String get switchingDoneTitle;
-
-  /// Text of that banner.
-  ///
-  /// In en, this message translates to:
-  /// **'Once you’ve checked nothing’s missing, you can uninstall {app}. Notes it never synced are only in it.'**
-  String switchingDoneText(String app);
-
-  /// Banner button that opens the old app's page in Android's settings, to uninstall it.
-  ///
-  /// In en, this message translates to:
-  /// **'Uninstall {app}'**
-  String switchingUninstall(String app);
-
-  /// Banner button that hides the uninstall banner for good.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep it'**
-  String get switchingKeep;
-
   /// Title of the banner above the notes and of the sheet, when a newer release of the app is out.
   ///
   /// In en, this message translates to:
