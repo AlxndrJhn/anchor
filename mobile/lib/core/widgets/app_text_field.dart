@@ -113,6 +113,7 @@ class _AppTextFieldState extends State<AppTextField> {
     );
 
     final density = context.density;
+    final rowPadding = widget.lines > 1 ? density.space12 : 0.0;
     final field = AnimatedContainer(
       duration: context.motion(AnchorTokens.motionDurationHover),
       // Taller with large text.
@@ -120,8 +121,8 @@ class _AppTextFieldState extends State<AppTextField> {
       padding: EdgeInsets.only(
         left: 16,
         right: widget.isPassword || widget.trailing != null ? 4 : 16,
-        top: widget.lines > 1 ? 12 : 0,
-        bottom: widget.lines > 1 ? 12 : 0,
+        top: rowPadding,
+        bottom: rowPadding,
       ),
       decoration: BoxDecoration(
         color: fill,
