@@ -1,4 +1,4 @@
-package com.zhfahim.anchor.widget
+package com.alxndrjhn.anchorplus.widget
 
 import android.content.Context
 import android.content.Intent
@@ -6,7 +6,7 @@ import android.content.res.Configuration
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
-import com.zhfahim.anchor.R
+import com.alxndrjhn.anchorplus.R
 import es.antonborri.home_widget.HomeWidgetPlugin
 import org.json.JSONObject
 

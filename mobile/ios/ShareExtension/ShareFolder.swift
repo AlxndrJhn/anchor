@@ -4,7 +4,7 @@ import Foundation
 /// saved shares in `inbox/`.
 enum ShareFolder {
     /// Also in AppDelegate.swift and both entitlements files.
-    static let appGroup = "group.com.zhfahim.anchor"
+    static let appGroup = "group.com.alxndrjhn.anchorplus"
 
     static var root: URL? {
         FileManager.default

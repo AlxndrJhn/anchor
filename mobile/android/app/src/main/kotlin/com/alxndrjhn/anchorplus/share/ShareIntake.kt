@@ -1,4 +1,4 @@
-package com.zhfahim.anchor.share
+package com.alxndrjhn.anchorplus.share
 
 import android.content.ContentResolver
 import android.content.Context
@@ -9,7 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
-import com.zhfahim.anchor.photos.JpegConverter
+import com.alxndrjhn.anchorplus.photos.JpegConverter
 import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException

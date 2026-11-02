@@ -16,7 +16,7 @@ import 'home_widget_payload.dart';
 part 'home_widget_service.g.dart';
 
 const _widgetProviderQualifiedName =
-    'com.zhfahim.anchor.widget.NotesWidgetProvider';
+    'com.alxndrjhn.anchorplus.widget.NotesWidgetProvider';
 
 @Riverpod(keepAlive: true)
 class HomeWidgetSync extends _$HomeWidgetSync {

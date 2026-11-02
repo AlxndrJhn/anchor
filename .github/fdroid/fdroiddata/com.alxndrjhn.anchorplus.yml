@@ -1,22 +1,12 @@
-# A draft of Anchor+'s recipe for F-Droid's own store, to send to
-# https://gitlab.com/fdroid/fdroiddata as metadata/com.zhfahim.anchor.fork.yml.
-# F-Droid builds it from source, without ML Kit (mobile/tool/fdroid_prebuild.sh)
-# and without the app's own updater (no FORK_BUILD / UPDATE_REPO), and signs
-# it with its own key.
-#
-# The builds are of a release tag fork-<version>.<build>: the version code is
-# the one the fork's release workflow gives it, 2000 + build, plus Flutter's
-# 1000 × the processor type (armeabi-v7a 1, arm64-v8a 2, x86_64 4). The tag
-# below is a placeholder: the first release that has the prebuild script.
-
+Categories:
+  - Note
+  - Writing
+License: AGPL-3.0-only
 AuthorName: AlxndrJhn
 WebSite: https://github.com/AlxndrJhn/anchor
 SourceCode: https://github.com/AlxndrJhn/anchor
 IssueTracker: https://github.com/AlxndrJhn/anchor/issues
 Changelog: https://github.com/AlxndrJhn/anchor/releases
-License: AGPL-3.0-only
-Categories:
-  - Writing
 
 Name: Anchor+
 Summary: Offline first notes, synced with your own Anchor server
@@ -35,9 +25,9 @@ RepoType: git
 Repo: https://github.com/AlxndrJhn/anchor.git
 
 Builds:
-  - versionName: 0.18.0-fork
-    versionCode: 3070
-    commit: fork-0.18.0.70
+  - versionName: 0.18.0-fork.c275a4e
+    versionCode: 3069
+    commit: fork-0.18.0.69
     subdir: mobile
     output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
     srclibs:
@@ -53,10 +43,11 @@ Builds:
     build:
       - export ORG_GRADLE_PROJECT_anchorFork=true
       - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm
-        --build-name=0.18.0-fork --build-number=2070
-  - versionName: 0.18.0-fork
-    versionCode: 4070
-    commit: fork-0.18.0.70
+        --build-name=0.18.0-fork.c275a4e --build-number=2069
+
+  - versionName: 0.18.0-fork.c275a4e
+    versionCode: 4069
+    commit: fork-0.18.0.69
     subdir: mobile
     output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
     srclibs:
@@ -72,10 +63,11 @@ Builds:
     build:
       - export ORG_GRADLE_PROJECT_anchorFork=true
       - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm64
-        --build-name=0.18.0-fork --build-number=2070
-  - versionName: 0.18.0-fork
-    versionCode: 6070
-    commit: fork-0.18.0.70
+        --build-name=0.18.0-fork.c275a4e --build-number=2069
+
+  - versionName: 0.18.0-fork.c275a4e
+    versionCode: 6069
+    commit: fork-0.18.0.69
     subdir: mobile
     output: build/app/outputs/flutter-apk/app-x86_64-release.apk
     srclibs:
@@ -91,9 +83,9 @@ Builds:
     build:
       - export ORG_GRADLE_PROJECT_anchorFork=true
       - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform=android-x64
-        --build-name=0.18.0-fork --build-number=2070
+        --build-name=0.18.0-fork.c275a4e --build-number=2069
 
 AutoUpdateMode: None
 UpdateCheckMode: Tags ^fork-[0-9.]+$
-CurrentVersion: 0.18.0-fork
-CurrentVersionCode: 6070
+CurrentVersion: 0.18.0-fork.c275a4e
+CurrentVersionCode: 6069

@@ -23,7 +23,7 @@ import UserNotifications
 
 enum ShareFolderChannel {
   /// Also in the share extension's ShareFolder.swift and both entitlements files.
-  static let appGroup = "group.com.zhfahim.anchor"
+  static let appGroup = "group.com.alxndrjhn.anchorplus"
 
   static func register(with messenger: FlutterBinaryMessenger) {
     let channel = FlutterMethodChannel(name: "anchor/share", binaryMessenger: messenger)

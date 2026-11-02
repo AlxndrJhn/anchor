@@ -6,7 +6,7 @@ name: Preview (v18rebase)
 # ghcr.io/<owner>/anchor:v18rebase (also :v18rebase-<sha>). Nothing is
 # released, so the fork's apps don't offer these as updates.
 #
-# The APK installs as "Anchor+ preview" (com.zhfahim.anchor.fork.preview),
+# The APK installs as "Anchor+ preview" (com.alxndrjhn.anchorplus.preview),
 # next to Anchor+ rather than over it: the redesign moves the notes to a new
 # local database, so try it on its own sign-in before trusting it with the
 # app you use.

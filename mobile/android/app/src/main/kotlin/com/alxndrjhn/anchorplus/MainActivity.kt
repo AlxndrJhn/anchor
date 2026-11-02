@@ -1,4 +1,4 @@
-package com.zhfahim.anchor
+package com.alxndrjhn.anchorplus
 
 import android.content.Intent
 import android.content.pm.ShortcutInfo
@@ -7,13 +7,13 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import com.zhfahim.anchor.debug.DebugVideoPlugin
-import com.zhfahim.anchor.files.DeviceFilesPlugin
-import com.zhfahim.anchor.lock.ScreenOffPlugin
-import com.zhfahim.anchor.photos.PhotoConverterPlugin
-import com.zhfahim.anchor.share.ShareFolderPlugin
-import com.zhfahim.anchor.update.UpdateInstallerPlugin
-import com.zhfahim.anchor.widget.NotesWidgetProvider
+import com.alxndrjhn.anchorplus.debug.DebugVideoPlugin
+import com.alxndrjhn.anchorplus.files.DeviceFilesPlugin
+import com.alxndrjhn.anchorplus.lock.ScreenOffPlugin
+import com.alxndrjhn.anchorplus.photos.PhotoConverterPlugin
+import com.alxndrjhn.anchorplus.share.ShareFolderPlugin
+import com.alxndrjhn.anchorplus.update.UpdateInstallerPlugin
+import com.alxndrjhn.anchorplus.widget.NotesWidgetProvider
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import io.flutter.embedding.android.FlutterFragment
 import io.flutter.embedding.android.FlutterFragmentActivity

@@ -407,6 +407,12 @@ Download the Android mobile app.
    Once installed, the app finds and installs new releases itself
    (Settings › Updates).
 
+After fork-0.18.0.69, Anchor+ is `com.alxndrjhn.anchorplus` on Android;
+before, it was `com.zhfahim.anchor.fork`. Android sees them as two apps, so
+the new one installs next to the old one instead of updating it. Sign in to
+your server in the new one, check your notes are there, then uninstall the old
+one: notes that never synced live only in the old one.
+
 ### F-Droid
 
 This fork has two F-Droid repositories, on its GitHub Pages site. Open
@@ -435,7 +441,7 @@ Settings › Updates still checks when asked.
 Anchor+ isn't in F-Droid's own store yet. For that F-Droid builds it from
 source, without Google's ML Kit and so without "Grab image text":
 `mobile/tool/fdroid_prebuild.sh` makes a checkout that build, and
-`.github/fdroid/fdroiddata/` has the recipe to send to F-Droid.
+`.github/fdroid/fdroiddata/` has the recipe to send to F-Droid, and how it works.
 
 ## Desktop App
 
