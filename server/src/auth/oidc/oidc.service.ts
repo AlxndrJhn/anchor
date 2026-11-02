@@ -35,7 +35,10 @@ export class OidcService {
   /**
    * Get authorization URL to redirect user to OIDC provider
    */
-  async getAuthorizationUrl(redirectUrl?: string): Promise<string> {
+  async getAuthorizationUrl(
+    redirectUrl?: string,
+    linkUserId?: string,
+  ): Promise<string> {
     const validatedRedirect = this.validateRedirectUrl(redirectUrl);
 
     // Generate state for CSRF protection
@@ -49,6 +52,7 @@ export class OidcService {
       state,
       pkce.codeVerifier,
       validatedRedirect,
+      linkUserId,
     );
 
     // Build authorization URL
@@ -58,13 +62,18 @@ export class OidcService {
     );
   }
 
+  /** The state belongs to a signed-in person connecting their account. */
+  isLinkState(state: string): boolean {
+    return !!this.oidcStateService.getState(state)?.linkUserId;
+  }
+
   /**
    * Handle OIDC callback - exchange code for tokens and create/link user
    */
   async handleCallback(
     callbackUrl: string,
     stateFromProvider: string,
-  ): Promise<OidcAuthResult> {
+  ): Promise<OidcAuthResult | { linked: true }> {
     // Retrieve and validate state
     const storedState = this.oidcStateService.getState(stateFromProvider);
     if (!storedState) {
@@ -98,6 +107,12 @@ export class OidcService {
 
       // Extract user claims from token response and userinfo
       const claims = this.extractUserClaims(tokenResponse, userinfo);
+
+      // A signed-in person connecting their account keeps their session.
+      if (storedState.linkUserId) {
+        await this.oidcUserService.linkUser(storedState.linkUserId, claims);
+        return { linked: true };
+      }
 
       // Find or create user (auto-links by email when match found)
       const user = await this.oidcUserService.findOrCreateUser(claims);

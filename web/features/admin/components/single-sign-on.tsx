@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy } from "lucide-react";
 import * as React from "react";
 import { useShellStore } from "@/components/layout/shell-store";
 import { Button } from "@/components/ui/button";
@@ -18,10 +19,57 @@ import { copyText } from "@/lib/clipboard";
 import { usePresence } from "@/lib/hooks/use-presence";
 import { useRetry } from "@/lib/hooks/use-retry";
 import { cn } from "@/lib/utils";
-import { getOidcSettings, updateOidcSettings } from "../api";
+import { getOidcSettings, testOidcIssuer, updateOidcSettings } from "../api";
 import { adminKeys } from "../queries";
-import type { UpdateOidcSettingsDto } from "../types";
+import type { OidcIssuerTest, UpdateOidcSettingsDto } from "../types";
 import { cardClass, LockNote } from "./admin-parts";
+
+const PHONE_CALLBACK_URL = "anchor://oidc/callback";
+
+function CopyAddress({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = React.useState(false);
+  React.useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+  return (
+    <Input
+      readOnly
+      mono
+      aria-label={label}
+      value={value}
+      boxClassName="bg-card"
+      end={
+        <InputButton
+          aria-label={`Copy ${label.toLowerCase()}`}
+          onClick={() =>
+            copyText(value).then(
+              () => setCopied(true),
+              () => toast.error("Couldn’t copy the address"),
+            )
+          }
+        >
+          {copied ? "Copied" : "Copy"}
+        </InputButton>
+      }
+    />
+  );
+}
+
+/** What to ask whoever runs the provider for, ready to paste in a message. */
+function providerRequest(providerName: string, callbackUrl: string) {
+  return [
+    `Could you add Anchor+ as an OIDC client in ${providerName}? In Pocket ID, that’s OIDC Clients → Add OIDC Client.`,
+    "",
+    "- Name: Anchor+",
+    `- Callback URLs: ${callbackUrl}`,
+    `  and ${PHONE_CALLBACK_URL} (for the phone app)`,
+    "- Public client: yes, with PKCE (the phone app can’t keep a secret)",
+    "",
+    "Then send me its client ID and the issuer URL (your Pocket ID’s address). Thanks!",
+  ].join("\n");
+}
 
 type OidcForm = Required<
   Pick<
@@ -65,13 +113,13 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
     issuer?: string;
     client?: string;
   }>({});
-  const [copied, setCopied] = React.useState(false);
   React.useEffect(() => setForm(saved), [saved]);
-  React.useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 1500);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
+  const test = useMutation({
+    mutationFn: testOidcIssuer,
+    onError: () => toast.error("Couldn’t test the issuer URL"),
+  });
+  const testResult: OidcIssuerTest | undefined =
+    test.variables === form?.issuerUrl.trim() ? test.data : undefined;
 
   const dirty =
     !!form &&
@@ -191,22 +239,61 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
                 >
                   <Input
                     value={form.providerName}
+                    placeholder="Pocket ID"
                     readOnly={locked}
                     onChange={(e) =>
                       updateForm({ providerName: e.target.value })
                     }
                   />
                 </Field>
-                <Field label="Issuer URL" error={errors.issuer}>
+                <Field
+                  label="Issuer URL"
+                  error={
+                    errors.issuer ??
+                    (testResult && !testResult.ok && (
+                      <>
+                        {testResult.message}{" "}
+                        {testResult.issuer && !locked && (
+                          <button
+                            type="button"
+                            className="cursor-pointer font-semibold underline underline-offset-2"
+                            onClick={() =>
+                              updateForm({ issuerUrl: testResult.issuer })
+                            }
+                          >
+                            Use it
+                          </button>
+                        )}
+                      </>
+                    ))
+                  }
+                  help={
+                    testResult?.ok
+                      ? testResult.supportsPkce
+                        ? `Found ${testResult.issuer}.`
+                        : `Found ${testResult.issuer}, but it doesn’t offer PKCE, which the phone app needs.`
+                      : "Your provider’s address, like https://id.example.com for Pocket ID."
+                  }
+                >
                   <Input
                     value={form.issuerUrl}
                     readOnly={locked}
                     inputMode="url"
-                    placeholder="https://auth.example.com"
+                    placeholder="https://id.example.com"
                     onChange={(e) => {
                       updateForm({ issuerUrl: e.target.value });
                       setErrors((prev) => ({ ...prev, issuer: undefined }));
                     }}
+                    end={
+                      form.issuerUrl.trim() && (
+                        <InputButton
+                          disabled={test.isPending}
+                          onClick={() => test.mutate(form.issuerUrl.trim())}
+                        >
+                          {test.isPending ? "Testing…" : "Test"}
+                        </InputButton>
+                      )
+                    }
                   />
                 </Field>
               </div>
@@ -294,33 +381,44 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
             </Row>
             <Row className="block">
               <div className="grid gap-1.5 rounded-lg bg-muted px-3.5 py-3">
-                <b className="font-semibold text-meta">Callback URL</b>
-                <Input
-                  readOnly
-                  mono
-                  aria-label="Callback URL"
+                <b className="font-semibold text-meta">Callback URLs</b>
+                <CopyAddress
+                  label="Web callback URL"
                   value={settings.callbackUrl}
-                  boxClassName="bg-card"
-                  end={
-                    <InputButton
-                      onClick={() =>
-                        copyText(settings.callbackUrl).then(
-                          () => setCopied(true),
-                          () => toast.error("Couldn’t copy the address"),
-                        )
-                      }
-                    >
-                      {copied ? "Copied" : "Copy"}
-                    </InputButton>
-                  }
+                />
+                <CopyAddress
+                  label="Phone app callback URL"
+                  value={PHONE_CALLBACK_URL}
                 />
                 <FieldDescription>
-                  Add this as the redirect URL in {providerName}. It’s based on{" "}
+                  Add both as callback URLs in {providerName}. The first is
+                  based on{" "}
                   <code className="rounded-[5px] bg-foreground/7 px-1.25 py-px font-mono text-foreground text-small">
                     APP_URL
                   </code>
-                  .
+                  . In Pocket ID, that’s OIDC Clients → Add OIDC Client; tick
+                  Public Client and PKCE so the phone app can sign in too, and
+                  copy its client ID here.
                 </FieldDescription>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="justify-self-start"
+                  onClick={() =>
+                    copyText(
+                      providerRequest(providerName, settings.callbackUrl),
+                    ).then(
+                      () =>
+                        toast.success(
+                          `Copied. Send it to whoever runs ${providerName}.`,
+                        ),
+                      () => toast.error("Couldn’t copy the request"),
+                    )
+                  }
+                >
+                  <Copy aria-hidden />
+                  Copy a request for your {providerName} admin
+                </Button>
               </div>
             </Row>
           </>

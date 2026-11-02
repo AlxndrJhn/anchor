@@ -9,8 +9,12 @@ import {
   BadRequestException,
   HttpException,
   InternalServerErrorException,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import type { User } from 'src/generated/prisma/client';
+import { JwtAuthGuard } from '../jwt-auth.guard';
+import { CurrentUser } from '../decorators/current-user.decorator';
 import { OidcService } from './oidc.service';
 import { OidcConfigService } from './oidc-config.service';
 import { getErrorMessage } from './oidc.utils';
@@ -55,6 +59,23 @@ export class OidcController {
   }
 
   /**
+   * Start connecting the signed-in person to the provider. Returns the
+   * provider's address for the app to open, since a redirect can't carry the
+   * session.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('link')
+  async link(@CurrentUser() user: User) {
+    const isEnabled = await this.oidcConfigService.isEnabled();
+    if (!isEnabled) {
+      throw new BadRequestException('OIDC is not enabled');
+    }
+    return {
+      url: await this.oidcService.getAuthorizationUrl(undefined, user.id),
+    };
+  }
+
+  /**
    * Handle OIDC callback - redirects to frontend with one-time exchange code
    */
   @Get('callback')
@@ -68,23 +89,28 @@ export class OidcController {
   ) {
     const frontendUrl = this.oidcConfigService.getAppUrl();
 
+    // Connecting a signed-in account goes back to Settings, where it began.
+    const isLink = !!state && this.oidcService.isLinkState(state);
+    const failTo = (message: string, status?: number) =>
+      isLink
+        ? `${frontendUrl}/settings?provider_error=${encodeURIComponent(message)}`
+        : `${frontendUrl}/login?error=${encodeURIComponent(message)}${status ? `&status=${status}` : ''}`;
+
     if (error) {
-      const errorMsg = errorDescription || error;
-      return res.redirect(
-        `${frontendUrl}/login?error=${encodeURIComponent(errorMsg)}`,
-      );
+      return res.redirect(failTo(errorDescription || error));
     }
 
     // Anchor's own errors carry a status; the provider's come without one.
     if (!code || !state) {
-      return res.redirect(
-        `${frontendUrl}/login?error=${encodeURIComponent('Missing authorization code or state')}&status=400`,
-      );
+      return res.redirect(failTo('Missing authorization code or state', 400));
     }
 
     try {
       const callbackUrl = `${this.oidcConfigService.getAppUrl()}${req.originalUrl}`;
       const result = await this.oidcService.handleCallback(callbackUrl, state);
+      if ('linked' in result) {
+        return res.redirect(`${frontendUrl}/settings?provider=connected`);
+      }
       const exchangeCode = this.oidcService.createExchangeCode(result);
       const redirectUrl = result.redirectUrl ?? '/';
 
@@ -97,9 +123,7 @@ export class OidcController {
         'Failed to process OIDC callback',
       );
       const status = error instanceof HttpException ? error.getStatus() : 500;
-      return res.redirect(
-        `${frontendUrl}/login?error=${encodeURIComponent(errorMsg)}&status=${status}`,
-      );
+      return res.redirect(failTo(errorMsg, status));
     }
   }
 

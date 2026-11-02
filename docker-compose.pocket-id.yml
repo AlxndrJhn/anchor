@@ -1,0 +1,32 @@
+# Sign in to Anchor+ with a Pocket ID (https://pocket-id.org) that's already
+# running. Use it on top of docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.pocket-id.yml up -d
+#
+# Ask your Pocket ID admin to add an OIDC client (OIDC Clients → Add OIDC
+# Client) with:
+#   - Public Client and PKCE ticked (the phone app can't keep a secret)
+#   - Callback URLs: ${ANCHOR_URL}/api/auth/oidc/callback
+#                    anchor://oidc/callback
+# They give you back its client ID. Then put these in a .env file next to
+# this one:
+#
+#   ANCHOR_URL=https://notes.example.com     # where Anchor+ is reached
+#   POCKET_ID_URL=https://id.example.com     # your Pocket ID
+#   POCKET_ID_CLIENT_ID=...                  # from your Pocket ID admin
+#   # ANCHOR_PROVIDER_ONLY=true              # hide email and password sign-in
+#
+# Anchor+ reaches Pocket ID at POCKET_ID_URL too, so it must work from inside
+# the container, not only in your browser. Without this file, the same is
+# set up in Anchor+ under Admin → Sign-in → Single sign-on, which also lists
+# the callback URLs to copy.
+
+services:
+  anchor-plus:
+    environment:
+      - APP_URL=${ANCHOR_URL:?Set ANCHOR_URL in .env}
+      - OIDC_ENABLED=true
+      - OIDC_PROVIDER_NAME=Pocket ID
+      - OIDC_ISSUER_URL=${POCKET_ID_URL:?Set POCKET_ID_URL in .env}
+      - OIDC_CLIENT_ID=${POCKET_ID_CLIENT_ID:?Set POCKET_ID_CLIENT_ID in .env}
+      - DISABLE_INTERNAL_AUTH=${ANCHOR_PROVIDER_ONLY:-false}

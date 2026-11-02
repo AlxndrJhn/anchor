@@ -7,6 +7,7 @@ import { OidcClientService } from './oidc-client.service';
 import { OidcStateService } from './oidc-state.service';
 import { OidcUserService } from './oidc-user.service';
 import { UserStatus } from '../../generated/prisma/enums';
+import type { OidcAuthResult } from './oidc.types';
 
 describe('OidcService redirects', () => {
   const APP_URL = 'https://notes.example.com';
@@ -38,6 +39,7 @@ describe('OidcService redirects', () => {
     deleteState: vi.fn(),
   };
   const oidcUserService = {
+    linkUser: vi.fn(() => Promise.resolve({ id: 'user-1' })),
     findOrCreateUser: vi.fn(() =>
       Promise.resolve({
         id: 'user-1',
@@ -73,11 +75,12 @@ describe('OidcService redirects', () => {
 
   const storedRedirect = () => oidcStateService.storeState.mock.lastCall?.[2];
 
-  const finishSignIn = (redirectUrl: string) => {
+  const finishCallback = (redirectUrl?: string, linkUserId?: string) => {
     oidcStateService.getState.mockReturnValue({
       state: 'state-1',
       codeVerifier: 'verifier',
       redirectUrl,
+      linkUserId,
       expiresAt: Date.now() + 60_000,
     });
     return service.handleCallback(
@@ -85,6 +88,8 @@ describe('OidcService redirects', () => {
       'state-1',
     );
   };
+  const finishSignIn = (redirectUrl: string) =>
+    finishCallback(redirectUrl) as Promise<OidcAuthResult>;
 
   describe('when signing in starts', () => {
     it.each([
@@ -135,6 +140,25 @@ describe('OidcService redirects', () => {
       expect((await finishSignIn('/notes/abc?x=1#y')).redirectUrl).toBe(
         '/notes/abc?x=1#y',
       );
+    });
+  });
+
+  describe('when a signed-in person connects their account', () => {
+    it('remembers who started it', async () => {
+      await service.getAuthorizationUrl(undefined, 'user-1');
+      expect(oidcStateService.storeState.mock.lastCall?.[3]).toBe('user-1');
+    });
+
+    it('links that person and signs no one in', async () => {
+      expect(await finishCallback(undefined, 'user-1')).toEqual({
+        linked: true,
+      });
+      expect(oidcUserService.linkUser).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ subject: 'sub-1' }),
+      );
+      expect(oidcUserService.findOrCreateUser).not.toHaveBeenCalled();
+      expect(authService.createTokenPair).not.toHaveBeenCalled();
     });
   });
 });

@@ -95,6 +95,7 @@ describe('OidcUserService', () => {
     users = [];
     registrationMode = 'enabled';
     const prisma = {
+      ...tx,
       $transaction: (fn: (t: typeof tx) => Promise<unknown>) => fn(tx),
     };
     const settings = {
@@ -161,6 +162,36 @@ describe('OidcUserService', () => {
       const user = await service.findOrCreateUser(claims());
       expect(user?.status).toBe(UserStatus.active);
       expect(user?.isAdmin).toBe(true);
+    });
+  });
+
+  describe('connecting a signed-in account', () => {
+    beforeEach(() => addUser({ id: 'me', email: 'me@example.com' }));
+
+    it('links even when the emails differ and are unverified', async () => {
+      const user = await service.linkUser(
+        'me',
+        claims({ email: 'other@example.com', emailVerified: false }),
+      );
+      expect(user?.id).toBe('me');
+      expect(find({ id: 'me' })?.oidcSubject).toBe('sub-pat');
+      expect(find({ id: 'me' })?.email).toBe('me@example.com');
+    });
+
+    it('turns down a provider account someone else has', async () => {
+      addUser({ id: 'them', oidcSubject: 'sub-pat' });
+      await expect(service.linkUser('me', claims())).rejects.toThrow(
+        ConflictException,
+      );
+      expect(find({ id: 'me' })?.oidcSubject).toBeNull();
+    });
+
+    it('keeps a different provider account it already has', async () => {
+      find({ id: 'me' })!.oidcSubject = 'sub-old';
+      await expect(service.linkUser('me', claims())).rejects.toThrow(
+        ConflictException,
+      );
+      expect(find({ id: 'me' })?.oidcSubject).toBe('sub-old');
     });
   });
 });

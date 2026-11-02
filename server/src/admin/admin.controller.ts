@@ -9,6 +9,8 @@ import {
   Param,
   Query,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminGuard } from './admin.guard';
@@ -20,6 +22,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateRegistrationModeDto } from './dto/update-registration-mode.dto';
 import { UpdateOidcSettingsDto } from './dto/update-oidc-settings.dto';
 import { UpdateSecondFactorDto } from './dto/update-second-factor.dto';
+import { TestOidcIssuerDto } from './dto/test-oidc-issuer.dto';
 
 @Controller('api/admin')
 @UseGuards(AdminGuard)
@@ -121,5 +124,11 @@ export class AdminController {
   @Put('settings/second-factor')
   updateSecondFactorSettings(@Body() dto: UpdateSecondFactorDto) {
     return this.adminService.setSecondFactorRequired(dto.required);
+  }
+
+  @Post('settings/oidc/test')
+  @HttpCode(HttpStatus.OK)
+  testOidcIssuer(@Body() dto: TestOidcIssuerDto) {
+    return this.adminService.testOidcIssuer(dto.issuerUrl);
   }
 }

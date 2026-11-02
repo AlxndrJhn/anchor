@@ -11,6 +11,7 @@ import {
   SECOND_FACTOR_GRACE_DAYS,
   SecondFactorService,
 } from '../auth/second-factor.service';
+import { OidcClientService } from '../auth/oidc/oidc-client.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { NoteState } from 'src/generated/prisma/enums';
@@ -28,6 +29,7 @@ export class AdminService {
     private settingsService: SettingsService,
     private oidcConfigService: OidcConfigService,
     private secondFactorService: SecondFactorService,
+    private oidcClientService: OidcClientService,
   ) {}
 
   async getStats() {
@@ -395,5 +397,9 @@ export class AdminService {
   async setSecondFactorRequired(required: boolean) {
     await this.secondFactorService.setRequired(required);
     return this.getSecondFactorSettings();
+  }
+
+  testOidcIssuer(issuerUrl: string) {
+    return this.oidcClientService.testIssuer(issuerUrl);
   }
 }

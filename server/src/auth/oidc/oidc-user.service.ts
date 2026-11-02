@@ -153,6 +153,45 @@ export class OidcUserService {
   }
 
   /**
+   * Connect a signed-in person to the provider account they just signed in
+   * with. Their email can differ, and needn't be verified: they proved both.
+   */
+  async linkUser(userId: string, claims: OidcUserClaims) {
+    const holder = await this.prisma.user.findUnique({
+      where: { oidcSubject: claims.subject },
+      select: { id: true },
+    });
+    if (holder && holder.id !== userId) {
+      throw new ConflictException(
+        'That sign-in account is already connected to someone else here.',
+      );
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { oidcSubject: true },
+    });
+    if (!user) {
+      throw new ForbiddenException('User not found');
+    }
+    if (user.oidcSubject && user.oidcSubject !== claims.subject) {
+      throw new ConflictException(
+        'Your account is already connected to a different sign-in account.',
+      );
+    }
+    if (!user.oidcSubject) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { oidcSubject: claims.subject },
+      });
+      this.logger.log(`Linked OIDC subject to signed-in user ${userId}`);
+    }
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: OIDC_USER_SELECT,
+    });
+  }
+
+  /**
    * Create a new user from OIDC claims (within a transaction), as the sign-up
    * mode allows. The very first account is always allowed, so an instance
    * that only signs in with OIDC can get its admin.

@@ -263,6 +263,7 @@ export class AuthService {
         passwordSignIn: true,
         totpSecret: true,
         totpRecoveryCodes: true,
+        oidcSubject: true,
         passkeys: {
           select: { id: true, name: true, createdAt: true, lastUsedAt: true },
           orderBy: { createdAt: 'asc' },
@@ -275,6 +276,7 @@ export class AuthService {
       passwordSignIn: user.passwordSignIn,
       twoStep: !!user.totpSecret,
       recoveryCodesLeft: user.totpRecoveryCodes.length,
+      providerLinked: !!user.oidcSubject,
       passkeys: user.passkeys,
       secondFactor: await this.secondFactorService.getStatus(userId),
     };

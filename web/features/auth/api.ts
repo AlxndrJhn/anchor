@@ -198,3 +198,9 @@ export async function regenerateRecoveryCodes(
     .post("api/auth/two-step/recovery-codes", { json: { code } })
     .json<RecoveryCodes>();
 }
+
+/** The provider's sign-in page that connects this account to it. */
+export async function startProviderLink(): Promise<string> {
+  const { url } = await api.post("api/auth/oidc/link").json<{ url: string }>();
+  return url;
+}
