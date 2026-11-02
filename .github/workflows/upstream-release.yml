@@ -1,15 +1,20 @@
 name: Upstream release
 
-# When ZhFahim/anchor publishes a regular release (not a prerelease), Claude
-# merges upstream's main into a branch upstream-sync/<tag> off this fork's
-# main, resolves the conflicts, runs the checks and opens a PR. GitHub can't
-# send another repository's release events here, so this looks every few
-# hours; a release whose commit main already has is skipped, and so is one
-# that already has a PR (an open one, or a closed one unless started by hand).
+# When ZhFahim/anchor publishes a release or a release candidate, Claude
+# merges upstream's main into the branch upstream-sync off this fork's main,
+# resolves the conflicts, runs the checks and opens a PR. Candidates count
+# because upstream's big changes land with them: the 0.18 redesign was on
+# upstream's main two days before 0.18.0-rc.1, and the fork kept moving away
+# from it for days while 0.18.0 itself wasn't out.
 #
-# Start it by hand (Actions › Upstream release › Run workflow) to try again
-# from main after closing its PR, or to carry on with its PR while it is still
-# a draft.
+# GitHub can't send another repository's release events here, so this looks
+# every few hours. It skips a release whose commit main already has, and one
+# whose PR was closed. There is one PR at a time: a newer release goes into
+# the open one (retitled for it) unless that PR is a draft, which waits for
+# the owner.
+#
+# Start it by hand (Actions › Upstream release › Run workflow) to carry on
+# with a draft PR, or to try a release again after closing its PR.
 #
 # Upstream's 0.18 mobile redesign came in one upstream PR that conflicted with
 # 147 of the fork's files, and rebasing the fork's 156 commits onto it took
@@ -60,31 +65,41 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+          BRANCH: upstream-sync
         run: |
-          # /releases/latest is the newest release that is neither a draft
-          # nor a prerelease.
-          TAG=$(gh api "repos/$UPSTREAM/releases/latest" -q .tag_name)
-          BRANCH="upstream-sync/$TAG"
+          # The newest release, candidates included. Upstream tags them
+          # v<version>, e.g. v0.18.0 and v0.18.0-rc.2.
+          TAG=$(gh api "repos/$UPSTREAM/releases?per_page=20" -q '[.[] | select(.draft | not)][0].tag_name')
+          VERSION=${TAG#v}
           git fetch --no-tags "https://github.com/$UPSTREAM.git" "refs/tags/$TAG:refs/upstream-release"
           if git merge-base --is-ancestor refs/upstream-release origin/main; then
             echo "main already has upstream $TAG."
+            exit 0
+          fi
+          # Its PRs are titled "Merge upstream ZhFahim/anchor <version>".
+          CLOSED=$(gh pr list --head "$BRANCH" --state closed --json url,title |
+            jq -r --arg v " $VERSION" '[.[] | select(.title | endswith($v))][0].url // ""')
+          if [ -n "$CLOSED" ] && [ "$MANUAL" != true ]; then
+            echo "$TAG had a PR that was closed: $CLOSED. Run this workflow by hand to try again."
             exit 0
           fi
           OPEN=$(gh pr list --head "$BRANCH" --state open --json url,isDraft -q '.[0] | select(.)')
           RESUME=false
           if [ -n "$OPEN" ]; then
             URL=$(jq -r .url <<< "$OPEN")
-            if [ "$MANUAL" != true ] || [ "$(jq -r .isDraft <<< "$OPEN")" != true ]; then
-              echo "$TAG already has a PR: $URL"
-              exit 0
+            git fetch --no-tags origin "$BRANCH"
+            if [ "$MANUAL" != true ]; then
+              if git merge-base --is-ancestor refs/upstream-release FETCH_HEAD; then
+                echo "$URL already has upstream $TAG."
+                exit 0
+              fi
+              if [ "$(jq -r .isDraft <<< "$OPEN")" = true ]; then
+                echo "$URL is a draft, which waits for you. Run this workflow by hand to carry on with it."
+                exit 0
+              fi
             fi
             echo "Carrying on with $URL."
             RESUME=true
-          fi
-          CLOSED=$(gh pr list --head "$BRANCH" --state closed --json url -q '.[0].url')
-          if [ -n "$CLOSED" ] && [ "$MANUAL" != true ]; then
-            echo "$TAG had a PR that was closed: $CLOSED. Run this workflow by hand to try again."
-            exit 0
           fi
           echo "Upstream released $TAG; merging it."
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -158,8 +173,9 @@ jobs:
           prompt: |
             You are in a checkout of AlxndrJhn/anchor, "Anchor+": a fork of
             ZhFahim/anchor (remote `upstream`) with its own features. Upstream
-            just released ${{ needs.check.outputs.tag }}. Bring upstream's
-            `main` into the fork and open a PR for the owner to review.
+            just released ${{ needs.check.outputs.tag }} (a release
+            candidate if its name ends in -rc.<n>). Bring upstream's `main`
+            into the fork and open a PR for the owner to review.
 
             Merge, never rebase. For upstream 0.18 the fork's 156 commits were
             rebased onto upstream's mobile redesign, which conflicted with 147
@@ -173,13 +189,18 @@ jobs:
 
             1. Start the branch `${{ needs.check.outputs.branch }}`. Carry
                on from an earlier run: ${{ needs.check.outputs.resume }}.
-               - true: an earlier run already started the branch and its
-                 draft PR. Check the branch out from origin, read the PR
-                 (`gh pr view ${{ needs.check.outputs.branch }}`) and the
-                 branch's log, and carry on where it stopped.
+               - true: the branch has an open PR from an earlier run, maybe
+                 for an earlier upstream release. Check the branch out from
+                 origin, read the PR (`gh pr view ${{ needs.check.outputs.branch }}`)
+                 and the branch's log, and carry on where it stopped. Then
+                 merge upstream/main into it as below; when it is already in,
+                 there's nothing to merge. Retitle the PR for
+                 ${{ needs.check.outputs.tag }} and rewrite its body to cover
+                 everything the branch brings in. If the branch is behind
+                 `main`, merge `main` into it first.
                - false: create it from `main`. If it already exists on
-                 origin (from a PR the owner closed), start over from `main`
-                 anyway and overwrite it with `git push --force`.
+                 origin (from an earlier PR), start over from `main` anyway
+                 and overwrite it with `git push --force`.
             2. See how much conflicts before merging:
                `git merge-tree --write-tree --name-only HEAD upstream/main`
                lists the conflicting files after its first line.
@@ -229,7 +250,9 @@ jobs:
                that main has too; list them in the PR.
             5. Push the branch and open a PR against `main` with `gh pr create`
                (or update the draft and mark it ready with `gh pr ready`),
-               titled like "Merge upstream ZhFahim/anchor 0.19.0". Write the
+               titled "Merge upstream ZhFahim/anchor <version>", e.g.
+               "Merge upstream ZhFahim/anchor 0.19.0-rc.1". The workflow finds
+               the PR by that title, so keep the version last. Write the
                body for the fork's owner, in plain sentences, like the body of
                the PR for 957069c2 (`gh pr list --state merged --search "Merge
                upstream" --json number,body`): how many upstream commits and
