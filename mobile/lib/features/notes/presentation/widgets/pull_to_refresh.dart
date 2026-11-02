@@ -16,11 +16,15 @@ class PullToRefresh extends StatefulWidget {
     super.key,
     required this.onSync,
     required this.isOnline,
+    this.hasServer = true,
   });
 
   /// Completes with whether everything synced.
   final Future<bool> Function() onSync;
   final bool Function() isOnline;
+
+  /// False while notes stay on this phone: a pull only says so.
+  final bool hasServer;
 
   @override
   State<PullToRefresh> createState() => _PullToRefreshState();
@@ -38,6 +42,10 @@ class _PullToRefreshState extends State<PullToRefresh> {
 
   Future<void> _refresh() async {
     final l10n = context.l10n;
+    if (!widget.hasServer) {
+      await _announce(l10n.pullNoServer, const Duration(milliseconds: 1200));
+      return;
+    }
     if (!widget.isOnline()) {
       await _announce(l10n.pullOffline, const Duration(milliseconds: 1600));
       return;

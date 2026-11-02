@@ -731,10 +731,10 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
         parent: AlwaysScrollableScrollPhysics(),
       ),
       // Searching still pulls: a sync can bring in what's searched for.
-      // Without a server there's nothing to pull.
-      refreshSliver: isSelecting || ref.watch(isLocalOnlyProvider)
+      refreshSliver: isSelecting
           ? null
           : PullToRefresh(
+              hasServer: !ref.watch(isLocalOnlyProvider),
               isOnline: () => ref.read(isOnlineProvider),
               onSync: () =>
                   ref.read(syncManagerProvider.notifier).requestSync(),

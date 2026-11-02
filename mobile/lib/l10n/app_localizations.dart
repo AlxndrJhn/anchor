@@ -3724,6 +3724,12 @@ abstract class AppLocalizations {
   /// **'You’re offline. Your changes are saved on this phone.'**
   String get pullOffline;
 
+  /// Shown when the person pulls down the list to sync while notes are kept on this phone only, with no server to sync with.
+  ///
+  /// In en, this message translates to:
+  /// **'No server, already up to date'**
+  String get pullNoServer;
+
   /// Shown above the list while a pull-down sync runs.
   ///
   /// In en, this message translates to:

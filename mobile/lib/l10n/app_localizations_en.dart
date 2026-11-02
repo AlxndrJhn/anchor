@@ -2494,6 +2494,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'You’re offline. Your changes are saved on this phone.';
 
   @override
+  String get pullNoServer => 'No server, already up to date';
+
+  @override
   String get pullSyncing => 'Syncing…';
 
   @override

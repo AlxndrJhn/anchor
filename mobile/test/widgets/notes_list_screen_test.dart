@@ -149,15 +149,16 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the list pulls to sync with a server, but not without one', (
-    tester,
-  ) async {
+  testWidgets('the list pulls to sync only with a server', (tester) async {
+    PullToRefresh pull() => tester.widget<PullToRefresh>(
+      find.byType(PullToRefresh, skipOffstage: false),
+    );
     await pumpList(tester, notesNamed('Note', 2));
-    expect(find.byType(PullToRefresh, skipOffstage: false), findsOneWidget);
+    expect(pull().hasServer, isTrue);
 
     await tester.pumpWidget(const SizedBox());
     await pumpList(tester, notesNamed('Note', 2), localOnly: true);
-    expect(find.byType(PullToRefresh, skipOffstage: false), findsNothing);
+    expect(pull().hasServer, isFalse);
   });
 
   testWidgets('a pull syncs while searching too', (tester) async {
