@@ -206,14 +206,16 @@ class EditableTextBlock extends StatelessWidget {
         indentLevelCounts: indentLevelCounts,
         count: count,
       );
+      // Anchor+: each line is laid out in its own direction.
+      final nodeTextDirection = getDirectionOfNode(line, textDirection);
       final editableTextLine = EditableTextLine(
         line,
         leading != null
-            ? Directionality(textDirection: textDirection, child: leading)
+            ? Directionality(textDirection: nodeTextDirection, child: leading)
             : null,
         TextLine(
           line: line,
-          textDirection: textDirection,
+          textDirection: nodeTextDirection,
           embedBuilder: embedBuilder,
           textSpanBuilder: textSpanBuilder,
           customStyleBuilder: customStyleBuilder,
@@ -229,7 +231,7 @@ class EditableTextBlock extends StatelessWidget {
         ),
         horizontalSpacingForBlock,
         _getSpacingForLine(line, index, count, defaultStyles),
-        textDirection,
+        nodeTextDirection,
         textSelection,
         color,
         enableInteractiveSelection,
@@ -239,7 +241,6 @@ class EditableTextBlock extends StatelessWidget {
         styles!.inlineCode!,
         null,
       );
-      final nodeTextDirection = getDirectionOfNode(line, textDirection);
       children.add(
         Directionality(
           textDirection: nodeTextDirection,

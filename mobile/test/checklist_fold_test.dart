@@ -15,6 +15,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 final _plain = AnchorColors.light.notes['none']!;
 
@@ -206,6 +207,27 @@ void main() {
     );
     expect(row.top, greaterThan(coffee.bottom));
     expect(row.bottom, lessThan(eggs.top));
+  });
+
+  testWidgets('in a right-to-left list the row starts at the right', (
+    tester,
+  ) async {
+    await pumpNote(tester, const [
+      ('חלב', 'unchecked', 0),
+      ('ביצים', 'checked', 0),
+    ]);
+    final row = tester.getRect(find.byType(CheckedFoldRow));
+    final editor = tester.getRect(find.byType(QuillEditor));
+    expect(row.right, moreOrLessEquals(editor.right, epsilon: 0.01));
+    expect(
+      tester.getRect(find.byIcon(LucideIcons.chevronDown)).center.dx,
+      greaterThan(tester.getRect(find.text('1 checked item')).right),
+    );
+    // Its label still reads in the app's language.
+    expect(
+      tester.widget<Text>(find.text('1 checked item')).textDirection,
+      TextDirection.ltr,
+    );
   });
 
   testWidgets('one checked item says so in the singular', (tester) async {

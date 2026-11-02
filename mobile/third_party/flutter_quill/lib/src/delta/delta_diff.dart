@@ -4,6 +4,7 @@ import 'dart:ui' show TextDirection;
 import 'package:flutter/foundation.dart' show immutable;
 
 import '../../quill_delta.dart';
+import '../common/utils/paragraph_direction.dart';
 import '../document/attribute.dart';
 import '../document/nodes/node.dart';
 
@@ -102,6 +103,13 @@ TextDirection getDirectionOfNode(Node node, [TextDirection? currentDirection]) {
     return TextDirection.ltr;
   } else if (direction == Attribute.rtl) {
     return TextDirection.rtl;
+  }
+  // Anchor+: without the attribute, a line takes its direction from its
+  // first strong character, like dir="auto" on the web. Code stays as is.
+  if (direction == null &&
+      !node.style.attributes.containsKey(Attribute.codeBlock.key)) {
+    final detected = paragraphDirection(node.toPlainText());
+    if (detected != null) return detected;
   }
   return currentDirection ?? TextDirection.ltr;
 }

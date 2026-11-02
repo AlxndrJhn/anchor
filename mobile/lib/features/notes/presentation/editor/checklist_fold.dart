@@ -178,9 +178,9 @@ class CheckedFoldRow extends StatelessWidget {
                 SizedBox(
                   width: AnchorTokens.space32,
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 5),
+                      padding: const EdgeInsetsDirectional.only(start: 5),
                       // off-scale: centers the chevron over the checkboxes
                       child: AnimatedRotation(
                         turns: isFolded ? -0.25 : 0,
@@ -197,6 +197,8 @@ class CheckedFoldRow extends StatelessWidget {
                 ),
                 Text(
                   labelOf(count, context.l10n),
+                  // In the app's language, under a right-to-left list too.
+                  textDirection: WidgetsLocalizations.of(context).textDirection,
                   maxLines: 1,
                   style: AppTypography.secondary.copyWith(
                     color: color,

@@ -1375,10 +1375,6 @@ class RenderEditableTextLine extends RenderEditableBox {
         maxHeight: _body!.size.height,
       );
       _leading!.layout(leadingConstraints, parentUsesSize: true);
-      (_leading!.parentData as BoxParentData).offset = Offset(
-        0,
-        _resolvedPadding!.top,
-      );
     }
 
     size = constraints.constrain(
@@ -1387,6 +1383,17 @@ class RenderEditableTextLine extends RenderEditableBox {
         _resolvedPadding!.top + _body!.size.height + _resolvedPadding!.bottom,
       ),
     );
+
+    // Anchor+: a right-to-left line's leading is laid out at its right, where
+    // it is painted, so taps on a checkbox there reach it.
+    if (_leading != null) {
+      (_leading!.parentData as BoxParentData).offset = Offset(
+        textDirection == TextDirection.ltr
+            ? 0
+            : size.width - _leading!.size.width,
+        _resolvedPadding!.top,
+      );
+    }
 
     _computeCaretPrototype();
   }
@@ -1404,18 +1411,9 @@ class RenderEditableTextLine extends RenderEditableBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     if (_leading != null) {
-      if (textDirection == TextDirection.ltr) {
-        final parentData = _leading!.parentData as BoxParentData;
-        final effectiveOffset = offset + parentData.offset;
-        context.paintChild(_leading!, effectiveOffset);
-      } else {
-        final parentData = _leading!.parentData as BoxParentData;
-        final effectiveOffset = offset + parentData.offset;
-        context.paintChild(
-          _leading!,
-          Offset(size.width - _leading!.size.width, effectiveOffset.dy),
-        );
-      }
+      // Anchor+: at its laid out offset, in either direction.
+      final parentData = _leading!.parentData as BoxParentData;
+      context.paintChild(_leading!, offset + parentData.offset);
     }
     final boxDecoration = decoration;
     if (boxDecoration != null) {

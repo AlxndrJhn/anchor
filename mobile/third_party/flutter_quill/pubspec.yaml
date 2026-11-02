@@ -1,21 +1,13 @@
 name: flutter_quill
 description: "A rich text editor built for Android, iOS, Web, and desktop platforms. It's the WYSIWYG editor and a Quill component for Flutter."
 version: 11.6.0
+publish_to: none
 homepage: https://github.com/singerdmx/flutter-quill/
 repository: https://github.com/singerdmx/flutter-quill/
 issue_tracker: https://github.com/singerdmx/flutter-quill/issues/
 documentation: https://github.com/singerdmx/flutter-quill/
 topics: [editor, text, rich-text-editor, quill, flutter-quill]
 
-screenshots:
-  - description: "iOS Light Mode"
-    path: example/assets/images/screenshot_1.png
-  - description: "macOS Dark Mode"
-    path: example/assets/images/screenshot_2.png
-  - description: "Android Dark Mode Search Dialog"
-    path: example/assets/images/screenshot_3.png
-  - description: "Web Select Color Dialog"
-    path: example/assets/images/screenshot_4.png
 
 environment:
   sdk: ^3.12.0

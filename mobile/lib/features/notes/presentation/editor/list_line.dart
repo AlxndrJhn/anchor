@@ -35,7 +35,8 @@ class ListLineLeading extends MultiChildRenderObjectWidget {
   /// How far the guides reach past the text, to meet the next line's.
   final double guideReach;
 
-  /// From the top left of the line's first row of text.
+  /// From the top left of the line's first row of text; from its top right,
+  /// mirrored, in a right-to-left line.
   final Rect? markerRect;
 
   final double rowHeight;
@@ -53,6 +54,7 @@ class ListLineLeading extends MultiChildRenderObjectWidget {
         guides: guides,
         guideColor: guideColor,
         guideReach: guideReach,
+        textDirection: Directionality.of(context),
       );
 
   @override
@@ -69,6 +71,7 @@ class ListLineLeading extends MultiChildRenderObjectWidget {
       ..guides = guides
       ..guideColor = guideColor
       ..guideReach = guideReach
+      ..textDirection = Directionality.of(context)
       // Quill has just put back its own spacing for the line.
       ..applySpacing();
   }
@@ -92,6 +95,7 @@ class RenderListLineLeading extends RenderBox
     int guides = 0,
     Color guideColor = const Color(0x00000000),
     double guideReach = 0,
+    TextDirection textDirection = TextDirection.ltr,
   }) : _top = top,
        _bottom = bottom,
        _markerRect = markerRect,
@@ -99,7 +103,8 @@ class RenderListLineLeading extends RenderBox
        _rowAbove = rowAbove,
        _guides = guides,
        _guideColor = guideColor,
-       _guideReach = guideReach;
+       _guideReach = guideReach,
+       _textDirection = textDirection;
 
   double _top;
   set top(double value) {
@@ -153,6 +158,16 @@ class RenderListLineLeading extends RenderBox
     markNeedsPaint();
   }
 
+  /// A right-to-left line has its leading at its right, mirrored.
+  TextDirection _textDirection;
+  set textDirection(TextDirection value) {
+    if (_textDirection == value) return;
+    _textDirection = value;
+    markNeedsLayout();
+  }
+
+  bool get _isRtl => _textDirection == TextDirection.rtl;
+
   RenderBox? get _marker => firstChild;
 
   RenderBox? get _row => _marker == null ? null : childAfter(_marker!);
@@ -192,8 +207,9 @@ class RenderListLineLeading extends RenderBox
             ? BoxConstraints.tight(size)
             : BoxConstraints.tight(rect.size),
       );
-      (marker.parentData! as _LeadingParentData).offset =
-          rect?.topLeft ?? Offset.zero;
+      (marker.parentData! as _LeadingParentData).offset = rect == null
+          ? Offset.zero
+          : Offset(_isRtl ? size.width - rect.right : rect.left, rect.top);
     }
     final row = _row;
     if (row != null) {
@@ -204,8 +220,12 @@ class RenderListLineLeading extends RenderBox
           minHeight: _rowHeight,
           maxHeight: _rowHeight,
         ),
+        parentUsesSize: _isRtl,
       );
-      (row.parentData! as _LeadingParentData).offset = Offset(0, -_rowAbove);
+      (row.parentData! as _LeadingParentData).offset = Offset(
+        _isRtl ? size.width - row.size.width : 0,
+        -_rowAbove,
+      );
     }
   }
 
@@ -229,9 +249,10 @@ class RenderListLineLeading extends RenderBox
     if (_guides > 0 && _guideColor.a > 0) {
       final paint = Paint()..color = _guideColor;
       for (var level = 0; level < _guides; level++) {
+        final x = _guideLeft + level * AnchorTokens.sizeListIndent;
         context.canvas.drawRect(
           Rect.fromLTWH(
-            offset.dx + _guideLeft + level * AnchorTokens.sizeListIndent,
+            offset.dx + (_isRtl ? size.width - x - 1 : x),
             offset.dy - _guideReach,
             1,
             size.height + 2 * _guideReach,

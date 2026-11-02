@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' show paragraphDirection;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_typography.dart';
@@ -154,6 +155,22 @@ class _CardLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final line = _buildLine(context);
+    // Each line in its own direction, from its first strong character: a
+    // Hebrew or Arabic line sits at the right of an English note's card.
+    final direction = block.type == BlockType.code
+        ? null
+        : paragraphDirection(block.text);
+    if (direction == null || direction == Directionality.of(context)) {
+      return line;
+    }
+    return Directionality(
+      textDirection: direction,
+      child: Align(alignment: AlignmentDirectional.topStart, child: line),
+    );
+  }
+
+  Widget _buildLine(BuildContext context) {
     final colors = context.anchor;
     switch (block.type) {
       case BlockType.h1 || BlockType.h2 || BlockType.h3:
@@ -185,10 +202,12 @@ class _CardLine extends StatelessWidget {
           appearance: appearance,
         );
         return Container(
-          padding: const EdgeInsets.only(left: 10), // off-scale: card quote
+          padding: const EdgeInsetsDirectional.only(
+            start: 10,
+          ), // off-scale: card quote
           decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(
+            border: BorderDirectional(
+              start: BorderSide(
                 color: AnchorTokens.colorAccentFill.withValues(alpha: 0.75),
                 width: 2,
               ),
@@ -248,7 +267,7 @@ class _CardLine extends StatelessWidget {
           width: scaler.scale(21), // off-scale: card checkbox
           height: scaler.scale(13) * 1.5, // off-scale: card checkbox
           child: Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: _ListMarker(
               block: block,
               marker: marker,
@@ -265,7 +284,7 @@ class _CardLine extends StatelessWidget {
           );
         }
         return Padding(
-          padding: EdgeInsets.only(left: indent),
+          padding: EdgeInsetsDirectional.only(start: indent),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -308,7 +327,9 @@ class _ListMarker extends StatelessWidget {
       return SizedBox(
         width: 15, // off-scale: card bullets
         child: Padding(
-          padding: const EdgeInsets.only(right: 3), // off-scale: card numbers
+          padding: const EdgeInsetsDirectional.only(
+            end: 3,
+          ), // off-scale: card numbers
           child: OverflowBox(
             minWidth: 0,
             maxWidth: double.infinity,

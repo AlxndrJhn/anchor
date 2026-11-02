@@ -5,6 +5,8 @@ export 'src/common/structs/image_url.dart';
 export 'src/common/structs/offset_value.dart';
 export 'src/common/structs/vertical_spacing.dart';
 export 'src/common/utils/embeds.dart';
+// Anchor+
+export 'src/common/utils/paragraph_direction.dart';
 export 'src/controller/quill_controller.dart';
 export 'src/document/attribute.dart';
 export 'src/document/document.dart';

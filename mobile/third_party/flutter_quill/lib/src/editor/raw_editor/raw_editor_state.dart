@@ -668,6 +668,7 @@ class QuillRawEditorState extends EditorState
           node,
           context,
           attrs,
+          nodeTextDirection,
         );
         result.add(
           Directionality(
@@ -730,10 +731,12 @@ class QuillRawEditorState extends EditorState
     Line node,
     BuildContext context,
     Map<String, Attribute<dynamic>> attrs,
+    // Anchor+: the line's own direction, not the editor's.
+    TextDirection textDirection,
   ) {
     final textLine = TextLine(
       line: node,
-      textDirection: _textDirection,
+      textDirection: textDirection,
       embedBuilder: widget.config.embedBuilder,
       textSpanBuilder: widget.config.textSpanBuilder,
       customStyleBuilder: widget.config.customStyleBuilder,
@@ -753,7 +756,7 @@ class QuillRawEditorState extends EditorState
       textLine,
       _getHorizontalSpacingForLine(node, _styles),
       _getVerticalSpacingForLine(node, _styles),
-      _textDirection,
+      textDirection,
       controller.selection,
       widget.config.selectionColor,
       widget.config.enableInteractiveSelection,
