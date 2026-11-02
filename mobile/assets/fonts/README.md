@@ -17,16 +17,19 @@ Taken from [google/fonts](https://github.com/google/fonts).
 ## Fallback
 
 [Noto Sans](https://github.com/notofonts/latin-greek-cyrillic) (SIL Open Font
-License 1.1, [OFL-NotoSans.txt](OFL-NotoSans.txt)) draws the Greek, Cyrillic
-and Vietnamese letters that DM Sans, Space Grotesk, Patrick Hand and Playfair
-Display lack. It is cut down to those letters, at normal width, keeping the
-weight axis:
+License 1.1, [OFL-NotoSans.txt](OFL-NotoSans.txt)) draws the letters the other
+fonts lack: Greek, Cyrillic, Vietnamese, IPA and the rarer Latin letters. It
+is cut down to Latin, Greek and Cyrillic, at normal width, keeping the weight
+axis. From the `ofl/notosans` folder of google/fonts:
 
 ```sh
-python -m fontTools.varLib.instancer "NotoSans[wdth,wght].ttf" wdth=100 -o inst.ttf
-python -m fontTools.subset inst.ttf --layout-features='*' \
-  --unicodes=U+0300-036F,U+0370-03FF,U+1F00-1FFF,U+0400-052F,U+1C80-1C8F,U+2DE0-2DFF,U+A640-A69F,U+0180-024F,U+1E00-1EFF,U+20AB,U+20BD,U+2116 \
-  --output-file=NotoSans-Variable.ttf
+python tool/fonts.py noto path/to/google/fonts/ofl/notosans
 ```
 
-The same for `NotoSans-Italic[wdth,wght].ttf`, from google/fonts.
+Some fonts have a few characters they draw badly next to the fallback: a
+handful of Greek letters (Nunito's Σ is a summation sign), or combining
+accents they cannot place on letters (Space Grotesk and Patrick Hand with
+Yoruba's ẹ̀). `tool/fonts.py unmap` takes those out of the fonts' character
+maps, so the whole word or letter falls back to Noto Sans; the glyphs stay.
+Run it again on a font file that is updated. Playfair Display is left as it
+is: its licence reserves the name for unmodified copies.
