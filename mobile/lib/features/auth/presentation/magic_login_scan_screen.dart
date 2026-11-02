@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:isolate';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +49,10 @@ class _MagicLoginScanScreenState extends State<MagicLoginScanScreen>
   CameraController? _camera;
   _Problem? _problem;
   bool _isReading = false;
+
+  /// The first open asks for the camera, and coming back from that prompt
+  /// resumes the app before it has finished; one camera at a time.
+  bool _isOpening = false;
   bool _isDone = false;
   DateTime _lastRead = DateTime(0);
 
@@ -104,7 +107,16 @@ class _MagicLoginScanScreenState extends State<MagicLoginScanScreen>
 
   Future<void> _open() async {
     final description = _description;
-    if (description == null || _isDone) return;
+    if (description == null || _isDone || _isOpening) return;
+    _isOpening = true;
+    try {
+      await _openWith(description);
+    } finally {
+      _isOpening = false;
+    }
+  }
+
+  Future<void> _openWith(CameraDescription description) async {
     final camera = CameraController(
       description,
       ResolutionPreset.high,
@@ -148,10 +160,12 @@ class _MagicLoginScanScreenState extends State<MagicLoginScanScreen>
     try {
       // The first plane is the brightness (Y), which is all a QR code needs.
       final plane = image.planes.first;
-      final width = image.width;
-      final height = image.height;
-      final grey = packRows(plane.bytes, width, height, plane.bytesPerRow);
-      final text = await Isolate.run(() => decodeQr(grey, width, height));
+      final text = await decodeQrInBackground(
+        plane.bytes,
+        image.width,
+        image.height,
+        plane.bytesPerRow,
+      );
       if (text == null || !mounted || _isDone) return;
       final link = MagicLink.parse(text);
       if (link == null) {
