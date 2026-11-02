@@ -18,6 +18,18 @@ abstract final class AppTypography {
   static const String spaceGrotesk = 'Space Grotesk';
   static const String patrickHand = 'Patrick Hand';
 
+  /// DM Sans, Space Grotesk, Patrick Hand and Playfair have no Greek,
+  /// Cyrillic or Vietnamese letters. Without a fallback of our own the
+  /// system picks a font per missing letter, which on Android draws Σ like a
+  /// C and sets accents beside their vowels.
+  static const String fallbackSans = 'Noto Sans';
+
+  /// The families tried, in order, for letters a style's family lacks.
+  static const List<String> fallback = [fallbackSans];
+
+  /// Literata covers what Playfair lacks, and is a serif too.
+  static const List<String> _serifFallback = [noteSerif, fallbackSans];
+
   static AppStyle _style = AppStyle.standard;
 
   /// The style the getters below draw in.
@@ -70,14 +82,19 @@ abstract final class AppTypography {
   /// baseline.
   static const List<FontFeature> _liningFigures = [FontFeature.liningFigures()];
 
-  static TextStyle _sansIn(AppStyle style, TextStyle base) =>
-      base.copyWith(fontFamily: uiFamilyOf(style)).withSize(base.fontSize!);
+  static List<String> _fallbackOf(String family) =>
+      family == serif ? _serifFallback : fallback;
+
+  static TextStyle _sansIn(AppStyle style, TextStyle base) => base
+      .copyWith(fontFamily: uiFamilyOf(style), fontFamilyFallback: fallback)
+      .withSize(base.fontSize!);
 
   static TextStyle _sans(TextStyle base) => _sansIn(_style, base);
 
   static TextStyle _largeTitleIn(AppStyle style) =>
       AnchorTokens.typeLargeTitle.copyWith(
         fontFamily: displayFamilyOf(style),
+        fontFamilyFallback: _fallbackOf(displayFamilyOf(style)),
         fontFeatures: _liningFigures,
         fontWeight: style == AppStyle.neoBrutalism ? FontWeight.w700 : null,
       );
@@ -132,13 +149,17 @@ abstract final class AppTypography {
     final size = (bodySize ?? noteBodySize) * scale;
     return TextStyle(
       fontFamily: uiFamily,
+      fontFamilyFallback: fallback,
       height: height,
       fontWeight: weight,
       letterSpacing: tracking * size,
     ).withSize(size);
   }
 
-  static TextStyle get code => AnchorTokens.typeCode.copyWith(fontFamily: mono);
+  static TextStyle get code => AnchorTokens.typeCode.copyWith(
+    fontFamily: mono,
+    fontFamilyFallback: fallback,
+  );
 
   static TextStyle get codeSmall => code.copyWith(fontSize: footnote.fontSize);
 
@@ -149,6 +170,7 @@ abstract final class AppTypography {
     double? height,
   }) => TextStyle(
     fontFamily: displayFamilyOf(_style),
+    fontFamilyFallback: _fallbackOf(displayFamilyOf(_style)),
     fontSize: fontSize,
     fontWeight: fontWeight,
     color: color,
