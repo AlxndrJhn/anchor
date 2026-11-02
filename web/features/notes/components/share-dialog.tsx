@@ -715,6 +715,7 @@ function PeopleSearch({
                 </div>
               )}
               {options.map((user, i) => (
+                // biome-ignore lint/a11y/useKeyWithClickEvents: the search field drives the list by aria-activedescendant
                 <div
                   key={user.id}
                   id={`${listId}-${i}`}

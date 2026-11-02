@@ -18,7 +18,7 @@ import { usePreferencesStore } from "@/features/preferences";
 import { copyText } from "@/lib/clipboard";
 import { DURATION } from "@/lib/design/tokens";
 import { watchHighlights } from "@/lib/highlight-paint";
-import { hasShortcutKey } from "@/lib/platform";
+import { hasShortcutKey, isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { stampFor } from "../../date-stamp";
 import { showInlineImages } from "../../inline-images";
@@ -30,7 +30,11 @@ import {
   linkTypedAddress,
   normalizeUrl,
 } from "../../link-utils";
-import type { QuillDelta, QuillInstance } from "../../quill";
+import type {
+  ChecklistMoveDetail,
+  QuillDelta,
+  QuillInstance,
+} from "../../quill";
 import {
   dropPendingFormat,
   isInCodeBlock,
@@ -441,6 +445,20 @@ export const RichTextEditor = forwardRef<
       const bump = () => setToolbarUpdateKey((k) => k + 1);
       el.addEventListener("formatchange", bump);
       return () => el.removeEventListener("formatchange", bump);
+    }, [editorContainerEl]);
+
+    // Says where Alt+Shift+Up/Down moved a checklist item.
+    const [moveAnnouncement, setMoveAnnouncement] = useState("");
+    useEffect(() => {
+      const el = editorContainerEl;
+      if (!el) return;
+      const announce = (e: Event) => {
+        const { place, siblings } = (e as CustomEvent<ChecklistMoveDetail>)
+          .detail;
+        setMoveAnnouncement(`Moved to ${place} of ${siblings}`);
+      };
+      el.addEventListener("checklistmove", announce);
+      return () => el.removeEventListener("checklistmove", announce);
     }, [editorContainerEl]);
 
     const { revealSelection } = checkedFolds;
@@ -871,6 +889,11 @@ export const RichTextEditor = forwardRef<
         root.setAttribute("role", "textbox");
         root.setAttribute("aria-multiline", "true");
         root.setAttribute("aria-label", "Note text");
+        // Moves the checklist item at the caret (see QUILL_MODULES).
+        root.setAttribute(
+          "aria-keyshortcuts",
+          "Alt+Shift+ArrowUp Alt+Shift+ArrowDown",
+        );
       };
       markTextbox();
       const observer = new MutationObserver(markTextbox);
@@ -881,6 +904,7 @@ export const RichTextEditor = forwardRef<
         root?.removeAttribute("role");
         root?.removeAttribute("aria-multiline");
         root?.removeAttribute("aria-label");
+        root?.removeAttribute("aria-keyshortcuts");
       };
     }, [editorContainerEl, readOnly]);
 
@@ -1009,8 +1033,12 @@ export const RichTextEditor = forwardRef<
             useSemanticHTML={false}
           />
           {!readOnly && checklistDrag.handle && !checklistDrag.drag && (
+            // Pointer only: from the keyboard, Alt+Shift+Up/Down in the item
+            // moves it, so the handle stays out of the tab order.
             <button
               type="button"
+              tabIndex={-1}
+              aria-hidden
               className="anchor-checklist-handle"
               style={{
                 top: checklistDrag.handle.top,
@@ -1020,10 +1048,15 @@ export const RichTextEditor = forwardRef<
                 checklistSort.cancel();
                 checklistDrag.startDrag(e);
               }}
-              aria-label="Drag to reorder"
+              title={`Drag to reorder (${isMac() ? "⌥⇧↑ ⌥⇧↓" : "Alt+Shift+↑ / ↓"})`}
             >
               <GripVertical size={15} />
             </button>
+          )}
+          {!readOnly && (
+            <div className="sr-only" aria-live="polite">
+              {moveAnnouncement}
+            </div>
           )}
           {checklistDrag.drag && checklistDrag.drag.indicatorTop !== null && (
             <div

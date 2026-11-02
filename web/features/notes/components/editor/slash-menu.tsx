@@ -442,6 +442,7 @@ export function SlashMenu({
         </span>
       )}
       {slash && place && (
+        // biome-ignore lint/a11y/noStaticElementInteractions: keeps the caret in the note when the menu is pressed
         <div
           ref={menu}
           className={cn(
@@ -466,6 +467,7 @@ export function SlashMenu({
               className="grid gap-px"
             >
               {items.map((item, i) => (
+                // biome-ignore lint/a11y/useKeyWithClickEvents: the note text drives the list by aria-activedescendant
                 <div
                   key={item.kind}
                   id={`${listId}-${i}`}

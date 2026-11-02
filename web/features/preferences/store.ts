@@ -44,6 +44,11 @@ interface EditorPreferences {
   noteLayout?: NoteLayout;
   /** The formatting bar, opened in the clean layout. */
   formattingOpen?: boolean;
+  /**
+   * Letter and symbol keys alone as shortcuts (C, /, F…), which speech input
+   * can set off by mistake (WCAG 2.1.4). Unset means on.
+   */
+  singleKeyShortcuts?: boolean;
   foldedChecklistNoteIds: string[];
 }
 

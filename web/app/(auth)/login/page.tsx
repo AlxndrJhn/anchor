@@ -28,8 +28,10 @@ import {
   serverSignInError,
   signInError,
 } from "@/features/auth/utils/sign-in-error";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 
 export default function LoginPage() {
+  useDocumentTitle("Sign in");
   const searchParams = useSearchParams();
   const login = useLogin();
   const oidc = useOidcConfig();

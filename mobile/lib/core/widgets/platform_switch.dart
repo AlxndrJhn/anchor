@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../motion/haptics.dart';
 import '../theme/context_extensions.dart';
+import 'expanded_hit_area.dart';
 
 class PlatformSwitch extends StatelessWidget {
   const PlatformSwitch({
@@ -32,26 +35,28 @@ class PlatformSwitch extends StatelessWidget {
     final isCupertino = context.isCupertino;
     // off-scale: each platform's track.
     final track = isCupertino ? const Size(51, 31) : const Size(52, 32);
-    return Semantics(
-      label: semanticLabel,
-      // The switches pad their track by 4 on each side; only the track
-      // takes space in the layout.
-      child: SizedBox.fromSize(
-        size: track,
-        child: OverflowBox(
-          maxWidth: track.width + 8,
-          maxHeight: track.height + 8,
-          child: isCupertino
-              ? CupertinoSwitch(
-                  value: value,
-                  onChanged: handler,
-                  activeTrackColor: colors.accentStrong,
-                )
-              : Switch(
-                  value: value,
-                  onChanged: handler,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
+    return MinTapTarget(
+      child: Semantics(
+        label: semanticLabel,
+        // The switches pad their track to a full touch target; only the
+        // track takes space in the layout.
+        child: SizedBox.fromSize(
+          size: track,
+          child: OverflowBox(
+            maxWidth: track.width + 8,
+            maxHeight: math.max(track.height + 8, kMinInteractiveDimension),
+            child: isCupertino
+                ? CupertinoSwitch(
+                    value: value,
+                    onChanged: handler,
+                    activeTrackColor: colors.accentStrong,
+                  )
+                : Switch(
+                    value: value,
+                    onChanged: handler,
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+          ),
         ),
       ),
     );

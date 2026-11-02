@@ -179,7 +179,9 @@ class _NoteAttachmentsStripState extends ConsumerState<NoteAttachmentsStrip> {
               : Padding(
                   padding: EdgeInsets.only(bottom: context.density.space16),
                   child: SizedBox(
-                    height: AttachmentTile.height + 8,
+                    // Recordings and files grow with large text; the
+                    // pictures keep their size.
+                    height: AttachmentTile.heightOf(context) + 8,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
@@ -189,7 +191,10 @@ class _NoteAttachmentsStripState extends ConsumerState<NoteAttachmentsStrip> {
                       physics: const BouncingScrollPhysics(),
                       itemCount: tiles.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (_, i) => tiles[i],
+                      itemBuilder: (_, i) => Align(
+                        alignment: Alignment.topCenter,
+                        child: tiles[i],
+                      ),
                     ),
                   ),
                 ),

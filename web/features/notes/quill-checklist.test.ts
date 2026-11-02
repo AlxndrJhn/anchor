@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { QuillDelta, QuillOp } from "./quill";
 import {
   buildChecklistDropDelta,
+  buildChecklistStepMove,
   buildDeleteCheckedDelta,
   buildUncheckAllDelta,
   checklistLineIndexFromOrdinal,
@@ -697,5 +698,69 @@ describe("uncheck all and delete checked items", () => {
       { insert: { attachment: "a1" } },
       { insert: "\n", attributes: { list: "unchecked" } },
     ]);
+  });
+});
+
+describe("buildChecklistStepMove", () => {
+  const nested = doc([
+    ["intro", null],
+    ["a", "unchecked"],
+    ["a1", "unchecked", 1],
+    ["b", "unchecked"],
+    ["b1", "unchecked", 1],
+    ["b2", "checked", 1],
+    ["c", "unchecked"],
+  ]);
+
+  it("moves an item and its children down past the next item and its children", () => {
+    const move = buildChecklistStepMove(nested, 1, 1);
+    expectApplied(nested, move?.delta ?? null, [
+      ["intro", null],
+      ["b", "unchecked"],
+      ["b1", "unchecked", 1],
+      ["b2", "checked", 1],
+      ["a", "unchecked"],
+      ["a1", "unchecked", 1],
+      ["c", "unchecked"],
+    ]);
+    // "intro" and its newline are 6 long; "a" now follows b, b1 and b2.
+    expect(move).toMatchObject({ from: 6, to: 6 + 2 + 3 + 3, place: 2 });
+    expect(move?.siblings).toBe(3);
+  });
+
+  it("moves an item up past the previous item and its children", () => {
+    const move = buildChecklistStepMove(nested, 6, -1);
+    expectApplied(nested, move?.delta ?? null, [
+      ["intro", null],
+      ["a", "unchecked"],
+      ["a1", "unchecked", 1],
+      ["c", "unchecked"],
+      ["b", "unchecked"],
+      ["b1", "unchecked", 1],
+      ["b2", "checked", 1],
+    ]);
+    expect(move).toMatchObject({ place: 2, siblings: 3 });
+  });
+
+  it("moves a child only among its siblings", () => {
+    const move = buildChecklistStepMove(nested, 5, -1);
+    expectApplied(nested, move?.delta ?? null, [
+      ["intro", null],
+      ["a", "unchecked"],
+      ["a1", "unchecked", 1],
+      ["b", "unchecked"],
+      ["b2", "checked", 1],
+      ["b1", "unchecked", 1],
+      ["c", "unchecked"],
+    ]);
+    expect(move).toMatchObject({ place: 1, siblings: 2 });
+    expect(buildChecklistStepMove(nested, 2, 1)).toBeNull();
+    expect(buildChecklistStepMove(nested, 4, -1)).toBeNull();
+  });
+
+  it("stops at the ends of the checklist and ignores other lines", () => {
+    expect(buildChecklistStepMove(nested, 1, -1)).toBeNull();
+    expect(buildChecklistStepMove(nested, 6, 1)).toBeNull();
+    expect(buildChecklistStepMove(nested, 0, 1)).toBeNull();
   });
 });

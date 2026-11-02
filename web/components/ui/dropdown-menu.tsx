@@ -41,8 +41,10 @@ function DropdownMenuContent({
   );
 }
 
+// The pointer's item gets a faint tint; the keyboard's (focus-visible) a
+// stronger one, a ring and an accent bar, so it can't be missed.
 const menuItem =
-  "relative flex min-h-8.5 cursor-pointer select-none items-center gap-2.5 whitespace-nowrap rounded-menu-item px-2.5 py-1.5 text-left text-ui transition-[color,background-color] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-transparent duration-(--duration-hover) data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-foreground/6 [&>svg]:size-3.75 [&>svg]:flex-none [&>svg]:text-muted-foreground [&>svg]:transition-colors data-highlighted:[&>svg:first-child]:text-foreground focus-visible:after:absolute focus-visible:after:top-1/2 focus-visible:after:left-0.75 focus-visible:after:-mt-2 focus-visible:after:h-4 focus-visible:after:w-0.75 focus-visible:after:rounded-xs focus-visible:after:bg-accent-strong focus-visible:after:content-['']";
+  "relative flex min-h-8.5 cursor-pointer select-none items-center gap-2.5 whitespace-nowrap rounded-menu-item px-2.5 py-1.5 text-left text-ui transition-[color,background-color] focus-visible:bg-foreground/10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring duration-(--duration-hover) data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-foreground/6 data-highlighted:focus-visible:bg-foreground/10 [&>svg]:size-3.75 [&>svg]:flex-none [&>svg]:text-muted-foreground [&>svg]:transition-colors data-highlighted:[&>svg:first-child]:text-foreground focus-visible:after:absolute focus-visible:after:top-1/2 focus-visible:after:left-0.75 focus-visible:after:-mt-2 focus-visible:after:h-4 focus-visible:after:w-0.75 focus-visible:after:rounded-xs focus-visible:after:bg-accent-strong focus-visible:after:content-['']";
 
 function DropdownMenuItem({
   className,

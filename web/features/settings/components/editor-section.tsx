@@ -126,6 +126,22 @@ export function EditorSection() {
           }}
         />
       </Row>
+      <Row>
+        <RowText
+          title={
+            <label htmlFor="single-key-shortcuts">Single-key shortcuts</label>
+          }
+          text="Keys like C for a new note, / to search, or F to pin, as in Google Keep. Off, only shortcuts with Ctrl or another modifier work. On this device only."
+        />
+        <Switch
+          id="single-key-shortcuts"
+          checked={editor.singleKeyShortcuts !== false}
+          onCheckedChange={(on) => {
+            setEditorPreference("singleKeyShortcuts", on);
+            setSaveStatus("saved");
+          }}
+        />
+      </Row>
     </Section>
   );
 }

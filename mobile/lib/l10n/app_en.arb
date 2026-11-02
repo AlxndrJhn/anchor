@@ -658,7 +658,7 @@
   },
   "commonSelect": "Select",
   "@commonSelect": {
-    "description": "Menu item on the logs page that starts selecting logs."
+    "description": "Menu item on the logs page that starts selecting logs, and the screen reader action on a note card that starts selecting notes with it, as holding the card does."
   },
   "commonSelectAll": "Select all",
   "@commonSelectAll": {
@@ -1852,6 +1852,10 @@
       }
     }
   },
+  "tagOptions": "Tag options",
+  "@tagOptions": {
+    "description": "Screen reader action on a tag in the side menu: opens the menu to rename, recolor or delete it, as holding the tag does."
+  },
   "tagNamePreview": "tag name",
   "@tagNamePreview": {
     "description": "Placeholder in the tag preview while the name field is empty. Lowercase, like a tag."
@@ -3028,6 +3032,10 @@
   "@noteNew": {
     "description": "Button that starts a new note, on the empty list and the plus button."
   },
+  "noteNewKinds": "New list or camera note",
+  "@noteNewKinds": {
+    "description": "Screen reader action on the New note button: opens the menu with New list, Camera note and New note, as holding the button does."
+  },
   "cardNotSynced": "Not synced yet",
   "@cardNotSynced": {
     "description": "Tooltip of the cloud icon on a note card with changes not yet sent. Screen readers also read it with the card."
@@ -3038,6 +3046,36 @@
     "placeholders": {
       "count": {
         "type": "int"
+      }
+    }
+  },
+  "cardTickItem": "Tick {item}",
+  "@cardTickItem": {
+    "description": "Screen reader action on a note card in the list: ticks one of the checklist items shown on it.",
+    "placeholders": {
+      "item": {
+        "type": "String",
+        "example": "Milk"
+      }
+    }
+  },
+  "cardUntickItem": "Untick {item}",
+  "@cardUntickItem": {
+    "description": "Screen reader action on a note card in the list: unticks one of the ticked checklist items shown on it.",
+    "placeholders": {
+      "item": {
+        "type": "String",
+        "example": "Milk"
+      }
+    }
+  },
+  "cardOpenPicture": "Open picture {number}",
+  "@cardOpenPicture": {
+    "description": "Screen reader action on a note card in the list: opens one of the pictures shown on it full size.",
+    "placeholders": {
+      "number": {
+        "type": "int",
+        "example": "2"
       }
     }
   },
@@ -4005,6 +4043,22 @@
       }
     }
   },
+  "commonMoveUp": "Move up",
+  "@commonMoveUp": {
+    "description": "Screen reader action on something that can be dragged into a new place (a note, tag, checklist item or quick action): moves it one place up."
+  },
+  "commonMoveDown": "Move down",
+  "@commonMoveDown": {
+    "description": "Screen reader action on something that can be dragged into a new place: moves it one place down."
+  },
+  "commonMoveToTop": "Move to top",
+  "@commonMoveToTop": {
+    "description": "Screen reader action on something that can be dragged into a new place: moves it to the first place."
+  },
+  "commonMoveToBottom": "Move to bottom",
+  "@commonMoveToBottom": {
+    "description": "Screen reader action on something that can be dragged into a new place: moves it to the last place."
+  },
   "commonPosition": "{index} of {count}",
   "@commonPosition": {
     "description": "Which picture is shown, such as “2 of 5”.",
@@ -4472,10 +4526,6 @@
   "viewCardPicturesHelp": "Show a note’s pictures on its card",
   "@viewCardPicturesHelp": {
     "description": "Under the Pictures on cards switch in the view options sheet."
-  },
-  "editorDragHint": "Drag to reorder",
-  "@editorDragHint": {
-    "description": "Spoken hint on a checklist item that can be dragged."
   },
   "slashMenuLabel": "Insert",
   "@slashMenuLabel": {
@@ -5442,6 +5492,16 @@
   "@settingsAddToBar": {
     "description": "Screen reader label of the + button by an action in Settings › In More.",
     "placeholders": { "action": { "type": "String" } }
+  },
+  "settingsMoveAction": "Move {action}",
+  "@settingsMoveAction": {
+    "description": "Screen reader label of the grip beside a quick action in Settings, dragged to put the action elsewhere in the top bar.",
+    "placeholders": {
+      "action": {
+        "type": "String",
+        "example": "Pin"
+      }
+    }
   },
   "settingsRemoveFromBar": "Take {action} out of the top bar",
   "@settingsRemoveFromBar": {

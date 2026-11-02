@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../motion/springs.dart';
@@ -46,6 +47,7 @@ class Pressable extends StatefulWidget {
     this.toggled,
     this.minSize,
     this.hitPadding,
+    this.semanticActions,
   });
 
   final PressStyle style;
@@ -64,6 +66,9 @@ class Pressable extends StatefulWidget {
   final Size? minSize;
 
   final EdgeInsets? hitPadding;
+
+  /// Screen reader actions besides the tap, such as what a hold does.
+  final Map<CustomSemanticsAction, VoidCallback>? semanticActions;
 
   @override
   State<Pressable> createState() => _PressableState();
@@ -156,6 +161,7 @@ class _PressableState extends State<Pressable> {
       excludeSemantics: widget.semanticLabel != null,
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
+      customSemanticsActions: widget.semanticActions,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: _enabled ? (_) => _set(true) : null,

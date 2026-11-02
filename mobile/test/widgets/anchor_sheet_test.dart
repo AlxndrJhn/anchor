@@ -6,6 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../semantics_helpers.dart';
+
 Widget opener(Widget sheet, {ValueChanged<Object?>? onResult}) => MaterialApp(
   theme: AppTheme.light(),
   home: Scaffold(
@@ -151,6 +153,74 @@ void main() {
     expect(closed, isTrue);
     expect(result, isNull);
     expect(find.text('Sheet title'), findsNothing);
+  });
+
+  testWidgets('screen readers close a sheet without Done from its handle', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    var closed = false;
+    await tester.pumpWidget(
+      opener(
+        const SheetHeader(title: 'Sheet title'),
+        onResult: (_) => closed = true,
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final close = find.bySemanticsLabel('Close');
+    expect(
+      tester.getSemantics(close),
+      isSemantics(isButton: true, hasTapAction: true, label: 'Close'),
+    );
+    tester.semantics.tap(find.semantics.byLabel('Close'));
+    await tester.pumpAndSettle();
+
+    expect(closed, isTrue);
+    expect(find.text('Sheet title'), findsNothing);
+    handle.dispose();
+  });
+
+  testWidgets('an open sheet meets the tap target and contrast guidelines', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      opener(
+        const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SheetHeader(title: 'Sheet title', showDone: true),
+            Text('Sheet body'),
+          ],
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await expectAccessibleScreen(tester);
+  });
+
+  testWidgets('a sheet title grows with large text instead of shrinking', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: const Scaffold(body: SheetHeader(title: 'Sheet title')),
+      ),
+    );
+
+    final title = tester.renderObject<RenderParagraph>(
+      find.descendant(
+        of: find.text('Sheet title'),
+        matching: find.byType(RichText),
+      ),
+    );
+    expect(title.textScaler.scale(10), 20);
   });
 
   testWidgets('SheetHeader shows its title, subtitle and Done', (tester) async {

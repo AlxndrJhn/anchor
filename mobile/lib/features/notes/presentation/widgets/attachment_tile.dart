@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -14,9 +16,19 @@ class AttachmentTile extends StatelessWidget {
     required this.deleteLabel,
     required this.onDelete,
     required this.child,
+    this.growsWithText = false,
   });
 
   static const double height = 96; // off-scale: a picture tile
+
+  /// [height], taller by as much as a name and the line under it grow with
+  /// large text, so a recording's or a file's words stay whole.
+  static double heightOf(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    double growth(double size) => (scaler.scale(size) - size) * 1.4;
+    // off-scale: the name's and the line's sizes
+    return height + math.max(0.0, growth(13.5) + growth(12)).ceilToDouble();
+  }
 
   final double width;
   final NoteAppearance appearance;
@@ -24,11 +36,14 @@ class AttachmentTile extends StatelessWidget {
   final VoidCallback? onDelete;
   final Widget child;
 
+  /// A recording or a file, whose words grow with large text.
+  final bool growsWithText;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
-      height: height,
+      height: growsWithText ? heightOf(context) : height,
       child: Stack(
         children: [
           Positioned.fill(child: child),

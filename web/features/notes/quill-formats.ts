@@ -77,7 +77,8 @@ export function registerNoteFormats(Quill: QuillStatic) {
       if (image.width)
         node.style.setProperty("--note-image-width", `${image.width * 100}%`);
       const img = document.createElement("img");
-      img.alt = image.caption ?? "";
+      // Never empty: the picture is part of the note, not decoration.
+      img.alt = image.caption?.trim() || "Picture";
       img.draggable = false;
       node.appendChild(img);
       if (image.caption) {

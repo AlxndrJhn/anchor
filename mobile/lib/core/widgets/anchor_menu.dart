@@ -283,8 +283,11 @@ class MenuRow extends StatelessWidget {
       semanticLabel: label,
       selected: isChecked || isHighlighted,
       tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
+      // Taller with large text.
       child: Container(
-        height: AnchorTokens.sizeControlMedium,
+        constraints: const BoxConstraints(
+          minHeight: AnchorTokens.sizeControlMedium,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: isHighlighted ? colors.appText.withValues(alpha: 0.07) : null,

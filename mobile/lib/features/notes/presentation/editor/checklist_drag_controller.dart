@@ -10,6 +10,10 @@ import '../../../../core/theme/tokens/anchor_tokens.dart';
 import 'checklist_lines.dart';
 import 'document_lines.dart';
 
+/// Where a screen reader moves a checklist item, among the items at its
+/// level.
+enum ChecklistMove { up, down, top, bottom }
+
 class ChecklistDragController extends ChangeNotifier {
   ChecklistDragController({
     required QuillController controller,
@@ -230,6 +234,41 @@ class ChecklistDragController extends ChangeNotifier {
     );
     HardwareKeyboard.instance.addHandler(_onKey);
     _updateHover(details.globalPosition);
+  }
+
+  /// Moves the item at [documentOffset], with its sub-items, past the
+  /// items shown at its level, for screen readers, which can't drag it.
+  /// False when it can't go that way.
+  bool move(int documentOffset, ChecklistMove move) {
+    if (isDragging) return false;
+    final lines = parseDocumentLines(_controller.document);
+    final index = lineIndexAt(lines, documentOffset);
+    if (index == -1 || !lines[index].isChecklist) return false;
+    final (groupStart, groupEnd) = checklistGroupAround(lines, index);
+    final starts = [
+      for (final start in checklistSiblingStarts(
+        lines,
+        index,
+        groupStart,
+        groupEnd,
+      ))
+        if (start == index || !_isFolded(lines[start].startOffset)) start,
+    ];
+    final at = starts.indexOf(index);
+    int after(int start) => checklistBlockEnd(lines, start, groupEnd) + 1;
+    final gap = switch (move) {
+      ChecklistMove.up when at > 0 => starts[at - 1],
+      ChecklistMove.top when at > 0 => starts.first,
+      ChecklistMove.down when at < starts.length - 1 => after(starts[at + 1]),
+      ChecklistMove.bottom when at < starts.length - 1 => after(starts.last),
+      _ => null,
+    };
+    if (gap == null) return false;
+    final blockEnd = checklistBlockEnd(lines, index, groupEnd);
+    onDrop(
+      buildBlockMoveDelta(_controller.document, lines, index, blockEnd, gap),
+    );
+    return true;
   }
 
   bool _isFoldedGap(List<ParsedLine> lines, int gap) =>

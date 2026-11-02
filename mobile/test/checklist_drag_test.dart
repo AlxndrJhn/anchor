@@ -11,6 +11,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'semantics_helpers.dart';
+
 String checklist(List<(String, String)> items) => jsonEncode({
   'ops': [
     for (final (text, state) in items) ...[
@@ -801,12 +803,86 @@ void main() {
     expect(lines(state), abcd);
   });
 
-  testWidgets('the box is named by its item and says how to drag it', (
+  testWidgets('the box is named by its item and offers the moves it can make', (
     tester,
   ) async {
     await pumpEditor(tester, content: checklist(abcd));
     final box = tester.getSemantics(checkboxSlot(1));
     expect(box.label, 'b');
-    expect(box.hint, 'Drag to reorder');
+    expect(box.hint, isEmpty);
+    expect(
+      customActionsOf(tester, checkboxSlot(1)),
+      unorderedEquals(['Move up', 'Move down', 'Move to bottom']),
+    );
+    expect(
+      customActionsOf(tester, checkboxSlot(0)),
+      unorderedEquals(['Move down', 'Move to bottom']),
+    );
+    expect(
+      customActionsOf(tester, checkboxSlot(3)),
+      unorderedEquals(['Move up', 'Move to top']),
+    );
+  });
+
+  group('screen readers move an item without dragging it', () {
+    for (final (action, expected) in [
+      ('Move up', ['b', 'a', 'c', 'd']),
+      ('Move down', ['a', 'c', 'b', 'd']),
+      ('Move to bottom', ['a', 'c', 'd', 'b']),
+    ]) {
+      testWidgets(action, (tester) async {
+        final (state, _) = await pumpEditor(tester, content: checklist(abcd));
+
+        performCustomAction(tester, checkboxSlot(1), action);
+        await tester.pump();
+
+        expect([for (final (text, _) in lines(state)) text], expected);
+      });
+    }
+
+    testWidgets('Move to top', (tester) async {
+      final (state, _) = await pumpEditor(tester, content: checklist(abcd));
+
+      performCustomAction(tester, checkboxSlot(3), 'Move to top');
+      await tester.pump();
+
+      expect(
+        [for (final (text, _) in lines(state)) text],
+        ['d', 'a', 'b', 'c'],
+      );
+    });
+
+    testWidgets('an item moves past the next one with its sub-items, and '
+        'keeps its own', (tester) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content: nestedChecklist([
+          ('a', 'unchecked', 0),
+          ('a1', 'unchecked', 1),
+          ('b', 'unchecked', 0),
+          ('b1', 'unchecked', 1),
+          ('c', 'unchecked', 0),
+        ]),
+      );
+      // A sub-item alone at its level goes nowhere.
+      expect(customActionsOf(tester, checkboxSlot(1)), isEmpty);
+
+      performCustomAction(tester, checkboxSlot(0), 'Move down');
+      await tester.pump();
+
+      expect(nestedLines(state), [
+        ('b', 'unchecked', 0),
+        ('b1', 'unchecked', 1),
+        ('a', 'unchecked', 0),
+        ('a1', 'unchecked', 1),
+        ('c', 'unchecked', 0),
+      ]);
+    });
+
+    testWidgets('read-only boxes offer no moves', (tester) async {
+      await pumpEditor(tester, content: checklist(abcd), canEdit: false);
+
+      expect(customActionsOf(tester, checkboxSlot(1)), isEmpty);
+    });
   });
 }

@@ -194,6 +194,34 @@ void main() {
     );
   });
 
+  testWidgets('screen readers resize it a step at a time', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final (editor, images) = await pumpNote(
+      tester,
+      image: const InlineImage(id: 'a', width: 0.5),
+    );
+    images.editing.value = true;
+    await settle(tester);
+    final handle = find.bySemanticsLabel('Resize picture');
+    expect(
+      tester.getSemantics(handle),
+      isSemantics(
+        isSlider: true,
+        value: '50%',
+        increasedValue: '60%',
+        decreasedValue: '40%',
+        hasIncreaseAction: true,
+        hasDecreaseAction: true,
+      ),
+    );
+
+    tester.semantics.increase(find.semantics.byLabel('Resize picture'));
+    await settle(tester);
+
+    expect(shown(editor).width, closeTo(0.6, 0.001));
+    semantics.dispose();
+  });
+
   testWidgets('a picture whose attachment is gone says so', (tester) async {
     when(
       () => repo.watchAttachment('gone'),

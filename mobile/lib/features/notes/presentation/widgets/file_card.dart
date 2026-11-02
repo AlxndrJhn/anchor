@@ -158,115 +158,111 @@ class _FileCardState extends ConsumerState<FileCard> {
         : attachment.isPendingUpload
         ? l10n.attachmentUploading
         : fileSizeLabel(attachment.fileSize, l10n.localeName);
-    return MediaQuery.withClampedTextScaling(
-      maxScaleFactor: 1.3,
-      child: AttachmentTile(
-        width: FileCard.width,
-        appearance: appearance,
-        deleteLabel: l10n.commonDeleteItem(name),
-        onDelete: widget.onDelete,
-        // Open and Save side by side, so each keeps its own name for
-        // screen readers.
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Pressable(
-                style: PressStyle.button,
-                onTap: _isLoading ? null : _open,
-                semanticLabel: attachment.isUploadFailed
-                    ? l10n.attachmentRetry(name)
-                    : l10n.fileOpen(name),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: appearance.colors.surface,
-                    borderRadius: radius,
+    return AttachmentTile(
+      width: FileCard.width,
+      growsWithText: true,
+      appearance: appearance,
+      deleteLabel: l10n.commonDeleteItem(name),
+      onDelete: widget.onDelete,
+      // Open and Save side by side, so each keeps its own name for
+      // screen readers.
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Pressable(
+              style: PressStyle.button,
+              onTap: _isLoading ? null : _open,
+              semanticLabel: attachment.isUploadFailed
+                  ? l10n.attachmentRetry(name)
+                  : l10n.fileOpen(name),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: appearance.colors.surface,
+                  borderRadius: radius,
+                ),
+                foregroundDecoration: BoxDecoration(
+                  borderRadius: radius,
+                  border: Border.all(
+                    color: appearance.colors.border.withValues(alpha: 0.6),
                   ),
-                  foregroundDecoration: BoxDecoration(
-                    borderRadius: radius,
-                    border: Border.all(
-                      color: appearance.colors.border.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        height: AnchorTokens.sizeIconLarge,
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: _isLoading
-                              ? SizedBox.square(
-                                  dimension: AnchorTokens.sizeIconMedium,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: appearance.colors.muted,
-                                  ),
-                                )
-                              : Icon(
-                                  fileIconOf(attachment.mimeType, name),
-                                  size: AnchorTokens.sizeIconMedium,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      height: AnchorTokens.sizeIconLarge,
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: _isLoading
+                            ? SizedBox.square(
+                                dimension: AnchorTokens.sizeIconMedium,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                   color: appearance.colors.muted,
                                 ),
-                        ),
-                      ),
-                      Padding(
-                        // Room for Save.
-                        padding: const EdgeInsets.only(right: 32),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.secondary
-                                  .withSize(
-                                    13.5,
-                                  ) // off-scale: as a voice note's
-                                  .copyWith(
-                                    height: 1.4,
-                                    fontWeight: AnchorTokens.fontWeightMedium,
-                                    color: colors.appText,
-                                  ),
-                            ),
-                            Text(
-                              line,
-                              maxLines: 1,
-                              style: AppTypography.footnote.tabular.copyWith(
-                                color: attachment.isUploadFailed
-                                    ? colors.statusLate
-                                    : appearance.colors.muted,
+                              )
+                            : Icon(
+                                fileIconOf(attachment.mimeType, name),
+                                size: AnchorTokens.sizeIconMedium,
+                                color: appearance.colors.muted,
                               ),
-                            ),
-                          ],
-                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      // Room for Save.
+                      padding: const EdgeInsets.only(right: 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.secondary
+                                .withSize(13.5) // off-scale: as a voice note's
+                                .copyWith(
+                                  height: 1.4,
+                                  fontWeight: AnchorTokens.fontWeightMedium,
+                                  color: colors.appText,
+                                ),
+                          ),
+                          Text(
+                            line,
+                            maxLines: 1,
+                            style: AppTypography.footnote.tabular.copyWith(
+                              color: attachment.isUploadFailed
+                                  ? colors.statusLate
+                                  : appearance.colors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            Positioned(
-              right: 8,
-              bottom: 8,
-              child: Pressable(
-                style: PressStyle.plain,
-                onTap: _isLoading ? null : _save,
-                semanticLabel: l10n.fileSave(name),
-                child: SizedBox.square(
-                  dimension: 32,
-                  child: Icon(
-                    LucideIcons.download,
-                    size: AnchorTokens.sizeIconSmall,
-                    color: appearance.colors.muted,
-                  ),
+          ),
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: Pressable(
+              style: PressStyle.plain,
+              onTap: _isLoading ? null : _save,
+              semanticLabel: l10n.fileSave(name),
+              child: SizedBox.square(
+                dimension: 32,
+                child: Icon(
+                  LucideIcons.download,
+                  size: AnchorTokens.sizeIconSmall,
+                  color: appearance.colors.muted,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

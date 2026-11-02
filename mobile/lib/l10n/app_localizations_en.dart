@@ -1312,6 +1312,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tagOptions => 'Tag options';
+
+  @override
   String get tagNamePreview => 'tag name';
 
   @override
@@ -2266,6 +2269,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noteNew => 'New note';
 
   @override
+  String get noteNewKinds => 'New list or camera note';
+
+  @override
   String get cardNotSynced => 'Not synced yet';
 
   @override
@@ -2277,6 +2283,21 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 picture',
     );
     return '$_temp0';
+  }
+
+  @override
+  String cardTickItem(String item) {
+    return 'Tick $item';
+  }
+
+  @override
+  String cardUntickItem(String item) {
+    return 'Untick $item';
+  }
+
+  @override
+  String cardOpenPicture(int number) {
+    return 'Open picture $number';
   }
 
   @override
@@ -2999,6 +3020,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commonMoveUp => 'Move up';
+
+  @override
+  String get commonMoveDown => 'Move down';
+
+  @override
+  String get commonMoveToTop => 'Move to top';
+
+  @override
+  String get commonMoveToBottom => 'Move to bottom';
+
+  @override
   String commonPosition(int index, int count) {
     return '$index of $count';
   }
@@ -3343,9 +3376,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewCardPicturesHelp => 'Show a note’s pictures on its card';
-
-  @override
-  String get editorDragHint => 'Drag to reorder';
 
   @override
   String get slashMenuLabel => 'Insert';
@@ -4190,6 +4220,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String settingsAddToBar(String action) {
     return 'Put $action in the top bar';
+  }
+
+  @override
+  String settingsMoveAction(String action) {
+    return 'Move $action';
   }
 
   @override

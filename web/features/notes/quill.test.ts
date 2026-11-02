@@ -6,6 +6,7 @@ import {
   findTickedLines,
   hasTextFormats,
   orderedPreviewMarker,
+  QUILL_MODULES,
   type QuillDelta,
   type QuillOp,
   startTypedBlock,
@@ -254,5 +255,55 @@ describe("clearTextFormats", () => {
 
     expect(ops()).toEqual(text);
     expect(hasTextFormats(quill, { index: 2, length: 0 })).toBe(false);
+  });
+});
+
+describe("Alt+Shift+Up/Down on a checklist item", () => {
+  const list = { list: "unchecked" };
+  const start = () => {
+    // "a" with its child "a1", then "b".
+    const fake = fakeQuill(
+      [
+        { insert: "a" },
+        { insert: "\n", attributes: list },
+        { insert: "a1" },
+        { insert: "\n", attributes: { ...list, indent: 1 } },
+        { insert: "b" },
+        { insert: "\n", attributes: list },
+      ],
+      1,
+    );
+    const root = new EventTarget();
+    const heard: unknown[] = [];
+    root.addEventListener("checklistmove", (e) =>
+      heard.push((e as CustomEvent).detail),
+    );
+    const quill = { ...fake.quill, root } as typeof fake.quill;
+    const press = (name: "move item up" | "move item down", index: number) =>
+      QUILL_MODULES.keyboard.bindings[name].handler.call(
+        { quill },
+        { index, length: 0 },
+        { format: list, prefix: "" },
+      );
+    return { fake, heard, press };
+  };
+
+  it("moves the item with its children, keeping the caret in it", () => {
+    const { fake, heard, press } = start();
+    // The caret after "a"; "a" and "a1" go below "b".
+    expect(press("move item down", 1)).toBe(false);
+    expect(
+      fake.ops().map((op) => (typeof op.insert === "string" ? op.insert : "")),
+    ).toEqual(["b", "\n", "a", "\n", "a1", "\n"]);
+    expect(fake.caret()).toBe(3);
+    expect(heard).toEqual([{ place: 2, siblings: 2 }]);
+  });
+
+  it("does nothing past the first item, and leaves other lines alone", () => {
+    const { fake, heard, press } = start();
+    const before = fake.ops();
+    expect(press("move item up", 0)).toBe(false);
+    expect(fake.ops()).toEqual(before);
+    expect(heard).toEqual([]);
   });
 });

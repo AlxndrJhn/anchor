@@ -48,10 +48,7 @@
         "noImgElement": "off"
       },
       "a11y": {
-        "useKeyWithClickEvents": "off",
-        "useMediaCaption": "off",
-        "noStaticElementInteractions": "off",
-        "noSvgWithoutTitle": "off"
+        "useMediaCaption": "off"
       }
     },
     "domains": {

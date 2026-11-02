@@ -34,11 +34,13 @@ import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
 import { burnNoteCards } from "@/lib/destroy";
 import { eachLimited } from "@/lib/each";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { plural } from "@/lib/utils";
 
 const NO_NOTES: Note[] = [];
 
 export default function ArchivePage() {
+  useDocumentTitle("Archive");
   const refresh = useRefreshNotes();
   const [confirmRemove, setConfirmRemove] = React.useState<{
     ids: string[];

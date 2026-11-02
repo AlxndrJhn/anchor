@@ -18,9 +18,11 @@ import {
   SettingsNav,
 } from "@/features/settings";
 import { api } from "@/lib/api/client";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { appMode, basePath, isServerless } from "@/lib/local-backend/mode";
 
 export default function SettingsPage() {
+  useDocumentTitle("Settings");
   // As in the Android app's About.
   const { data: server } = useQuery({
     queryKey: ["server-health"],

@@ -1,6 +1,7 @@
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/springs.dart';
@@ -241,6 +242,11 @@ class _NotesBottomBarState extends State<NotesBottomBar> {
             style: PressStyle.bottomBar,
             onTap: widget.onNewNote,
             onLongPress: widget.onHoldNewNote,
+            // VoiceOver has no hold.
+            semanticActions: {
+              CustomSemanticsAction(label: context.l10n.noteNewKinds):
+                  ?widget.onHoldNewNote,
+            },
             semanticLabel: context.l10n.noteNew,
             child: Container(
               key: widget.newNoteKey,
