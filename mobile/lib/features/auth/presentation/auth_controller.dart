@@ -21,6 +21,7 @@ class AuthController extends _$AuthController {
   Future<User?> build() async {
     final serverUrl = await ref.watch(serverConfigProvider.future);
     await ref.watch(allowSelfSignedCertProvider.future);
+    await ref.watch(savedServerHeadersProvider.future);
 
     if (serverUrl == null || serverUrl.isEmpty) {
       // No account: the notes stay on this device.

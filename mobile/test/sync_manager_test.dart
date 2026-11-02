@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:anchor/core/database/app_database.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
+import 'package:anchor/core/network/server_headers.dart';
 import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/core/session/session_expired_provider.dart';
 import 'package:anchor/features/sync/data/sync_compatibility.dart';
@@ -52,6 +53,11 @@ class NoSelfSignedCert extends AllowSelfSignedCert {
   Future<bool> build() async => false;
 }
 
+class NoServerHeaders extends SavedServerHeaders {
+  @override
+  Future<ServerHeaders?> build() async => null;
+}
+
 class SignedIn extends ActiveUserId {
   @override
   String? build() => 'user-1';
@@ -92,6 +98,7 @@ void main() {
         syncEventsProvider.overrideWithValue(QuietSyncEvents()),
         serverConfigProvider.overrideWith(FixedServerConfig.new),
         allowSelfSignedCertProvider.overrideWith(NoSelfSignedCert.new),
+        savedServerHeadersProvider.overrideWith(NoServerHeaders.new),
         syncCompatibilityProvider.overrideWith((ref) async => compatibility),
         connectivityStreamProvider.overrideWith(
           (ref) => const Stream<List<ConnectivityResult>>.empty(),

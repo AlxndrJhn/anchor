@@ -463,6 +463,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use only with a server you manage. Anchor can’t verify its identity.';
 
   @override
+  String get serverHeaders => 'Extra headers';
+
+  @override
+  String get serverHeadersHint => 'CF-Access-Client-Id: …';
+
+  @override
+  String get serverHeadersHelp =>
+      'For a proxy in front of your server, like Cloudflare Access. One per line, as Name: value. Sent only to this server.';
+
+  @override
+  String serverHeaderNotNameValue(int line) {
+    return 'Line $line needs a name and a value, as Name: value.';
+  }
+
+  @override
+  String serverHeaderBadName(int line) {
+    return 'Line $line: the name can have only letters, digits and - _ .';
+  }
+
+  @override
+  String serverHeaderBadValue(int line) {
+    return 'Line $line: the value has characters a header can’t carry.';
+  }
+
+  @override
+  String serverHeaderReserved(int line) {
+    return 'Line $line: Anchor sets this header itself.';
+  }
+
+  @override
+  String serverHeaderRepeated(int line) {
+    return 'Line $line repeats a name from above.';
+  }
+
+  @override
   String get serverSelfHosted => 'Notes on this phone move into your account.';
 
   @override

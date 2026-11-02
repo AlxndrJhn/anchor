@@ -8,6 +8,7 @@ import '../../../core/motion/haptics.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/server_address.dart';
 import '../../../core/network/server_config_provider.dart';
+import '../../../core/network/server_headers.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
@@ -48,14 +49,31 @@ class ServerConfigScreen extends ConsumerStatefulWidget {
 class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
     with FormSubmit {
   static const _addressField = #address;
+  static const _headersField = #headers;
 
   final _address = TextEditingController();
   final _focus = FocusNode();
+  final _headers = TextEditingController();
+  final _headersFocus = FocusNode();
   bool _isAdvancedOpen = false;
+
+  /// The saved headers fill their field before anything connects.
+  late final Future<void> _headersRead = _readHeaders();
+
+  Future<void> _readHeaders() async {
+    final saved = await ref.read(savedServerHeadersProvider.future);
+    if (saved == null || !mounted || _headers.text.isNotEmpty) return;
+    setState(() {
+      _headers.text = saved.text;
+      // Shown, so they never go to another server unseen.
+      _isAdvancedOpen = true;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    _headersRead.ignore();
     final initial = widget.initialUrl;
     if (initial != null && initial.isNotEmpty) {
       _address.text = initial.startsWith('http://') ? initial : hostOf(initial);
@@ -78,10 +96,14 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
   void dispose() {
     _address.dispose();
     _focus.dispose();
+    _headers.dispose();
+    _headersFocus.dispose();
     super.dispose();
   }
 
   Future<void> _connect() async {
+    await _headersRead;
+    if (!mounted) return;
     final typed = _address.text.trim();
     final url = normalizeServerUrl(typed);
     final error = typed.isEmpty
@@ -89,7 +111,14 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
         : url == null
         ? context.l10n.serverEnterValidAddress
         : null;
-    if (!checkFields([(_addressField, _focus, error)])) return;
+    final headersError = _headersError();
+    if (headersError != null) setState(() => _isAdvancedOpen = true);
+    if (!checkFields([
+      (_addressField, _focus, error),
+      (_headersField, _headersFocus, headersError),
+    ])) {
+      return;
+    }
     await submit(
       () => _connectTo(
         url!,
@@ -105,15 +134,50 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
     if (link != null && mounted) await _signInWith(link);
   }
 
+  /// The first problem in the headers, worded for their field.
+  String? _headersError() {
+    final error = parseServerHeaders(_headers.text).errors.firstOrNull;
+    if (error == null) return null;
+    final l10n = context.l10n;
+    final line = error.line;
+    return switch (error.problem) {
+      ServerHeaderProblem.notNameValue => l10n.serverHeaderNotNameValue(line),
+      ServerHeaderProblem.badName => l10n.serverHeaderBadName(line),
+      ServerHeaderProblem.badValue => l10n.serverHeaderBadValue(line),
+      ServerHeaderProblem.reservedName => l10n.serverHeaderReserved(line),
+      ServerHeaderProblem.repeatedName => l10n.serverHeaderRepeated(line),
+    };
+  }
+
+  /// Saves the headers with the address, so the new server gets them from
+  /// the first request. Read now: the switch may outlive this screen.
+  Future<void> Function() _switchTo(String url) {
+    final headers = ref.read(savedServerHeadersProvider.notifier);
+    final serverConfig = ref.read(serverConfigProvider.notifier);
+    final text = _headers.text;
+    return () async {
+      await headers.save(url, text);
+      await serverConfig.setServerUrl(url);
+    };
+  }
+
   /// The server and the one-time code come from the web's magic login.
   Future<void> _signInWith(MagicLink link) async {
+    await _headersRead;
+    if (!mounted) return;
+    final headersError = _headersError();
+    if (headersError != null) {
+      setState(() => _isAdvancedOpen = true);
+      checkFields([(_headersField, _headersFocus, headersError)]);
+      return;
+    }
     final url = link.serverUrl;
     _address.text = url.startsWith('http://') ? url : hostOf(url);
     final l10n = context.l10n;
     await submit(
       () async {
         if (!await _isServerUsable(url, isSchemeAdded: false)) return;
-        await ref.read(serverConfigProvider.notifier).setServerUrl(url);
+        await _switchTo(url)();
         // Signing in waits for the switch to the new server to settle.
         final auth = ref.read(authControllerProvider.notifier);
         await ref.read(authControllerProvider.future);
@@ -129,15 +193,15 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
   Future<void> _connectTo(String url, {required bool isSchemeAdded}) async {
     if (!await _isServerUsable(url, isSchemeAdded: isSchemeAdded)) return;
     if (!mounted) return;
-    final serverConfig = ref.read(serverConfigProvider.notifier);
     Haptics.success();
     if (context.canPop()) {
       // Leave this screen first, then switch servers.
+      final switchServer = _switchTo(url);
       context.pop();
-      await serverConfig.setServerUrl(url);
+      await switchServer();
     } else {
       // Sign in can't open until there is a server.
-      await serverConfig.setServerUrl(url);
+      await _switchTo(url)();
       if (mounted) context.go(AppRoutes.login);
     }
   }
@@ -160,6 +224,7 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
         ref.read(allowSelfSignedCertProvider).value ?? false;
     final check = await ServerConnector(
       allowSelfSigned: allowSelfSigned,
+      headers: parseServerHeaders(_headers.text).headers,
     ).check(url);
     final List<int> protocols;
     switch (check) {
@@ -278,6 +343,24 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
                       ref.read(allowSelfSignedCertProvider.notifier).toggle(on),
                 ),
               ],
+            ),
+          ),
+        ),
+        Reveal(
+          visible: _isAdvancedOpen,
+          child: Padding(
+            padding: EdgeInsets.only(top: density.space16),
+            child: AppTextField(
+              controller: _headers,
+              focusNode: _headersFocus,
+              label: l10n.serverHeaders,
+              hint: l10n.serverHeadersHint,
+              help: l10n.serverHeadersHelp,
+              lines: 2,
+              keyboardType: TextInputType.multiline,
+              autocorrect: false,
+              error: errorOf(_headersField),
+              onChanged: (_) => clearError(_headersField),
             ),
           ),
         ),

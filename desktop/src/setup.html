@@ -43,6 +43,23 @@
             required
           />
         </div>
+        <details id="advanced" class="advanced">
+          <summary>Advanced</summary>
+          <label for="headers">Extra headers</label>
+          <textarea
+            id="headers"
+            name="headers"
+            rows="2"
+            spellcheck="false"
+            autocomplete="off"
+            placeholder="CF-Access-Client-Id: …"
+            aria-describedby="headers-help"
+          ></textarea>
+          <p id="headers-help" class="help">
+            For a proxy in front of your server, like Cloudflare Access. One per line, as Name: value. Sent only to
+            this server.
+          </p>
+        </details>
         <button id="connect" type="submit" class="primary">Continue</button>
       </form>
       <button id="local" type="button" class="secondary" hidden>Use without a server</button>

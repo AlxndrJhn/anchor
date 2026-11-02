@@ -4,6 +4,7 @@ class StorageKeys {
   static const serverUrl = 'server_url';
   static const localOnly = 'local_only';
   static const allowSelfSignedCert = 'allow_self_signed_cert';
+  static const serverHeaders = 'server_headers';
   static const accessToken = 'access_token';
   static const refreshToken = 'refresh_token';
   static const userData = 'user_data';
@@ -41,6 +42,7 @@ class StorageKeys {
     serverUrl,
     localOnly,
     allowSelfSignedCert,
+    serverHeaders,
     accessToken,
     userData,
     themeMode,

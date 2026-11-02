@@ -13,12 +13,15 @@ const {
   net,
   powerMonitor,
   protocol,
+  safeStorage,
   screen,
+  session,
   shell,
 } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const { headersError, headersFor, isToServer } = require("./headers");
 const { startUpdater } = require("./updater");
 
 // The name the window, menu and About panel show, and the settings folder's.
@@ -105,6 +108,48 @@ function saveSettings() {
   }
 }
 
+// --- Extra headers (settings.serverHeaders) ---------------------------------
+
+// { server, text } as on Android, the text sealed with the system's keychain
+// when it has one: they are often a proxy's secret.
+function readHeaders() {
+  const saved = settings.serverHeaders;
+  if (!saved || typeof saved.server !== "string") return null;
+  try {
+    if (typeof saved.sealed === "string") {
+      return { server: saved.server, text: safeStorage.decryptString(Buffer.from(saved.sealed, "base64")) };
+    }
+    if (typeof saved.text === "string") return { server: saved.server, text: saved.text };
+  } catch (err) {
+    console.error("Could not read the extra headers:", err);
+  }
+  return null;
+}
+
+function writeHeaders(server, text) {
+  if (!String(text ?? "").trim()) {
+    delete settings.serverHeaders;
+  } else if (safeStorage.isEncryptionAvailable()) {
+    settings.serverHeaders = { server, sealed: safeStorage.encryptString(text).toString("base64") };
+  } else {
+    settings.serverHeaders = { server, text };
+  }
+  savedHeaders = readHeaders();
+}
+
+// Read once ready (the keychain needs it), and on every change.
+let savedHeaders = null;
+
+// Every request to the server carries them: the pages, the API, the service
+// worker's. They go to no other site, and not to another server's address.
+function sendHeaders(targetSession) {
+  targetSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    if (!isToServer(details.url, settings.serverUrl)) return callback({});
+    const extra = headersFor(savedHeaders, settings.serverUrl);
+    callback({ requestHeaders: { ...details.requestHeaders, ...extra } });
+  });
+}
+
 // --- Server URL ------------------------------------------------------------
 
 /** "notes.example.com/" -> "https://notes.example.com"; null if not a URL. */
@@ -125,15 +170,16 @@ function normalizeServerUrl(input) {
 }
 
 // The messages are the Android app's (serverNotAnchor, serverUnreachable…).
-async function checkServer(serverUrl, { isSchemeAdded = false } = {}) {
+async function checkServer(serverUrl, { isSchemeAdded = false, headers = {} } = {}) {
   const host = new URL(serverUrl).host;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
   try {
-    const res = await net.fetch(`${serverUrl}/api/health`, {
+    // Not the window's session: its saved headers would replace these.
+    const res = await session.fromPartition("anchor-check").fetch(`${serverUrl}/api/health`, {
       signal: controller.signal,
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: { ...headers, Accept: "application/json" },
     });
     if (!res.ok) {
       return { ok: false, error: `${host} answered ${res.status} ${res.statusText}. Check the address.` };
@@ -419,20 +465,25 @@ ipcMain.handle("anchor:get-state", (event) => {
     serverUrl: settings.serverUrl ?? "",
     hasServer: Boolean(settings.serverUrl),
     isFirstStart: !settings.serverUrl && !settings.localOnly,
+    headers: savedHeaders?.text ?? "",
     error: setupState.error,
     canRetry: setupState.canRetry,
     version: app.getVersion(),
   };
 });
 
-ipcMain.handle("anchor:connect", async (event, input) => {
+ipcMain.handle("anchor:connect", async (event, input, headersText = "") => {
   if (!fromSetupPage(event)) throw new Error("Not allowed");
   const serverUrl = normalizeServerUrl(input);
   if (!String(input ?? "").trim()) return { ok: false, error: "Enter a server address." };
   if (!serverUrl) return { ok: false, error: "Enter a valid server address." };
+  const headersProblem = headersError(headersText);
+  if (headersProblem) return { ok: false, error: headersProblem, field: "headers" };
   const isSchemeAdded = !/^https?:\/\//i.test(String(input).trim());
-  const result = await checkServer(serverUrl, { isSchemeAdded });
+  const headers = headersFor({ server: serverUrl, text: headersText }, serverUrl);
+  const result = await checkServer(serverUrl, { isSchemeAdded, headers });
   if (!result.ok) return result;
+  writeHeaders(serverUrl, headersText);
   // The notes kept without a server move into the account once signed in.
   if (!settings.serverUrl && settings.localOnly) await keepLocalNotesForMove();
   settings.serverUrl = serverUrl;
@@ -590,7 +641,9 @@ function changeServer() {
 // preview image (ghcr.io/<owner>/anchor:fork-preview).
 async function wantsCandidates() {
   if (!settings.previewReleases || !settings.serverUrl) return false;
-  const server = await checkServer(settings.serverUrl);
+  const server = await checkServer(settings.serverUrl, {
+    headers: headersFor(savedHeaders, settings.serverUrl),
+  });
   return server.ok && Boolean(server.image?.endsWith(":fork-preview"));
 }
 
@@ -702,6 +755,8 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     protocol.handle(LOCAL_SCHEME, serveLocal);
+    savedHeaders = readHeaders();
+    sendHeaders(session.defaultSession);
     app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
     buildMenu();
     createWindow();
