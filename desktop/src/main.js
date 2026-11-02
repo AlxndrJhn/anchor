@@ -363,8 +363,10 @@ function openServer() {
   mainWindow.loadURL(settings.serverUrl || LOCAL_URL);
 }
 
+// The first start welcomes, with the choice of a server or none.
 function start() {
-  openServer();
+  if (settings.serverUrl || settings.localOnly) openServer();
+  else showSetup();
 }
 
 // --- The built-in web client (anchor-app://notes/) ---------------------------
@@ -416,6 +418,7 @@ ipcMain.handle("anchor:get-state", (event) => {
   return {
     serverUrl: settings.serverUrl ?? "",
     hasServer: Boolean(settings.serverUrl),
+    isFirstStart: !settings.serverUrl && !settings.localOnly,
     error: setupState.error,
     canRetry: setupState.canRetry,
     version: app.getVersion(),
@@ -453,6 +456,7 @@ ipcMain.handle("anchor:retry", (event) => {
 ipcMain.handle("anchor:use-local", (event) => {
   if (!fromSetupPage(event)) throw new Error("Not allowed");
   delete settings.serverUrl;
+  settings.localOnly = true;
   saveSettings();
   buildMenu();
   openServer();

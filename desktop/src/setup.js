@@ -1,5 +1,5 @@
-// The built-in "Welcome to Anchor+" page, which asks for the server (from
-// "Connect to a server…", or when the server can't be opened).
+// The built-in "Welcome to Anchor+" page: on the first start (with the choice
+// of no server), from "Connect to a server…", or when the server can't open.
 (async () => {
   const api = window.anchorDesktop;
   const form = document.getElementById("form");
@@ -27,7 +27,7 @@
   input.value = state.serverUrl;
   showError(state.error);
   retry.hidden = !state.canRetry;
-  local.hidden = !state.hasServer;
+  local.hidden = !state.hasServer && !state.isFirstStart;
   // Opened from "Change server…" rather than after an error.
   if (!state.error) retry.textContent = "Back to your notes";
   input.focus();
