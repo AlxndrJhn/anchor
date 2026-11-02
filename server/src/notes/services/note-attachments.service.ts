@@ -248,12 +248,33 @@ export class NoteAttachmentsService {
     return { data: await fs.readFile(filePath), attachment };
   }
 
+  /** For a share link: the caller has already checked the link opens it. */
+  async listForLink(noteId: string) {
+    const attachments = await this.prisma.noteAttachment.findMany({
+      where: { noteId },
+      orderBy: { position: 'asc' },
+    });
+    return attachments.map(toAttachmentResponse);
+  }
+
+  /** For a share link: the caller has already checked the link opens it. */
+  async serveFileForLink(noteId: string, attachmentId: string) {
+    const { attachment, filePath } = await this.findNoteFile(
+      noteId,
+      attachmentId,
+    );
+    return { stream: createReadStream(filePath), attachment };
+  }
+
   private async findFile(userId: string, noteId: string, attachmentId: string) {
     const access = await this.noteAccessService.hasNoteAccess(userId, noteId);
     if (!access.hasAccess) {
       throw new NotFoundException('Note not found');
     }
+    return this.findNoteFile(noteId, attachmentId);
+  }
 
+  private async findNoteFile(noteId: string, attachmentId: string) {
     const attachment = await this.prisma.noteAttachment.findFirst({
       where: { id: attachmentId, noteId },
     });

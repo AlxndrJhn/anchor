@@ -12,11 +12,14 @@ export interface PriorNoteContent {
 
 @Injectable()
 export class NoteRevisionsService {
-  /** With `collapse`, a run of one person's edits keeps only the text before it. */
+  /**
+   * With `collapse`, a run of one person's edits keeps only the text before it.
+   * No author: an edit made through the note's share link.
+   */
   async recordEdit(
     tx: Prisma.TransactionClient,
     prior: PriorNoteContent,
-    authorUserId: string,
+    authorUserId: string | null,
     { collapse = true }: { collapse?: boolean } = {},
   ): Promise<void> {
     const newest = await tx.noteRevision.findFirst({

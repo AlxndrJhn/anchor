@@ -307,6 +307,11 @@ export class LocalServer {
       if (method === "GET") return [];
       return fail(400, "Sharing needs an Anchor server");
     }
+    if (action === "link") {
+      this.find(id);
+      if (method === "GET") return { link: null };
+      return fail(400, "Share links need an Anchor server");
+    }
 
     const note = this.find(id);
     switch (`${method} ${action ?? ""}`) {

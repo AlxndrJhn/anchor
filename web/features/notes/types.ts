@@ -29,6 +29,30 @@ export interface NoteShare {
   updatedAt: string;
 }
 
+/** A link that opens the note without an account. */
+export interface NoteShareLink {
+  token: string;
+  permission: NoteSharePermission;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A note as its share link opens it: nothing about whose it is. */
+export interface SharedNote {
+  title: string;
+  content: string | null;
+  background: string | null;
+  version: number;
+  updatedAt: string;
+  isFrozen: boolean;
+  permission: NoteSharePermission;
+  canEdit: boolean;
+  attachments: Pick<
+    NoteAttachment,
+    "id" | "type" | "originalFilename" | "mimeType" | "fileSize" | "position"
+  >[];
+}
+
 export type ReminderRecurrence =
   | "none"
   | "daily"

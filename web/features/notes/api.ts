@@ -13,7 +13,9 @@ import type {
   NoteRevision,
   NoteRevisionPage,
   NoteShare,
+  NoteShareLink,
   NoteSharePermission,
+  SharedNote,
   UpdateNoteDto,
   UserSearchResult,
 } from "./types";
@@ -328,6 +330,46 @@ export async function getNoteShares(noteId: string): Promise<NoteShare[]> {
   return api.get(`api/notes/${noteId}/shares`).json<NoteShare[]>();
 }
 
+export async function getNoteShareLink(
+  noteId: string,
+): Promise<NoteShareLink | null> {
+  const { link } = await api
+    .get(`api/notes/${noteId}/link`)
+    .json<{ link: NoteShareLink | null }>();
+  return link;
+}
+
+/** Makes the note's link, or changes what it lets people do. */
+export async function setNoteShareLink(
+  noteId: string,
+  permission: NoteSharePermission,
+): Promise<NoteShareLink> {
+  const { link } = await api
+    .put(`api/notes/${noteId}/link`, { json: { permission } })
+    .json<{ link: NoteShareLink }>();
+  return link;
+}
+
+export async function removeNoteShareLink(noteId: string): Promise<void> {
+  await api.delete(`api/notes/${noteId}/link`);
+}
+
+/** Where a note's link opens it. */
+export function shareLinkUrl(token: string): string {
+  return `${window.location.origin}/s/${token}`;
+}
+
+export async function getSharedNote(token: string): Promise<SharedNote> {
+  return getJson<SharedNote>(`api/shared/${token}`);
+}
+
+export async function updateSharedNote(
+  token: string,
+  data: { title?: string; content?: string; baseVersion?: number },
+): Promise<SharedNote> {
+  return api.patch(`api/shared/${token}`, { json: data }).json<SharedNote>();
+}
+
 export async function updateNoteSharePermission(
   noteId: string,
   shareId: string,
@@ -382,12 +424,24 @@ export async function getNoteAttachments(
   return api.get(`api/notes/${noteId}/attachments`).json<NoteAttachment[]>();
 }
 
+let linkToken: string | null = null;
+
+/**
+ * On a page opened by a share link: its note's files are fetched through
+ * the link, not the account.
+ */
+export function setAttachmentLink(token: string | null) {
+  linkToken = token;
+}
+
 export async function fetchAttachmentBlob(
   noteId: string,
   attachmentId: string,
 ): Promise<Blob> {
   const response = await api.get(
-    `api/notes/${noteId}/attachments/${attachmentId}`,
+    linkToken
+      ? `api/shared/${linkToken}/attachments/${attachmentId}`
+      : `api/notes/${noteId}/attachments/${attachmentId}`,
   );
   return response.blob();
 }
