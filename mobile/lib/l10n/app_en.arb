@@ -3367,6 +3367,10 @@
   "@pullOffline": {
     "description": "Shown when the person pulls down the list to sync while offline."
   },
+  "pullNoServer": "No server, already up to date",
+  "@pullNoServer": {
+    "description": "Shown when the person pulls down the list to sync while notes are kept on this phone only, with no server to sync with."
+  },
   "pullSyncing": "Syncing…",
   "@pullSyncing": {
     "description": "Shown above the list while a pull-down sync runs."

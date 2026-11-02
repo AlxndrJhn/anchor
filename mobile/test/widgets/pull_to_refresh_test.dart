@@ -8,7 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 final _english = lookupAppLocalizations(const Locale('en'));
 
 void main() {
-  Future<int> pullDown(WidgetTester tester, {required bool isSynced}) async {
+  Future<int> pullDown(
+    WidgetTester tester, {
+    required bool isSynced,
+    bool hasServer = true,
+  }) async {
     var syncs = 0;
     await tester.pumpWidget(
       MaterialApp(
@@ -21,6 +25,7 @@ void main() {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           refreshSliver: PullToRefresh(
+            hasServer: hasServer,
             isOnline: () => true,
             onSync: () async {
               syncs++;
@@ -61,6 +66,16 @@ void main() {
   testWidgets('a pull that fails to sync says so', (tester) async {
     await pullDown(tester, isSynced: false);
     expect(await shows(tester, _english.pullFailed), isTrue);
+    expect(find.text(_english.pullUpToDate), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('without a server a pull says there is nothing to sync', (
+    tester,
+  ) async {
+    final syncs = await pullDown(tester, isSynced: true, hasServer: false);
+    expect(await shows(tester, _english.pullNoServer), isTrue);
+    expect(syncs, 0);
     expect(find.text(_english.pullUpToDate), findsNothing);
     await tester.pump(const Duration(seconds: 3));
   });

@@ -1,6 +1,7 @@
 import 'package:anchor/app/app_bootstrap.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/network/server_config_provider.dart';
+import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/features/auth/domain/user.dart';
@@ -14,6 +15,7 @@ import 'package:anchor/features/notes/presentation/notes_list_screen.dart';
 import 'package:anchor/features/notes/presentation/notes_view_options.dart';
 import 'package:anchor/features/notes/presentation/widgets/card_registry.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_card.dart';
+import 'package:anchor/features/notes/presentation/widgets/pull_to_refresh.dart';
 import 'package:anchor/features/picture_search/picture_search.dart';
 import 'package:anchor/features/reminders/data/reminder_permissions.dart';
 import 'package:anchor/features/settings/domain/editor_preferences.dart';
@@ -66,6 +68,8 @@ void main() {
     PictureSearchRepository? pictureSearch,
     bool burnDeleted = true,
     NoteFreezeRepository? freezer,
+    bool localOnly = false,
+    SyncManager Function()? sync,
   }) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
@@ -83,11 +87,12 @@ void main() {
           tagsControllerProvider.overrideWith(_Tags.new),
           notesViewOptionsProvider.overrideWith(() => _ViewOptions(options)),
           reminderPermissionsControllerProvider.overrideWith(_Permissions.new),
-          syncManagerProvider.overrideWith(_Sync.new),
+          syncManagerProvider.overrideWith(sync ?? _Sync.new),
           syncCompatibilityProvider.overrideWith(
             (ref) async => SyncCompatibility.ok,
           ),
           isOnlineProvider.overrideWith((ref) => true),
+          isLocalOnlyProvider.overrideWithValue(localOnly),
           firstDownloadProvider.overrideWithValue(FirstDownload.done),
           appBootstrapProvider.overrideWithValue(
             AppBootstrap(
@@ -143,6 +148,34 @@ void main() {
     await gesture.up();
     await tester.pumpAndSettle();
   }
+
+  testWidgets('the list pulls to sync only with a server', (tester) async {
+    PullToRefresh pull() => tester.widget<PullToRefresh>(
+      find.byType(PullToRefresh, skipOffstage: false),
+    );
+    await pumpList(tester, notesNamed('Note', 2));
+    expect(pull().hasServer, isTrue);
+
+    await tester.pumpWidget(const SizedBox());
+    await pumpList(tester, notesNamed('Note', 2), localOnly: true);
+    expect(pull().hasServer, isFalse);
+  });
+
+  testWidgets('a pull syncs while searching too', (tester) async {
+    _CountingSync.calls = 0;
+    await pumpList(tester, notesNamed('Note', 8), sync: _CountingSync.new);
+    await tester.tap(find.bySemanticsLabel('Search notes'));
+    await tester.pumpAndSettle();
+
+    final pull = await tester.startGesture(const Offset(195, 300));
+    for (var i = 0; i < 16; i++) {
+      await pull.moveBy(const Offset(0, 14));
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await pull.up();
+    await tester.pumpAndSettle();
+    expect(_CountingSync.calls, 1);
+  });
 
   testWidgets('a held card follows the finger and the others make room', (
     tester,
@@ -1048,6 +1081,19 @@ class _Sync extends SyncManager {
 
   @override
   Future<bool> requestSync() async => false;
+}
+
+class _CountingSync extends SyncManager {
+  static var calls = 0;
+
+  @override
+  bool build() => false;
+
+  @override
+  Future<bool> requestSync() async {
+    calls++;
+    return true;
+  }
 }
 
 class _MockFreezer extends Mock implements NoteFreezeRepository {}

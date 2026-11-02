@@ -9,10 +9,15 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../app/router/app_router.dart';
 import '../../../core/motion/haptics.dart';
+import '../../../core/motion/springs.dart';
+import '../../../core/network/connectivity_provider.dart';
+import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/session/session_expired_provider.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/pressable.dart';
 import '../../../l10n/l10n.dart';
+import '../../sync/data/sync_manager.dart';
 import '../data/debug_privacy.dart';
 import '../data/debug_recorder_controller.dart';
 import '../data/debug_report.dart';
@@ -112,6 +117,20 @@ class _DebugRecorderHostState extends ConsumerState<DebugRecorderHost> {
       'height': MediaQuery.sizeOf(context).height,
       'pixel_ratio': MediaQuery.devicePixelRatioOf(context),
       'brightness': Theme.of(context).brightness.name,
+      'text_scale': MediaQuery.textScalerOf(context).scale(1),
+      'reduced_motion': context.isMotionReduced,
+    });
+    // Only changes are recorded after this, so how things stood at the start.
+    final userId = ref.read(activeUserIdProvider);
+    _recorder.record('session', {
+      'mode': switch (userId) {
+        null => 'signed_out',
+        localUserId => 'local_only',
+        _ => 'server',
+      },
+      'online': ref.read(isOnlineProvider),
+      'session_expired': ref.read(sessionExpiredProvider),
+      'syncing': ref.read(syncManagerProvider),
     });
   }
 

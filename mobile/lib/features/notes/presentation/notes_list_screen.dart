@@ -15,6 +15,7 @@ import '../../../core/motion/reorder_animation.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/search/search_pattern.dart';
+import '../../../core/session/active_user_id_provider.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/update/update_sheet.dart';
@@ -729,9 +730,11 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
-      refreshSliver: isSelecting || _searching
+      // Searching still pulls: a sync can bring in what's searched for.
+      refreshSliver: isSelecting
           ? null
           : PullToRefresh(
+              hasServer: !ref.watch(isLocalOnlyProvider),
               isOnline: () => ref.read(isOnlineProvider),
               onSync: () =>
                   ref.read(syncManagerProvider.notifier).requestSync(),

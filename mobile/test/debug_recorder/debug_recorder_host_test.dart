@@ -1,4 +1,5 @@
 import 'package:anchor/app/router/app_router.dart';
+import 'package:anchor/core/session/active_user_id_provider.dart';
 import 'package:anchor/features/debug_recorder/data/debug_recorder_controller.dart';
 import 'package:anchor/features/debug_recorder/presentation/debug_recorder_host.dart';
 import 'package:anchor/l10n/app_localizations.dart';
@@ -30,7 +31,10 @@ void main() {
   Future<void> pumpApp(WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [goRouterProvider.overrideWith((_) => router)],
+        overrides: [
+          goRouterProvider.overrideWith((_) => router),
+          activeUserIdProvider.overrideWith(_LocalOnly.new),
+        ],
         child: MaterialApp.router(
           routerConfig: router,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -51,6 +55,12 @@ void main() {
     expect(DebugRecorder.instance.isRecording, isTrue);
     expect(find.byIcon(LucideIcons.video), findsOneWidget);
     expect(find.bySemanticsLabel('Stop debug recording'), findsOneWidget);
+    // How things stood at the start, since only changes follow.
+    final session = DebugRecorder.instance.events.singleWhere(
+      (e) => e.type == 'session',
+    );
+    expect(session.data, containsPair('mode', 'local_only'));
+    expect(session.data, containsPair('online', isA<bool>()));
     await a.up();
     await b.up();
 
@@ -77,4 +87,9 @@ void main() {
     await b.up();
     await c.up();
   });
+}
+
+class _LocalOnly extends ActiveUserId {
+  @override
+  String? build() => localUserId;
 }
