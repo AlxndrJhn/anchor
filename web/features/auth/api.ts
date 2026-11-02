@@ -52,6 +52,13 @@ export async function changePassword(
     .json<{ message: string }>();
 }
 
+/** Signs out every other device; this one stays signed in. */
+export async function logoutOtherDevices(): Promise<void> {
+  await api.post("api/auth/logout-others", {
+    json: { refreshToken: getRefreshToken() ?? undefined },
+  });
+}
+
 export async function updateProfile(data: UpdateProfileDto): Promise<User> {
   return api.patch("api/auth/profile", { json: data }).json<User>();
 }

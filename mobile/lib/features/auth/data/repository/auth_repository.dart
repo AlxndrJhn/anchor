@@ -107,6 +107,15 @@ class AuthRepository {
     );
   }
 
+  /// Signs out every other device; this one stays signed in.
+  Future<void> logoutOtherDevices() async {
+    final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw StateError('No session to keep');
+    }
+    await _authService.logoutOthers(refreshToken);
+  }
+
   /// Profile answers may leave out hasPassword; the stored value is kept then.
   Future<User> _profileFrom(Map<String, dynamic> data) async {
     final user = User.fromJson(data);

@@ -274,6 +274,15 @@ export class AuthService {
     }
   }
 
+  async revokeOtherRefreshTokens(
+    userId: string,
+    keepRefreshToken: string,
+  ): Promise<void> {
+    await this.prisma.refreshToken.deleteMany({
+      where: { userId, token: { not: keepRefreshToken } },
+    });
+  }
+
   async getApiToken(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

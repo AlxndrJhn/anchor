@@ -728,6 +728,26 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsSignOutOthers => 'Sign out other devices';
+
+  @override
+  String get settingsSignOutOthersTitle => 'Sign out your other devices?';
+
+  @override
+  String get settingsSignOutOthersMessage =>
+      'Within 15 minutes every other phone, browser and computer will be asked to sign in again. This phone stays signed in.';
+
+  @override
+  String get settingsSignOutOthersConfirm => 'Sign out others';
+
+  @override
+  String get settingsSignOutOthersDone => 'Signed out of your other devices';
+
+  @override
+  String get settingsSignOutOthersFailed =>
+      'Couldn’t sign out your other devices';
+
+  @override
   String get settingsUpdates => 'Updates';
 
   @override

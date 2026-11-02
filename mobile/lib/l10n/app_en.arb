@@ -1016,6 +1016,30 @@
       }
     }
   },
+  "settingsSignOutOthers": "Sign out other devices",
+  "@settingsSignOutOthers": {
+    "description": "Row in Settings: signs out every other device, keeping this phone signed in."
+  },
+  "settingsSignOutOthersTitle": "Sign out your other devices?",
+  "@settingsSignOutOthersTitle": {
+    "description": "Title of the dialog that confirms signing out every other device."
+  },
+  "settingsSignOutOthersMessage": "Within 15 minutes every other phone, browser and computer will be asked to sign in again. This phone stays signed in.",
+  "@settingsSignOutOthersMessage": {
+    "description": "Message of the dialog that confirms signing out every other device."
+  },
+  "settingsSignOutOthersConfirm": "Sign out others",
+  "@settingsSignOutOthersConfirm": {
+    "description": "Confirm button of the dialog that signs out every other device."
+  },
+  "settingsSignOutOthersDone": "Signed out of your other devices",
+  "@settingsSignOutOthersDone": {
+    "description": "Shown once every other device was signed out."
+  },
+  "settingsSignOutOthersFailed": "Couldn’t sign out your other devices",
+  "@settingsSignOutOthersFailed": {
+    "description": "Shown when signing out the other devices failed."
+  },
   "settingsUpdates": "Updates",
   "@settingsUpdates": {
     "description": "Section label in Settings for this fork's updates from its GitHub releases (Android release builds only)."

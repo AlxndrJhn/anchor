@@ -57,6 +57,16 @@ class AuthService {
     );
   }
 
+  /// Signs out every session but [refreshToken]'s.
+  Future<void> logoutOthers(String refreshToken) async {
+    await _send<Object?>(
+      () => _dio.post(
+        '/api/auth/logout-others',
+        data: {'refreshToken': refreshToken},
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> updateProfile({String? name}) =>
       _send(() => _dio.patch('/api/auth/profile', data: {'name': ?name}));
 

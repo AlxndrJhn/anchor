@@ -24,6 +24,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { LogoutOthersDto } from './dto/logout-others.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { PROFILE_IMAGE_MAX_BYTES } from './constants/auth.constants';
@@ -62,6 +63,20 @@ export class AuthController {
   @Post('logout')
   async logout(@Body() logoutDto: LogoutDto): Promise<void> {
     return this.authService.revokeRefreshToken(logoutDto.refreshToken);
+  }
+
+  /** Signs out every device but the one asking. */
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('logout-others')
+  async logoutOthers(
+    @CurrentUser() user: User,
+    @Body() logoutOthersDto: LogoutOthersDto,
+  ): Promise<void> {
+    return this.authService.revokeOtherRefreshTokens(
+      user.id,
+      logoutOthersDto.refreshToken,
+    );
   }
 
   /** A one-time code that signs another device in as this person. */

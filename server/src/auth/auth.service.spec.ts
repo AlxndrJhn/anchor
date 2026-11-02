@@ -504,6 +504,32 @@ describe('AuthService', () => {
     });
   });
 
+  describe('revokeOtherRefreshTokens', () => {
+    it('signs out every other session of that person only', async () => {
+      addUser({ id: 'u1' });
+      addUser({ id: 'u2' });
+      const expiresAt = new Date(Date.now() + 60_000);
+      for (const [token, userId] of [
+        ['this-device', 'u1'],
+        ['laptop', 'u1'],
+        ['phone', 'u1'],
+        ['someone-else', 'u2'],
+      ]) {
+        refreshTokens.set(token, { id: token, token, userId, expiresAt });
+      }
+
+      await service.revokeOtherRefreshTokens('u1', 'this-device');
+
+      expect([...refreshTokens.keys()].sort()).toEqual([
+        'someone-else',
+        'this-device',
+      ]);
+      await expect(service.refreshTokens('laptop')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
   describe('changePassword', () => {
     it('rejects a wrong current password', async () => {
       addUser({ id: 'u1' });
