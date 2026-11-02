@@ -7,6 +7,10 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { OidcConfigService } from '../auth/oidc/oidc-config.service';
+import {
+  SECOND_FACTOR_GRACE_DAYS,
+  SecondFactorService,
+} from '../auth/second-factor.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { NoteState } from 'src/generated/prisma/enums';
@@ -23,6 +27,7 @@ export class AdminService {
     private prisma: PrismaService,
     private settingsService: SettingsService,
     private oidcConfigService: OidcConfigService,
+    private secondFactorService: SecondFactorService,
   ) {}
 
   async getStats() {
@@ -370,5 +375,25 @@ export class AdminService {
     }
     await this.oidcConfigService.setOidcSettings(toSet);
     return this.oidcConfigService.getOidcSettings();
+  }
+
+  /** The sign-in rule, and who still signs in with a password alone. */
+  async getSecondFactorSettings() {
+    const [policy, passwordOnly] = await Promise.all([
+      this.secondFactorService.getPolicy(),
+      this.secondFactorService.listPasswordOnly(),
+    ]);
+    return {
+      required: policy.required,
+      since: policy.since?.toISOString() ?? null,
+      deadline: policy.deadline?.toISOString() ?? null,
+      graceDays: SECOND_FACTOR_GRACE_DAYS,
+      passwordOnly,
+    };
+  }
+
+  async setSecondFactorRequired(required: boolean) {
+    await this.secondFactorService.setRequired(required);
+    return this.getSecondFactorSettings();
   }
 }

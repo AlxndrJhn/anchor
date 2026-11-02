@@ -24,8 +24,11 @@ sealed class AuthFailure implements Exception {
         wasWrong: true,
       ),
       (403, final text?)
-          when text.startsWith('Password sign-in is turned off') =>
+          when text.startsWith('Password sign-in is turned off') ||
+              text.endsWith('Sign in with your passkey.') =>
         const PasskeyOnlyFailure(),
+      (403, final text?) when text.endsWith('with your sign-in provider.') =>
+        const PasswordlessAccountFailure(),
       (401, final text?)
           when text.startsWith('This sign-in code has expired') =>
         const MagicCodeUsedFailure(),
@@ -68,6 +71,12 @@ final class TwoStepRequiredFailure extends AuthFailure {
 /// The account turned password sign-in off and signs in with passkeys.
 final class PasskeyOnlyFailure extends AuthFailure {
   const PasskeyOnlyFailure();
+}
+
+/// The admin asks everyone for a passkey or authenticator app, the deadline
+/// has passed, and this account has neither. Set up on the web.
+final class SecondFactorSetupFailure extends AuthFailure {
+  const SecondFactorSetupFailure();
 }
 
 final class MagicCodeUsedFailure extends AuthFailure {

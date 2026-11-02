@@ -29,6 +29,7 @@ import { LogoutDto } from './dto/logout.dto';
 import { LogoutOthersDto } from './dto/logout-others.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { AllowBeforeSecondFactor } from './decorators/allow-before-second-factor.decorator';
 import { PROFILE_IMAGE_MAX_BYTES } from './constants/auth.constants';
 import type { User } from 'src/generated/prisma/client';
 
@@ -117,6 +118,7 @@ export class AuthController {
     return this.magicLoginService.redeem(magicLoginDto.code);
   }
 
+  @AllowBeforeSecondFactor()
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@CurrentUser() user: User) {

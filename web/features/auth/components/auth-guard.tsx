@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
+import { getMe } from "../api";
 import { useAuthStore } from "../store";
 import { SessionCheck } from "./session-check";
 
@@ -25,6 +26,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const isInitialized = useAuthStore((state) => state.isInitialized);
   const hasSignedOut = useAuthStore((state) => state.hasSignedOut);
   const logout = useAuthStore((state) => state.logout);
+  const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
     const handleUnauthorized = () => logout();
@@ -33,6 +35,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
       window.removeEventListener("auth:unauthorized", handleUnauthorized);
     };
   }, [logout]);
+
+  // The admin's deadline passed during this session: look again, which
+  // brings up the setup screen.
+  useEffect(() => {
+    const handleSecondFactor = () => {
+      getMe().then(setUser, () => {});
+    };
+    window.addEventListener("auth:second-factor", handleSecondFactor);
+    return () =>
+      window.removeEventListener("auth:second-factor", handleSecondFactor);
+  }, [setUser]);
 
   useEffect(() => {
     if (isInitialized && !isAuthenticated) {

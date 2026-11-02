@@ -16,6 +16,7 @@ import { getRegistrationSettings, updateRegistrationMode } from "../api";
 import { adminKeys } from "../queries";
 import type { RegistrationMode } from "../types";
 import { LockNote } from "./admin-parts";
+import { SecondFactorPolicy } from "./second-factor-policy";
 import { SingleSignOn } from "./single-sign-on";
 
 export function SignInTab({ hidden }: { hidden?: boolean }) {
@@ -107,6 +108,7 @@ export function SignInTab({ hidden }: { hidden?: boolean }) {
           />
         )}
       </section>
+      <SecondFactorPolicy />
       <SingleSignOn isHidden={hidden} />
     </div>
   );

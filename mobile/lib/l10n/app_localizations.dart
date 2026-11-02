@@ -454,6 +454,12 @@ abstract class AppLocalizations {
   /// **'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.'**
   String get authPasskeyOnly;
 
+  /// Error at the top of the sign-in form when the admin requires a passkey or authenticator app and this account has neither yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Your admin asks everyone to sign in with a passkey or an authenticator app. Set one up in Anchor+ on the web, then sign in here.'**
+  String get authSecondFactorSetup;
+
   /// Error at the top of the sign-in form when the email or password is wrong.
   ///
   /// In en, this message translates to:

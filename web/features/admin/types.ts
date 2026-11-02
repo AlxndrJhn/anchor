@@ -79,3 +79,13 @@ export interface UpdateOidcSettingsDto {
   clearClientSecret?: boolean;
   disableInternalAuth?: boolean;
 }
+
+export interface SecondFactorSettings {
+  required: boolean;
+  since: string | null;
+  /** From when a password alone only lets people set one up. */
+  deadline: string | null;
+  graceDays: number;
+  /** Active people who still sign in with a password alone. */
+  passwordOnly: { id: string; name: string; email: string }[];
+}

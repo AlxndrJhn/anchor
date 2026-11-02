@@ -18,6 +18,7 @@ import { PasskeyService } from './passkey.service';
 import { TwoStepService } from './two-step.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { AllowBeforeSecondFactor } from './decorators/allow-before-second-factor.decorator';
 import {
   AddPasskeyDto,
   PasskeySignInDto,
@@ -34,6 +35,7 @@ export class SecurityController {
     private readonly twoStepService: TwoStepService,
   ) {}
 
+  @AllowBeforeSecondFactor()
   @UseGuards(JwtAuthGuard)
   @Get('security')
   getSecurity(@CurrentUser() user: User) {
@@ -49,6 +51,7 @@ export class SecurityController {
     return this.authService.setPasswordSignIn(user.id, enabled);
   }
 
+  @AllowBeforeSecondFactor()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('two-step/setup')
@@ -56,6 +59,7 @@ export class SecurityController {
     return this.twoStepService.start(user.id);
   }
 
+  @AllowBeforeSecondFactor()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('two-step/enable')
@@ -83,6 +87,7 @@ export class SecurityController {
     return this.twoStepService.regenerateRecoveryCodes(user.id, code);
   }
 
+  @AllowBeforeSecondFactor()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('passkeys/options')
@@ -93,6 +98,7 @@ export class SecurityController {
     return this.passkeyService.registrationOptions(user.id, origin);
   }
 
+  @AllowBeforeSecondFactor()
   @UseGuards(JwtAuthGuard)
   @Post('passkeys')
   addPasskey(
