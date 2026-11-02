@@ -814,6 +814,18 @@ Anchor supports OpenID Connect (OIDC) authentication for simplified credential m
 - Support for public OIDC clients (PKCE, no client secret required)
 - Auto create users on first login (if user signup is not disabled)
 - Auto link existing users by email
+- Connect an existing account from Settings, whatever its email
+- Test the issuer URL from the admin settings before saving
+
+### Pocket ID
+
+[Pocket ID](https://pocket-id.org) signs people in with passkeys, so pairing it with Anchor+ gives you passwordless sign-in on the web and the phone app. [`docker-compose.pocket-id.yml`](docker-compose.pocket-id.yml) runs both; its header lists the three steps, all on Pocket ID's side:
+
+1. Add your passkey as the Pocket ID admin at `https://id.example.com/setup`.
+2. Under **OIDC Clients → Add OIDC Client**, tick **Public Client** and **PKCE**, and add both callback URLs: `https://notes.example.com/api/auth/oidc/callback` and `anchor://oidc/callback`.
+3. Put the client ID in `.env` as `POCKET_ID_CLIENT_ID`, or in **Admin → Settings → Single sign-on** with `https://id.example.com` as the issuer URL. **Test** there checks Anchor+ can reach it.
+
+The first account to sign in becomes the admin. If you already have an account with a password, sign in as usual and use **Connect** under **Settings → Sign-in security** to link it to Pocket ID, even if the emails differ.
 
 ### Configuration
 

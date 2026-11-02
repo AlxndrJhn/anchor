@@ -4,7 +4,13 @@ import { browserSupportsWebAuthn } from "@simplewebauthn/browser";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { HTTPError } from "ky";
-import { Copy, FingerprintPattern, Plus, ShieldCheck } from "lucide-react";
+import {
+  Copy,
+  FingerprintPattern,
+  KeyRound,
+  Plus,
+  ShieldCheck,
+} from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -32,8 +38,10 @@ import {
   regenerateRecoveryCodes,
   removePasskey,
   setPasswordSignIn,
+  startProviderLink,
   startTwoStep,
 } from "@/features/auth/api";
+import { useOidcConfig } from "@/features/auth/hooks/use-oidc";
 import { useAuthStore } from "@/features/auth/store";
 import type { Passkey } from "@/features/auth/types";
 import { isPasskeyCancelled } from "@/features/auth/utils/sign-in-error";
@@ -129,6 +137,34 @@ export function SecuritySection() {
     onError: (error: Error) => toast.error(messageOf(error)),
   });
 
+  const oidc = useOidcConfig();
+  const providerName = oidc.data?.providerName || "your provider";
+  const link = useMutation({
+    mutationFn: startProviderLink,
+    onSuccess: (url) => {
+      window.location.href = url;
+    },
+    onError: (error: Error) => toast.error(messageOf(error)),
+  });
+  // Back from the provider after connecting.
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("provider") === "connected";
+    const failure = params.get("provider_error");
+    if (!connected && failure === null) return;
+    document.getElementById("set-security")?.scrollIntoView({ block: "start" });
+    if (connected) toast.success("Connected. You can sign in with it now.");
+    else toast.error(failure || "Couldn’t connect your account");
+    params.delete("provider");
+    params.delete("provider_error");
+    const search = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`,
+    );
+  }, []);
+
   const status = security.data;
   // Setting one up lifts the admin's reminder (or setup screen).
   const mergeUser = useAuthStore((s) => s.mergeUser);
@@ -159,6 +195,28 @@ export function SecuritySection() {
         </Row>
       ) : (
         <>
+          {oidc.data?.enabled && (
+            <Row>
+              <RowText
+                title={providerName}
+                text={
+                  status.providerLinked
+                    ? `Connected. “Continue with ${providerName}” signs you in to this account.`
+                    : `Connect it to sign in to this account with “Continue with ${providerName}”, whatever email it has.`
+                }
+              />
+              {!status.providerLinked && (
+                <Button
+                  variant="secondary"
+                  onClick={() => link.mutate()}
+                  busy={(link.isPending || link.isSuccess) && "Opening…"}
+                >
+                  <KeyRound aria-hidden />
+                  Connect
+                </Button>
+              )}
+            </Row>
+          )}
           <Row>
             <RowText
               title="Passkeys"

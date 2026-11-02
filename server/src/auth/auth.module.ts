@@ -60,6 +60,7 @@ import { OidcUserService } from './oidc/oidc-user.service';
     SecondFactorService,
     SecondFactorInterceptor,
     OidcConfigService,
+    OidcClientService,
     JwtModule,
     TokenResolverService,
     AuthGuard,

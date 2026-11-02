@@ -3,6 +3,7 @@ import type {
   AdminStats,
   AdminUser,
   CreateUserDto,
+  OidcIssuerTest,
   OidcSettings,
   RegistrationSettings,
   ResetPasswordResponse,
@@ -110,4 +111,12 @@ export async function updateSecondFactorRequired(
   return api
     .put("api/admin/settings/second-factor", { json: { required } })
     .json<SecondFactorSettings>();
+}
+
+export async function testOidcIssuer(
+  issuerUrl: string,
+): Promise<OidcIssuerTest> {
+  return api
+    .post("api/admin/settings/oidc/test", { json: { issuerUrl } })
+    .json<OidcIssuerTest>();
 }

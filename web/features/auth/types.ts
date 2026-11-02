@@ -105,6 +105,8 @@ export interface SecurityStatus {
   passwordSignIn: boolean;
   twoStep: boolean;
   recoveryCodesLeft: number;
+  /** Connected to the single sign-on provider. */
+  providerLinked: boolean;
   passkeys: Passkey[];
   secondFactor?: SecondFactorStatus | null;
 }

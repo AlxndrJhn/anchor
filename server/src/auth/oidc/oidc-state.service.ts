@@ -5,6 +5,8 @@ export interface OidcState {
   state: string;
   codeVerifier?: string;
   redirectUrl?: string;
+  /** Set when a signed-in person connects their account to the provider. */
+  linkUserId?: string;
   expiresAt: number;
 }
 
@@ -33,11 +35,17 @@ export class OidcStateService implements OnModuleDestroy {
   /**
    * Store OIDC state for CSRF protection
    */
-  storeState(state: string, codeVerifier?: string, redirectUrl?: string): void {
+  storeState(
+    state: string,
+    codeVerifier?: string,
+    redirectUrl?: string,
+    linkUserId?: string,
+  ): void {
     this.stateStore.set(state, {
       state,
       codeVerifier,
       redirectUrl,
+      linkUserId,
       expiresAt: Date.now() + this.STATE_EXPIRY_MS,
     });
   }

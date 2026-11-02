@@ -3,6 +3,7 @@ import { AdminService } from './admin.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { SecondFactorService } from '../auth/second-factor.service';
+import { OidcClientService } from '../auth/oidc/oidc-client.service';
 import { OidcConfigService } from '../auth/oidc/oidc-config.service';
 
 describe('AdminService.findUsers', () => {
@@ -25,6 +26,7 @@ describe('AdminService.findUsers', () => {
       {} as SettingsService,
       {} as OidcConfigService,
       {} as SecondFactorService,
+      {} as OidcClientService,
     );
   });
 
@@ -109,6 +111,7 @@ describe('AdminService.getPendingUsers', () => {
       {} as SettingsService,
       {} as OidcConfigService,
       {} as SecondFactorService,
+      {} as OidcClientService,
     );
 
     const waiting = await service.getPendingUsers();

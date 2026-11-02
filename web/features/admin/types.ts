@@ -70,6 +70,10 @@ export interface OidcSettings {
   source: "env" | "database" | "default";
 }
 
+export type OidcIssuerTest =
+  | { ok: true; issuer: string; supportsPkce: boolean }
+  | { ok: false; message: string; issuer?: string };
+
 export interface UpdateOidcSettingsDto {
   enabled?: boolean;
   providerName?: string;

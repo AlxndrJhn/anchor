@@ -1,0 +1,71 @@
+# Anchor+ with Pocket ID (https://pocket-id.org) for passkey sign-in.
+#
+# Both need their own HTTPS address behind your reverse proxy: passkeys only
+# work over HTTPS, and Anchor+ reaches Pocket ID at the same address your
+# browser does. Put these in a .env file next to this one:
+#
+#   ANCHOR_URL=https://notes.example.com
+#   POCKET_ID_URL=https://id.example.com
+#   POCKET_ID_ENCRYPTION_KEY=   # openssl rand -base64 32
+#
+# Then `docker compose -f docker-compose.pocket-id.yml up -d` and:
+#
+#   1. Open ${POCKET_ID_URL}/setup and add your passkey as the Pocket ID admin.
+#   2. In Pocket ID, OIDC Clients → Add OIDC Client: name it Anchor+, tick
+#      "Public Client" and "PKCE", and add both callback URLs:
+#        ${ANCHOR_URL}/api/auth/oidc/callback
+#        anchor://oidc/callback
+#   3. Put its client ID in .env as POCKET_ID_CLIENT_ID and run the `up`
+#      command again. Without it, set up single sign-on in Anchor+ under
+#      Admin → Settings instead; the issuer URL is ${POCKET_ID_URL}.
+#
+# The first account to sign in becomes the Anchor+ admin.
+
+services:
+  anchor-plus:
+    image: ghcr.io/alxndrjhn/anchor:fork-latest
+    container_name: anchor-plus
+    restart: unless-stopped
+    stop_grace_period: 1m
+    ports:
+      - "3000:3000"
+    environment:
+      - APP_URL=${ANCHOR_URL:?Set ANCHOR_URL in .env}
+      - PG_USER=anchor
+      - PG_PASSWORD=password
+      - PG_DATABASE=anchor
+      # All three set lock single sign-on to these; leave the client ID out
+      # to manage it in the admin settings instead.
+      - OIDC_ENABLED=${POCKET_ID_CLIENT_ID:+true}
+      - OIDC_PROVIDER_NAME=Pocket ID
+      - OIDC_ISSUER_URL=${POCKET_ID_CLIENT_ID:+${POCKET_ID_URL}}
+      - OIDC_CLIENT_ID=${POCKET_ID_CLIENT_ID:-}
+      # Pocket ID signs in with passkeys, so its button can be the only one.
+      - DISABLE_INTERNAL_AUTH=${ANCHOR_PROVIDER_ONLY:-false}
+    volumes:
+      - anchor_plus_data:/data
+    depends_on:
+      - pocket-id
+
+  pocket-id:
+    image: ghcr.io/pocket-id/pocket-id:v2
+    container_name: pocket-id
+    restart: unless-stopped
+    ports:
+      - "1411:1411"
+    environment:
+      - APP_URL=${POCKET_ID_URL:?Set POCKET_ID_URL in .env}
+      - ENCRYPTION_KEY=${POCKET_ID_ENCRYPTION_KEY:?Set POCKET_ID_ENCRYPTION_KEY in .env}
+      - TRUST_PROXY=true
+    volumes:
+      - pocket_id_data:/app/data
+    healthcheck:
+      test: ["CMD", "/app/pocket-id", "healthcheck"]
+      interval: 1m30s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+
+volumes:
+  anchor_plus_data:
+  pocket_id_data:
