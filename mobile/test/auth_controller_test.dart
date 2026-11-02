@@ -57,16 +57,24 @@ class _FixedServerConfig extends ServerConfig {
   Future<String?> build() async => 'https://anchor.example.com';
 }
 
+class _NoServer extends ServerConfig {
+  @override
+  Future<String?> build() async => null;
+}
+
 class _NoSelfSignedCert extends AllowSelfSignedCert {
   @override
   Future<bool> build() async => false;
 }
 
-ProviderContainer _container(_FakeAuthService service) {
+ProviderContainer _container(
+  _FakeAuthService service, {
+  ServerConfig Function() server = _FixedServerConfig.new,
+}) {
   final container = ProviderContainer(
     overrides: [
       authServiceProvider.overrideWithValue(service),
-      serverConfigProvider.overrideWith(_FixedServerConfig.new),
+      serverConfigProvider.overrideWith(server),
       allowSelfSignedCertProvider.overrideWith(_NoSelfSignedCert.new),
     ],
   );
@@ -79,6 +87,13 @@ void main() {
 
   group('signed out', () {
     setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
+    test('without a server, the notes kept on this device open', () async {
+      final container = _container(_FakeAuthService(), server: _NoServer.new);
+      expect(await container.read(authControllerProvider.future), isNull);
+      expect(container.read(activeUserIdProvider), localUserId);
+      expect(container.read(isLocalOnlyProvider), isTrue);
+    });
 
     test('signing up on an open server signs in', () async {
       final container = _container(_FakeAuthService());

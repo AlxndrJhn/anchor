@@ -249,7 +249,8 @@ GoRouter goRouter(Ref ref) {
       final isRegister = state.matchedLocation == AppRoutes.register;
 
       if (!hasServerUrl) {
-        return isServerConfig ? null : AppRoutes.serverConfig;
+        // The notes stay on this device; there is nothing to sign in to.
+        return isLogin || isRegister ? AppRoutes.home : null;
       }
 
       if (!isLoggedIn) {

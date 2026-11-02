@@ -598,6 +598,18 @@ abstract class AppLocalizations {
   /// **'New to Anchor?'**
   String get authNewToAnchor;
 
+  /// Before the link at the bottom of sign in that goes back to keeping notes on this phone, without a server.
+  ///
+  /// In en, this message translates to:
+  /// **'Just taking notes?'**
+  String get authNoAccountNeeded;
+
+  /// Link at the bottom of sign in: forgets the server and keeps notes on this phone only, until a server is connected in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Use without a server'**
+  String get authUseWithoutServer;
+
   /// Link after “New to Anchor?” on the sign-in page that opens the sign-up page.
   ///
   /// In en, this message translates to:
@@ -808,7 +820,7 @@ abstract class AppLocalizations {
   /// **'Server'**
   String get serverTitle;
 
-  /// Title of the first page, where the person enters their server address. Ends with the app's name, Anchor+; the trailing + is drawn as an animated plus.
+  /// Title of the page where the person enters their server address. Ends with the app's name, Anchor+; the trailing + is drawn as an animated plus.
   ///
   /// In en, this message translates to:
   /// **'Welcome to Anchor+'**
@@ -817,7 +829,7 @@ abstract class AppLocalizations {
   /// Under the title of the first page, where the server address is entered.
   ///
   /// In en, this message translates to:
-  /// **'Enter your server address to get started.'**
+  /// **'Enter your server address to sync your notes.'**
   String get serverSubtitle;
 
   /// Label of the field for the web address of the person’s Anchor server.
@@ -856,10 +868,10 @@ abstract class AppLocalizations {
   /// **'Use only with a server you manage. Anchor can’t verify its identity.'**
   String get serverSelfSignedWarning;
 
-  /// Note at the bottom of the server page: Anchor has no shared public server.
+  /// Note at the bottom of the server page: the notes kept on this phone without a server go into the account signed in to.
   ///
   /// In en, this message translates to:
-  /// **'Anchor requires a self-hosted server.'**
+  /// **'Notes on this phone move into your account.'**
   String get serverSelfHosted;
 
   /// Error under the server address field when it’s left empty.
@@ -1306,6 +1318,24 @@ abstract class AppLocalizations {
   /// **'Account'**
   String get settingsAccount;
 
+  /// Section label in Settings, without a server, for connecting one.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get settingsSync;
+
+  /// Row in Settings, without a server: opens the page for the address of a self-hosted Anchor server.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a server'**
+  String get settingsConnectServer;
+
+  /// Under Connect to a server in Settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync and share your notes with your own Anchor server. The notes on this phone move into your account when you sign in.'**
+  String get settingsConnectServerHelp;
+
   /// Row in Settings that opens the change password page, or shows who manages it.
   ///
   /// In en, this message translates to:
@@ -1635,6 +1665,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Offline. Changes are saved on this phone.'**
   String get settingsOffline;
+
+  /// Small line at the bottom of Settings when no server is connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes are kept on this phone only.'**
+  String get settingsLocalOnly;
 
   /// {reason} is a short instruction, such as “Update your server.”
   ///

@@ -23,6 +23,14 @@ class ServerConfig extends _$ServerConfig {
         .write(key: StorageKeys.serverUrl, value: normalizedUrl);
     state = AsyncData(normalizedUrl);
   }
+
+  /// Keeps the notes on this device only, and opens on them from now on.
+  Future<void> useWithoutServer() async {
+    final storage = ref.read(secureStorageProvider);
+    await storage.write(key: StorageKeys.localOnly, value: 'true');
+    await storage.delete(key: StorageKeys.serverUrl);
+    state = const AsyncData(null);
+  }
 }
 
 @Riverpod(keepAlive: true)

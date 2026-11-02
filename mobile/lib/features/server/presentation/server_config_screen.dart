@@ -142,6 +142,13 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
     }
   }
 
+  /// Notes stay on this phone; Settings connects a server later.
+  Future<void> _useWithoutServer() async {
+    Haptics.selection();
+    await ref.read(serverConfigProvider.notifier).useWithoutServer();
+    if (mounted) context.go(AppRoutes.home);
+  }
+
   /// Shows why not, when not.
   Future<bool> _isServerUsable(
     String url, {
@@ -196,6 +203,8 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
     final isSigningIn = isSubmitting(#magicLink);
     final density = context.density;
     final l10n = context.l10n;
+    // Only the first start offers to go on without one.
+    final isFirstStart = !Navigator.canPop(context);
     return FormPage(
       title: l10n.serverTitle,
       isTitleShown: false,
@@ -239,6 +248,15 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
           kind: AppButtonKind.secondary,
           onPressed: isBusy ? null : _scan,
         ),
+        if (isFirstStart) ...[
+          SizedBox(height: density.space12),
+          AppButton(
+            label: l10n.authUseWithoutServer,
+            icon: LucideIcons.smartphone,
+            kind: AppButtonKind.secondary,
+            onPressed: isBusy ? null : _useWithoutServer,
+          ),
+        ],
         SizedBox(height: density.space16),
         _AdvancedToggle(
           isOpen: _isAdvancedOpen,

@@ -110,6 +110,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
     onFailure: _failed,
   );
 
+  /// Notes stay on this phone until a server is connected again.
+  Future<void> _useWithoutServer() async {
+    await ref.read(serverConfigProvider.notifier).useWithoutServer();
+    if (mounted) context.go(AppRoutes.home);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isBusy = isSubmitting();
@@ -236,6 +242,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
             onTap: () => context.push(AppRoutes.register),
           ),
         ],
+        AuthSwitchLink(
+          text: l10n.authNoAccountNeeded,
+          action: l10n.authUseWithoutServer,
+          onTap: isBusy ? () {} : _useWithoutServer,
+        ),
       ],
     );
   }

@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../app/router/app_routes.dart';
 import '../../../core/motion/haptics.dart';
 import '../../../core/motion/springs.dart';
+import '../../../core/session/active_user_id_provider.dart';
 import '../../../core/widgets/anchor_dialog.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/choice_sheet.dart';
@@ -207,10 +208,9 @@ class NoteActions {
         // Freezing and Make invisible sit with Lock, so the bar still fits a
         // narrow phone.
         final isUnfreezing = unfreezesAll(notes);
-        final canFreeze = freezableIdsOf(
-          notes,
-          isFreezing: !isUnfreezing,
-        ).isNotEmpty;
+        final canFreeze =
+            !ref.read(isLocalOnlyProvider) &&
+            freezableIdsOf(notes, isFreezing: !isUnfreezing).isNotEmpty;
         final l10n = context.l10n;
         final invisible = NoteAction.invisible.iconAndLabelFor(notes, l10n);
         final choice = await showChoiceSheet<NoteAction>(

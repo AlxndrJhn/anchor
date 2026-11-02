@@ -202,14 +202,72 @@ class AppDatabase extends _$AppDatabase {
       }
     },
   );
+
+  /// Copies in what was kept on this device without an account, from the
+  /// database file at [localFile], then empties that file. Nothing there has
+  /// ever been synced, so it all goes up with the next sync.
+  Future<void> takeOverLocalNotes(String localFile) async {
+    final tables = <TableInfo<Table, Object?>>[
+      notes,
+      tags,
+      noteTags,
+      noteAttachments,
+      noteRevisions,
+      noteHistoryState,
+    ];
+    await customStatement("ATTACH DATABASE ? AS local", [localFile]);
+    try {
+      await transaction(() async {
+        for (final table in tables) {
+          final name = table.actualTableName;
+          // A file an older version wrote may lack the newer columns.
+          final there = await customSelect(
+            'PRAGMA local.table_info("$name")',
+          ).map((row) => row.read<String>('name')).get();
+          final columns = [
+            for (final column in table.$columns)
+              if (there.contains(column.name)) '"${column.name}"',
+          ].join(', ');
+          if (columns.isEmpty) continue;
+          await customStatement(
+            'INSERT OR IGNORE INTO main."$name" ($columns) '
+            'SELECT $columns FROM local."$name"',
+          );
+          await customStatement('DELETE FROM local."$name"');
+        }
+      });
+    } finally {
+      await customStatement('DETACH DATABASE local');
+    }
+  }
+}
+
+/// Where [userId]'s database is kept.
+Future<File> databaseFileOf(String userId) async {
+  final dbFolder = await getApplicationDocumentsDirectory();
+  return File(path.join(dbFolder.path, 'db_$userId.sqlite'));
+}
+
+/// Moves the notes kept on this device without an account into [userId]'s
+/// database, before that database opens for the app.
+Future<void> moveLocalNotesTo(String userId) async {
+  final localFile = await databaseFileOf(localUserId);
+  if (!localFile.existsSync()) return;
+  final db = AppDatabase(userId);
+  try {
+    await db.takeOverLocalNotes(localFile.path);
+  } finally {
+    await db.close();
+  }
 }
 
 LazyDatabase _openConnection(String userId) {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final userDbFile = File(path.join(dbFolder.path, 'db_$userId.sqlite'));
+    final userDbFile = await databaseFileOf(userId);
 
-    if (!userDbFile.existsSync()) {
+    // The file from before databases were per user was an account's.
+    if (!userDbFile.existsSync() && userId != localUserId) {
       final legacyFile = File(path.join(dbFolder.path, 'db.sqlite'));
       if (legacyFile.existsSync()) {
         await legacyFile.rename(userDbFile.path);

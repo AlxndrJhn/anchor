@@ -1,5 +1,6 @@
-// The built-in setup page gets the whole bridge; the server's web client runs
-// as it does in a browser, plus a way to learn of an app update and install it.
+// The built-in setup page gets the whole bridge; the web client (the server's
+// or the built-in one) runs as it does in a browser, plus a way to learn of an
+// app update and install it, and to take in the notes kept without a server.
 const { contextBridge, ipcRenderer } = require("electron");
 
 const update = {
@@ -22,8 +23,15 @@ if (location.protocol === "file:") {
     getState: () => ipcRenderer.invoke("anchor:get-state"),
     connect: (url) => ipcRenderer.invoke("anchor:connect", url),
     retry: () => ipcRenderer.invoke("anchor:retry"),
+    useLocal: () => ipcRenderer.invoke("anchor:use-local"),
     ...update,
   });
 } else if (window.top === window) {
-  contextBridge.exposeInMainWorld("anchorDesktop", update);
+  contextBridge.exposeInMainWorld("anchorDesktop", {
+    ...update,
+    /** The notes kept without a server, as an Anchor backup, or null. */
+    takeLocalNotes: () => ipcRenderer.invoke("anchor:take-local-notes"),
+    /** They are in the account: the built-in client lets them go. */
+    localNotesMoved: () => ipcRenderer.invoke("anchor:local-notes-moved"),
+  });
 }

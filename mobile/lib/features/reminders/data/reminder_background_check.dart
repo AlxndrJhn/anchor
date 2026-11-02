@@ -43,7 +43,8 @@ void reminderBackgroundCheck(Ref ref) {
   final userId = ref.watch(activeUserIdProvider);
   if (!Platform.isAndroid) return;
   unawaited(
-    _register(userId != null).catchError((Object error, StackTrace stack) {
+    // Only an account's reminders change elsewhere.
+    _register(userId != null && userId != localUserId).catchError((Object error, StackTrace stack) {
       AppLogger.instance.error(
         LogTags.reminders,
         'Setting up the background reminder check failed',

@@ -20,7 +20,7 @@
           ><canvas id="plus"></canvas
         ></span>
       </h1>
-      <p class="lead">Enter your server address to get started.</p>
+      <p class="lead">Enter your server address to sync your notes.</p>
 
       <div id="error" class="error" role="alert" hidden></div>
       <button id="retry" type="button" class="secondary" hidden>Retry</button>
@@ -45,12 +45,13 @@
         </div>
         <button id="connect" type="submit" class="primary">Continue</button>
       </form>
+      <button id="local" type="button" class="secondary" hidden>Use without a server</button>
       <p class="hint">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="10" />
           <path d="M12 16v-4M12 8h.01" />
         </svg>
-        <span>Anchor requires a self-hosted server.</span>
+        <span>Without a server, notes stay on this computer. They move into your account when you connect one.</span>
       </p>
       <p id="version" class="version"></p>
     </main>

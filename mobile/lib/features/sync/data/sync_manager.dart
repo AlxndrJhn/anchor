@@ -100,8 +100,10 @@ class SyncManager extends _$SyncManager {
 
   void _applyLiveUpdates() {
     final events = ref.read(syncEventsProvider);
+    final userId = ref.read(activeUserIdProvider);
     if (_isForeground &&
-        ref.read(activeUserIdProvider) != null &&
+        userId != null &&
+        userId != localUserId &&
         !ref.read(sessionExpiredProvider)) {
       events.connect();
       _poll ??= Timer.periodic(
@@ -139,6 +141,8 @@ class SyncManager extends _$SyncManager {
     if (_isStopped || userId == null || ref.read(sessionExpiredProvider)) {
       return Future.value(false);
     }
+    // Nothing to sync with: everything is where it belongs already.
+    if (userId == localUserId) return Future.value(true);
 
     final activeSync = _activeSync;
     if (activeSync != null) {
@@ -275,7 +279,8 @@ enum FirstDownload { done, running, failed, paused }
 
 @riverpod
 FirstDownload firstDownload(Ref ref) {
-  if (ref.watch(activeUserIdProvider) == null) return FirstDownload.done;
+  final userId = ref.watch(activeUserIdProvider);
+  if (userId == null || userId == localUserId) return FirstDownload.done;
   final hasDownloaded = ref.watch(hasDownloadedProvider);
   if (hasDownloaded.hasError || (hasDownloaded.value ?? false)) {
     return FirstDownload.done;

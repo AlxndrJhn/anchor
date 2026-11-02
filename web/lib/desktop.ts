@@ -9,6 +9,8 @@ export interface DesktopUpdate {
 interface AnchorDesktop {
   onUpdate?: (callback: (update: DesktopUpdate) => void) => () => void;
   installUpdate?: () => Promise<boolean>;
+  takeLocalNotes?: () => Promise<Uint8Array | null>;
+  localNotesMoved?: () => Promise<boolean>;
 }
 
 const desktop = () =>
@@ -26,4 +28,21 @@ export function useDesktopUpdate() {
 /** Quits the desktop app, installs the update and starts it again. */
 export async function installDesktopUpdate() {
   return (await desktop()?.installUpdate?.()) ?? false;
+}
+
+/**
+ * The notes kept in the desktop app without a server, as an Anchor backup,
+ * waiting to move into the account; null when there are none.
+ */
+export async function takeDesktopLocalNotes(): Promise<File | null> {
+  const bytes = await desktop()?.takeLocalNotes?.();
+  if (!bytes) return null;
+  return new File([bytes as BlobPart], "notes-on-this-computer.zip", {
+    type: "application/zip",
+  });
+}
+
+/** They are in the account: the desktop app lets its own copy go. */
+export async function desktopLocalNotesMoved() {
+  await desktop()?.localNotesMoved?.();
 }

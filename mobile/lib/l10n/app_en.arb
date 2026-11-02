@@ -408,6 +408,14 @@
   "@authNewToAnchor": {
     "description": "Followed by the link “Create an account”."
   },
+  "authNoAccountNeeded": "Just taking notes?",
+  "@authNoAccountNeeded": {
+    "description": "Before the link at the bottom of sign in that goes back to keeping notes on this phone, without a server."
+  },
+  "authUseWithoutServer": "Use without a server",
+  "@authUseWithoutServer": {
+    "description": "Link at the bottom of sign in: forgets the server and keeps notes on this phone only, until a server is connected in Settings."
+  },
   "authCreateAnAccount": "Create an account",
   "@authCreateAnAccount": {
     "description": "Link after “New to Anchor?” on the sign-in page that opens the sign-up page."
@@ -568,9 +576,9 @@
   },
   "serverWelcome": "Welcome to Anchor+",
   "@serverWelcome": {
-    "description": "Title of the first page, where the person enters their server address. Ends with the app's name, Anchor+; the trailing + is drawn as an animated plus."
+    "description": "Title of the page where the person enters their server address. Ends with the app's name, Anchor+; the trailing + is drawn as an animated plus."
   },
-  "serverSubtitle": "Enter your server address to get started.",
+  "serverSubtitle": "Enter your server address to sync your notes.",
   "@serverSubtitle": {
     "description": "Under the title of the first page, where the server address is entered."
   },
@@ -598,9 +606,9 @@
   "@serverSelfSignedWarning": {
     "description": "Warning under the self-signed certificates switch while it’s on."
   },
-  "serverSelfHosted": "Anchor requires a self-hosted server.",
+  "serverSelfHosted": "Notes on this phone move into your account.",
   "@serverSelfHosted": {
-    "description": "Note at the bottom of the server page: Anchor has no shared public server."
+    "description": "Note at the bottom of the server page: the notes kept on this phone without a server go into the account signed in to."
   },
   "serverEnterAddress": "Enter a server address.",
   "@serverEnterAddress": {
@@ -996,6 +1004,18 @@
   "@settingsAccount": {
     "description": "Section label in Settings for password and sign out."
   },
+  "settingsSync": "Sync",
+  "@settingsSync": {
+    "description": "Section label in Settings, without a server, for connecting one."
+  },
+  "settingsConnectServer": "Connect to a server",
+  "@settingsConnectServer": {
+    "description": "Row in Settings, without a server: opens the page for the address of a self-hosted Anchor server."
+  },
+  "settingsConnectServerHelp": "Sync and share your notes with your own Anchor server. The notes on this phone move into your account when you sign in.",
+  "@settingsConnectServerHelp": {
+    "description": "Under Connect to a server in Settings."
+  },
   "settingsPassword": "Password",
   "@settingsPassword": {
     "description": "Row in Settings that opens the change password page, or shows who manages it."
@@ -1305,6 +1325,10 @@
   "settingsOffline": "Offline. Changes are saved on this phone.",
   "@settingsOffline": {
     "description": "Small line at the bottom of Settings while the phone is offline."
+  },
+  "settingsLocalOnly": "Notes are kept on this phone only.",
+  "@settingsLocalOnly": {
+    "description": "Small line at the bottom of Settings when no server is connected."
   },
   "settingsSyncPaused": "Sync is paused. {reason}",
   "@settingsSyncPaused": {

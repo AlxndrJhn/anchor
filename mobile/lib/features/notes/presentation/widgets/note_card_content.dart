@@ -36,6 +36,7 @@ class NoteCardContent extends StatelessWidget {
     this.onOpenPicture,
     this.showPictures = true,
     this.onToggleItem,
+    this.showUnsynced = true,
   });
 
   final Note note;
@@ -60,6 +61,9 @@ class NoteCardContent extends StatelessWidget {
 
   /// Ticks a checklist item from the card; null leaves the boxes read-only.
   final void Function(int line, String text)? onToggleItem;
+
+  /// Off without a server, where no note is ever synced.
+  final bool showUnsynced;
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +115,7 @@ class NoteCardContent extends StatelessWidget {
             _Footer(
               note: note,
               isHidden: isHidden,
+              showUnsynced: showUnsynced,
               appearance: appearance,
               status: status,
               showDate: true,
@@ -121,6 +126,7 @@ class NoteCardContent extends StatelessWidget {
             _Footer(
               note: note,
               isHidden: isHidden,
+              showUnsynced: showUnsynced,
               appearance: appearance,
               status: status,
               showDate: false,
@@ -314,6 +320,7 @@ class _Footer extends StatelessWidget {
     required this.status,
     required this.showDate,
     required this.isHidden,
+    required this.showUnsynced,
     this.tags = const [],
   });
 
@@ -322,6 +329,7 @@ class _Footer extends StatelessWidget {
   final String? status;
   final bool showDate;
   final bool isHidden;
+  final bool showUnsynced;
   final List<Tag> tags;
 
   @override
@@ -366,7 +374,7 @@ class _Footer extends StatelessWidget {
             color: muted,
           ),
         ),
-      if (!note.isSynced)
+      if (!note.isSynced && showUnsynced)
         Tooltip(
           message: context.l10n.cardNotSynced,
           child: Icon(

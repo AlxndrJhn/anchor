@@ -2,6 +2,7 @@ class StorageKeys {
   StorageKeys._();
 
   static const serverUrl = 'server_url';
+  static const localOnly = 'local_only';
   static const allowSelfSignedCert = 'allow_self_signed_cert';
   static const accessToken = 'access_token';
   static const refreshToken = 'refresh_token';
@@ -38,6 +39,7 @@ class StorageKeys {
   /// fails and it reads key by key.
   static const all = [
     serverUrl,
+    localOnly,
     allowSelfSignedCert,
     accessToken,
     userData,

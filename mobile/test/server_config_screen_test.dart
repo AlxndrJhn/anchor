@@ -21,7 +21,7 @@ void main() {
   String addressOf(WidgetTester tester) =>
       tester.widget<TextField>(find.byType(TextField)).controller!.text;
 
-  testWidgets('the first start asks for the server with no way back', (
+  testWidgets('the first start asks for the server, or to go on without one', (
     tester,
   ) async {
     await pumpApp(tester, const ServerConfigScreen());
@@ -30,6 +30,7 @@ void main() {
     expect(find.textContaining('Welcome to Anchor'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
     expect(find.byType(PageBackButton), findsNothing);
+    expect(find.text('Use without a server'), findsOneWidget);
     expect(addressOf(tester), isEmpty);
   });
 
@@ -58,6 +59,7 @@ void main() {
     expect(find.textContaining('Welcome to Anchor'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
     expect(find.byType(PageBackButton), findsOneWidget);
+    expect(find.text('Use without a server'), findsNothing);
     expect(addressOf(tester), 'anchor.example.com');
   });
 }

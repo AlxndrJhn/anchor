@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/network/server_config_provider.dart';
@@ -21,14 +22,16 @@ class AuthController extends _$AuthController {
     final serverUrl = await ref.watch(serverConfigProvider.future);
     await ref.watch(allowSelfSignedCertProvider.future);
 
+    if (serverUrl == null || serverUrl.isEmpty) {
+      // No account: the notes stay on this device.
+      ref.read(activeUserIdProvider.notifier).set(localUserId);
+      return null;
+    }
+
     final authRepo = ref.watch(authRepositoryProvider);
 
     final token = await authRepo.getToken();
     if (token == null) {
-      return null;
-    }
-
-    if (serverUrl == null || serverUrl.isEmpty) {
       return null;
     }
 
@@ -75,7 +78,7 @@ class AuthController extends _$AuthController {
   /// Throws an [AuthFailure] when the server says no; the state stays
   /// signed out.
   Future<void> login(String email, String password, {String? code}) async {
-    _signedIn(
+    await _signedIn(
       await ref
           .read(authRepositoryProvider)
           .login(email, password, code: code),
@@ -84,7 +87,9 @@ class AuthController extends _$AuthController {
 
   /// A code from the web's magic login (its QR code or link).
   Future<void> loginWithMagicCode(String code) async {
-    _signedIn(await ref.read(authRepositoryProvider).loginWithMagicCode(code));
+    await _signedIn(
+      await ref.read(authRepositoryProvider).loginWithMagicCode(code),
+    );
   }
 
   /// Returns false when an admin has to approve the account first.
@@ -93,7 +98,7 @@ class AuthController extends _$AuthController {
         .read(authRepositoryProvider)
         .register(email, password, name);
     if (user == null) return false;
-    _signedIn(user);
+    await _signedIn(user);
     return true;
   }
 
@@ -101,11 +106,26 @@ class AuthController extends _$AuthController {
   Future<bool> loginWithOidc() async {
     final user = await ref.read(authRepositoryProvider).loginWithOidc();
     if (user == null) return false;
-    _signedIn(user);
+    await _signedIn(user);
     return true;
   }
 
-  void _signedIn(User user) {
+  Future<void> _signedIn(User user) async {
+    // What was written here without an account goes up with this one,
+    // moved before the account's database opens (signing in again after
+    // the session ran out keeps it open).
+    try {
+      if (ref.read(activeUserIdProvider) != user.id) {
+        await moveLocalNotesTo(user.id);
+      }
+    } catch (error, stack) {
+      AppLogger.instance.error(
+        LogTags.auth,
+        'Moving the notes kept on this device into the account failed',
+        error: error,
+        stackTrace: stack,
+      );
+    }
     // Opens the user's own database.
     ref.read(activeUserIdProvider.notifier).set(user.id);
     state = AsyncData(user);
