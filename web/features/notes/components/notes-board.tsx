@@ -6,7 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTagMap } from "@/features/tags/hooks";
 import { moveItem } from "@/features/tags/utils";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
-import { hasOverlay, useShortcuts } from "@/lib/hooks/use-shortcuts";
+import {
+  hasOverlay,
+  singleKeyAllowed,
+  useShortcuts,
+} from "@/lib/hooks/use-shortcuts";
 import { cn } from "@/lib/utils";
 import {
   CARD_KEYS,
@@ -149,7 +153,8 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
     const onKeyDown = (e: React.KeyboardEvent) => {
       const link = e.target as HTMLElement;
       if (!link.classList.contains("nc-link")) return;
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || !singleKeyAllowed(e.key))
+        return;
       const direction = CARD_KEYS[e.key];
       if (direction) {
         e.preventDefault();
@@ -163,6 +168,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
       }
     };
     return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: keys pressed on the focused card links bubble here
       <div
         ref={boardRef}
         data-hold-width

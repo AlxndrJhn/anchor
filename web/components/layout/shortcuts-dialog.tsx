@@ -17,8 +17,9 @@ const sections = (mod: string): [string, Row[]][] => [
     "Anywhere",
     [
       ["New note", [["N"]]],
-      ["Search", [["/"], [mod, "K"]]],
+      ["Search, or go to a page or tag by name", [["/"], [mod, "K"]]],
       ["Go to Notes, Archive, Trash or Settings", [["G", "N / A / T / S"]]],
+      ["Go to a tag: type a few letters of it", [["#"]]],
       ["Show or hide the sidebar", [[mod, "\\"]]],
       ["These shortcuts", [["?"]]],
     ],

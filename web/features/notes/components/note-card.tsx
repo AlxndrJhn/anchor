@@ -31,6 +31,7 @@ import type { TagLabel } from "@/features/tags/types";
 import { sortTagsByName } from "@/features/tags/utils";
 import { useHighlightPaint } from "@/lib/highlight-paint";
 import { useNearScreen } from "@/lib/hooks/use-near-screen";
+import { singleKeyAllowed } from "@/lib/hooks/use-shortcuts";
 import { rememberCard } from "@/lib/morph";
 import { cn } from "@/lib/utils";
 import { getNoteAttachments } from "../api";
@@ -303,7 +304,9 @@ export const NoteCard = React.memo(function NoteCard({
           if (cardRef.current) rememberCard(note.id, cardRef.current);
         }}
         onKeyDown={(e) => {
-          const isPlain = !e.ctrlKey && !e.metaKey && !e.altKey;
+          // Space and Enter always; X and O unless single keys are off.
+          const isPlain =
+            !e.ctrlKey && !e.metaKey && !e.altKey && singleKeyAllowed(e.key);
           if (isPlain && (e.key === " " || e.key.toLowerCase() === "x")) {
             if (!onPick) return;
             e.preventDefault();

@@ -17,6 +17,7 @@ import { useShellStore } from "./shell-store";
 import { ShortcutsDialog } from "./shortcuts-dialog";
 import { newNoteHref, Sidebar } from "./sidebar";
 import { MAIN_ID, SkipLink } from "./skip-link";
+import { TagJump } from "./tag-jump";
 
 const GO_TO: Record<string, string> = {
   n: "/notes",
@@ -33,8 +34,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const folded = usePreferencesStore((s) => s.ui.sidebarCollapsed);
   const setUI = usePreferencesStore((s) => s.setUIPreference);
-  const { drawerOpen, setDrawer, barShown, shortcutsOpen, setShortcuts } =
-    useShellStore();
+  const {
+    drawerOpen,
+    setDrawer,
+    barShown,
+    shortcutsOpen,
+    setShortcuts,
+    tagJumpOpen,
+    setTagJump,
+  } = useShellStore();
   const drawerRef = React.useRef<HTMLDivElement>(null);
   const drawerOpener = React.useRef<HTMLElement | null>(null);
   const goPressedAt = React.useRef(0);
@@ -50,7 +58,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const inDialog = !!document.querySelector(
         ":is([role=dialog], [role=alertdialog], [role=menu]):not([data-state=closed])",
       );
-      const isPlain = !typing && !mod && !e.altKey && !inDialog;
+      const isPlain =
+        !typing && !mod && !e.altKey && !inDialog && singleKeyAllowed(e.key);
       // G and a letter goes to a page, as in Gmail; G G to the first note.
       const after = goPressedAt.current;
       goPressedAt.current = 0;
@@ -66,6 +75,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (isPlain && e.key === "g") {
         e.preventDefault();
         goPressedAt.current = performance.now();
+        return;
+      }
+      // # and a tag's name; in a note, # moves the note to the trash.
+      if (
+        isPlain &&
+        e.key === "#" &&
+        !/^\/notes\/[^/]+$/.test(window.location.pathname)
+      ) {
+        e.preventDefault();
+        setTagJump(true);
         return;
       }
       if (isPlain && e.key === "?") {
@@ -125,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("anchor:new-note", startNote);
     };
-  }, [router, setUI, setShortcuts]);
+  }, [router, setUI, setShortcuts, setTagJump]);
 
   return (
     <div
@@ -178,6 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Toaster className={cn(barShown && "bottom-20")} />
       </main>
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcuts} />
+      <TagJump open={tagJumpOpen} onOpenChange={setTagJump} />
     </div>
   );
 }

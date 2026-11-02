@@ -7,6 +7,8 @@ interface ShellState {
   setBarShown: (shown: boolean) => void;
   shortcutsOpen: boolean;
   setShortcuts: (open: boolean) => void;
+  tagJumpOpen: boolean;
+  setTagJump: (open: boolean) => void;
 }
 
 export const useShellStore = create<ShellState>((set) => ({
@@ -16,4 +18,6 @@ export const useShellStore = create<ShellState>((set) => ({
   setBarShown: (barShown) => set({ barShown }),
   shortcutsOpen: false,
   setShortcuts: (shortcutsOpen) => set({ shortcutsOpen }),
+  tagJumpOpen: false,
+  setTagJump: (tagJumpOpen) => set({ tagJumpOpen }),
 }));
