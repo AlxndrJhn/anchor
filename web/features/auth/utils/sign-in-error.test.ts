@@ -1,6 +1,11 @@
 import { HTTPError } from "ky";
 import { describe, expect, it } from "vitest";
-import { serverSignInError, signInError } from "./sign-in-error";
+import {
+  isPasskeyCancelled,
+  isTwoStepRequired,
+  serverSignInError,
+  signInError,
+} from "./sign-in-error";
 
 const failed = (status: number, message = "") => {
   const error = new HTTPError(
@@ -11,6 +16,46 @@ const failed = (status: number, message = "") => {
   if (message) error.message = message;
   return error;
 };
+
+const needsCode = (message: string) =>
+  Object.assign(failed(401, message), {
+    data: { error: "two_step_required", message },
+  });
+
+describe("two-step and passkeys", () => {
+  it("knows the password was right but a code is missing", () => {
+    const error = needsCode("Enter the code from your authenticator app");
+    expect(isTwoStepRequired(error)).toBe(true);
+    expect(isTwoStepRequired(failed(401, "Invalid credentials"))).toBe(false);
+    expect(signInError(error, "Pocket ID")).toBeNull();
+  });
+
+  it("says when the code was wrong", () => {
+    expect(signInError(needsCode("That code isn’t right"), "Pocket ID")).toBe(
+      "That code isn’t right. Check your authenticator app and try again.",
+    );
+  });
+
+  it("points to the passkey when password sign-in is off", () => {
+    expect(
+      signInError(
+        failed(
+          403,
+          "Password sign-in is turned off for this account. Sign in with a passkey.",
+        ),
+        "Pocket ID",
+      ),
+    ).toBe(
+      "This account signs in with a passkey. Use “Sign in with a passkey” above.",
+    );
+  });
+
+  it("says nothing when the passkey prompt is closed", () => {
+    const closed = new DOMException("closed", "NotAllowedError");
+    expect(isPasskeyCancelled(closed)).toBe(true);
+    expect(signInError(closed, "Pocket ID")).toBeNull();
+  });
+});
 
 describe("signInError", () => {
   it("says nothing before a sign-in fails", () => {

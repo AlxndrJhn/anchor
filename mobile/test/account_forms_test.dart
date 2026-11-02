@@ -62,7 +62,7 @@ class _WrongPassword extends AuthController {
   Future<User?> build() async => null;
 
   @override
-  Future<void> login(String email, String password) async {
+  Future<void> login(String email, String password, {String? code}) async {
     attempts++;
     throw const InvalidCredentialsFailure();
   }

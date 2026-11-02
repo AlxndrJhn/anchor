@@ -119,6 +119,35 @@ void main() {
       );
     });
 
+    test('a right password that still needs the authenticator code', () async {
+      final asked = await _loginFailure(
+        401,
+        'Enter the code from your authenticator app',
+      );
+      final wrong = await _loginFailure(401, 'That code isn’t right');
+
+      expect(asked, isA<TwoStepRequiredFailure>());
+      expect((asked as TwoStepRequiredFailure).wasWrong, isFalse);
+      expect((wrong as TwoStepRequiredFailure).wasWrong, isTrue);
+      expect(authErrorMessageOf(wrong, _english), (
+        text:
+            'That code isn’t right. Check your authenticator app and try '
+            'again.',
+        field: AuthField.code,
+      ));
+    });
+
+    test('an account that signs in with passkeys only', () async {
+      final failure = await _loginFailure(
+        403,
+        'Password sign-in is turned off for this account. Sign in with a '
+        'passkey.',
+      );
+
+      expect(failure, isA<PasskeyOnlyFailure>());
+      expect(authErrorMessageOf(failure, _english).field, isNull);
+    });
+
     test('an account waiting for approval', () async {
       expect(
         await _loginFailure(

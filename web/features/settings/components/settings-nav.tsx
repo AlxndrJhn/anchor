@@ -8,6 +8,7 @@ import {
   LockKeyhole,
   PencilLine,
   Search,
+  ShieldCheck,
   Smartphone,
   SunMoon,
   UserRound,
@@ -26,17 +27,18 @@ const ALL_SECTIONS = [
   { id: "token", label: "API token", icon: KeyRound },
   { id: "data", label: "Import and export", icon: HardDriveDownload },
   { id: "locks", label: "Note locks", icon: LockKeyhole },
+  { id: "security", label: "Sign-in security", icon: ShieldCheck },
   { id: "password", label: "Password", icon: Lock },
   { id: "about", label: "About", icon: Info },
 ] as const;
 
-// Without a server there is no phone sign-in, API token, password or
-// picture search.
+// Without a server there is no phone sign-in, API token, sign-in security,
+// password or picture search.
 const SECTIONS = ALL_SECTIONS.filter(
   (section) =>
     !(
       isServerless &&
-      ["phone", "token", "password", "search"].includes(section.id)
+      ["phone", "token", "security", "password", "search"].includes(section.id)
     ),
 );
 

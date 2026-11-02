@@ -10,6 +10,9 @@ import { JwtStrategy } from './jwt.strategy';
 import { TokenResolverService } from './token-resolver.service';
 import { AuthGuard } from './auth.guard';
 import { MagicLoginService } from './magic-login.service';
+import { PasskeyService } from './passkey.service';
+import { TwoStepService } from './two-step.service';
+import { SecurityController } from './security.controller';
 import { SettingsModule } from '../settings/settings.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { OidcService } from './oidc/oidc.service';
@@ -33,13 +36,15 @@ import { OidcUserService } from './oidc/oidc-user.service';
     SettingsModule,
     PrismaModule,
   ],
-  controllers: [AuthController, OidcController],
+  controllers: [AuthController, SecurityController, OidcController],
   providers: [
     AuthService,
     JwtStrategy,
     TokenResolverService,
     AuthGuard,
     MagicLoginService,
+    PasskeyService,
+    TwoStepService,
     OidcService,
     OidcConfigService,
     OidcClientService,

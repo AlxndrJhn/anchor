@@ -11,6 +11,7 @@ import {
   login as loginApi,
   register as registerApi,
   revokeRefreshToken,
+  signInWithPasskey,
 } from "../api";
 import { getRefreshToken, hasAccessToken, useAuthStore } from "../store";
 import type { LoginCredentials, RegisterCredentials } from "../types";
@@ -110,6 +111,19 @@ export function useLogin() {
   const setAuth = useAuthStore((state) => state.setAuth);
   return useMutation({
     mutationFn: (credentials: LoginCredentials) => loginApi(credentials),
+    onSuccess: (data) => {
+      if (data.access_token && data.refresh_token) {
+        setAuth(data.user, data.access_token, data.refresh_token);
+        toast.success(`Welcome back, ${firstName(data.user.name)}`);
+      }
+    },
+  });
+}
+
+export function usePasskeyLogin() {
+  const setAuth = useAuthStore((state) => state.setAuth);
+  return useMutation({
+    mutationFn: signInWithPasskey,
     onSuccess: (data) => {
       if (data.access_token && data.refresh_token) {
         setAuth(data.user, data.access_token, data.refresh_token);

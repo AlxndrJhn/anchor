@@ -22,6 +22,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateApiToken } from './utils/generate-api-token';
+import { TwoStepService } from './two-step.service';
 import {
   PROFILE_IMAGE_EXTENSIONS,
   storedProfileImageFile,
@@ -54,6 +55,7 @@ export class AuthService {
     private jwtService: JwtService,
     private settingsService: SettingsService,
     private oidcConfigService: OidcConfigService,
+    private twoStepService: TwoStepService,
     @Inject(StorageConfig.KEY)
     private storageConfig: ConfigType<typeof StorageConfig>,
   ) {}
@@ -159,6 +161,7 @@ export class AuthService {
         profileImage: true,
         isAdmin: true,
         status: true,
+        passwordSignIn: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -204,8 +207,16 @@ export class AuthService {
       );
     }
 
+    // Told only to whoever knows the password.
+    if (!user.passwordSignIn) {
+      throw new ForbiddenException(
+        'Password sign-in is turned off for this account. Sign in with a passkey.',
+      );
+    }
+    await this.twoStepService.checkSignIn(user.id, loginDto.code);
+
     // Remove password from user object
-    const { password, ...userWithoutPassword } = user;
+    const { password, passwordSignIn, ...userWithoutPassword } = user;
 
     const tokens = await this.createTokenPair(user.id, user.email);
     return {
@@ -220,6 +231,47 @@ export class AuthService {
       select: { password: true },
     });
     return { ...user, hasPassword: !!row?.password };
+  }
+
+  /** How this person signs in, for Settings. */
+  async getSecurity(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        password: true,
+        passwordSignIn: true,
+        totpSecret: true,
+        totpRecoveryCodes: true,
+        passkeys: {
+          select: { id: true, name: true, createdAt: true, lastUsedAt: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+    if (!user) throw new ForbiddenException('User not found');
+    return {
+      hasPassword: !!user.password,
+      passwordSignIn: user.passwordSignIn,
+      twoStep: !!user.totpSecret,
+      recoveryCodesLeft: user.totpRecoveryCodes.length,
+      passkeys: user.passkeys,
+    };
+  }
+
+  /** Off only while a passkey can still sign this person in. */
+  async setPasswordSignIn(userId: string, enabled: boolean) {
+    if (!enabled) {
+      const passkeys = await this.prisma.passkey.count({ where: { userId } });
+      if (passkeys === 0)
+        throw new BadRequestException(
+          'Add a passkey before turning password sign-in off',
+        );
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordSignIn: enabled },
+    });
+    return this.getSecurity(userId);
   }
 
   async refreshTokens(refreshToken: string) {

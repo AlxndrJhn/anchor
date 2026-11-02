@@ -424,6 +424,36 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Use at least 1 character.} other{Use at least {count} characters.}}'**
   String authPasswordTooShort(int count);
 
+  /// Label of the field on the sign-in page for the six-digit code from an authenticator app, asked after the right password when the account has two-step sign-in on.
+  ///
+  /// In en, this message translates to:
+  /// **'Code from your authenticator app'**
+  String get fieldTwoStepCode;
+
+  /// Help under the authenticator code field on the sign-in page.
+  ///
+  /// In en, this message translates to:
+  /// **'Lost your phone? Enter one of your recovery codes instead.'**
+  String get authTwoStepCodeHelp;
+
+  /// Shown under the authenticator code field when the password was right but the account also needs a code.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your authenticator app.'**
+  String get authEnterTwoStepCode;
+
+  /// Error under the authenticator code field when the code was wrong or already used.
+  ///
+  /// In en, this message translates to:
+  /// **'That code isn’t right. Check your authenticator app and try again.'**
+  String get authWrongTwoStepCode;
+
+  /// Error at the top of the sign-in form when the account turned password sign-in off and uses passkeys.
+  ///
+  /// In en, this message translates to:
+  /// **'This account signs in with a passkey. Sign in on the web, then scan the QR code from Settings › Phone sign-in.'**
+  String get authPasskeyOnly;
+
   /// Error at the top of the sign-in form when the email or password is wrong.
   ///
   /// In en, this message translates to:

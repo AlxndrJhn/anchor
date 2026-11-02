@@ -65,8 +65,8 @@ class AuthRepository {
     return user;
   }
 
-  Future<User> login(String email, String password) async =>
-      _saveSession(await _authService.login(email, password));
+  Future<User> login(String email, String password, {String? code}) async =>
+      _saveSession(await _authService.login(email, password, code: code));
 
   /// Returns null when an admin has to approve the account first.
   Future<User?> register(String email, String password, String name) async {

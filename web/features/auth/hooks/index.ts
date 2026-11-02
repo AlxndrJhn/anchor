@@ -1,6 +1,7 @@
 export {
   useAuth,
   useLogin,
+  usePasskeyLogin,
   useRegister,
   useRegistrationMode,
 } from "./use-auth";

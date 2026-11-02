@@ -1,3 +1,7 @@
+import {
+  startAuthentication,
+  startRegistration,
+} from "@simplewebauthn/browser";
 import type { Options } from "ky";
 import { api } from "@/lib/api/client";
 import { getRefreshToken } from "./store";
@@ -9,8 +13,12 @@ import type {
   MagicLoginCode,
   OidcConfig,
   OidcExchangeResponse,
+  Passkey,
+  RecoveryCodes,
   RegisterCredentials,
   RegistrationMode,
+  SecurityStatus,
+  TwoStepSetup,
   UpdateProfileDto,
   User,
 } from "./types";
@@ -106,4 +114,66 @@ export async function revokeRefreshToken(
 ): Promise<void> {
   if (!refreshToken) return;
   return api.post("api/auth/logout", { json: { refreshToken } }).json<void>();
+}
+
+/** Signs in with a passkey this browser or a phone nearby offers. */
+export async function signInWithPasskey(): Promise<AuthResponse> {
+  const { challengeId, options } = await api
+    .post("api/auth/passkey-login/options")
+    .json<{
+      challengeId: string;
+      options: Parameters<typeof startAuthentication>[0]["optionsJSON"];
+    }>();
+  const response = await startAuthentication({ optionsJSON: options });
+  return api
+    .post("api/auth/passkey-login", { json: { challengeId, response } })
+    .json<AuthResponse>();
+}
+
+export async function getSecurity(): Promise<SecurityStatus> {
+  return api.get("api/auth/security").json<SecurityStatus>();
+}
+
+export async function setPasswordSignIn(
+  enabled: boolean,
+): Promise<SecurityStatus> {
+  return api
+    .put("api/auth/security/password-sign-in", { json: { enabled } })
+    .json<SecurityStatus>();
+}
+
+export async function addPasskey(name: string): Promise<Passkey> {
+  const options = await api
+    .post("api/auth/passkeys/options")
+    .json<Parameters<typeof startRegistration>[0]["optionsJSON"]>();
+  const response = await startRegistration({ optionsJSON: options });
+  return api
+    .post("api/auth/passkeys", { json: { response, name } })
+    .json<Passkey>();
+}
+
+export async function removePasskey(id: string): Promise<void> {
+  await api.delete(`api/auth/passkeys/${id}`);
+}
+
+export async function startTwoStep(): Promise<TwoStepSetup> {
+  return api.post("api/auth/two-step/setup").json<TwoStepSetup>();
+}
+
+export async function enableTwoStep(code: string): Promise<RecoveryCodes> {
+  return api
+    .post("api/auth/two-step/enable", { json: { code } })
+    .json<RecoveryCodes>();
+}
+
+export async function disableTwoStep(code: string): Promise<void> {
+  await api.post("api/auth/two-step/disable", { json: { code } });
+}
+
+export async function regenerateRecoveryCodes(
+  code: string,
+): Promise<RecoveryCodes> {
+  return api
+    .post("api/auth/two-step/recovery-codes", { json: { code } })
+    .json<RecoveryCodes>();
 }

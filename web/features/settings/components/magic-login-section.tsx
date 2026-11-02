@@ -3,7 +3,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { Link2, QrCode, RotateCw } from "lucide-react";
 import * as React from "react";
-import { encode } from "uqr";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { QrImage } from "@/components/ui/qr-image";
 import { toast } from "@/components/ui/toast";
 import { createMagicLogin } from "@/features/auth/api";
 import type { MagicLoginCode } from "@/features/auth/types";
@@ -22,30 +22,6 @@ import { Row, RowText, Section } from "./settings-blocks";
 
 const linkOf = (magicLogin: MagicLoginCode) =>
   magicLinkUrl(magicLogin.code, window.location.origin);
-
-/** Black on white in either theme, as scanners read it best. */
-function QrImage({ text }: { text: string }) {
-  const { path, size } = React.useMemo(() => {
-    const { data, size } = encode(text, { ecc: "M", border: 2 });
-    const path = data
-      .flatMap((row, y) =>
-        row.flatMap((isDark, x) => (isDark ? [`M${x} ${y}h1v1h-1z`] : [])),
-      )
-      .join("");
-    return { path, size };
-  }, [text]);
-  return (
-    <svg
-      role="img"
-      aria-label="QR code for magic login"
-      viewBox={`0 0 ${size} ${size}`}
-      shapeRendering="crispEdges"
-      className="mx-auto block aspect-square w-full max-w-64 rounded-lg bg-white"
-    >
-      <path d={path} fill="#000" />
-    </svg>
-  );
-}
 
 function useMinutesLeft(expiresAt: string | undefined) {
   const [now, setNow] = React.useState(() => Date.now());
@@ -138,7 +114,7 @@ export function MagicLoginSection() {
           <DialogBody>
             {shown && (
               <div className="relative">
-                <QrImage text={linkOf(shown)} />
+                <QrImage text={linkOf(shown)} label="QR code for magic login" />
                 {isExpired && (
                   <div className="absolute inset-0 grid place-items-center rounded-lg bg-card/90">
                     <Button

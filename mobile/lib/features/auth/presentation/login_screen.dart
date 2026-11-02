@@ -36,6 +36,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
   final _password = TextEditingController();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
+  final _code = TextEditingController();
+  final _codeFocus = FocusNode();
+
+  /// Asked for once the password was right and two-step sign-in is on.
+  bool _needsCode = false;
 
   @override
   void dispose() {
@@ -43,10 +48,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
     _password.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
+    _code.dispose();
+    _codeFocus.dispose();
     super.dispose();
   }
 
   void _failed(Object error) {
+    if (error is TwoStepRequiredFailure) {
+      setState(() => _needsCode = true);
+      _code.clear();
+      if (error.wasWrong) {
+        showError(context.l10n.authWrongTwoStepCode, field: AuthField.code);
+      }
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _codeFocus.requestFocus(),
+      );
+      return;
+    }
     final errorMessage = authErrorMessageOf(error, context.l10n);
     showError(errorMessage.text, field: errorMessage.field);
     if (error is InvalidCredentialsFailure) {
@@ -63,13 +81,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
         _passwordFocus,
         passwordError(_password.text, context.l10n),
       ),
+      if (_needsCode)
+        (
+          AuthField.code,
+          _codeFocus,
+          _code.text.trim().isEmpty ? context.l10n.authEnterTwoStepCode : null,
+        ),
     ])) {
       return;
     }
     await submit(
       () => ref
           .read(authControllerProvider.notifier)
-          .login(_email.text.trim(), _password.text),
+          .login(
+            _email.text.trim(),
+            _password.text,
+            code: _needsCode ? _code.text.trim() : null,
+          ),
       tag: _SignInMethod.password,
       onSuccess: Haptics.success,
       onFailure: _failed,
@@ -166,7 +194,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
                     AutofillHints.username,
                   ],
                   textInputAction: TextInputAction.next,
-                  onChanged: (_) => clearError(AuthField.email),
+                  onChanged: (_) {
+                    clearError(AuthField.email);
+                    if (_needsCode) setState(() => _needsCode = false);
+                  },
                   onSubmitted: (_) => _passwordFocus.requestFocus(),
                 ),
                 AppTextField(
@@ -180,6 +211,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with FormSubmit {
                   onChanged: (_) => clearError(AuthField.password),
                   onSubmitted: (_) => _signIn(),
                 ),
+                if (_needsCode)
+                  AppTextField(
+                    controller: _code,
+                    focusNode: _codeFocus,
+                    label: l10n.fieldTwoStepCode,
+                    help: l10n.authTwoStepCodeHelp,
+                    error: errorOf(AuthField.code),
+                    autocorrect: false,
+                    autofillHints: const [AutofillHints.oneTimeCode],
+                    textInputAction: TextInputAction.go,
+                    onChanged: (_) => clearError(AuthField.code),
+                    onSubmitted: (_) => _signIn(),
+                  ),
               ],
             ),
           ),

@@ -29,6 +29,8 @@ export interface ApiTokenResponse {
 export interface LoginCredentials {
   email: string;
   password: string;
+  /** From the authenticator app, or a recovery code, once two-step is on. */
+  code?: string;
 }
 
 export interface RegisterCredentials {
@@ -67,3 +69,28 @@ export interface MagicLoginCode {
 }
 
 export type RegistrationMode = "disabled" | "enabled" | "review";
+
+export interface Passkey {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+/** How you sign in, for Settings. */
+export interface SecurityStatus {
+  hasPassword: boolean;
+  passwordSignIn: boolean;
+  twoStep: boolean;
+  recoveryCodesLeft: number;
+  passkeys: Passkey[];
+}
+
+export interface TwoStepSetup {
+  secret: string;
+  uri: string;
+}
+
+export interface RecoveryCodes {
+  recoveryCodes: string[];
+}

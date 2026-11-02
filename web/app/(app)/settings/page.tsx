@@ -15,6 +15,7 @@ import {
   Row,
   SearchSection,
   Section,
+  SecuritySection,
   SettingsNav,
 } from "@/features/settings";
 import { api } from "@/lib/api/client";
@@ -42,6 +43,7 @@ export default function SettingsPage() {
           {!isServerless && <ApiTokenSection />}
           <ImportExportSection />
           <NoteLocksSection />
+          {!isServerless && <SecuritySection />}
           {!isServerless && <PasswordSection />}
           <Section id="about" title="About">
             <Row>
