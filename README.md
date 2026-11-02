@@ -332,7 +332,7 @@ followed by `docker compose up -d` in `/opt/anchor`.
    Available options:
    | Variable | Required | Default | Description |
    |----------|----------|---------|-------------|
-   | `APP_URL` | No | `http://localhost:3000` | Base URL where Anchor is served; with this `docker-compose.yml` on your own machine, `http://localhost:3001` |
+   | `APP_URL` | No | `http://localhost:3001` | Base URL where Anchor is served |
    | `JWT_SECRET` | No | (auto-generated) | Auth token secret. Min 16 characters when set |
    | `DATA_DIR` | No | `/data` | Root directory for persisted uploads |
    | `PICTURE_TEXT` | No | `on` | `off` stops reading the text in pictures for search |

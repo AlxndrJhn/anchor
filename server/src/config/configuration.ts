@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import * as path from 'path';
 
 const DEFAULT_DATA_DIR = '/data';
-const DEFAULT_APP_URL = 'http://localhost:3000';
+const DEFAULT_APP_URL = 'http://localhost:3001';
 const DEFAULT_PORT = 3001;
 
 export const AppConfig = registerAs('app', () => ({

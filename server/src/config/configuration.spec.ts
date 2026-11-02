@@ -49,7 +49,7 @@ describe('configuration namespaces', () => {
       const appConfig = AppConfig();
 
       expect(appConfig.corsOrigins).toEqual([]);
-      expect(appConfig.appUrl).toBe('http://localhost:3000');
+      expect(appConfig.appUrl).toBe('http://localhost:3001');
       expect(appConfig.port).toBe(3001);
     });
 
