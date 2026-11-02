@@ -200,65 +200,40 @@ schemes in `design/schemes/schemes.json`; the parsers are
 
 ## Switching from Anchor
 
-Your notes move with your server: switch the server, then the apps. Nothing
-is copied by hand.
+Anchor+ runs as a server of its own, from its own folder, next to the
+original. Your notes go over in a backup you make in the original's web
+app; the original stays as it is.
 
-**1. The server.** Back up your notes first: in the web app, open
-Settings › Import and export › Export and download **Anchor backup
-(.zip)**. It holds your notes, tags and attachments, and Anchor+ can import
-it under Settings › Import and export › Import. Each account exports its
-own notes.
+**1. Back up your notes from Anchor.** First open the Android app once,
+online, so every change on the phone has reached the server. Then in
+Anchor's web app, open Settings › Import and export › Export and download
+**Anchor backup (.zip)**. It holds your notes, tags, attachments, pins,
+archive and reminders. Each account exports its own notes.
 
-Then change only the `image:` line of the `docker-compose.yml` and start it
-again. The data stays where it is; the fork adds its own tables and columns
-to it on the first start:
+**2. Start Anchor+** in a folder of its own, with this repository's
+[`docker-compose.yml`](docker-compose.yml) (see
+[Option 1](#option-1-using-pre-built-image-recommended)) or the
+[one-line install](#one-line-install-on-a-small-server). Its container and
+volume are named `anchor-plus` and `anchor_plus_data`, so they don't touch
+the original's. Only the port has to differ while both run, for example
+`3001:3000` in its `ports:`.
 
-```yaml
-    image: ghcr.io/alxndrjhn/anchor:fork-latest
-```
+**3. Import your notes into Anchor+.** Open its web app, create your
+account, and under Settings › Import and export › Import choose the zip.
+Each person on the server does this with their own backup. Notes someone
+shared with you come in as your own copies, and sharing has to be set up
+again.
 
-```bash
-docker compose pull && docker compose up -d
-```
+**4. Android.** Anchor+ installs next to the official app, not over it.
+Install it (see [Mobile App](#mobile-app) or [F-Droid](#f-droid)) and sign
+in to the Anchor+ server. These stay in the official app and don't come
+along: the theme, density, font and text size, the notes view and sort
+order, folded checklists, home screen widgets, and Android's permission to
+send notifications.
 
-Your service and container keep the name `anchor`, so where this README
-says `anchor-plus` in a command, such as `docker compose exec -T anchor-plus
-backup`, write `anchor`. (If you built the original from source, put the
-`image:` line in place of its `build:` and `image: anchor` lines.)
-
-To try Anchor+ first and keep the original as it is, run it next to it
-instead: copy the original's volume into a new one, then start this
-repository's [`docker-compose.yml`](docker-compose.yml) from a folder named
-`anchor-plus`, with its port changed to a free one such as `3001:3000`:
-
-```bash
-docker compose stop   # in the original's folder
-docker volume create anchor-plus_anchor_plus_data
-docker run --rm --volumes-from anchor -v anchor-plus_anchor_plus_data:/to alpine cp -a /data/. /to/
-docker compose start
-```
-
-Each then has its own copy of the notes, so sign the apps in to only one
-of them.
-
-**2. The web app** comes with the server: reload the page.
-
-**3. Android.** Anchor+ installs next to the official app, not over it, and
-Android lets neither read the other's notes. They meet on the server:
-
-1. Open the official app once, online, so every change has synced.
-2. Install Anchor+ (see [Mobile App](#mobile-app) or [F-Droid](#f-droid))
-   and sign in to the same server.
-
-Both apps can stay installed and signed in to the same server.
-
-These stay on the phone and don't come along: the theme, density, font and
-text size, the notes view and sort order, folded checklists, home screen
-widgets, and Android's permission to send notifications. Reminders do come
-along; they're kept on the server.
-
-**Going back.** A server can return to the original image and come back
-later without losing a note; see
+The original keeps running with the notes it had, so you can go back to it
+at any time. Changes made in Anchor+ in the meantime don't reach it; for
+moving a server back and forth with all its notes, see
 [Switching Back to Anchor](#switching-back-to-anchor).
 
 ## Features
@@ -449,9 +424,9 @@ multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 | `ghcr.io/alxndrjhn/anchor:fork-preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
 
 The original project's image is `ghcr.io/zhfahim/anchor:latest`; it has none
-of this fork's changes. A server can move from it to Anchor+ (see
-[Switching from Anchor](#switching-from-anchor)), and go back to it and
-return later, keeping every note (see
+of this fork's changes. To move your notes from it to Anchor+, see
+[Switching from Anchor](#switching-from-anchor). A server can also go back
+to it and return later, keeping every note (see
 [Switching Back to Anchor](#switching-back-to-anchor)).
 
 ### Option 2: Building from Source
@@ -658,9 +633,9 @@ Download the Android mobile app.
 
 After fork-0.18.0.69, Anchor+ is `com.alxndrjhn.anchorplus` on Android;
 before, it was `com.zhfahim.anchor.fork`. Android sees them as two apps, so
-the new one installs next to the old one instead of updating it, as it does
-next to the official app. The steps in
-[Switching from Anchor](#switching-from-anchor) apply to both.
+the new one installs next to the old one instead of updating it. Sign in to
+your server in the new one and your notes come from there; notes the old one
+never synced stay only in it.
 
 ### F-Droid
 
