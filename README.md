@@ -200,6 +200,26 @@ changes until the JSON is fixed. The keys are the fields of the built-in
 schemes in `design/schemes/schemes.json`; the parsers are
 `web/lib/design/custom-theme.ts` and `mobile/lib/core/theme/custom_theme.dart`.
 
+## Switching from Anchor
+
+Anchor+ runs next to the original, from its own folder; your notes move over
+in a backup.
+
+1. **Back up.** Open the Anchor Android app once online so it syncs, then in
+   Anchor's web app download Settings › Import and export › Export ›
+   **Anchor backup (.zip)**. Each account exports its own notes.
+2. **Start Anchor+** in its own folder with
+   [`docker-compose.yml`](docker-compose.yml) or the
+   [one-line install](#one-line-install-on-a-small-server). It uses its own
+   container, volume and port 3001, so both servers run side by side.
+3. **Import** the zip in Anchor+'s web app under Settings › Import and
+   export › Import. Shared notes arrive as your own copies.
+4. **Android:** install Anchor+ next to the official app and sign in to the
+   Anchor+ server. App settings and widgets don't come along.
+
+The original keeps its notes, so you can go back any time (see
+[Switching Back to Anchor](#switching-back-to-anchor)).
+
 ## Features
 
 - **Rich Text Editor** - Create and edit notes with powerful formatting (bold, italic, underline, headings, lists, checkboxes)
@@ -245,7 +265,7 @@ E2.1.Micro and Ampere A1, AWS t2/t3/t4g.micro, Google Cloud's e2-micro, a 1 GB
 VPS), one command, run over SSH, sets up everything:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3000 bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3001 bash
 ```
 
 With a domain whose DNS points at the server, Anchor gets HTTPS (a Let's
@@ -277,12 +297,12 @@ show, whose model needs more), opens the port in the server's own firewall,
 and runs Anchor from `/opt/anchor` with a random database password. Sign up
 right away: the first account is the admin.
 
-Your cloud's firewall has to let the port in too (3000, or 80 and 443 with a
+Your cloud's firewall has to let the port in too (3001, or 80 and 443 with a
 domain or sslip.io): on Oracle Cloud an ingress rule in the subnet's security
 list, on AWS the instance's security group, on Google Cloud a VPC firewall
 rule. Or leave it closed and serve Anchor over HTTPS for free with a
 [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
-to `http://localhost:3000`.
+to `http://localhost:3001`.
 
 It also runs on a Linux desktop, such as [Omarchy](https://omarchy.org), for
 your own network: Anchor is at `http://localhost:3000` there, and other
@@ -339,7 +359,7 @@ The [desktop app](#desktop-app) installs with winget too.
        container_name: anchor-plus
        restart: unless-stopped
        ports:
-         - "3000:3000"
+         - "3001:3000"
        volumes:
          - anchor_plus_data:/data
 
@@ -353,7 +373,7 @@ The [desktop app](#desktop-app) installs with winget too.
    Available options:
    | Variable | Required | Default | Description |
    |----------|----------|---------|-------------|
-   | `APP_URL` | No | `http://localhost:3000` | Base URL where Anchor is served |
+   | `APP_URL` | No | `http://localhost:3001` | Base URL where Anchor is served |
    | `JWT_SECRET` | No | (auto-generated) | Auth token secret. Min 16 characters when set |
    | `DATA_DIR` | No | `/data` | Root directory for persisted uploads |
    | `PICTURE_TEXT` | No | `on` | `off` stops reading the text in pictures for search |
@@ -382,7 +402,7 @@ The [desktop app](#desktop-app) installs with winget too.
    ```
 
 4. **Access the app:**
-   Open http://localhost:3000
+   Open http://localhost:3001
 
 5. **Update later:**
 
@@ -427,9 +447,10 @@ multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 | `ghcr.io/alxndrjhn/anchor:fork-preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
 
 The original project's image is `ghcr.io/zhfahim/anchor:latest`; it has none
-of this fork's changes. A server can go back to it and return to Anchor+
-later, keeping every note: see
-[Switching Back to Anchor](#switching-back-to-anchor).
+of this fork's changes. To move your notes from it to Anchor+, see
+[Switching from Anchor](#switching-from-anchor). A server can also go back
+to it and return later, keeping every note (see
+[Switching Back to Anchor](#switching-back-to-anchor)).
 
 ### Option 2: Building from Source
 
@@ -636,8 +657,8 @@ Download the Android mobile app.
 After fork-0.18.0.69, Anchor+ is `com.alxndrjhn.anchorplus` on Android;
 before, it was `com.zhfahim.anchor.fork`. Android sees them as two apps, so
 the new one installs next to the old one instead of updating it. Sign in to
-your server in the new one, check your notes are there, then uninstall the old
-one: notes that never synced live only in the old one.
+your server in the new one and your notes come from there; notes the old one
+never synced stay only in it.
 
 ### F-Droid
 

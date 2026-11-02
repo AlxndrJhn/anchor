@@ -8,7 +8,7 @@
 # Rocky/Alma/RHEL, Fedora, Amazon Linux or Arch server (amd64 or arm64), or
 # on a Linux desktop such as Omarchy, with the port Anchor listens on:
 #
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3000 bash
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3001 bash
 #
 # With a domain whose DNS already points at the server, Anchor gets HTTPS
 # (a Let's Encrypt certificate, through Caddy) on ports 80 and 443:
@@ -29,7 +29,8 @@
 #   DOMAIN       serve https://DOMAIN, with Caddy on ports 80 and 443. sslip.io or nip.io:
 #                a free hostname for the server's IP (<ip>.sslip.io), found
 #                again on every run, so it follows a new IP
-#   PORT         without DOMAIN, the port Anchor listens on (default 3000)
+#   PORT         without DOMAIN, the port Anchor listens on (default 3001, so the
+#                original Anchor can keep 3000)
 #   ANCHOR_TAG   the image tag, e.g. fork-preview or fork-0.17.2.36
 #                (default fork-latest)
 #   ANCHOR_DIR   where it lives (default /opt/anchor)
@@ -75,7 +76,7 @@ get_env() {
 }
 
 check_system() {
-  [ "$(id -u)" -eq 0 ] || die "Run it as root: curl -fsSL <url> | sudo PORT=3000 bash"
+  [ "$(id -u)" -eq 0 ] || die "Run it as root: curl -fsSL <url> | sudo PORT=3001 bash"
   [ "$(uname -s)" = Linux ] || die "This is for Linux servers"
   case "$(uname -m)" in
     x86_64 | amd64 | aarch64 | arm64) ;;
@@ -221,7 +222,7 @@ load_settings() {
   OLD_HOST=$(get_env "$CONF" HOST)
   DOMAIN=${DOMAIN-$(get_env "$CONF" DOMAIN)}
   PORT=${PORT:-$(get_env "$CONF" PORT)}
-  PORT=${PORT:-3000}
+  PORT=${PORT:-3001}
   ANCHOR_TAG=${ANCHOR_TAG:-$(get_env "$CONF" ANCHOR_TAG)}
   ANCHOR_TAG=${ANCHOR_TAG:-fork-latest}
   DOMAIN=${DOMAIN#http://}
