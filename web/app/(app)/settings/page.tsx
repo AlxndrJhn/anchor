@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AnchorLogo } from "@/components/layout/anchor-logo";
 import { AppPage, PageTitle } from "@/components/layout/app-page";
+import { AddonsSection } from "@/features/addons";
 import {
   ApiTokenSection,
   AppearanceSection,
@@ -39,6 +40,7 @@ export default function SettingsPage() {
           <ProfileSection />
           <AppearanceSection />
           <EditorSection />
+          <AddonsSection />
           {!isServerless && <SearchSection />}
           {!isServerless && <MagicLoginSection />}
           {!isServerless && <ApiTokenSection />}

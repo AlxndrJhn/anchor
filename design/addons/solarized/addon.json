@@ -1,0 +1,44 @@
+{
+  "id": "dev.anchorplus.solarized",
+  "name": "Solarized",
+  "version": "1.0.0",
+  "anchorApi": 1,
+  "description": "Ethan Schoonover's Solarized colours, with squarer cards.",
+  "author": "Anchor+",
+  "homepage": "https://github.com/AlxndrJhn/anchor/tree/main/design/addons/solarized",
+  "contributes": {
+    "theme": {
+      "light": {
+        "background": "#fdf6e3",
+        "card": "#fffbf0",
+        "sidebar": "#eee8d5",
+        "muted": "#eee8d5",
+        "foreground": "#073642",
+        "mutedForeground": "#586e75",
+        "accent": "#b58900",
+        "accentStrong": "#b58900",
+        "accentInk": "#8a6800",
+        "border": "#e4dcc4",
+        "divider": "#eee8d5",
+        "input": "#93a1a1",
+        "destructive": "#dc322f"
+      },
+      "dark": {
+        "background": "#002b36",
+        "card": "#073642",
+        "sidebar": "#00232c",
+        "muted": "#0a3d4a",
+        "foreground": "#eee8d5",
+        "mutedForeground": "#93a1a1",
+        "accent": "#b58900",
+        "accentStrong": "#b58900",
+        "accentInk": "#d9a300",
+        "border": "#0e4a59",
+        "divider": "#0a3d4a",
+        "input": "#586e75",
+        "destructive": "#ff6b68"
+      }
+    },
+    "styles": ["style.css"]
+  }
+}

@@ -103,6 +103,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Colour schemes: Nord, Dracula, Solarized, Gruvbox, Catppuccin, Tokyo Night, One, Rosé Pine, Monokai, GitHub | ✓ | ✓ |
 | OLED colour scheme: pure black in dark mode, near-black outlined cards, white text | ✓ | ✓ |
 | Custom theme from JSON (Settings › Appearance), kept on the device; the same JSON works on both ([how](#custom-themes)) | ✓ | ✓ |
+| Addons: colours and CSS others made, installed from a .zip or an address in Settings › Addons and synced to your devices; Android applies their colours and turns them on or off. Open the web app with `?safe` to start without them ([how](#addons)) | ✓ | ✓ |
 | Styles: Skeuomorphism, Neo-Brutalism and Lo-fi | ✓ | ✓ |
 | A skeuomorphic app icon everywhere: Android (adaptive and themed), iOS, the splash screens, the in-app logo, the web app and its home-screen icons | ✓ | ✓ |
 | **Getting around** | | |
@@ -200,6 +201,51 @@ colour, is refused with a message naming the key and what is wrong with it
 changes until the JSON is fixed. The keys are the fields of the built-in
 schemes in `design/schemes/schemes.json`; the parsers are
 `web/lib/design/custom-theme.ts` and `mobile/lib/core/theme/custom_theme.dart`.
+
+### Addons
+
+An addon is a folder, or a .zip of one, with an `addon.json` and the files
+it names. Settings › Addons on the web installs one from its file or its
+address; installing one with the same `id` again updates it. Your addons are
+kept on your Anchor+ server, so they turn up on your other devices, and
+what you turn on or off anywhere changes everywhere. Upstream Anchor's server
+has no addons.
+
+```json
+{
+  "id": "dev.example.paper",
+  "name": "Paper",
+  "version": "1.0.0",
+  "anchorApi": 1,
+  "description": "Warm colours, square cards.",
+  "contributes": {
+    "theme": { "light": { "background": "#f4f1ea" }, "dark": { "card": "#2a2622" } },
+    "styles": ["style.css"]
+  }
+}
+```
+
+- `theme` takes the `light` and `dark` colours of a [custom theme](#custom-themes).
+  Addons' colours go on in the order they were installed, and your own custom
+  theme goes over them. Android applies these.
+- `styles` lists CSS files, applied on the web and the desktop app in the
+  same order. CSS may not load anything from elsewhere: `@import` is refused,
+  and `url()` takes only `data:` URLs. Class names change between releases;
+  the CSS variables (`--radius-card`, `--background`…) and `[data-note]` are
+  safer to build on.
+- `description`, `author` and an `https://` `homepage` are optional.
+- A manifest is refused with every problem listed, as a custom theme is.
+  Keys planned for later (`commands`, `panels`, `hooks`, `permissions`) say
+  they need a newer Anchor+.
+
+An address can point to the .zip or to the `addon.json`; with the latter,
+its CSS files are downloaded from beside it. The site has to let other sites
+download from it, as GitHub's raw files do. If an addon gets in the way,
+open the web app with `?safe` at the end of its address: addons stay off in
+that tab until "Turn addons back on" in Settings › Addons. An example is in
+[design/addons/solarized](design/addons/solarized), and what addons will be
+able to do next is in [design/addons.md](design/addons.md) and the
+[roadmap](roadmap.md).
 
 ## Switching from Anchor
 
@@ -926,7 +972,9 @@ Logs are stored locally on the device only (rolling, ~2 MB max).
 
 ## Roadmap
 
-Future planned features:
+What's planned, phase by phase, is in [roadmap.md](roadmap.md): first
+addons that restyle Anchor+, then add commands, panels and server hooks.
+Also planned:
 
 - Real-time collaboration
 

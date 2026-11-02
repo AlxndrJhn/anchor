@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import { useAppliedAddons } from "@/features/addons";
 import { AuthGuard, SecondFactorGate, useAuthStore } from "@/features/auth";
 import { LocalNotesMove } from "@/features/import-export";
 import { useLockSession } from "@/features/notes/hooks/use-note-lock";
@@ -31,6 +32,7 @@ function SignedIn({ children }: { children: ReactNode }) {
       <OfflineSupport />
       <LockSession />
       <LocalNotesMove />
+      <Addons />
       <AppShell>{children}</AppShell>
     </>
   );
@@ -38,5 +40,10 @@ function SignedIn({ children }: { children: ReactNode }) {
 
 function LockSession() {
   useLockSession();
+  return null;
+}
+
+function Addons() {
+  useAppliedAddons();
   return null;
 }

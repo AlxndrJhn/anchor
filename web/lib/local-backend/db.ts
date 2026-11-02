@@ -6,6 +6,7 @@ import type {
   NoteReminder,
   NoteRevisionCause,
 } from "@/features/notes/types";
+import type { AddonManifest } from "@/lib/addons/manifest";
 import { idbDelete, idbGet, idbSet } from "@/lib/offline/idb";
 
 export interface StoredNote {
@@ -70,12 +71,25 @@ export interface StoredUser {
   createdAt: string;
 }
 
+/** An installed addon, as api/addons answers with it. */
+export interface StoredAddon {
+  id: string;
+  addonId: string;
+  version: string;
+  enabled: boolean;
+  manifest: AddonManifest;
+  files: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Data {
   user: StoredUser;
   notes: StoredNote[];
   tags: StoredTag[];
   attachments: StoredAttachment[];
   revisions: StoredRevision[];
+  addons: StoredAddon[];
 }
 
 const DATA_KEY = "local-backend";
@@ -98,6 +112,7 @@ export function emptyData(): Data {
     tags: [],
     attachments: [],
     revisions: [],
+    addons: [],
   };
 }
 

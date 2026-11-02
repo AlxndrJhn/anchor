@@ -6,6 +6,7 @@ import {
   Playfair_Display,
   Space_Grotesk,
 } from "next/font/google";
+import { addonsScript } from "@/lib/addons/apply";
 import { appearanceScript } from "@/lib/appearance-script";
 import { memoryStorageScript } from "@/lib/demo/memory-storage-script";
 import { isDemo } from "@/lib/local-backend/mode";
@@ -80,6 +81,10 @@ export default function RootLayout({
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed script, set before paint
           dangerouslySetInnerHTML={{ __html: appearanceScript }}
+        />
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: a fixed script, set before paint
+          dangerouslySetInnerHTML={{ __html: addonsScript }}
         />
       </head>
       <body>

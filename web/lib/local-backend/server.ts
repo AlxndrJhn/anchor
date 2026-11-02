@@ -10,11 +10,13 @@ import type {
   NoteReminderInput,
   NoteRevisionCause,
 } from "@/features/notes/types";
+import { checkAddon } from "@/lib/addons/manifest";
 import { newId } from "@/lib/id";
 import {
   type Data,
   emptyData,
   type Storage,
+  type StoredAddon,
   type StoredAttachment,
   type StoredNote,
   type StoredTag,
@@ -151,6 +153,8 @@ export class LocalServer {
         return this.noteLocks(method, rest, body);
       case "tags":
         return this.tags(method, rest, body);
+      case "addons":
+        return this.addons(method, rest, body);
       case "users":
         return [];
       case "picture-search":
@@ -892,6 +896,57 @@ export class LocalServer {
       if (changed) tag.version++;
       tag.updatedAt = now();
       return this.toTag(tag);
+    }
+    return fail(404, "Not found");
+  }
+
+  // Addons, checked as the server checks them.
+
+  private addons(method: string, rest: string[], body: Body) {
+    const [id] = rest;
+    if (!id) {
+      if (method === "GET") return this.data.addons;
+      const check = checkAddon(body.manifest, body.files);
+      if (!check.ok)
+        throw new HttpError(400, {
+          statusCode: 400,
+          message: "This addon is not valid",
+          errors: check.errors,
+        });
+      const { manifest, files } = check.addon;
+      const existing = this.data.addons.find((a) => a.addonId === manifest.id);
+      if (existing) {
+        Object.assign(existing, {
+          version: manifest.version,
+          manifest,
+          files,
+          updatedAt: now(),
+        });
+        return existing;
+      }
+      const addon: StoredAddon = {
+        id: newId(),
+        addonId: manifest.id,
+        version: manifest.version,
+        enabled: true,
+        manifest,
+        files,
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      this.data.addons.push(addon);
+      return addon;
+    }
+    const addon = this.data.addons.find((a) => a.id === id);
+    if (!addon) return fail(404, "Addon not found");
+    if (method === "PATCH") {
+      addon.enabled = body.enabled === true;
+      addon.updatedAt = now();
+      return addon;
+    }
+    if (method === "DELETE") {
+      this.data.addons = this.data.addons.filter((a) => a !== addon);
+      return undefined;
     }
     return fail(404, "Not found");
   }

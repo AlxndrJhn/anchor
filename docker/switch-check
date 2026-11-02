@@ -33,6 +33,7 @@ locked=$(count "SELECT count(DISTINCT \"noteId\") FROM \"NoteLock\"")
 invisible=$(count "SELECT count(DISTINCT \"noteId\") FROM \"NoteInvisible\"")
 frozen=$(note_count "\"isFrozen\"")
 links=$(count "SELECT count(*) FROM \"NoteShareLink\"")
+addons=$(count "SELECT count(*) FROM \"UserAddon\"")
 
 line() {
   [ "$1" = "0" ] || printf '  %6s %s\n' "$1" "$2"
@@ -48,6 +49,7 @@ line "$locked" "locked notes open without their lock"
 line "$invisible" "invisible notes show in the lists"
 line "$frozen" "frozen notes can be changed and deleted"
 line "$links" "share links stop opening"
+line "$addons" "addons are not applied; they're back on switching back"
 echo "         Note and tag order, picture search and text read from pictures"
 echo "         are unused, and kept."
 echo

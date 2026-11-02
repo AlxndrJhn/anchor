@@ -1084,6 +1084,36 @@ abstract class AppLocalizations {
   /// **'None'**
   String get settingsCustomThemeOff;
 
+  /// Label of the Appearance setting, and title of its sheet, listing the addons installed on the web.
+  ///
+  /// In en, this message translates to:
+  /// **'Addons'**
+  String get settingsAddons;
+
+  /// Value of the Addons setting: how many installed addons are turned on.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} on'**
+  String settingsAddonsOn(int count);
+
+  /// Explanation at the top of the Addons sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Addons bring colours and styles. Install them in Anchor+ on the web, in Settings › Addons; they come here too, and what you turn on or off here changes everywhere.'**
+  String get addonsHelp;
+
+  /// Note under an addon that brings CSS, which the Android app can't apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Its styles show on the web only.'**
+  String get addonsStylesOnWeb;
+
+  /// Snackbar when turning an addon on or off fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t change {name}'**
+  String addonsSwitchFailed(String name);
+
   /// Value of the Custom theme setting while an unnamed custom theme is applied.
   ///
   /// In en, this message translates to:

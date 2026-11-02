@@ -46,6 +46,8 @@ import '../../../core/widgets/pressable.dart';
 import '../../../core/widgets/segmented_control.dart';
 import '../../../core/widgets/switch_row.dart';
 import '../../../l10n/l10n.dart';
+import '../../addons/addons.dart';
+import '../../addons/addons_sheet.dart';
 import '../../auth/domain/user.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/oidc_config_provider.dart';
@@ -220,6 +222,7 @@ class _AppearanceSection extends ConsumerWidget {
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
     final customTheme = ref.watch(customThemeControllerProvider);
+    final addons = ref.watch(addonsControllerProvider);
     final l10n = context.l10n;
     return Section(
       label: l10n.settingsAppearance,
@@ -250,6 +253,17 @@ class _AppearanceSection extends ConsumerWidget {
             showChevron: true,
             onTap: () => showCustomThemeSheet(context),
           ),
+          // Installed on the web; with none, there's nothing to do here.
+          if (addons.isNotEmpty)
+            GroupedListTile(
+              icon: LucideIcons.puzzle,
+              label: l10n.settingsAddons,
+              value: l10n.settingsAddonsOn(
+                addons.where((a) => a.enabled).length,
+              ),
+              showChevron: true,
+              onTap: () => showAddonsSheet(context),
+            ),
           GroupedListTile(
             icon: LucideIcons.brush,
             label: l10n.settingsStyle,

@@ -9,6 +9,7 @@ import 'core/motion/springs.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/style_typography.dart';
 import 'core/update/app_updater.dart';
+import 'features/addons/addons.dart';
 import 'features/auth/presentation/magic_link_handler.dart';
 import 'features/debug_recorder/data/debug_state_observer.dart';
 import 'features/debug_recorder/presentation/debug_recorder_host.dart';
@@ -71,7 +72,8 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     final density = ref.watch(displayDensityControllerProvider);
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
-    final customTheme = ref.watch(customThemeControllerProvider);
+    // The addons' themes, with the person's own custom theme over them.
+    final customTheme = ref.watch(appCustomThemeProvider);
     final (font, textSize) = ref.watch(
       editorPreferencesControllerProvider.select(
         (editor) => (editor.noteFont, editor.noteTextSize),

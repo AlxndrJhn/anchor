@@ -92,6 +92,11 @@ export function parseCustomTheme(text: string): CustomThemeResult {
       ],
     };
   }
+  return checkCustomTheme(json);
+}
+
+/** Checks a custom theme that is already JSON, as an addon's theme is. */
+export function checkCustomTheme(json: unknown): CustomThemeResult {
   if (!isObject(json))
     return {
       ok: false,

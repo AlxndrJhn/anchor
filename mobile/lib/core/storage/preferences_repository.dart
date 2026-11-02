@@ -220,6 +220,18 @@ class PreferencesRepository {
     }
   }
 
+  /// The addons as api/addons last listed them, as JSON.
+  Future<String?> getAddons() => _read(StorageKeys.addons);
+
+  /// Null forgets them.
+  Future<void> setAddons(String? json) async {
+    if (json == null) {
+      await _storage.delete(key: StorageKeys.addons);
+    } else {
+      await _storage.write(key: StorageKeys.addons, value: json);
+    }
+  }
+
   Future<bool> getAllowSelfSignedCert() async {
     final value = await _read(StorageKeys.allowSelfSignedCert);
     return value == 'true';

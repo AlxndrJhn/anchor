@@ -13,6 +13,7 @@ class StorageKeys {
   static const colorScheme = 'color_scheme';
   static const appStyle = 'app_style';
   static const customTheme = 'custom_theme';
+  static const addons = 'addons';
   static const sortChecklistItems = 'editor_sort_checklist_items';
   static const burnDeleted = 'editor_burn_deleted';
   static const foldedChecklistNotes = 'editor_folded_checklist_notes';
@@ -50,6 +51,7 @@ class StorageKeys {
     colorScheme,
     appStyle,
     customTheme,
+    addons,
     sortChecklistItems,
     burnDeleted,
     foldedChecklistNotes,

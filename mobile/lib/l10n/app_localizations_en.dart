@@ -595,6 +595,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsCustomThemeOff => 'None';
 
   @override
+  String get settingsAddons => 'Addons';
+
+  @override
+  String settingsAddonsOn(int count) {
+    return '$count on';
+  }
+
+  @override
+  String get addonsHelp =>
+      'Addons bring colours and styles. Install them in Anchor+ on the web, in Settings › Addons; they come here too, and what you turn on or off here changes everywhere.';
+
+  @override
+  String get addonsStylesOnWeb => 'Its styles show on the web only.';
+
+  @override
+  String addonsSwitchFailed(String name) {
+    return 'Couldn’t change $name';
+  }
+
+  @override
   String get settingsCustomThemeOn => 'On';
 
   @override

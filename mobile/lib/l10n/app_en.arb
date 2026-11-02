@@ -826,6 +826,32 @@
   "@settingsCustomThemeOff": {
     "description": "Value of the Custom theme setting while no custom theme is applied."
   },
+  "settingsAddons": "Addons",
+  "@settingsAddons": {
+    "description": "Label of the Appearance setting, and title of its sheet, listing the addons installed on the web."
+  },
+  "settingsAddonsOn": "{count} on",
+  "@settingsAddonsOn": {
+    "description": "Value of the Addons setting: how many installed addons are turned on.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addonsHelp": "Addons bring colours and styles. Install them in Anchor+ on the web, in Settings › Addons; they come here too, and what you turn on or off here changes everywhere.",
+  "@addonsHelp": {
+    "description": "Explanation at the top of the Addons sheet."
+  },
+  "addonsStylesOnWeb": "Its styles show on the web only.",
+  "@addonsStylesOnWeb": {
+    "description": "Note under an addon that brings CSS, which the Android app can't apply."
+  },
+  "addonsSwitchFailed": "Couldn’t change {name}",
+  "@addonsSwitchFailed": {
+    "description": "Snackbar when turning an addon on or off fails.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "settingsCustomThemeOn": "On",
   "@settingsCustomThemeOn": {
     "description": "Value of the Custom theme setting while an unnamed custom theme is applied."

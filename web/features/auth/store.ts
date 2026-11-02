@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { applyAddons } from "@/lib/addons/apply";
 import type { User } from "./types";
 
 const TOKEN_KEY = "access_token";
@@ -94,6 +95,8 @@ export const useAuthStore = create<AuthState>()(
       logout: ({ hasSignedOut = false } = {}) => {
         clearAccessToken();
         clearRefreshToken();
+        // The next person to sign in here shouldn't see these.
+        applyAddons([]);
         set({ ...initialState, isInitialized: true, hasSignedOut });
       },
     }),

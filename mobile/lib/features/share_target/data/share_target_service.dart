@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/session/active_user_id_provider.dart';
+import '../../addons/addons.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../notes/data/repository/note_attachments_repository.dart';
 import '../../notes/data/repository/notes_repository.dart';
@@ -87,7 +88,7 @@ class ShareContextSync extends _$ShareContextSync {
       density: ref.watch(displayDensityControllerProvider),
       colorScheme: ref.watch(colorSchemeControllerProvider),
       style: ref.watch(appStyleControllerProvider),
-      customTheme: ref.watch(customThemeControllerProvider),
+      customTheme: ref.watch(appCustomThemeProvider),
       tags: sortTagsByName(tags.where((tag) => !tag.isDeleted)),
     );
     _throttle?.cancel();

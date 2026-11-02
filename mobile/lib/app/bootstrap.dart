@@ -175,6 +175,7 @@ Future<AppBootstrap> initializeApp({
     colorScheme: colorScheme,
     appStyle: appStyle,
     customTheme: customTheme,
+    addons: await preferences.getAddons(),
     editorPreferences: editorPreferences,
     reminderPreferences: reminderPreferences,
     foldedChecklistNotes: await preferences.getFoldedChecklistNotes(),

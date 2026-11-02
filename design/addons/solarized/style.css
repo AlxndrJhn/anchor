@@ -1,0 +1,6 @@
+/* Squarer cards and buttons; Android draws only the colours. */
+:root {
+  --radius-card: 4px;
+  --radius-note: 4px;
+  --radius-button: 4px;
+}

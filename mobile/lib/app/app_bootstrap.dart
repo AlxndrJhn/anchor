@@ -18,6 +18,7 @@ class AppBootstrap {
     this.colorScheme = anchorSchemeId,
     this.appStyle = AppStyle.standard,
     this.customTheme,
+    this.addons,
     this.editorPreferences = const EditorPreferences(),
     this.reminderPreferences = const ReminderPreferences(),
     this.foldedChecklistNotes = const [],
@@ -36,6 +37,9 @@ class AppBootstrap {
 
   /// The custom theme over the colour scheme, if one is saved.
   final CustomTheme? customTheme;
+
+  /// The addons as api/addons last listed them, as JSON; see AddonsController.
+  final String? addons;
   final EditorPreferences editorPreferences;
   final ReminderPreferences reminderPreferences;
 
