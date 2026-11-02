@@ -264,6 +264,83 @@ textarea.n-title {
   gap: --spacing(2);
   padding-top: --spacing(1.5);
 }
+
+/* Clean note layout */
+.n-head {
+  display: flex;
+  align-items: flex-start;
+  gap: --spacing(2);
+}
+.n-head .n-title {
+  flex: 1;
+  min-width: 0;
+}
+.fold-tb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  /* Level with the title's first line. */
+  margin-top: calc(--spacing(1) + (var(--text-note-title) * 1.12 - 32px) / 2);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--note-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-hover),
+    color var(--duration-hover);
+}
+.fold-tb:hover {
+  background: var(--note-surface);
+  color: var(--foreground);
+}
+.fold-tb svg {
+  width: 18px;
+  height: 18px;
+  transition: transform var(--duration-hover) var(--ease-standard);
+}
+.fold-tb[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.tb-folded {
+  margin-top: --spacing(3);
+}
+.tb-folded > .rte > .tb {
+  display: none;
+}
+/* Tags and attachments at the foot of the page, or under a long note. */
+.ed-scroll:has(.n-foot) {
+  display: flex;
+  flex-direction: column;
+}
+.ed .note-in:has(> .n-foot) {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  padding-bottom: --spacing(6);
+}
+.n-foot {
+  margin-top: auto;
+  padding-top: --spacing(8);
+}
+.n-foot > :is(.n-tags, .st-wrap) {
+  margin-top: 0;
+  padding-top: --spacing(3);
+  border-top: 1px solid color-mix(in srgb, var(--note-border) 60%, transparent);
+}
+.n-foot > .n-tags ~ .st-wrap {
+  padding-top: --spacing(2);
+  border-top: 0;
+}
+.n-foot .n-tags {
+  justify-content: flex-end;
+}
+.n-foot .strip > :first-child {
+  margin-left: auto;
+}
+
 .save {
   display: inline-flex;
   align-items: center;
@@ -448,6 +525,16 @@ textarea.n-title {
   }
   .n-title {
     font-size: var(--text-note-title-phone);
+  }
+  /* The bar is how a phone formats, so it stays. */
+  .fold-tb {
+    display: none;
+  }
+  .tb-folded {
+    margin-top: 0;
+  }
+  .tb-folded > .rte > .tb {
+    display: flex;
   }
   .ed .tb {
     order: 10;

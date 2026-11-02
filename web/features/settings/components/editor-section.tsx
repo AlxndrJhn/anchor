@@ -13,7 +13,7 @@ import {
   type Shortcut,
   shortcutFromEvent,
 } from "@/features/notes/date-stamp";
-import { usePreferencesStore } from "@/features/preferences";
+import { type NoteLayout, usePreferencesStore } from "@/features/preferences";
 import {
   Row,
   RowText,
@@ -28,6 +28,25 @@ export function EditorSection() {
   const today = new Date();
   return (
     <Section id="editor" title="Editor">
+      <Row>
+        <RowText
+          title="Note layout"
+          text="Clean puts tags under the text and folds the formatting bar away until you open it."
+        />
+        <SegmentedControl<NoteLayout>
+          aria-label="Note layout"
+          size="sm"
+          value={editor.noteLayout ?? "default"}
+          onValueChange={(layout) => {
+            setEditorPreference("noteLayout", layout);
+            setSaveStatus("saved");
+          }}
+          options={[
+            { value: "default", label: "Default" },
+            { value: "clean", label: "Clean" },
+          ]}
+        />
+      </Row>
       <Row>
         <RowText
           title={
