@@ -143,19 +143,22 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                8,
-                density.space8,
-                8,
-                density.space16,
-              ),
-              child: Row(
-                children: [
-                  const AnchorLogo(size: AnchorLogo.drawer, isRaised: false),
-                  const SizedBox(width: 12),
-                  Flexible(child: _AppName(color: colors.appText)),
-                ],
+            // The + after the name takes taps from around it.
+            MinTapTargetScope(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  8,
+                  density.space8,
+                  8,
+                  density.space16,
+                ),
+                child: Row(
+                  children: [
+                    const AnchorLogo(size: AnchorLogo.drawer, isRaised: false),
+                    const SizedBox(width: 12),
+                    Flexible(child: _AppName(color: colors.appText)),
+                  ],
+                ),
               ),
             ),
             Expanded(

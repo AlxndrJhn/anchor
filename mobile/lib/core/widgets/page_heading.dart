@@ -100,10 +100,14 @@ class PageHeading extends StatelessWidget {
           ),
       ],
     );
-    if (link == null) return heading;
+    // A small mark in the title takes taps from around it.
+    final reached = titleMark == null
+        ? heading
+        : MinTapTargetScope(child: heading);
+    if (link == null) return reached;
     return ExpandedHitArea(
       padding: EdgeInsets.only(bottom: hitPadding),
-      child: heading,
+      child: reached,
     );
   }
 }

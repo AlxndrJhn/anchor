@@ -73,10 +73,59 @@ class MinTapTarget extends SingleChildRenderObjectWidget {
   }
 }
 
+/// Lets the [MinTapTarget]s inside it take taps from all of their room,
+/// even where a box between them and it ends sooner, as a widget set inline
+/// in text does. Taps in that room go to the target first, past whatever
+/// lies in between, pointer blockers included.
+class MinTapTargetScope extends SingleChildRenderObjectWidget {
+  const MinTapTargetScope({super.key, required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderMinTapTargetScope();
+}
+
+class _RenderMinTapTargetScope extends RenderProxyBox {
+  final _targets = <_RenderMinTapTarget>[];
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    for (final target in _targets.reversed) {
+      if (!target.hasSize) continue;
+      final isHit = result.addWithPaintTransform(
+        transform: target.getTransformTo(this),
+        position: position,
+        hitTest: (result, local) => target.hitTest(result, position: local),
+      );
+      if (isHit) return true;
+    }
+    return super.hitTest(result, position: position);
+  }
+}
+
 class _RenderMinTapTarget extends RenderProxyBox {
   _RenderMinTapTarget(this._minSize);
 
   double _minSize;
+  _RenderMinTapTargetScope? _scope;
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    for (var node = parent; node != null; node = node.parent) {
+      if (node is _RenderMinTapTargetScope) {
+        _scope = node.._targets.add(this);
+        break;
+      }
+    }
+  }
+
+  @override
+  void detach() {
+    _scope?._targets.remove(this);
+    _scope = null;
+    super.detach();
+  }
 
   set minSize(double value) {
     if (value == _minSize) return;
