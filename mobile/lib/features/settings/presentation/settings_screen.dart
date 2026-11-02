@@ -743,6 +743,12 @@ class _AccountSection extends ConsumerWidget {
               subtitle: managed,
             ),
           GroupedListTile(
+            icon: LucideIcons.monitorSmartphone,
+            label: l10n.settingsDevices,
+            showChevron: true,
+            onTap: () => context.push(AppRoutes.devices),
+          ),
+          GroupedListTile(
             icon: LucideIcons.logOut,
             label: l10n.settingsSignOut,
             isDanger: true,

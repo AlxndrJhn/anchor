@@ -10,6 +10,7 @@ import {
   PUBLIC_PROFILES_PREFIX,
 } from './config/storage.constants';
 import { AppValidationPipe } from './common/pipes/app-validation.pipe';
+import { requestContextMiddleware } from './common/utils/request-context';
 import { PROFILE_IMAGE_EXTENSIONS } from './auth/utils/profile-image.util';
 
 export function setupApp(app: NestExpressApplication): void {
@@ -21,6 +22,7 @@ export function setupApp(app: NestExpressApplication): void {
   app.useBodyParser('json', { limit: '30mb' });
 
   app.use(helmet());
+  app.use(requestContextMiddleware);
 
   if (appConfig.corsOrigins.length > 0) {
     app.enableCors({ origin: appConfig.corsOrigins });

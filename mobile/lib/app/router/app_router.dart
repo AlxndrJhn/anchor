@@ -21,6 +21,7 @@ import '../../features/notes/presentation/note_morph_route.dart';
 import '../../features/notes/presentation/note_revision_screen.dart';
 import '../../features/notes/presentation/notes_list_screen.dart';
 import '../../features/server/presentation/server_config_screen.dart';
+import '../../features/settings/presentation/devices_screen.dart';
 import '../../features/settings/presentation/log_viewer_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../app_bootstrap.dart';
@@ -38,6 +39,7 @@ const _settingsPath = 'settings';
 const _changePasswordPath = 'change-password';
 const _editProfilePath = 'edit-profile';
 const _logsPath = 'logs';
+const _devicesPath = 'devices';
 const _widgetNotePath = '/widget/note/:id';
 
 @Riverpod(keepAlive: true)
@@ -186,6 +188,10 @@ GoRouter goRouter(Ref ref) {
               GoRoute(
                 path: _logsPath,
                 builder: (context, state) => const LogViewerScreen(),
+              ),
+              GoRoute(
+                path: _devicesPath,
+                builder: (context, state) => const DevicesScreen(),
               ),
             ],
           ),

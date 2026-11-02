@@ -6,6 +6,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -41,6 +42,8 @@ import {
   REFRESH_TOKEN_REUSE_WINDOW_MS,
   REFRESH_TOKEN_VALIDITY_DAYS,
 } from './constants/auth.constants';
+import { currentUserAgent } from '../common/utils/request-context';
+import { describeDevice, trimUserAgent } from './utils/device-label.util';
 
 @Injectable()
 export class AuthService {
@@ -303,6 +306,7 @@ export class AuthService {
     const tokens = await this.createTokenPair(
       storedToken.user.id,
       storedToken.user.email,
+      storedToken,
     );
 
     // Keep the old token working for the reuse window.
@@ -324,6 +328,53 @@ export class AuthService {
     } catch {
       // Silently ignore - don't leak whether token existed
     }
+  }
+
+  async revokeOtherRefreshTokens(
+    userId: string,
+    keepRefreshToken: string,
+  ): Promise<void> {
+    const kept = await this.prisma.refreshToken.findUnique({
+      where: { token: keepRefreshToken },
+    });
+    await this.prisma.refreshToken.deleteMany({
+      where:
+        kept?.userId === userId
+          ? { userId, sessionId: { not: kept.sessionId } }
+          : { userId, token: { not: keepRefreshToken } },
+    });
+  }
+
+  /** The devices signed in as this person, the one asking first. */
+  async listSessions(userId: string, currentRefreshToken?: string) {
+    const tokens = await this.prisma.refreshToken.findMany({
+      where: { userId, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const currentSessionId = tokens.find(
+      (t) => currentRefreshToken && t.token === currentRefreshToken,
+    )?.sessionId;
+    // Newest first, so a session's first token is its latest refresh.
+    const sessions = new Map<string, (typeof tokens)[number]>();
+    for (const token of tokens) {
+      if (!sessions.has(token.sessionId)) sessions.set(token.sessionId, token);
+    }
+    return [...sessions.values()]
+      .map((t) => ({
+        id: t.sessionId,
+        device: describeDevice(t.userAgent),
+        signedInAt: t.signedInAt,
+        lastActiveAt: t.createdAt,
+        current: t.sessionId === currentSessionId,
+      }))
+      .sort((a, b) => Number(b.current) - Number(a.current));
+  }
+
+  async revokeSession(userId: string, sessionId: string): Promise<void> {
+    const { count } = await this.prisma.refreshToken.deleteMany({
+      where: { userId, sessionId },
+    });
+    if (count === 0) throw new NotFoundException('Session not found');
   }
 
   async getApiToken(userId: string) {
@@ -633,7 +684,12 @@ export class AuthService {
    * Create access and refresh token pair for a user.
    * Used by login, register, and OIDC flows.
    */
-  async createTokenPair(userId: string, email: string) {
+  /** Signs a device in, or carries [session] on to its next token. */
+  async createTokenPair(
+    userId: string,
+    email: string,
+    session?: { sessionId: string; signedInAt: Date; userAgent: string | null },
+  ) {
     const payload = { email, sub: userId };
 
     // Generate access token (short-lived)
@@ -650,6 +706,11 @@ export class AuthService {
         token: refreshTokenString,
         userId,
         expiresAt,
+        ...(session && {
+          sessionId: session.sessionId,
+          signedInAt: session.signedInAt,
+        }),
+        userAgent: trimUserAgent(currentUserAgent()) ?? session?.userAgent,
       },
     });
 

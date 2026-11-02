@@ -1348,6 +1348,96 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{Your notes stay on this phone and sync again when you sign in.} =1{1 change hasn’t synced yet. It stays on this phone and syncs when you sign in again.} other{{count} changes haven’t synced yet. They stay on this phone and sync when you sign in again.}}'**
   String settingsSignOutMessage(int count);
 
+  /// Row in Settings that opens the list of devices signed in to the account.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get settingsDevices;
+
+  /// Title of the screen listing the devices signed in to the account.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get devicesTitle;
+
+  /// Marks the phone in use in the list of signed-in devices.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone'**
+  String get devicesThisPhone;
+
+  /// Under this phone in the list of signed-in devices. {date} is a date, or a time for today.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in {date}'**
+  String devicesSignedIn(String date);
+
+  /// Under another device in the list of signed-in devices. Each is a date, or a time for today.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in {date}, last active {active}'**
+  String devicesSignedInLastActive(String date, String active);
+
+  /// Shown once a device was signed out. {device} is as "Chrome on Windows".
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out {device}'**
+  String devicesSignedOut(String device);
+
+  /// Shown when signing a device out failed. {device} is as "Chrome on Windows".
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t sign out {device}'**
+  String devicesSignOutFailed(String device);
+
+  /// Title shown when the list of signed-in devices couldn’t be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load your devices'**
+  String get devicesLoadFailed;
+
+  /// Under the title when the list of signed-in devices couldn’t be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get devicesLoadFailedHelp;
+
+  /// Row in Settings: signs out every other device, keeping this phone signed in.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out other devices'**
+  String get settingsSignOutOthers;
+
+  /// Title of the dialog that confirms signing out every other device.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out your other devices?'**
+  String get settingsSignOutOthersTitle;
+
+  /// Message of the dialog that confirms signing out every other device.
+  ///
+  /// In en, this message translates to:
+  /// **'Within 15 minutes every other phone, browser and computer will be asked to sign in again. This phone stays signed in.'**
+  String get settingsSignOutOthersMessage;
+
+  /// Confirm button of the dialog that signs out every other device.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out others'**
+  String get settingsSignOutOthersConfirm;
+
+  /// Shown once every other device was signed out.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out of your other devices'**
+  String get settingsSignOutOthersDone;
+
+  /// Shown when signing out the other devices failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t sign out your other devices'**
+  String get settingsSignOutOthersFailed;
+
   /// Section label in Settings for this fork's updates from its GitHub releases (Android release builds only).
   ///
   /// In en, this message translates to:

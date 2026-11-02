@@ -1036,6 +1036,94 @@
       }
     }
   },
+  "settingsDevices": "Devices",
+  "@settingsDevices": {
+    "description": "Row in Settings that opens the list of devices signed in to the account."
+  },
+  "devicesTitle": "Devices",
+  "@devicesTitle": {
+    "description": "Title of the screen listing the devices signed in to the account."
+  },
+  "devicesThisPhone": "This phone",
+  "@devicesThisPhone": {
+    "description": "Marks the phone in use in the list of signed-in devices."
+  },
+  "devicesSignedIn": "Signed in {date}",
+  "@devicesSignedIn": {
+    "description": "Under this phone in the list of signed-in devices. {date} is a date, or a time for today.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Nov 2, 2026"
+      }
+    }
+  },
+  "devicesSignedInLastActive": "Signed in {date}, last active {active}",
+  "@devicesSignedInLastActive": {
+    "description": "Under another device in the list of signed-in devices. Each is a date, or a time for today.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Nov 2, 2026"
+      },
+      "active": {
+        "type": "String",
+        "example": "3:40 PM"
+      }
+    }
+  },
+  "devicesSignedOut": "Signed out {device}",
+  "@devicesSignedOut": {
+    "description": "Shown once a device was signed out. {device} is as \"Chrome on Windows\".",
+    "placeholders": {
+      "device": {
+        "type": "String",
+        "example": "Chrome on Windows"
+      }
+    }
+  },
+  "devicesSignOutFailed": "Couldn’t sign out {device}",
+  "@devicesSignOutFailed": {
+    "description": "Shown when signing a device out failed. {device} is as \"Chrome on Windows\".",
+    "placeholders": {
+      "device": {
+        "type": "String",
+        "example": "Chrome on Windows"
+      }
+    }
+  },
+  "devicesLoadFailed": "Couldn’t load your devices",
+  "@devicesLoadFailed": {
+    "description": "Title shown when the list of signed-in devices couldn’t be loaded."
+  },
+  "devicesLoadFailedHelp": "Check your connection and try again.",
+  "@devicesLoadFailedHelp": {
+    "description": "Under the title when the list of signed-in devices couldn’t be loaded."
+  },
+  "settingsSignOutOthers": "Sign out other devices",
+  "@settingsSignOutOthers": {
+    "description": "Row in Settings: signs out every other device, keeping this phone signed in."
+  },
+  "settingsSignOutOthersTitle": "Sign out your other devices?",
+  "@settingsSignOutOthersTitle": {
+    "description": "Title of the dialog that confirms signing out every other device."
+  },
+  "settingsSignOutOthersMessage": "Within 15 minutes every other phone, browser and computer will be asked to sign in again. This phone stays signed in.",
+  "@settingsSignOutOthersMessage": {
+    "description": "Message of the dialog that confirms signing out every other device."
+  },
+  "settingsSignOutOthersConfirm": "Sign out others",
+  "@settingsSignOutOthersConfirm": {
+    "description": "Confirm button of the dialog that signs out every other device."
+  },
+  "settingsSignOutOthersDone": "Signed out of your other devices",
+  "@settingsSignOutOthersDone": {
+    "description": "Shown once every other device was signed out."
+  },
+  "settingsSignOutOthersFailed": "Couldn’t sign out your other devices",
+  "@settingsSignOutOthersFailed": {
+    "description": "Shown when signing out the other devices failed."
+  },
   "settingsUpdates": "Updates",
   "@settingsUpdates": {
     "description": "Section label in Settings for this fork's updates from its GitHub releases (Android release builds only)."

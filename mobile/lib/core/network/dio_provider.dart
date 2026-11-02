@@ -41,6 +41,8 @@ Dio createServerDio(String? serverUrl, {required bool allowSelfSigned}) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        // Names this app in Settings' list of signed-in devices.
+        'User-Agent': 'AnchorPlus/${Platform.operatingSystem}',
       },
     ),
   );

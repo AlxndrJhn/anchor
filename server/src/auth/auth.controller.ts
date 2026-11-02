@@ -13,6 +13,8 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Param,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
@@ -24,6 +26,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { LogoutOthersDto } from './dto/logout-others.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { PROFILE_IMAGE_MAX_BYTES } from './constants/auth.constants';
@@ -62,6 +65,42 @@ export class AuthController {
   @Post('logout')
   async logout(@Body() logoutDto: LogoutDto): Promise<void> {
     return this.authService.revokeRefreshToken(logoutDto.refreshToken);
+  }
+
+  /** Signs out every device but the one asking. */
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('logout-others')
+  async logoutOthers(
+    @CurrentUser() user: User,
+    @Body() logoutOthersDto: LogoutOthersDto,
+  ): Promise<void> {
+    return this.authService.revokeOtherRefreshTokens(
+      user.id,
+      logoutOthersDto.refreshToken,
+    );
+  }
+
+  /**
+   * The devices signed in as this person. A POST, as the asking device's
+   * refresh token, which marks it, has no place in a URL.
+   */
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('sessions')
+  listSessions(@CurrentUser() user: User, @Body() logoutDto: LogoutDto) {
+    return this.authService.listSessions(user.id, logoutDto.refreshToken);
+  }
+
+  /** Signs one device out. */
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete('sessions/:id')
+  revokeSession(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) sessionId: string,
+  ): Promise<void> {
+    return this.authService.revokeSession(user.id, sessionId);
   }
 
   /** A one-time code that signs another device in as this person. */

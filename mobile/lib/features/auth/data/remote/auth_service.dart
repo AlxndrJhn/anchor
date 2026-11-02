@@ -63,6 +63,33 @@ class AuthService {
     );
   }
 
+  /// The devices signed in, the one holding [refreshToken] marked.
+  Future<List<Map<String, dynamic>>> listSessions(String? refreshToken) async {
+    final response = await _send<List<dynamic>>(
+      () => _dio.post(
+        '/api/auth/sessions',
+        data: {'refreshToken': ?refreshToken},
+      ),
+    );
+    return response.cast<Map<String, dynamic>>();
+  }
+
+  Future<void> revokeSession(String id) async {
+    await _send<Object?>(
+      () => _dio.delete('/api/auth/sessions/${Uri.encodeComponent(id)}'),
+    );
+  }
+
+  /// Signs out every session but [refreshToken]'s.
+  Future<void> logoutOthers(String refreshToken) async {
+    await _send<Object?>(
+      () => _dio.post(
+        '/api/auth/logout-others',
+        data: {'refreshToken': refreshToken},
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> updateProfile({String? name}) =>
       _send(() => _dio.patch('/api/auth/profile', data: {'name': ?name}));
 

@@ -6,6 +6,7 @@ import { AppPage, PageTitle } from "@/components/layout/app-page";
 import {
   ApiTokenSection,
   AppearanceSection,
+  DevicesSection,
   EditorSection,
   ImportExportSection,
   MagicLoginSection,
@@ -45,6 +46,7 @@ export default function SettingsPage() {
           <NoteLocksSection />
           {!isServerless && <SecuritySection />}
           {!isServerless && <PasswordSection />}
+          {!isServerless && <DevicesSection />}
           <Section id="about" title="About">
             <Row>
               <div className="flex items-center gap-3">
