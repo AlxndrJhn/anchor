@@ -194,6 +194,25 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
       </div>
     );
 
+  const attachments = (
+    <AttachmentStrip
+      ref={strip}
+      noteId={props.noteId}
+      canEdit={props.canUpload}
+      isOwner={props.isOwner}
+      currentUserId={props.currentUserId}
+      onEnsureNoteId={props.onEnsureNoteIdForAttachmentUpload}
+      dropping={!!dropping}
+      onHasFiles={setHasFiles}
+      inTextIds={inTextIds}
+      onGrabText={
+        props.readOnly
+          ? undefined
+          : (text) => props.contentEditorRef?.current?.appendText(text)
+      }
+    />
+  );
+
   const onTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const stamp = stampFor(
       e.nativeEvent,
@@ -334,22 +353,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         </div>
       )}
       {!clean && <TagRow {...props} withReminder />}
-      <AttachmentStrip
-        ref={strip}
-        noteId={props.noteId}
-        canEdit={props.canUpload}
-        isOwner={props.isOwner}
-        currentUserId={props.currentUserId}
-        onEnsureNoteId={props.onEnsureNoteIdForAttachmentUpload}
-        dropping={!!dropping}
-        onHasFiles={setHasFiles}
-        inTextIds={inTextIds}
-        onGrabText={
-          props.readOnly
-            ? undefined
-            : (text) => props.contentEditorRef?.current?.appendText(text)
-        }
-      />
+      {!clean && attachments}
       <div
         className={cn(
           "ed-body",
@@ -417,7 +421,12 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           firstLine={titleLine.firstLine}
         />
       </div>
-      {clean && <TagRow {...props} withReminder={false} />}
+      {clean && (
+        <div className="n-foot">
+          <TagRow {...props} withReminder={false} />
+          {attachments}
+        </div>
+      )}
       <NoteOutline root={root} />
       {recording && (
         <VoiceRecorder

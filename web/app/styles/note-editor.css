@@ -310,10 +310,35 @@ textarea.n-title {
 .tb-folded > .rte > .tb {
   display: none;
 }
-.ed-body ~ .n-tags {
-  margin-top: --spacing(8);
+/* Tags and attachments at the foot of the page, or under a long note. */
+.ed-scroll:has(.n-foot) {
+  display: flex;
+  flex-direction: column;
+}
+.ed .note-in:has(> .n-foot) {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  padding-bottom: --spacing(6);
+}
+.n-foot {
+  margin-top: auto;
+  padding-top: --spacing(8);
+}
+.n-foot > :is(.n-tags, .st-wrap) {
+  margin-top: 0;
   padding-top: --spacing(3);
   border-top: 1px solid color-mix(in srgb, var(--note-border) 60%, transparent);
+}
+.n-foot > .n-tags ~ .st-wrap {
+  padding-top: --spacing(2);
+  border-top: 0;
+}
+.n-foot .n-tags {
+  justify-content: flex-end;
+}
+.n-foot .strip > :first-child {
+  margin-left: auto;
 }
 
 .save {
