@@ -15,13 +15,21 @@ const TELEPORT_IMPACT_MS = 650;
  * lands. */
 export const TELEPORT_WAIT_MS = FLIGHT_MS - TELEPORT_IMPACT_MS;
 const TRAIL_EVERY_MS = 40;
+const TRAIL_MS = 480;
+// Enough sparks to go round, made once: a new element for each would be
+// drawn afresh mid-flight.
+const TRAIL_SPARKS = 14;
+const SPARK_SIZE = 14;
 // The anchor's size as it reaches the device icon.
 const LANDING_SIZE = 22;
 // The anchor takes this share of the QR code's box.
 const ANCHOR_SHARE = 0.7;
+// How long the page takes to bring the phone's row into view.
+const SCROLL_MS = 650;
 
 // The anchor of the app icon (anchor-logo.tsx), in its own units.
-const ANCHOR_SVG = `<svg class="qr-anchor" viewBox="-4 2 108 100" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="18" r="9"/><path d="M50 27V94M10 54A40 40 0 0 0 90 54M10 54H22M90 54H78"/></svg>`;
+// A white halo under it keeps it clear on any background.
+const ANCHOR_SVG = `<span class="qr-glow"></span><svg class="qr-anchor" viewBox="-6 0 112 104" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke="white" stroke-opacity="0.8" stroke-width="21"><circle cx="50" cy="18" r="9"/><path d="M50 27V94M10 54A40 40 0 0 0 90 54M10 54H22M90 54H78"/></g><g stroke="currentColor" stroke-width="13"><circle cx="50" cy="18" r="9"/><path d="M50 27V94M10 54A40 40 0 0 0 90 54M10 54H22M90 54H78"/></g></svg>`;
 
 let onScan: ((sessionId: string) => void) | null = null;
 
@@ -52,8 +60,8 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
  * Lifts the QR code out of its dialog, turns it into the anchor of Anchor+
  * and spins that, shrinking, to the icon of the phone that scanned the code
  * in the Devices list, where it lands as the teleport bursts into the +.
- * Follows the
- * icon as the page scrolls to it. Does nothing with reduced motion.
+ * Scrolls the page to the row frame by frame with the flight, so the two
+ * move in step. Does nothing with reduced motion.
  */
 export function flyQrTo(qr: Element, sessionId: string) {
   if (prefersReducedMotion()) return;
@@ -82,9 +90,18 @@ export function flyQrTo(qr: Element, sessionId: string) {
   const start = performance.now();
   const landingScale = LANDING_SIZE / (from.width * ANCHOR_SHARE);
   let target: Element | null = null;
+  let scroll: { el: Element; from: number; to: number; at: number } | null =
+    null;
   let landAt = start + FLIGHT_MS;
   let isTimed = false;
   let lastTrail = start;
+  const sparks = Array.from({ length: TRAIL_SPARKS }, () => {
+    const spark = document.createElement("span");
+    spark.className = "qr-trail";
+    document.body.append(spark);
+    return spark;
+  });
+  let nextSpark = 0;
 
   const step = (now: number) => {
     // Brings the row into view once the dialog, which holds the page still,
@@ -93,9 +110,16 @@ export function flyQrTo(qr: Element, sessionId: string) {
       target = document.querySelector(
         `[data-arrival="${CSS.escape(sessionId)}"] .teleport-icon`,
       );
-      target
-        ?.closest("[data-arrival]")
-        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      const row = target?.closest("[data-arrival]");
+      if (row) scroll = { ...scrollToCenter(row), at: now };
+    }
+    if (scroll) {
+      const p = Math.min(1, (now - scroll.at) / SCROLL_MS);
+      scroll.el.scrollTo({
+        top: lerp(scroll.from, scroll.to, easeInOutSine(p)),
+        behavior: "instant",
+      });
+      if (p === 1) scroll = null;
     }
     // Lands as the teleport bursts into its +, by the teleport's own clock,
     // which may run late on a busy page.
@@ -116,6 +140,9 @@ export function flyQrTo(qr: Element, sessionId: string) {
     }
     if (now >= landAt) {
       ghost.remove();
+      window.setTimeout(() => {
+        for (const spark of sparks) spark.remove();
+      }, TRAIL_MS);
       return;
     }
     const end = target?.getBoundingClientRect();
@@ -140,25 +167,56 @@ export function flyQrTo(qr: Element, sessionId: string) {
     ghost.style.transform = `translate(${x - ax}px, ${y - ay}px) rotate(${-8 * pulse * (1 - morph) + 360 * SPIN_TURNS * e}deg) scale(${scale})`;
     ghost.style.opacity = String(t < 0.92 ? 1 : 1 - (t - 0.92) / 0.08);
     ghost.style.setProperty("--qr-morph", String(morph));
-    ghost.style.setProperty("--qr-ring", `${Math.sin(Math.PI * pulse) * 10}px`);
-    // The glow stays about the same on screen as the anchor shrinks.
-    ghost.style.setProperty("--qr-glow", `${(4 + 6 * e) / scale}px`);
 
     if (morph > 0.5 && now - lastTrail >= TRAIL_EVERY_MS) {
       lastTrail = now;
-      const spark = document.createElement("span");
-      spark.className = "qr-trail";
-      const size = Math.max(4, Math.min(14, from.width * scale * 0.2));
-      Object.assign(spark.style, {
-        left: `${x - size / 2}px`,
-        top: `${y - size / 2}px`,
-        width: `${size}px`,
-        height: `${size}px`,
-      });
-      spark.addEventListener("animationend", () => spark.remove());
-      document.body.append(spark);
+      const spark = sparks[nextSpark];
+      nextSpark = (nextSpark + 1) % sparks.length;
+      const size =
+        Math.max(4, Math.min(SPARK_SIZE, from.width * scale * 0.2)) /
+        SPARK_SIZE;
+      spark.style.translate = `${x - SPARK_SIZE / 2}px ${y - SPARK_SIZE / 2}px`;
+      spark.animate(
+        { opacity: [1, 0], scale: [size, size * 0.2] },
+        { duration: TRAIL_MS, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
+      );
     }
     requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
+}
+
+/** Where the row's scroller goes to have the row in the middle, once it has
+ * opened. */
+function scrollToCenter(row: Element) {
+  let el: Element | null = row.parentElement;
+  while (el && el !== document.body) {
+    const { overflowY } = getComputedStyle(el);
+    if (
+      (overflowY === "auto" || overflowY === "scroll") &&
+      el.scrollHeight > el.clientHeight
+    )
+      break;
+    el = el.parentElement;
+  }
+  const scroller =
+    el && el !== document.body
+      ? el
+      : (document.scrollingElement ?? document.documentElement);
+  const isPage = scroller === document.scrollingElement;
+  const view = isPage
+    ? { top: 0, height: window.innerHeight }
+    : scroller.getBoundingClientRect();
+  const box = row.getBoundingClientRect();
+  const height = row.lastElementChild?.scrollHeight ?? box.height;
+  const to =
+    scroller.scrollTop + box.top + height / 2 - (view.top + view.height / 2);
+  return {
+    el: scroller,
+    from: scroller.scrollTop,
+    to: Math.max(
+      0,
+      Math.min(scroller.scrollHeight - scroller.clientHeight, to),
+    ),
+  };
 }

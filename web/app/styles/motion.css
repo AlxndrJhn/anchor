@@ -327,23 +327,43 @@
   left: var(--spot-x);
   opacity: 0;
 }
+/* As wide as the row, so it sweeps by its own width, a transform. */
 .teleport-fx > .teleport-scan {
   top: 0;
   bottom: 0;
+  left: 0;
+  width: 100%;
+  animation:
+    teleport-scan 560ms var(--ease-in-out) calc(var(--teleport-wait) + 700ms),
+    teleport-unseen calc(var(--teleport-wait) + 700ms) step-end;
+}
+.teleport-scan::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
   width: 2px;
-  margin-left: -1px;
   background: white;
   box-shadow:
     0 0 6px 1px var(--accent-strong),
     0 0 22px 4px color-mix(in srgb, var(--accent-strong) 55%, transparent);
-  animation: teleport-scan 560ms var(--ease-in-out)
-    calc(var(--teleport-wait) + 700ms);
 }
 /* The + of Anchor+ (plus-mark.tsx): rounded bars with a light across them. */
 .teleport-fx > .teleport-plus {
   width: 30px;
   height: 30px;
   margin: -15px;
+  /* It hovers and catches the light as the + does, rather than turning. */
+  animation:
+    teleport-plus 1100ms var(--ease-in-out) calc(var(--teleport-wait) + 650ms),
+    teleport-unseen calc(var(--teleport-wait) + 650ms) step-end;
+}
+.teleport-plus::before,
+.teleport-plus::after {
+  content: "";
+  position: absolute;
+  border-radius: 4px;
   background:
     linear-gradient(
       135deg,
@@ -354,15 +374,27 @@
       var(--accent-ink) 75%
     )
     150% 150% / 300% 300%;
-  mask:
-    linear-gradient(#000 0 0) center / 100% 26% no-repeat,
-    linear-gradient(#000 0 0) center / 26% 100% no-repeat;
-  filter: drop-shadow(0 0 8px var(--accent-strong));
-  /* It hovers and catches the light as the + does, rather than turning. */
+  animation: teleport-plus-light 900ms var(--ease-in-out)
+    calc(var(--teleport-wait) + 700ms) forwards;
+}
+.teleport-plus::before {
+  inset: 37% 0;
+}
+.teleport-plus::after {
+  inset: 0 37%;
+}
+.teleport-fx > .teleport-plus-glow {
+  width: 64px;
+  height: 64px;
+  margin: -32px;
+  border-radius: 50%;
+  background: radial-gradient(
+    color-mix(in srgb, var(--accent-strong) 55%, transparent),
+    transparent 70%
+  );
   animation:
     teleport-plus 1100ms var(--ease-in-out) calc(var(--teleport-wait) + 650ms),
-    teleport-plus-light 900ms var(--ease-in-out)
-    calc(var(--teleport-wait) + 700ms);
+    teleport-unseen calc(var(--teleport-wait) + 650ms) step-end;
 }
 .teleport-feature {
   position: absolute;
@@ -371,9 +403,10 @@
   margin: -9px;
   color: var(--accent-ink);
   opacity: 0;
-  filter: drop-shadow(0 0 3px var(--card));
-  animation: teleport-feature 1300ms cubic-bezier(0.33, 1, 0.68, 1)
-    calc(var(--teleport-wait) + 660ms);
+  animation:
+    teleport-feature 1300ms cubic-bezier(0.33, 1, 0.68, 1)
+    calc(var(--teleport-wait) + 660ms),
+    teleport-unseen calc(var(--teleport-wait) + 660ms) step-end;
 }
 .teleport-feature > svg {
   display: block;
@@ -387,8 +420,9 @@
     0 0 0 2px var(--accent-strong),
     0 0 14px 2px color-mix(in srgb, var(--accent-strong) 60%, transparent);
   rotate: -28deg;
-  animation: teleport-portal 640ms var(--ease-in-out)
-    calc(var(--teleport-wait) + 110ms);
+  animation:
+    teleport-portal 640ms var(--ease-in-out) calc(var(--teleport-wait) + 110ms),
+    teleport-unseen calc(var(--teleport-wait) + 110ms) step-end;
 }
 .teleport-core {
   width: 30px;
@@ -401,8 +435,9 @@
     transparent 70%
   );
   /* Charges until the burst, then gives way to the +. */
-  animation: teleport-core 450ms var(--ease-in-out)
-    calc(var(--teleport-wait) + 230ms);
+  animation:
+    teleport-core 450ms var(--ease-in-out) calc(var(--teleport-wait) + 230ms),
+    teleport-unseen calc(var(--teleport-wait) + 230ms) step-end;
 }
 .teleport-wave {
   width: 24px;
@@ -410,12 +445,15 @@
   margin: -12px;
   border-radius: 50%;
   border: 2px solid var(--accent-strong);
-  animation: teleport-wave 700ms cubic-bezier(0.1, 0.7, 0.3, 1)
-    calc(var(--teleport-wait) + 650ms);
+  animation:
+    teleport-wave 700ms cubic-bezier(0.1, 0.7, 0.3, 1)
+    calc(var(--teleport-wait) + 650ms),
+    teleport-unseen calc(var(--teleport-wait) + 650ms) step-end;
 }
 .teleport-wave-late {
   border-width: 1px;
-  animation-delay: calc(var(--teleport-wait) + 760ms);
+  animation-delay: calc(var(--teleport-wait) + 760ms), 0s;
+  animation-duration: 700ms, calc(var(--teleport-wait) + 760ms);
 }
 .teleport-fx > .teleport-orbit {
   width: 0;
@@ -431,7 +469,8 @@
     teleport-swing-x 500ms var(--ease-in-out) calc(var(--i) * -333ms) alternate
     infinite,
     teleport-orbit-fade 1500ms var(--ease-standard)
-    calc(var(--teleport-wait) + 800ms) forwards;
+    calc(var(--teleport-wait) + 800ms) forwards,
+    teleport-unseen calc(var(--teleport-wait) + 800ms) step-end;
 }
 .teleport-orbit > b > b {
   display: block;
@@ -445,6 +484,14 @@
     calc(var(--i) * -333ms - 250ms) alternate infinite;
 }
 
+/* Keeps an effect out of rendering until its own animation starts, so the
+   effects are first drawn a few at a time; separate from their animations,
+   which change only transform and opacity and so run on the compositor. */
+@keyframes teleport-unseen {
+  from {
+    visibility: hidden;
+  }
+}
 @keyframes teleport-open {
   from {
     grid-template-rows: 0fr;
@@ -540,15 +587,15 @@
 }
 @keyframes teleport-scan {
   0% {
-    left: 44px;
     opacity: 1;
+    translate: 44px 0;
   }
   90% {
     opacity: 1;
   }
   100% {
-    left: 100%;
     opacity: 0;
+    translate: 100% 0;
   }
 }
 @keyframes teleport-reveal {
@@ -616,16 +663,25 @@
 }
 
 /* The magic login QR code on its way to the phone that scanned it
-   (scan-handoff.ts): the code blurs away as the anchor of Anchor+ glows up
-   in its place, then spins down to the phone's icon, shedding sparks. */
+   (scan-handoff.ts): a ring marks the scan, the code fades as the anchor of
+   Anchor+ glows up in its place, then the anchor spins down to the phone's
+   icon, shedding sparks. Its parts change only in transform and opacity, on
+   layers of their own, so the flight needs no repainting. */
 .qr-flight {
   --qr-morph: 0;
-  --qr-ring: 0px;
-  --qr-glow: 4px;
   position: fixed;
   z-index: var(--z-toast);
   pointer-events: none;
-  will-change: transform;
+  will-change: transform, opacity;
+}
+.qr-flight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 3px solid var(--accent-strong);
+  opacity: 0;
+  animation: qr-scanned 420ms var(--ease-standard);
 }
 .qr-card {
   position: absolute;
@@ -633,13 +689,10 @@
   overflow: hidden;
   border-radius: 8px;
   background: white;
-  box-shadow:
-    0 0 0 var(--qr-ring)
-    color-mix(in srgb, var(--accent-strong) 45%, transparent),
-    0 0 18px color-mix(in srgb, var(--accent-strong) 50%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent-strong) 50%, transparent);
   opacity: calc(1 - var(--qr-morph));
   scale: calc(1 - var(--qr-morph) * 0.5);
-  filter: blur(calc(var(--qr-morph) * 6px));
+  will-change: opacity, scale;
 }
 .qr-card > svg {
   width: 100%;
@@ -653,20 +706,41 @@
   color: var(--accent-strong);
   opacity: var(--qr-morph);
   scale: calc(0.4 + var(--qr-morph) * 0.6);
-  filter: drop-shadow(0 0 1px white)
-    drop-shadow(0 0 var(--qr-glow) var(--accent-strong));
+  will-change: opacity, scale;
+}
+/* The anchor's glow, a soft disc rather than a filter, which would be slow
+   to draw at the start of the flight. */
+.qr-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--accent-strong) 45%, transparent),
+    transparent
+  );
+  opacity: var(--qr-morph);
+  will-change: opacity;
+}
+@keyframes qr-scanned {
+  from {
+    opacity: 1;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 1.12;
+  }
 }
 .qr-trail {
   position: fixed;
+  top: 0;
+  left: 0;
   z-index: var(--z-toast);
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   pointer-events: none;
   background: radial-gradient(white, var(--accent-strong) 45%, transparent 70%);
-  animation: qr-trail 480ms var(--ease-standard) forwards;
-}
-@keyframes qr-trail {
-  to {
-    opacity: 0;
-    scale: 0.2;
-  }
+  opacity: 0;
 }

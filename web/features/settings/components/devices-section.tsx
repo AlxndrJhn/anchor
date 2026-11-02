@@ -188,6 +188,7 @@ function TeleportFx() {
     <div aria-hidden className="teleport-fx">
       <i className="teleport-portal" />
       <i className="teleport-core" />
+      <i className="teleport-plus-glow" />
       <i className="teleport-plus" />
       {FEATURES.map((Icon, i) => (
         <span
