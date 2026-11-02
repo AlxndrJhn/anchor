@@ -344,20 +344,25 @@
   width: 30px;
   height: 30px;
   margin: -15px;
-  background: linear-gradient(
-    135deg,
-    var(--accent-ink),
-    var(--accent-strong) 35%,
-    white 50%,
-    var(--accent-strong) 65%,
-    var(--accent-ink)
-  );
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent-ink) 25%,
+      var(--accent-strong) 40%,
+      white 50%,
+      var(--accent-strong) 60%,
+      var(--accent-ink) 75%
+    )
+    150% 150% / 300% 300%;
   mask:
     linear-gradient(#000 0 0) center / 100% 26% no-repeat,
     linear-gradient(#000 0 0) center / 26% 100% no-repeat;
   filter: drop-shadow(0 0 8px var(--accent-strong));
-  animation: teleport-plus 820ms var(--ease-standard)
-    calc(var(--teleport-wait) + 650ms);
+  /* It hovers and catches the light as the + does, rather than turning. */
+  animation:
+    teleport-plus 1100ms var(--ease-in-out) calc(var(--teleport-wait) + 650ms),
+    teleport-plus-light 900ms var(--ease-in-out)
+    calc(var(--teleport-wait) + 700ms);
 }
 .teleport-feature {
   position: absolute;
@@ -451,22 +456,32 @@
 @keyframes teleport-plus {
   0% {
     opacity: 0;
-    scale: 0.2;
-    rotate: -90deg;
+    scale: 0.3;
+    translate: 0 3px;
   }
-  22% {
+  16% {
     opacity: 1;
-    scale: 1.6;
-    rotate: 0deg;
+    scale: 1.45;
+    translate: 0 0;
   }
-  55% {
+  42% {
+    scale: 1.3;
+    translate: 0 -3px;
+  }
+  68% {
     opacity: 1;
-    scale: 1.25;
+    scale: 1.3;
+    translate: 0 1.5px;
   }
   100% {
     opacity: 0;
-    scale: 0.4;
-    rotate: 45deg;
+    scale: 1.15;
+    translate: 0 -2px;
+  }
+}
+@keyframes teleport-plus-light {
+  to {
+    background-position: -50% -50%;
   }
 }
 @keyframes teleport-feature {
