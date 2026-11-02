@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import {
+  Client,
+  StreamableHTTPClientTransport,
+} from '@modelcontextprotocol/client';
 import { Actor, createE2EApp, E2EApp } from '../support';
 import { PNG_1PX } from '../support/fixtures';
 
@@ -46,7 +48,10 @@ describe('mcp', () => {
     await ctx.resetDb();
     user = await ctx.registerUser();
     const { port } = ctx.address;
-    client = new Client({ name: 'e2e', version: '1.0.0' });
+    client = new Client(
+      { name: 'e2e', version: '1.0.0' },
+      { versionNegotiation: { mode: { pin: '2026-07-28' } } },
+    );
     await client.connect(
       new StreamableHTTPClientTransport(
         new URL(`http://127.0.0.1:${port}/api/mcp`),
@@ -60,6 +65,34 @@ describe('mcp', () => {
       .post('/api/mcp')
       .send({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
       .expect(401);
+  });
+
+  it('speaks the newest protocol revision', () => {
+    expect(client.getNegotiatedProtocolVersion()).toBe('2026-07-28');
+  });
+
+  it('still serves clients of the 2025 revisions', async () => {
+    const legacy = (body: object) =>
+      request(ctx.http)
+        .post('/api/mcp')
+        .set(user.auth)
+        .set('Accept', 'application/json, text/event-stream')
+        .send({ jsonrpc: '2.0', id: 1, ...body });
+
+    const init = await legacy({
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-06-18',
+        capabilities: {},
+        clientInfo: { name: 'old', version: '1.0.0' },
+      },
+    }).expect(200);
+    expect(init.text).toContain('"protocolVersion":"2025-06-18"');
+
+    const listed = await legacy({ method: 'tools/list' })
+      .set('MCP-Protocol-Version', '2025-06-18')
+      .expect(200);
+    expect(listed.text).toContain('list_notes');
   });
 
   it('lists its tools', async () => {

@@ -1,4 +1,4 @@
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/server';
 import { AttachmentType } from 'src/generated/prisma/enums';
 import type { AttachmentKind } from '../notes/utils/attachment-storage.util';
 
