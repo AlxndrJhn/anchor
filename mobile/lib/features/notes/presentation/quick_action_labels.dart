@@ -45,5 +45,6 @@ extension QuickActionLabels on QuickAction {
     ],
     QuickAction.uncheckAll => const [NoteAction.uncheckAll],
     QuickAction.deleteChecked => const [NoteAction.deleteChecked],
+    QuickAction.sortByName => const [NoteAction.sortByName],
   };
 }

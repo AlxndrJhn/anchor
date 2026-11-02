@@ -839,6 +839,107 @@ void main() {
     );
   });
 
+  group('buildSortByNameDelta', () {
+    Document sorted(Document doc, {bool checkedLast = false}) {
+      final before = doc.toDelta();
+      final delta = buildSortByNameDelta(
+        doc,
+        parseDocumentLines(doc),
+        checkedLast: checkedLast,
+      )!;
+      doc.compose(delta, ChangeSource.local);
+      final undone = Document.fromDelta(doc.toDelta())
+        ..compose(delta.invert(before), ChangeSource.local);
+      expect(undone.toDelta(), before);
+      return doc;
+    }
+
+    test('sorts each checklist on its own, ignoring case and accents', () {
+      final doc = docFrom([
+        ('Shop', null),
+        ('milk', 'unchecked'),
+        ('Eggs', 'checked'),
+        ('éclairs', 'unchecked'),
+        ('bread', 'unchecked'),
+        ('Pack', null),
+        ('socks', 'unchecked'),
+        ('Charger', 'unchecked'),
+      ]);
+      expect(linesOf(sorted(doc)), [
+        ('Shop', null),
+        ('bread', 'unchecked'),
+        ('éclairs', 'unchecked'),
+        ('Eggs', 'checked'),
+        ('milk', 'unchecked'),
+        ('Pack', null),
+        ('Charger', 'unchecked'),
+        ('socks', 'unchecked'),
+      ]);
+    });
+
+    test('keeps checked items last when they move to the bottom', () {
+      final doc = docFrom([
+        ('milk', 'unchecked'),
+        ('apples', 'checked'),
+        ('eggs', 'unchecked'),
+        ('bread', 'checked'),
+      ]);
+      expect(linesOf(sorted(doc, checkedLast: true)), [
+        ('eggs', 'unchecked'),
+        ('milk', 'unchecked'),
+        ('apples', 'checked'),
+        ('bread', 'checked'),
+      ]);
+    });
+
+    test('sub-items move with their item and are sorted among themselves', () {
+      final doc = nestedDoc([
+        ('trip', 'unchecked', 0),
+        ('tickets', 'unchecked', 1),
+        ('bags', 'unchecked', 1),
+        ('home', 'unchecked', 0),
+        ('water plants', 'unchecked', 1),
+        ('keys', 'unchecked', 1),
+      ]);
+      expect(nestedLinesOf(sorted(doc)), [
+        ('home', 'unchecked', 0),
+        ('keys', 'unchecked', 1),
+        ('water plants', 'unchecked', 1),
+        ('trip', 'unchecked', 0),
+        ('bags', 'unchecked', 1),
+        ('tickets', 'unchecked', 1),
+      ]);
+    });
+
+    test('sorts a checklist that ends the note', () {
+      final doc = docFrom([('b', 'unchecked'), ('c', 'checked'), ('a', null)]);
+      doc.compose(
+        Delta()
+          ..retain(doc.length - 1)
+          ..retain(1, {'list': 'unchecked'}),
+        ChangeSource.local,
+      );
+      expect(linesOf(sorted(doc)), [
+        ('a', 'unchecked'),
+        ('b', 'unchecked'),
+        ('c', 'checked'),
+      ]);
+    });
+
+    test('is null when every checklist is in order', () {
+      final doc = docFrom([
+        ('apples', 'unchecked'),
+        ('Bread', 'checked'),
+        ('Note', null),
+        ('cheese', 'unchecked'),
+      ]);
+      expect(
+        buildSortByNameDelta(doc, parseDocumentLines(doc), checkedLast: false),
+        isNull,
+      );
+    });
+  });
+
   group('toggleChecklistItemContent', () {
     String stored(List<(String, String?)> lines) =>
         jsonEncode({'ops': docFrom(lines).toDelta().toJson()});

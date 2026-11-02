@@ -2872,6 +2872,12 @@ abstract class AppLocalizations {
   /// **'Uncheck all'**
   String get actionUncheckAll;
 
+  /// Item in a note's More menu that sorts the items of each of the note's checklists alphabetically, sub-items moving with their item, with Undo. Checked items stay at the bottom when Move checked items to bottom is on. Shown for notes with a checklist, dimmed while it has fewer than two items.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort A to Z'**
+  String get actionSortByName;
+
   /// Item in a note's More menu that deletes every checked item from the note's checklists, with Undo. Shown for notes with a checklist, dimmed while no item is checked.
   ///
   /// In en, this message translates to:
@@ -2967,6 +2973,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Checkbox removed} other{{count} checkboxes removed}}'**
   String checkboxesHidden(int count);
+
+  /// Toast after Sort A to Z in a note's More menu, with an Undo button. The items are checklist items in the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Item sorted A to Z} other{{count} items sorted A to Z}}'**
+  String itemsSortedByName(int count);
+
+  /// Toast after Sort A to Z in a note's More menu when every checklist in the note was in alphabetical order already, so nothing changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in A to Z order'**
+  String get itemsAlreadySorted;
 
   /// Toast after Delete checked items in a note's More menu, with an Undo button. The items are checklist items in the note.
   ///

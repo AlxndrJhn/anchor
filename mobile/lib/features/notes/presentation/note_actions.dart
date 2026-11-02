@@ -51,6 +51,7 @@ enum NoteAction {
   showCheckboxes,
   hideCheckboxes,
   uncheckAll,
+  sortByName,
   deleteChecked,
   archive,
   unarchive,
@@ -137,6 +138,10 @@ enum NoteAction {
     NoteAction.uncheckAll => (
       icon: LucideIcons.listRestart,
       label: l10n.actionUncheckAll,
+    ),
+    NoteAction.sortByName => (
+      icon: LucideIcons.arrowDownAZ,
+      label: l10n.actionSortByName,
     ),
     NoteAction.deleteChecked => (
       icon: LucideIcons.listX,
@@ -289,6 +294,7 @@ class NoteActions {
           NoteAction.showCheckboxes ||
           NoteAction.hideCheckboxes ||
           NoteAction.uncheckAll ||
+          NoteAction.sortByName ||
           NoteAction.deleteChecked ||
           NoteAction.reminder ||
           NoteAction.editQuickActions:

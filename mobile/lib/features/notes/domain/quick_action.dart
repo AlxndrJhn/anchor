@@ -17,7 +17,8 @@ enum QuickAction {
   takeSeveral,
   checkboxes,
   uncheckAll,
-  deleteChecked;
+  deleteChecked,
+  sortByName;
 
   /// The bar until it's changed in Settings.
   static const defaults = [trash, background, pin, reminder, archive];

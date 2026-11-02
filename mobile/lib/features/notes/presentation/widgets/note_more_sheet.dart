@@ -26,6 +26,7 @@ Future<NoteAction?> showNoteMoreSheet(
   NoteLock? lock,
   bool hasChecklist = false,
   bool hasCheckedItems = false,
+  bool canSortByName = false,
   bool canShowCheckboxes = false,
   bool canHideCheckboxes = false,
   bool canAddPictures = false,
@@ -106,6 +107,12 @@ Future<NoteAction?> showNoteMoreSheet(
         icon: LucideIcons.listRestart,
         label: l10n.actionUncheckAll,
         enabled: hasCheckedItems,
+      ),
+      SheetChoice(
+        value: NoteAction.sortByName,
+        icon: LucideIcons.arrowDownAZ,
+        label: l10n.actionSortByName,
+        enabled: canSortByName,
       ),
       SheetChoice(
         value: NoteAction.deleteChecked,
