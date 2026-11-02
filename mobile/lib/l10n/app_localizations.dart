@@ -1414,24 +1414,6 @@ abstract class AppLocalizations {
   /// **'Couldn’t change picture search'**
   String get pictureSearchChangeFailed;
 
-  /// Title of the notice on the server page while the Anchor app the user is switching from is still installed.
-  ///
-  /// In en, this message translates to:
-  /// **'Moving from {app}?'**
-  String switchingFromTitle(String app);
-
-  /// Text of the notice on the server page: notes move between the apps only through the server.
-  ///
-  /// In en, this message translates to:
-  /// **'Open it once so it syncs your notes to your server, then sign in to the same server here.'**
-  String get switchingFromText;
-
-  /// Button on the server page that opens the Anchor app the user is switching from.
-  ///
-  /// In en, this message translates to:
-  /// **'Open {app}'**
-  String switchingOpen(String app);
-
   /// Title of the banner above the notes and of the sheet, when a newer release of the app is out.
   ///
   /// In en, this message translates to:

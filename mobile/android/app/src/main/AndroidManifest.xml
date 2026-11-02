@@ -160,8 +160,5 @@
             <action android:name="android.intent.action.GET_CONTENT"/>
             <data android:mimeType="*/*"/>
         </intent>
-        <!-- The Anchor app someone is switching from (OtherAnchorPlugin). -->
-        <package android:name="com.zhfahim.anchor"/>
-        <package android:name="com.zhfahim.anchor.fork"/>
     </queries>
 </manifest>

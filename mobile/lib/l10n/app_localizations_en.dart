@@ -795,20 +795,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pictureSearchChangeFailed => 'Couldn’t change picture search';
 
   @override
-  String switchingFromTitle(String app) {
-    return 'Moving from $app?';
-  }
-
-  @override
-  String get switchingFromText =>
-      'Open it once so it syncs your notes to your server, then sign in to the same server here.';
-
-  @override
-  String switchingOpen(String app) {
-    return 'Open $app';
-  }
-
-  @override
   String get updateAvailable => 'Update available';
 
   @override
