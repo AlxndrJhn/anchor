@@ -18,7 +18,7 @@ class AppBootstrap {
     this.colorScheme = anchorSchemeId,
     this.appStyle = AppStyle.standard,
     this.customTheme,
-    this.highContrast = false,
+    this.highContrast = true,
     this.editorPreferences = const EditorPreferences(),
     this.reminderPreferences = const ReminderPreferences(),
     this.foldedChecklistNotes = const [],

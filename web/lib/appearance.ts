@@ -21,7 +21,7 @@ export function applyAppearance(
   else delete html.dataset.scheme;
   if (style && style !== "default") html.dataset.style = style;
   else delete html.dataset.style;
-  if (highContrast) html.dataset.contrast = "high";
+  if (highContrast !== false) html.dataset.contrast = "high";
   else delete html.dataset.contrast;
 
   let sheet = document.getElementById(CUSTOM_THEME_STYLE_ID);

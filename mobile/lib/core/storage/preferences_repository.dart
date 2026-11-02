@@ -219,9 +219,9 @@ class PreferencesRepository {
     }
   }
 
-  /// Darker, heavier text; off unless turned on.
+  /// Darker, heavier text; on unless turned off.
   Future<bool> getHighContrast() async =>
-      await _read(StorageKeys.highContrast) == 'true';
+      await _read(StorageKeys.highContrast) != 'false';
 
   Future<void> setHighContrast(bool value) async {
     await _storage.write(

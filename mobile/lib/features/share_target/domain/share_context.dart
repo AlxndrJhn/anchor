@@ -14,7 +14,7 @@ class ShareContext {
     this.colorScheme = anchorSchemeId,
     this.style = AppStyle.standard,
     this.customTheme,
-    this.highContrast = false,
+    this.highContrast = true,
     this.tags = const [],
   });
 
@@ -70,7 +70,7 @@ class ShareContext {
         final String stored => CustomTheme.decode(stored),
         _ => null,
       },
-      highContrast: json['highContrast'] == true,
+      highContrast: json['highContrast'] != false,
       tags: [
         if (tags is List)
           for (final tag in tags)

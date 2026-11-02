@@ -160,13 +160,17 @@ describe("applying a custom theme", () => {
       storage,
       document,
     );
-    expect(html.dataset).toEqual({ scheme: "oled", customTheme: "" });
+    expect(html.dataset).toEqual({
+      scheme: "oled",
+      contrast: "high",
+      customTheme: "",
+    });
     expect(appended).toEqual([
       { id: "custom-theme", textContent: customThemeCss(theme) },
     ]);
   });
 
-  it("turns high contrast on before the first paint", () => {
+  it("turns high contrast on before the first paint, unless it's off", () => {
     const run = (ui: object) => {
       const html = { dataset: {} as Record<string, string> };
       new Function("localStorage", "document", appearanceScript)(
@@ -175,9 +179,9 @@ describe("applying a custom theme", () => {
       );
       return html.dataset;
     };
+    expect(run({})).toEqual({ contrast: "high" });
     expect(run({ highContrast: true })).toEqual({ contrast: "high" });
     expect(run({ highContrast: false })).toEqual({});
-    expect(run({ highContrast: "yes" })).toEqual({});
   });
 });
 

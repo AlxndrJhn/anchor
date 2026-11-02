@@ -168,7 +168,7 @@ function SchemeAndStyle() {
   const mode = resolvedTheme === "dark" ? "dark" : "light";
   const scheme = usePreferencesStore((s) => s.ui.colorScheme ?? "anchor");
   const style = usePreferencesStore((s) => s.ui.style ?? "default");
-  const highContrast = usePreferencesStore((s) => s.ui.highContrast === true);
+  const highContrast = usePreferencesStore((s) => s.ui.highContrast !== false);
   const setUI = usePreferencesStore((s) => s.setUIPreference);
   return (
     <>

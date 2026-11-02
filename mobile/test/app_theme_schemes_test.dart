@@ -315,15 +315,16 @@ void main() {
     const context = ShareContext(
       colorScheme: 'nord',
       style: AppStyle.lofi,
-      highContrast: true,
+      highContrast: false,
     );
     final read = ShareContext.fromJson(context.toJson());
     expect(read.colorScheme, 'nord');
     expect(read.style, AppStyle.lofi);
-    expect(read.highContrast, isTrue);
+    expect(read.highContrast, isFalse);
     final unknown = ShareContext.fromJson({'scheme': 'nope', 'style': 1});
     expect(unknown.colorScheme, anchorSchemeId);
     expect(unknown.style, AppStyle.standard);
+    expect(unknown.highContrast, isTrue);
   });
 
   testWidgets('switching scheme and style redraws colours, corners and font', (
@@ -551,23 +552,26 @@ void main() {
       expect(_familyOf(tester, 'Color scheme'), AppTypography.patrickHand);
     });
 
-    testWidgets('turns on high contrast, and keeps it', (tester) async {
+    testWidgets('high contrast is on until turned off, and stays off', (
+      tester,
+    ) async {
       final container = await pumpSettings(tester);
+      expect(container.read(highContrastControllerProvider), isTrue);
       final before = _textColorOf(tester, 'Color scheme');
 
       await tester.ensureVisible(find.text('High contrast'));
       await tester.tap(find.text('High contrast'));
       await tester.pumpAndSettle();
 
-      expect(container.read(highContrastControllerProvider), isTrue);
+      expect(container.read(highContrastControllerProvider), isFalse);
       expect(
         await const FlutterSecureStorage().read(key: StorageKeys.highContrast),
-        'true',
+        'false',
       );
       final after = _textColorOf(tester, 'Color scheme');
       expect(
         _contrast(after, AnchorColors.light.appPage),
-        greaterThan(_contrast(before, AnchorColors.light.appPage)),
+        lessThan(_contrast(before, AnchorColors.light.appPage)),
       );
     });
 
