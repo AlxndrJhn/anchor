@@ -78,7 +78,7 @@ export function SignInTab({ hidden }: { hidden?: boolean }) {
         ) : (
           <RadioCards
             aria-label="Who can sign up"
-            value={registration.data?.mode ?? "enabled"}
+            value={registration.data?.mode ?? "review"}
             onValueChange={(mode) => saveMode.mutate(mode)}
             className="grid-cols-3 max-md:grid-cols-1"
             options={[

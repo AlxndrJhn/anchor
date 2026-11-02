@@ -63,7 +63,9 @@ export class AuthService {
     private storageConfig: ConfigType<typeof StorageConfig>,
   ) {}
 
+  /** Sign-up is open to the very first account, which becomes the admin. */
   async getRegistrationMode() {
+    if ((await this.prisma.user.count()) === 0) return { mode: 'enabled' };
     return {
       mode: await this.settingsService.getRegistrationMode(),
     };
@@ -78,8 +80,11 @@ export class AuthService {
     }
 
     const registrationMode = await this.settingsService.getRegistrationMode();
+    // Let in the very first account, the admin's, whatever the mode: there's
+    // no one yet to approve it.
+    const isFirstUser = (await this.prisma.user.count()) === 0;
 
-    if (registrationMode === 'disabled') {
+    if (registrationMode === 'disabled' && !isFirstUser) {
       throw new ForbiddenException('Registration is disabled');
     }
 
@@ -103,7 +108,9 @@ export class AuthService {
 
     // Determine user status based on registration mode
     const userStatus =
-      registrationMode === 'review' ? UserStatus.pending : UserStatus.active;
+      registrationMode === 'review' && !isFirstUser
+        ? UserStatus.pending
+        : UserStatus.active;
 
     const user = await this.prisma.user.create({
       data: {

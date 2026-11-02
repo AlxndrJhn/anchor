@@ -388,7 +388,7 @@ The [desktop app](#desktop-app) installs with winget too.
    | `PG_USER` | No | `anchor` | Postgres username |
    | `PG_PASSWORD` | No | `password` | Postgres password |
    | `PG_DATABASE` | No | `anchor` | Database name |
-   | `USER_SIGNUP` | No | (not set) | Sign up mode: `disabled`, `enabled`, or `review`. If not set, admins can control it via the admin panel |
+   | `USER_SIGNUP` | No | (not set) | Sign up mode: `disabled`, `enabled`, or `review`. If not set, admins choose it in the admin panel; it starts as `review` (new accounts need an admin's approval). The very first account, the admin's, is always let in |
    | `OIDC_ENABLED` | No | — | Enable OIDC authentication |
    | `OIDC_PROVIDER_NAME` | No | `"OIDC Provider"` | Display name for the login button |
    | `OIDC_ISSUER_URL` | When OIDC enabled | — | Base URL of your OIDC provider |
