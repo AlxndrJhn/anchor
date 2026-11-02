@@ -815,6 +815,17 @@ class RichTextEditorState extends State<RichTextEditor>
 
   UndoableEdit? deleteChecked() => _editChecked(buildDeleteCheckedDelta);
 
+  /// Sorts every checklist A to Z, checked items still last when they move
+  /// to the bottom; the count is the items.
+  UndoableEdit? sortByName() => _editLines(
+    (lines) => buildSortByNameDelta(
+      _controller.document,
+      lines,
+      checkedLast: widget.sortChecklistItems,
+    ),
+    (line) => line.isChecklist,
+  );
+
   /// Makes every written line an unchecked item; the count is the lines
   /// that became one.
   UndoableEdit? showCheckboxes() => _editLines(

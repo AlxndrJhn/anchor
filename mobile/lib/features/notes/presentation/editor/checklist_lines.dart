@@ -4,6 +4,7 @@ import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
+import '../../../../core/text/name_order.dart';
 import '../../domain/note_blocks.dart';
 import 'document_lines.dart';
 
@@ -316,6 +317,76 @@ void _orderSiblingBlocks(
     out.add(blockStart);
     if (blockEnd > blockStart) {
       _orderSiblingBlocks(lines, blockStart + 1, blockEnd, toggledIndex, out);
+    }
+  }
+}
+
+/// Sorts each checklist's items by name, at every level, sub-items moving
+/// with their item; with [checkedLast], unchecked items stay above checked
+/// ones. Null when every checklist is in order already.
+Delta? buildSortByNameDelta(
+  Document document,
+  List<ParsedLine> lines, {
+  required bool checkedLast,
+}) {
+  final sorted = Document.fromDelta(document.toDelta());
+  Delta? total;
+  var index = 0;
+  while (index < lines.length) {
+    if (!lines[index].isChecklist) {
+      index++;
+      continue;
+    }
+    final current = parseDocumentLines(sorted);
+    final (groupStart, groupEnd) = checklistGroupAround(current, index);
+    final text = sorted.toPlainText();
+    String nameOf(int i) => text.substring(
+      current[i].startOffset,
+      current[i].startOffset + current[i].length - 1,
+    );
+    final order = <int>[];
+    _orderByName(current, groupStart, groupEnd, nameOf, checkedLast, order);
+    var isMoved = false;
+    for (var k = 0; k < order.length && !isMoved; k++) {
+      isMoved = order[k] != groupStart + k;
+    }
+    if (isMoved) {
+      final move = buildGroupReorderDelta(sorted, current, groupStart, order);
+      sorted.compose(move, ChangeSource.local);
+      total = total == null ? move : total.compose(move);
+    }
+    index = groupEnd + 1;
+  }
+  return total;
+}
+
+void _orderByName(
+  List<ParsedLine> lines,
+  int start,
+  int end,
+  String Function(int index) nameOf,
+  bool checkedLast,
+  List<int> out,
+) {
+  final blocks = <(int, int)>[];
+  var i = start;
+  while (i <= end) {
+    final blockEnd = checklistBlockEnd(lines, i, end);
+    blocks.add((i, blockEnd));
+    i = blockEnd + 1;
+  }
+  final byName = sortedByName(blocks, (block) => nameOf(block.$1));
+  final sorted = checkedLast
+      ? [
+          ...byName.where((block) => !lines[block.$1].isChecked),
+          ...byName.where((block) => lines[block.$1].isChecked),
+        ]
+      : byName;
+
+  for (final (blockStart, blockEnd) in sorted) {
+    out.add(blockStart);
+    if (blockEnd > blockStart) {
+      _orderByName(lines, blockStart + 1, blockEnd, nameOf, checkedLast, out);
     }
   }
 }

@@ -1826,6 +1826,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionUncheckAll => 'Uncheck all';
 
   @override
+  String get actionSortByName => 'Sort A to Z';
+
+  @override
   String get actionDeleteChecked => 'Delete checked items';
 
   @override
@@ -1928,6 +1931,20 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String itemsSortedByName(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items sorted A to Z',
+      one: 'Item sorted A to Z',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get itemsAlreadySorted => 'Already in A to Z order';
 
   @override
   String checkedItemsDeleted(int count) {

@@ -2528,6 +2528,10 @@
   "@actionUncheckAll": {
     "description": "Item in a note's More menu that unchecks every checked item in the note's checklists. Shown for notes with a checklist, dimmed while no item is checked."
   },
+  "actionSortByName": "Sort A to Z",
+  "@actionSortByName": {
+    "description": "Item in a note's More menu that sorts the items of each of the note's checklists alphabetically, sub-items moving with their item, with Undo. Checked items stay at the bottom when Move checked items to bottom is on. Shown for notes with a checklist, dimmed while it has fewer than two items."
+  },
   "actionDeleteChecked": "Delete checked items",
   "@actionDeleteChecked": {
     "description": "Item in a note's More menu that deletes every checked item from the note's checklists, with Undo. Shown for notes with a checklist, dimmed while no item is checked."
@@ -2633,6 +2637,20 @@
         "example": "3"
       }
     }
+  },
+  "itemsSortedByName": "{count, plural, =1{Item sorted A to Z} other{{count} items sorted A to Z}}",
+  "@itemsSortedByName": {
+    "description": "Toast after Sort A to Z in a note's More menu, with an Undo button. The items are checklist items in the note.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "itemsAlreadySorted": "Already in A to Z order",
+  "@itemsAlreadySorted": {
+    "description": "Toast after Sort A to Z in a note's More menu when every checklist in the note was in alphabetical order already, so nothing changed."
   },
   "checkedItemsDeleted": "{count, plural, =1{Checked item deleted} other{{count} checked items deleted}}",
   "@checkedItemsDeleted": {

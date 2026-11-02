@@ -491,6 +491,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           QuickAction.takeSeveral ||
           QuickAction.checkboxes ||
           QuickAction.uncheckAll ||
+          QuickAction.sortByName ||
           QuickAction.deleteChecked => !_isReadOnly,
           _ => true,
         })
@@ -527,6 +528,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       shareCount: opened?.shareIds?.length ?? 0,
       hasChecklist: (checklist?.items ?? 0) > 0,
       hasCheckedItems: (checklist?.checked ?? 0) > 0,
+      canSortByName: (checklist?.items ?? 0) > 1,
       canShowCheckboxes: canShowCheckboxes,
       canHideCheckboxes:
           !canShowCheckboxes && (editor?.isAllChecklist ?? false),
@@ -598,6 +600,14 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
         return;
       case NoteAction.deleteChecked:
         _offerUndo(_editor?.deleteChecked(), l10n.checkedItemsDeleted);
+        return;
+      case NoteAction.sortByName:
+        final edit = _editor?.sortByName();
+        if (edit == null) {
+          AppSnackbar.show(context, l10n.itemsAlreadySorted);
+          return;
+        }
+        _offerUndo(edit, l10n.itemsSortedByName);
         return;
       default:
         break;
