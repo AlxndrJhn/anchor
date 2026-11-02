@@ -118,6 +118,7 @@ model Note {
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags        Tag[]
   sharedWith  NoteShare[]
+  shareLink   NoteShareLink?
   attachments NoteAttachment[]
   pins        NotePin[]
   archives    NoteArchive[]
@@ -251,6 +252,18 @@ model NoteShare {
   @@unique([noteId, sharedWithUserId])
   @@index([noteId])
   @@index([sharedWithUserId])
+}
+
+// A link that opens the note without an account, to read it or to change
+// its text; one per note, made by its owner. Taking it away deletes it, so a
+// new one has a new token.
+model NoteShareLink {
+  noteId     String              @id
+  token      String              @unique
+  permission NoteSharePermission
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  note       Note                @relation(fields: [noteId], references: [id], onDelete: Cascade)
 }
 
 model RefreshToken {

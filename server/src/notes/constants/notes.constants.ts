@@ -178,6 +178,8 @@ export const ERROR_MESSAGES = {
     'Only note owner can update share permissions',
   ONLY_OWNER_CAN_REVOKE_SHARES: 'Only note owner can revoke shares',
   CANNOT_SHARE_WITH_SELF: 'Cannot share note with yourself',
+  SHARE_LINK_NOT_FOUND: 'This link doesn’t open a note',
+  SHARE_LINK_VIEW_ONLY: 'This link can only view the note',
   VIEWERS_CANNOT_EDIT: 'Viewers cannot edit notes',
   ONLY_OWNER_CAN_DELETE: 'Only note owner can delete notes',
   ONLY_OWNER_CAN_RESTORE: 'Only note owner can restore notes',

@@ -12,6 +12,11 @@ import { PictureTextService } from './services/picture-text.service';
 import { NoteRevisionsController } from './controllers/note-revisions.controller';
 import { NoteLocksController } from './controllers/note-locks.controller';
 import { NoteLocksService } from './services/note-locks.service';
+import { NoteShareLinksService } from './services/note-share-links.service';
+import {
+  NoteShareLinksController,
+  SharedNotesController,
+} from './controllers/note-share-links.controller';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
 import { SyncModule } from '../sync/sync.module';
@@ -31,6 +36,8 @@ import { PictureSearchModule } from '../picture-search/picture-search.module';
     NoteAttachmentsController,
     NoteRevisionsController,
     NoteLocksController,
+    NoteShareLinksController,
+    SharedNotesController,
   ],
   providers: [
     NotesService,
@@ -40,6 +47,7 @@ import { PictureSearchModule } from '../picture-search/picture-search.module';
     NoteHistoryService,
     PictureTextService,
     NoteLocksService,
+    NoteShareLinksService,
   ],
   exports: [
     NotesService,

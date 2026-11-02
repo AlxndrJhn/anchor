@@ -5,7 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   ChevronDown,
+  Copy,
   Eye,
+  Globe,
+  Link2,
   LoaderCircle,
   Lock,
   Pencil,
@@ -38,18 +41,25 @@ import { Input } from "@/components/ui/input";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { useAuthStore } from "@/features/auth";
+import { copyText } from "@/lib/clipboard";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
+import { isServerless } from "@/lib/local-backend/mode";
 import { cn } from "@/lib/utils";
 import {
+  getNoteShareLink,
   getNoteShares,
   getRecentContacts,
+  removeNoteShareLink,
   revokeShare,
   searchUsers,
+  setNoteShareLink,
+  shareLinkUrl,
   shareNote,
   updateNoteSharePermission,
 } from "../api";
 import type {
   NoteShare,
+  NoteShareLink,
   NoteSharePermission,
   UserSearchResult,
 } from "../types";
@@ -67,6 +77,30 @@ const ACCESS: Record<
     label: "Can edit",
     icon: <Pencil />,
     description: "Can change the text and pictures",
+  },
+};
+
+type LinkAccess = NoteSharePermission | "off";
+
+// What the note's link lets anyone who has it do.
+const LINK_ACCESS: Record<
+  LinkAccess,
+  { label: string; icon: React.ReactNode; description: string }
+> = {
+  off: {
+    label: "Off",
+    icon: <Lock />,
+    description: "Only people you add can open it",
+  },
+  viewer: {
+    label: "Can view",
+    icon: <Eye />,
+    description: "Anyone with the link can read it, without an account",
+  },
+  editor: {
+    label: "Can edit",
+    icon: <Pencil />,
+    description: "Anyone with the link can change the title and text",
   },
 };
 
@@ -117,6 +151,37 @@ export function ShareDialog({
     enabled: open && !!noteId,
   });
   const showLoadingShapes = useDelayedFlag(isLoading);
+  const linkKey = ["note-link", noteId];
+  const linkQuery = useQuery({
+    queryKey: linkKey,
+    queryFn: () => getNoteShareLink(noteId),
+    enabled: open && !!noteId && !isServerless,
+  });
+  const link = linkQuery.data ?? null;
+
+  const changeLink = useMutation({
+    mutationFn: async (access: LinkAccess) => {
+      if (access !== "off") return setNoteShareLink(noteId, access);
+      await removeNoteShareLink(noteId);
+      return null;
+    },
+    onSuccess: (next, access) => {
+      queryClient.setQueryData<NoteShareLink | null>(linkKey, next);
+      if (!next) toast.success("Link turned off; it no longer opens the note");
+      else if (!link)
+        copyText(shareLinkUrl(next.token)).then(
+          () => toast.success("Link made and copied"),
+          () => toast.success("Link made"),
+        );
+      else
+        toast.success(
+          access === "editor"
+            ? "Anyone with the link can now edit"
+            : "Anyone with the link can now view",
+        );
+    },
+    onError: () => toast.error("Couldn’t change the link"),
+  });
   const visibleShares = shares.filter((s) => !pending.has(s.id));
 
   const refresh = () => {
@@ -266,11 +331,29 @@ export function ShareDialog({
               ))
             )}
           </div>
+          {!isServerless && (
+            <>
+              <div className="mt-1.5 -mb-0.5 text-label text-muted-foreground uppercase">
+                Link
+              </div>
+              <LinkRow
+                link={link}
+                loading={linkQuery.isLoading}
+                failed={linkQuery.isLoadingError}
+                retrying={linkQuery.isFetching}
+                onRetry={() => void linkQuery.refetch()}
+                busy={changeLink.isPending}
+                onChange={(access) => changeLink.mutate(access)}
+              />
+            </>
+          )}
         </DialogBody>
         <DialogFooter className="justify-between">
           <span className="flex items-center gap-2 text-meta text-muted-foreground [&_svg]:size-3.75">
-            <Lock aria-hidden />
-            Only people you add can open it.
+            {link ? <Globe aria-hidden /> : <Lock aria-hidden />}
+            {link
+              ? "Anyone with the link can open it."
+              : "Only people you add can open it."}
           </span>
           <Button onClick={() => onOpenChange(false)}>Done</Button>
         </DialogFooter>
@@ -375,6 +458,119 @@ function AccessMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function LinkRow({
+  link,
+  loading,
+  failed,
+  retrying,
+  onRetry,
+  busy,
+  onChange,
+}: {
+  link: NoteShareLink | null;
+  loading: boolean;
+  failed: boolean;
+  retrying: boolean;
+  onRetry: () => void;
+  busy: boolean;
+  onChange: (access: LinkAccess) => void;
+}) {
+  if (failed)
+    return (
+      <LoadFailedRow
+        message="Couldn’t load the note’s link."
+        onRetry={onRetry}
+        isRetrying={retrying}
+        className="mt-1"
+      />
+    );
+  if (loading) return <SkeletonRows count={1} className="py-2.5" />;
+
+  const access: LinkAccess = link?.permission ?? "off";
+  const url = link ? shareLinkUrl(link.token) : null;
+  return (
+    <div className="-mx-2 grid gap-1">
+      <div className="flex min-h-13 items-center gap-3 rounded-lg px-2 py-1.5">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground/6 text-muted-foreground [&_svg]:size-4">
+          {link ? <Globe aria-hidden /> : <Link2 aria-hidden />}
+        </span>
+        <span className="grid min-w-0 flex-1 leading-[1.3]">
+          <b className="truncate font-semibold text-ui">Anyone with the link</b>
+          <small className="truncate text-muted-foreground text-small">
+            {LINK_ACCESS[access].description}
+          </small>
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={busy}>
+            <button
+              type="button"
+              className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent pr-2 pl-3 font-medium text-control text-foreground hover:bg-foreground/6 disabled:cursor-default disabled:opacity-60 aria-expanded:bg-foreground/6 [&_svg]:size-3.75 [&_svg]:text-muted-foreground"
+            >
+              {busy && <LoaderCircle aria-hidden className="animate-spin" />}
+              {LINK_ACCESS[access].label}
+              <ChevronDown aria-hidden />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-61"
+            aria-label="Access with the link"
+          >
+            <MenuPrimitive.RadioGroup
+              value={access}
+              onValueChange={(value) =>
+                value !== access && onChange(value as LinkAccess)
+              }
+            >
+              {(Object.keys(LINK_ACCESS) as LinkAccess[]).map((option) => (
+                <MenuPrimitive.RadioItem
+                  key={option}
+                  value={option}
+                  className={cn(menuItem, "items-start py-2 [&>svg]:mt-0.5")}
+                >
+                  {LINK_ACCESS[option].icon}
+                  <span className="grid flex-1 gap-0.5 leading-[1.3]">
+                    {LINK_ACCESS[option].label}
+                    <small className="whitespace-normal text-muted-foreground text-small">
+                      {LINK_ACCESS[option].description}
+                    </small>
+                  </span>
+                  <MenuPrimitive.ItemIndicator className="mt-0.5">
+                    <Check className="size-4 text-accent-strong" />
+                  </MenuPrimitive.ItemIndicator>
+                </MenuPrimitive.RadioItem>
+              ))}
+            </MenuPrimitive.RadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {url && (
+        <div className="flex items-center gap-2 px-2">
+          <Input
+            readOnly
+            value={url}
+            aria-label="The note’s link"
+            boxClassName="h-9 min-w-0 flex-1"
+            onFocus={(e) => e.currentTarget.select()}
+          />
+          <Button
+            variant="secondary"
+            onClick={() =>
+              copyText(url).then(
+                () => toast.success("Link copied"),
+                () => toast.error("Couldn’t copy the link"),
+              )
+            }
+          >
+            <Copy aria-hidden />
+            Copy link
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 

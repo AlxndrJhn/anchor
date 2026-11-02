@@ -7,6 +7,7 @@ import '../../../../core/logging/app_logger.dart';
 import '../../../../core/logging/log_tags.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../domain/note_share.dart';
+import '../../domain/note_share_link.dart';
 import '../../domain/note_share_permission.dart';
 import '../local/note_rows.dart';
 
@@ -72,6 +73,34 @@ class NoteSharesRepository {
     await _dio.delete('/api/notes/$noteId/shares/$shareId');
 
     await _updateLocalShareIds(noteId);
+  }
+
+  /// Null when the note has no link.
+  Future<NoteShareLink?> getLink(String noteId) async {
+    final response = await _dio.get('/api/notes/$noteId/link');
+    final link = (response.data as Map<String, dynamic>)['link'];
+    return link == null
+        ? null
+        : NoteShareLink.fromJson(link as Map<String, dynamic>);
+  }
+
+  /// Makes the note's link, or changes what it lets people do.
+  Future<NoteShareLink> setLink(
+    String noteId,
+    NoteSharePermission permission,
+  ) async {
+    final response = await _dio.put(
+      '/api/notes/$noteId/link',
+      data: {'permission': permission.name},
+    );
+    return NoteShareLink.fromJson(
+      (response.data as Map<String, dynamic>)['link'] as Map<String, dynamic>,
+    );
+  }
+
+  /// The link stops working; a new one gets a new address.
+  Future<void> removeLink(String noteId) async {
+    await _dio.delete('/api/notes/$noteId/link');
   }
 
   Future<void> _updateLocalShareIds(String noteId) async {

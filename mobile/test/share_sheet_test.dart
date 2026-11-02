@@ -1,4 +1,5 @@
 import 'package:anchor/core/network/connectivity_provider.dart';
+import 'package:anchor/core/network/server_config_provider.dart';
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/pill.dart';
 import 'package:anchor/features/auth/domain/user.dart';
@@ -7,11 +8,13 @@ import 'package:anchor/features/notes/data/repository/note_shares_repository.dar
 import 'package:anchor/features/notes/data/repository/users_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_share.dart';
+import 'package:anchor/features/notes/domain/note_share_link.dart';
 import 'package:anchor/features/notes/domain/note_share_permission.dart';
 import 'package:anchor/features/notes/domain/user_summary.dart';
 import 'package:anchor/features/notes/presentation/notes_controller.dart';
 import 'package:anchor/features/notes/presentation/widgets/share_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -45,6 +48,33 @@ class FakeShares implements NoteSharesRepository {
   bool isFailing = false;
   final added = <(String, NoteSharePermission)>[];
   final revoked = <String>[];
+  NoteShareLink? link;
+  bool isLinkFailing = false;
+  final linkChanges = <NoteSharePermission?>[];
+
+  @override
+  Future<NoteShareLink?> getLink(String noteId) async {
+    if (isLinkFailing) throw Exception('server unreachable');
+    return link;
+  }
+
+  @override
+  Future<NoteShareLink> setLink(
+    String noteId,
+    NoteSharePermission permission,
+  ) async {
+    linkChanges.add(permission);
+    return link = NoteShareLink(
+      token: link?.token ?? 'tok3n',
+      permission: permission,
+    );
+  }
+
+  @override
+  Future<void> removeLink(String noteId) async {
+    linkChanges.add(null);
+    link = null;
+  }
 
   @override
   Future<List<NoteShare>> getNoteShares(String noteId) async {
@@ -142,6 +172,7 @@ void main() {
           overrides: [
             isOnlineProvider.overrideWith((ref) => ref.watch(online)),
             noteSharesRepositoryProvider.overrideWithValue(shares),
+            serverUrlProvider.overrideWithValue('https://notes.example.com/'),
             usersRepositoryProvider.overrideWithValue(users),
             authControllerProvider.overrideWith(SignedIn.new),
             noteProvider('n1').overrideWith(
@@ -393,6 +424,124 @@ void main() {
 
     expect(find.text('Couldn’t load the people with access.'), findsNothing);
     expect(find.text('Pat Partner'), findsOneWidget);
+  });
+
+  group('the link', () {
+    late List<String> copied;
+
+    setUp(() {
+      copied = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied.add((call.arguments as Map)['text'] as String);
+            }
+            return null;
+          });
+    });
+
+    tearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+
+    Future<void> pickLinkAccess(WidgetTester tester, String access) async {
+      final pill = find.bySemanticsLabel(RegExp('Change access with the link'));
+      await tester.ensureVisible(pill);
+      await tester.tap(pill);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(access).last);
+      await settleUnderSnackbar(tester);
+    }
+
+    testWidgets('starts off, and turning it on makes and copies it', (
+      tester,
+    ) async {
+      await openSheet(tester);
+      expect(find.text('Anyone with the link'), findsOneWidget);
+      expect(find.text('Only people you add can open it'), findsOneWidget);
+      expect(find.text('Copy link'), findsNothing);
+
+      await pickLinkAccess(tester, 'Can edit');
+
+      expect(shares.linkChanges, [NoteSharePermission.editor]);
+      expect(find.text('Link made and copied'), findsOneWidget);
+      expect(copied, ['https://notes.example.com/s/tok3n']);
+      expect(
+        find.text('Anyone with the link can change the title and text'),
+        findsOneWidget,
+      );
+      expect(find.text('https://notes.example.com/s/tok3n'), findsOneWidget);
+      expect(find.text('Send link'), findsOneWidget);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('copies the link, changes what it allows, and turns it off', (
+      tester,
+    ) async {
+      shares.link = const NoteShareLink(
+        token: 'abc',
+        permission: NoteSharePermission.viewer,
+      );
+      await openSheet(tester);
+      expect(
+        find.text('Anyone with the link can read it, without an account'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.text('Copy link'));
+      await tester.tap(find.text('Copy link'));
+      await settleUnderSnackbar(tester);
+      expect(copied, ['https://notes.example.com/s/abc']);
+      await drainSnackbar(tester);
+
+      await pickLinkAccess(tester, 'Can edit');
+      expect(find.text('Anyone with the link can now edit'), findsOneWidget);
+      expect(copied, hasLength(1));
+      await drainSnackbar(tester);
+
+      await pickLinkAccess(tester, 'Off');
+      expect(shares.linkChanges, [NoteSharePermission.editor, null]);
+      expect(
+        find.text('Link turned off; it no longer opens the note'),
+        findsOneWidget,
+      );
+      expect(find.text('Copy link'), findsNothing);
+      await drainSnackbar(tester);
+    });
+
+    testWidgets('with no people, says the link opens it', (tester) async {
+      shares.shares = [];
+      shares.link = const NoteShareLink(
+        token: 'abc',
+        permission: NoteSharePermission.viewer,
+      );
+      await openSheet(tester, syncedShareIds: const []);
+      expect(find.text('Anyone with the link can open it.'), findsOneWidget);
+      expect(find.text('Only you can see this note.'), findsNothing);
+    });
+
+    testWidgets('a link that doesn’t load says so, and Try again loads it', (
+      tester,
+    ) async {
+      shares.isLinkFailing = true;
+      await openSheet(tester);
+      expect(find.text('Couldn’t load the note’s link.'), findsOneWidget);
+
+      shares.isLinkFailing = false;
+      await tester.ensureVisible(find.text('Try again'));
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+      expect(find.text('Couldn’t load the note’s link.'), findsNothing);
+      expect(find.text('Only people you add can open it'), findsOneWidget);
+    });
+
+    testWidgets('offline with nothing fetched, it isn’t shown as off', (
+      tester,
+    ) async {
+      await openSheet(tester, isOnline: false);
+      expect(find.text('Anyone with the link'), findsNothing);
+    });
   });
 
   testWidgets('back online, the people and suggestions load', (tester) async {

@@ -1525,6 +1525,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareCanEdit => 'Can edit';
 
   @override
+  String get shareLink => 'Link';
+
+  @override
+  String get shareLinkAnyone => 'Anyone with the link';
+
+  @override
+  String get shareLinkOff => 'Off';
+
+  @override
+  String get shareLinkOffHint => 'Only people you add can open it';
+
+  @override
+  String get shareLinkViewHint =>
+      'Anyone with the link can read it, without an account';
+
+  @override
+  String get shareLinkEditHint =>
+      'Anyone with the link can change the title and text';
+
+  @override
+  String get shareLinkAccess => 'Access with the link';
+
+  @override
+  String shareLinkChangeAccess(String access) {
+    return '$access. Change access with the link';
+  }
+
+  @override
+  String get shareLinkCopy => 'Copy link';
+
+  @override
+  String get shareLinkShareIt => 'Send link';
+
+  @override
+  String get shareLinkCopied => 'Link copied';
+
+  @override
+  String get shareLinkMade => 'Link made and copied';
+
+  @override
+  String get shareLinkTurnedOff =>
+      'Link turned off; it no longer opens the note';
+
+  @override
+  String get shareLinkNowCanView => 'Anyone with the link can now view';
+
+  @override
+  String get shareLinkNowCanEdit => 'Anyone with the link can now edit';
+
+  @override
+  String get shareLinkFailed => 'Couldn’t change the link';
+
+  @override
+  String get shareLinkLoadFailed => 'Couldn’t load the note’s link.';
+
+  @override
+  String get shareLinkOpens => 'Anyone with the link can open it.';
+
+  @override
   String dayTodayAt(String time) {
     return 'Today at $time';
   }

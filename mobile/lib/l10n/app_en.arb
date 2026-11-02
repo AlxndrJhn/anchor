@@ -2126,6 +2126,84 @@
   "@shareCanEdit": {
     "description": "Access level: the person can read and change the note."
   },
+  "shareLink": "Link",
+  "@shareLink": {
+    "description": "Heading of the share sheet’s section for the note’s share link."
+  },
+  "shareLinkAnyone": "Anyone with the link",
+  "@shareLinkAnyone": {
+    "description": "Row in the share sheet for the note’s share link."
+  },
+  "shareLinkOff": "Off",
+  "@shareLinkOff": {
+    "description": "Access level of a share link that is turned off."
+  },
+  "shareLinkOffHint": "Only people you add can open it",
+  "@shareLinkOffHint": {
+    "description": "Under “Anyone with the link” while the note has no link."
+  },
+  "shareLinkViewHint": "Anyone with the link can read it, without an account",
+  "@shareLinkViewHint": {
+    "description": "Under “Anyone with the link” while the link can only view."
+  },
+  "shareLinkEditHint": "Anyone with the link can change the title and text",
+  "@shareLinkEditHint": {
+    "description": "Under “Anyone with the link” while the link can edit."
+  },
+  "shareLinkAccess": "Access with the link",
+  "@shareLinkAccess": {
+    "description": "Accessibility label of the menu that picks what the share link allows."
+  },
+  "shareLinkChangeAccess": "{access}. Change access with the link",
+  "@shareLinkChangeAccess": {
+    "description": "Accessibility label of the button that opens the share link’s access menu.",
+    "placeholders": {
+      "access": {
+        "type": "String",
+        "example": "Can view"
+      }
+    }
+  },
+  "shareLinkCopy": "Copy link",
+  "@shareLinkCopy": {
+    "description": "Button that copies the note’s share link."
+  },
+  "shareLinkShareIt": "Send link",
+  "@shareLinkShareIt": {
+    "description": "Button that sends the note’s share link with another app."
+  },
+  "shareLinkCopied": "Link copied",
+  "@shareLinkCopied": {
+    "description": "Toast after copying the note’s share link."
+  },
+  "shareLinkMade": "Link made and copied",
+  "@shareLinkMade": {
+    "description": "Toast after turning on the note’s share link, which also copies it."
+  },
+  "shareLinkTurnedOff": "Link turned off; it no longer opens the note",
+  "@shareLinkTurnedOff": {
+    "description": "Toast after turning off the note’s share link."
+  },
+  "shareLinkNowCanView": "Anyone with the link can now view",
+  "@shareLinkNowCanView": {
+    "description": "Toast after making the share link view only."
+  },
+  "shareLinkNowCanEdit": "Anyone with the link can now edit",
+  "@shareLinkNowCanEdit": {
+    "description": "Toast after letting the share link edit."
+  },
+  "shareLinkFailed": "Couldn’t change the link",
+  "@shareLinkFailed": {
+    "description": "Toast when turning the share link on or off, or changing it, failed."
+  },
+  "shareLinkLoadFailed": "Couldn’t load the note’s link.",
+  "@shareLinkLoadFailed": {
+    "description": "Notice in the share sheet when the note’s share link didn’t load."
+  },
+  "shareLinkOpens": "Anyone with the link can open it.",
+  "@shareLinkOpens": {
+    "description": "Small line in the share sheet while the note has a share link and no people."
+  },
   "dayTodayAt": "Today at {time}",
   "@dayTodayAt": {
     "description": "When a version of a note was saved, in version history.",

@@ -2530,6 +2530,114 @@ abstract class AppLocalizations {
   /// **'Can edit'**
   String get shareCanEdit;
 
+  /// Heading of the share sheet’s section for the note’s share link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get shareLink;
+
+  /// Row in the share sheet for the note’s share link.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link'**
+  String get shareLinkAnyone;
+
+  /// Access level of a share link that is turned off.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get shareLinkOff;
+
+  /// Under “Anyone with the link” while the note has no link.
+  ///
+  /// In en, this message translates to:
+  /// **'Only people you add can open it'**
+  String get shareLinkOffHint;
+
+  /// Under “Anyone with the link” while the link can only view.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can read it, without an account'**
+  String get shareLinkViewHint;
+
+  /// Under “Anyone with the link” while the link can edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can change the title and text'**
+  String get shareLinkEditHint;
+
+  /// Accessibility label of the menu that picks what the share link allows.
+  ///
+  /// In en, this message translates to:
+  /// **'Access with the link'**
+  String get shareLinkAccess;
+
+  /// Accessibility label of the button that opens the share link’s access menu.
+  ///
+  /// In en, this message translates to:
+  /// **'{access}. Change access with the link'**
+  String shareLinkChangeAccess(String access);
+
+  /// Button that copies the note’s share link.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get shareLinkCopy;
+
+  /// Button that sends the note’s share link with another app.
+  ///
+  /// In en, this message translates to:
+  /// **'Send link'**
+  String get shareLinkShareIt;
+
+  /// Toast after copying the note’s share link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get shareLinkCopied;
+
+  /// Toast after turning on the note’s share link, which also copies it.
+  ///
+  /// In en, this message translates to:
+  /// **'Link made and copied'**
+  String get shareLinkMade;
+
+  /// Toast after turning off the note’s share link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link turned off; it no longer opens the note'**
+  String get shareLinkTurnedOff;
+
+  /// Toast after making the share link view only.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can now view'**
+  String get shareLinkNowCanView;
+
+  /// Toast after letting the share link edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can now edit'**
+  String get shareLinkNowCanEdit;
+
+  /// Toast when turning the share link on or off, or changing it, failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t change the link'**
+  String get shareLinkFailed;
+
+  /// Notice in the share sheet when the note’s share link didn’t load.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load the note’s link.'**
+  String get shareLinkLoadFailed;
+
+  /// Small line in the share sheet while the note has a share link and no people.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can open it.'**
+  String get shareLinkOpens;
+
   /// When a version of a note was saved, in version history.
   ///
   /// In en, this message translates to:
