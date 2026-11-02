@@ -200,41 +200,23 @@ schemes in `design/schemes/schemes.json`; the parsers are
 
 ## Switching from Anchor
 
-Anchor+ runs as a server of its own, from its own folder, next to the
-original. Your notes go over in a backup you make in the original's web
-app; the original stays as it is.
+Anchor+ runs next to the original, from its own folder; your notes move over
+in a backup.
 
-**1. Back up your notes from Anchor.** First open the Android app once,
-online, so every change on the phone has reached the server. Then in
-Anchor's web app, open Settings › Import and export › Export and download
-**Anchor backup (.zip)**. It holds your notes, tags, attachments, pins,
-archive and reminders. Each account exports its own notes.
+1. **Back up.** Open the Anchor Android app once online so it syncs, then in
+   Anchor's web app download Settings › Import and export › Export ›
+   **Anchor backup (.zip)**. Each account exports its own notes.
+2. **Start Anchor+** in its own folder with
+   [`docker-compose.yml`](docker-compose.yml) or the
+   [one-line install](#one-line-install-on-a-small-server). It uses its own
+   container, volume and port 3001, so both servers run side by side.
+3. **Import** the zip in Anchor+'s web app under Settings › Import and
+   export › Import. Shared notes arrive as your own copies.
+4. **Android:** install Anchor+ next to the official app and sign in to the
+   Anchor+ server. App settings and widgets don't come along.
 
-**2. Start Anchor+** in a folder of its own, with this repository's
-[`docker-compose.yml`](docker-compose.yml) (see
-[Option 1](#option-1-using-pre-built-image-recommended)) or the
-[one-line install](#one-line-install-on-a-small-server). Its container and
-volume are named `anchor-plus` and `anchor_plus_data`, so they don't touch
-the original's, and it listens on port 3001 where the original has 3000,
-so both run at the same time without getting in each other's way.
-
-**3. Import your notes into Anchor+.** Open its web app, create your
-account, and under Settings › Import and export › Import choose the zip.
-Each person on the server does this with their own backup. Notes someone
-shared with you come in as your own copies, and sharing has to be set up
-again.
-
-**4. Android.** Anchor+ installs next to the official app, not over it.
-Install it (see [Mobile App](#mobile-app) or [F-Droid](#f-droid)) and sign
-in to the Anchor+ server. These stay in the official app and don't come
-along: the theme, density, font and text size, the notes view and sort
-order, folded checklists, home screen widgets, and Android's permission to
-send notifications.
-
-The original keeps running with the notes it had, so you can go back to it
-at any time. Changes made in Anchor+ in the meantime don't reach it; for
-moving a server back and forth with all its notes, see
-[Switching Back to Anchor](#switching-back-to-anchor).
+The original keeps its notes, so you can go back any time (see
+[Switching Back to Anchor](#switching-back-to-anchor)).
 
 ## Features
 
