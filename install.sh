@@ -20,25 +20,16 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=sslip.io bash
 #
-# Or through a Cloudflare Tunnel, with no port open at all: make a tunnel in
-# Cloudflare's dashboard (Zero Trust > Networks > Tunnels), give it a public
-# hostname whose service is http://anchor:3000, and pass its token:
-#
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo TUNNEL_TOKEN=eyJ... DOMAIN=notes.example.com bash
-#
 # It installs Docker if it's missing, adds swap when the server has less than
 # 2 GB of memory, opens the port in the server's own firewall, and runs
 # Anchor from /opt/anchor. Running it again updates Anchor to the newest
 # release and keeps the notes, the settings and the domain.
 #
 # Settings (environment variables, all optional; remembered for later runs):
-#   DOMAIN       serve https://DOMAIN, with Caddy on ports 80 and 443; with
-#                TUNNEL_TOKEN, the tunnel's public hostname. sslip.io or nip.io:
+#   DOMAIN       serve https://DOMAIN, with Caddy on ports 80 and 443. sslip.io or nip.io:
 #                a free hostname for the server's IP (<ip>.sslip.io), found
 #                again on every run, so it follows a new IP
-#   TUNNEL_TOKEN serve through this Cloudflare Tunnel, with no open port
-#                (TUNNEL_TOKEN= stops using it)
-#   PORT         without either, the port Anchor listens on (default 3000)
+#   PORT         without DOMAIN, the port Anchor listens on (default 3000)
 #   ANCHOR_TAG   the image tag, e.g. fork-preview or fork-0.17.2.36
 #                (default fork-latest)
 #   ANCHOR_DIR   where it lives (default /opt/anchor)
@@ -195,10 +186,6 @@ load_settings() {
   DOMAIN=${DOMAIN#http://}
   DOMAIN=${DOMAIN#https://}
   DOMAIN=${DOMAIN%%/*}
-  TUNNEL_TOKEN=${TUNNEL_TOKEN-$(get_env "$CONF" TUNNEL_TOKEN)}
-  # The token alone, also out of the `cloudflared service install <token>`
-  # command Cloudflare shows
-  TUNNEL_TOKEN=${TUNNEL_TOKEN##* }
   PUBLIC_IP=$(public_ip)
 
   # HOST is the name Anchor is served at: the domain, or for sslip.io and
@@ -206,7 +193,6 @@ load_settings() {
   HOST=$DOMAIN
   case "$DOMAIN" in
     sslip.io | nip.io)
-      [ -z "$TUNNEL_TOKEN" ] || die "DOMAIN=$DOMAIN is for a server with its own IP, not a tunnel"
       is_public_ipv4 "$PUBLIC_IP" ||
         die "DOMAIN=$DOMAIN needs the server's public IPv4 address, and '$PUBLIC_IP' isn't one"
       HOST="$(printf '%s' "$PUBLIC_IP" | tr . -).$DOMAIN"
@@ -217,7 +203,6 @@ load_settings() {
   chmod 600 "$CONF"
   set_env "$CONF" DOMAIN "$DOMAIN"
   set_env "$CONF" HOST "$HOST"
-  set_env "$CONF" TUNNEL_TOKEN "$TUNNEL_TOKEN"
   set_env "$CONF" PORT "$PORT"
   set_env "$CONF" ANCHOR_TAG "$ANCHOR_TAG"
 }
@@ -250,27 +235,7 @@ EOF
 
 write_compose() {
   local ports caddy=
-  if [ -n "$TUNNEL_TOKEN" ]; then
-    ports=
-    caddy=$(
-      cat <<'EOF'
-
-  # The way in: a Cloudflare Tunnel, whose public hostname goes to
-  # http://anchor:3000
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: anchor-cloudflared
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    logging:
-      driver: local
-    depends_on:
-      - anchor
-EOF
-    )
-  elif [ -n "$DOMAIN" ]; then
+  if [ -n "$DOMAIN" ]; then
     ports=
     caddy=$(
       cat <<'EOF'
@@ -305,8 +270,8 @@ EOF
   fi
   cat >"$ANCHOR_DIR/docker-compose.yml" <<EOF
 # Written by install.sh, which rewrites it on every run: settings go in
-# anchor.env (Anchor's own) and .env (DOMAIN, TUNNEL_TOKEN, PORT, ANCHOR_TAG;
-# HOST follows from DOMAIN).
+# anchor.env (Anchor's own) and .env (DOMAIN, PORT, ANCHOR_TAG; HOST follows
+# from DOMAIN).
 name: anchor
 
 services:
@@ -326,7 +291,7 @@ services:
 volumes:
   anchor_data:
 EOF
-  if [ -n "$DOMAIN" ] && [ -z "$TUNNEL_TOKEN" ]; then
+  if [ -n "$DOMAIN" ]; then
     printf '  caddy_data:\n  caddy_config:\n' >>"$ANCHOR_DIR/docker-compose.yml"
   fi
 }
@@ -335,8 +300,6 @@ EOF
 # in iptables; Oracle Linux and RHEL have firewalld.
 open_ports() {
   local port ports rules=/etc/iptables/rules.v4 rule
-  # A tunnel connects out: nothing has to come in
-  [ -z "$TUNNEL_TOKEN" ] || return 0
   if [ -n "$DOMAIN" ]; then ports="80 443"; else ports=$PORT; fi
   for port in $ports; do
     if have ufw && ufw status 2>/dev/null | grep -q '^Status: active'; then
@@ -405,63 +368,32 @@ start_anchor() {
   die "Anchor didn't answer in 3 minutes. Its log: cd $ANCHOR_DIR && docker compose logs anchor"
 }
 
-# Whether cloudflared reached Cloudflare with the token
-check_tunnel() {
-  [ -n "$TUNNEL_TOKEN" ] || return 0
-  local tries=15
-  while [ "$tries" -gt 0 ]; do
-    tries=$((tries - 1))
-    if docker logs anchor-cloudflared 2>&1 | grep -q 'Registered tunnel connection'; then
-      return
-    fi
-    sleep 2
-  done
-  die "The tunnel didn't connect; is the token right? Its log: docker logs anchor-cloudflared"
-}
-
 report() {
   local url
-  if [ -n "$TUNNEL_TOKEN" ]; then
-    url=${HOST:+https://$HOST}
-    url=${url:-"the tunnel's public hostname"}
-  elif [ -n "$HOST" ]; then
-    url="https://$HOST"
-  else
-    url="http://$PUBLIC_IP:$PORT"
-  fi
+  if [ -n "$HOST" ]; then url="https://$HOST"; else url="http://$PUBLIC_IP:$PORT"; fi
   echo
   log "Anchor is running: $url"
   echo
   echo "  Sign up right away: the first account is the admin."
-  if [ -n "$TUNNEL_TOKEN" ]; then
-    echo "  The tunnel is connected. In Cloudflare, its public hostname's service"
-    echo "  has to be http://anchor:3000. No port is open on this server."
-    if [ -z "$DOMAIN" ]; then
-      echo "  Run this again with DOMAIN=<the hostname>, so Anchor knows its address"
-      echo "  (OIDC sign in needs it)."
-    fi
-    echo "  Cloudflare's free plan takes uploads of up to 100 MB."
+  if [ "$HOST" != "$DOMAIN" ]; then
+    echo "  $HOST is a free hostname for $PUBLIC_IP. If the"
+    echo "  IP changes, run this again: Anchor moves to the new hostname, and the"
+    echo "  apps need it too."
+    echo "  The certificate comes once ports 80 and 443 are open."
+  elif [ -n "$HOST" ]; then
+    echo "  The certificate comes once $HOST points at $PUBLIC_IP and ports 80"
+    echo "  and 443 are open."
   else
-    if [ "$HOST" != "$DOMAIN" ]; then
-      echo "  $HOST is a free hostname for $PUBLIC_IP. If the"
-      echo "  IP changes, run this again: Anchor moves to the new hostname, and the"
-      echo "  apps need it too."
-      echo "  The certificate comes once ports 80 and 443 are open."
-    elif [ -n "$HOST" ]; then
-      echo "  The certificate comes once $HOST points at $PUBLIC_IP and ports 80"
-      echo "  and 443 are open."
-    else
-      echo "  Over plain HTTP, passwords and notes cross the internet unencrypted."
-      echo "  For HTTPS, run this again with DOMAIN=sslip.io (a free hostname for"
-      echo "  $PUBLIC_IP), DOMAIN=<your domain>, or TUNNEL_TOKEN=<a Cloudflare Tunnel's token>."
-    fi
-    echo
-    echo "  Your cloud's firewall must let the port in too (only the server's own"
-    echo "  firewall was opened):"
-    echo "    Oracle Cloud  VCN > Security List > Ingress rule, TCP, source 0.0.0.0/0"
-    echo "    AWS           the instance's security group > Inbound rule"
-    echo "    Google Cloud  VPC network > Firewall > rule for the instance"
+    echo "  Over plain HTTP, passwords and notes cross the internet unencrypted."
+    echo "  For HTTPS, run this again with DOMAIN=sslip.io (a free hostname for"
+    echo "  $PUBLIC_IP) or DOMAIN=<your domain>."
   fi
+  echo
+  echo "  Your cloud's firewall must let the port in too (only the server's own"
+  echo "  firewall was opened):"
+  echo "    Oracle Cloud  VCN > Security List > Ingress rule, TCP, source 0.0.0.0/0"
+  echo "    AWS           the instance's security group > Inbound rule"
+  echo "    Google Cloud  VPC network > Firewall > rule for the instance"
   echo
   echo "  Update later:  run the same command again"
   echo "  Settings:      $ENV_FILE, then: cd $ANCHOR_DIR && docker compose up -d"
@@ -478,7 +410,6 @@ main() {
   write_compose
   open_ports
   start_anchor
-  check_tunnel
   report
 }
 
