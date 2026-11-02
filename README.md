@@ -292,17 +292,17 @@ followed by `docker compose up -d` in `/opt/anchor`.
 
    ```yaml
    services:
-     anchor:
+     anchor-plus:
        image: ghcr.io/alxndrjhn/anchor:fork-latest
-       container_name: anchor
+       container_name: anchor-plus
        restart: unless-stopped
        ports:
          - "3000:3000"
        volumes:
-         - anchor_data:/data
+         - anchor_plus_data:/data
 
    volumes:
-     anchor_data:
+     anchor_plus_data:
    ```
 
 2. **(Optional) Configure environment:**
@@ -348,11 +348,29 @@ followed by `docker compose up -d` in `/opt/anchor`.
    docker compose pull && docker compose up -d
    ```
 
-   Your data lives in the `anchor_data` volume, which updates (and
+   Your data lives in the `anchor_plus_data` volume, which updates (and
    `--force-recreate`) keep. Run them from the same folder each time: the
    volume is named after it. Before a release changes the database, Anchor
    saves it to `/data/backups` (the last 3 are kept). Only
    `docker compose down -v` deletes the volume.
+
+   The container and the volume are named `anchor-plus` and
+   `anchor_plus_data`, not `anchor` and `anchor_data` like the original
+   Anchor's, so both can run on one server (on different ports). A
+   `docker-compose.yml` from before that still names them `anchor`; to move
+   to the new names, back up with the old file, change it, and restore:
+
+   ```bash
+   docker compose exec -T anchor backup > anchor-backup.tar
+   docker compose down
+   # in docker-compose.yml: anchor -> anchor-plus, anchor_data -> anchor_plus_data
+   docker compose up -d
+   docker compose exec -T anchor-plus restore < anchor-backup.tar
+   ```
+
+   The old volume is kept until you delete it (`docker volume ls`, then
+   `docker volume rm <folder>_anchor_data`). The one-line install moves
+   itself.
 
 ### Image Tags
 
@@ -397,23 +415,23 @@ Whoever can run `docker` on the host can set a new password for any
 account, admins included, without signing in. List the accounts:
 
 ```bash
-docker exec -it anchor reset-password
+docker exec -it anchor-plus reset-password
 ```
 
 Give one a new, generated password, which the command prints:
 
 ```bash
-docker exec -it anchor reset-password user@example.com
+docker exec -it anchor-plus reset-password user@example.com
 ```
 
 Or type the new password yourself (at least 8 characters, not echoed):
 
 ```bash
-docker exec -it anchor reset-password user@example.com --password
+docker exec -it anchor-plus reset-password user@example.com --password
 ```
 
-`anchor` is the `container_name`; with Docker Compose you can also run
-`docker compose exec anchor reset-password …` from the folder with the
+`anchor-plus` is the `container_name`; with Docker Compose you can also run
+`docker compose exec anchor-plus reset-password …` from the folder with the
 `docker-compose.yml`. The user signs in with the new password right away;
 devices that are already signed in stay signed in.
 
@@ -425,7 +443,7 @@ picture, recording and file, and the secret sign-ins are signed with.
 Anchor keeps running while it's made, and it takes seconds:
 
 ```bash
-docker compose exec -T anchor backup > anchor-backup-$(date +%F).tar
+docker compose exec -T anchor-plus backup > anchor-backup-$(date +%F).tar
 ```
 
 One command restores it, on this server or on a fresh one, even one on a
@@ -433,7 +451,7 @@ later release, whose database it brings up to date. It replaces everything
 on that server, then Anchor restarts, and the apps stay signed in:
 
 ```bash
-docker compose exec -T anchor restore < anchor-backup-2026-10-31.tar
+docker compose exec -T anchor-plus restore < anchor-backup-2026-10-31.tar
 ```
 
 On a new server, start Anchor first (`docker compose up -d`), then restore.
@@ -666,7 +684,7 @@ Configure OIDC via environment variables in your `docker-compose.yml`. Pocket ID
 
 ```yaml
 services:
-  anchor:
+  anchor-plus:
     image: ghcr.io/alxndrjhn/anchor:fork-latest
     environment:
       - OIDC_ENABLED=true
