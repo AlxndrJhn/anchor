@@ -73,6 +73,9 @@ export function flyQrTo(qr: Element, sessionId: string) {
     height: `${from.height}px`,
   });
   document.body.append(ghost);
+  // The dialog closes around it; only the flying copy shows.
+  if (qr instanceof SVGElement || qr instanceof HTMLElement)
+    qr.style.visibility = "hidden";
 
   const ax = from.left + from.width / 2;
   const ay = from.top + from.height / 2;
