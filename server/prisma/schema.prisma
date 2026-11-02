@@ -305,7 +305,7 @@ model RefreshToken {
   createdAt DateTime @default(now())
   // One sign-in on one device: refreshing hands the new token the same
   // session, with when it began and what the device said it was.
-  sessionId  String   @default(uuid())
+  sessionId  String   @default(dbgenerated("(gen_random_uuid())::text"))
   signedInAt DateTime @default(now())
   userAgent  String?
 
