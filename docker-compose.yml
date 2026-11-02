@@ -12,8 +12,9 @@ services:
     # Time to shut Postgres down cleanly on `docker compose down` and on every
     # `up --force-recreate`, before Docker kills what's left.
     stop_grace_period: 1m
+    # 3001 on the host, so the original Anchor can keep 3000 next to it.
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - PG_USER=anchor
       - PG_PASSWORD=password

@@ -215,8 +215,8 @@ archive and reminders. Each account exports its own notes.
 [Option 1](#option-1-using-pre-built-image-recommended)) or the
 [one-line install](#one-line-install-on-a-small-server). Its container and
 volume are named `anchor-plus` and `anchor_plus_data`, so they don't touch
-the original's. Only the port has to differ while both run, for example
-`3001:3000` in its `ports:`.
+the original's, and it listens on port 3001 where the original has 3000,
+so both run at the same time without getting in each other's way.
 
 **3. Import your notes into Anchor+.** Open its web app, create your
 account, and under Settings › Import and export › Import choose the zip.
@@ -281,7 +281,7 @@ E2.1.Micro and Ampere A1, AWS t2/t3/t4g.micro, Google Cloud's e2-micro, a 1 GB
 VPS), one command, run over SSH, sets up everything:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3000 bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3001 bash
 ```
 
 With a domain whose DNS points at the server, Anchor gets HTTPS (a Let's
@@ -311,12 +311,12 @@ what pictures show, whose model needs more), opens the port in the server's
 own firewall, and runs Anchor from `/opt/anchor` with a random database
 password. Sign up right away: the first account is the admin.
 
-Your cloud's firewall has to let the port in too (3000, or 80 and 443 with a
+Your cloud's firewall has to let the port in too (3001, or 80 and 443 with a
 domain or sslip.io): on Oracle Cloud an ingress rule in the subnet's security
 list, on AWS the instance's security group, on Google Cloud a VPC firewall
 rule. Or leave it closed and serve Anchor over HTTPS for free with a
 [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
-to `http://localhost:3000`.
+to `http://localhost:3001`.
 
 Running the same command again updates Anchor and keeps the notes and the
 domain. `PORT` is the port Anchor listens on without a domain, e.g.
@@ -336,7 +336,7 @@ followed by `docker compose up -d` in `/opt/anchor`.
        container_name: anchor-plus
        restart: unless-stopped
        ports:
-         - "3000:3000"
+         - "3001:3000"
        volumes:
          - anchor_plus_data:/data
 
@@ -350,7 +350,7 @@ followed by `docker compose up -d` in `/opt/anchor`.
    Available options:
    | Variable | Required | Default | Description |
    |----------|----------|---------|-------------|
-   | `APP_URL` | No | `http://localhost:3000` | Base URL where Anchor is served |
+   | `APP_URL` | No | `http://localhost:3000` | Base URL where Anchor is served; with this `docker-compose.yml` on your own machine, `http://localhost:3001` |
    | `JWT_SECRET` | No | (auto-generated) | Auth token secret. Min 16 characters when set |
    | `DATA_DIR` | No | `/data` | Root directory for persisted uploads |
    | `PICTURE_TEXT` | No | `on` | `off` stops reading the text in pictures for search |
@@ -379,7 +379,7 @@ followed by `docker compose up -d` in `/opt/anchor`.
    ```
 
 4. **Access the app:**
-   Open http://localhost:3000
+   Open http://localhost:3001
 
 5. **Update later:**
 
