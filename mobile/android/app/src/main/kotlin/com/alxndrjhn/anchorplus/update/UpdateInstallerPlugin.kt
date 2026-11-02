@@ -1,4 +1,4 @@
-package com.zhfahim.anchor.update
+package com.alxndrjhn.anchorplus.update
 
 import android.content.Context
 import android.content.Intent

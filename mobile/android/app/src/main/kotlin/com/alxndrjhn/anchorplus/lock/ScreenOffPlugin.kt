@@ -1,4 +1,4 @@
-package com.zhfahim.anchor.lock
+package com.alxndrjhn.anchorplus.lock
 
 import android.content.BroadcastReceiver
 import android.content.Context

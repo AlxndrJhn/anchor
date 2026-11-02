@@ -7,8 +7,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Fork builds (ORG_GRADLE_PROJECT_anchorFork=true) install next to the
-// official app instead of clashing with its signature.
+// Fork builds (ORG_GRADLE_PROJECT_anchorFork=true) are named Anchor+. Every
+// build is com.alxndrjhn.anchorplus, so none clashes with the official app.
 val isForkBuild = (project.findProperty("anchorFork") as String?) == "true"
 // Preview builds of a branch (ORG_GRADLE_PROJECT_anchorPreview=true, see
 // preview-v18rebase.yml) install next to the fork's releases.
@@ -21,7 +21,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.zhfahim.anchor"
+    namespace = "com.alxndrjhn.anchorplus"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -33,8 +33,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = if (isForkBuild) "com.alxndrjhn.anchorplus" else "com.zhfahim.anchor"
+        applicationId = "com.alxndrjhn.anchorplus"
         if (isPreviewBuild) applicationIdSuffix = ".preview"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.

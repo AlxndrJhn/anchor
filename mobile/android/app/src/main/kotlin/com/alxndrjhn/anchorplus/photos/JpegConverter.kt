@@ -1,4 +1,4 @@
-package com.zhfahim.anchor.photos
+package com.alxndrjhn.anchorplus.photos
 
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder

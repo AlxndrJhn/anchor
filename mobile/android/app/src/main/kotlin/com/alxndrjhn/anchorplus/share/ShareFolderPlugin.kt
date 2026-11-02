@@ -1,4 +1,4 @@
-package com.zhfahim.anchor.share
+package com.alxndrjhn.anchorplus.share
 
 import android.content.Context
 import io.flutter.embedding.engine.plugins.FlutterPlugin

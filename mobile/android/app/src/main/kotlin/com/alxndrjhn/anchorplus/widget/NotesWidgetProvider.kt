@@ -1,4 +1,4 @@
-package com.zhfahim.anchor.widget
+package com.alxndrjhn.anchorplus.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -8,8 +8,8 @@ import android.content.Intent
 import android.net.Uri
 import android.view.View
 import android.widget.RemoteViews
-import com.zhfahim.anchor.MainActivity
-import com.zhfahim.anchor.R
+import com.alxndrjhn.anchorplus.MainActivity
+import com.alxndrjhn.anchorplus.R
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
 import org.json.JSONObject
@@ -91,7 +91,7 @@ class NotesWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val URI_SCHEME = "anchorwidget"
-        const val EXTRA_NOTE_ID = "com.zhfahim.anchor.widget.EXTRA_NOTE_ID"
+        const val EXTRA_NOTE_ID = "com.alxndrjhn.anchorplus.widget.EXTRA_NOTE_ID"
         private const val LIST_TEMPLATE_REQUEST_CODE = 1
     }
 }
