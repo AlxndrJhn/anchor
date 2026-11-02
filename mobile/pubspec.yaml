@@ -179,6 +179,13 @@ flutter:
         - asset: assets/fonts/JetBrainsMono-BoldItalic.ttf
           weight: 700
           style: italic
+    # Greek, Cyrillic and Vietnamese for the families that lack them; cut down
+    # to those letters, see assets/fonts/README.md.
+    - family: Noto Sans
+      fonts:
+        - asset: assets/fonts/NotoSans-Variable.ttf
+        - asset: assets/fonts/NotoSans-Italic-Variable.ttf
+          style: italic
     # The fonts of the Neo-Brutalism and Lo-fi styles (Settings › Style).
     - family: Space Grotesk
       fonts:
