@@ -120,6 +120,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Debug mode: hold two fingers still for 3 s to film the app and its state, mark problems on a timeline and file them as a GitHub issue (see [mobile/README.md](mobile/README.md#debug-reports)) | | ✓ |
 | The server's version in Settings › About | ✓ | |
 | Back up the whole server with one command and restore it with another, onto a fresh or newer server (see [Backing Up the Server](#backing-up-the-server)) | ✓ | |
+| Install the server with one command on a small Linux server, such as a free tier one, with HTTPS for your domain or a free hostname (see [One-Line Install on a Small Server](#one-line-install-on-a-small-server)) | ✓ | |
 | Claude, and other apps that speak MCP, can search, read and write your notes through your server (see [Claude (MCP)](#claude-mcp)) | ✓ | |
 | **Fixes** | | |
 | Copying and saving the logs on Android ([#187](https://github.com/ZhFahim/anchor/issues/187), [#188](https://github.com/ZhFahim/anchor/issues/188)) | | ✓ |
@@ -232,6 +233,57 @@ schemes in `design/schemes/schemes.json`; the parsers are
 </div>
 
 ## Self Hosting With Docker
+
+### One-Line Install on a Small Server
+
+On a fresh Linux server, even the smallest free tier ones (Oracle Cloud's
+E2.1.Micro and Ampere A1, AWS t2/t3/t4g.micro, Google Cloud's e2-micro, a 1 GB
+VPS), one command, run over SSH, sets up everything:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3000 bash
+```
+
+With a domain whose DNS points at the server, Anchor gets HTTPS (a Let's
+Encrypt certificate, through Caddy) on ports 80 and 443:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=notes.example.com bash
+```
+
+Without a domain of your own, `DOMAIN=sslip.io` takes a free hostname that
+maps to the server's IP, such as `203-0-113-7.sslip.io` for `203.0.113.7`
+(from [sslip.io](https://sslip.io)), and gets HTTPS for it the same way:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=sslip.io bash
+```
+
+The script finds the IP again on every run, so if the server gets a new one,
+running it again moves Anchor to the new hostname (the apps then need the new
+address). `DOMAIN=nip.io` does the same with nip.io, should Let's Encrypt's
+limit for sslip.io be reached.
+
+It works on Ubuntu, Debian, Oracle Linux, Rocky, Alma, RHEL, Fedora and Amazon
+Linux, on amd64 and arm64. It installs Docker if it's missing, adds 2 GB of
+swap when the server has less than 2 GB of memory (and turns off search by
+what pictures show, whose model needs more), opens the port in the server's
+own firewall, and runs Anchor from `/opt/anchor` with a random database
+password. Sign up right away: the first account is the admin.
+
+Your cloud's firewall has to let the port in too (3000, or 80 and 443 with a
+domain or sslip.io): on Oracle Cloud an ingress rule in the subnet's security
+list, on AWS the instance's security group, on Google Cloud a VPC firewall
+rule. Or leave it closed and serve Anchor over HTTPS for free with a
+[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
+to `http://localhost:3000`.
+
+Running the same command again updates Anchor and keeps the notes and the
+domain. `PORT` is the port Anchor listens on without a domain, e.g.
+`PORT=8080`; `DOMAIN=` (empty) goes back to plain HTTP;
+`ANCHOR_TAG=fork-preview` follows the release candidates.
+Anchor's own settings (see the table below) go in `/opt/anchor/anchor.env`,
+followed by `docker compose up -d` in `/opt/anchor`.
 
 ### Option 1: Using Pre-built Image (Recommended)
 
