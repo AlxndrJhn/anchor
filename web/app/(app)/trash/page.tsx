@@ -33,6 +33,7 @@ import {
 import type { Note } from "@/features/notes/types";
 import { burnNoteCards } from "@/lib/destroy";
 import { eachLimited } from "@/lib/each";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { plural } from "@/lib/utils";
 
 const NO_NOTES: Note[] = [];
@@ -41,6 +42,7 @@ const timeLeft = (note: Note) =>
   `${plural(daysUntilDeletion(note), "day")} left`;
 
 export default function TrashPage() {
+  useDocumentTitle("Trash");
   const refresh = useRefreshNotes();
   const [pendingDelete, setPendingDelete] = React.useState<{
     ids: string[];

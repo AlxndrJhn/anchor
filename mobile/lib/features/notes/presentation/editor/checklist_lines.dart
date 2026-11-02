@@ -31,6 +31,25 @@ int checklistBlockEnd(List<ParsedLine> lines, int index, int rangeEnd) {
   return end;
 }
 
+/// The first lines of [index]'s item and of the other items at its level
+/// under the same parent, in order.
+List<int> checklistSiblingStarts(
+  List<ParsedLine> lines,
+  int index,
+  int groupStart,
+  int groupEnd,
+) {
+  final indent = lines[index].indent;
+  var first = index;
+  while (first > groupStart && lines[first - 1].indent >= indent) {
+    first--;
+  }
+  return [
+    for (var i = first; i <= groupEnd && lines[i].indent >= indent; i++)
+      if (lines[i].indent == indent) i,
+  ];
+}
+
 class ChecklistGap {
   /// The block drops before line [gap].
   final int gap;

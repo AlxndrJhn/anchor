@@ -4,6 +4,7 @@ import 'package:anchor/core/motion/page_transitions.dart';
 import 'package:anchor/core/network/connectivity_provider.dart';
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/page_bar.dart';
+import 'package:anchor/core/widgets/reveal.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/domain/note_attachment.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_bar.dart';
@@ -59,6 +60,28 @@ void main() {
       expect(tester.getTopLeft(find.byKey(const ValueKey('next'))).dx, 0);
     });
   }
+
+  testWidgets('with reduced motion, a revealed part opens at once', (
+    tester,
+  ) async {
+    reduceMotion(tester);
+    Widget reveal({required bool visible}) => MaterialApp(
+      home: Column(
+        children: [
+          Reveal(
+            visible: visible,
+            child: const SizedBox(key: ValueKey('part'), height: 120),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpWidget(reveal(visible: false));
+
+    await tester.pumpWidget(reveal(visible: true));
+    await tester.pump();
+
+    expect(tester.getSize(find.byType(Reveal)).height, 120);
+  });
 
   testWidgets('with reduced motion, a loading picture doesn’t shimmer', (
     tester,

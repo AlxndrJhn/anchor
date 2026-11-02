@@ -163,6 +163,7 @@ export function TagPicker({
           {shown.map((tag, i) => {
             const checked = state(tag.id);
             return (
+              // biome-ignore lint/a11y/useKeyWithClickEvents: the search field drives the list by aria-activedescendant
               <div
                 key={tag.id}
                 id={`${listId}-${i}`}
@@ -208,6 +209,7 @@ export function TagPicker({
             );
           })}
           {canCreate && (
+            // biome-ignore lint/a11y/useKeyWithClickEvents: the search field drives the list by aria-activedescendant
             <div
               id={`${listId}-${shown.length}`}
               role="option"

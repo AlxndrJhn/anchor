@@ -1,4 +1,5 @@
 import Delta from "quill-delta";
+import { buildChecklistStepMove } from "./quill-checklist";
 import {
   buildListIndentDelta,
   deltaToLines,
@@ -589,6 +590,46 @@ const leaveLastCodeLine: KeyHandler = function (range) {
   return false;
 };
 
+/** What a keyboard move of a checklist item tells the editor to announce. */
+export type ChecklistMoveDetail = { place: number; siblings: number };
+
+/**
+ * Alt+Shift+Up/Down: moves the checklist item at the caret, with its indented
+ * children, past its neighbour, as one undo step; the caret moves with it.
+ * The editor hears a `checklistmove` event to announce the new place.
+ */
+const moveChecklistItem = (step: -1 | 1): KeyHandler =>
+  function (range) {
+    const quill = this.quill;
+    const [, offset] = quill.getLine(range.index);
+    const lines = deltaToLines(quill.getContents().ops);
+    let lineIndex = 0;
+    for (let at = 0; lineIndex < lines.length; lineIndex++) {
+      const next = at + getLineLength(lines[lineIndex]);
+      if (range.index - offset < next) break;
+      at = next;
+    }
+    const list = lines[lineIndex]?.newlineOp.attributes?.list;
+    if (list !== LIST_FORMATS.CHECKED && list !== LIST_FORMATS.UNCHECKED)
+      return true;
+    const move = buildChecklistStepMove(quill.getContents(), lineIndex, step);
+    // Already first or last: nothing moves, and the keys do nothing else.
+    if (!move) return false;
+    const restoreCaret = setUndoCaret(quill, range.index);
+    quill.history.cutoff();
+    quill.updateContents(move.delta, "user");
+    quill.history.cutoff();
+    quill.setSelection(range.index - move.from + move.to, range.length, "api");
+    restoreCaret();
+    quill.root.dispatchEvent(
+      new CustomEvent<ChecklistMoveDetail>("checklistmove", {
+        bubbles: true,
+        detail: { place: move.place, siblings: move.siblings },
+      }),
+    );
+    return false;
+  };
+
 /**
  * The bindings named `indent` and `outdent` replace Quill's own, so Tab and
  * Shift+Tab use the clamped indent.
@@ -806,6 +847,20 @@ export const QUILL_MODULES = {
           );
           return false;
         },
+      },
+      "move item up": {
+        key: "ArrowUp",
+        altKey: true,
+        shiftKey: true,
+        format: ["list"],
+        handler: moveChecklistItem(-1),
+      },
+      "move item down": {
+        key: "ArrowDown",
+        altKey: true,
+        shiftKey: true,
+        format: ["list"],
+        handler: moveChecklistItem(1),
       },
       outdent: {
         key: "Tab",

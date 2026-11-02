@@ -12,6 +12,7 @@ import '../theme/tokens/anchor_tokens.dart';
 import 'app_buttons.dart';
 import 'balanced_text.dart';
 import 'button_row.dart';
+import 'expanded_hit_area.dart';
 import 'grouped_list.dart';
 
 enum SheetDetent { fit, medium, large }
@@ -250,6 +251,7 @@ class _SheetFrameState extends State<_SheetFrame> {
                     onStart: _dragStart,
                     onUpdate: _dragUpdate,
                     onEnd: _dragEnd,
+                    onClose: () => Navigator.of(context).maybePop(),
                   ),
                   Flexible(
                     fit: height == null ? FlexFit.loose : FlexFit.tight,
@@ -286,6 +288,9 @@ class _SheetFrameState extends State<_SheetFrame> {
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).maybePop(),
                   behavior: HitTestBehavior.opaque,
+                  // Screen readers close the sheet from its handle instead
+                  // of an unnamed area around it.
+                  excludeFromSemantics: true,
                   child: ColoredBox(
                     color: colors.appOverlay.withValues(
                       alpha: colors.appOverlay.a * progress,
@@ -341,31 +346,56 @@ class _Handle extends StatelessWidget {
     required this.onStart,
     required this.onUpdate,
     required this.onEnd,
+    required this.onClose,
   });
 
   final VoidCallback onStart;
   final ValueChanged<double> onUpdate;
   final ValueChanged<double> onEnd;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final cupertino = context.isCupertino;
+    final target = MinTapTarget.sizeOf(context);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onVerticalDragStart: (_) => onStart(),
       onVerticalDragUpdate: (d) => onUpdate(d.delta.dy),
       onVerticalDragEnd: (d) => onEnd(d.velocity.pixelsPerSecond.dy),
+      excludeFromSemantics: true,
       child: SizedBox(
         height: cupertino ? 20 : 26, // off-scale: each platform's handle
-        child: Center(
-          child: Container(
-            width: cupertino ? 36 : 32, // off-scale: as above
-            height: cupertino ? 5 : 4, // off-scale: as above
-            decoration: BoxDecoration(
-              color: context.anchor.appMuted.withValues(alpha: 0.38),
-              borderRadius: BorderRadius.circular(AnchorTokens.radiusPill),
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: [
+            Center(
+              child: Container(
+                width: cupertino ? 36 : 32, // off-scale: as above
+                height: cupertino ? 5 : 4, // off-scale: as above
+                decoration: BoxDecoration(
+                  color: context.anchor.appMuted.withValues(alpha: 0.38),
+                  borderRadius: BorderRadius.circular(AnchorTokens.radiusPill),
+                ),
+              ),
             ),
-          ),
+            // As on Material's sheets, screen readers close the sheet from
+            // its handle, which also covers a sheet without Done. The
+            // target reaches into the header, for screen readers only.
+            Positioned(
+              top: 0,
+              width: target,
+              height: target,
+              child: Semantics(
+                container: true,
+                button: true,
+                label: context.l10n.commonClose,
+                onTap: onClose,
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -453,22 +483,22 @@ class SheetHeader extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Taller with large text, rather than holding the title back.
           SizedBox(
-            height: AnchorTokens.sizeControlMedium,
+            height: math.max(
+              AnchorTokens.sizeControlMedium,
+              MediaQuery.textScalerOf(context).scale(titleStyle.fontSize!) *
+                  titleStyle.height!,
+            ),
             child: NavigationToolbar(
               middleSpacing: 12,
-              middle: MediaQuery.withClampedTextScaling(
-                maxScaleFactor:
-                    AnchorTokens.sizeControlMedium /
-                    (titleStyle.fontSize! * titleStyle.height!),
-                child: Semantics(
-                  header: true,
-                  child: DefaultTextStyle.merge(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: titleStyle,
-                    child: titleChild ?? Text(title),
-                  ),
+              middle: Semantics(
+                header: true,
+                child: DefaultTextStyle.merge(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStyle,
+                  child: titleChild ?? Text(title),
                 ),
               ),
               trailing: done,

@@ -5,12 +5,18 @@ import 'package:anchor/core/widgets/anchor_sheet.dart';
 import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/pill.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_attachment.dart';
+import 'package:anchor/features/notes/presentation/widgets/attachment_tile.dart';
+import 'package:anchor/features/notes/presentation/widgets/audio_card.dart';
 import 'package:anchor/features/notes/presentation/widgets/card_body.dart';
+import 'package:anchor/features/notes/presentation/widgets/file_card.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_chips.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_surface.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Text drawn in a box shorter than the text, so its tops or bottoms are cut.
@@ -129,5 +135,59 @@ void main() {
     expect(find.text('Undo'), findsOneWidget);
     expect(clippedTexts(tester), isEmpty);
     await tester.pump(const Duration(seconds: 11));
+  });
+
+  testWidgets('a recording and a file grow with large text', (tester) async {
+    // No audio engine in tests: the player's calls just succeed.
+    const audio = MethodChannel('com.ryanheise.just_audio.methods');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(audio, (_) async => <String, Object>{});
+    addTearDown(() => messenger.setMockMethodCallHandler(audio, null));
+    NoteAttachment attached(String name, AttachmentType type) => NoteAttachment(
+      id: name,
+      noteId: 'n1',
+      type: type,
+      originalFilename: name,
+      mimeType: 'application/octet-stream',
+      fileSize: 2048,
+    );
+
+    await pumpAt2x(
+      tester,
+      (context) => ProviderScope(
+        child: Column(
+          children: [
+            AudioCard(
+              attachment: attached('memo.m4a', AttachmentType.audio),
+              appearance: NoteAppearance.of(context, null),
+              onDelete: null,
+            ),
+            FileCard(
+              attachment: attached('plan.pdf', AttachmentType.file),
+              appearance: NoteAppearance.of(context, null),
+              onDelete: null,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(AttachmentTile).first).height,
+      greaterThan(AttachmentTile.height),
+    );
+    expect(
+      tester
+          .renderObject<RenderParagraph>(
+            find.descendant(
+              of: find.text('plan.pdf'),
+              matching: find.byType(RichText),
+            ),
+          )
+          .textScaler
+          .scale(10),
+      20,
+    );
+    expect(clippedTexts(tester), isEmpty);
   });
 }

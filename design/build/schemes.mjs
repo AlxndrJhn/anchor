@@ -37,6 +37,46 @@ for (const scheme of [
       if (!/^#[0-9A-Fa-f]{6}$/.test(scheme[mode]?.[field] ?? ""))
         throw new Error(`${scheme.id}.${mode}.${field} must be #RRGGBB`);
 
+/** WCAG 2 contrast ratio between two #RRGGBB colours. */
+const contrast = (a, b) => {
+  const luminance = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => {
+      const c = Number.parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+// Text needs 4.5:1 (WCAG 1.4.3) on every surface it's drawn on, and a
+// field's border 3:1 (WCAG 1.4.11) on the surfaces fields sit on.
+const CONTRAST = [
+  {
+    fields: ["foreground", "mutedForeground", "accentInk", "destructive"],
+    surfaces: ["background", "card", "sidebar", "muted"],
+    min: 4.5,
+  },
+  { fields: ["input"], surfaces: ["background", "card"], min: 3 },
+];
+const lowContrast = [];
+for (const scheme of [...source.schemes, { id: "lofi", ...source.lofi }])
+  for (const mode of ["light", "dark"])
+    for (const { fields, surfaces, min } of CONTRAST)
+      for (const field of fields)
+        for (const surface of surfaces) {
+          const ratio = contrast(scheme[mode][field], scheme[mode][surface]);
+          if (ratio < min)
+            lowContrast.push(
+              `${scheme.id}.${mode}: ${field} on ${surface} is ${ratio.toFixed(2)}:1, needs ${min}:1`,
+            );
+        }
+if (lowContrast.length) {
+  console.error(`Contrast too low:\n  ${lowContrast.join("\n  ")}`);
+  process.exit(1);
+}
+
 /** Which palette field each of the web's colour variables takes. */
 const CSS_VARS = {
   background: "background",

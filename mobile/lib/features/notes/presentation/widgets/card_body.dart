@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../../core/widgets/expanded_hit_area.dart';
 import '../../../../core/widgets/highlighted_text.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/note_blocks.dart';
@@ -35,22 +36,8 @@ class CardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final all = parseNoteBlocks(content);
-    final lineOf = Map<NoteBlock, int>.identity();
-    for (var i = 0; i < all.length; i++) {
-      lineOf[all[i]] = i;
-    }
-    final blocks = all.where((b) => !b.isEmpty).toList();
-    if (blocks.isEmpty) return const SizedBox.shrink();
-    final lines = foldCheckedItems(blocks);
-    final density = context.density;
-    final cap = switch (layout) {
-      CardLayout.list => density.previewList,
-      CardLayout.grid => density.previewGrid,
-      CardLayout.masonry => density.previewMasonry,
-    };
-    final isTruncated = lines.length > cap;
-    final shown = lines.take(cap).toList();
+    final (:lineOf, :shown, :isTruncated) = _preview(context, content, layout);
+    if (shown.isEmpty) return const SizedBox.shrink();
     final numbers = orderedMarkers(shown.map((l) => l.block).toList());
     final colors = context.anchor;
     final base = context.noteTypography.cardBody
@@ -108,7 +95,7 @@ class CardBody extends StatelessWidget {
     final column = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      spacing: 3, // off-scale: card lines
+      spacing: _lineGap,
       children: rows,
     );
     // A done count ends the preview at full strength, not faded.
@@ -129,6 +116,48 @@ class CardBody extends StatelessWidget {
       child: column,
     );
   }
+}
+
+/// The lines a card shows of [content], each block with its line in the
+/// note.
+({Map<NoteBlock, int> lineOf, List<CardLine> shown, bool isTruncated}) _preview(
+  BuildContext context,
+  String? content,
+  CardLayout layout,
+) {
+  final all = parseNoteBlocks(content);
+  final lineOf = Map<NoteBlock, int>.identity();
+  for (var i = 0; i < all.length; i++) {
+    lineOf[all[i]] = i;
+  }
+  final blocks = all.where((b) => !b.isEmpty).toList();
+  final lines = foldCheckedItems(blocks);
+  final density = context.density;
+  final cap = switch (layout) {
+    CardLayout.list => density.previewList,
+    CardLayout.grid => density.previewGrid,
+    CardLayout.masonry => density.previewMasonry,
+  };
+  return (
+    lineOf: lineOf,
+    shown: lines.take(cap).toList(),
+    isTruncated: lines.length > cap,
+  );
+}
+
+/// The checklist items a card shows, which can be ticked from it: each
+/// one's line in the note, its text and whether it's ticked.
+List<({int line, String text, bool done})> cardChecklistItems(
+  BuildContext context,
+  String? content,
+  CardLayout layout,
+) {
+  final (:lineOf, :shown, isTruncated: _) = _preview(context, content, layout);
+  return [
+    for (final line in shown)
+      if (line.block case final block? when block.type == BlockType.check)
+        (line: lineOf[block]!, text: block.text, done: block.done),
+  ];
 }
 
 class _CardLine extends StatelessWidget {
@@ -244,32 +273,24 @@ class _CardLine extends StatelessWidget {
         );
         final indent = block.level * AnchorTokens.sizeListIndentCard;
         final scaler = MediaQuery.textScalerOf(context);
-        Widget leading = SizedBox(
-          width: scaler.scale(21), // off-scale: card checkbox
-          height: scaler.scale(13) * 1.5, // off-scale: card checkbox
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: _ListMarker(
-              block: block,
-              marker: marker,
-              appearance: appearance,
-            ),
-          ),
-        );
-        if (onToggle case final toggle?) {
-          // Ticked straight from the card, without opening the note.
-          leading = GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: toggle,
-            child: leading,
-          );
-        }
-        return Padding(
+        final boxWidth = scaler.scale(21); // off-scale: card checkbox
+        final line = Padding(
           padding: EdgeInsets.only(left: indent),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              leading,
+              SizedBox(
+                width: boxWidth,
+                height: scaler.scale(13) * 1.5, // off-scale: card checkbox
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _ListMarker(
+                    block: block,
+                    marker: marker,
+                    appearance: appearance,
+                  ),
+                ),
+              ),
               Expanded(
                 child: HighlightedText(
                   span: span,
@@ -281,9 +302,38 @@ class _CardLine extends StatelessWidget {
             ],
           ),
         );
+        final toggle = onToggle;
+        if (toggle == null) return line;
+        // Ticked straight from the card, without opening the note. The box
+        // takes taps over the start of its text and in the gaps above and
+        // below its line, ahead of the text.
+        return ExpandedHitArea(
+          padding: const EdgeInsets.symmetric(vertical: _lineGap),
+          child: Stack(
+            children: [
+              line,
+              Positioned(
+                left: indent,
+                top: 0,
+                bottom: 0,
+                width: boxWidth + _checkboxReach,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: toggle,
+                ),
+              ),
+            ],
+          ),
+        );
     }
   }
 }
+
+/// Between a card's lines.
+const double _lineGap = 3; // off-scale: card lines
+
+/// How far past a card's checkbox it still takes a tap.
+const double _checkboxReach = 11; // off-scale: to 32 wide
 
 /// The checkboxes on cards: a fifth larger than the token, so they are
 /// easier to hit when ticking an item from the list; they still fit the

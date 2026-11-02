@@ -52,8 +52,10 @@ import { isLockHidden, useUnlockedNotes } from "@/features/notes/note-lock";
 import { sendNote } from "@/features/notes/note-text";
 import { parseStoredContent } from "@/features/notes/quill";
 import { checkboxesAction } from "@/features/notes/quill-checklist";
+import { hasTitle } from "@/features/notes/title";
 import { createTag, nextTagColor, type Tag, useTags } from "@/features/tags";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
+import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import {
   hasOverlay,
   isTypingTarget,
@@ -239,6 +241,15 @@ function NoteEditor({
   const canEditNote =
     !isNew && !trashedNote && (!editor.isReadOnly || editor.isFrozen);
   const canTrash = !isNew && !trashedNote && !(editor.isFrozen && isOwner);
+  useDocumentTitle(
+    hasTitle(editor.title)
+      ? editor.title.trim()
+      : isNew
+        ? "New note"
+        : isLoading
+          ? "Note"
+          : "Untitled",
+  );
   // Google Keep's keys while no text field has focus.
   useShortcuts(
     lockedOut

@@ -542,7 +542,7 @@ struct AnchorColors {
         checkMark: Color(.sRGB, red: 1, green: 1, blue: 1, opacity: 1),
         statusDanger: Color(.sRGB, red: 0.7529, green: 0.2235, blue: 0.1686, opacity: 1),
         statusLate: Color(.sRGB, red: 0.651, green: 0.1176, blue: 0.0784, opacity: 1),
-        statusAdded: Color(.sRGB, red: 0.1216, green: 0.6157, blue: 0.3333, opacity: 1),
+        statusAdded: Color(.sRGB, red: 0.1137, green: 0.5843, blue: 0.3176, opacity: 1),
         statusRemoved: Color(.sRGB, red: 0.8157, green: 0.2275, blue: 0.3098, opacity: 1),
         statusAddedInk: Color(.sRGB, red: 0.0863, green: 0.4353, blue: 0.2667, opacity: 1),
         statusRemovedInk: Color(.sRGB, red: 0.6902, green: 0.1333, blue: 0.2157, opacity: 1),

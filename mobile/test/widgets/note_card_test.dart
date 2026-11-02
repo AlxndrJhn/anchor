@@ -18,6 +18,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../semantics_helpers.dart';
+
 void main() {
   Note noteWith(NoteReminder? reminder) => Note(
     id: 'n1',
@@ -278,6 +280,94 @@ void main() {
     await tester.tap(find.text('Milk'));
     await tester.pumpAndSettle();
     expect(taps, 1);
+  });
+
+  group('screen readers', () {
+    const content =
+        '{"ops":[{"insert":"Eggs"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"\\n"},{"insert":"Milk"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
+    const note = Note(
+      id: 'n1',
+      title: 'Shopping',
+      content: content,
+      imagePreviewData: [
+        NoteImagePreview(attachmentId: 'a1', noteId: 'n1', filename: 'a.jpg'),
+      ],
+    );
+
+    testWidgets("tick a card's items and open its pictures from the card", (
+      tester,
+    ) async {
+      final toggled = <(int, String)>[];
+      final opened = <String>[];
+      await pumpCard(
+        tester,
+        note,
+        200,
+        picture: () => null,
+        onOpenPicture: opened.add,
+        onToggleItem: (line, text) => toggled.add((line, text)),
+      );
+      final card = find.byType(NoteCard);
+      // The card still reads as one.
+      expect(tester.getSemantics(card).label, startsWith('Shopping'));
+      expect(
+        customActionsOf(tester, card),
+        unorderedEquals(['Tick Eggs', 'Tick Milk', 'Open picture 1']),
+      );
+
+      performCustomAction(tester, card, 'Tick Milk');
+      performCustomAction(tester, card, 'Open picture 1');
+
+      expect(toggled, [(2, 'Milk')]);
+      expect(opened, ['a1']);
+    });
+
+    testWidgets('while selecting, a card offers neither', (tester) async {
+      await pumpCard(
+        tester,
+        note,
+        200,
+        isSelecting: true,
+        picture: () => null,
+        onOpenPicture: (_) {},
+        onToggleItem: (_, _) {},
+      );
+
+      expect(customActionsOf(tester, find.byType(NoteCard)), isEmpty);
+      await tester.pumpAndSettle();
+    });
+  });
+
+  testWidgets('a card checkbox takes taps around it, ahead of its text', (
+    tester,
+  ) async {
+    final toggled = <(int, String)>[];
+    const content =
+        '{"ops":[{"insert":"Eggs"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"Milk"},{"insert":"\\n","attributes":{"list":"unchecked"}}]}';
+    await pumpCard(
+      tester,
+      const Note(id: 'n1', title: 'Shopping', content: content),
+      200,
+      onToggleItem: (line, text) => toggled.add((line, text)),
+    );
+
+    final milk = tester.getTopLeft(find.text('Milk'));
+    // Over the start of its text, and in the gap above its line.
+    await tester.tapAt(milk + const Offset(6, 10));
+    await tester.tapAt(milk + const Offset(-8, -2));
+    await tester.pumpAndSettle();
+
+    expect(toggled, [(1, 'Milk'), (1, 'Milk')]);
+  });
+
+  testWidgets('a card meets the tap target and contrast guidelines', (
+    tester,
+  ) async {
+    await pumpCard(tester, noteWith(null), 200, onTap: () {});
+
+    await expectAccessibleScreen(tester);
   });
 
   testWidgets('no reminder still lays out', (tester) async {

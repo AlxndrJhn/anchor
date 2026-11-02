@@ -7,12 +7,14 @@ import { Toaster } from "@/components/ui/toast";
 import { usePreferencesStore } from "@/features/preferences";
 import { useOnlineStatus, useSync, useWarnWhenUnsaved } from "@/features/sync";
 import { useTrackPageChanges } from "@/lib/app-history";
+import { singleKeyAllowed } from "@/lib/hooks/use-shortcuts";
 import { findNewNoteButton, rememberNewNoteButton } from "@/lib/morph";
 import { hasShortcutKey } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { PageTransition } from "./page-transition";
 import { useShellStore } from "./shell-store";
 import { newNoteHref, Sidebar } from "./sidebar";
+import { MAIN_ID, SkipLink } from "./skip-link";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   useSync();
@@ -68,7 +70,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         !mod &&
         !e.altKey &&
         e.key.toLowerCase() === "n" &&
-        !inDialog
+        !inDialog &&
+        singleKeyAllowed(e.key)
       ) {
         e.preventDefault();
         rememberNewNoteButton(findNewNoteButton());
@@ -87,6 +90,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       data-slot="app-shell"
       className="flex h-dvh overflow-hidden bg-background text-foreground"
     >
+      <SkipLink />
       <div className="hidden min-h-0 lg:flex">
         <Sidebar
           folded={folded}
@@ -123,7 +127,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
       </DialogPrimitive.Root>
-      <main className="relative flex min-w-0 flex-1 flex-col">
+      <main
+        id={MAIN_ID}
+        tabIndex={-1}
+        className="relative flex min-w-0 flex-1 flex-col outline-none"
+      >
         <PageTransition>{children}</PageTransition>
         <Toaster className={cn(barShown && "bottom-20")} />
       </main>

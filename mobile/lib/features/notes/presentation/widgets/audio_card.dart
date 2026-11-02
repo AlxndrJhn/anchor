@@ -229,8 +229,9 @@ class _AudioCardState extends ConsumerState<AudioCard> {
         : _length == Duration.zero
         ? ''
         : '${durationLabel(_at)} / ${durationLabel(_length)}';
-    final tile = AttachmentTile(
+    return AttachmentTile(
       width: 210, // off-scale: a voice note's tile
+      growsWithText: true,
       appearance: appearance,
       deleteLabel: l10n.commonDeleteItem(name),
       onDelete: widget.onDelete,
@@ -302,6 +303,10 @@ class _AudioCardState extends ConsumerState<AudioCard> {
                       progress: progress,
                       appearance: appearance,
                       label: l10n.voicePosition(name),
+                      step: _length == Duration.zero
+                          ? 0.1
+                          : (_seekStep.inMilliseconds / _length.inMilliseconds)
+                                .clamp(0.0, 1.0),
                       onSeek: _length == Duration.zero
                           ? null
                           : (f) => _player.seek(_length * f),
@@ -326,27 +331,11 @@ class _AudioCardState extends ConsumerState<AudioCard> {
         ),
       ),
     );
-    return MediaQuery.withClampedTextScaling(
-      maxScaleFactor: _textScaleThatFits(nameStyle, lineStyle),
-      child: tile,
-    );
   }
 }
 
-double _textScaleThatFits(TextStyle name, TextStyle line) {
-  double heightOf(TextStyle style) {
-    final painter = TextPainter(
-      text: TextSpan(text: 'Hg', style: style),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final height = painter.height;
-    painter.dispose();
-    return height;
-  }
-
-  const room = AttachmentTile.height - 12 * 2 - _SeekBar.height;
-  return room / (heightOf(name) + heightOf(line));
-}
+/// How far a screen reader moves through a recording at a time.
+const Duration _seekStep = Duration(seconds: 5);
 
 class _RetryUpload extends StatelessWidget {
   const _RetryUpload({required this.name, required this.onRetry});
@@ -385,6 +374,7 @@ class _SeekBar extends StatelessWidget {
     required this.progress,
     required this.appearance,
     required this.label,
+    required this.step,
     required this.onSeek,
   });
 
@@ -393,6 +383,9 @@ class _SeekBar extends StatelessWidget {
   final double progress;
   final NoteAppearance appearance;
   final String label;
+
+  /// A screen reader's step, as a share of the whole.
+  final double step;
   final ValueChanged<double>? onSeek;
 
   @override
@@ -402,12 +395,20 @@ class _SeekBar extends StatelessWidget {
       builder: (context, box) {
         void seekAt(double x) =>
             onSeek?.call((x / box.maxWidth).clamp(0.0, 1.0));
+        final percent = NumberFormat.percentPattern(context.l10n.localeName);
+        final seek = onSeek;
+        final later = (progress + step).clamp(0.0, 1.0);
+        final earlier = (progress - step).clamp(0.0, 1.0);
+        final canForward = seek != null && progress < 1;
+        final canBack = seek != null && progress > 0;
         return Semantics(
           slider: true,
           label: label,
-          value: NumberFormat.percentPattern(
-            context.l10n.localeName,
-          ).format(progress),
+          value: percent.format(progress),
+          increasedValue: canForward ? percent.format(later) : null,
+          decreasedValue: canBack ? percent.format(earlier) : null,
+          onIncrease: canForward ? () => seek(later) : null,
+          onDecrease: canBack ? () => seek(earlier) : null,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapDown: (d) => seekAt(d.localPosition.dx),

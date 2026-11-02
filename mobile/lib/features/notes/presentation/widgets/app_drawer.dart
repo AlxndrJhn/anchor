@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show listEquals, setEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:lucide_icons_flutter/lucide_icons_600.dart';
@@ -13,7 +14,9 @@ import '../../../../core/widgets/anchor_logo.dart';
 import '../../../../core/widgets/anchor_plus_mark.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/cap_height_text.dart';
+import '../../../../core/widgets/expanded_hit_area.dart';
 import '../../../../core/widgets/grouped_list.dart';
+import '../../../../core/widgets/move_actions.dart';
 import '../../../../core/widgets/person_avatar.dart';
 import '../../../../core/widgets/pressable.dart';
 import '../../../../l10n/l10n.dart';
@@ -106,6 +109,13 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
         tags = inIdOrder(tags, dropped);
       }
     }
+    // Dragged by the grip, or moved by its screen reader actions.
+    void moveTag(int oldIndex, int newIndex) {
+      final ids = movedTagIds(tags, oldIndex, newIndex);
+      setState(() => _droppedOrder = ids);
+      ref.read(tagsRepositoryProvider).reorderTags(ids);
+    }
+
     final notes = ref.watch(allActiveNotesProvider).value ?? const <Note>[];
     final counts = ref.watch(tagNoteCountsProvider);
     final current = folder == NoteFolder.notes
@@ -203,14 +213,16 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                         ReorderableList(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.zero,
+                          // Room for the rows' targets, which reach past
+                          // them; the heading above gives it back.
+                          padding: const EdgeInsets.symmetric(
+                            vertical: _Item.targetReach,
+                          ),
                           itemCount: tags.length,
                           onReorderStart: (_) => Haptics.medium(),
                           onReorderItem: (oldIndex, newIndex) {
                             Haptics.selection();
-                            final ids = movedTagIds(tags, oldIndex, newIndex);
-                            setState(() => _droppedOrder = ids);
-                            ref.read(tagsRepositoryProvider).reorderTags(ids);
+                            moveTag(oldIndex, newIndex);
                           },
                           proxyDecorator: (child, index, animation) =>
                               _LiftedTag(animation: animation, child: child),
@@ -248,21 +260,39 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                                         Haptics.medium();
                                         showTagMenu(context, t);
                                       },
+                                      // VoiceOver has no hold.
+                                      semanticActions: {
+                                        CustomSemanticsAction(
+                                          label: context.l10n.tagOptions,
+                                        ): () =>
+                                            showTagMenu(context, t),
+                                      },
                                     ),
                                   ),
                                   ReorderableDragStartListener(
                                     index: index,
-                                    child: Semantics(
-                                      label: context.l10n.tagMove(t.name),
-                                      child: SizedBox(
-                                        width: 32,
-                                        height: AnchorTokens.sizeControlMedium,
-                                        child: Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Icon(
-                                            LucideIcons.gripVertical,
-                                            size: AnchorTokens.sizeIconSmall,
-                                            color: context.anchor.appMuted,
+                                    child: MinTapTarget(
+                                      child: Semantics(
+                                        label: context.l10n.tagMove(t.name),
+                                        customSemanticsActions:
+                                            indexMoveActions(
+                                              context,
+                                              index: index,
+                                              count: tags.length,
+                                              onMove: (to) =>
+                                                  moveTag(index, to),
+                                            ),
+                                        child: SizedBox(
+                                          width: 32,
+                                          height:
+                                              AnchorTokens.sizeControlMedium,
+                                          child: Align(
+                                            alignment: Alignment.centerRight,
+                                            child: Icon(
+                                              LucideIcons.gripVertical,
+                                              size: AnchorTokens.sizeIconSmall,
+                                              color: context.anchor.appMuted,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -307,7 +337,7 @@ class _TagsHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = context.density.space16;
     return SizedBox(
-      height: top + _addButtonSize + 4,
+      height: top + _addButtonSize + 4 - _Item.targetReach,
       child: Stack(
         children: [
           Positioned(
@@ -347,6 +377,7 @@ class _Item extends StatelessWidget {
     required this.isCurrent,
     required this.onTap,
     this.onLongPress,
+    this.semanticActions,
   });
 
   final IconData? icon;
@@ -356,49 +387,61 @@ class _Item extends StatelessWidget {
   final bool isCurrent;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final Map<CustomSemanticsAction, VoidCallback>? semanticActions;
+
+  /// How far a row's target reaches past it, into the gaps between rows.
+  static const double targetReach =
+      (kMinInteractiveDimension - AnchorTokens.sizeControlMedium) / 2;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
-    return Pressable(
-      style: PressStyle.row,
-      onTap: onTap,
-      onLongPress: onLongPress,
-      selected: isCurrent,
-      semanticLabel: count == null ? label : '$label, $count',
-      tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
-      child: SizedBox(
-        height: AnchorTokens.sizeControlMedium,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            children: [
-              leading ??
-                  Icon(
-                    icon,
-                    size: AnchorTokens.sizeIconMedium,
-                    color: isCurrent ? colors.accentStrong : colors.appMuted,
-                  ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.row.copyWith(
-                    fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                    color: colors.appText,
+    // The rows' gaps make up their full target.
+    return MinTapTarget(
+      child: Pressable(
+        style: PressStyle.row,
+        onTap: onTap,
+        onLongPress: onLongPress,
+        semanticActions: semanticActions,
+        selected: isCurrent,
+        semanticLabel: count == null ? label : '$label, $count',
+        tintRadius: context.appStyle.corners(AnchorTokens.radiusLg),
+        // Taller with large text.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AnchorTokens.sizeControlMedium,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                leading ??
+                    Icon(
+                      icon,
+                      size: AnchorTokens.sizeIconMedium,
+                      color: isCurrent ? colors.accentStrong : colors.appMuted,
+                    ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.row.copyWith(
+                      fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
+                      color: colors.appText,
+                    ),
                   ),
                 ),
-              ),
-              if (count != null)
-                Text(
-                  '$count',
-                  style: AppTypography.footnote.tabular.copyWith(
-                    color: colors.appMuted,
+                if (count != null)
+                  Text(
+                    '$count',
+                    style: AppTypography.footnote.tabular.copyWith(
+                      color: colors.appMuted,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

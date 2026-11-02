@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePreferencesStore } from "@/features/preferences";
 
 /** Something on screen that an Esc or a letter key belongs to first. */
 const OVERLAYS =
@@ -19,8 +20,20 @@ export function hasOverlay() {
 }
 
 /**
+ * Whether a letter, digit or symbol key alone may act; Settings can turn
+ * these off (WCAG 2.1.4). Keys like Esc always may.
+ */
+export function singleKeyAllowed(key: string) {
+  return (
+    key.length !== 1 ||
+    usePreferencesStore.getState().editor.singleKeyShortcuts !== false
+  );
+}
+
+/**
  * Single-key shortcuts like Google Keep's. `keys` maps `e.key` to an action;
- * they never fire while typing, with a modifier held, or under an overlay.
+ * they never fire while typing, with a modifier held, under an overlay, or,
+ * for character keys, with single-key shortcuts turned off in Settings.
  */
 export function useShortcuts(
   keys: Record<string, (e: KeyboardEvent) => void>,
@@ -39,6 +52,7 @@ export function useShortcuts(
       if (e.defaultPrevented || e.isComposing || overlayAtPress) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (isTypingTarget(e.target)) return;
+      if (!singleKeyAllowed(e.key)) return;
       const run = live.current[e.key];
       if (!run) return;
       e.preventDefault();

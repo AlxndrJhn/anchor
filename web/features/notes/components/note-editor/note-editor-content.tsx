@@ -261,6 +261,10 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
       }}
     >
       {props.readOnlyBar}
+      {/* The page's heading while the title is a field (WCAG 1.3.1). */}
+      {!props.readOnly && (
+        <h1 className="sr-only">{props.title.trim() || "Untitled"}</h1>
+      )}
       {props.readOnly ? (
         <h1 className="n-title">{props.title || "Untitled"}</h1>
       ) : clean ? (
@@ -354,6 +358,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
       )}
       {!clean && <TagRow {...props} withReminder />}
       {!clean && attachments}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: listens for keys meant for the text inside */}
       <div
         className={cn(
           "ed-body",

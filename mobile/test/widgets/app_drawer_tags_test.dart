@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../semantics_helpers.dart';
+
 class _MockTagsRepository extends Mock implements TagsRepository {}
 
 class _SignedIn extends AuthController {
@@ -136,6 +138,48 @@ void main() {
     await pumpDrawer(tester, named(['alpha']));
 
     expect(find.bySemanticsLabel('Move alpha'), findsOneWidget);
+  });
+
+  testWidgets('screen readers move a tag from its grip, without dragging', (
+    tester,
+  ) async {
+    // In order by name: none has been dragged yet.
+    await pumpDrawer(tester, named(['alpha', 'beta', 'delta', 'gamma']));
+    final grip = find.bySemanticsLabel('Move beta');
+    expect(
+      customActionsOf(tester, grip),
+      unorderedEquals(['Move up', 'Move down', 'Move to bottom']),
+    );
+
+    performCustomAction(tester, grip, 'Move to bottom');
+    await tester.pump();
+
+    verify(
+      () => repo.reorderTags(['alpha', 'delta', 'gamma', 'beta']),
+    ).called(1);
+  });
+
+  testWidgets("screen readers open a tag's options without holding it", (
+    tester,
+  ) async {
+    await pumpDrawer(tester, named(['alpha', 'beta']));
+
+    performCustomAction(
+      tester,
+      find.bySemanticsLabel('beta, 0'),
+      'Tag options',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('#beta'), findsOneWidget);
+  });
+
+  testWidgets('the drawer meets the tap target and contrast guidelines', (
+    tester,
+  ) async {
+    await pumpDrawer(tester, named(['alpha', 'beta']));
+
+    await expectAccessibleScreen(tester);
   });
 
   testWidgets('holding a tag name still opens its options', (tester) async {

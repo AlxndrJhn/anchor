@@ -688,7 +688,7 @@ class AnchorColors extends ThemeExtension<AnchorColors> {
     checkMark: Color(0xFFFFFFFF),
     statusDanger: Color(0xFFC0392B),
     statusLate: Color(0xFFA61E14),
-    statusAdded: Color(0xFF1F9D55),
+    statusAdded: Color(0xFF1D9551),
     statusRemoved: Color(0xFFD03A4F),
     statusAddedInk: Color(0xFF166F44),
     statusRemovedInk: Color(0xFFB02237),

@@ -47,7 +47,8 @@ const patrickHand = Patrick_Hand({
 });
 
 export const metadata: Metadata = {
-  title: "Anchor+",
+  // Pages name themselves first: "Settings · Anchor+" (lib/hooks/use-document-title).
+  title: { default: "Anchor+", template: "%s · Anchor+" },
   description: "Your thoughts, secured",
   other: {
     "apple-mobile-web-app-title": "Anchor+",

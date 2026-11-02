@@ -8,7 +8,9 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/app_buttons.dart';
 import '../../../core/widgets/app_snackbar.dart';
+import '../../../core/widgets/expanded_hit_area.dart';
 import '../../../core/widgets/grouped_list.dart';
+import '../../../core/widgets/move_actions.dart';
 import '../../../core/widgets/platform_switch.dart';
 import '../../../l10n/l10n.dart';
 import '../../notes/domain/quick_action.dart';
@@ -29,6 +31,13 @@ class QuickActionsSection extends ConsumerWidget {
     final isFull = bar.length >= QuickAction.max;
     final gap = SizedBox(height: Section.gapOf(context));
 
+    // Dragged by the grip, or moved by its screen reader actions.
+    void move(int from, int to) {
+      final actions = [...bar];
+      actions.insert(to, actions.removeAt(from));
+      controller.setQuickActions(actions);
+    }
+
     Widget tile(QuickAction action, int index) {
       final (:icon, :label) = action.iconAndLabel(l10n);
       final row = GroupedListTile(
@@ -48,12 +57,23 @@ class QuickActionsSection extends ConsumerWidget {
             ),
             ReorderableDragStartListener(
               index: index,
-              child: SizedBox.square(
-                dimension: AnchorTokens.sizeControlSmall,
-                child: Icon(
-                  LucideIcons.gripVertical,
-                  size: AnchorTokens.sizeIconMedium,
-                  color: context.anchor.appMuted,
+              child: MinTapTarget(
+                child: Semantics(
+                  label: l10n.settingsMoveAction(label),
+                  customSemanticsActions: indexMoveActions(
+                    context,
+                    index: index,
+                    count: bar.length,
+                    onMove: (to) => move(index, to),
+                  ),
+                  child: SizedBox.square(
+                    dimension: AnchorTokens.sizeControlSmall,
+                    child: Icon(
+                      LucideIcons.gripVertical,
+                      size: AnchorTokens.sizeIconMedium,
+                      color: context.anchor.appMuted,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -100,9 +120,7 @@ class QuickActionsSection extends ConsumerWidget {
                     ),
                     onReorderItem: (from, to) {
                       Haptics.selection();
-                      final actions = [...bar];
-                      actions.insert(to, actions.removeAt(from));
-                      controller.setQuickActions(actions);
+                      move(from, to);
                     },
                     children: [
                       for (final (index, action) in bar.indexed)

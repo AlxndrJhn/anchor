@@ -31,6 +31,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'semantics_helpers.dart';
+
 ThemeData _light(String scheme, [AppStyle style = AppStyle.standard]) =>
     AppTheme.light(
       DisplayDensity.standard,
@@ -362,10 +364,11 @@ void main() {
     expect(dark.sidebar, const Color(0xFF1D2021)); // bg0_h
     expect(dark.muted, const Color(0xFF504945)); // bg2
     expect(dark.foreground, const Color(0xFFEBDBB2)); // fg
-    expect(dark.mutedForeground, const Color(0xFFBDAE93)); // fg3
+    expect(dark.mutedForeground, const Color(0xFFD5C4A1)); // fg2
     expect(dark.accent, const Color(0xFFFE8019)); // bright orange
     expect(dark.accentInk, const Color(0xFFFABD2F)); // bright yellow
-    expect(dark.destructive, const Color(0xFFFB4934)); // bright red
+    // Bright red lightened to read on the muted grey at 4.5:1.
+    expect(dark.destructive, const Color(0xFFFDA196));
   });
 
   testWidgets('Lo-fi draws every note plain', (tester) async {
@@ -386,6 +389,57 @@ void main() {
     expect(yellow.palette, 'none');
     expect(yellow.colors.bg, lofiScheme.light.card);
     expect(plain.colors.bg, lofiScheme.light.card);
+  });
+
+  test('text and accents stay readable on every scheme', () {
+    final unreadable = <String>[];
+    void check(String where, Map<String, Color> inks, Map<String, Color> on) {
+      for (final ink in inks.entries) {
+        for (final ground in on.entries) {
+          final ratio = _contrast(ink.value, ground.value);
+          if (ratio < 4.5) {
+            unreadable.add(
+              '$where: ${ink.key} on ${ground.key} is '
+              '${ratio.toStringAsFixed(2)}:1',
+            );
+          }
+        }
+      }
+    }
+
+    for (final scheme in appSchemes) {
+      for (final (side, colors) in [
+        ('light', scheme.light),
+        ('dark', scheme.dark),
+      ]) {
+        check(
+          '${scheme.id} $side',
+          {
+            'foreground': colors.foreground,
+            'mutedForeground': colors.mutedForeground,
+            'accentInk': colors.accentInk,
+            'destructive': colors.destructive,
+          },
+          {'background': colors.background, 'card': colors.card},
+        );
+      }
+    }
+    for (final (side, colors) in [
+      ('light', AnchorColors.light),
+      ('dark', AnchorColors.dark),
+    ]) {
+      check(
+        'anchor $side',
+        {
+          'text': colors.appText,
+          'muted': colors.appMuted,
+          'accentInk': colors.accentInk,
+          'danger': colors.statusDanger,
+        },
+        {'page': colors.appPage, 'surface': colors.appSurface},
+      );
+    }
+    expect(unreadable, isEmpty, reason: unreadable.join('\n'));
   });
 
   group('Settings › Appearance', () {
@@ -426,6 +480,17 @@ void main() {
       await tester.pumpAndSettle();
       return container;
     }
+
+    testWidgets('Settings meets the tap target and contrast guidelines, '
+        'and its sections are headings', (tester) async {
+      await pumpSettings(tester);
+
+      expect(
+        tester.getSemantics(find.text('APPEARANCE')),
+        isSemantics(isHeader: true),
+      );
+      await expectAccessibleScreen(tester);
+    });
 
     Future<void> choose(WidgetTester tester, String row, String option) async {
       await tester.ensureVisible(find.text(row));

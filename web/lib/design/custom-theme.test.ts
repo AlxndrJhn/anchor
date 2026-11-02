@@ -195,12 +195,14 @@ describe("schemes", () => {
       sidebar: "#1D2021", // bg0_h
       muted: "#504945", // bg2
       foreground: "#EBDBB2", // fg
-      mutedForeground: "#BDAE93", // fg3
+      // fg2, gray and a lighter bright red: fg3, bg4 and bright red itself
+      // are too faint on bg1 and bg2 (WCAG 1.4.3, 1.4.11).
+      mutedForeground: "#D5C4A1", // fg2
       accent: "#FE8019", // bright orange
       accentInk: "#FABD2F", // bright yellow
       border: "#504945", // bg2
-      input: "#7C6F64", // bg4
-      destructive: "#FB4934", // bright red
+      input: "#928374", // gray
+      destructive: "#FDA196", // bright red, lightened
     });
   });
 });

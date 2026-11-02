@@ -34,8 +34,11 @@ class MediaPill extends StatelessWidget {
       child: AnimatedOpacity(
         opacity: enabled ? 1 : DisabledOpacity.button,
         duration: context.motion(AnchorTokens.motionDurationFade),
+        // Taller with large text.
         child: Container(
-          height: AnchorTokens.sizeControlMedium,
+          constraints: const BoxConstraints(
+            minHeight: AnchorTokens.sizeControlMedium,
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: isProminent

@@ -9,6 +9,7 @@ import '../../../../core/motion/springs.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/note_typography.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
+import '../../../../core/widgets/move_actions.dart';
 import '../../../../l10n/l10n.dart';
 import 'checklist_drag_controller.dart';
 import 'checklist_fold.dart';
@@ -125,6 +126,7 @@ Widget? buildListMarker(
     final label = text.length > 1 ? text.substring(0, text.length - 1) : '';
     final checked = config.value;
     final isJustChecked = wasJustChecked(line);
+    final moves = enabled ? _checklistMovesOf(line) : _noMoves;
     final tick = context.anchor.checkMark == context.anchor.appSurface
         ? palette.background
         : context.anchor.checkMark;
@@ -156,12 +158,14 @@ Widget? buildListMarker(
           muted,
           tick,
           isDragged,
+          moves,
         ),
         () => _CheckboxTarget(
           checked: checked,
           label: label,
           enabled: enabled,
           onToggle: () => onToggle(line, !checked),
+          moves: moves,
           drag: drag,
           line: line,
           child: Padding(
@@ -238,6 +242,42 @@ Widget? buildListMarker(
   );
 }
 
+/// How many items at [line]'s level, under the same parent, are shown
+/// above it and below it, counting to two: enough to tell which moves go
+/// somewhere. Quick, as it's worked out for each line as it's drawn.
+typedef _ChecklistMoves = ({int above, int below});
+
+const _ChecklistMoves _noMoves = (above: 0, below: 0);
+
+_ChecklistMoves _checklistMovesOf(Line line) {
+  final indent = line.style.attributes.indentLevel;
+  int count(Line? Function(Line) step) {
+    var count = 0;
+    for (
+      var other = step(line);
+      other != null && count < 2;
+      other = step(other)
+    ) {
+      final attributes = other.style.attributes;
+      if (!attributes.isChecklist || attributes.indentLevel < indent) break;
+      if (attributes.indentLevel == indent && !isFoldedLine(other)) count++;
+    }
+    return count;
+  }
+
+  return (above: count(_lineBefore), below: count((l) => l.nextLine));
+}
+
+Line? _lineBefore(Line line) {
+  final before =
+      line.previous ?? (line.parent is Block ? line.parent!.previous : null);
+  return switch (before) {
+    final Block block => block.last as Line?,
+    final Line other => other,
+    _ => null,
+  };
+}
+
 const double _draggedOpacity = 0.35;
 
 Color draggedColor(Color color) =>
@@ -249,6 +289,7 @@ class _CheckboxTarget extends StatelessWidget {
     required this.label,
     required this.enabled,
     required this.onToggle,
+    required this.moves,
     required this.drag,
     required this.line,
     required this.child,
@@ -258,17 +299,27 @@ class _CheckboxTarget extends StatelessWidget {
   final String label;
   final bool enabled;
   final VoidCallback onToggle;
+  final _ChecklistMoves moves;
   final ChecklistDragController drag;
   final Line line;
   final Widget child;
+
+  void _move(ChecklistMove move) => drag.move(line.documentOffset, move);
 
   @override
   Widget build(BuildContext context) => Semantics(
     checked: checked,
     enabled: enabled,
     label: label.isEmpty ? context.l10n.editorEmptyItem : label,
-    hint: enabled ? context.l10n.editorDragHint : null,
     onTap: enabled ? onToggle : null,
+    // Held and dragged otherwise.
+    customSemanticsActions: moveActions(
+      context,
+      up: moves.above > 0 ? () => _move(ChecklistMove.up) : null,
+      down: moves.below > 0 ? () => _move(ChecklistMove.down) : null,
+      top: moves.above > 1 ? () => _move(ChecklistMove.top) : null,
+      bottom: moves.below > 1 ? () => _move(ChecklistMove.bottom) : null,
+    ),
     child: RawGestureDetector(
       behavior: HitTestBehavior.opaque,
       excludeFromSemantics: true,
