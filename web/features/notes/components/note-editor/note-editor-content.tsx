@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   BellRing,
+  ChevronDown,
   ImagePlus,
   List,
   ListChecks,
@@ -130,6 +131,10 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
   const record =
     props.canUpload && canRecord ? () => setRecording(true) : undefined;
   const startersRoving = useRovingFocus<HTMLDivElement>();
+  const clean = usePreferencesStore((s) => s.editor.noteLayout === "clean");
+  const formattingOpen = usePreferencesStore(
+    (s) => !!s.editor.formattingOpen,
+  );
   const titleLine = useTitleLine(
     props.titleInputRef,
     props.contentEditorRef,
@@ -191,6 +196,39 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
       </div>
     );
 
+  const onTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              const stamp = stampFor(
+                e.nativeEvent,
+                usePreferencesStore.getState().editor,
+              );
+              if (stamp) {
+                e.preventDefault();
+                const input = e.currentTarget;
+                input.setRangeText(
+                  stamp,
+                  input.selectionStart ?? input.value.length,
+                  input.selectionEnd ?? input.value.length,
+                  "end",
+                );
+                props.onTitleChange(withoutLineBreaks(input.value));
+                return;
+              }
+              // Tab skips the tag row, attachments and toolbar on the way.
+              if (
+                e.key === "Tab" &&
+                !e.shiftKey &&
+                !e.altKey &&
+                !e.ctrlKey &&
+                !e.metaKey &&
+                !e.nativeEvent.isComposing
+              ) {
+                e.preventDefault();
+                props.contentEditorRef?.current?.setSelection(0, 0);
+                return;
+              }
+              titleLine.onKeyDown(e);
+            };
+
   return (
     <div
       ref={root}
@@ -208,43 +246,37 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
       {props.readOnlyBar}
       {props.readOnly ? (
         <h1 className="n-title">{props.title || "Untitled"}</h1>
+      ) : clean ? (
+        <div className="n-head">
+          <TitleField
+            ref={props.titleInputRef}
+            value={props.title}
+            onChange={(title) => props.onTitleChange(withoutLineBreaks(title))}
+            onKeyDown={onTitleKeyDown}
+            onPaste={titleLine.onPaste}
+          />
+          <Tip label={formattingOpen ? "Hide formatting" : "Show formatting"}>
+            <button
+              type="button"
+              className="fold-tb"
+              aria-label="Formatting"
+              aria-expanded={formattingOpen}
+              onClick={() =>
+                usePreferencesStore
+                  .getState()
+                  .setEditorPreference("formattingOpen", !formattingOpen)
+              }
+            >
+              <ChevronDown aria-hidden />
+            </button>
+          </Tip>
+        </div>
       ) : (
         <TitleField
           ref={props.titleInputRef}
           value={props.title}
           onChange={(title) => props.onTitleChange(withoutLineBreaks(title))}
-          onKeyDown={(e) => {
-            const stamp = stampFor(
-              e.nativeEvent,
-              usePreferencesStore.getState().editor,
-            );
-            if (stamp) {
-              e.preventDefault();
-              const input = e.currentTarget;
-              input.setRangeText(
-                stamp,
-                input.selectionStart ?? input.value.length,
-                input.selectionEnd ?? input.value.length,
-                "end",
-              );
-              props.onTitleChange(withoutLineBreaks(input.value));
-              return;
-            }
-            // Tab skips the tag row, attachments and toolbar on the way.
-            if (
-              e.key === "Tab" &&
-              !e.shiftKey &&
-              !e.altKey &&
-              !e.ctrlKey &&
-              !e.metaKey &&
-              !e.nativeEvent.isComposing
-            ) {
-              e.preventDefault();
-              props.contentEditorRef?.current?.setSelection(0, 0);
-              return;
-            }
-            titleLine.onKeyDown(e);
-          }}
+          onKeyDown={onTitleKeyDown}
           onPaste={titleLine.onPaste}
         />
       )}
@@ -298,7 +330,12 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           )}
         </div>
       )}
-      <TagRow {...props} />
+      {clean && props.reminder && props.canSetReminder && (
+        <div className="n-tags">
+          <ReminderChip {...props} />
+        </div>
+      )}
+      {!clean && <TagRow {...props} withReminder />}
       <AttachmentStrip
         ref={strip}
         noteId={props.noteId}
@@ -316,7 +353,11 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         }
       />
       <div
-        className={cn("ed-body", props.readOnly && "mt-4.5")}
+        className={cn(
+          "ed-body",
+          props.readOnly && "mt-4.5",
+          clean && !formattingOpen && "tb-folded",
+        )}
         onKeyDownCapture={(e) => {
           const typing =
             (e.key.length === 1 ||
@@ -378,6 +419,7 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           firstLine={titleLine.firstLine}
         />
       </div>
+      {clean && <TagRow {...props} withReminder={false} />}
       <NoteOutline root={root} />
       {recording && (
         <VoiceRecorder
@@ -592,19 +634,64 @@ function useFileDrop(
   return overNote;
 }
 
-function TagRow(props: NoteEditorContentProps) {
-  const roving = useRovingFocus<HTMLDivElement>();
-  const row = roving.ref;
-  const flip = useFlip(row, { pop: true });
-  const [reminderOpen, setReminderOpen] = React.useState(false);
-  const tags = sortTagsByName(
-    props.tagIds.flatMap((id) => props.allTags.find((t) => t.id === id) ?? []),
-  );
+/** The note's reminder, which opens the picker to change it. */
+function ReminderChip(props: NoteEditorContentProps) {
+  const [open, setOpen] = React.useState(false);
   const late = !!props.reminder && isReminderPast(props.reminder);
   const ringBell = useRingOnce(
     props.noteId ?? "new",
     late && props.canSetReminder,
   );
+  if (!props.reminder) return null;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <Tip label="Change the reminder">
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            data-flip="rem"
+            className={cn(
+              "inline-flex h-chip cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-pill border-0 pr-2 pl-2.25 font-medium text-chip max-md:h-7.5 [&_svg]:size-3",
+              late
+                ? "bg-[color-mix(in_srgb,var(--late)_var(--mix-late),var(--note-surface))] text-late"
+                : "bg-note-surface text-foreground shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--note-border)_55%,transparent)] hover:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--note-muted)_45%,transparent)] [&_svg]:text-note-muted",
+              ringBell && "[&_svg]:origin-[50%_15%] [&_svg]:animate-bell-ring",
+            )}
+          >
+            {late ? (
+              <BellRing aria-hidden />
+            ) : props.reminder.recurrence !== "none" ? (
+              <Repeat aria-hidden />
+            ) : (
+              <Bell aria-hidden />
+            )}
+            {late && <span className="sr-only">Late: </span>}
+            {reminderLabel(props.reminder)}
+          </button>
+        </PopoverTrigger>
+      </Tip>
+      <ReminderPopoverContent
+        align="start"
+        reminder={props.reminder}
+        onReminder={props.onReminder}
+        onClose={() => setOpen(false)}
+      />
+    </Popover>
+  );
+}
+
+function TagRow({
+  withReminder,
+  ...props
+}: NoteEditorContentProps & { withReminder: boolean }) {
+  const roving = useRovingFocus<HTMLDivElement>();
+  const row = roving.ref;
+  const flip = useFlip(row, { pop: true });
+  const tags = sortTagsByName(
+    props.tagIds.flatMap((id) => props.allTags.find((t) => t.id === id) ?? []),
+  );
+  const showReminder =
+    withReminder && !!props.reminder && props.canSetReminder;
   const tagsFailed = props.tagsLoadFailed && props.tagIds.length > 0;
   if (props.tagsLocked && !tags.length && !tagsFailed) return null;
 
@@ -659,42 +746,7 @@ function TagRow(props: NoteEditorContentProps) {
           />
         </span>
       ))}
-      {props.reminder && props.canSetReminder && (
-        <Popover open={reminderOpen} onOpenChange={setReminderOpen}>
-          <Tip label="Change the reminder">
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                data-flip="rem"
-                className={cn(
-                  "inline-flex h-chip cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-pill border-0 pr-2 pl-2.25 font-medium text-chip max-md:h-7.5 [&_svg]:size-3",
-                  late
-                    ? "bg-[color-mix(in_srgb,var(--late)_var(--mix-late),var(--note-surface))] text-late"
-                    : "bg-note-surface text-foreground shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--note-border)_55%,transparent)] hover:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--note-muted)_45%,transparent)] [&_svg]:text-note-muted",
-                  ringBell &&
-                    "[&_svg]:origin-[50%_15%] [&_svg]:animate-bell-ring",
-                )}
-              >
-                {late ? (
-                  <BellRing aria-hidden />
-                ) : props.reminder.recurrence !== "none" ? (
-                  <Repeat aria-hidden />
-                ) : (
-                  <Bell aria-hidden />
-                )}
-                {late && <span className="sr-only">Late: </span>}
-                {reminderLabel(props.reminder)}
-              </button>
-            </PopoverTrigger>
-          </Tip>
-          <ReminderPopoverContent
-            align="start"
-            reminder={props.reminder}
-            onReminder={props.onReminder}
-            onClose={() => setReminderOpen(false)}
-          />
-        </Popover>
-      )}
+      {showReminder && <ReminderChip {...props} />}
       {!props.tagsLocked && (
         <Popover>
           <PopoverTrigger asChild>

@@ -9,6 +9,9 @@ export type SortOrder = "asc" | "desc";
 
 export type AppStyle = "default" | "skeuomorphism" | "neo-brutalism" | "lofi";
 
+/** Clean puts the tags under the text and folds the formatting bar away. */
+export type NoteLayout = "default" | "clean";
+
 interface UIPreferences {
   sidebarCollapsed: boolean;
   /** A colour scheme id from lib/design/schemes, or "anchor". */
@@ -37,6 +40,10 @@ interface EditorPreferences {
   dateTimeShortcut?: Shortcut;
   /** How an inserted date reads; unset means "Oct 28th 2026". */
   dateFormat?: DateFormat;
+  /** Unset means the default layout. */
+  noteLayout?: NoteLayout;
+  /** The formatting bar, opened in the clean layout. */
+  formattingOpen?: boolean;
   foldedChecklistNoteIds: string[];
 }
 
