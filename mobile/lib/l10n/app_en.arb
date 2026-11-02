@@ -3611,6 +3611,10 @@
   "@toolRemoveHighlight": {
     "description": "Screen reader label of the toolbar button that removes the color mark from text."
   },
+  "toolClearFormatting": "Clear formatting",
+  "@toolClearFormatting": {
+    "description": "Screen reader label of the toolbar button that takes bold, italic, underline, strikethrough, highlight, color and font off the selected words."
+  },
   "toolRedo": "Redo",
   "@toolRedo": {
     "description": "Screen reader label of the toolbar button that repeats an undone change."

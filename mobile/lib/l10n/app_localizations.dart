@@ -4150,6 +4150,12 @@ abstract class AppLocalizations {
   /// **'Remove highlight'**
   String get toolRemoveHighlight;
 
+  /// Screen reader label of the toolbar button that takes bold, italic, underline, strikethrough, highlight, color and font off the selected words.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear formatting'**
+  String get toolClearFormatting;
+
   /// Screen reader label of the toolbar button that repeats an undone change.
   ///
   /// In en, this message translates to:

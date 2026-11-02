@@ -49,6 +49,16 @@ Map<String, dynamic> lineAttributesOf(LineKind kind) => {
   if (!kind.isList) Attribute.indent.key: null,
 };
 
+final _clearedFormats = [
+  Attribute.bold.key,
+  Attribute.italic.key,
+  Attribute.underline.key,
+  Attribute.strikeThrough.key,
+  highlightKey,
+  Attribute.color.key,
+  Attribute.font.key,
+];
+
 extension EditorFormat on QuillController {
   Style get _style => getSelectionStyle();
 
@@ -154,6 +164,22 @@ extension EditorFormat on QuillController {
   String? get highlight => _style.highlight;
 
   void setHighlight(String? name) => formatSelection(highlightAttribute(name));
+
+  /// Takes bold, italic, underline, strikethrough, the highlight, the text
+  /// color and the font off the selected words, in one undo step. Links stay.
+  void clearInlineFormats() {
+    final range = selection;
+    if (range.isCollapsed) return;
+    compose(
+      Delta()
+        ..retain(range.start)
+        ..retain(range.end - range.start, {
+          for (final key in _clearedFormats) key: null,
+        }),
+      range,
+      ChangeSource.local,
+    );
+  }
 
   /// [attribute] on the words in [range] (their style for what's typed next
   /// when it's empty).

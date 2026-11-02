@@ -2716,6 +2716,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolRemoveHighlight => 'Remove highlight';
 
   @override
+  String get toolClearFormatting => 'Clear formatting';
+
+  @override
   String get toolRedo => 'Redo';
 
   @override

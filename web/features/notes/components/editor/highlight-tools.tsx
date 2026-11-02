@@ -8,6 +8,7 @@ import {
   Eraser,
   Highlighter,
   Italic,
+  RemoveFormatting,
   Strikethrough,
   Underline,
 } from "lucide-react";
@@ -21,7 +22,9 @@ import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import {
+  clearTextFormats,
   getTextFormat,
+  hasTextFormats,
   isInCodeBlock,
   type QuillInstance,
   rememberConversion,
@@ -368,6 +371,7 @@ export function SelectionToolbar({
   const [place, setPlace] = React.useState<Place | null>(null);
   const [format, setFormat] = React.useState<Record<string, unknown>>({});
   const [canErase, setCanErase] = React.useState(false);
+  const [canClear, setCanClear] = React.useState(false);
   const isColorsMenuOpen = useColorsMenu((s) => s.isOpen);
   const roving = useRovingFocus<HTMLDivElement>();
   const bar = roving.ref;
@@ -415,6 +419,7 @@ export function SelectionToolbar({
       });
       setFormat(getTextFormat(quill, selection.index, selection.length));
       setCanErase(hasHighlight(quill, selection));
+      setCanClear(hasTextFormats(quill, selection));
     };
 
     const convertMarks = () => {
@@ -534,6 +539,7 @@ export function SelectionToolbar({
     fn(quill, selection);
     setFormat(getTextFormat(quill, selection.index, selection.length));
     setCanErase(hasHighlight(quill, selection));
+    setCanClear(hasTextFormats(quill, selection));
   };
 
   if (!place || isColorsMenuOpen) return null;
@@ -589,6 +595,17 @@ export function SelectionToolbar({
           onClick={() => canErase && run((quill) => removeHighlight(quill))}
         >
           <Eraser aria-hidden />
+        </button>
+      </Tip>
+      <Tip label="Clear formatting">
+        <button
+          type="button"
+          className="fb"
+          aria-label="Clear formatting"
+          aria-disabled={!canClear || undefined}
+          onClick={() => canClear && run(clearTextFormats)}
+        >
+          <RemoveFormatting aria-hidden />
         </button>
       </Tip>
     </div>

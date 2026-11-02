@@ -128,6 +128,7 @@ void main() {
         'strikethrough',
         'highlight',
         'link',
+        'clearFormatting',
         'space',
         'hideKeyboard',
       ]);
@@ -315,10 +316,19 @@ void main() {
     testWidgets('on a narrow phone the places shrink evenly, to 40', (
       tester,
     ) async {
+      await pumpBar(tester, modelOf(), width: 336);
+
+      expect(tester.getSize(tool('Text styles')).width, 40);
+      expect(tester.getTopRight(tool('Hide keyboard')).dx, 328);
+    });
+
+    testWidgets('nine tools shrink below 40 to fit a narrow phone', (
+      tester,
+    ) async {
       await pumpBar(tester, modelOf(hasWords: true), width: 336);
 
-      expect(tester.getSize(tool('Bold')).width, 40);
-      expect(tester.getTopRight(tool('Hide keyboard')).dx, 328);
+      expect(tester.getSize(tool('Bold')).width, closeTo(320 / 9, 0.01));
+      expect(tester.getTopRight(tool('Hide keyboard')).dx, closeTo(328, 0.01));
     });
 
     testWidgets('Aa adds the line styles above, the caret line on a chip', (

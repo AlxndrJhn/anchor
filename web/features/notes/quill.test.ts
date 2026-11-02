@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { fakeQuill } from "./fixtures/fake-quill";
 import {
   capPastedHeading,
+  clearTextFormats,
   findTickedLines,
+  hasTextFormats,
   orderedPreviewMarker,
   type QuillDelta,
   type QuillOp,
@@ -205,5 +207,52 @@ describe("undoConversion", () => {
     moved.quill.setSelection(1, 0);
     expect(undoConversion(moved.quill)).toBe(false);
     expect(fake.undoCount() + moved.undoCount()).toBe(0);
+  });
+});
+
+describe("clearTextFormats", () => {
+  const formatted = {
+    bold: true,
+    italic: true,
+    underline: true,
+    strike: true,
+    highlight: "yellow",
+    color: "#e03131",
+    font: "serif",
+  };
+
+  it("takes the inline formats off the selected words and keeps links", () => {
+    const { quill, ops } = fakeQuill(
+      [
+        { insert: "Clear " },
+        { insert: "these", attributes: { ...formatted, link: "https://a.b" } },
+        { insert: " words\n", attributes: { bold: true } },
+      ],
+      0,
+    );
+    const range = { index: 6, length: 5 };
+    expect(hasTextFormats(quill, range)).toBe(true);
+
+    clearTextFormats(quill, range);
+
+    expect(ops()).toEqual([
+      { insert: "Clear " },
+      { insert: "these", attributes: { link: "https://a.b" } },
+      { insert: " words\n", attributes: { bold: true } },
+    ]);
+    expect(hasTextFormats(quill, range)).toBe(false);
+  });
+
+  it("leaves a bare caret alone", () => {
+    const text = [
+      { insert: "let a", attributes: { bold: true } },
+      { insert: "\n" },
+    ];
+    const { quill, ops } = fakeQuill(text, 2);
+
+    clearTextFormats(quill, { index: 2, length: 0 });
+
+    expect(ops()).toEqual(text);
+    expect(hasTextFormats(quill, { index: 2, length: 0 })).toBe(false);
   });
 });

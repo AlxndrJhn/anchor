@@ -38,6 +38,7 @@ enum EditorTool {
   strikethrough(LucideIcons.strikethrough),
   highlight(LucideIcons.highlighter),
   link(LucideIcons.link),
+  clearFormatting(LucideIcons.removeFormatting),
   textStyle(LucideIcons.baseline),
   yellow(null, highlightName: 'yellow'),
   green(null, highlightName: 'green'),
@@ -70,6 +71,7 @@ enum EditorTool {
     EditorTool.strikethrough => l10n.toolStrikethrough,
     EditorTool.highlight => l10n.toolHighlight,
     EditorTool.link => l10n.editorLink,
+    EditorTool.clearFormatting => l10n.toolClearFormatting,
     EditorTool.textStyle => l10n.toolTextStyle,
     EditorTool.yellow => l10n.colorYellow,
     EditorTool.green => l10n.colorGreen,
@@ -149,6 +151,7 @@ EditorToolbarMode toolbarModeOf({
       ...EditorTool.inline,
       EditorTool.highlight,
       EditorTool.link,
+      EditorTool.clearFormatting,
     ],
     // Aa trades Link (one tap back) for the text's color and font.
     EditorToolbarMode.styles => [

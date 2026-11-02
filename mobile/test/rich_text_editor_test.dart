@@ -10,6 +10,7 @@ import 'package:anchor/features/notes/presentation/editor/highlight_underlay.dar
 import 'package:anchor/features/notes/presentation/editor/line_kind.dart';
 import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
+import 'package:anchor/features/notes/presentation/editor/text_formats.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -957,6 +958,27 @@ void main() {
       state.clearHighlight();
       expect(state.controller.highlight, isNull);
       expect(state.getContent(), isNot(contains('highlight')));
+    });
+
+    testWidgets('clearFormatting takes the inline formats off the selected '
+        'words and keeps them selected', (tester) async {
+      final (state, _) = await pumpEditor(tester);
+      const words = TextSelection(baseOffset: 0, extentOffset: 2);
+      final text = state.controller;
+      text.updateSelection(words, ChangeSource.local);
+      text.formatSelection(Attribute.bold);
+      text.formatSelection(Attribute.strikeThrough);
+      text.formatSelection(textColorAttribute('#e03131'));
+      text.formatSelection(fontAttribute('serif'));
+      state.paintHighlight('green');
+      expect(state.getContent(), contains('highlight'));
+
+      state.clearFormatting();
+      final content = state.getContent();
+      for (final key in ['bold', 'strike', 'color', 'font', 'highlight']) {
+        expect(content, isNot(contains(key)));
+      }
+      expect(state.selection, words);
     });
 
     testWidgets('startLineAtTop adds a line of that kind above the text and '

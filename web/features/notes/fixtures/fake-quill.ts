@@ -13,6 +13,17 @@ export function fakeQuill(ops: QuillOp[], caret: number) {
     },
     getContents: (index = 0, length = document.length() - index) =>
       document.slice(index, index + length),
+    // The formats all of the range has, like Quill's, without line formats.
+    getFormat: (index: number, length: number) => {
+      const parts = document
+        .slice(index, index + Math.max(length, 1))
+        .ops.map((op) => op.attributes ?? {});
+      return Object.fromEntries(
+        Object.entries(parts[0] ?? {}).filter(([key, value]) =>
+          parts.every((part) => part[key] === value),
+        ),
+      );
+    },
     getText: (index: number, length: number) =>
       document
         .map((op) => (typeof op.insert === "string" ? op.insert : ""))
