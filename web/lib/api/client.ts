@@ -6,8 +6,10 @@ import {
   getRefreshToken,
   setAccessToken,
   setRefreshToken,
+  useAuthStore,
 } from "@/features/auth/store";
 import type { RefreshTokenResponse } from "@/features/auth/types";
+import { isServerless } from "@/lib/local-backend/mode";
 import { fitsKeepalive, isPageClosing } from "@/lib/page-close";
 
 let refreshPromise: Promise<boolean> | null = null;
@@ -80,10 +82,83 @@ export function refreshAccessToken(): Promise<boolean> {
   return refreshPromise;
 }
 
+// A read the server hasn't answered after this long: it counts as offline,
+// and the app works from what the device holds until the server is back.
+const SLOW_READ_MS = 5000;
+const RECHECK_MS = 5000;
+
+let recheckTimer: ReturnType<typeof setTimeout> | undefined;
+// Requests on their way, cut off together once the server stops answering.
+const waiting = new Set<AbortController>();
+
+function reached() {
+  clearTimeout(recheckTimer);
+  recheckTimer = undefined;
+  if (useAuthStore.getState().unreachable)
+    useAuthStore.getState().setUnreachable(false);
+}
+
+/** The server didn't answer: offline until it does, asked every few seconds. */
+function notReached() {
+  if (!useAuthStore.getState().unreachable) {
+    useAuthStore.getState().setUnreachable(true);
+    // They would only hold "Saving…" up until they gave up; they fail now
+    // and wait for the server like everything else.
+    for (const controller of waiting) controller.abort();
+    waiting.clear();
+  }
+  if (recheckTimer !== undefined) return;
+  const recheck = () => {
+    recheckTimer = setTimeout(() => {
+      globalThis
+        .fetch("/api/health", { signal: AbortSignal.timeout(RECHECK_MS) })
+        .then((response) => {
+          if (response.ok) reached();
+          else recheck();
+        }, recheck);
+    }, RECHECK_MS);
+  };
+  recheck();
+}
+
+function fetchNoticingServer(input: RequestInfo | URL, init?: RequestInit) {
+  const method = (
+    init?.method ?? (input instanceof Request ? input.method : "GET")
+  ).toUpperCase();
+  // Only reads: an upload can take long to send before the server answers.
+  const slow =
+    method === "GET" ? setTimeout(notReached, SLOW_READ_MS) : undefined;
+  const controller = new AbortController();
+  waiting.add(controller);
+  const own = init?.signal ?? (input instanceof Request ? input.signal : null);
+  const signal = own
+    ? AbortSignal.any([own, controller.signal])
+    : controller.signal;
+  return globalThis.fetch(input, { ...init, signal }).then(
+    (response) => {
+      clearTimeout(slow);
+      waiting.delete(controller);
+      reached();
+      return response;
+    },
+    (error: unknown) => {
+      clearTimeout(slow);
+      waiting.delete(controller);
+      // Cut off on purpose (left the page, or a timeout) says nothing new.
+      if (!(error instanceof DOMException && error.name === "AbortError"))
+        notReached();
+      throw error;
+    },
+  );
+}
+
 export const api = ky.create({
   prefix: "/",
   // Looked up on each request: the serverless builds answer it themselves.
-  fetch: (input, init) => globalThis.fetch(input, init),
+  fetch: (input, init) =>
+    isServerless
+      ? globalThis.fetch(input, init)
+      : fetchNoticingServer(input, init),
   timeout: 30000,
   hooks: {
     beforeRequest: [

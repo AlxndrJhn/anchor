@@ -2,10 +2,19 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { toast } from "@/components/ui/toast";
 import { useAuthStore } from "@/features/auth/store";
-import { restoreOutbox } from "@/features/notes/save-queues";
+import {
+  allSaved,
+  restoreOutbox,
+  retryAllSaves,
+} from "@/features/notes/save-queues";
+import { useSyncStatus } from "@/features/sync/status";
 import { isServerless } from "@/lib/local-backend/mode";
 import { persistQueries } from "./query-cache";
+
+// How long coming back online waits for the edits made offline to go up.
+const SYNC_WAIT_MS = 30_000;
 
 /**
  * Lets the app work offline once signed in: notes and tags kept on the
@@ -34,6 +43,39 @@ export function OfflineSupport() {
       stop?.();
     };
   }, [queryClient, userId]);
+
+  useEffect(() => {
+    if (isServerless) return;
+    let waiting: number | undefined;
+    const unsubscribe = useSyncStatus.subscribe((state, before) => {
+      if (state.online === before.online) return;
+      window.clearTimeout(waiting);
+      if (!state.online) return;
+      // Back: send what waited, then say so once it is all on the server.
+      retryAllSaves();
+      void queryClient.invalidateQueries({ queryKey: ["notes"] });
+      const since = Date.now();
+      const check = async () => {
+        if (!useSyncStatus.getState().online) return;
+        if (await allSaved()) {
+          toast.success("Back online. All changes synced.", { id: "online" });
+          return;
+        }
+        if (Date.now() - since > SYNC_WAIT_MS) {
+          toast.info("Back online. Some changes are still waiting to sync.", {
+            id: "online",
+          });
+          return;
+        }
+        waiting = window.setTimeout(check, 500);
+      };
+      waiting = window.setTimeout(check, 500);
+    });
+    return () => {
+      unsubscribe();
+      window.clearTimeout(waiting);
+    };
+  }, [queryClient]);
 
   useEffect(() => {
     // Development serves changing files; only a build is cached.

@@ -35,7 +35,12 @@ import {
   sameReminder,
   toReminderInput,
 } from "../save-queue";
-import { keepNewNote, noteSaveQueue, releaseSaveQueue } from "../save-queues";
+import {
+  keepConflictCopy,
+  keepNewNote,
+  noteSaveQueue,
+  releaseSaveQueue,
+} from "../save-queues";
 import { draftTitle } from "../title";
 import type {
   CreateNoteDto,
@@ -133,6 +138,8 @@ export function useNoteEditor({
   const serverReminderRef = useRef<NoteReminder | null>(null);
 
   const replacesOtherEdit = useRef(false);
+  // Edits that waited for the server, here or kept from before a reload.
+  const editedOffline = useRef(!isNew && !!outboxEntry(noteId));
   const [newNoteId] = useState(newId);
   const queueId = isNew ? newNoteId : noteId;
   const { queue, live } = noteSaveQueue(queueId);
@@ -293,6 +300,27 @@ export function useNoteEditor({
     );
   }, [live]);
 
+  // Text edited offline that was also changed elsewhere: the edit becomes a
+  // note of its own and this one shows the other edit. Returns the draft to
+  // save here, or null when the texts don't clash.
+  const splitOffConflict = useCallback(
+    (serverNote: Note): NoteDraft | null => {
+      const incoming = noteToDraft(serverNote);
+      const base = lastSaved ?? incoming;
+      if (!editedOffline.current || !replacesText(draft, base, incoming))
+        return null;
+      editedOffline.current = false;
+      const next = keepConflictCopy(draft, base, incoming);
+      applyServerNote(serverNote);
+      setIsPinned(next.isPinned);
+      setBackground(next.background);
+      setSelectedTagIds(next.tagIds);
+      setReminder(next.reminder);
+      return next;
+    },
+    [applyServerNote, draft, lastSaved],
+  );
+
   // A new note's caret goes to its text; the editor page puts it there.
 
   // Fields fill once per note, so background refetches don't reset focus.
@@ -347,8 +375,10 @@ export function useNoteEditor({
         !!sent &&
         sent.title === incoming.title &&
         sent.content === incoming.content;
-      if (!isOwnSave && replacesText(draft, lastSaved ?? incoming, incoming))
+      if (!isOwnSave && replacesText(draft, lastSaved ?? incoming, incoming)) {
+        if (splitOffConflict(note)) return;
         keepOtherEdit();
+      }
       rebaseOnto(note);
       queue.setBaseVersion(note.version);
       return;
@@ -364,6 +394,7 @@ export function useNoteEditor({
     draft,
     lastSaved,
     keepOtherEdit,
+    splitOffConflict,
   ]);
 
   useEffect(() => {
@@ -377,8 +408,12 @@ export function useNoteEditor({
   const createdNote = useRef<Note | null>(null);
   const createWaiters = useRef<((note: Note) => void)[]>([]);
   const createMutation = useMutation({
-    mutationFn: (data: CreateNoteDto) => createNote(data),
-    // Offline, the create fails at once instead of pausing.
+    // Offline, the create fails at once instead of pausing, and is tried
+    // again once the server is back.
+    mutationFn: (data: CreateNoteDto) =>
+      useSyncStatus.getState().online
+        ? createNote(data)
+        : Promise.reject(new Error("Offline")),
     networkMode: "always",
     onSuccess: (newNote) => {
       createRetries.current = 0;
@@ -485,6 +520,7 @@ export function useNoteEditor({
       }
       useSyncStatus.getState().setWaiting(noteId, 0);
       replacesOtherEdit.current = false;
+      editedOffline.current = false;
       setLastSaved(savedDraft);
       noteVersionRef.current = savedNote.version;
       if (isViewer) {
@@ -511,6 +547,10 @@ export function useNoteEditor({
         serverNote.permission === "viewer" ||
         serverNote.state !== "active";
 
+      const split = serverWins ? null : splitOffConflict(serverNote);
+      if (split)
+        return noteDraftsEqual(split, noteToDraft(serverNote)) ? null : split;
+
       if (serverWins) {
         applyServerNote(serverNote);
         toast.info("This note was changed elsewhere and has been reloaded.", {
@@ -528,7 +568,14 @@ export function useNoteEditor({
       if (replacesText(next, base, incoming)) keepOtherEdit();
       return noteDraftsEqual(next, incoming) ? null : next;
     },
-    [applyServerNote, draft, keepOtherEdit, lastSaved, rebaseOnto],
+    [
+      applyServerNote,
+      draft,
+      keepOtherEdit,
+      lastSaved,
+      rebaseOnto,
+      splitOffConflict,
+    ],
   );
 
   const dirtySince = useRef<number | null>(null);
@@ -574,6 +621,9 @@ export function useNoteEditor({
   };
 
   const flush = useCallback(() => {
+    // Offline the outbox keeps the edit for the next visit; a request left
+    // waiting here could land later, over an edit made elsewhere meanwhile.
+    if (!useSyncStatus.getState().online) return;
     if (isNew) {
       if (canSaveDraft && hasUnsavedChanges && !createdNote.current)
         createNote(createFields(newNoteId, draft)).catch(() => {});
@@ -610,6 +660,7 @@ export function useNoteEditor({
         handleConflict(serverNote, canRetry),
       base: () => lastSaved,
       onFailed: (failure) => {
+        if (failure.retryable) editedOffline.current = true;
         setIsSaveStuck(failure.retryable);
         setSaveFailure(failure);
       },

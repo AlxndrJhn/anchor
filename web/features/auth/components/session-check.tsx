@@ -12,13 +12,14 @@ export function SessionCheck({
   children: ReactNode;
   isWaiting?: boolean;
 }) {
-  const { isInitialized, unreachable, initialize } = useAuth();
+  const { user, isInitialized, unreachable, initialize } = useAuth();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
 
-  if (unreachable && !isInitialized)
+  // With a session kept on this device the app starts offline instead.
+  if (unreachable && !isInitialized && !user)
     return <ServerDownScreen onRetry={initialize} />;
 
   if (!isInitialized || isWaiting) {
