@@ -40,12 +40,13 @@ export default function SettingsPage() {
           <AppearanceSection />
           <EditorSection />
           {!isServerless && <SearchSection />}
-          {!isServerless && <MagicLoginSection />}
           {!isServerless && <ApiTokenSection />}
           <ImportExportSection />
           <NoteLocksSection />
           {!isServerless && <SecuritySection />}
           {!isServerless && <PasswordSection />}
+          {/* Just above Devices, where a phone that scans the code shows up. */}
+          {!isServerless && <MagicLoginSection />}
           {!isServerless && <DevicesSection />}
           <Section id="about" title="About">
             <Row>
