@@ -16,6 +16,7 @@ import {
   CARD_KEYS,
   focusEdgeCard,
   moveCardFocus,
+  reachFollowedCard,
   refocusLeftCard,
 } from "../card-focus";
 import { type DragPreview, useCardDrag } from "../hooks/use-card-drag";
@@ -130,7 +131,9 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
         );
     }, [preview, groups, settled]);
     React.useLayoutEffect(() => {
-      if (groups.some((g) => g.notes.length)) refocusLeftCard();
+      if (!groups.some((g) => g.notes.length)) return;
+      refocusLeftCard();
+      reachFollowedCard();
     }, [groups]);
     // With no card focused, J and K start at the first card, as do the
     // arrows with nothing focused at all (L is the notes page's new list);
