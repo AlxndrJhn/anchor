@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A video camera, for the "Transmitting" notification of a live image. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M16,13L21.2,16.5A0.5,0.5 0 0 0 22,16.1L22,7.9A0.5,0.5 0 0 0 21.2,7.5L16,11M4,6L14,6A2,2 0 0 1 16,8L16,16A2,2 0 0 1 14,18L4,18A2,2 0 0 1 2,16L2,8A2,2 0 0 1 4,6Z" />
+</vector>

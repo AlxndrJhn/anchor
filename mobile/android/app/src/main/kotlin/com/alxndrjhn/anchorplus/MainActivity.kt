@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import com.alxndrjhn.anchorplus.debug.DebugVideoPlugin
 import com.alxndrjhn.anchorplus.files.DeviceFilesPlugin
+import com.alxndrjhn.anchorplus.live.LiveTransmissionPlugin
 import com.alxndrjhn.anchorplus.lock.ScreenOffPlugin
 import com.alxndrjhn.anchorplus.photos.PhotoConverterPlugin
 import com.alxndrjhn.anchorplus.share.ShareFolderPlugin
@@ -121,6 +122,7 @@ class MainActivity : FlutterFragmentActivity() {
         flutterEngine.plugins.add(ScreenOffPlugin())
         flutterEngine.plugins.add(DeviceFilesPlugin())
         flutterEngine.plugins.add(DebugVideoPlugin())
+        flutterEngine.plugins.add(LiveTransmissionPlugin())
         magicLinkChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, MAGIC_LINK_CHANNEL).apply {
             setMethodCallHandler { call, result ->
                 if (call.method != "takeLink") return@setMethodCallHandler result.notImplemented()

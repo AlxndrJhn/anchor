@@ -15,8 +15,12 @@ import '../../../../core/widgets/shimmer.dart';
 import '../../../../core/widgets/trailing_wrap.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../tags/domain/tag.dart';
+import '../../data/live_host.dart';
+import '../../data/live_signals.dart';
 import '../../data/repository/attachment_file_provider.dart';
+import '../../domain/live_image.dart';
 import '../../domain/note.dart';
+import '../editor/live_image_embed.dart';
 import '../note_labels.dart';
 import 'card_body.dart';
 import 'note_chips.dart';
@@ -72,10 +76,15 @@ class NoteCardContent extends StatelessWidget {
     final previews = showPictures && !isHidden
         ? note.imagePreviewData
         : const <NoteImagePreview>[];
+    // A live image shows in the pictures' place, live.
+    final live = showPictures && !isHidden
+        ? liveImagesOf(note.content).firstOrNull
+        : null;
+    final hasMedia = live != null || previews.isNotEmpty;
     final radius = context.appStyle.corners(AnchorTokens.radiusCard);
     final density = context.density;
     // The first line keeps clear of the selection check over it.
-    final checkInset = check != null && (list || previews.isEmpty)
+    final checkInset = check != null && (list || !hasMedia)
         ? AnchorTokens.space24
         : 0.0;
 
@@ -141,7 +150,18 @@ class NoteCardContent extends StatelessWidget {
       body = Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (previews.isNotEmpty)
+          if (live != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: ClipRRect(
+                borderRadius: context.appStyle.corners(AnchorTokens.radiusLg),
+                child: SizedBox.square(
+                  dimension: 52, // off-scale: the list card's picture
+                  child: _LiveTile(image: live, noteId: note.id),
+                ),
+              ),
+            )
+          else if (previews.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(left: 12),
               child: ClipRRect(
@@ -194,7 +214,12 @@ class NoteCardContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (previews.isNotEmpty)
+          if (live != null)
+            AspectRatio(
+              aspectRatio: layout == CardLayout.grid ? 2 : 16 / 10,
+              child: _LiveTile(image: live, noteId: note.id),
+            )
+          else if (previews.isNotEmpty)
             _Pictures(
               previews: previews,
               fileCount: note.attachmentCount,
@@ -528,6 +553,24 @@ class _Pictures extends StatelessWidget {
           ],
         );
     }
+  }
+}
+
+/// A note's live image on its card, from the device that shows it.
+class _LiveTile extends ConsumerWidget {
+  const _LiveTile({required this.image, required this.noteId});
+
+  final LiveImage image;
+  final String noteId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return LiveImageCardView(
+      image: image,
+      noteId: noteId,
+      signals: ref.watch(liveSignalsProvider),
+      host: ref.watch(liveHostProvider),
+    );
   }
 }
 

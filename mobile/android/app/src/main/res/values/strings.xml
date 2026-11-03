@@ -9,4 +9,8 @@
     <string name="shortcut_new_checklist">New checklist</string>
     <string name="widget_empty">No notes yet.\nTap + to write your first one.</string>
     <string name="widget_logged_out">Sign in to Anchor\nto see your notes here.</string>
+    <string name="live_channel_name">Live images</string>
+    <string name="live_transmitting">Transmitting</string>
+    <string name="live_transmitting_text">A note shows your camera live.</string>
+    <string name="live_stop_transmission">Stop transmission</string>
 </resources>

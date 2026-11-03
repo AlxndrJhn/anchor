@@ -77,6 +77,25 @@ class LiveImage {
   }
 }
 
+/// The live images in a note's [content], in the order the text shows them.
+List<LiveImage> liveImagesOf(String? content) {
+  if (content == null || !content.contains(LiveImage.embedType)) {
+    return const [];
+  }
+  try {
+    final json = jsonDecode(content);
+    final ops = json is Map ? json['ops'] : null;
+    if (ops is! List) return const [];
+    return [
+      for (final op in ops)
+        if (op is Map && op['insert'] is Map)
+          ?LiveImage.tryParse((op['insert'] as Map)[LiveImage.embedType]),
+    ];
+  } catch (_) {
+    return const [];
+  }
+}
+
 /// A part of a video, in shares (0 to 1) of its width and height.
 class LiveCrop {
   final double left;
