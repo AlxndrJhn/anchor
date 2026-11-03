@@ -114,11 +114,46 @@ async function fromCacheFirst(request) {
 // A server that takes the connection but doesn't answer would hold the page
 // up until the browser gives up; after this long a kept page stands in.
 const PAGE_WAIT_MS = 5000;
+// A request given up on is cut off after this, so it doesn't hold one of the
+// browser's few connections to the server.
+const GIVE_UP_MS = 30000;
+// Once the server hasn't answered, pages come from what is kept straight
+// away, without waiting again, until it answers.
+const RECHECK_MS = 3000;
+let unreachable = false;
+
+function fetchWithin(request, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(request, { signal: controller.signal }).then(
+    (response) => {
+      clearTimeout(timer);
+      unreachable = false;
+      return response;
+    },
+    (error) => {
+      clearTimeout(timer);
+      unreachable = true;
+      throw error;
+    },
+  );
+}
+
+// Asks the server whether it is back, at most every few seconds.
+let checking = null;
+function recheck() {
+  checking ??= fetchWithin(new Request("/api/health"), RECHECK_MS)
+    .catch(() => {})
+    .finally(() => {
+      checking = null;
+    });
+  return checking;
+}
 
 async function page(event, url) {
   const { request } = event;
   const path = shellPath(url.pathname);
-  const network = fetch(request);
+  const network = fetchWithin(request, GIVE_UP_MS);
   // Kept for next time, also when a kept page answered first. This runs
   // before the page takes the response's body.
   event.waitUntil(
@@ -140,11 +175,12 @@ async function page(event, url) {
   };
   let timer;
   const slow = new Promise((resolve) => {
-    timer = setTimeout(resolve, PAGE_WAIT_MS);
+    timer = setTimeout(resolve, unreachable ? 0 : PAGE_WAIT_MS);
   });
   try {
     const response = await Promise.race([network, slow]);
     if (response) return response;
+    unreachable = true;
     return (await kept()) ?? (await network);
   } catch (error) {
     const copy = await kept();
@@ -156,14 +192,25 @@ async function page(event, url) {
 }
 
 // Moving between pages: a server that doesn't answer fails like a missing
-// connection, so Next.js loads the page itself and a kept one stands in.
-async function payload(request) {
+// connection, so Next.js loads the page itself and a kept one stands in. Once
+// it hasn't answered, that happens at once while it is asked again.
+async function payload(event) {
+  if (unreachable) {
+    event.waitUntil(recheck());
+    return Response.error();
+  }
   let timer;
   const slow = new Promise((resolve) => {
-    timer = setTimeout(() => resolve(Response.error()), PAGE_WAIT_MS);
+    timer = setTimeout(() => {
+      unreachable = true;
+      resolve(Response.error());
+    }, PAGE_WAIT_MS);
   });
   try {
-    return await Promise.race([fetch(request), slow]);
+    return await Promise.race([
+      fetchWithin(event.request, GIVE_UP_MS).catch(() => Response.error()),
+      slow,
+    ]);
   } finally {
     clearTimeout(timer);
   }
@@ -182,5 +229,5 @@ self.addEventListener("fetch", (event) => {
   }
   if (request.mode === "navigate") event.respondWith(page(event, url));
   else if (request.headers.get("RSC") === "1")
-    event.respondWith(payload(request));
+    event.respondWith(payload(event));
 });

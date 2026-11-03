@@ -17,8 +17,16 @@ import { getRefreshToken, hasAccessToken, useAuthStore } from "../store";
 import type { LoginCredentials, RegisterCredentials } from "../types";
 
 let recheckTimer: number | undefined;
+let checking: Promise<void> | null = null;
 
-async function initialize() {
+function initialize() {
+  checking ??= checkSession().finally(() => {
+    checking = null;
+  });
+  return checking;
+}
+
+async function checkSession() {
   const { isInitialized, setUser, setInitialized, setUnreachable, logout } =
     useAuthStore.getState();
   if (isInitialized && !useAuthStore.getState().unreachable) return;
@@ -28,20 +36,23 @@ async function initialize() {
     return;
   }
 
+  // With a session kept on this device the app starts from what it holds at
+  // once, and the server is asked meanwhile: a server that doesn't answer
+  // shouldn't hold the app up.
+  const keptUser = useAuthStore.getState().user;
+  if (keptUser) setInitialized(true);
+
   // Known to be offline: don't wait for the request's retries to give up.
-  if (!navigator.onLine && useAuthStore.getState().user) {
+  if (!navigator.onLine && keptUser) {
     setUnreachable(true);
-    setInitialized(true);
     window.addEventListener("online", () => void initialize(), { once: true });
     return;
   }
 
   try {
-    // With a session kept on this device the app can start offline, so a
-    // server that doesn't answer shouldn't hold it up through every retry.
     // The limit stays 1 for the retry after refreshing the access token.
     const user = await getMe(
-      useAuthStore.getState().user
+      keptUser
         ? { timeout: 5000, retry: { limit: 1, shouldRetry: () => false } }
         : undefined,
     );
@@ -60,7 +71,6 @@ async function initialize() {
       // and check the session again once the connection is back. The network
       // can be up while the server is not, so also look again now and then.
       if (!(error instanceof HTTPError) && useAuthStore.getState().user) {
-        setInitialized(true);
         window.addEventListener("online", () => void initialize(), {
           once: true,
         });

@@ -102,6 +102,9 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        // A page loaded while the server doesn't answer starts offline,
+        // instead of trying to save until a request gives up.
+        unreachable: state.unreachable,
       }),
     },
   ),

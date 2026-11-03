@@ -1,5 +1,9 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { toast } from "@/components/ui/toast";
+import { useAuthStore } from "@/features/auth/store";
+import { useSyncStatus } from "@/features/sync/status";
+import { newId } from "@/lib/id";
 import { createNote, isRetryableError, saveNote } from "./api";
 import { type OutboxEntry, readOutbox, writeOutboxEntry } from "./outbox";
 import {
@@ -10,6 +14,7 @@ import {
   noteDraftsEqual,
   noteToDraft,
   rebaseDraft,
+  replacesText,
   type SaveFailure,
   type SaveOutcome,
   toReminderInput,
@@ -50,6 +55,17 @@ function showSaved(note: Note) {
   );
 }
 
+/** Puts a note the server doesn't have yet at the top of the notes lists. */
+function showNew(noteId: string, note: Note) {
+  queryClient?.setQueriesData<unknown>(
+    { queryKey: ["notes"] },
+    (data: unknown) =>
+      Array.isArray(data) && !(data as Note[]).some((n) => n.id === noteId)
+        ? [note, ...data]
+        : data,
+  );
+}
+
 /** Shows an unsent draft on the note's card in every loaded list. */
 function showDraft(noteId: string, draft: NoteDraft) {
   queryClient?.setQueriesData<unknown>(
@@ -79,12 +95,16 @@ function unlinkedEditor(noteId: string): EditorLink {
       draftUpdate(draft, null, { isViewer: false, baseVersion }),
     onSaved: (_draft, note) => showSaved(note),
     // Keeps the fields changed offline and takes the rest from the server.
-    // The server keeps the version this replaces in the note's history.
+    // Text changed on both sides goes into a note of its own.
     onConflict: (serverNote, draft) => {
       const server = noteToDraft(serverNote);
       const base = readOutbox()[noteId]?.base ?? server;
-      const next = rebaseDraft(draft, base, server);
-      return noteDraftsEqual(next, server) ? null : next;
+      const next = replacesText(draft, base, server)
+        ? keepConflictCopy(draft, base, server)
+        : rebaseDraft(draft, base, server);
+      if (!noteDraftsEqual(next, server)) return next;
+      showSaved(serverNote);
+      return null;
     },
     onFailed: (failure) => {
       if (failure.retryable) return;
@@ -98,6 +118,59 @@ function unlinkedEditor(noteId: string): EditorLink {
     flush: () => {},
     openHistory: () => {},
   };
+}
+
+/** Shows a note the server doesn't have yet and sends it when it can. */
+function sendNewNote(noteId: string, draft: NoteDraft) {
+  const userId = useAuthStore.getState().user?.id;
+  if (userId) {
+    const note = localNote(noteId, { draft, base: null, create: true }, userId);
+    queryClient?.setQueryData(["notes", noteId], note);
+    showNew(noteId, note);
+  }
+  noteSaveQueue(noteId).queue.push(draft);
+}
+
+/** What this copy of the app runs on, as a conflict copy's title names it. */
+function deviceName() {
+  if (!(window as { anchorDesktop?: unknown }).anchorDesktop) return "web";
+  const agent = navigator.userAgent;
+  if (/mac/i.test(agent)) return "mac";
+  return /windows/i.test(agent) ? "windows" : "linux";
+}
+
+export function conflictTitle(title: string, now = new Date()) {
+  return `(conflict ${deviceName()} ${format(now, "yyyy-MM-dd")}) ${title}`;
+}
+
+/**
+ * Text edited here while it was also changed elsewhere: this edit becomes a
+ * new note, titled as a conflict copy, and the note keeps the other edit.
+ * Returns the draft to save on the note: the server's text with this
+ * device's other changes (pin, colour, tags, reminder).
+ */
+export function keepConflictCopy(
+  draft: NoteDraft,
+  base: NoteDraft,
+  server: NoteDraft,
+): NoteDraft {
+  const copyId = newId();
+  const copy: NoteDraft = {
+    ...draft,
+    title: conflictTitle(draft.title),
+    isPinned: false,
+    reminder: null,
+  };
+  keepNewNote(copyId, copy);
+  sendNewNote(copyId, copy);
+  toast.info(
+    `“${draft.title || "Untitled"}” was changed elsewhere too. Your version is kept as a new note.`,
+  );
+  return rebaseDraft(
+    { ...draft, title: base.title, content: base.content },
+    base,
+    server,
+  );
 }
 
 /** Creates a note made offline, then saves anything newer than what it got. */
@@ -171,10 +244,18 @@ export function noteSaveQueue(noteId: string) {
   if (!entry) {
     const live = { current: unlinkedEditor(noteId) };
     const queue = createNoteSaveQueue({
-      save: (draft, baseVersion) =>
-        readOutbox()[noteId]?.create
+      // Offline nothing is sent; it all goes once the server is back.
+      save: (draft, baseVersion) => {
+        if (!useSyncStatus.getState().online)
+          return Promise.resolve<SaveOutcome>({
+            status: "failed",
+            httpStatus: null,
+            retryable: true,
+          });
+        return readOutbox()[noteId]?.create
           ? createThenSave(noteId, draft)
-          : saveNote(noteId, live.current.buildUpdate(draft, baseVersion)),
+          : saveNote(noteId, live.current.buildUpdate(draft, baseVersion));
+      },
       onSaved: (draft, note) => {
         live.current.onSaved(draft, note);
         keepLater(noteId);
@@ -212,6 +293,17 @@ export function releaseSaveQueue(noteId: string) {
   const link = entry.live.current;
   void entry.queue.settled().then(() => {
     if (saveQueues.get(noteId) !== entry || entry.live.current !== link) return;
+    // A note made offline whose editor closed: the queue creates it later.
+    const made = readOutbox()[noteId];
+    if (
+      made?.create &&
+      !entry.queue.newestDraft() &&
+      !useSyncStatus.getState().online
+    ) {
+      entry.live.current = unlinkedEditor(noteId);
+      sendNewNote(noteId, made.draft);
+      return;
+    }
     // Still unsent: the queue carries on without the editor.
     if (entry.queue.newestDraft()) entry.live.current = unlinkedEditor(noteId);
     else saveQueues.delete(noteId);
@@ -266,13 +358,7 @@ export function restoreOutbox(client: QueryClient, userId: string) {
         ["notes", noteId],
         (old: Note | undefined) => old ?? note,
       );
-      client.setQueriesData<unknown>(
-        { queryKey: ["notes"] },
-        (data: unknown) =>
-          Array.isArray(data) && !(data as Note[]).some((n) => n.id === noteId)
-            ? [note, ...data]
-            : data,
-      );
+      showNew(noteId, note);
     }
     const { queue } = noteSaveQueue(noteId);
     if (queue.newestDraft()) continue;
@@ -281,7 +367,23 @@ export function restoreOutbox(client: QueryClient, userId: string) {
   }
 }
 
+/** Sends what every queue holds now, without waiting out its backoff. */
+export function retryAllSaves() {
+  for (const { queue, live } of saveQueues.values()) {
+    live.current.retryCreate();
+    queue.retryNow();
+  }
+}
+
+/** Whether every edit, made here or kept from before a reload, is saved. */
+export async function allSaved(): Promise<boolean> {
+  const entries = Array.from(saveQueues.values());
+  await Promise.all(entries.map(({ queue }) => queue.settled()));
+  return (
+    entries.every(({ queue }) => !queue.newestDraft()) &&
+    Object.keys(readOutbox()).length === 0
+  );
+}
+
 if (typeof window !== "undefined")
-  window.addEventListener("online", () => {
-    for (const { queue } of saveQueues.values()) queue.retryNow();
-  });
+  window.addEventListener("online", retryAllSaves);
