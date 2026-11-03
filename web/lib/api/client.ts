@@ -88,6 +88,8 @@ const SLOW_READ_MS = 5000;
 const RECHECK_MS = 5000;
 
 let recheckTimer: ReturnType<typeof setTimeout> | undefined;
+// Requests on their way, cut off together once the server stops answering.
+const waiting = new Set<AbortController>();
 
 function reached() {
   clearTimeout(recheckTimer);
@@ -98,8 +100,13 @@ function reached() {
 
 /** The server didn't answer: offline until it does, asked every few seconds. */
 function notReached() {
-  if (!useAuthStore.getState().unreachable)
+  if (!useAuthStore.getState().unreachable) {
     useAuthStore.getState().setUnreachable(true);
+    // They would only hold "Saving…" up until they gave up; they fail now
+    // and wait for the server like everything else.
+    for (const controller of waiting) controller.abort();
+    waiting.clear();
+  }
   if (recheckTimer !== undefined) return;
   const recheck = () => {
     recheckTimer = setTimeout(() => {
@@ -121,14 +128,22 @@ function fetchNoticingServer(input: RequestInfo | URL, init?: RequestInit) {
   // Only reads: an upload can take long to send before the server answers.
   const slow =
     method === "GET" ? setTimeout(notReached, SLOW_READ_MS) : undefined;
-  return globalThis.fetch(input, init).then(
+  const controller = new AbortController();
+  waiting.add(controller);
+  const own = init?.signal ?? (input instanceof Request ? input.signal : null);
+  const signal = own
+    ? AbortSignal.any([own, controller.signal])
+    : controller.signal;
+  return globalThis.fetch(input, { ...init, signal }).then(
     (response) => {
       clearTimeout(slow);
+      waiting.delete(controller);
       reached();
       return response;
     },
     (error: unknown) => {
       clearTimeout(slow);
+      waiting.delete(controller);
       // Cut off on purpose (left the page, or a timeout) says nothing new.
       if (!(error instanceof DOMException && error.name === "AbortError"))
         notReached();
