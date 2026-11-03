@@ -71,7 +71,9 @@ ENV PGDATA=/data/postgres
 COPY --from=base /usr/local/bin/node /usr/local/bin/node
 
 # curl for HEALTHCHECK, supervisor for process management. Upgrading first
-# takes Alpine's fixes ahead of the base image's next rebuild.
+# takes Alpine's fixes ahead of the base image's next rebuild; CI passes a
+# new day each day so the build cache doesn't keep an old upgrade.
+ARG APK_UPGRADE_DAY
 RUN apk upgrade --no-cache   && apk add --no-cache curl supervisor libstdc++ libatomic libc6-compat
 
 # Server runtime files
