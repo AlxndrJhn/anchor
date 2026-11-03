@@ -20,6 +20,11 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <!-- Taking several pictures in a row (the camera plugin). -->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- A live image keeps its camera and microphone on while the phone is
+         locked (live/LiveTransmissionService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
 
     <application
         android:label="${appLabel}"
@@ -131,6 +136,11 @@
             android:name=".widget.NotesWidgetService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+        <!-- "Transmitting", with "Stop transmission", while a live image is on. -->
+        <service
+            android:name=".live.LiveTransmissionService"
+            android:exported="false"
+            android:foregroundServiceType="camera|microphone" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

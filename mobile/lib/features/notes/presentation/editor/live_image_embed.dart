@@ -62,6 +62,51 @@ class LiveImageEmbedBuilder extends EmbedBuilder {
   }
 }
 
+/// A note's first live image on its card in the notes list: live, with
+/// the red dot, but no controls; a tap opens the note, as on the rest of the
+/// card. It fills its box, cropped to it.
+class LiveImageCardView extends StatelessWidget {
+  const LiveImageCardView({
+    super.key,
+    required this.image,
+    required this.noteId,
+    required this.signals,
+    required this.host,
+  });
+
+  final LiveImage image;
+  final String noteId;
+  final LiveSignals signals;
+  final LiveHost host;
+
+  /// The width it is drawn at before it is scaled to the card.
+  static const _drawnWidth = 320.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ClipRect(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          clipBehavior: Clip.hardEdge,
+          child: SizedBox(
+            width: _drawnWidth,
+            child: _LiveImageView(
+              key: ValueKey(image.id),
+              image: image,
+              noteId: noteId,
+              signals: signals,
+              host: host,
+              keepStill: null,
+              isCard: true,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 enum _Status {
   /// Asking the other device for the video.
   connecting,
@@ -87,19 +132,25 @@ class _LiveImageView extends StatefulWidget {
   const _LiveImageView({
     super.key,
     required this.image,
-    required this.controller,
-    required this.node,
+    this.controller,
+    this.node,
     required this.noteId,
     required this.signals,
     required this.host,
     required this.keepStill,
+    this.isCard = false,
   });
 
   final LiveImage image;
 
-  /// Where it is in the text, to keep it from being selected.
-  final QuillController controller;
-  final Embed node;
+  /// Where it is in the text, to keep it from being selected; null on a
+  /// card.
+  final QuillController? controller;
+  final Embed? node;
+
+  /// On a note's card ([LiveImageCardView]): its full width, square
+  /// corners, no controls.
+  final bool isCard;
   final String? noteId;
   final LiveSignals signals;
   final LiveHost host;
@@ -171,17 +222,19 @@ class _LiveImageViewState extends State<_LiveImageView>
   /// The editor selects the live image on a double tap (typing would then
   /// replace it): the caret goes just after it instead.
   void _deselect() {
+    final controller = widget.controller;
+    if (controller == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final node = widget.node;
-      if (!mounted || node.parent == null) return;
+      if (!mounted || node == null || node.parent == null) return;
       final at = node.documentOffset;
-      final selection = widget.controller.selection;
+      final selection = controller.selection;
       if (selection.isCollapsed ||
           selection.start > at ||
           selection.end <= at) {
         return;
       }
-      widget.controller.updateSelection(
+      controller.updateSelection(
         TextSelection.collapsed(offset: at + 1),
         ChangeSource.local,
       );
@@ -558,7 +611,10 @@ class _LiveImageViewState extends State<_LiveImageView>
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final l10n = context.l10n;
-    final radius = context.appStyle.corners(AnchorTokens.radiusTile);
+    final isCard = widget.isCard;
+    final radius = isCard
+        ? BorderRadius.zero
+        : context.appStyle.corners(AnchorTokens.radiusTile);
     final crop = widget.image.crop ?? LiveCrop.whole;
     final isLive =
         _status == _Status.live &&
@@ -568,10 +624,11 @@ class _LiveImageViewState extends State<_LiveImageView>
         ? (crop.across * _videoSize.width) / (crop.down * _videoSize.height)
         : 16 / 9;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: isCard ? 0 : 4),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final width = constraints.maxWidth * (widget.image.width ?? 1.0);
+          final width =
+              constraints.maxWidth * (isCard ? 1.0 : widget.image.width ?? 1.0);
           final height = width / aspect;
           return Align(
             alignment: AlignmentDirectional.centerStart,
@@ -581,7 +638,7 @@ class _LiveImageViewState extends State<_LiveImageView>
                   : l10n.liveImageCamera,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTapUp: isLive ? _tapped : null,
+                onTapUp: isLive && !isCard ? _tapped : null,
                 child: ClipRRect(
                   borderRadius: radius,
                   child: SizedBox(
@@ -675,7 +732,7 @@ class _LiveImageViewState extends State<_LiveImageView>
                               ),
                             ),
                           ),
-                        if (isLive && _mic != null)
+                        if (isLive && _mic != null && !isCard)
                           PositionedDirectional(
                             end: 8,
                             bottom: 8,

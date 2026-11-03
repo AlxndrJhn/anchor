@@ -1,16 +1,23 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'live_signals.dart';
+import 'repository/notes_repository.dart';
 
 part 'live_host.g.dart';
 
 @Riverpod(keepAlive: true)
 LiveHost liveHost(Ref ref) {
-  final host = LiveHost(ref.watch(liveSignalsProvider));
+  final host = LiveHost(
+    ref.watch(liveSignalsProvider),
+    titleOf: (noteId) async =>
+        (await ref.read(notesRepositoryProvider).getNote(noteId))?.title,
+  );
   ref.onDispose(host.dispose);
   return host;
 }
@@ -51,9 +58,35 @@ class _Sender {
 /// live-hub.ts does. The video goes straight to them; only the messages
 /// that connect go through the server (see [LiveSignals]).
 class LiveHost extends ChangeNotifier {
-  LiveHost(this._signals) {
+  LiveHost(this._signals, {Future<String?> Function(String noteId)? titleOf})
+    : _titleOf = titleOf {
     _messages = _signals.messages.listen(_receive);
+    if (_isAndroid) {
+      _transmission.setMethodCallHandler((call) async {
+        final noteId = call.arguments;
+        if (call.method == 'stopNote' && noteId is String) closeNote(noteId);
+      });
+    }
   }
+
+  /// Android's "Transmitting" notifications, one for each note that shows
+  /// the camera: a tap opens the note, "Stop transmission" stops its live
+  /// images ("stopNote"). Their foreground service keeps the camera on
+  /// while the phone is locked (live/LiveTransmissionService).
+  static const _transmission = MethodChannel('anchor/live');
+
+  static bool get _isAndroid => !kIsWeb && Platform.isAndroid;
+
+  /// The title of a note, for its notification.
+  final Future<String?> Function(String noteId)? _titleOf;
+
+  /// The notes last told to the transmission service, with their
+  /// microphone choice.
+  Map<String, bool> _transmitted = const {};
+
+  /// Counts the updates to the service, so a slower title lookup doesn't
+  /// undo a newer one.
+  int _transmissionUpdate = 0;
 
   final LiveSignals _signals;
   late final StreamSubscription<Map<String, dynamic>> _messages;
@@ -102,6 +135,7 @@ class LiveHost extends ChangeNotifier {
       isFront: isFront,
     );
     _withMic[liveId] = stream.getAudioTracks().isNotEmpty;
+    _syncTransmission();
     notifyListeners();
     _send(noteId, liveId, 'ready');
   }
@@ -135,14 +169,48 @@ class LiveHost extends ChangeNotifier {
       unawaited(entry.value.pc.close());
       _senders.remove(entry.key);
     }
+    _syncTransmission();
     notifyListeners();
   }
 
-  /// Stops every live image of [noteId]: the note was trashed or deleted.
+  /// Stops every live image of [noteId]: the note was trashed or deleted,
+  /// or its "Stop transmission" tapped.
   void closeNote(String noteId) {
     for (final entry in [..._captures.entries]) {
       if (entry.value.noteId == noteId) stop(entry.key);
     }
+  }
+
+  /// Stops every camera this phone shows.
+  void stopAll() {
+    for (final liveId in [..._captures.keys]) {
+      stop(liveId);
+    }
+  }
+
+  void _syncTransmission() {
+    if (!_isAndroid) return;
+    final now = <String, bool>{};
+    for (final capture in _captures.values) {
+      now[capture.noteId] = (now[capture.noteId] ?? false) || capture.hasMic;
+    }
+    if (mapEquals(now, _transmitted)) return;
+    _transmitted = now;
+    final update = ++_transmissionUpdate;
+    unawaited(
+      () async {
+        final notes = [
+          for (final MapEntry(key: noteId, value: withMic) in now.entries)
+            {
+              'noteId': noteId,
+              'title': await _titleOf?.call(noteId).catchError((_) => null),
+              'withMic': withMic,
+            },
+        ];
+        if (update != _transmissionUpdate) return;
+        await _transmission.invokeMethod<void>('show', notes);
+      }().catchError((_) {}),
+    );
   }
 
   void setMicMuted(String liveId, bool isMuted) {
@@ -326,9 +394,8 @@ class LiveHost extends ChangeNotifier {
   @override
   void dispose() {
     unawaited(_messages.cancel());
-    for (final liveId in [..._captures.keys]) {
-      stop(liveId);
-    }
+    stopAll();
+    if (_isAndroid) _transmission.setMethodCallHandler(null);
     super.dispose();
   }
 }

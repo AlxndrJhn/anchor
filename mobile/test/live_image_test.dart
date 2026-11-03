@@ -45,12 +45,10 @@ void main() {
       'right': 0.2,
       'bottom': 0.1,
     })!;
-    expect([turned.left, turned.top, turned.right, turned.bottom], [
-      0.2,
-      0.1,
-      0.8,
-      0.5,
-    ]);
+    expect(
+      [turned.left, turned.top, turned.right, turned.bottom],
+      [0.2, 0.1, 0.8, 0.5],
+    );
     expect(
       LiveCrop.tryParse({'left': 0.5, 'top': 0, 'right': 0.5, 'bottom': 1}),
       isNull,
@@ -62,5 +60,30 @@ void main() {
     expect(LiveImage.tryParse(jsonEncode({'device': 'd'})), isNull);
     expect(LiveImage.tryParse('{nope'), isNull);
     expect(LiveImage.tryParse(null), isNull);
+  });
+
+  test('finds the live images in a note, in the order of its text', () {
+    String embed(String id) => jsonEncode({'id': id, 'device': 'desk'});
+    final content = jsonEncode({
+      'ops': [
+        {'insert': 'Watch\n'},
+        {
+          'insert': {LiveImage.embedType: embed('l1')},
+        },
+        {
+          'insert': {'note-image': '{"id":"a1"}'},
+        },
+        {
+          'insert': {LiveImage.embedType: embed('l2')},
+        },
+        {
+          'insert': {LiveImage.embedType: '{nope'},
+        },
+        {'insert': '\n'},
+      ],
+    });
+    expect([for (final image in liveImagesOf(content)) image.id], ['l1', 'l2']);
+    expect(liveImagesOf(null), isEmpty);
+    expect(liveImagesOf('plain text'), isEmpty);
   });
 }
