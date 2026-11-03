@@ -49,6 +49,8 @@ export interface InlinePictureHost {
 export interface InlineImageToolsHandle {
   /** Chooses pictures to put in the text at the caret. */
   pick: () => void;
+  /** Puts pasted pictures in the text at the caret. */
+  insert: (files: File[]) => void;
 }
 
 type BlotLookup = {
@@ -400,14 +402,22 @@ export const InlineImageTools = React.forwardRef<
     grip.addEventListener("pointercancel", finish);
   };
 
+  const keepCaret = () => {
+    const quill = getQuill();
+    const caret = quill?.getSelection() ?? quill?.selection.savedRange;
+    caretForInsert.current = caret
+      ? caret.index + caret.length
+      : (quill?.getLength() ?? 1) - 1;
+  };
+
   React.useImperativeHandle(ref, () => ({
     pick: () => {
-      const quill = getQuill();
-      const caret = quill?.getSelection() ?? quill?.selection.savedRange;
-      caretForInsert.current = caret
-        ? caret.index + caret.length
-        : (quill?.getLength() ?? 1) - 1;
+      keepCaret();
       insertInput.current?.click();
+    },
+    insert: (files) => {
+      keepCaret();
+      void insertChosen(files);
     },
   }));
 

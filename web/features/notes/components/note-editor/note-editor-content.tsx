@@ -257,6 +257,10 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         // Caught before Quill sees it, or the picture lands in the text.
         e.preventDefault();
         e.stopPropagation();
+        // Pasted in the text, the picture goes in at the caret.
+        const inText = (e.target as HTMLElement).closest(".ql-editor");
+        if (inText && props.contentEditorRef?.current?.pastePictures(images))
+          return;
         strip.current?.add(images);
       }}
     >

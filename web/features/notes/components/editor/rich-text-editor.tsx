@@ -203,6 +203,8 @@ export interface RichTextEditorHandle {
   hideCheckboxes: () => void;
   /** Adds plain lines at the end of the note ("Grab image text"). */
   appendText: (text: string) => void;
+  /** Puts pasted pictures in the text at the caret; false when it can't. */
+  pastePictures: (files: File[]) => boolean;
 }
 
 export const RichTextEditor = forwardRef<
@@ -829,6 +831,12 @@ export const RichTextEditor = forwardRef<
           const start = Math.max(0, Math.min(index, end));
           quill.setSelection(start, Math.min(length, end - start), "user");
           setIsFocused(true);
+        },
+        pastePictures: (files: File[]) => {
+          const tools = pictureTools.current;
+          if (!tools) return false;
+          tools.insert(files);
+          return true;
         },
         getCaret: () => {
           const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
