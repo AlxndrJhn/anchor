@@ -76,6 +76,18 @@
 .nc.picked::after {
   box-shadow: none;
 }
+/* A restored note followed to its card: a ring of light greets you there. */
+.nc.welcome::after {
+  animation: card-welcome var(--duration-flash) var(--ease-standard);
+}
+@keyframes card-welcome {
+  0%,
+  45% {
+    box-shadow:
+      inset 0 0 0 2px var(--accent-strong),
+      inset 0 0 24px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
 /* Dragging to arrange, as in Google Keep: the card lifts off and follows
    the pointer, and its place stays open as a gap the others move around. */
 .nc[data-dragging] {

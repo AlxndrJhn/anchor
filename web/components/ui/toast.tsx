@@ -19,6 +19,7 @@ interface ToastItem {
   kind: Kind;
   message: string;
   action?: ToastAction;
+  secondaryAction?: ToastAction;
   duration: number;
   serial: number;
   swap: boolean;
@@ -30,6 +31,7 @@ interface ToastOptions {
   duration?: number;
   undo?: () => void;
   retry?: () => void;
+  /** With [undo] too, Undo shows before it, as Undo before Follow it. */
   action?: ToastAction;
   /** Runs once when the toast goes away without its button being pressed. */
   onClose?: () => void;
@@ -58,11 +60,12 @@ const useToastStore = create<ToastState>((set, get) => ({
   show: (kind, message, options = {}) => {
     const id = options.id ?? `t${++serial}`;
     const previous = get().current;
-    const action = options.undo
-      ? { label: "Undo", onClick: options.undo }
-      : options.retry
-        ? { label: "Try again", onClick: options.retry }
-        : options.action;
+    const action =
+      options.undo && !options.action
+        ? { label: "Undo", onClick: options.undo }
+        : options.retry
+          ? { label: "Try again", onClick: options.retry }
+          : options.action;
     const swap = !!previous && previous.id === id && previous.kind === "busy";
     if (previous && !swap) previous.onClose?.();
     set({
@@ -71,6 +74,10 @@ const useToastStore = create<ToastState>((set, get) => ({
         kind,
         message,
         action,
+        secondaryAction:
+          options.undo && options.action
+            ? { label: "Undo", onClick: options.undo }
+            : undefined,
         duration: options.duration ?? DURATION[kind],
         serial: ++serial,
         swap,
@@ -276,17 +283,21 @@ function ToastView({
       >
         {item.message}
       </span>
-      {item.action && (
-        <button
-          type="button"
-          onClick={() => {
-            dismiss(item.id, true);
-            item.action?.onClick();
-          }}
-          className="h-7.5 flex-none cursor-pointer rounded-sm bg-transparent px-3 font-semibold text-control text-inverse-link shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--inverse-foreground)_18%,transparent)] transition-shadow duration-(--duration-hover) hover:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--inverse-foreground)_40%,transparent)]"
-        >
-          {item.action.label}
-        </button>
+      {[item.secondaryAction, item.action].map(
+        (action) =>
+          action && (
+            <button
+              key={action.label}
+              type="button"
+              onClick={() => {
+                dismiss(item.id, true);
+                action.onClick();
+              }}
+              className="h-7.5 flex-none cursor-pointer rounded-sm bg-transparent px-3 font-semibold text-control text-inverse-link shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--inverse-foreground)_18%,transparent)] transition-shadow duration-(--duration-hover) hover:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--inverse-foreground)_40%,transparent)]"
+            >
+              {action.label}
+            </button>
+          ),
       )}
       <button
         type="button"

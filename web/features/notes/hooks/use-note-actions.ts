@@ -13,6 +13,7 @@ import {
   restoreNote,
   unarchiveNote,
 } from "../api";
+import { followCard } from "../card-focus";
 import { closeLiveImages } from "../live-hub";
 import { type NoteCaret, returnCaretTo } from "../note-caret";
 import type { Note } from "../types";
@@ -165,6 +166,15 @@ export function useNoteActions({
           );
           refreshLists();
           refetchNote();
+        },
+        // Goes to the list the note is kept in, which scrolls to its card.
+        action: {
+          label: "Follow it",
+          onClick: () => {
+            save();
+            followCard(noteId);
+            router.push(note?.isArchived ? "/archive" : "/notes");
+          },
         },
       });
     },

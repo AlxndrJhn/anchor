@@ -3,6 +3,7 @@
 
 let left: { id: string; at: number } | null = null;
 let openedByKey: string | null = null;
+let following: { id: string; at: number } | null = null;
 
 const isFresh = (at: number) => performance.now() - at < 3000;
 const nothingFocused = () =>
@@ -33,6 +34,41 @@ const cardLinks = () =>
 function focusCard(link: HTMLElement) {
   link.focus({ preventScroll: true });
   link.scrollIntoView({ block: "nearest" });
+}
+
+/** A restored note to follow to: its list scrolls to its card, which greets you. */
+export function followCard(id: string) {
+  following = { id, at: performance.now() };
+}
+
+/** Once the followed card is in its list: scroll to it, focus it, greet. */
+export function reachFollowedCard() {
+  if (!following) return;
+  if (performance.now() - following.at > 10000) {
+    following = null;
+    return;
+  }
+  const card = document.querySelector<HTMLElement>(
+    `main .nc[data-flip="${CSS.escape(following.id)}"]`,
+  );
+  if (!card) return;
+  following = null;
+  left = null;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  card.scrollIntoView({
+    block: "center",
+    behavior: reduced ? "auto" : "smooth",
+  });
+  card.querySelector<HTMLElement>(".nc-link")?.focus({ preventScroll: true });
+  card.classList.remove("welcome");
+  void card.offsetWidth;
+  card.classList.add("welcome");
+  const done = (e: AnimationEvent) => {
+    if (e.animationName !== "card-welcome") return;
+    card.classList.remove("welcome");
+    card.removeEventListener("animationend", done);
+  };
+  card.addEventListener("animationend", done);
 }
 
 /** Back from a note: focus its card, if nothing else took focus first. */
