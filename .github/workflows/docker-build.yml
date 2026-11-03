@@ -61,13 +61,21 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: ${{ inputs.tags }}
 
+      # Changes daily, so the image's `apk upgrade` layer is rebuilt rather
+      # than reused from the build cache, and takes Alpine's latest fixes.
+      - name: Pick the day for a fresh apk upgrade
+        id: day
+        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
       - name: Build image
         uses: docker/build-push-action@v7
         with:
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: ${{ inputs.build-args }}
+          build-args: |
+            APK_UPGRADE_DAY=${{ steps.day.outputs.date }}
+            ${{ inputs.build-args }}
           load: true
           tags: anchor:test
           cache-from: type=gha,scope=${{ matrix.arch }}
@@ -110,7 +118,9 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: ${{ inputs.build-args }}
+          build-args: |
+            APK_UPGRADE_DAY=${{ steps.day.outputs.date }}
+            ${{ inputs.build-args }}
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Save digest
