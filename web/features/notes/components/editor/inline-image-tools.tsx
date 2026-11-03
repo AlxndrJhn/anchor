@@ -119,7 +119,20 @@ export function insertPictures(
   at: number,
   ids: string[],
 ) {
-  if (!ids.length) return;
+  insertEmbedLines(
+    quill,
+    at,
+    ids.map((id) => ({ [INLINE_IMAGE_EMBED]: encodeInlineImage({ id }) })),
+  );
+}
+
+/** Puts embeds on lines of their own at `at`, as insertPictures does. */
+export function insertEmbedLines(
+  quill: QuillInstance,
+  at: number,
+  embeds: Record<string, string>[],
+) {
+  if (!embeds.length) return;
   const index = Math.max(0, Math.min(at, quill.getLength() - 1));
   const change = new Delta().retain(index);
   let length = 0;
@@ -134,10 +147,8 @@ export function insertPictures(
     change.insert("\n", line);
     length++;
   }
-  for (const id of ids) {
-    change
-      .insert({ [INLINE_IMAGE_EMBED]: encodeInlineImage({ id }) })
-      .insert("\n");
+  for (const embed of embeds) {
+    change.insert(embed).insert("\n");
     length += 2;
   }
   quill.history.cutoff();

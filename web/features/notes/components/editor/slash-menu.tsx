@@ -13,6 +13,7 @@ import {
   ListOrdered,
   Mic,
   Quote,
+  Radio,
   Type,
 } from "lucide-react";
 import * as React from "react";
@@ -38,7 +39,8 @@ type Kind =
   | "link"
   | "date"
   | "attachment"
-  | "record";
+  | "record"
+  | "live";
 
 const ITEMS: {
   kind: Kind;
@@ -136,6 +138,12 @@ const ITEMS: {
     icon: <Mic />,
     keywords: "voice memo microphone mic recording sound",
   },
+  {
+    kind: "live",
+    label: "Live image",
+    icon: <Radio />,
+    keywords: "camera webcam screen share window stream video live",
+  },
 ];
 
 interface Slash {
@@ -155,6 +163,7 @@ interface SlashMenuProps {
   onAddAttachment?: () => void;
   onRecordAudio?: () => void;
   onAddLink: () => void;
+  onAddLiveImage?: () => void;
 }
 
 export const isSlashMenuOpen = (root: HTMLElement) =>
@@ -166,6 +175,7 @@ export function SlashMenu({
   onAddAttachment,
   onRecordAudio,
   onAddLink,
+  onAddLiveImage,
 }: SlashMenuProps) {
   const [slash, setSlash] = React.useState<Slash | null>(null);
   const [place, setPlace] = React.useState<Place | null>(null);
@@ -184,11 +194,12 @@ export function SlashMenu({
         ITEMS.filter(
           (item) =>
             (item.kind !== "attachment" || onAddAttachment) &&
-            (item.kind !== "record" || onRecordAudio),
+            (item.kind !== "record" || onRecordAudio) &&
+            (item.kind !== "live" || onAddLiveImage),
         ),
         slash?.query ?? "",
       ),
-    [slash?.query, onAddAttachment, onRecordAudio],
+    [slash?.query, onAddAttachment, onRecordAudio, onAddLiveImage],
   );
   const activeIndex = Math.min(active, Math.max(0, items.length - 1));
 
@@ -338,6 +349,7 @@ export function SlashMenu({
         quill.setSelection(from, 0, "silent");
         if (kind === "attachment") onAddAttachment?.();
         else if (kind === "record") onRecordAudio?.();
+        else if (kind === "live") onAddLiveImage?.();
         else if (kind === "link") onAddLink();
         return;
       }
@@ -354,7 +366,14 @@ export function SlashMenu({
       quill.history.cutoff();
       quill.setSelection(from, 0, "user");
     },
-    [getQuill, onAddAttachment, onRecordAudio, onAddLink, updateSlash],
+    [
+      getQuill,
+      onAddAttachment,
+      onRecordAudio,
+      onAddLink,
+      onAddLiveImage,
+      updateSlash,
+    ],
   );
 
   // Keys go to the menu before the editor sees them.

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from 'src/generated/prisma/client';
-import { SyncEntityType, SyncOp } from 'src/generated/prisma/enums';
+import { NoteState, SyncEntityType, SyncOp } from 'src/generated/prisma/enums';
 import { SyncEventsService } from './sync-events.service';
 import { CHANGELOG_UPSERT_CHUNK_SIZE } from './sync.constants';
 
@@ -61,7 +61,36 @@ export class SyncEmitterService {
     }
 
     this.syncEvents.schedulePoke(lastSeqByRecipient);
+    await this.stopLiveImages(tx, [...deduped.values()]);
     return recipients;
+  }
+
+  // A note trashed or deleted stops its live images on every device at once,
+  // whichever app made the change; restoring it doesn't start them again.
+  private async stopLiveImages(
+    tx: Prisma.TransactionClient,
+    emissions: SyncEmission[],
+  ): Promise<void> {
+    const notes = emissions.filter((e) => e.entityType === SyncEntityType.note);
+    if (notes.length === 0) {
+      return;
+    }
+    const gone = await tx.note.findMany({
+      where: {
+        id: { in: [...new Set(notes.map((e) => e.entityId))] },
+        state: { not: NoteState.active },
+      },
+      select: { id: true },
+    });
+    if (gone.length === 0) {
+      return;
+    }
+    const goneIds = new Set(gone.map((note) => note.id));
+    this.syncEvents.scheduleLiveStop(
+      notes
+        .filter((e) => goneIds.has(e.entityId))
+        .map((e) => ({ userId: e.recipientUserId, noteId: e.entityId })),
+    );
   }
 
   // Everyone whose feed carries this note: the owner plus active sharees.

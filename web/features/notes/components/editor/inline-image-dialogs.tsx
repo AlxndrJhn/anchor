@@ -130,19 +130,28 @@ const CORNERS: { corner: Corner; label: string; cursor: string }[] = [
  */
 export function CropDialog({
   picture,
+  initial = WHOLE_PICTURE,
+  title = "Crop picture",
+  canKeepWhole = false,
   onClose,
   onCrop,
 }: {
   picture: Blob | null;
+  /** The part kept so far. */
+  initial?: CropArea;
+  title?: string;
+  /** Whether keeping all of it is a change, e.g. undoing a crop. */
+  canKeepWhole?: boolean;
   onClose: () => void;
   onCrop: (area: CropArea) => void;
 }) {
   const [area, setArea] = React.useState<CropArea>(WHOLE_PICTURE);
   const [url, setUrl] = React.useState<string | null>(null);
   const frame = React.useRef<HTMLDivElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: starts over for each picture only
   React.useEffect(() => {
     if (!picture) return;
-    setArea(WHOLE_PICTURE);
+    setArea(initial);
     const next = URL.createObjectURL(picture);
     setUrl(next);
     return () => URL.revokeObjectURL(next);
@@ -189,7 +198,7 @@ export function CropDialog({
     <Dialog open={!!picture} onOpenChange={(next) => !next && onClose()}>
       <DialogContent size="lg">
         <DialogHeader>
-          <DialogTitle>Crop picture</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <DialogBody className="justify-items-center">
           {url && (
@@ -275,7 +284,11 @@ export function CropDialog({
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" disabled={isWhole} onClick={() => onCrop(area)}>
+          <Button
+            type="button"
+            disabled={isWhole && !canKeepWhole}
+            onClick={() => onCrop(area)}
+          >
             Crop
           </Button>
         </DialogFooter>

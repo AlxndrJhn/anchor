@@ -23,6 +23,7 @@ export const asSyncEmitter = (mock: MockSyncEmitter) =>
 export function createMockSyncEvents() {
   return {
     schedulePoke: vi.fn(),
+    scheduleLiveStop: vi.fn(),
     poke: vi.fn(),
   };
 }

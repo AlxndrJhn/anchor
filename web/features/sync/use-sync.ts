@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getAccessToken, useAuthStore } from "@/features/auth";
+import { receiveLiveSignal } from "@/features/notes/live-hub";
 import { refreshAccessToken } from "@/lib/api/client";
 import { connectSyncEvents } from "./events";
 
@@ -40,6 +41,7 @@ export function useSync(): void {
       },
       // Messages sent while we were disconnected are lost.
       onReconnect: pull,
+      onLive: receiveLiveSignal,
       getToken: getAccessToken,
       refreshToken: refreshAccessToken,
     });

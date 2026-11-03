@@ -14,6 +14,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../app/router/app_routes.dart';
 import '../../../core/logging/app_logger.dart';
@@ -40,11 +41,14 @@ import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../tags/domain/tag.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
+import '../data/live_host.dart';
+import '../data/live_signals.dart';
 import '../data/repository/note_attachments_repository.dart';
 import '../data/repository/note_copies_repository.dart';
 import '../data/repository/note_shares_repository.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/inline_image.dart';
+import '../domain/live_image.dart';
 import '../domain/note.dart';
 import '../domain/note_attachment.dart';
 import '../domain/note_history.dart';
@@ -56,6 +60,7 @@ import 'editor/editor_overlay_controller.dart';
 import 'editor/editor_palette.dart';
 import 'editor/inline_image_embed.dart';
 import 'editor/line_kind.dart';
+import 'editor/live_image_embed.dart';
 import 'editor/rich_text_editor.dart';
 import 'editor/text_formats.dart';
 import 'multi_shot_camera_screen.dart';
@@ -70,6 +75,7 @@ import 'quick_action_labels.dart';
 import 'widgets/add_sheet.dart';
 import 'widgets/background_sheet.dart';
 import 'widgets/card_registry.dart';
+import 'widgets/live_camera_sheet.dart';
 import 'widgets/note_attachments_strip.dart';
 import 'widgets/note_bar.dart';
 import 'widgets/note_header.dart';
@@ -179,12 +185,63 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
   /// The pictures placed in the text: how they load, show and change.
   late final InlineImages _inlineImages;
-  late final _embedBuilders = [InlineImageEmbedBuilder(_inlineImages)];
+  late final _embedBuilders = [
+    InlineImageEmbedBuilder(_inlineImages),
+    LiveImageEmbedBuilder(
+      signals: () => ref.read(liveSignalsProvider),
+      host: () => ref.read(liveHostProvider),
+      noteId: () => _draft.noteId,
+      keepStill: _keepLiveStill,
+    ),
+  ];
 
   /// The attachments the text shows as pictures, kept out of the strip;
   /// null until the text changes, then read from the editor.
   Set<String>? _shownInline;
   (int, String?)? _shownInlineOf;
+
+  /// Puts this phone's camera in the text at the caret, shown live on every
+  /// device that opens the note.
+  Future<void> _addLiveCamera() async {
+    if (_isReadOnly) return;
+    final choice = await showLiveCameraSheet(context);
+    if (choice == null || !mounted) return;
+    final noteId = _draft.noteId ?? await _draft.createNote();
+    final image = LiveImage(
+      id: const Uuid().v4(),
+      source: 'camera',
+      device: LiveSignals.device,
+      label: 'Anchor+ on Android',
+    );
+    ref
+        .read(liveHostProvider)
+        .adopt(image.id, noteId, choice.stream, isFront: choice.isFront);
+    Haptics.success();
+    _editor?.insertBlockEmbeds([
+      BlockEmbed(LiveImage.embedType, image.encode()),
+    ]);
+  }
+
+  /// A live image's still, straight into the note's attachments.
+  Future<void> _keepLiveStill(Uint8List png, String name) async {
+    final noteId = _draft.noteId;
+    if (noteId == null || _isReadOnly) return;
+    final dir = await getTemporaryDirectory();
+    final file = File(
+      p.join(
+        dir.path,
+        'live-still-${DateTime.now().microsecondsSinceEpoch}.png',
+      ),
+    );
+    await file.writeAsBytes(png, flush: true);
+    try {
+      await ref
+          .read(noteAttachmentsRepositoryProvider)
+          .addAttachment(noteId, file.path, 'image/png', name);
+    } finally {
+      unawaited(file.delete().catchError((_) => file));
+    }
+  }
 
   @override
   void initState() {
@@ -942,6 +999,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     final files = await showAddSheet(
       context,
       onTakeSeveral: _takeSeveralPictures,
+      onLiveCamera: _addLiveCamera,
     );
     if (files == null || files.isEmpty || !mounted) return;
     await _addFiles(files);

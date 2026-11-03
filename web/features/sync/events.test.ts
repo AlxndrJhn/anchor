@@ -103,6 +103,23 @@ describe("connectSyncEvents", () => {
     stream.close();
   });
 
+  it("passes on a live image's message, and only that", async () => {
+    const onLive = vi.fn();
+    const onSync = vi.fn();
+    const { opened, fetchFn } = channels();
+    const stream = connect({ fetchFn, onLive, onSync });
+
+    await vi.waitFor(() => expect(opened).toHaveLength(1));
+    opened[0].send('event: live\ndata: {"kind":"want",');
+    opened[0].send('"liveId":"l1"}\n\nevent: live\ndata: {broken\n\n');
+    opened[0].send("event: sync\ndata:\n\n");
+
+    await vi.waitFor(() => expect(onSync).toHaveBeenCalledTimes(1));
+    expect(onLive).toHaveBeenCalledTimes(1);
+    expect(onLive).toHaveBeenCalledWith({ kind: "want", liveId: "l1" });
+    stream.close();
+  });
+
   it("pulls after reconnecting, not on the first connection", async () => {
     const onReconnect = vi.fn();
     const { opened, fetchFn } = channels();

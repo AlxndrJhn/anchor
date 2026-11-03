@@ -4411,4 +4411,107 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get magicLoginAlreadySignedIn =>
       'You’re already signed in. Sign out first to use a magic link.';
+
+  @override
+  String liveImageConnecting(String device) {
+    return 'Connecting to $device…';
+  }
+
+  @override
+  String liveImageWaiting(String device) {
+    return 'Waiting for $device. Open Anchor there to show it.';
+  }
+
+  @override
+  String liveImageScreenPaused(String device) {
+    return '$device isn’t sharing its screen right now.';
+  }
+
+  @override
+  String liveImageCameraPaused(String device) {
+    return '$device can’t show its camera right now.';
+  }
+
+  @override
+  String get liveImageSomeDevice => 'the device that added it';
+
+  @override
+  String get liveImageBadge => 'Live';
+
+  @override
+  String get liveImageCamera => 'Live camera';
+
+  @override
+  String get liveImageScreen => 'Live screen';
+
+  @override
+  String get liveImageSoundOn => 'Turn sound on';
+
+  @override
+  String get liveImageSoundOff => 'Turn sound off';
+
+  @override
+  String get liveImageMicMuted => 'Microphone muted';
+
+  @override
+  String liveImageViewers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count watching',
+      one: '1 watching',
+      zero: 'Nobody watching',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get liveImageStillKept => 'Still added to the attachments';
+
+  @override
+  String get liveImageStillFailed => 'Couldn’t keep a still of the live image';
+
+  @override
+  String get liveImageCameraOff => 'Your camera is off.';
+
+  @override
+  String get liveImageTurnCameraOn => 'Turn camera on';
+
+  @override
+  String get liveImageCameraFailed => 'Couldn’t turn the camera on';
+
+  @override
+  String get liveImageMute => 'Mute microphone';
+
+  @override
+  String get liveImageUnmute => 'Unmute microphone';
+
+  @override
+  String get addLiveCamera => 'Live camera';
+
+  @override
+  String get liveCameraTitle => 'Live camera';
+
+  @override
+  String get liveCameraSubtitle =>
+      'Shows this phone’s camera in the note, live, on every device that opens it, while Anchor is open here.';
+
+  @override
+  String get liveCameraFront => 'Front';
+
+  @override
+  String get liveCameraBack => 'Back';
+
+  @override
+  String get liveCameraMic => 'Microphone';
+
+  @override
+  String get liveCameraMicHint =>
+      'Sends this phone’s sound too; you can mute it while it’s live.';
+
+  @override
+  String get liveCameraAdd => 'Add to note';
+
+  @override
+  String get liveCameraNoCamera => 'No camera could be turned on.';
 }

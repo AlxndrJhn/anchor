@@ -1,6 +1,7 @@
 import { HIGHLIGHTS } from "@/lib/design/tokens";
 import { INLINE_IMAGE_EMBED, parseInlineImage } from "./inline-images";
 import { LINK_PROTOCOLS } from "./link-utils";
+import { LIVE_IMAGE_EMBED, parseLiveImage } from "./live-images";
 import { deleteWholeLines, isWholeLines, type QuillInstance } from "./quill";
 import { MAX_LIST_INDENT } from "./quill-lines";
 import { FONTS, inkFor, isHexColor } from "./text-style";
@@ -94,6 +95,55 @@ export function registerNoteFormats(Quill: QuillStatic) {
     }
   }
   Quill.register(NoteImage, true);
+
+  // A camera or screen shown live (see live-hub.ts); its video is attached
+  // in useLiveImages, the stored value kept as it came.
+  class LiveImageEmbed extends Embed {
+    static blotName = LIVE_IMAGE_EMBED;
+    static tagName = "SPAN";
+    static className = "live-image";
+    static create(value: unknown) {
+      // biome-ignore lint/complexity/noThisInStatic: Parchment's create reads this.tagName
+      const node = super.create(value);
+      node.setAttribute("data-value", typeof value === "string" ? value : "");
+      const image = parseLiveImage(value);
+      if (!image) return node;
+      node.dataset.id = image.id;
+      node.dataset.source = image.source;
+      if (image.width)
+        node.style.setProperty("--note-image-width", `${image.width * 100}%`);
+      const frame = document.createElement("span");
+      frame.className = "live-frame";
+      const video = document.createElement("video");
+      video.muted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.setAttribute(
+        "aria-label",
+        image.source === "screen" ? "Live screen" : "Live camera",
+      );
+      frame.appendChild(video);
+      const status = document.createElement("span");
+      status.className = "live-status";
+      frame.appendChild(status);
+      // The red dot, which a tap turns into an anchor and back; then how
+      // many watch (use-live-images.ts fills it in).
+      const badge = document.createElement("span");
+      badge.className = "live-badge";
+      badge.innerHTML =
+        '<span class="live-mark" aria-hidden="true"><span class="live-dot"></span>' +
+        '<svg class="live-anchor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg></span>' +
+        '<span class="live-word">Live</span><span class="live-viewers" hidden></span>';
+      frame.appendChild(badge);
+      node.appendChild(frame);
+      return node;
+    }
+    static value(node: HTMLElement) {
+      return node.getAttribute("data-value") ?? "";
+    }
+  }
+  Quill.register(LiveImageEmbed, true);
 
   // A font for the selected text, written as its font-family.
   const FontStyle = Quill.import("attributors/style/font") as {

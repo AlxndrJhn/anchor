@@ -21,6 +21,7 @@ import { watchHighlights } from "@/lib/highlight-paint";
 import { hasShortcutKey, isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { stampFor } from "../../date-stamp";
+import { useLiveImages } from "../../hooks/use-live-images";
 import { showInlineImages } from "../../inline-images";
 import type { LinkRange } from "../../link-utils";
 import {
@@ -30,6 +31,7 @@ import {
   linkTypedAddress,
   normalizeUrl,
 } from "../../link-utils";
+import { canWatchLive } from "../../live-hub";
 import type {
   ChecklistMoveDetail,
   QuillDelta,
@@ -65,6 +67,7 @@ import {
 } from "./inline-image-tools";
 import { LinkBubble } from "./link-bubble";
 import { LinkPopover } from "./link-popover";
+import { LiveImageTools, type LiveImageToolsHandle } from "./live-image-tools";
 import { QuillToolbar } from "./quill-toolbar";
 import { SlashMenu } from "./slash-menu";
 import type { UndoableEdit } from "./undoable-edit";
@@ -224,6 +227,8 @@ export const RichTextEditor = forwardRef<
     const quillRef = useRef<{ getEditor: () => QuillInstance }>(null);
     const pictureTools = useRef<InlineImageToolsHandle>(null);
     const canPlacePictures = !readOnly && !!pictures;
+    const liveTools = useRef<LiveImageToolsHandle>(null);
+    const canAddLive = !readOnly && !!noteId && canWatchLive();
     const rootRef = useRef<HTMLDivElement>(null);
     const [editorContainerEl, setEditorContainerEl] =
       useState<HTMLDivElement | null>(null);
@@ -320,6 +325,12 @@ export const RichTextEditor = forwardRef<
       observer.observe(host, { childList: true, subtree: true });
       return () => observer.disconnect();
     }, [editorContainerEl, noteId]);
+
+    useLiveImages(
+      editorContainerEl,
+      noteId,
+      canPlacePictures ? pictures?.upload : undefined,
+    );
 
     const [longContent, setLongContent] = useState<QuillDelta | null>(() => {
       const content = parseStoredContent(value);
@@ -1000,6 +1011,9 @@ export const RichTextEditor = forwardRef<
             onPictureInText={
               canPlacePictures ? () => pictureTools.current?.pick() : undefined
             }
+            onLiveImage={
+              canAddLive ? () => liveTools.current?.add() : undefined
+            }
           />
         )}
         <div
@@ -1115,6 +1129,14 @@ export const RichTextEditor = forwardRef<
               host={pictures}
             />
           )}
+          {canAddLive && noteId && (
+            <LiveImageTools
+              ref={liveTools}
+              getQuill={getQuill}
+              container={editorContainerEl}
+              noteId={noteId}
+            />
+          )}
           {!readOnly && (
             <SelectionToolbar
               getQuill={getQuill}
@@ -1128,6 +1150,9 @@ export const RichTextEditor = forwardRef<
               onAddAttachment={onAddAttachment}
               onRecordAudio={onRecordAudio}
               onAddLink={openLinkDialog}
+              onAddLiveImage={
+                canAddLive ? () => liveTools.current?.add() : undefined
+              }
             />
           )}
           {!linkDialogState.open && (

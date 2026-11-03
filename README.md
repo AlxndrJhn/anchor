@@ -89,6 +89,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Attach any kind of file; Android can also attach a whole folder, zipped | ✓ | ✓ |
 | Add image, Take picture and Take several (one picture after another, without going back to the note) in an opened note's menu | | ✓ |
 | Camera and pictures buttons left of the text styles put pictures in the text at the caret; drag a picture's corner to resize it, hold it to retake, crop, mirror, caption or delete it (web: a picture button, a corner that shows on hover, and right-click to replace, crop, mirror, caption or delete) | ✓ | ✓ |
+| Live images: put a camera or a screen of this computer in a note (toolbar, or `/live`), or the phone's camera (Add › Live camera), with or without the microphone, and every device that opens the note shows it live, straight from that one while Anchor is open there. Resize and crop it on the web; mute the microphone while it's live; viewers turn the sound on themselves and see how many watch. A tap spins the red dot into an anchor; a double tap keeps a still in the note's attachments, named for the moment it was taken. Trashing the note stops them at once, and a restored note's live images stay off until turned on again | ✓ | ✓ (camera) |
 | Download pictures and recordings ([#164](https://github.com/ZhFahim/anchor/issues/164)) | | ✓ |
 | Share to Anchor from other apps: text, links, pictures, files ([#52](https://github.com/ZhFahim/anchor/issues/52)) | | ✓ |
 | **History** | | |
@@ -382,6 +383,7 @@ The [desktop app](#desktop-app) installs with winget too.
    | `PICTURE_SEARCH_MODEL_URL` | No | (Hugging Face) | Where to download its model (~380 MB) from, e.g. a mirror |
    | `HEARTBEAT_URL` | No | — | URL to call while the server works, e.g. an Uptime Kuma push URL (see [Monitoring](#monitoring-the-server)) |
    | `HEARTBEAT_INTERVAL` | No | `60` | Seconds between those calls (10 or more) |
+   | `LIVE_ICE_SERVERS` | No | (none) | STUN/TURN servers for live images between devices on different networks: comma-separated URLs, or a JSON array of `RTCIceServer` objects for a TURN login. Without them, devices on the same network or VPN still connect |
    | `CORS_ORIGINS` | No | (allow all) | Comma-separated allowlist of CORS origins |
    | `PG_HOST` | No | (empty) | External Postgres host (leave empty for embedded) |
    | `PG_PORT` | No | `5432` | Postgres port |

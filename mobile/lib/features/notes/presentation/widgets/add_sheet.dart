@@ -39,11 +39,13 @@ typedef AddedFile = ({String path, String mime, String name});
 Future<List<AddedFile>?> showAddSheet(
   BuildContext context, {
   VoidCallback? onTakeSeveral,
+  VoidCallback? onLiveCamera,
 }) {
   return showAnchorSheet<List<AddedFile>>(
     context,
     semanticLabel: context.l10n.addToNote,
-    builder: (_) => _AddSheet(onTakeSeveral: onTakeSeveral),
+    builder: (_) =>
+        _AddSheet(onTakeSeveral: onTakeSeveral, onLiveCamera: onLiveCamera),
   );
 }
 
@@ -76,9 +78,12 @@ const _waveformBarCount = 36;
 const _recordingLimit = maxAttachmentBytes - 2 * 1024 * 1024;
 
 class _AddSheet extends StatefulWidget {
-  const _AddSheet({this.onTakeSeveral});
+  const _AddSheet({this.onTakeSeveral, this.onLiveCamera});
 
   final VoidCallback? onTakeSeveral;
+
+  /// Closes the sheet to put a live camera in the text; null leaves it out.
+  final VoidCallback? onLiveCamera;
 
   @override
   State<_AddSheet> createState() => _AddSheetState();
@@ -141,6 +146,12 @@ class _AddSheetState extends State<_AddSheet> {
     if (image == null || !mounted) return;
     final files = await _uploadable([image]);
     if (files != null && files.isNotEmpty) _done(files);
+  }
+
+  void _liveCamera() {
+    final onLiveCamera = widget.onLiveCamera!;
+    Navigator.of(context).pop();
+    onLiveCamera();
   }
 
   void _takeSeveral() {
@@ -394,6 +405,12 @@ class _AddSheetState extends State<_AddSheet> {
                       label: l10n.addChoosePhoto,
                       onTap: _choosePhotos,
                     ),
+                    if (widget.onLiveCamera != null)
+                      _Option(
+                        icon: LucideIcons.radio,
+                        label: l10n.addLiveCamera,
+                        onTap: _liveCamera,
+                      ),
                     _Option(
                       icon: LucideIcons.mic,
                       label: l10n.addRecordAudio,

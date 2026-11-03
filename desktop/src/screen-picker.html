@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' file:; img-src data:; font-src 'self' file:"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Share a screen or window</title>
+    <link rel="stylesheet" href="screen-picker.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Share a screen or window</h1>
+      <p class="lead">It shows live in the note, on every device that opens it.</p>
+      <h2 id="screens-title">Screens</h2>
+      <div id="screens" class="grid" role="listbox" aria-labelledby="screens-title"></div>
+      <h2 id="windows-title">Windows</h2>
+      <div id="windows" class="grid" role="listbox" aria-labelledby="windows-title"></div>
+    </main>
+    <footer>
+      <button id="cancel" type="button" class="secondary">Cancel</button>
+      <button id="share" type="button" disabled>Share</button>
+    </footer>
+    <script src="screen-picker-page.js"></script>
+  </body>
+</html>

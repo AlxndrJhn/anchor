@@ -55,6 +55,47 @@ export const MonitoringConfig = registerAs('monitoring', () => ({
   heartbeatInterval: parseInt(process.env.HEARTBEAT_INTERVAL ?? '60', 10),
 }));
 
+/**
+ * The STUN or TURN servers live images connect through, for devices on
+ * different networks: LIVE_ICE_SERVERS as a comma-separated list of URLs, or
+ * as a JSON array of RTCIceServer objects when a TURN server needs a login.
+ * None by default, which connects devices on the same network or VPN.
+ */
+export const LiveConfig = registerAs('live', () => ({
+  iceServers: parseIceServers(process.env.LIVE_ICE_SERVERS),
+}));
+
+export interface IceServer {
+  urls: string | string[];
+  username?: string;
+  credential?: string;
+}
+
+export function parseIceServers(value: string | undefined): IceServer[] {
+  const text = value?.trim();
+  if (!text) return [];
+  if (text.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(text) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (server): server is IceServer =>
+          !!server &&
+          typeof server === 'object' &&
+          (typeof (server as IceServer).urls === 'string' ||
+            Array.isArray((server as IceServer).urls)),
+      );
+    } catch {
+      return [];
+    }
+  }
+  return text
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean)
+    .map((urls) => ({ urls }));
+}
+
 export const configurations = [
   AppConfig,
   DatabaseConfig,
@@ -63,4 +104,5 @@ export const configurations = [
   PictureTextConfig,
   PictureSearchConfig,
   MonitoringConfig,
+  LiveConfig,
 ];

@@ -3,6 +3,7 @@ import { getAccessToken } from "@/features/auth/store";
 import { api, getJson } from "@/lib/api/client";
 import { uploadWithProgress } from "@/lib/api/upload";
 import { fitsKeepalive } from "@/lib/page-close";
+import { closeLiveImages } from "./live-hub";
 import type { SaveOutcome } from "./save-queue";
 import type {
   CreateNoteDto,
@@ -164,6 +165,8 @@ export async function deleteNote(
   id: string,
   trashedAt?: string,
 ): Promise<void> {
+  // At once, before the server tells every other device to.
+  closeLiveImages(id);
   await api.delete(`api/notes/${id}`, {
     searchParams: trashedAt ? { trashedAt } : undefined,
   });
@@ -178,6 +181,7 @@ export async function restoreNote(id: string): Promise<Note> {
 }
 
 export async function permanentDeleteNote(id: string): Promise<void> {
+  closeLiveImages(id);
   await api.delete(`api/notes/${id}/permanent`);
 }
 
@@ -214,6 +218,7 @@ async function inBulkBatches(
 export async function bulkDeleteNotes(
   noteIds: string[],
 ): Promise<{ count: number }> {
+  for (const id of noteIds) closeLiveImages(id);
   return inBulkBatches(noteIds, (batch) =>
     api
       .post("api/notes/bulk/delete", { json: { noteIds: batch } })

@@ -13,6 +13,7 @@ import {
   restoreNote,
   unarchiveNote,
 } from "../api";
+import { closeLiveImages } from "../live-hub";
 import { type NoteCaret, returnCaretTo } from "../note-caret";
 import type { Note } from "../types";
 import { useRefreshNotes } from "./use-refresh-notes";
@@ -105,6 +106,8 @@ export function useNoteActions({
     close: () => void,
     remove: () => Promise<unknown>,
   ) => {
+    // Its live images stop now, not once the card has burnt away.
+    closeLiveImages(noteId);
     close();
     const burn = await burnNoteCardWhenShown(noteId);
     await burn.done;

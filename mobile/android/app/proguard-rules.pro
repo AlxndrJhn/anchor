@@ -10,3 +10,8 @@
 # manifest. Without this, R8 drops their constructors as unused, ML Kit starts
 # without its text recognizer, and every "Grab image text" fails.
 -keep class com.google.mlkit.**.*Registrar { <init>(); }
+
+# Live images: libwebrtc calls its Java side by name from native code, so
+# R8 must keep it whole.
+-keep class org.webrtc.** { *; }
+-keep class com.cloudwebrtc.webrtc.** { *; }
