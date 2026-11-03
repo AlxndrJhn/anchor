@@ -4,8 +4,7 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { McpServer, type CallToolResult } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import { NotesService } from '../notes/services/notes.service';
 import { NoteAttachmentsService } from '../notes/services/note-attachments.service';
@@ -64,7 +63,7 @@ export class AnchorMcpService {
           'Lists notes, newest first, with a snippet of each. Searches ' +
           'titles, text and the text in pictures when a query is given; ' +
           'invisible notes only show up in a search.',
-        inputSchema: {
+        inputSchema: z.object({
           query: z.string().optional().describe('Text to search for'),
           tag: z.string().optional().describe('Only notes with this tag'),
           scope: z
@@ -72,7 +71,7 @@ export class AnchorMcpService {
             .default('notes')
             .describe('Which notes to list'),
           limit: z.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
-        },
+        }),
         annotations: { readOnlyHint: true },
       },
       ({ query, tag, scope, limit }) =>
@@ -129,7 +128,7 @@ export class AnchorMcpService {
           'Reads a note: its title, its text as markdown, its tags, its ' +
           'attachments (pictures, recordings, files; newest first) and its ' +
           'version, which update_note takes to avoid overwriting edits.',
-        inputSchema: { id: z.string().describe('The note id') },
+        inputSchema: z.object({ id: z.string().describe('The note id') }),
         annotations: { readOnlyHint: true },
       },
       ({ id }) =>
@@ -151,10 +150,10 @@ export class AnchorMcpService {
           "Fetches one of a note's attachments, by the ids get_note lists: " +
           'a picture comes back as an image to look at (scaled down if ' +
           'large), a recording as audio, and a file as its contents.',
-        inputSchema: {
+        inputSchema: z.object({
           noteId: z.string().describe('The note id'),
           id: z.string().describe('The attachment id, from get_note'),
-        },
+        }),
         annotations: { readOnlyHint: true },
       },
       ({ noteId, id }) =>
@@ -228,12 +227,12 @@ export class AnchorMcpService {
       {
         title: 'Create a note',
         description: 'Creates a note. Tags that do not exist yet are created.',
-        inputSchema: {
+        inputSchema: z.object({
           title: z.string().default(''),
           content: z.string().default('').describe('The text, as markdown'),
           tags: z.array(z.string()).optional().describe('Tag names'),
           pinned: z.boolean().optional(),
-        },
+        }),
       },
       ({ title, content, tags, pinned }) =>
         this.run(async () => {
@@ -255,7 +254,7 @@ export class AnchorMcpService {
           'Changes a note. Leave out what stays as it is. content replaces ' +
           'the whole text, so pass the full markdown; to add lines at the ' +
           'end, use append_to_note. tags replaces the tag list.',
-        inputSchema: {
+        inputSchema: z.object({
           id: z.string(),
           version: z
             .number()
@@ -267,7 +266,7 @@ export class AnchorMcpService {
           tags: z.array(z.string()).optional().describe('Tag names'),
           pinned: z.boolean().optional(),
           archived: z.boolean().optional(),
-        },
+        }),
       },
       ({ id, version, title, content, tags, pinned, archived }) =>
         this.run(async () => {
@@ -306,10 +305,10 @@ export class AnchorMcpService {
         description:
           'Adds markdown lines to the end of a note, keeping everything ' +
           'already in it, such as items for a checklist ("- [ ] eggs").',
-        inputSchema: {
+        inputSchema: z.object({
           id: z.string(),
           content: z.string().describe('The lines to add, as markdown'),
-        },
+        }),
       },
       ({ id, content }) =>
         this.run(async () => {
@@ -330,7 +329,7 @@ export class AnchorMcpService {
         description:
           'Moves a note to the trash, where it can be restored from in ' +
           'Anchor until the trash is emptied.',
-        inputSchema: { id: z.string() },
+        inputSchema: z.object({ id: z.string() }),
         annotations: { destructiveHint: true },
       },
       ({ id }) =>
