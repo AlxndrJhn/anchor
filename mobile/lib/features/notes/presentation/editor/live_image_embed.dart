@@ -629,7 +629,9 @@ class _LiveImageViewState extends State<_LiveImageView>
                                     ),
                                     if (_status == _Status.off &&
                                         widget.keepStill != null) ...[
-                                      const SizedBox(height: 10),
+                                      const SizedBox(
+                                        height: AnchorTokens.space12,
+                                      ),
                                       AppButton(
                                         label: l10n.liveImageTurnCameraOn,
                                         icon: LucideIcons.camera,
@@ -687,7 +689,7 @@ class _LiveImageViewState extends State<_LiveImageView>
                                     label: l10n.liveImageMicMuted,
                                     isWarning: true,
                                   ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: AnchorTokens.space8),
                                 if (_isOwn)
                                   _RoundIcon(
                                     icon: _mic == 'on'
@@ -751,7 +753,7 @@ class _RoundIcon extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: SizedBox.square(
-        dimension: 36,
+        dimension: 36, // off-scale: a round control over the video
         child: Icon(
           icon,
           size: AnchorTokens.sizeIconSmall,
@@ -805,21 +807,26 @@ class _LiveBadge extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AnchorTokens.radiusPill),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AnchorTokens.space8,
+          vertical: 2, // off-scale: the badge is a line of small text
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             _SpinningMark(spin: spin),
-            const SizedBox(width: 5),
+            const SizedBox(width: AnchorTokens.space4),
             Text(label.toUpperCase(), style: style),
             if (viewers != null) ...[
               Container(
                 width: 1,
-                height: 10,
-                margin: const EdgeInsets.symmetric(horizontal: 6),
+                height: 10, // off-scale: the divider in the badge
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 6, // off-scale: room around the divider
+                ),
                 color: Colors.white.withValues(alpha: 0.35),
               ),
               Semantics(
@@ -828,7 +835,11 @@ class _LiveBadge extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.eye, size: 11, color: Colors.white),
+                    const Icon(
+                      LucideIcons.eye,
+                      size: 11, // off-scale: a badge icon
+                      color: Colors.white,
+                    ), // off-scale: a badge icon
                     const SizedBox(width: 3),
                     Text(
                       '$viewers',
@@ -869,7 +880,7 @@ class _SpinningMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox.square(
-      dimension: 10,
+      dimension: 10, // off-scale: the red dot's spot in the badge
       child: AnimatedBuilder(
         animation: spin,
         builder: (context, _) {
@@ -892,7 +903,9 @@ class _SpinningMark extends StatelessWidget {
                         color: _LiveBadge._red,
                         shape: BoxShape.circle,
                       ),
-                      child: SizedBox.square(dimension: 6),
+                      child: SizedBox.square(
+                        dimension: 6, // off-scale: the red dot
+                      ),
                     ),
                   ),
                   if (anchor > 0)
@@ -902,7 +915,7 @@ class _SpinningMark extends StatelessWidget {
                         scale: anchor,
                         child: const Icon(
                           LucideIcons.anchor,
-                          size: 11,
+                          size: 11, // off-scale: a badge icon
                           color: _LiveBadge._red,
                         ),
                       ),
