@@ -10,9 +10,6 @@ plugins {
 // Fork builds (ORG_GRADLE_PROJECT_anchorFork=true) are named Anchor+. Every
 // build is com.alxndrjhn.anchorplus, so none clashes with the official app.
 val isForkBuild = (project.findProperty("anchorFork") as String?) == "true"
-// Preview builds of a branch (ORG_GRADLE_PROJECT_anchorPreview=true, see
-// preview-v18rebase.yml) install next to the fork's releases.
-val isPreviewBuild = (project.findProperty("anchorPreview") as String?) == "true"
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -34,7 +31,6 @@ android {
 
     defaultConfig {
         applicationId = "com.alxndrjhn.anchorplus"
-        if (isPreviewBuild) applicationIdSuffix = ".preview"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -43,7 +39,6 @@ android {
         versionName = flutter.versionName
         manifestPlaceholders["appAuthRedirectScheme"] = "anchor"
         manifestPlaceholders["appLabel"] = when {
-            isPreviewBuild -> "Anchor+ preview"
             isForkBuild -> "Anchor+"
             else -> "Anchor Notes"
         }
