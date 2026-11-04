@@ -32,6 +32,12 @@ import {
   normalizeUrl,
 } from "../../link-utils";
 import { canWatchLive } from "../../live-hub";
+import {
+  type ClipboardContent,
+  fetchPicture,
+  putPictures,
+  takePictures,
+} from "../../paste-formatted";
 import type {
   ChecklistMoveDetail,
   QuillDelta,
@@ -207,6 +213,11 @@ export interface RichTextEditorHandle {
   appendText: (text: string) => void;
   /** Puts pasted pictures in the text at the caret; false when it can't. */
   pastePictures: (files: File[]) => boolean;
+  /**
+   * Pastes what was read from the clipboard at the caret, formatted as
+   * Ctrl+V would, its pictures uploaded into the text.
+   */
+  pasteFormatted: (content: ClipboardContent) => Promise<void>;
 }
 
 export const RichTextEditor = forwardRef<
@@ -841,6 +852,61 @@ export const RichTextEditor = forwardRef<
           tools.insert(files);
           return true;
         },
+        pasteFormatted: async (content: ClipboardContent) => {
+          if (readOnly) return;
+          if (!content.html && content.pictures.length) {
+            const quill = getQuill();
+            quill?.focus();
+            quill?.getSelection(true);
+            if (!pictureTools.current) return;
+            pictureTools.current.insert(content.pictures);
+            return;
+          }
+          const taken = content.html
+            ? takePictures(content.html)
+            : { html: undefined, sources: [], names: [] };
+          let ids: (string | null)[] = [];
+          if (taken.sources.length) {
+            const files = await Promise.all(taken.sources.map(fetchPicture));
+            const found = files.filter((file): file is File => !!file);
+            const uploaded = found.length
+              ? await (pictures?.upload(found) ?? Promise.resolve([])).catch(
+                  () => [] as string[],
+                )
+              : [];
+            let next = 0;
+            ids = files.map((file) =>
+              file ? (uploaded[next++] ?? null) : null,
+            );
+            const missing = ids.filter((id) => !id).length;
+            if (missing)
+              toast.error(
+                `${
+                  missing === 1
+                    ? "Couldn’t bring along a picture"
+                    : `Couldn’t bring along ${missing} pictures`
+                }. Copy ${missing === 1 ? "it" : "each"} on its own to add it.`,
+              );
+          }
+          const quill = getQuill();
+          if (!quill) return;
+          quill.focus();
+          const range = quill.getSelection(true) ?? {
+            index: quill.getLength() - 1,
+            length: 0,
+          };
+          const clipboard = (quill as unknown as { clipboard: unknown })
+            .clipboard as {
+            onPaste: (
+              range: { index: number; length: number },
+              data: { html?: string; text?: string },
+            ) => void;
+          };
+          clipboard.onPaste(range, {
+            html: taken.html && putPictures(taken.html, ids, taken.names),
+            text: content.text,
+          });
+        },
         getCaret: () => {
           const quill = quillRef.current?.getEditor?.() as QuillInstance | null;
           return quill ? { ...quill.selection.savedRange } : null;
@@ -901,7 +967,7 @@ export const RichTextEditor = forwardRef<
         undoOrRedoText: (action: UndoRedoAction) =>
           getQuill()?.history[action](),
       };
-    }, [checklistEdits, getQuill, readOnly]);
+    }, [checklistEdits, getQuill, pictures, readOnly]);
 
     useEffect(() => {
       const host = editorContainerEl;

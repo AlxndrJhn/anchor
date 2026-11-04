@@ -5,6 +5,7 @@ import {
   Bell,
   BellRing,
   ChevronDown,
+  ClipboardPaste,
   ImagePlus,
   List,
   ListChecks,
@@ -28,6 +29,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { usePreferencesStore } from "@/features/preferences";
 import { sortTagsByName, type Tag, TagChip, TagPicker } from "@/features/tags";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
+import { isMac } from "@/lib/platform";
 import { useFlip } from "@/lib/use-flip";
 import { cn, shortNames } from "@/lib/utils";
 import {
@@ -38,6 +40,7 @@ import {
 import { MAX_ATTACHMENT_SIZE } from "../../constants";
 import { stampFor } from "../../date-stamp";
 import { inlineImageIds, primeInlineImage } from "../../inline-images";
+import { readClipboard } from "../../paste-formatted";
 import { deltaToFullPlainText, isContentBlank } from "../../quill";
 import { isReminderPast, reminderLabel } from "../../reminder";
 import type {
@@ -152,6 +155,21 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
   const record =
     props.canUpload && canRecord ? () => setRecording(true) : undefined;
   const startersRoving = useRovingFocus<HTMLDivElement>();
+  const pasteFormatted = async () => {
+    // Read first, while the click still counts as the person's own.
+    const content = await readClipboard().catch(() => undefined);
+    if (content === undefined) {
+      toast.error(
+        `Couldn’t read the clipboard. Allow it for this site, or press ${isMac() ? "⌘V" : "Ctrl+V"}.`,
+      );
+      return;
+    }
+    if (!content) {
+      toast("The clipboard is empty");
+      return;
+    }
+    await props.contentEditorRef?.current?.pasteFormatted(content);
+  };
   const clean = usePreferencesStore((s) => s.editor.noteLayout === "clean");
   const formattingOpen = usePreferencesStore((s) => !!s.editor.formattingOpen);
   const titleLine = useTitleLine(
@@ -209,6 +227,10 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
             Record audio
           </button>
         )}
+        <button type="button" onClick={() => void pasteFormatted()}>
+          <ClipboardPaste aria-hidden />
+          Paste formatted
+        </button>
         <span className="hint">
           or type <kbd>/</kbd> for more
         </span>
