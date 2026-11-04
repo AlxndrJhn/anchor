@@ -245,6 +245,9 @@ export const NoteCard = React.memo(function NoteCard({
       ? pictureIds.slice(0, layout === "grid" ? 1 : 4)
       : [];
   const hiddenCount = attachmentCount - shownPictures.length;
+  const noteHref = searchTerm
+    ? `/notes/${note.id}?hl=${encodeURIComponent(searchTerm)}`
+    : `/notes/${note.id}`;
   const [viewing, setViewing] = React.useState<string | null>(null);
   const [readingOffline, setReadingOffline] = React.useState(false);
   const tickItem = useCardChecklist();
@@ -274,11 +277,7 @@ export const NoteCard = React.memo(function NoteCard({
       className={cn("nc", picked && "picked")}
     >
       <Link
-        href={
-          searchTerm
-            ? `/notes/${note.id}?hl=${encodeURIComponent(searchTerm)}`
-            : `/notes/${note.id}`
-        }
+        href={noteHref}
         aria-label={label}
         aria-keyshortcuts={
           onMove
@@ -439,6 +438,7 @@ export const NoteCard = React.memo(function NoteCard({
       {viewing && (
         <CardViewer
           noteId={note.id}
+          noteHref={noteHref}
           id={viewing}
           onShow={setViewing}
           onGrabText={
@@ -511,12 +511,14 @@ function OfflineNote({
 /** The note's pictures, full size, opened from a card. */
 function CardViewer({
   noteId,
+  noteHref,
   id,
   onShow,
   onClosed,
   onGrabText,
 }: {
   noteId: string;
+  noteHref: string;
   id: string;
   onShow: (id: string | null) => void;
   onClosed: () => void;
@@ -544,6 +546,7 @@ function CardViewer({
         return true;
       }}
       onGrabText={onGrabText}
+      noteHref={noteHref}
     />
   );
 }

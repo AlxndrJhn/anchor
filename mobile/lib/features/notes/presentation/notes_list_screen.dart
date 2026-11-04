@@ -670,8 +670,13 @@ class _NotesListScreenState extends ConsumerState<NotesListScreen> {
             ? (line, text) =>
                   NoteActions(context, ref).toggleItem(note, line, text)
             : null,
-        onOpenPicture: (id) =>
-            showNotePictures(context, ref, noteId: note.id, attachmentId: id),
+        onOpenPicture: (id) => showNotePictures(
+          context,
+          ref,
+          noteId: note.id,
+          attachmentId: id,
+          onOpenNote: () => _open(note),
+        ),
         semanticActions: group == null || place < 0 || _drag != null
             ? const {}
             : indexMoveActions(

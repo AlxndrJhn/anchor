@@ -483,7 +483,8 @@
   display: flex;
   gap: --spacing(1.5);
 }
-.vw-actions button {
+.vw-actions button,
+.vw-actions .vw-open {
   display: inline-flex;
   align-items: center;
   gap: --spacing(1.5);
@@ -495,7 +496,8 @@
   font-size: var(--text-meta);
   cursor: pointer;
 }
-.vw-actions button:hover {
+.vw-actions button:hover,
+.vw-actions .vw-open:hover {
   background: var(--color-media-control-hover);
 }
 .vw-actions svg {
@@ -805,6 +807,7 @@
     display: none;
   }
   .vw-actions button,
+  .vw-actions .vw-open,
   .vw-actions .vw-x {
     padding: 9px;
   }

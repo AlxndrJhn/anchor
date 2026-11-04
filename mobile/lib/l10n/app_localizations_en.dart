@@ -3319,6 +3319,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pictureReadingText => 'Reading the picture’s text';
 
   @override
+  String get pictureOpenNote => 'Open note';
+
+  @override
   String get pictureTextAdded => 'Text added to the note';
 
   @override

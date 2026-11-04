@@ -9,6 +9,7 @@ import {
   Download,
   LoaderCircle,
   ScanText,
+  SquareArrowOutUpRight,
   Tags,
   Trash2,
   X,
@@ -40,6 +41,7 @@ export function Viewer({
   onDelete,
   onReturnFocus,
   onGrabText,
+  noteHref,
 }: {
   noteId: string;
   pictures: NoteAttachment[];
@@ -54,6 +56,8 @@ export function Viewer({
    * be edited, which leaves copying it.
    */
   onGrabText?: (text: string) => void;
+  /** Where the note opens, when the viewer was opened from outside it. */
+  noteHref?: string;
 }) {
   // The last picture stays while the viewer fades out.
   const [last, setLast] = React.useState(id);
@@ -267,6 +271,18 @@ export function Viewer({
                     <Trash2 aria-hidden />
                     <span className="vw-lbl">Delete</span>
                   </button>
+                )}
+                {noteHref && (
+                  <Link
+                    href={noteHref}
+                    className="vw-open"
+                    aria-label="Open note"
+                    title="Open note"
+                    onClick={() => onShow(null)}
+                  >
+                    <SquareArrowOutUpRight aria-hidden />
+                    <span className="vw-lbl">Open note</span>
+                  </Link>
                 )}
                 <DialogPrimitive.Close className="vw-x" aria-label="Close">
                   <X aria-hidden />

@@ -5080,6 +5080,12 @@ abstract class AppLocalizations {
   /// **'Reading the picture’s text'**
   String get pictureReadingText;
 
+  /// Button in the picture viewer, when it was opened from a note card, that opens the note the picture belongs to.
+  ///
+  /// In en, this message translates to:
+  /// **'Open note'**
+  String get pictureOpenNote;
+
   /// Toast after Grab image text put the picture's selected text at the end of the note.
   ///
   /// In en, this message translates to:
