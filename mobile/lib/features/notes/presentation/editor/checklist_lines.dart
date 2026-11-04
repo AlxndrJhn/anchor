@@ -394,7 +394,12 @@ void _orderByName(
     blocks.add((i, blockEnd));
     i = blockEnd + 1;
   }
-  final byName = sortedByName(blocks, (block) => nameOf(block.$1));
+  // Blank items, such as the one being typed, stay at the end.
+  final named = sortedByName(blocks, (block) => nameOf(block.$1).trim());
+  final byName = [
+    ...named.where((block) => nameOf(block.$1).trim().isNotEmpty),
+    ...named.where((block) => nameOf(block.$1).trim().isEmpty),
+  ];
   final sorted = checkedLast
       ? [
           ...byName.where((block) => !lines[block.$1].isChecked),

@@ -3332,7 +3332,7 @@ void main() {
       when(() => prefsRepo.setHiddenActions(any())).thenAnswer((_) async {});
     });
 
-    testWidgets('the bar reads Delete, Color, Pin, Reminder, Archive, More', (
+    testWidgets('the bar reads Delete, Pin, Reminder, Archive, More', (
       tester,
     ) async {
       await pumpScreen(
@@ -3340,11 +3340,11 @@ void main() {
         note: const Note(id: 'n1', title: 'Groceries'),
       );
       await tester.pumpAndSettle();
+      expect(barButton('Background'), findsNothing);
 
       final lefts = [
         for (final label in [
           'Move to trash',
-          'Background',
           'Pin',
           'Add a reminder',
           'Archive',

@@ -41,6 +41,7 @@ import type { RichTextEditorHandle } from "@/features/notes/components/editor";
 import { isOnChecklistItem } from "@/features/notes/components/editor/use-checklist-boxes";
 import { LockDialog } from "@/features/notes/components/lock/lock-dialog";
 import { LockGate } from "@/features/notes/components/lock/lock-gate";
+import type { PictureActions } from "@/features/notes/components/note-editor";
 import { useApplyFreeze } from "@/features/notes/hooks/use-note-freeze";
 import { useApplyInvisible } from "@/features/notes/hooks/use-note-invisible";
 import {
@@ -126,6 +127,7 @@ function NoteEditor({
   } = editor;
   const contentEditorRef = useRef<RichTextEditorHandle | null>(null);
   const checklist = useChecklistActions(noteId, contentEditorRef);
+  const pictureActions = useRef<PictureActions | null>(null);
   // The field the caret was last in, which a menu or button may since have
   // taken focus from.
   const caretField = useRef<NoteCaret["field"] | null>(null);
@@ -651,6 +653,15 @@ function NoteEditor({
                 : contentEditorRef.current?.hideCheckboxes()
             }
             checklist={readOnly ? undefined : checklist}
+            {...(editor.canUpload && !readOnly
+              ? {
+                  onAddImage: () => pictureActions.current?.pickPictures(),
+                  onTakePicture: () =>
+                    pictureActions.current?.takePictures(false),
+                  onTakeSeveral: () =>
+                    pictureActions.current?.takePictures(true),
+                }
+              : {})}
           />
           <NoteEditorContent
             noteId={!isNew ? noteId : undefined}
@@ -687,6 +698,7 @@ function NoteEditor({
             }
             onReminder={editor.changeReminder}
             onReadOnlyAttempt={() => setNudge((n) => n + 1)}
+            pictureActionsRef={pictureActions}
           />
         </div>
       </article>

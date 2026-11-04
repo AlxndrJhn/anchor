@@ -555,6 +555,72 @@ export function countChecklistItems(contents: QuillDelta) {
   return { items, checked };
 }
 
+const byName = new Intl.Collator("en", { numeric: false });
+
+/** The lines of [start..end] in name order, children under their parent. */
+function orderByName(
+  lines: DeltaLine[],
+  start: number,
+  end: number,
+  checkedLast: boolean,
+  out: number[],
+): void {
+  const blocks: [number, number][] = [];
+  for (let i = start; i <= end; ) {
+    const blockEnd = blockEndIndex(lines, i, end);
+    blocks.push([i, blockEnd]);
+    i = blockEnd + 1;
+  }
+  const name = (index: number) => getLineText(lines[index]).trim();
+  // Blank items, such as the one being typed, stay at the end.
+  blocks.sort(
+    ([a], [b]) =>
+      Number(!name(a)) - Number(!name(b)) || byName.compare(name(a), name(b)),
+  );
+  const ordered = checkedLast
+    ? [
+        ...blocks.filter(([i]) => !isCheckedLine(lines[i])),
+        ...blocks.filter(([i]) => isCheckedLine(lines[i])),
+      ]
+    : blocks;
+  for (const [blockStart, blockEnd] of ordered) {
+    out.push(blockStart);
+    if (blockEnd > blockStart)
+      orderByName(lines, blockStart + 1, blockEnd, checkedLast, out);
+  }
+}
+
+/**
+ * Sorts every checklist A to Z, as the Android app's Sort A to Z does,
+ * checked items still last when they move to the bottom. Null when every
+ * checklist is in order already.
+ */
+export function buildSortByNameDelta(
+  contents: QuillDelta,
+  checkedLast: boolean,
+): QuillDelta | null {
+  const lines = deltaToLines(contents.ops);
+  const order: number[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!isChecklistLine(lines[i])) {
+      order.push(i);
+      continue;
+    }
+    let end = i;
+    while (end + 1 < lines.length && isChecklistLine(lines[end + 1])) end++;
+    orderByName(lines, i, end, checkedLast, order);
+    i = end;
+  }
+  if (order.every((index, k) => index === k)) return null;
+  const sorted = new Delta();
+  for (const index of order) {
+    for (const op of lines[index].contentOps) sorted.push(op as never);
+    sorted.push(lines[index].newlineOp as never);
+  }
+  const change = new Delta(contents.ops as never).diff(sorted);
+  return change.ops.length ? { ops: change.ops as QuillOp[] } : null;
+}
+
 /** Null when nothing is checked. */
 export function buildUncheckAllDelta(contents: QuillDelta): QuillDelta | null {
   const ops = lineFormatOps(deltaToLines(contents.ops), (line) =>

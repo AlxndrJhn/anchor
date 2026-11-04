@@ -938,6 +938,18 @@ void main() {
         isNull,
       );
     });
+    test('leaves blank items at the end', () {
+      final doc = docFrom([
+        ('b', 'unchecked'),
+        ('', 'unchecked'),
+        ('a', 'unchecked'),
+      ]);
+      expect(linesOf(sorted(doc)), [
+        ('a', 'unchecked'),
+        ('b', 'unchecked'),
+        ('', 'unchecked'),
+      ]);
+    });
   });
 
   group('toggleChecklistItemContent', () {

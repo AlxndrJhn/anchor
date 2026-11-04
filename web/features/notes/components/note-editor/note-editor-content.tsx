@@ -50,6 +50,7 @@ import {
   type AttachmentStripHandle,
   holdAttachment,
 } from "../attachments";
+import { CameraDialog } from "../attachments/camera-dialog";
 import { canRecordAudio, VoiceRecorder } from "../attachments/voice-recorder";
 import { RichTextEditor, type RichTextEditorHandle } from "../editor";
 import type { InlinePictureHost } from "../editor/inline-image-tools";
@@ -98,6 +99,16 @@ interface NoteEditorContentProps {
     reminder: { remindAt: string; recurrence: ReminderRecurrence } | null,
   ) => void;
   onReadOnlyAttempt?: () => void;
+  /** For the note's Add image, Take picture and Take several. */
+  pictureActionsRef?: RefObject<PictureActions | null>;
+}
+
+/** Adds pictures to the note as attachments, as its bar's actions do. */
+export interface PictureActions {
+  /** Opens the file picker, for pictures only. */
+  pickPictures: () => void;
+  /** Takes a picture with a camera, or several in a row. */
+  takePictures: (several: boolean) => void;
 }
 
 /** “Sam”, “Sam and Maya”, “Sam, Maya and 2 others”. */
@@ -114,6 +125,16 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
   const strip = React.useRef<AttachmentStripHandle>(null);
   const dropping = useFileDrop(root, props.canUpload, (files) =>
     strip.current?.add(files),
+  );
+  const pictureInput = React.useRef<HTMLInputElement>(null);
+  const [camera, setCamera] = React.useState<"one" | "several" | null>(null);
+  React.useImperativeHandle(
+    props.pictureActionsRef,
+    () => ({
+      pickPictures: () => pictureInput.current?.click(),
+      takePictures: (several) => setCamera(several ? "several" : "one"),
+    }),
+    [],
   );
   const words = React.useMemo(
     () =>
@@ -437,6 +458,24 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
         </div>
       )}
       <NoteOutline root={root} />
+      <input
+        ref={pictureInput}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])];
+          e.target.value = "";
+          if (files.length) strip.current?.add(files);
+        }}
+      />
+      <CameraDialog
+        open={camera !== null}
+        several={camera === "several"}
+        onClose={() => setCamera(null)}
+        onPicture={(file) => strip.current?.add([file])}
+      />
       {recording && (
         <VoiceRecorder
           onRecorded={(file) => strip.current?.add([file])}

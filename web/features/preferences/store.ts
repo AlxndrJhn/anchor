@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DateFormat, Shortcut } from "@/features/notes/date-stamp";
+import type {
+  BarWidth,
+  QuickActionSetup,
+} from "@/features/notes/quick-actions";
 import type { CustomTheme } from "@/lib/design/custom-theme";
 
 export type ViewMode = "masonry" | "grid" | "list";
@@ -49,6 +53,8 @@ interface EditorPreferences {
    * can set off by mistake (WCAG 2.1.4). Unset means on.
    */
   singleKeyShortcuts?: boolean;
+  /** A note's bar and More, each width unset until changed in Settings. */
+  quickActions?: Partial<Record<BarWidth, QuickActionSetup>>;
   foldedChecklistNoteIds: string[];
 }
 

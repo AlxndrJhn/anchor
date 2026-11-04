@@ -41,14 +41,47 @@ Future<NoteAction?> showNoteMoreSheet(
     return SheetChoice(value: action, icon: icon, label: label);
   }
 
+  // The same order as the web's More menu; the bar's actions are left out.
   final choices = <SheetChoice<NoteAction>?>[
     SheetChoice(
       value: NoteAction.pin,
       icon: isPinned ? LucideIcons.pinOff : LucideIcons.pin,
       label: isPinned ? l10n.actionUnpin : l10n.actionPin,
     ),
-    if (canColor) plain(NoteAction.background),
     if (canRemind) plain(NoteAction.reminder),
+    if (canAddPictures) ...[
+      null,
+      plain(NoteAction.addImage),
+      plain(NoteAction.takePicture),
+      plain(NoteAction.takeSeveral),
+    ],
+    null,
+    if (canShowCheckboxes)
+      plain(NoteAction.showCheckboxes)
+    else if (canHideCheckboxes)
+      plain(NoteAction.hideCheckboxes),
+    if (hasChecklist) ...[
+      SheetChoice(
+        value: NoteAction.uncheckAll,
+        icon: LucideIcons.listRestart,
+        label: l10n.actionUncheckAll,
+        enabled: hasCheckedItems,
+      ),
+      SheetChoice(
+        value: NoteAction.deleteChecked,
+        icon: LucideIcons.listX,
+        label: l10n.actionDeleteChecked,
+        isDanger: true,
+        enabled: hasCheckedItems,
+      ),
+      SheetChoice(
+        value: NoteAction.sortByName,
+        icon: LucideIcons.arrowDownAZ,
+        label: l10n.actionSortByName,
+        enabled: canSortByName,
+      ),
+    ],
+    null,
     if (isOwner)
       SheetChoice(
         value: NoteAction.share,
@@ -57,6 +90,9 @@ Future<NoteAction?> showNoteMoreSheet(
         detail: shareCount > 0 ? l10n.peopleCount(shareCount) : null,
         showChevron: true,
       ),
+    plain(NoteAction.send),
+    if (canCopy) plain(NoteAction.copy),
+    null,
     if (canSeeHistory)
       SheetChoice(
         value: NoteAction.history,
@@ -64,8 +100,7 @@ Future<NoteAction?> showNoteMoreSheet(
         label: l10n.actionHistory,
         showChevron: true,
       ),
-    plain(NoteAction.send),
-    if (canCopy) plain(NoteAction.copy),
+    if (canColor) plain(NoteAction.background),
     if (canLock) ...[
       SheetChoice(
         value: NoteAction.lock,
@@ -90,38 +125,6 @@ Future<NoteAction?> showNoteMoreSheet(
         label: isInvisible ? l10n.actionMakeVisible : l10n.actionMakeInvisible,
         subtitle: isInvisible ? null : l10n.noteInvisibleHelp,
       ),
-    if (canAddPictures) ...[
-      null,
-      plain(NoteAction.addImage),
-      plain(NoteAction.takePicture),
-      plain(NoteAction.takeSeveral),
-    ],
-    null,
-    if (canShowCheckboxes)
-      plain(NoteAction.showCheckboxes)
-    else if (canHideCheckboxes)
-      plain(NoteAction.hideCheckboxes),
-    if (hasChecklist) ...[
-      SheetChoice(
-        value: NoteAction.uncheckAll,
-        icon: LucideIcons.listRestart,
-        label: l10n.actionUncheckAll,
-        enabled: hasCheckedItems,
-      ),
-      SheetChoice(
-        value: NoteAction.sortByName,
-        icon: LucideIcons.arrowDownAZ,
-        label: l10n.actionSortByName,
-        enabled: canSortByName,
-      ),
-      SheetChoice(
-        value: NoteAction.deleteChecked,
-        icon: LucideIcons.listX,
-        label: l10n.actionDeleteChecked,
-        isDanger: true,
-        enabled: hasCheckedItems,
-      ),
-    ],
     null,
     if (canArchive)
       isArchived ? plain(NoteAction.unarchive) : plain(NoteAction.archive),
