@@ -1,5 +1,6 @@
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/page_bar.dart';
+import 'package:anchor/features/notes/domain/quick_action.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_bar.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_surface.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +29,14 @@ void main() {
                 isUnsynced: true,
                 isTrashed: false,
                 isReadOnly: false,
+                // The bar these widths were measured with.
+                quickActions: const [
+                  QuickAction.trash,
+                  QuickAction.background,
+                  QuickAction.pin,
+                  QuickAction.reminder,
+                  QuickAction.archive,
+                ],
                 onBack: () {},
                 onHistory: () {},
                 onBackground: () {},
