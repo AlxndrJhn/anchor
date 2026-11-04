@@ -44,6 +44,7 @@ Future<void> showPictureViewer(
   required ValueChanged<NoteAttachment> onDelete,
   ValueChanged<String>? onGrabText,
   ValueChanged<String>? onSearch,
+  VoidCallback? onOpenNote,
 }) {
   return Navigator.of(context, rootNavigator: true).push(
     PageRouteBuilder<void>(
@@ -62,6 +63,7 @@ Future<void> showPictureViewer(
         canGrabText: canReadImageText,
         onGrabText: onGrabText,
         onSearch: onSearch,
+        onOpenNote: onOpenNote,
       ),
       transitionsBuilder: (_, animation, _, child) => child,
     ),
@@ -71,12 +73,14 @@ Future<void> showPictureViewer(
 /// Opens a note's pictures from outside the note (a card's picture),
 /// starting at [attachmentId]. Nothing can be deleted from there; text
 /// grabbed from a picture goes at the end of the note, when the user may
-/// edit it; a detected tag searches the list it was opened from.
+/// edit it; a detected tag searches the list it was opened from;
+/// [onOpenNote] opens the note itself, once the viewer has closed.
 Future<void> showNotePictures(
   BuildContext context,
   WidgetRef ref, {
   required String noteId,
   required String attachmentId,
+  VoidCallback? onOpenNote,
 }) async {
   final repo = ref.read(noteAttachmentsRepositoryProvider);
   final pictures = (await repo.watchAttachments(noteId).first)
@@ -105,6 +109,7 @@ Future<void> showNotePictures(
           )
         : null,
     onSearch: (word) => ref.read(searchQueryProvider.notifier).set(word),
+    onOpenNote: onOpenNote,
   );
 }
 
@@ -118,6 +123,7 @@ class _Viewer extends ConsumerStatefulWidget {
     this.canGrabText = false,
     this.onGrabText,
     this.onSearch,
+    this.onOpenNote,
   });
 
   final String noteId;
@@ -137,6 +143,10 @@ class _Viewer extends ConsumerStatefulWidget {
   /// Searches the notes for a tag detected in a picture; once the viewer
   /// has closed. Null offers no detected tags.
   final ValueChanged<String>? onSearch;
+
+  /// Opens the note the pictures belong to, once the viewer has closed;
+  /// null where the viewer was opened from inside the note.
+  final VoidCallback? onOpenNote;
 
   @override
   ConsumerState<_Viewer> createState() => _ViewerState();
@@ -243,6 +253,12 @@ class _ViewerState extends ConsumerState<_Viewer>
   });
 
   void _close() => Navigator.of(context).pop();
+
+  void _openNote() {
+    final open = widget.onOpenNote!;
+    _close();
+    open();
+  }
 
   void _dragUpdate(DragUpdateDetails details) {
     _drag += details.delta;
@@ -644,6 +660,15 @@ class _ViewerState extends ConsumerState<_Viewer>
                   color: ink,
                   onPressed: _close,
                 ),
+                actions: [
+                  if (widget.onOpenNote != null)
+                    BarButton(
+                      icon: LucideIcons.squareArrowOutUpRight,
+                      label: context.l10n.pictureOpenNote,
+                      color: ink,
+                      onPressed: _openNote,
+                    ),
+                ],
                 title: Semantics(
                   liveRegion: true,
                   child: CapHeightText(

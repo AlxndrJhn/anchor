@@ -4475,6 +4475,10 @@
   "@pictureReadingText": {
     "description": "Screen reader label while Grab image text reads the picture."
   },
+  "pictureOpenNote": "Open note",
+  "@pictureOpenNote": {
+    "description": "Button in the picture viewer, when it was opened from a note card, that opens the note the picture belongs to."
+  },
   "pictureTextAdded": "Text added to the note",
   "@pictureTextAdded": {
     "description": "Toast after Grab image text put the picture's selected text at the end of the note."
