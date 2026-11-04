@@ -29,7 +29,8 @@ const POLL_MS = 5000;
 // How long a new device's row keeps its arrival markup.
 const ARRIVAL_MS = 2800;
 
-const isPhone = (session: DeviceSession) => /Android|iOS/.test(session.device);
+export const isPhone = (session: DeviceSession) =>
+  /Android|iOS/.test(session.device);
 
 function sessionUse(session: DeviceSession) {
   const signedIn = `Signed in ${formatDistanceToNowStrict(new Date(session.signedInAt))} ago`;

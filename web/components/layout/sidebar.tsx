@@ -1,7 +1,7 @@
 "use client";
 
 import * as MenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
   ChevronsUpDown,
@@ -18,10 +18,12 @@ import {
   Pencil,
   Play,
   Plus,
+  QrCode,
   Settings,
   ShieldCheck,
   Sun,
   Trash2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -43,7 +45,12 @@ import { useGlidingFill } from "@/components/ui/segmented-control";
 import { toast } from "@/components/ui/toast";
 import { Tip } from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth";
+import { listSessions } from "@/features/auth/api";
 import { usePreferencesStore } from "@/features/preferences";
+import {
+  isPhone,
+  sessionsKey,
+} from "@/features/settings/components/devices-section";
 import { useSyncStatus, useUnsavedCount } from "@/features/sync";
 import {
   deleteTag,
@@ -612,6 +619,9 @@ export function Sidebar({
             </span>
           </div>
         )}
+        {user && !isServerless && (
+          <PhoneCrumb isNarrow={isNarrow} onNavigate={onNavigate} />
+        )}
         {onToggleFold && (
           <Tip
             label={`Expand sidebar (${isMac() ? "⌘\\" : "Ctrl+\\"})`}
@@ -734,6 +744,88 @@ export function Sidebar({
         onConfirm={() => tagToDelete && deleteMutation.mutate(tagToDelete)}
       />
     </aside>
+  );
+}
+
+const PHONE_CRUMB_KEY = "phone-crumb-dismissed";
+const PHONE_HREF = "/settings#set-phone";
+
+function readCrumbDismissed() {
+  try {
+    return localStorage.getItem(PHONE_CRUMB_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * On a fresh setup, until a phone has signed in: a way to connect one, which
+ * opens the phone section of Settings. It can be put away for good.
+ */
+function PhoneCrumb({
+  isNarrow,
+  onNavigate,
+}: {
+  isNarrow: boolean;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const [isDismissed, setIsDismissed] = React.useState(true);
+  React.useEffect(() => setIsDismissed(readCrumbDismissed()), []);
+  const sessions = useQuery({
+    queryKey: sessionsKey,
+    queryFn: listSessions,
+    staleTime: 5 * 60 * 1000,
+    enabled: !isDismissed,
+  });
+  if (isDismissed || !sessions.data || sessions.data.some(isPhone)) return null;
+  if (pathname === "/settings") return null;
+
+  const dismiss = () => {
+    setIsDismissed(true);
+    try {
+      localStorage.setItem(PHONE_CRUMB_KEY, "1");
+    } catch {}
+  };
+
+  return (
+    <div className="relative min-w-0">
+      <Tip
+        label="Connect phone via QR code"
+        side="right"
+        isDisabled={!isNarrow}
+        isFocusOnly
+      >
+        <Link
+          href={PHONE_HREF}
+          onClick={onNavigate}
+          className={cn(
+            rowClass,
+            "h-auto bg-accent-strong/12 py-2 pr-9 font-semibold text-accent-ink hover:bg-accent-strong/20 hover:text-accent-ink group-data-narrow/sb:pr-2 [&>svg]:text-accent-strong",
+          )}
+        >
+          <QrCode aria-hidden />
+          <span className={cn("grid min-w-0 flex-1 leading-tight", fadeClass)}>
+            <span className="truncate">Connect phone</span>
+            <span className="truncate font-medium text-meta opacity-80">
+              via QR code
+            </span>
+          </span>
+        </Link>
+      </Tip>
+      <span
+        className={cn(
+          "absolute top-1/2 right-1 -translate-y-1/2 text-accent-ink",
+          hideClass,
+        )}
+      >
+        <Tip label="Hide">
+          <IconButton size="sm" label="Hide phone setup" onClick={dismiss}>
+            <X />
+          </IconButton>
+        </Tip>
+      </span>
+    </div>
   );
 }
 

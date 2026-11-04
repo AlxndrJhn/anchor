@@ -9,9 +9,9 @@ import {
   DevicesSection,
   EditorSection,
   ImportExportSection,
-  MagicLoginSection,
   NoteLocksSection,
   PasswordSection,
+  PhoneSection,
   ProfileSection,
   Row,
   SearchSection,
@@ -46,7 +46,7 @@ export default function SettingsPage() {
           {!isServerless && <SecuritySection />}
           {!isServerless && <PasswordSection />}
           {/* Just above Devices, where a phone that scans the code shows up. */}
-          {!isServerless && <MagicLoginSection />}
+          {!isServerless && <PhoneSection />}
           {!isServerless && <DevicesSection />}
           <Section id="about" title="About">
             <Row>

@@ -29,7 +29,7 @@ const ALL_SECTIONS = [
   { id: "locks", label: "Note locks", icon: LockKeyhole },
   { id: "security", label: "Sign-in security", icon: ShieldCheck },
   { id: "password", label: "Password", icon: Lock },
-  { id: "phone", label: "Phone sign-in", icon: Smartphone },
+  { id: "phone", label: "Connect phone", icon: Smartphone },
   { id: "devices", label: "Devices", icon: MonitorSmartphone },
   { id: "about", label: "About", icon: Info },
 ] as const;
@@ -64,6 +64,24 @@ export function SettingsNav() {
       glidePill(nav, from, to, "rounded-md bg-foreground/6");
     setActiveSection(id);
   }, []);
+
+  // Arriving at a section's link, such as #set-phone from the sidebar: it
+  // stays highlighted as if clicked, once the sections above have their
+  // height.
+  React.useEffect(() => {
+    const id = window.location.hash.replace(/^#set-/, "");
+    if (!SECTIONS.some((section) => section.id === id)) return;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        isClickedSectionHeldRef.current = true;
+        highlight(id);
+        document
+          .getElementById(`set-${id}`)
+          ?.scrollIntoView({ block: "start" });
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [highlight]);
 
   React.useEffect(() => {
     const scroller = document.querySelector<HTMLElement>(

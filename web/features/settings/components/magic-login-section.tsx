@@ -20,7 +20,7 @@ import { magicLinkUrl } from "@/features/auth/utils/magic-link";
 import { copyText } from "@/lib/clipboard";
 import { sessionsKey } from "./devices-section";
 import { flyQrTo, waitForScan } from "./scan-handoff";
-import { Row, RowText, Section } from "./settings-blocks";
+import { Row, RowText } from "./settings-blocks";
 
 // Looks for the phone signing in more often while the QR code shows, so the
 // code flies to it soon after the scan.
@@ -41,7 +41,8 @@ function useMinutesLeft(expiresAt: string | undefined) {
   return Math.max(0, Math.ceil((Date.parse(expiresAt) - now) / 60_000));
 }
 
-export function MagicLoginSection() {
+/** The phone section's second tab: sign in to the app without a password. */
+export function MagicLoginPanel() {
   const [isQrOpen, setIsQrOpen] = React.useState(false);
   const [shown, setShown] = React.useState<MagicLoginCode | null>(null);
   const minutesLeft = useMinutesLeft(shown?.expiresAt);
@@ -102,15 +103,11 @@ export function MagicLoginSection() {
   });
 
   return (
-    <Section
-      id="phone"
-      title="Sign in on your phone"
-      description="No password needed on the phone."
-    >
+    <>
       <Row>
         <RowText
           title="Show QR code for magic login"
-          text="Scan it from the first screen of the Anchor+ Android app, or open the magic link on your phone. Each works once, within 10 minutes."
+          text="Once the app is installed, scan it from the app’s first screen, or open the magic link on your phone. No password needed. Each works once, within 10 minutes."
         />
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -191,6 +188,6 @@ export function MagicLoginSection() {
           </DialogBody>
         </DialogContent>
       </Dialog>
-    </Section>
+    </>
   );
 }
