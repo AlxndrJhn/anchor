@@ -22,6 +22,11 @@ part 'reminder_scheduler.g.dart';
 /// iOS keeps only the soonest 64 pending notifications.
 const int maxScheduledReminders = 60;
 
+const int _datedRings = 12;
+
+/// Must stay above every note's slot.
+const int _datedRingIdStep = 1000000;
+
 const Duration _settleWindow = Duration(milliseconds: 500);
 
 const List<Duration> _retryDelays = [
@@ -313,72 +318,29 @@ List<DesiredReminder> desiredReminders(
     }
 
     final heading = reminderHeading(note);
-    desired.add(
-      DesiredReminder(
-        id: slot,
-        at: at,
-        title: heading ?? l10n.reminderTitle,
-        body: heading == null ? '' : reminderBody(note),
-        repeat: repeatFor(reminder, at: at, now: now),
-        noteId: note.id,
-      ),
-    );
+    DesiredReminder ring(int id, DateTime ringAt, DateTimeComponents? repeat) =>
+        DesiredReminder(
+          id: id,
+          at: ringAt,
+          title: heading ?? l10n.reminderTitle,
+          body: heading == null ? '' : reminderBody(note),
+          repeat: repeat,
+          noteId: note.id,
+        );
+
+    final repeat = matchComponentsFor(reminder.recurrence);
+    if (repeat == null || canUseOsRepeat(reminder, now: now)) {
+      desired.add(ring(slot, at, repeat));
+    } else {
+      final dates = nextOccurrences(reminder, from: now, count: _datedRings);
+      for (final (index, date) in dates.indexed) {
+        desired.add(ring(slot + index * _datedRingIdStep, date, null));
+      }
+    }
   }
 
   desired.sort((a, b) => a.at.compareTo(b.at));
   return desired.take(maxScheduledReminders).toList();
-}
-
-/// The OS repeats a notification only once its next two firings are the
-/// reminder's; until then it rings once at [at] and a later pass hands the
-/// series over.
-///
-/// The OS keeps only the matched parts of [at] and rings at the first match
-/// from now, so a monthly reminder starting next March would ring on the
-/// coming day with the same day of the month.
-DateTimeComponents? repeatFor(
-  NoteReminder reminder, {
-  required DateTime at,
-  required DateTime now,
-}) {
-  final components = matchComponentsFor(reminder.recurrence);
-  if (components == null) return null;
-
-  final after = at.add(const Duration(minutes: 1));
-  final follows = nextOccurrence(reminder, from: after);
-  final keepsSeries =
-      osFiring(at, components, from: now) == at &&
-      osFiring(at, components, from: after) == follows;
-  return keepsSeries ? components : null;
-}
-
-/// The first time at or after [from] that matches [at]'s [components], as
-/// flutter_local_notifications picks it on Android and iOS.
-DateTime? osFiring(
-  DateTime at,
-  DateTimeComponents components, {
-  required DateTime from,
-}) {
-  // A yearly Feb 29 matches within four years.
-  for (var offset = 0; offset <= 4 * 366; offset++) {
-    final firing = DateTime(
-      from.year,
-      from.month,
-      from.day + offset,
-      at.hour,
-      at.minute,
-    );
-    if (firing.isBefore(from)) continue;
-    final matches = switch (components) {
-      DateTimeComponents.time => true,
-      DateTimeComponents.dayOfWeekAndTime => firing.weekday == at.weekday,
-      DateTimeComponents.dayOfMonthAndTime => firing.day == at.day,
-      DateTimeComponents.dateAndTime =>
-        firing.month == at.month && firing.day == at.day,
-    };
-    if (matches) return firing;
-  }
-  return null;
 }
 
 DateTimeComponents? matchComponentsFor(ReminderRecurrence recurrence) =>

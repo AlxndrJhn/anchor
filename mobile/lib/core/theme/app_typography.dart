@@ -25,10 +25,10 @@ abstract final class AppTypography {
   static const String fallbackSans = 'Noto Sans';
 
   /// The families tried, in order, for letters a style's family lacks.
-  static const List<String> fallback = [fallbackSans];
+  static const List<String> sansFallback = [fallbackSans];
 
   /// Literata covers what Playfair lacks, and is a serif too.
-  static const List<String> _serifFallback = [noteSerif, fallbackSans];
+  static const List<String> serifFallback = [noteSerif, fallbackSans];
 
   static AppStyle _style = AppStyle.standard;
 
@@ -83,10 +83,10 @@ abstract final class AppTypography {
   static const List<FontFeature> _liningFigures = [FontFeature.liningFigures()];
 
   static List<String> _fallbackOf(String family) =>
-      family == serif ? _serifFallback : fallback;
+      family == serif ? serifFallback : sansFallback;
 
   static TextStyle _sansIn(AppStyle style, TextStyle base) => base
-      .copyWith(fontFamily: uiFamilyOf(style), fontFamilyFallback: fallback)
+      .copyWith(fontFamily: uiFamilyOf(style), fontFamilyFallback: sansFallback)
       .withSize(base.fontSize!);
 
   static TextStyle _sans(TextStyle base) => _sansIn(_style, base);
@@ -149,7 +149,7 @@ abstract final class AppTypography {
     final size = (bodySize ?? noteBodySize) * scale;
     return TextStyle(
       fontFamily: uiFamily,
-      fontFamilyFallback: fallback,
+      fontFamilyFallback: sansFallback,
       height: height,
       fontWeight: weight,
       letterSpacing: tracking * size,
@@ -158,7 +158,7 @@ abstract final class AppTypography {
 
   static TextStyle get code => AnchorTokens.typeCode.copyWith(
     fontFamily: mono,
-    fontFamilyFallback: fallback,
+    fontFamilyFallback: sansFallback,
   );
 
   static TextStyle get codeSmall => code.copyWith(fontSize: footnote.fontSize);

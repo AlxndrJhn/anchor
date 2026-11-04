@@ -56,6 +56,8 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
   final _headers = TextEditingController();
   final _headersFocus = FocusNode();
   bool _isAdvancedOpen = false;
+  late final AppLifecycleListener _lifecycle;
+  String? _unreachableAddress;
 
   /// The saved headers fill their field before anything connects.
   late final Future<void> _headersRead = _readHeaders();
@@ -83,6 +85,7 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
         if (mounted) _signInWith(link);
       });
     }
+    _lifecycle = AppLifecycleListener(onResume: _retryUnreachable);
   }
 
   @override
@@ -94,6 +97,7 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     _address.dispose();
     _focus.dispose();
     _headers.dispose();
@@ -101,7 +105,12 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
     super.dispose();
   }
 
+  void _retryUnreachable() {
+    if (_address.text == _unreachableAddress && !isSubmitting()) _connect();
+  }
+
   Future<void> _connect() async {
+    _unreachableAddress = null;
     await _headersRead;
     if (!mounted) return;
     final typed = _address.text.trim();
@@ -235,6 +244,7 @@ class _ServerConfigScreenState extends ConsumerState<ServerConfigScreen>
       case UntrustedCertificate():
         return _fail(l10n.serverUntrusted(host));
       case ServerUnreachable():
+        _unreachableAddress = _address.text;
         return _fail(
           isSchemeAdded
               ? l10n.serverUnreachableNoScheme(host)
