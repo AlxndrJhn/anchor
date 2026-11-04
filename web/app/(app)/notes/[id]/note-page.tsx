@@ -31,7 +31,7 @@ import {
   useNoteActions,
   useNoteEditor,
 } from "@/features/notes";
-import { copyNote } from "@/features/notes/api";
+import { bulkPinNotes, copyNote } from "@/features/notes/api";
 import {
   forgetOpenedByKey,
   noteLeft,
@@ -48,6 +48,7 @@ import {
   useApplyLock,
   useUnlockedIds,
 } from "@/features/notes/hooks/use-note-lock";
+import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import {
   clampCaret,
   hasReturnCaret,
@@ -241,6 +242,21 @@ function NoteEditor({
     save();
     actions.goBack();
   };
+  // A locked note pins without being opened: the editor isn't there to save.
+  const refreshNotes = useRefreshNotes();
+  const togglePinLocked = async (pin = !note?.isPinned, undoable = true) => {
+    try {
+      await bulkPinNotes([noteId], pin);
+    } catch {
+      toast.error(pin ? "Couldn’t pin note" : "Couldn’t unpin note");
+      return;
+    }
+    await Promise.all([editor.refetchNote(), refreshNotes()]);
+    if (undoable)
+      toast.success(pin ? "Note pinned" : "Note unpinned", {
+        undo: () => void togglePinLocked(!pin, false),
+      });
+  };
   const leaveRef = useRef(leave);
   leaveRef.current = leave;
   const trashedNote = note?.state === "trashed";
@@ -272,7 +288,11 @@ function NoteEditor({
   // Google Keep's keys while no text field has focus.
   useShortcuts(
     lockedOut
-      ? { Escape: leave }
+      ? {
+          Escape: leave,
+          e: () => canEditNote && !editor.isArchived && actions.archive(),
+          f: () => canEditNote && !editor.isArchived && togglePinLocked(),
+        }
       : {
           Escape: leave,
           e: () =>
@@ -418,8 +438,17 @@ function NoteEditor({
       <NoteLoadFailed onRetry={() => editor.refetchNote()} />
     );
 
-  if (lockedOut && note?.lock)
-    return <LockGate note={{ ...note, lock: note.lock }} onBack={leave} />;
+  if (lockedOut && note?.lock) {
+    const canPinLocked = canEditNote && !editor.isArchived;
+    return (
+      <LockGate
+        note={{ ...note, lock: note.lock }}
+        onBack={leave}
+        onArchive={canPinLocked ? actions.archive : undefined}
+        onTogglePin={canPinLocked ? () => togglePinLocked() : undefined}
+      />
+    );
+  }
 
   const lockNote = async (kind: NonNullable<Note["lock"]>) => {
     // Locked by this person here, so it stays open.
