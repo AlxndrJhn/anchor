@@ -27,8 +27,16 @@ name: Upstream release
 #
 # Needs the Claude GitHub app installed on this repository, and a
 # CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`) or ANTHROPIC_API_KEY
-# secret. The app pushes the branch and opens the PR, so CI runs on it, which
-# it wouldn't for a PR opened with the workflow's own token.
+# secret in the "claude" environment, which only main may use. The app pushes
+# the branch and opens the PR, so CI runs on it, which it wouldn't for a PR
+# opened with the workflow's own token.
+#
+# Claude runs unattended here, with Bash and that app's token, on code from
+# upstream, so the repository limits what a run that goes wrong can do:
+# rulesets keep main from being force-pushed or deleted, and keep tags from
+# being made (v*) or moved and deleted (fork-*) by anyone but the owner; and
+# the secrets live in the main-only "claude" and "release" environments, so a
+# workflow pushed on another branch can't read them.
 
 on:
   schedule:
@@ -113,6 +121,7 @@ jobs:
     # GitHub stops a job after six hours; leave a few minutes for the
     # action to report.
     timeout-minutes: 350
+    environment: claude
     permissions:
       contents: write
       pull-requests: write

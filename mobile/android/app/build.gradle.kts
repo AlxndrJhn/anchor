@@ -10,8 +10,8 @@ plugins {
 // Fork builds (ORG_GRADLE_PROJECT_anchorFork=true) are named Anchor+. Every
 // build is com.alxndrjhn.anchorplus, so none clashes with the official app.
 val isForkBuild = (project.findProperty("anchorFork") as String?) == "true"
-// Preview builds of a branch (ORG_GRADLE_PROJECT_anchorPreview=true, see
-// preview-v18rebase.yml) install next to the fork's releases.
+// Preview builds of a branch (ORG_GRADLE_PROJECT_anchorPreview=true) install
+// next to the fork's releases.
 val isPreviewBuild = (project.findProperty("anchorPreview") as String?) == "true"
 
 val keystoreProperties = Properties()

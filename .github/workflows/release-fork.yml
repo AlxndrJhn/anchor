@@ -19,6 +19,12 @@ name: Release (fork)
 # and their server runs that image. The web app on Pages stays the last
 # release's; the preview F-Droid repository gets the candidate's APKs.
 # Releases also update :fork-preview, so preview servers never fall behind.
+#
+# Its secrets (ANDROID_KEYSTORE_*, ANDROID_KEY_*, WINGET_TOKEN, and pages.yml's
+# FDROID_KEYSTORE_*) belong in the "release" environment (Settings ›
+# Environments), which only main may use, not in the repository's secrets: a
+# repository secret reaches any workflow pushed on any branch, also one an
+# automated run like upstream-release.yml pushes.
 
 on:
   workflow_dispatch:
@@ -168,6 +174,9 @@ jobs:
   build-apk:
     needs: version
     if: needs.version.outputs.apk == 'true'
+    # The signing key lives in the "release" environment, which only main
+    # can use, so a workflow pushed on any other branch can't read it.
+    environment: release
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -493,6 +502,7 @@ jobs:
       github.ref == 'refs/heads/main' && !cancelled() &&
       needs.release.result == 'success' && needs.version.outputs.desktop == 'true' &&
       needs.version.outputs.candidate != 'true'
+    environment: release
     runs-on: windows-latest
     timeout-minutes: 15
     defaults:
