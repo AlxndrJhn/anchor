@@ -250,6 +250,29 @@ void main() {
       expect(find.text('the secret text'), findsNothing);
       expect(find.byKey(const ValueKey('tap-to-unlock')), findsOneWidget);
     });
+
+    testWidgets('archives without being unlocked', (tester) async {
+      when(() => repo.archive(['n1'])).thenAnswer((_) async {});
+      await pumpGate(tester);
+
+      await tester.tap(find.byKey(const ValueKey('locked-archive')));
+      await tester.pump();
+
+      verify(() => repo.archive(['n1'])).called(1);
+      expect(find.text('the secret text'), findsNothing);
+      // The snackbar times out.
+      await tester.pump(const Duration(seconds: 10));
+    });
+
+    testWidgets('an archived note offers no archive', (tester) async {
+      when(() => repo.watchNote('n1')).thenAnswer(
+        (_) => Stream.value(lockedNote.copyWith(isArchived: true)),
+      );
+      await pumpGate(tester);
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('locked-archive')), findsNothing);
+    });
   });
 
   group('session', () {

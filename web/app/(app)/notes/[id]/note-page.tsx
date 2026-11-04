@@ -272,7 +272,10 @@ function NoteEditor({
   // Google Keep's keys while no text field has focus.
   useShortcuts(
     lockedOut
-      ? { Escape: leave }
+      ? {
+          Escape: leave,
+          e: () => canEditNote && !editor.isArchived && actions.archive(),
+        }
       : {
           Escape: leave,
           e: () =>
@@ -419,7 +422,15 @@ function NoteEditor({
     );
 
   if (lockedOut && note?.lock)
-    return <LockGate note={{ ...note, lock: note.lock }} onBack={leave} />;
+    return (
+      <LockGate
+        note={{ ...note, lock: note.lock }}
+        onBack={leave}
+        onArchive={
+          canEditNote && !editor.isArchived ? actions.archive : undefined
+        }
+      />
+    );
 
   const lockNote = async (kind: NonNullable<Note["lock"]>) => {
     // Locked by this person here, so it stays open.

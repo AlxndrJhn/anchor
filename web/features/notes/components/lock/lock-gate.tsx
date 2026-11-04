@@ -1,19 +1,25 @@
 "use client";
 
-import { ArrowLeft, Lock } from "lucide-react";
+import { Archive, ArrowLeft, Lock } from "lucide-react";
 import { IconButton } from "@/components/ui/button";
 import { Tip } from "@/components/ui/tooltip";
 import { hasTitle } from "../../title";
 import type { Note, NoteLockKind } from "../../types";
 import { UnlockForm } from "./unlock-form";
 
-/** Stands in for a locked note until it is unlocked this session. */
+/**
+ * Stands in for a locked note until it is unlocked this session. It can
+ * still go to the archive without being unlocked.
+ */
 export function LockGate({
   note,
   onBack,
+  onArchive,
 }: {
   note: Pick<Note, "id" | "title" | "background"> & { lock: NoteLockKind };
   onBack: () => void;
+  /** Absent where the note can't be archived (already is, or trashed). */
+  onArchive?: () => void;
 }) {
   const title = hasTitle(note.title) ? note.title : "Untitled";
   return (
@@ -32,6 +38,15 @@ export function LockGate({
                 </IconButton>
               </Tip>
             </div>
+            {onArchive && (
+              <div className="ed-head-r">
+                <Tip label="Archive">
+                  <IconButton label="Archive" onClick={onArchive}>
+                    <Archive />
+                  </IconButton>
+                </Tip>
+              </div>
+            )}
           </div>
           <div className="lock-gate">
             <span className="lock-gate-icon" aria-hidden>

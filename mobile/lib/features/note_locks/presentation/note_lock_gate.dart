@@ -15,6 +15,7 @@ import '../../../core/widgets/page_bar.dart';
 import '../../../l10n/l10n.dart';
 import '../../notes/data/repository/notes_repository.dart';
 import '../../notes/domain/note.dart';
+import '../../notes/presentation/note_actions.dart';
 import '../../notes/presentation/widgets/note_surface.dart';
 import '../data/biometric_unlock.dart';
 import '../data/note_lock_secrets.dart';
@@ -218,6 +219,19 @@ class _NoteLockScreenState extends ConsumerState<NoteLockScreen> {
   String _titleOf(BuildContext context) =>
       widget.note.hasTitle ? widget.note.title : context.l10n.lockUntitled;
 
+  /// Sends the note to the archive without opening it, then leaves.
+  Future<void> _archive() async {
+    final note = widget.note;
+    final repo = ref.read(notesRepositoryProvider);
+    await NoteActions(context, ref).archive(
+      [note],
+      beforeChange: () async {
+        if (note.isPinned) await repo.setPinned([note.id], false);
+      },
+      afterChange: _back,
+    );
+  }
+
   void _back() {
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {
@@ -346,6 +360,15 @@ class _NoteLockScreenState extends ConsumerState<NoteLockScreen> {
             child: PageBar(
               color: appearance.colors.bg,
               leading: PageBackButton(onPressed: _back),
+              actions: [
+                if (widget.note.isActive && !widget.note.isArchived)
+                  BarButton(
+                    key: const ValueKey('locked-archive'),
+                    icon: LucideIcons.archive,
+                    label: l10n.actionArchive,
+                    onPressed: _archive,
+                  ),
+              ],
             ),
           ),
         ],
