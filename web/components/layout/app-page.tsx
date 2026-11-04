@@ -188,10 +188,11 @@ export const SearchField = React.forwardRef<
     className?: string;
     autoFocus?: boolean;
     onFocus?: () => void;
+    onBlur?: () => void;
   }
 >(
   (
-    { value, onChange, placeholder, className, autoFocus, onFocus },
+    { value, onChange, placeholder, className, autoFocus, onFocus, onBlur },
     forwardedRef,
   ) => {
     const input = React.useRef<HTMLInputElement>(null);
@@ -287,6 +288,7 @@ export const SearchField = React.forwardRef<
             onBlur={() => {
               setIsFocused(false);
               if (!value) setOpen(false);
+              onBlur?.();
             }}
             onKeyDown={(e) => {
               if (place && (e.key === "ArrowDown" || e.key === "ArrowUp")) {

@@ -34,6 +34,7 @@ export function NoteListActions({
         placeholder={placeholder}
         autoFocus={autoFocus}
         onFocus={onSearchFocus}
+        onBlur={list.flushQueryToUrl}
       />
       <FilterMenu list={list} showTags={showTagFilter} />
       <ViewOptions

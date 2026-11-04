@@ -5,8 +5,32 @@ set -eu
 # Anchor Docker Entrypoint
 # =============================================================================
 # Initializes environment, starts embedded Postgres (if enabled), runs
-# database migrations, then hands off to supervisord for process management.
+# database migrations, then runs supervisord for process management. On stop,
+# shuts down supervisord first and Postgres last.
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# Shutdown
+# -----------------------------------------------------------------------------
+POSTGRES_PID=""
+SUPERVISOR_PID=""
+
+stop_services() {
+  trap '' TERM INT
+  echo "[anchor] Stopping services..."
+  if [ -n "$SUPERVISOR_PID" ]; then
+    kill -TERM "$SUPERVISOR_PID" 2>/dev/null || true
+    wait "$SUPERVISOR_PID" || true
+  fi
+  if [ -n "$POSTGRES_PID" ]; then
+    # SIGINT is Postgres' fast shutdown
+    kill -INT "$POSTGRES_PID" 2>/dev/null || true
+    wait "$POSTGRES_PID" || true
+  fi
+}
+
+trap stop_services EXIT
+trap 'exit 0' TERM INT
 
 # -----------------------------------------------------------------------------
 # Environment defaults
@@ -70,6 +94,7 @@ if [ "$USE_EMBEDDED_POSTGRES" = "1" ]; then
   /usr/local/bin/docker-entrypoint.sh postgres \
     -c listen_addresses=127.0.0.1 \
     -p "${PG_PORT}" &
+  POSTGRES_PID=$!
 
   echo "[anchor] Waiting for Postgres..."
   for i in $(seq 1 60); do
@@ -123,29 +148,9 @@ echo "[anchor] Running migrations..."
 # -----------------------------------------------------------------------------
 # This shell stays PID 1, so that on `docker stop` (and so on every
 # `docker compose up --force-recreate`) it stops the API and web first, then
-# shuts Postgres down cleanly. Were supervisord PID 1, Postgres, which it
-# doesn't manage, would be killed when it exited.
-stop_postgres() {
-  if [ "$USE_EMBEDDED_POSTGRES" = "1" ] && [ -f "$PGDATA/postmaster.pid" ]; then
-    echo "[anchor] Stopping Postgres..."
-    su postgres -c "pg_ctl -D '$PGDATA' stop -m fast -w -t 60" >/dev/null || true
-  fi
-}
-
-shutdown() {
-  echo "[anchor] Stopping..."
-  kill -TERM "$SUPERVISOR_PID" 2>/dev/null || true
-  wait "$SUPERVISOR_PID" 2>/dev/null || true
-  stop_postgres
-  exit 0
-}
-
+# shuts Postgres down cleanly (stop_services above). Were supervisord PID 1,
+# Postgres, which it doesn't manage, would be killed when it exited.
 echo "[anchor] Starting services..."
 /usr/bin/supervisord -c /etc/supervisord.conf &
 SUPERVISOR_PID=$!
-trap shutdown TERM INT
-
-status=0
-wait "$SUPERVISOR_PID" || status=$?
-stop_postgres
-exit "$status"
+wait "$SUPERVISOR_PID"

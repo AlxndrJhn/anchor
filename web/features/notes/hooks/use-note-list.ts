@@ -23,11 +23,22 @@ import {
 import { matchesSearch } from "../search";
 import { compareNotes } from "../sort";
 import type { Note } from "../types";
+import { QUERY_PARAM } from "../url-with-query";
 import { useUnlockedIds } from "./use-note-lock";
 
 export { matchesSearch };
 
-const SEARCH_PARAM = "q";
+/** Keeps the search and filters in the address, so Back from an opened note
+ * finds the same results. */
+function writeListParams(query: string, filters: NoteFilters) {
+  const url = new URL(window.location.href);
+  const before = url.search;
+  if (query) url.searchParams.set(QUERY_PARAM, query);
+  else url.searchParams.delete(QUERY_PARAM);
+  writeFilterParams(url.searchParams, filters);
+  if (url.search === before) return;
+  window.history.replaceState(window.history.state, "", url);
+}
 
 const NO_NOTES: Note[] = [];
 
@@ -102,7 +113,7 @@ export function useNoteList(
   const searchParams = useSearchParams();
   // Kept in the address, so Back from an opened note finds the same results.
   const [query, setQueryValue] = React.useState(
-    () => searchParams.get(SEARCH_PARAM) ?? "",
+    () => searchParams.get(QUERY_PARAM) ?? "",
   );
   const [filters, setFiltersValue] = React.useState<NoteFilters>(() =>
     filtersFromParams(searchParams),
@@ -110,15 +121,7 @@ export function useNoteList(
   const searchedQuery = React.useDeferredValue(query);
   const term = searchedQuery.trim().toLowerCase();
   React.useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const url = new URL(window.location.href);
-      const before = url.search;
-      if (query) url.searchParams.set(SEARCH_PARAM, query);
-      else url.searchParams.delete(SEARCH_PARAM);
-      writeFilterParams(url.searchParams, filters);
-      if (url.search === before) return;
-      window.history.replaceState(window.history.state, "", url);
-    }, 250);
+    const timer = window.setTimeout(() => writeListParams(query, filters), 250);
     return () => window.clearTimeout(timer);
   }, [query, filters]);
   const activeFilters = filterCount(filters);
@@ -261,6 +264,8 @@ export function useNoteList(
     },
     /** Whether a search or a filter narrows the list. */
     searching: isSearching,
+    /** Puts the search in the address now, as the field loses focus. */
+    flushQueryToUrl: () => writeListParams(query, filters),
     layout: viewMode,
     setLayout: (layout: ViewMode) => {
       flip.prepare();

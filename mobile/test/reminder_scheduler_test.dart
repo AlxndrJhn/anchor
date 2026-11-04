@@ -341,74 +341,166 @@ void main() {
     );
   });
 
-  group('repeating reminders that start later', () {
-    DesiredReminder only(
-      String remindAt,
-      ReminderRecurrence recurrence, {
-      required DateTime now,
-    }) => desiredReminders(
-      [note(id: 'n1', slot: 1, remindAt: remindAt, recurrence: recurrence)],
-      now: now,
-      l10n: _english,
-    ).single;
+  group('a repeat the OS would ring on the wrong date', () {
+    Note monthlyFromMarch() => note(
+      id: 'n1',
+      slot: 7,
+      remindAt: '2027-03-01T09:00',
+      recurrence: ReminderRecurrence.monthly,
+    );
 
-    test('the OS alone would ring a monthly start in March today', () {
-      expect(
-        osFiring(
-          DateTime(2027, 3, 1, 9),
-          DateTimeComponents.dayOfMonthAndTime,
-          from: DateTime(2026, 11, 1, 7),
-        ),
-        DateTime(2026, 11, 1, 9),
-      );
-    });
-
-    test('rings a monthly reminder once on its start date', () {
-      final desired = only(
-        '2027-03-01T09:00',
-        ReminderRecurrence.monthly,
-        now: DateTime(2026, 11, 1, 7),
-      );
-
-      expect(desired.at, DateTime(2027, 3, 1, 9));
-      expect(desired.repeat, isNull);
-    });
-
-    test('hands the series to the OS once the start is a cycle away', () {
-      final desired = only(
-        '2027-03-01T09:00',
-        ReminderRecurrence.monthly,
-        now: DateTime(2027, 2, 15, 7),
-      );
-
-      expect(desired.at, DateTime(2027, 3, 1, 9));
-      expect(desired.repeat, DateTimeComponents.dayOfMonthAndTime);
-    });
-
-    test('rings once whenever the start is more than a cycle away', () {
-      final now = DateTime(2026, 11, 1, 7);
-      for (final (remindAt, recurrence) in [
-        ('2026-11-03T09:00', ReminderRecurrence.daily),
-        ('2026-11-15T09:00', ReminderRecurrence.weekly),
-        ('2028-11-01T09:00', ReminderRecurrence.yearly),
-      ]) {
-        final desired = only(remindAt, recurrence, now: now);
-        expect(desired.at, parseWallClock(remindAt), reason: '$recurrence');
-        expect(desired.repeat, isNull, reason: '$recurrence');
-      }
-    });
-
-    test('rings once on a short month the OS would keep repeating', () {
-      // Anchored on the 31st: September rings on the 30th, October on the
-      // 31st again, where the OS would repeat the 30th.
-      final desired = only(
-        '2026-08-31T09:00',
-        ReminderRecurrence.monthly,
+    test('rings from its first date on dated one-time notifications', () {
+      final desired = desiredReminders(
+        [monthlyFromMarch()],
         now: now,
+        l10n: _english,
       );
 
-      expect(desired.at, DateTime(2026, 9, 30, 9));
-      expect(desired.repeat, isNull);
+      expect(desired.map((item) => item.at), [
+        for (var month = 0; month < 12; month++)
+          DateTime(2027, 3 + month, 1, 9),
+      ]);
+      expect(desired.every((item) => item.repeat == null), isTrue);
+      expect(desired.every((item) => item.noteId == 'n1'), isTrue);
+      expect(desired.every((item) => item.title == 'Groceries'), isTrue);
+    });
+
+    test('keeps one id per ring, starting from the slot', () {
+      final desired = desiredReminders(
+        [monthlyFromMarch()],
+        now: now,
+        l10n: _english,
+      );
+
+      expect(desired.first.id, 7);
+      expect(desired.map((item) => item.id).toSet(), hasLength(12));
+    });
+
+    test('moves to the OS repeat once its first date is the next match', () {
+      final desired = desiredReminders(
+        [monthlyFromMarch()],
+        now: DateTime(2027, 2, 10),
+        l10n: _english,
+      );
+
+      expect(desired.single.id, 7);
+      expect(desired.single.at, DateTime(2027, 3, 1, 9));
+      expect(desired.single.repeat, DateTimeComponents.dayOfMonthAndTime);
+    });
+
+    test('stays on the OS repeat after its first date', () {
+      final desired = desiredReminders(
+        [monthlyFromMarch()],
+        now: DateTime(2027, 3, 2),
+        l10n: _english,
+      );
+
+      expect(desired.single.id, 7);
+      expect(desired.single.at, DateTime(2027, 4, 1, 9));
+      expect(desired.single.repeat, DateTimeComponents.dayOfMonthAndTime);
+    });
+
+    test('moving to the OS repeat cancels the other dated rings', () async {
+      final dated = desiredReminders(
+        [monthlyFromMarch()],
+        now: now,
+        l10n: _english,
+      );
+      final repeating = desiredReminders(
+        [monthlyFromMarch()],
+        now: DateTime(2027, 2, 10),
+        l10n: _english,
+      );
+      final gateway = RecordingGateway();
+
+      await applyReminders(
+        gateway,
+        repeating,
+        pending: {for (final item in dated) item.id},
+      );
+
+      expect(gateway.scheduled, [7]);
+      expect(gateway.cancelled.toSet(), {
+        for (final item in dated.skip(1)) item.id,
+      });
+    });
+
+    test('a month-end day stays on dated rings through short months', () {
+      final desired = desiredReminders(
+        [
+          note(
+            id: 'n1',
+            slot: 7,
+            remindAt: '2026-01-31T09:00',
+            recurrence: ReminderRecurrence.monthly,
+          ),
+        ],
+        now: now,
+        l10n: _english,
+      );
+
+      expect(desired, hasLength(12));
+      expect(desired.every((item) => item.repeat == null), isTrue);
+      expect(desired.take(3).map((item) => item.at), [
+        DateTime(2026, 9, 30, 9),
+        DateTime(2026, 10, 31, 9),
+        DateTime(2026, 11, 30, 9),
+      ]);
+    });
+
+    test('a repeat that starts tomorrow stays quiet today', () {
+      final desired = desiredReminders(
+        [
+          note(
+            id: 'n1',
+            slot: 7,
+            remindAt: '2026-09-05T18:00',
+            recurrence: ReminderRecurrence.daily,
+          ),
+        ],
+        now: now,
+        l10n: _english,
+      );
+
+      expect(desired.first.at, DateTime(2026, 9, 5, 18));
+      expect(desired.every((item) => item.repeat == null), isTrue);
+    });
+
+    test('a repeat the OS gets right keeps a single notification', () {
+      final desired = desiredReminders(
+        [
+          note(
+            id: 'n1',
+            slot: 7,
+            remindAt: '2026-09-05T09:00',
+            recurrence: ReminderRecurrence.daily,
+          ),
+        ],
+        now: now,
+        l10n: _english,
+      );
+
+      expect(desired.single.at, DateTime(2026, 9, 5, 9));
+      expect(desired.single.repeat, DateTimeComponents.time);
+    });
+
+    test('the cap keeps the soonest rings of every note', () {
+      final notes = [
+        for (var i = 0; i < 6; i++)
+          note(
+            id: 'n$i',
+            slot: i + 1,
+            remindAt: '2027-03-01T09:00',
+            recurrence: ReminderRecurrence.monthly,
+          ),
+        note(id: 'soon', slot: 9, remindAt: '2027-03-02T09:00'),
+      ];
+
+      final desired = desiredReminders(notes, now: now, l10n: _english);
+
+      expect(desired, hasLength(maxScheduledReminders));
+      expect(desired.first.at, DateTime(2027, 3, 1, 9));
+      expect(desired.any((item) => item.noteId == 'soon'), isTrue);
     });
   });
 
@@ -534,6 +626,25 @@ void main() {
 
       expect(gateway.shown, isEmpty);
       expect(rung.keys, {rungKey('n1', late.reminder!.remindAt)});
+    });
+
+    test('a repeat that starts later reaches the OS as dated rings', () async {
+      final gateway = RecordingGateway();
+
+      await start(
+        gateway,
+        Stream.value([
+          note(
+            id: 'n1',
+            slot: 1,
+            remindAt: '2099-03-01T09:00',
+            recurrence: ReminderRecurrence.monthly,
+          ),
+        ]),
+      );
+      await settle();
+
+      expect(gateway.scheduled, hasLength(12));
     });
 
     test('signing out clears everything the OS holds', () async {
