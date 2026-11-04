@@ -3,6 +3,9 @@ export {
   NoteLoadFailed,
   NoteUnavailable,
 } from "./editor-states";
-export { NoteEditorContent } from "./note-editor-content";
+export {
+  NoteEditorContent,
+  type PictureActions,
+} from "./note-editor-content";
 export { NoteEditorHeader, type SaveState } from "./note-editor-header";
 export { ReadOnlyBar } from "./read-only-bar";

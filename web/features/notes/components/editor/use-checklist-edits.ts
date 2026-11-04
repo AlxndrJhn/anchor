@@ -5,6 +5,7 @@ import { type RefObject, useCallback, useEffect, useMemo, useRef } from "react";
 import type { QuillDelta, QuillInstance } from "../../quill";
 import {
   buildDeleteCheckedDelta,
+  buildSortByNameDelta,
   buildUncheckAllDelta,
   countChecklistItems,
 } from "../../quill-checklist";
@@ -15,9 +16,12 @@ export function useChecklistEdits({
   readOnly,
   contentsRef,
   onBeforeEdit,
+  checkedLast,
 }: {
   getQuill: () => QuillInstance | null;
   readOnly: boolean;
+  /** Checked items stay at the bottom when sorted by name. */
+  checkedLast: boolean;
   contentsRef: RefObject<QuillDelta>;
   onBeforeEdit: () => void;
 }) {
@@ -33,7 +37,11 @@ export function useChecklistEdits({
   }, [contentsRef]);
 
   const apply = useCallback(
-    (build: (contents: QuillDelta) => QuillDelta | null) => {
+    (
+      build: (contents: QuillDelta) => QuillDelta | null,
+      /** What the edit's count counts: checked items unless said. */
+      counted: "checked" | "items" = "checked",
+    ) => {
       const quill = readOnly ? null : getQuill();
       const contents = quill?.getContents() as QuillDelta | undefined;
       const change = contents && build(contents);
@@ -49,7 +57,7 @@ export function useChecklistEdits({
       quill.history.cutoff();
       const edit = new UndoableEdit(
         quill,
-        countChecklistItems(contents).checked,
+        countChecklistItems(contents)[counted],
         new Delta(change.ops as never),
         new Delta(contents.ops as never),
         quill.history.stack.undo.length,
@@ -80,9 +88,14 @@ export function useChecklistEdits({
       },
       uncheckAll: () => apply(buildUncheckAllDelta),
       deleteChecked: () => apply(buildDeleteCheckedDelta),
+      sortByName: () =>
+        apply(
+          (contents) => buildSortByNameDelta(contents, checkedLast),
+          "items",
+        ),
       follow,
       isApplying,
     }),
-    [apply, follow, getQuill, isApplying],
+    [apply, checkedLast, follow, getQuill, isApplying],
   );
 }

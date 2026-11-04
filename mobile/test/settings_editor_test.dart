@@ -338,7 +338,6 @@ void main() {
       expect(bar(), [
         QuickAction.pin,
         QuickAction.trash,
-        QuickAction.background,
         QuickAction.reminder,
         QuickAction.archive,
       ]);
@@ -355,7 +354,6 @@ void main() {
         QuickAction.reminder,
         QuickAction.pin,
         QuickAction.trash,
-        QuickAction.background,
         QuickAction.archive,
       ]);
     },

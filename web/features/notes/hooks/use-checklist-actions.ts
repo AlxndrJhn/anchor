@@ -20,12 +20,20 @@ const ACTIONS = {
     message: (count: number) =>
       count === 1 ? "Checked item deleted" : `${count} checked items deleted`,
   },
+  sort: {
+    apply: (editor: RichTextEditorHandle) => editor.sortByName(),
+    message: (count: number) =>
+      count === 1 ? "Item sorted A to Z" : `${count} items sorted A to Z`,
+    /** Said when there was nothing to move. */
+    already: "Already in A to Z order",
+  },
 };
 
 export interface ChecklistActions {
   getCounts: () => { items: number; checked: number } | null;
   uncheckAll: () => void;
   deleteChecked: () => void;
+  sortByName: () => void;
 }
 
 export function useChecklistActions(
@@ -56,7 +64,10 @@ export function useChecklistActions(
   const run = (action: (typeof ACTIONS)[keyof typeof ACTIONS]) => {
     const editor = editorRef.current;
     const edit = editor && action.apply(editor);
-    if (!edit) return;
+    if (!edit) {
+      if (editor && "already" in action) toast.success(action.already);
+      return;
+    }
     toast.success(action.message(edit.itemCount), {
       undo: () => {
         if (!edit.undo() && edit.isClosed) void undoInSavedNote(edit);
@@ -69,5 +80,6 @@ export function useChecklistActions(
     getCounts: () => editorRef.current?.checklistCount() ?? null,
     uncheckAll: () => run(ACTIONS.uncheck),
     deleteChecked: () => run(ACTIONS.delete),
+    sortByName: () => run(ACTIONS.sort),
   };
 }

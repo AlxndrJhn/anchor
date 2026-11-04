@@ -13,6 +13,7 @@ import {
   PasswordSection,
   PhoneSection,
   ProfileSection,
+  QuickActionsSection,
   Row,
   SearchSection,
   Section,
@@ -39,6 +40,7 @@ export default function SettingsPage() {
           <ProfileSection />
           <AppearanceSection />
           <EditorSection />
+          <QuickActionsSection />
           {!isServerless && <SearchSection />}
           {!isServerless && <ApiTokenSection />}
           <ImportExportSection />

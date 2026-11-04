@@ -1,27 +1,28 @@
 /// What a note offers: in its bar beside More, in More, or neither.
 enum QuickAction {
-  trash,
-  background,
+  // In the order More lists them, as Settings does.
   pin,
   reminder,
-  archive,
-  share,
-  history,
-  send,
-  copy,
-  lock,
-  freeze,
-  invisible,
   addImage,
   takePicture,
   takeSeveral,
   checkboxes,
   uncheckAll,
   deleteChecked,
-  sortByName;
+  sortByName,
+  share,
+  send,
+  copy,
+  history,
+  background,
+  lock,
+  freeze,
+  invisible,
+  archive,
+  trash;
 
   /// The bar until it's changed in Settings.
-  static const defaults = [trash, background, pin, reminder, archive];
+  static const defaults = [trash, pin, reminder, archive];
 
   /// As many as fit beside Back and More on a narrow phone.
   static const max = 5;

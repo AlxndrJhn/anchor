@@ -194,6 +194,8 @@ export interface RichTextEditorHandle {
   /** Null when nothing is checked. */
   uncheckAll: () => UndoableEdit | null;
   deleteChecked: () => UndoableEdit | null;
+  /** Sorts every checklist A to Z; null when they're in order. */
+  sortByName: () => UndoableEdit | null;
   /** False when the text didn't change. */
   addFirstLine: (text: string) => boolean;
   historyDepth: () => { undo: number; redo: number };
@@ -348,6 +350,7 @@ export const RichTextEditor = forwardRef<
       readOnly,
       contentsRef: previousContents,
       onBeforeEdit: checklistSort.cancel,
+      checkedLast: sortChecklistItems,
     });
     const [appliedValue, setAppliedValue] = useState(value);
     const [incomingValue, setIncomingValue] = useState<string | null>(null);
@@ -866,6 +869,7 @@ export const RichTextEditor = forwardRef<
         checklistCount: checklistEdits.count,
         uncheckAll: checklistEdits.uncheckAll,
         deleteChecked: checklistEdits.deleteChecked,
+        sortByName: checklistEdits.sortByName,
         addFirstLine: (text: string) => {
           const quill = readOnly ? null : getQuill();
           if (!quill) return false;

@@ -2,10 +2,9 @@ import 'package:anchor/features/notes/domain/quick_action.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('the bar starts as Delete, Color, Pin, Reminder, Archive', () {
+  test('the bar starts as Delete, Pin, Reminder, Archive', () {
     expect(QuickAction.decode(null), [
       QuickAction.trash,
-      QuickAction.background,
       QuickAction.pin,
       QuickAction.reminder,
       QuickAction.archive,
