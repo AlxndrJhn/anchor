@@ -219,7 +219,8 @@ class _NoteLockScreenState extends ConsumerState<NoteLockScreen> {
   String _titleOf(BuildContext context) =>
       widget.note.hasTitle ? widget.note.title : context.l10n.lockUntitled;
 
-  /// Sends the note to the archive without opening it, then leaves.
+  /// Sends the note to the archive without opening it, then leaves. Pin,
+  /// next to it, also works without opening the note.
   Future<void> _archive() async {
     final note = widget.note;
     final repo = ref.read(notesRepositoryProvider);
@@ -361,13 +362,25 @@ class _NoteLockScreenState extends ConsumerState<NoteLockScreen> {
               color: appearance.colors.bg,
               leading: PageBackButton(onPressed: _back),
               actions: [
-                if (widget.note.isActive && !widget.note.isArchived)
+                if (widget.note.isActive && !widget.note.isArchived) ...[
+                  BarButton(
+                    key: const ValueKey('locked-pin'),
+                    icon: widget.note.isPinned
+                        ? LucideIcons.pinOff
+                        : LucideIcons.pin,
+                    label: widget.note.isPinned
+                        ? l10n.actionUnpin
+                        : l10n.actionPin,
+                    onPressed: () =>
+                        NoteActions(context, ref).pin([widget.note]),
+                  ),
                   BarButton(
                     key: const ValueKey('locked-archive'),
                     icon: LucideIcons.archive,
                     label: l10n.actionArchive,
                     onPressed: _archive,
                   ),
+                ],
               ],
             ),
           ),

@@ -264,14 +264,27 @@ void main() {
       await tester.pump(const Duration(seconds: 10));
     });
 
+    testWidgets('pins without being unlocked', (tester) async {
+      when(() => repo.setPinned(['n1'], true)).thenAnswer((_) async {});
+      await pumpGate(tester);
+
+      await tester.tap(find.byKey(const ValueKey('locked-pin')));
+      await tester.pump();
+
+      verify(() => repo.setPinned(['n1'], true)).called(1);
+      expect(find.text('the secret text'), findsNothing);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
     testWidgets('an archived note offers no archive', (tester) async {
-      when(() => repo.watchNote('n1')).thenAnswer(
-        (_) => Stream.value(lockedNote.copyWith(isArchived: true)),
-      );
+      when(
+        () => repo.watchNote('n1'),
+      ).thenAnswer((_) => Stream.value(lockedNote.copyWith(isArchived: true)));
       await pumpGate(tester);
       await tester.pump();
 
       expect(find.byKey(const ValueKey('locked-archive')), findsNothing);
+      expect(find.byKey(const ValueKey('locked-pin')), findsNothing);
     });
   });
 

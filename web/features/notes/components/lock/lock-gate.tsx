@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArrowLeft, Lock } from "lucide-react";
+import { Archive, ArrowLeft, Lock, Pin } from "lucide-react";
 import { IconButton } from "@/components/ui/button";
 import { Tip } from "@/components/ui/tooltip";
 import { hasTitle } from "../../title";
@@ -9,17 +9,22 @@ import { UnlockForm } from "./unlock-form";
 
 /**
  * Stands in for a locked note until it is unlocked this session. It can
- * still go to the archive without being unlocked.
+ * still be pinned and go to the archive without being unlocked.
  */
 export function LockGate({
   note,
   onBack,
   onArchive,
+  onTogglePin,
 }: {
-  note: Pick<Note, "id" | "title" | "background"> & { lock: NoteLockKind };
+  note: Pick<Note, "id" | "title" | "background" | "isPinned"> & {
+    lock: NoteLockKind;
+  };
   onBack: () => void;
   /** Absent where the note can't be archived (already is, or trashed). */
   onArchive?: () => void;
+  /** Absent where the note can't be pinned. */
+  onTogglePin?: () => void;
 }) {
   const title = hasTitle(note.title) ? note.title : "Untitled";
   return (
@@ -38,13 +43,27 @@ export function LockGate({
                 </IconButton>
               </Tip>
             </div>
-            {onArchive && (
+            {(onTogglePin || onArchive) && (
               <div className="ed-head-r">
-                <Tip label="Archive">
-                  <IconButton label="Archive" onClick={onArchive}>
-                    <Archive />
-                  </IconButton>
-                </Tip>
+                {onTogglePin && (
+                  <Tip label={note.isPinned ? "Unpin" : "Pin"}>
+                    <IconButton
+                      label={note.isPinned ? "Unpin" : "Pin"}
+                      aria-pressed={note.isPinned}
+                      onClick={onTogglePin}
+                      className="aria-pressed:[&_svg]:fill-current"
+                    >
+                      <Pin />
+                    </IconButton>
+                  </Tip>
+                )}
+                {onArchive && (
+                  <Tip label="Archive">
+                    <IconButton label="Archive" onClick={onArchive}>
+                      <Archive />
+                    </IconButton>
+                  </Tip>
+                )}
               </div>
             )}
           </div>
