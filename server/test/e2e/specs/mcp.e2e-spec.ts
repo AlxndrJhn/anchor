@@ -101,6 +101,7 @@ describe('mcp', () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'append_to_note',
       'create_note',
+      'create_tag',
       'get_attachment',
       'get_note',
       'list_notes',
@@ -131,6 +132,85 @@ describe('mcp', () => {
     expect(await json('list_tags')).toEqual([
       { id: stored.tagIds[0], name: 'Shopping', notes: 1 },
     ]);
+  });
+
+  it('creates a note with a picture, a recording and a file, in order', async () => {
+    type WithAttachments = NoteResult & {
+      attachments: {
+        id: string;
+        type: string;
+        filename: string;
+        mimeType: string;
+      }[];
+    };
+    const created = await json<WithAttachments>('create_note', {
+      title: 'Trip',
+      attachments: [
+        { filename: 'map.png', data: PNG_1PX.toString('base64') },
+        {
+          filename: 'memo.m4a',
+          data: Buffer.from('not really audio').toString('base64'),
+          mimeType: 'audio/mp4',
+        },
+        {
+          filename: 'tickets.pdf',
+          data: `data:application/pdf;base64,${Buffer.from('%PDF-1.4').toString('base64')}`,
+        },
+      ],
+    });
+
+    expect(
+      created.attachments.map(({ type, filename, mimeType }) => ({
+        type,
+        filename,
+        mimeType,
+      })),
+    ).toEqual([
+      { type: 'image', filename: 'map.png', mimeType: 'image/png' },
+      { type: 'audio', filename: 'memo.m4a', mimeType: 'audio/mp4' },
+      { type: 'file', filename: 'tickets.pdf', mimeType: 'application/pdf' },
+    ]);
+
+    const picture = await client.callTool({
+      name: 'get_attachment',
+      arguments: { noteId: created.id, id: created.attachments[0].id },
+    });
+    expect(picture.content).toContainEqual({
+      type: 'image',
+      mimeType: 'image/png',
+      data: PNG_1PX.toString('base64'),
+    });
+  });
+
+  it('makes no note when an attachment is not base64', async () => {
+    const { isError, text } = await call('create_note', {
+      title: 'Broken',
+      attachments: [{ filename: 'a.png', data: 'not base64!' }],
+    });
+
+    expect(isError).toBe(true);
+    expect(text).toContain('not base64');
+    expect(await json<{ notes: unknown[] }>('list_notes')).toEqual({
+      notes: [],
+    });
+  });
+
+  it('creates an empty tag, and refuses one that exists', async () => {
+    const tag = await json<{ id: string }>('create_tag', {
+      name: 'Ideas',
+      color: 'teal',
+    });
+
+    expect(tag).toEqual({ id: tag.id, name: 'Ideas', color: 'teal', notes: 0 });
+    expect(await json('list_tags')).toEqual([
+      { id: tag.id, name: 'Ideas', notes: 0 },
+    ]);
+    const stored = await user.http.get('/api/tags').expect(200);
+    expect((stored.body as { color: string }[])[0].color).toBe('#4DB6AC');
+
+    const again = await call('create_tag', { name: 'ideas' });
+    expect(again.isError).toBe(true);
+    expect(again.text).toContain('"Ideas" already exists');
   });
 
   it('reads a note as markdown', async () => {

@@ -22,10 +22,41 @@ import {
   ATTACHMENT_MAX_SENT_BYTES,
   attachmentContent,
 } from './attachment-content.util';
+import {
+  ATTACHMENTS_MAX_SENT_BYTES,
+  decodeAttachments,
+} from './attachment-input.util';
+import { ATTACHMENT_MAX_FILE_SIZE } from '../notes/constants/notes.constants';
 
 const SNIPPET_LENGTH = 200;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+const MAX_ATTACHMENTS = 20;
+
+/** The colours the apps offer for a tag, and the value each stores. */
+const TAG_COLORS = {
+  red: '#E57373',
+  pink: '#F06292',
+  purple: '#BA68C8',
+  deepPurple: '#9575CD',
+  indigo: '#7986CB',
+  blue: '#64B5F6',
+  lightBlue: '#4FC3F7',
+  cyan: '#4DD0E1',
+  teal: '#4DB6AC',
+  green: '#81C784',
+  lightGreen: '#AED581',
+  lime: '#DCE775',
+  amber: '#FFD54F',
+  orange: '#FFB74D',
+  deepOrange: '#FF8A65',
+  brown: '#A1887F',
+  blueGrey: '#90A4AE',
+} as const;
+const TAG_COLOR_NAMES = Object.keys(TAG_COLORS) as [
+  keyof typeof TAG_COLORS,
+  ...(keyof typeof TAG_COLORS)[],
+];
 
 type Tag = { id: string; name: string };
 type Content = CallToolResult['content'][number];
@@ -37,7 +68,8 @@ const INSTRUCTIONS =
   '<u>underline</u>, ==highlight==, links, quotes and code blocks. ' +
   'Read a note with get_note before changing it. Pictures, recordings and ' +
   'files attached to a note are listed by get_note; get_attachment fetches ' +
-  'one, so you can look at a picture. Locked notes keep their text and ' +
+  'one, so you can look at a picture; create_note can attach files to a ' +
+  'new note. Locked notes keep their text and ' +
   'attachments to themselves, and frozen notes cannot be changed.';
 
 /** Builds the MCP server Claude talks to, acting as one Anchor user. */
@@ -208,7 +240,8 @@ export class AnchorMcpService {
       'list_tags',
       {
         title: 'List tags',
-        description: 'Lists the tags, with how many notes have each.',
+        description:
+          'Lists the tags, with how many notes have each; create_tag adds one.',
         annotations: { readOnlyHint: true },
       },
       () =>
@@ -223,26 +256,124 @@ export class AnchorMcpService {
     );
 
     server.registerTool(
+      'create_tag',
+      {
+        title: 'Create a tag',
+        description:
+          'Creates a tag with no notes yet, to tag notes with later. Refused ' +
+          'if a tag of that name (in any case) already exists.',
+        inputSchema: z.object({
+          name: z.string().trim().min(1).describe('The tag name'),
+          color: z
+            .enum(TAG_COLOR_NAMES)
+            .optional()
+            .describe('Its colour in Anchor; blue grey when left out'),
+        }),
+      },
+      ({ name, color }) =>
+        this.run(async () => {
+          const existing = findTag(await this.tags(userId), name);
+          if (existing) {
+            throw new HttpException(
+              `A tag called "${existing.name}" already exists.`,
+              HttpStatus.CONFLICT,
+            );
+          }
+          const tag = await this.tagsService.create(userId, {
+            name,
+            ...(color ? { color: TAG_COLORS[color] } : {}),
+          });
+          return {
+            id: tag.id,
+            name: tag.name,
+            ...(color ? { color } : {}),
+            notes: 0,
+          };
+        }),
+    );
+
+    server.registerTool(
       'create_note',
       {
         title: 'Create a note',
-        description: 'Creates a note. Tags that do not exist yet are created.',
+        description:
+          'Creates a note. Tags that do not exist yet are created. ' +
+          'attachments adds files to it, in the order given: pictures ' +
+          '(JPEG, PNG, WebP, GIF) show in the note, recordings (MP3, WAV, ' +
+          'M4A, OGG, AAC, WebM) play in it, and any other file is attached ' +
+          `as a file. Each can be up to ${ATTACHMENT_MAX_FILE_SIZE / 1024 / 1024} ` +
+          `MB, and all together up to ${ATTACHMENTS_MAX_SENT_BYTES / 1024 / 1024} ` +
+          'MB in one call.',
         inputSchema: z.object({
           title: z.string().default(''),
           content: z.string().default('').describe('The text, as markdown'),
           tags: z.array(z.string()).optional().describe('Tag names'),
           pinned: z.boolean().optional(),
+          attachments: z
+            .array(
+              z.object({
+                filename: z
+                  .string()
+                  .describe('The file name, with its extension'),
+                data: z
+                  .string()
+                  .describe(
+                    "The file's bytes, base64 encoded (or a data: URL)",
+                  ),
+                mimeType: z
+                  .string()
+                  .optional()
+                  .describe(
+                    'Its type, such as image/png; read from the ' +
+                      'name when left out',
+                  ),
+              }),
+            )
+            .max(MAX_ATTACHMENTS)
+            .optional()
+            .describe('Files to attach'),
         }),
       },
-      ({ title, content, tags, pinned }) =>
+      ({ title, content, tags, pinned, attachments }) =>
         this.run(async () => {
-          const note = await this.notesService.create(userId, {
+          // Checked before the note is made, so a bad file leaves nothing
+          // half made behind.
+          const files = decodeAttachments(attachments ?? []);
+          let note = await this.notesService.create(userId, {
             title,
             content: markdownToNoteContent(content),
             isPinned: pinned,
             tagIds: tags ? await this.tagIds(userId, tags) : undefined,
           });
-          return describe(note, await this.tags(userId));
+          if (files.length === 0)
+            return describe(note, await this.tags(userId));
+
+          // Each upload goes to the top, so the first given is sent last.
+          let stored = 0;
+          try {
+            for (const file of [...files].reverse()) {
+              await this.attachmentsService.upload(
+                userId,
+                note.id,
+                file as Express.Multer.File,
+              );
+              stored++;
+            }
+          } catch (error) {
+            throw new HttpException(
+              `Created note ${note.id}, but could not attach ` +
+                `${files[files.length - 1 - stored].originalname}` +
+                (stored ? ` (${stored} of ${files.length} attached)` : '') +
+                `: ${errorMessage(error)}`,
+              HttpStatus.BAD_GATEWAY,
+            );
+          }
+          note = await this.notesService.findOne(userId, note.id);
+          return describe(
+            note,
+            await this.tags(userId),
+            await this.attachmentsService.findAll(userId, note.id),
+          );
         }),
     );
 
