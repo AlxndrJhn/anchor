@@ -285,6 +285,7 @@ function NoteEditor({
       contentEditorRef.current?.setSelection(caret.index, caret.length);
     else document.querySelector<HTMLElement>(".ed .ql-editor")?.focus();
   };
+  const trash = () => canTrash && actions.trash();
   // Google Keep's keys while no text field has focus.
   useShortcuts(
     lockedOut
@@ -299,7 +300,8 @@ function NoteEditor({
             editor.isArchived
               ? actions.unarchive()
               : canEditNote && actions.archive(),
-          "#": () => canTrash && actions.trash(),
+          "#": trash,
+          Delete: trash,
           f: () => canEditNote && editor.setIsPinned((was) => !was),
           i: resumeTyping,
         },

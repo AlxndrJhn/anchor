@@ -211,6 +211,11 @@ export default function TrashPage() {
             onPick={list.onPick}
             renderActions={renderActions}
             dateLabel={timeLeft}
+            onCardKey={(note, key) => {
+              if (key !== "Delete") return false;
+              setPendingDelete({ ids: [note.id] });
+              return true;
+            }}
             groups={[{ key: "all", notes: list.shown }]}
           />
         )}
@@ -234,6 +239,7 @@ export default function TrashPage() {
             label: "Delete permanently",
             icon: <Trash2 aria-hidden />,
             onClick: () => setPendingDelete({ ids: chosenIds }),
+            keys: ["Delete"],
           },
         ]}
       />
