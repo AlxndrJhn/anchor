@@ -416,10 +416,27 @@ jobs:
               echo "Nothing changed for Android, so this release has no APK. The newest one is in [$APK_TAG](https://github.com/$GITHUB_REPOSITORY/releases/tag/$APK_TAG)."
             fi
             echo
-            if ls Anchor-*.exe Anchor-*.dmg >/dev/null 2>&1; then
+            # `ls a b` fails when either pattern matches nothing, so check each
+            # pattern on its own: one installer missing (say macOS found no
+            # runner) must not drop the whole section.
+            EXE=$(compgen -G 'Anchor-Setup-*.exe' | head -n1 || true)
+            DMG=$(compgen -G 'Anchor-*.dmg' | head -n1 || true)
+            if [ -n "$EXE$DMG" ]; then
               echo "## Desktop (Windows, macOS)"
               echo
-              echo "Windows: run \`$(ls Anchor-Setup-*.exe 2>/dev/null)\`, or \`winget install AlxndrJhn.AnchorPlus\` once winget has this version. macOS (Apple silicon and Intel): open \`$(ls Anchor-*.dmg 2>/dev/null)\` and drag Anchor+ to Applications. On first launch it asks for your Anchor server's address."
+              if [ -n "$EXE" ]; then
+                echo "Windows: run \`$EXE\`, or \`winget install AlxndrJhn.AnchorPlus\` once winget has this version."
+              else
+                echo "Windows: the installer didn't build for this release."
+              fi
+              echo
+              if [ -n "$DMG" ]; then
+                echo "macOS (Apple silicon and Intel): open \`$DMG\` and drag Anchor+ to Applications."
+              else
+                echo "macOS: the installer didn't build for this release."
+              fi
+              echo
+              echo "On first launch it asks for your Anchor server's address."
               echo
               echo 'The installers are not signed. On Windows, if SmartScreen stops it, choose More info › Run anyway. On macOS, right-click the app and choose Open the first time, or allow it under System Settings › Privacy & Security.'
               echo
@@ -429,7 +446,7 @@ jobs:
               echo "Nothing changed for the desktop app, so this release has no installers. The newest ones are in [$DESKTOP_TAG](https://github.com/$GITHUB_REPOSITORY/releases/tag/$DESKTOP_TAG)."
               echo
             fi
-            if ls anchor-fork*.apk Anchor-*.exe Anchor-*.dmg >/dev/null 2>&1; then
+            if [ -n "$EXE$DMG" ] || compgen -G 'anchor-fork*.apk' >/dev/null; then
               echo "## Verifying a download"
               echo
               echo "Each file attached here has a signed record that it was built by this repository's release workflow from ${GITHUB_SHA::7}. To check one, with the [GitHub CLI](https://cli.github.com):"
