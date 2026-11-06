@@ -61,15 +61,20 @@ class AppRelease {
   final List<String> changes;
 }
 
-/// The change lines in a release's notes: the list under "## Changes",
-/// without the commit hashes.
+/// The Android app's change lines in a release's notes, without the commit
+/// hashes: the list under "## Android changes", or, in releases from before
+/// that section, every change under "## Changes".
 List<String> changesInNotes(String notes) {
+  final lines = notes.split('\n');
+  final section = lines.any((l) => l.trim() == '## Android changes')
+      ? '## Android changes'
+      : '## Changes';
   final changes = <String>[];
   var inChanges = false;
-  for (final line in notes.split('\n')) {
+  for (final line in lines) {
     if (line.startsWith('#')) {
       if (inChanges) break;
-      inChanges = line.trim() == '## Changes';
+      inChanges = line.trim() == section;
     } else if (inChanges && line.startsWith('- ')) {
       changes.add(
         line.substring(2).replaceFirst(RegExp(r'\s*\([0-9a-f]{7,}\)$'), ''),

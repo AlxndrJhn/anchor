@@ -471,6 +471,18 @@ jobs:
               echo "Also published as \`$IMAGE:fork-latest\` and \`$IMAGE:fork-${GITHUB_SHA::7}\`."
             fi
             echo
+            # The app's "What's new" lists only these. Always written, even
+            # empty, so the app doesn't fall back to every change.
+            ANDROID_PATHS=(mobile/lib mobile/android mobile/assets mobile/pubspec.lock)
+            echo "## Android changes"
+            echo
+            if [ -n "$PREVIOUS" ]; then
+              ANDROID_LOG=$(git log --no-merges --format='- %s (%h)' "$PREVIOUS..HEAD" -- "${ANDROID_PATHS[@]}")
+            else
+              ANDROID_LOG=$(git log --no-merges --format='- %s (%h)' -20 -- "${ANDROID_PATHS[@]}")
+            fi
+            echo "${ANDROID_LOG:-Nothing changed in the Android app.}"
+            echo
             echo "## Changes"
             echo
             if [ -n "$PREVIOUS" ]; then

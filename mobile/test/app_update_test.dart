@@ -92,6 +92,18 @@ void main() {
       expect(changesInNotes(notes! as String), ['feat: one', 'fix: two']);
       expect(changesInNotes('No changes section'), isEmpty);
     });
+
+    test('only the Android changes show when the notes list them', () {
+      const notes =
+          '## Android changes\n\n- Pinch to zoom (aaa1111)\n\n'
+          '## Changes\n\n- Pinch to zoom (aaa1111)\n'
+          '- Redesign the web icon (bbb2222)\n';
+      expect(changesInNotes(notes), ['Pinch to zoom']);
+      const none =
+          '## Android changes\n\nNothing changed in the Android app.\n\n'
+          '## Changes\n\n- Redesign the web icon (bbb2222)\n';
+      expect(changesInNotes(none), isEmpty);
+    });
   });
 
   group('the newest release', () {
