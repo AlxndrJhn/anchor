@@ -41,12 +41,16 @@ class ListLines {
 
   static final empty = ListLines._(HashMap.identity(), const []);
 
-  /// Tags the folded lines.
+  /// Tags the folded lines. A line [isWaiting] to move after its toggle
+  /// counts as it was, so the fold row holds still until the line moves.
   factory ListLines.of(
     Document document, {
     required bool canFold,
     required bool isFolded,
+    bool Function(Line line)? isWaiting,
   }) {
+    bool isChecked(Line line) =>
+        _isChecked(line) != (isWaiting?.call(line) ?? false);
     final all = <Line>[];
     for (final node in document.root.children) {
       if (node is Line) {
@@ -72,7 +76,7 @@ class ListLines {
       }
       var head = end + 1;
       if (canFold && kind == _ListKind.checklist) {
-        while (head > i && _isChecked(all[head - 1])) {
+        while (head > i && isChecked(all[head - 1])) {
           head--;
         }
       }
