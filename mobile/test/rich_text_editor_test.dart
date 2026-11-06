@@ -482,6 +482,93 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
+  group('while a toggled item waits to sink, the list holds still', () {
+    String items(List<bool> checked) => jsonEncode({
+      'ops': [
+        for (var i = 0; i < checked.length; i++) ...[
+          {'insert': 'item $i'},
+          {
+            'insert': '\n',
+            'attributes': {'list': checked[i] ? 'checked' : 'unchecked'},
+          },
+        ],
+      ],
+    });
+
+    Future<void> expectStill(
+      WidgetTester tester,
+      List<bool> checked,
+      int tapped,
+    ) async {
+      final (state, _) = await pumpEditor(tester, content: items(checked));
+      Map<String, double> tops() => {
+        for (var i = 0; i < checked.length; i++)
+          if (find.text('item $i', findRichText: true).evaluate().isNotEmpty)
+            'item $i': tester
+                .getTopLeft(find.text('item $i', findRichText: true))
+                .dy
+                .roundToDouble(),
+      };
+      final before = tops();
+
+      await tester.tap(checkboxSlot(tapped));
+      await tester.pump();
+      expect(tops(), before);
+
+      await tester.pump(AnchorTokens.motionDurationSinkDelay);
+      await tester.pump();
+      expect(state.getContent(), isNot(items(checked)));
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('unchecking an item amid the checked ones', (tester) async {
+      await expectStill(tester, [for (var i = 0; i < 12; i++) i >= 4], 8);
+    });
+
+    testWidgets('checking the last open item', (tester) async {
+      await expectStill(tester, [for (var i = 0; i < 12; i++) i >= 6], 5);
+    });
+  });
+
+  testWidgets('checking the first item leaves the other boxes as they were', (
+    tester,
+  ) async {
+    // Quill matches its blocks by position: the checked block below lent its
+    // filled boxes to the open items, which faded back out.
+    final content = jsonEncode({
+      'ops': [
+        for (var i = 0; i < 8; i++) ...[
+          {'insert': 'item $i'},
+          {
+            'insert': '\n',
+            'attributes': {'list': i >= 5 ? 'checked' : 'unchecked'},
+          },
+        ],
+      ],
+    });
+    await pumpEditor(tester, content: content);
+
+    await tester.tap(checkboxSlot(0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    // The open items' boxes stay empty instead of fading from a fill.
+    final filled = [
+      for (var i = 1; i < 5; i++)
+        if (tester
+            .widgetList<DecoratedBox>(
+              find.descendant(
+                of: checkboxSlot(i),
+                matching: find.byType(DecoratedBox),
+              ),
+            )
+            .any((box) => (box.decoration as BoxDecoration).color != null))
+          i,
+    ];
+    expect(filled, isEmpty);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('checkbox tap repaints the editor and stays tappable', (
     tester,
   ) async {

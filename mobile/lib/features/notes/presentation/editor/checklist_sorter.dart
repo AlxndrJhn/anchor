@@ -14,14 +14,19 @@ class ChecklistSorter {
     required bool Function() isEnabled,
     Duration Function()? delay,
     void Function(Delta move, TextSelection selection)? compose,
+    VoidCallback? onSettled,
   }) : _isEnabled = isEnabled,
        _delay = delay ?? (() => Duration.zero),
-       _compose = compose;
+       _compose = compose,
+       _onSettled = onSettled;
 
   final QuillController _controller;
   final bool Function() _isEnabled;
   final Duration Function() _delay;
   final void Function(Delta move, TextSelection selection)? _compose;
+
+  /// A waiting line stopped waiting without a move.
+  final VoidCallback? _onSettled;
   final List<_PendingSort> _waiting = [];
   bool _isDisposed = false;
 
@@ -40,6 +45,8 @@ class ChecklistSorter {
       _cancel(waiting);
       return;
     }
+    // A line that stays put isn't waiting: nothing would settle it.
+    if (_sortOf(newline) == null) return;
     final history = _controller.document.history;
     final pending = _PendingSort(
       newline,
@@ -54,6 +61,13 @@ class ChecklistSorter {
     } else {
       pending.timer = Timer(delay, () => _run(pending));
     }
+  }
+
+  /// Whether [line] was just toggled and is still to move to its place.
+  bool isWaiting(Line line) {
+    if (_waiting.isEmpty) return false;
+    final newline = line.documentOffset + line.length - 1;
+    return _waiting.any((s) => s.newline == newline);
   }
 
   void cancelAll() {
@@ -73,7 +87,8 @@ class ChecklistSorter {
   }
 
   void _run(_PendingSort pending) {
-    if (_isDisposed || !_waiting.remove(pending) || !_isEnabled()) return;
+    if (_isDisposed || !_waiting.remove(pending)) return;
+    if (!_isEnabled()) return _onSettled?.call();
     final history = _controller.document.history;
     // The move joins the check's Undo step unless something came between.
     if (history.lastRecorded == pending.lastRecorded &&
@@ -111,14 +126,29 @@ class ChecklistSorter {
     return null;
   }
 
-  void _sortToggledLine(int newlineOffset) {
+  _Sort? _sortOf(int newlineOffset) {
     final lines = parseDocumentLines(_controller.document);
     final lineIndex = lineIndexAt(lines, newlineOffset);
-    if (lineIndex == -1 || !lines[lineIndex].isChecklist) return;
+    if (lineIndex == -1 || !lines[lineIndex].isChecklist) return null;
 
     final (groupStart, groupEnd) = checklistGroupAround(lines, lineIndex);
     final order = checklistSortOrder(lines, groupStart, groupEnd, lineIndex);
-    if (order == null) return;
+    if (order == null) return null;
+    return (
+      lines: lines,
+      lineIndex: lineIndex,
+      groupStart: groupStart,
+      order: order,
+    );
+  }
+
+  void _sortToggledLine(int newlineOffset) {
+    final sort = _sortOf(newlineOffset);
+    if (sort == null) {
+      _onSettled?.call();
+      return;
+    }
+    final (:lines, :lineIndex, :groupStart, :order) = sort;
 
     final move = buildGroupReorderDelta(
       _controller.document,
@@ -152,6 +182,13 @@ class ChecklistSorter {
     }
   }
 }
+
+typedef _Sort = ({
+  List<ParsedLine> lines,
+  int lineIndex,
+  int groupStart,
+  List<int> order,
+});
 
 class _PendingSort {
   _PendingSort(this.newline, {required this.lastRecorded, required this.steps});

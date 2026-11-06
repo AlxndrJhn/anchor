@@ -196,6 +196,11 @@ class RichTextEditorState extends State<RichTextEditor>
       isEnabled: () => widget.sortChecklistItems,
       delay: () => context.motion(AnchorTokens.motionDurationSinkDelay),
       compose: _composeMove,
+      onSettled: () {
+        if (!mounted) return;
+        _refreshLists();
+        setState(() {});
+      },
     );
     _drag = ChecklistDragController(
       controller: _controller,
@@ -248,10 +253,11 @@ class RichTextEditorState extends State<RichTextEditor>
       // Editing ends the search's marks.
       if (change.source == ChangeSource.local) _search = null;
       _followUndoable(change);
+      // First: the lists read which lines wait to move.
+      _sorter.handleChange(change);
       _refreshLists();
       widget.onChanged?.call();
       _repaintMarks();
-      _sorter.handleChange(change);
       _checkBlank();
       _checkDateCommand(change);
     });
@@ -344,6 +350,7 @@ class RichTextEditorState extends State<RichTextEditor>
       _controller.document,
       canFold: widget.sortChecklistItems,
       isFolded: _isFolded,
+      isWaiting: _sorter.isWaiting,
     );
   }
 

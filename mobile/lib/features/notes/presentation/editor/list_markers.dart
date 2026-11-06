@@ -161,6 +161,9 @@ Widget? buildListMarker(
           moves,
         ),
         () => _CheckboxTarget(
+          // Quill matches its lines by position, so a box would take over
+          // another line's state and fade from that line's look.
+          key: ObjectKey(line),
           checked: checked,
           label: label,
           enabled: enabled,
@@ -285,6 +288,7 @@ Color draggedColor(Color color) =>
 
 class _CheckboxTarget extends StatelessWidget {
   const _CheckboxTarget({
+    super.key,
     required this.checked,
     required this.label,
     required this.enabled,
