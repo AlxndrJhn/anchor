@@ -530,6 +530,45 @@ void main() {
     });
   });
 
+  testWidgets('checking the first item leaves the other boxes as they were', (
+    tester,
+  ) async {
+    // Quill matches its blocks by position: the checked block below lent its
+    // filled boxes to the open items, which faded back out.
+    final content = jsonEncode({
+      'ops': [
+        for (var i = 0; i < 8; i++) ...[
+          {'insert': 'item $i'},
+          {
+            'insert': '\n',
+            'attributes': {'list': i >= 5 ? 'checked' : 'unchecked'},
+          },
+        ],
+      ],
+    });
+    await pumpEditor(tester, content: content);
+
+    await tester.tap(checkboxSlot(0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+
+    // The open items' boxes stay empty instead of fading from a fill.
+    final filled = [
+      for (var i = 1; i < 5; i++)
+        if (tester
+            .widgetList<DecoratedBox>(
+              find.descendant(
+                of: checkboxSlot(i),
+                matching: find.byType(DecoratedBox),
+              ),
+            )
+            .any((box) => (box.decoration as BoxDecoration).color != null))
+          i,
+    ];
+    expect(filled, isEmpty);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('checkbox tap repaints the editor and stays tappable', (
     tester,
   ) async {
