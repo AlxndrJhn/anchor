@@ -6,6 +6,7 @@ import { useShellStore } from "@/components/layout/shell-store";
 import { Tip } from "@/components/ui/tooltip";
 import { usePresence } from "@/lib/hooks/use-presence";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
+import { useShortcuts } from "@/lib/hooks/use-shortcuts";
 import { cn } from "@/lib/utils";
 
 interface SelectionBarAction {
@@ -13,7 +14,17 @@ interface SelectionBarAction {
   label: string;
   icon: React.ReactNode;
   onClick: (button: HTMLButtonElement) => void;
+  /** `e.key` values that run it while notes are selected; the first is shown. */
+  keys?: string[];
 }
+
+/** How a key is written in a tooltip, and for aria-keyshortcuts. */
+const KEY_NAMES: Record<string, [shown: string, aria: string]> = {
+  Delete: ["Del", "Delete"],
+  "#": ["#", "Shift+3"],
+};
+const keyName = (key: string) => KEY_NAMES[key]?.[0] ?? key.toUpperCase();
+const ariaKey = (key: string) => KEY_NAMES[key]?.[1] ?? key.toUpperCase();
 
 interface SelectionBarProps {
   open: boolean;
@@ -37,6 +48,21 @@ export function SelectionBar({
   const { mounted, leaving, done } = usePresence(open);
   const setBarShown = useShellStore((s) => s.setBarShown);
   const roving = useRovingFocus<HTMLDivElement>();
+  const buttons = React.useRef(new Map<string, HTMLButtonElement>());
+  useShortcuts(
+    Object.fromEntries(
+      actions.flatMap((action) =>
+        (action.keys ?? []).map((key) => [
+          key,
+          () => {
+            const button = buttons.current.get(action.key);
+            if (button) action.onClick(button);
+          },
+        ]),
+      ),
+    ),
+    open && count > 0,
+  );
   React.useEffect(() => {
     setBarShown(open);
     return () => setBarShown(false);
@@ -93,12 +119,25 @@ export function SelectionBar({
       </span>
       {divider}
       {actions.map((action) => (
-        <Tip key={action.key} label={action.label} side="top">
+        <Tip
+          key={action.key}
+          label={
+            action.keys?.length
+              ? `${action.label} (${keyName(action.keys[0])})`
+              : action.label
+          }
+          side="top"
+        >
           <button
+            ref={(button) => {
+              if (button) buttons.current.set(action.key, button);
+              else buttons.current.delete(action.key);
+            }}
             type="button"
             className={barButtonClass}
             aria-disabled={!count || undefined}
             aria-label={action.label}
+            aria-keyshortcuts={action.keys?.map(ariaKey).join(" ") || undefined}
             onClick={(e) => {
               if (count) action.onClick(e.currentTarget);
             }}

@@ -58,6 +58,11 @@ interface NotesBoardProps {
    * keys on a card move it one place.
    */
   onReorder?: (draggedId: string, ids: string[]) => void;
+  /**
+   * A key pressed on a focused card while nothing is selected, such as
+   * Delete; returns whether it acted.
+   */
+  onCardKey?: (note: Note, key: string) => boolean;
 }
 
 export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
@@ -74,6 +79,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
       dateLabel,
       searchTerm,
       onReorder,
+      onCardKey,
     },
     ref,
   ) => {
@@ -130,6 +136,29 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
           group.notes.map((n) => n.id),
         );
     }, [preview, groups, settled]);
+    // A card acted on by key keeps focus where it moves (pinned), or hands it
+    // to its neighbour when it leaves (archived, deleted).
+    const kept = React.useRef<{ id: string; next?: string; at: number }>(null);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the notes change
+    React.useLayoutEffect(() => {
+      const keep = kept.current;
+      if (!keep) return;
+      if (performance.now() - keep.at > 10000) {
+        kept.current = null;
+        return;
+      }
+      const find = (id?: string) =>
+        id
+          ? boardRef.current?.querySelector<HTMLElement>(
+              `.nc[data-flip="${CSS.escape(id)}"] > .nc-link`,
+            )
+          : null;
+      const own = find(keep.id);
+      const link = own ?? find(keep.next);
+      if (!own) kept.current = null;
+      const active = document.activeElement;
+      if (link && (!active || active === document.body)) link.focus();
+    }, [groups]);
     React.useLayoutEffect(() => {
       if (!groups.some((g) => g.notes.length)) return;
       refocusLeftCard();
@@ -158,6 +187,25 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
       if (!link.classList.contains("nc-link")) return;
       if (e.ctrlKey || e.metaKey || e.altKey || !singleKeyAllowed(e.key))
         return;
+      if (onCardKey && !picking) {
+        const id = link.closest<HTMLElement>(".nc")?.dataset.flip;
+        const note = groups.flatMap((g) => g.notes).find((n) => n.id === id);
+        if (note && onCardKey(note, e.key)) {
+          e.preventDefault();
+          const links = [
+            ...(boardRef.current?.querySelectorAll<HTMLElement>(".nc-link") ??
+              []),
+          ];
+          const at = links.indexOf(link);
+          const next = links[at + 1] ?? links[at - 1];
+          kept.current = {
+            id: note.id,
+            next: next?.closest<HTMLElement>(".nc")?.dataset.flip,
+            at: performance.now(),
+          };
+          return;
+        }
+      }
       const direction = CARD_KEYS[e.key];
       if (direction) {
         e.preventDefault();

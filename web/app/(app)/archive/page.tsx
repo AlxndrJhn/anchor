@@ -140,9 +140,9 @@ export default function ArchivePage() {
     [mutateNotes],
   );
 
-  const deleteChosen = () => {
+  const deleteNotes = (notes: Note[]) => {
     // Frozen notes stay where they are.
-    const deletable = list.chosen.filter((n) => !isOwnFrozen(n));
+    const deletable = notes.filter((n) => !isOwnFrozen(n));
     if (!deletable.length) {
       toast.info("Frozen notes can’t be deleted; unfreeze them first");
       return;
@@ -202,6 +202,13 @@ export default function ArchivePage() {
             onPick={list.onPick}
             onShare={setSharingNote}
             renderActions={renderActions}
+            onCardKey={(note, key) => {
+              if (key === "Delete") deleteNotes([note]);
+              else if (key === "e")
+                noteAction.mutate({ kind: "unarchive", ids: [note.id] });
+              else return false;
+              return true;
+            }}
             groups={[{ key: "all", notes: list.shown }]}
           />
         )}
@@ -218,6 +225,7 @@ export default function ArchivePage() {
             key: "unarchive",
             label: "Unarchive",
             icon: <ArchiveRestore aria-hidden />,
+            keys: ["e"],
             onClick: () =>
               noteAction.mutate({
                 kind: "unarchive",
@@ -234,7 +242,8 @@ export default function ArchivePage() {
             key: "delete",
             label: "Delete",
             icon: <Trash2 aria-hidden />,
-            onClick: deleteChosen,
+            onClick: () => deleteNotes(list.chosen),
+            keys: ["Delete"],
           },
         ]}
       />

@@ -323,9 +323,9 @@ function NotesView({ tagId }: { tagId: string | null }) {
     },
   });
 
-  const deleteChosen = () => {
+  const deleteNotes = (notes: Note[]) => {
     // Frozen notes stay where they are.
-    const deletable = chosen.filter((n) => !isOwnFrozen(n));
+    const deletable = notes.filter((n) => !isOwnFrozen(n));
     if (!deletable.length) {
       toast.info("Frozen notes can’t be deleted; unfreeze them first");
       return;
@@ -336,6 +336,19 @@ function NotesView({ tagId }: { tagId: string | null }) {
     ).length;
     if (sharedCount) setConfirmRemove({ ids, sharedCount });
     else noteAction.mutate({ kind: "trash", ids });
+  };
+
+  // The selection bar's keys, for the focused card when nothing is selected.
+  const onCardKey = (note: Note, key: string) => {
+    if (key === "Delete") deleteNotes([note]);
+    else if (key === "e")
+      noteAction.mutate({
+        kind: note.isArchived ? "unarchive" : "archive",
+        ids: [note.id],
+      });
+    else if (key === "f") togglePin(note);
+    else return false;
+    return true;
   };
 
   const applyFreeze = useApplyFreeze();
@@ -529,6 +542,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             onPick={list.onPick}
             onShare={setSharingNote}
             onTogglePin={togglePin}
+            onCardKey={onCardKey}
             groups={[
               ...(pinned.length
                 ? [
@@ -586,6 +600,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
             picked={NO_PICKS}
             onShare={setSharingNote}
             onTogglePin={togglePin}
+            onCardKey={onCardKey}
             groups={[
               {
                 key: "pictures",
@@ -636,6 +651,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
                 key: "unpin",
                 label: "Unpin",
                 icon: <PinOff aria-hidden />,
+                keys: ["f"],
                 onClick: () =>
                   noteAction.mutate({
                     kind: "unpin",
@@ -646,6 +662,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
                 key: "pin",
                 label: "Pin",
                 icon: <Pin aria-hidden />,
+                keys: ["f"],
                 onClick: () =>
                   noteAction.mutate({
                     kind: "pin",
@@ -679,6 +696,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
                 key: "unarchive",
                 label: "Unarchive",
                 icon: <ArchiveRestore aria-hidden />,
+                keys: ["e"],
                 onClick: () =>
                   noteAction.mutate({
                     kind: "unarchive",
@@ -689,6 +707,7 @@ function NotesView({ tagId }: { tagId: string | null }) {
                 key: "archive",
                 label: "Archive",
                 icon: <Archive aria-hidden />,
+                keys: ["e"],
                 onClick: () =>
                   noteAction.mutate({
                     kind: "archive",
@@ -699,7 +718,8 @@ function NotesView({ tagId }: { tagId: string | null }) {
             key: "delete",
             label: "Delete",
             icon: <Trash2 aria-hidden />,
-            onClick: deleteChosen,
+            onClick: () => deleteNotes(chosen),
+            keys: ["Delete"],
           },
         ]}
       />

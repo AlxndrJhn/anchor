@@ -48,6 +48,14 @@ const sections = (mod: string): [string, Row[]][] => [
     ],
   ],
   [
+    "Focused or selected notes",
+    [
+      ["Pin or unpin", [["F"]]],
+      ["Archive or unarchive", [["E"]]],
+      ["Move to trash; in Trash, delete permanently", [["Del"]]],
+    ],
+  ],
+  [
     "In a note",
     [
       ["Leave the text; again to close", [["Esc"]]],
@@ -55,7 +63,7 @@ const sections = (mod: string): [string, Row[]][] => [
       ["Close, or tick a checklist item", [[mod, "Enter"]]],
       ["Pin or unpin", [["F"]]],
       ["Archive", [["E"]]],
-      ["Move to trash", [["#"]]],
+      ["Move to trash", [["Del"], ["#"]]],
     ],
   ],
 ];
