@@ -19,8 +19,8 @@ import {
   reachFollowedCard,
   refocusLeftCard,
 } from "../card-focus";
-import { type DragPreview, useCardDrag } from "../hooks/use-card-drag";
 import { useCardColumns } from "../hooks/use-card-columns";
+import { type DragPreview, useCardDrag } from "../hooks/use-card-drag";
 import type { Note } from "../types";
 import { type CardLayout, NoteCard } from "./note-card";
 
