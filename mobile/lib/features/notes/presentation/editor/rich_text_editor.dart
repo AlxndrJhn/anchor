@@ -648,7 +648,8 @@ class RichTextEditorState extends State<RichTextEditor>
     final line = editor.childAtPosition(caret).container;
     if (!line.containsOffset(caret.offset)) return null;
     final local = editor.getLocalRectForCaret(caret);
-    return editor.localToGlobal(local.topLeft) & local.size;
+    // Through the note's zoom, which scales the caret too.
+    return MatrixUtils.transformRect(editor.getTransformTo(null), local);
   }
 
   double get scrollSpace {

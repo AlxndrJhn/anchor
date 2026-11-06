@@ -61,6 +61,7 @@ import 'editor/editor_palette.dart';
 import 'editor/inline_image_embed.dart';
 import 'editor/line_kind.dart';
 import 'editor/live_image_embed.dart';
+import 'editor/note_zoom.dart';
 import 'editor/rich_text_editor.dart';
 import 'editor/text_formats.dart';
 import 'multi_shot_camera_screen.dart';
@@ -141,6 +142,13 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   final _editorFocus = FocusNode();
   final _editorKey = GlobalKey<RichTextEditorState>();
   final _scroll = ScrollController();
+
+  /// How far the body is pinched in; kept for every note.
+  late final _zoom = ValueNotifier<double>(
+    clampNoteZoom(ref.read(editorPreferencesControllerProvider).noteZoom),
+  );
+  final _isPinching = ValueNotifier(false);
+  final _zoomBox = GlobalKey();
   final _corrections = ScrollCorrections();
   late final _scrollOffset = ScrollOffset(_scroll, corrections: _corrections);
   final _titleHistory = UndoHistoryController();
@@ -465,6 +473,8 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     _titleFocus.dispose();
     _editorFocus.dispose();
     _scroll.dispose();
+    _zoom.dispose();
+    _isPinching.dispose();
     _corrections.dispose();
     _titleHistory.dispose();
     _nudge.dispose();
@@ -1466,7 +1476,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                         ? 40
                         : 140, // off-scale: spacer
                   ),
-                  child: editor,
+                  child: ValueListenableBuilder(
+                    valueListenable: _zoom,
+                    builder: (context, zoom, editor) =>
+                        ZoomedBox(key: _zoomBox, zoom: zoom, child: editor),
+                    child: editor,
+                  ),
                 ),
               ),
               if (showsEmptyNoteActions)
@@ -1582,28 +1597,45 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
               child: _AboveKeyboard(
                 child: NotificationListener<ScrollMetricsNotification>(
                   onNotification: _corrections.onMetrics,
-                  child: CustomScrollView(
-                    controller: _scroll,
-                    physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
-                    ),
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.manual,
-                    slivers: [
-                      SliverToBoxAdapter(child: content),
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: _focusEditorEnd,
-                          child: _BottomSpacer(
-                            height: underText,
-                            slashQuery: writing ? _editor?.slashQuery : null,
-                            slashHeight: _editorOverlay.slashMenuSpace,
+                  child: PinchZoom(
+                    zoom: _zoom,
+                    box: _zoomBox,
+                    scroll: _scroll,
+                    isPinching: _isPinching,
+                    onZoomEnd: (zoom) => ref
+                        .read(editorPreferencesControllerProvider.notifier)
+                        .setNoteZoom(zoom),
+                    child: ValueListenableBuilder(
+                      valueListenable: _isPinching,
+                      builder: (context, isPinching, _) => CustomScrollView(
+                        controller: _scroll,
+                        // Two fingers zoom the body instead of scrolling it.
+                        physics: isPinching
+                            ? const NeverScrollableScrollPhysics()
+                            : const BouncingScrollPhysics(
+                                parent: AlwaysScrollableScrollPhysics(),
+                              ),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.manual,
+                        slivers: [
+                          SliverToBoxAdapter(child: content),
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: _focusEditorEnd,
+                              child: _BottomSpacer(
+                                height: underText,
+                                slashQuery: writing
+                                    ? _editor?.slashQuery
+                                    : null,
+                                slashHeight: _editorOverlay.slashMenuSpace,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

@@ -38,6 +38,14 @@ class EditorPreferencesController extends _$EditorPreferencesController {
     await repository.setNoteTextSize(textSize.name);
   }
 
+  /// Keeps the zoom a pinch on an open note's body ended at.
+  Future<void> setNoteZoom(double zoom) async {
+    if (zoom == state.noteZoom) return;
+    state = state.copyWith(noteZoom: zoom);
+    final repository = ref.read(preferencesRepositoryProvider);
+    await repository.setNoteZoom(zoom);
+  }
+
   /// The note bar's actions, in order; one put in the bar is on again.
   Future<void> setQuickActions(List<QuickAction> actions) async {
     final hidden = state.hiddenActions.difference(actions.toSet());
