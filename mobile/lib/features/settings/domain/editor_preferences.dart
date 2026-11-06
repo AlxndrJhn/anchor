@@ -11,6 +11,9 @@ class EditorPreferences {
   final NoteFont noteFont;
   final NoteTextSize noteTextSize;
 
+  /// How far an open note's body is pinched in, 1 being its own size.
+  final double noteZoom;
+
   /// The note bar's actions beside More, in order.
   final List<QuickAction> quickActions;
 
@@ -22,6 +25,7 @@ class EditorPreferences {
     this.burnDeleted = true,
     this.noteFont = NoteFont.sans,
     this.noteTextSize = NoteTextSize.standard,
+    this.noteZoom = 1,
     this.quickActions = QuickAction.defaults,
     this.hiddenActions = const {},
   });
@@ -31,6 +35,7 @@ class EditorPreferences {
     bool? burnDeleted,
     NoteFont? noteFont,
     NoteTextSize? noteTextSize,
+    double? noteZoom,
     List<QuickAction>? quickActions,
     Set<QuickAction>? hiddenActions,
   }) {
@@ -39,6 +44,7 @@ class EditorPreferences {
       burnDeleted: burnDeleted ?? this.burnDeleted,
       noteFont: noteFont ?? this.noteFont,
       noteTextSize: noteTextSize ?? this.noteTextSize,
+      noteZoom: noteZoom ?? this.noteZoom,
       quickActions: quickActions ?? this.quickActions,
       hiddenActions: hiddenActions ?? this.hiddenActions,
     );

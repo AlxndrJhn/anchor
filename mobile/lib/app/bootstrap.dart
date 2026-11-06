@@ -25,6 +25,7 @@ import '../core/theme/tokens/app_style.dart';
 import '../features/home_widget/data/home_widget_payload.dart';
 import '../features/notes/data/live_signals.dart';
 import '../features/notes/domain/quick_action.dart';
+import '../features/notes/presentation/editor/note_zoom.dart';
 import '../features/notes/presentation/notes_view_options.dart';
 import '../features/reminders/domain/reminder_preferences.dart';
 import '../features/reminders/presentation/notification_launch.dart';
@@ -121,6 +122,7 @@ Future<AppBootstrap> initializeApp({
       (textSize) => textSize.name == savedTextSize,
       orElse: () => NoteTextSize.standard,
     ),
+    noteZoom: clampNoteZoom(await preferences.getNoteZoom()),
     quickActions: QuickAction.decode(await preferences.getQuickActions()),
     hiddenActions: QuickAction.decodeAll(
       await preferences.getHiddenActions(),

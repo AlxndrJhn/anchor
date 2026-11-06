@@ -184,6 +184,16 @@ class PreferencesRepository {
     await _storage.write(key: StorageKeys.noteTextSize, value: textSize);
   }
 
+  /// How far an open note's body is pinched in; 1 when never pinched.
+  Future<double> getNoteZoom() async {
+    final value = double.tryParse(await _read(StorageKeys.noteZoom) ?? '');
+    return value == null || !value.isFinite ? 1 : value;
+  }
+
+  Future<void> setNoteZoom(double zoom) async {
+    await _storage.write(key: StorageKeys.noteZoom, value: zoom.toString());
+  }
+
   Future<String?> getThemeMode() => _read(StorageKeys.themeMode);
 
   Future<void> setThemeMode(String mode) async {
