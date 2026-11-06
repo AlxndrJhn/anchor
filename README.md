@@ -789,7 +789,8 @@ Claude gets these tools, and sees only what your account sees:
 | `get_note` | Reads a note's title, tags and text as Markdown, and lists its attachments |
 | `get_attachment` | Fetches an attachment: a picture to look at (scaled down if large), a recording, or a file |
 | `list_tags` | Lists your tags |
-| `create_note` | Makes a note from Markdown, with tags (new ones are created) |
+| `create_tag` | Makes a tag with no notes yet, in one of the apps' colours |
+| `create_note` | Makes a note from Markdown, with tags (new ones are created) and attachments: pictures, recordings or any other file, sent as base64 |
 | `update_note` | Changes a note's title, text, tags, pin or archive |
 | `append_to_note` | Adds lines to the end of a note, such as checklist items |
 | `trash_note` | Moves a note to the trash, from where it can be restored |
