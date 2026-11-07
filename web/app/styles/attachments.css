@@ -115,6 +115,21 @@
 .t-x:hover {
   color: var(--destructive);
 }
+/* A voice card's download button, left of its delete button when it has one. */
+.t-dl[data-beside] {
+  right: 31px;
+}
+@media (hover: none) {
+  .t-dl[data-beside] {
+    right: 32px;
+  }
+}
+.t-dl:hover {
+  color: var(--accent-strong);
+}
+.att-audio:has(.t-dl[data-beside]) .aa-name {
+  padding-right: 44px;
+}
 .att-tile .shimmer {
   position: absolute;
   inset: 0;

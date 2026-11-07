@@ -251,6 +251,18 @@ export function VoiceCard({
         <span className="a-fill" />
         <span className="a-knob" />
       </div>
+      {blobUrl && (
+        <a
+          className="t-x t-dl"
+          href={blobUrl}
+          download={name}
+          aria-label={`Download ${name}`}
+          title="Download"
+          data-beside={onDelete ? "" : undefined}
+        >
+          <Download aria-hidden />
+        </a>
+      )}
       {onDelete && (
         <button
           type="button"
