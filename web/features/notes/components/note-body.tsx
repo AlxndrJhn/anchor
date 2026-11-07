@@ -2,12 +2,15 @@ import { CircleCheck } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import {
+  cardCodeLines,
   type DoneRow,
   foldTickedItems,
   type InlineRun,
   type NoteBlock,
 } from "../note-blocks";
 import { inkFor, isHexColor } from "../text-style";
+
+const CARD_CODE_LINES = 3;
 
 type ListKind = "check" | "bullet" | "ordered";
 type Row = NoteBlock | DoneRow;
@@ -51,7 +54,7 @@ export function NoteBody({
 }: NoteBodyProps) {
   const card = variant === "card";
   const shown = blocks.filter(
-    (b) => b.type === "code" || b.runs.some((r) => r.text.trim()),
+    (b) => (b.type === "code" && !card) || b.runs.some((r) => r.text.trim()),
   );
   let rows: Row[] = card ? foldTickedItems(shown) : shown;
   const truncated = rows.length > maxRows;
@@ -145,12 +148,17 @@ function Block({ row, card }: { row: Row; card: boolean }) {
     return <Tag className={headingClass}>{text}</Tag>;
   }
   if (block.type === "quote") return <blockquote>{text}</blockquote>;
-  if (block.type === "code")
+  if (block.type === "code") {
+    const code = block.runs.map((r) => r.text).join("");
+    const preview = card ? cardCodeLines(code, CARD_CODE_LINES) : null;
     return (
       <div className="code-wrap">
-        <pre className="code">{block.runs.map((r) => r.text).join("")}</pre>
+        <pre className={cn("code", preview?.isCut && "cut")}>
+          {preview ? preview.lines.join("\n") : code}
+        </pre>
       </div>
     );
+  }
   return <p>{text}</p>;
 }
 

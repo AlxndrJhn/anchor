@@ -51,6 +51,9 @@ kill -0 "$SYNC_STREAM" 2>/dev/null || fail "could not open the sync stream"
 
 docker restart -t 60 "$CONTAINER" >/dev/null
 wait_until_ready
+if docker logs "$CONTAINER" 2>&1 | grep -q "not properly shut down"; then
+  fail "Postgres did not shut down cleanly"
+fi
 post /api/auth/login "{$CREDENTIALS}" || fail "could not sign in after a restart"
 if docker logs "$CONTAINER" 2>&1 | grep -q "not properly shut down"; then
   fail "Postgres wasn't shut down cleanly on the restart"

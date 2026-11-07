@@ -253,8 +253,8 @@ The original keeps its notes, so you can go back any time (see
 ### Mobile App
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-mobile-light.jpg" alt="Mobile Light Mode" width="20%">
-  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-mobile-dark.jpg" alt="Mobile Dark Mode" width="20%">
+  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-mobile-light.png" alt="Mobile Light Mode" width="20%">
+  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-mobile-dark.png" alt="Mobile Dark Mode" width="20%">
 </div>
 
 ## Self Hosting With Docker

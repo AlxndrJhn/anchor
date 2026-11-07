@@ -19,8 +19,8 @@ import {
   reachFollowedCard,
   refocusLeftCard,
 } from "../card-focus";
+import { useCardColumns } from "../hooks/use-card-columns";
 import { type DragPreview, useCardDrag } from "../hooks/use-card-drag";
-import { useMasonry } from "../hooks/use-masonry";
 import type { Note } from "../types";
 import { type CardLayout, NoteCard } from "./note-card";
 
@@ -89,7 +89,7 @@ export const NotesBoard = React.forwardRef<HTMLDivElement, NotesBoardProps>(
     const rulerRef = React.useRef<HTMLDivElement>(null);
     const boardId = React.useId();
     React.useImperativeHandle(ref, () => boardRef.current as HTMLDivElement);
-    useMasonry(boardRef, rulerRef);
+    useCardColumns(boardRef, rulerRef);
     const drag = useCardDrag({
       enabled: !!onReorder && !picking,
       onDrop: (draggedId, ids) => onReorder?.(draggedId, ids),
@@ -344,27 +344,38 @@ function inPreviewOrder(
 
 export function NotesBoardSkeleton({ loading }: { loading: boolean }) {
   const shown = useDelayedFlag(loading);
+  const boardRef = React.useRef<HTMLDivElement>(null);
+  const rulerRef = React.useRef<HTMLDivElement>(null);
+  useCardColumns(boardRef, rulerRef);
   if (!shown) return null;
   return (
     <div
+      ref={boardRef}
       role="status"
       aria-label="Loading notes"
-      className="columns-[4_200px] gap-x-4"
+      className="relative"
     >
-      {[5, 3, 4, 2, 4, 3, 5, 2].map((lines, index) => (
-        <div
-          key={index}
-          className="mb-4 grid break-inside-avoid gap-2 rounded-card bg-card p-4 shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--border)_60%,transparent)]"
-        >
-          <Skeleton className="h-3.5 w-[62%] bg-[linear-gradient(90deg,var(--muted)_30%,color-mix(in_srgb,var(--muted)_40%,var(--card))_50%,var(--muted)_70%)]" />
-          {Array.from({ length: lines }, (_, i) => (
-            <Skeleton
-              key={i}
-              className="bg-[linear-gradient(90deg,var(--muted)_30%,color-mix(in_srgb,var(--muted)_40%,var(--card))_50%,var(--muted)_70%)]"
-            />
-          ))}
-        </div>
-      ))}
+      <div
+        ref={rulerRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-0"
+      />
+      <div className="cards masonry">
+        {[5, 3, 4, 2, 4, 3, 5, 2].map((lines, index) => (
+          <div
+            key={index}
+            className="grid gap-2 rounded-card bg-card p-4 shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--border)_60%,transparent)]"
+          >
+            <Skeleton className="h-3.5 w-[62%] bg-[linear-gradient(90deg,var(--muted)_30%,color-mix(in_srgb,var(--muted)_40%,var(--card))_50%,var(--muted)_70%)]" />
+            {Array.from({ length: lines }, (_, i) => (
+              <Skeleton
+                key={i}
+                className="bg-[linear-gradient(90deg,var(--muted)_30%,color-mix(in_srgb,var(--muted)_40%,var(--card))_50%,var(--muted)_70%)]"
+              />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
