@@ -13,6 +13,7 @@ import {
   Snowflake,
 } from "lucide-react";
 import { useParams } from "next/navigation";
+import Delta, { type Op } from "quill-delta";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Brand } from "@/components/layout/brand";
 import { ErrorScreen } from "@/components/layout/error-screen";
@@ -24,19 +25,23 @@ import {
   setAttachmentLink,
   updateSharedNote,
 } from "@/features/notes/api";
+import { CollabSession } from "@/features/notes/collab/session";
 import { RichTextEditor } from "@/features/notes/components/editor";
 import { EditorSkeleton } from "@/features/notes/components/note-editor/editor-states";
 import { useAttachmentBlob } from "@/features/notes/hooks/use-attachment-blob";
 import { inlineImageIds } from "@/features/notes/inline-images";
+import { parseStoredContent, stringifyDelta } from "@/features/notes/quill";
 import type { SharedNote } from "@/features/notes/types";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
+import { isServerless } from "@/lib/local-backend/mode";
 import { cn } from "@/lib/utils";
 
 // Long enough typing without a pause still saves this often, for others to see.
 const SAVE_MAX_WAIT_MS = 2_000;
 
 const SAVE_DELAY_MS = 800;
-// Picks up what others changed while this page is open and has no edits.
+// Others' changes arrive over a WebSocket the moment they're saved; without
+// one (a proxy that doesn't pass it on, say), the page polls instead.
 const REFRESH_MS = 15_000;
 
 type SaveState = "saved" | "saving" | "unsaved" | "failed";
@@ -47,6 +52,7 @@ const statusOf = (error: unknown) =>
 /** A note opened by its share link: no account, no sidebar. */
 export default function SharedNotePage() {
   const { token } = useParams<{ token: string }>();
+  const [live, setLive] = useState(false);
 
   // The note's pictures and files come through the link too.
   useEffect(() => {
@@ -57,7 +63,7 @@ export default function SharedNotePage() {
   const query = useQuery({
     queryKey: ["shared-note", token],
     queryFn: () => getSharedNote(token),
-    refetchInterval: REFRESH_MS,
+    refetchInterval: live ? false : REFRESH_MS,
     refetchOnWindowFocus: true,
   });
   useDocumentTitle(
@@ -69,10 +75,10 @@ export default function SharedNotePage() {
   );
 
   if (query.isPending) return <EditorSkeleton />;
+  // Also once it was open: the link was turned off or the note trashed.
+  if (statusOf(query.error) === 404) return <LinkGone />;
   if (query.isError && !query.data) {
-    return statusOf(query.error) === 404 ? (
-      <LinkGone />
-    ) : (
+    return (
       <Screen>
         <ErrorScreen
           illustration="broken"
@@ -88,15 +94,17 @@ export default function SharedNotePage() {
       </Screen>
     );
   }
-  return <SharedNoteEditor token={token} note={query.data} />;
+  return <SharedNoteEditor token={token} note={query.data} onLive={setLive} />;
 }
 
 function SharedNoteEditor({
   token,
   note,
+  onLive,
 }: {
   token: string;
   note: SharedNote;
+  onLive: (isLive: boolean) => void;
 }) {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState(note.title);
@@ -109,6 +117,8 @@ function SharedNoteEditor({
   const timer = useRef<number>(undefined);
   const deadline = useRef<number>(undefined);
   const inFlight = useRef(false);
+  const [collab, setCollab] = useState<CollabSession | null>(null);
+  const collabLive = useRef(false);
   const queued = useRef(false);
 
   const adopt = (next: SharedNote) => {
@@ -122,6 +132,15 @@ function SharedNoteEditor({
   // Others' edits show while this page has none of its own waiting.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only a newer copy from the server.
   useEffect(() => {
+    // The session's text is newer than any copy loaded, and on screen.
+    if (collabLive.current) {
+      base.current = {
+        ...note,
+        title: draft.current.title,
+        content: draft.current.content,
+      };
+      return;
+    }
     if (note.version === base.current.version) {
       base.current = note;
       return;
@@ -200,10 +219,79 @@ function SharedNoteEditor({
     draft.current = { ...draft.current, ...next };
     if (next.title !== undefined) setTitle(next.title);
     if (next.content !== undefined) setContent(next.content);
+    if (collabLive.current) {
+      if (next.title !== undefined) collab?.setMeta({ title: next.title });
+      return;
+    }
     setSaveState("unsaved");
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => void save(), SAVE_DELAY_MS);
     deadline.current ??= window.setTimeout(() => void save(), SAVE_MAX_WAIT_MS);
+  };
+
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: one session per link.
+  useEffect(() => {
+    if (isServerless) return;
+    const session = new CollabSession({
+      target: { link: token },
+      // Edits the page hasn't saved go up first.
+      getUnsavedBase: () =>
+        draft.current.content !== (base.current.content ?? "")
+          ? new Delta(
+              parseStoredContent(base.current.content ?? "").ops as Op[],
+            )
+          : null,
+      onLive: (isLive) => {
+        collabLive.current = isLive;
+        onLive(isLive);
+        if (isLive) {
+          window.clearTimeout(timer.current);
+          window.clearTimeout(deadline.current);
+          deadline.current = undefined;
+          setSaveState("saved");
+          return;
+        }
+        // The page saves on its own again, from what the server last had.
+        void saveRef.current();
+      },
+      onMeta: ({ title: nextTitle }) => {
+        if (nextTitle === undefined) return;
+        draft.current = { ...draft.current, title: nextTitle };
+        base.current = { ...base.current, title: nextTitle };
+        setTitle(nextTitle);
+      },
+      onPending: (isPending) => setSaveState(isPending ? "saving" : "saved"),
+      onSaved: (version) => {
+        const server = session.serverDoc;
+        base.current = {
+          ...base.current,
+          version,
+          ...(server ? { content: stringifyDelta({ ops: server.ops }) } : {}),
+        };
+      },
+      onChanged: () =>
+        void queryClient.invalidateQueries({
+          queryKey: ["shared-note", token],
+        }),
+      onGone: () =>
+        void queryClient.invalidateQueries({
+          queryKey: ["shared-note", token],
+        }),
+    });
+    setCollab(session);
+    return () => {
+      void session.close();
+      collabLive.current = false;
+      onLive(false);
+      setCollab(null);
+    };
+  }, [token]);
+
+  const remoteContent = (next: string) => {
+    draft.current = { ...draft.current, content: next };
+    setContent(next);
   };
 
   // Leaving with edits not yet saved asks first.
@@ -275,6 +363,8 @@ function SharedNoteEditor({
                 onChange={(next) => edit({ content: next })}
                 readOnly={!canEdit}
                 noteId={token}
+                collab={collab}
+                onRemoteContent={remoteContent}
               />
             </div>
           </div>

@@ -11,6 +11,7 @@ import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/core/widgets/grouped_list.dart';
 import 'package:anchor/core/widgets/revival.dart';
+import 'package:anchor/features/notes/data/collab/collab_session.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_copies_repository.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
@@ -24,6 +25,7 @@ import 'package:anchor/features/notes/presentation/editor/editor_tool_button.dar
 import 'package:anchor/features/notes/presentation/editor/editor_toolbar.dart';
 import 'package:anchor/features/notes/presentation/editor/line_kind.dart';
 import 'package:anchor/features/notes/presentation/editor/link_bubble.dart';
+import 'package:anchor/features/notes/presentation/editor/remote_cursors.dart';
 import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_menu.dart';
@@ -37,6 +39,7 @@ import 'package:anchor/features/reminders/domain/reminder_schedule.dart';
 import 'package:anchor/features/settings/presentation/editor_preferences_controller.dart';
 import 'package:anchor/features/tags/data/repository/tags_repository.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
+import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +67,16 @@ class MockCopiesRepository extends Mock implements NoteCopiesRepository {}
 class FakeActiveUserId extends ActiveUserId {
   @override
   String? build() => 'user-1';
+}
+
+/// The list's tag filter, held as the notes list would.
+class FixedTagFilter extends SelectedTagFilter {
+  FixedTagFilter(this.tagId);
+
+  final String tagId;
+
+  @override
+  String? build() => tagId;
 }
 
 /// The 2s auto-save timer is driven with tester.pump.
@@ -117,6 +130,8 @@ void main() {
     bool withCard = false,
     // A note opened again from the list is a real note page.
     bool reopens = false,
+    // The tag the list is filtered by.
+    String? tagFilter,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -132,6 +147,10 @@ void main() {
           activeUserIdProvider.overrideWith(FakeActiveUserId.new),
           notificationGatewayProvider.overrideWithValue(gateway),
           noteCopiesRepositoryProvider.overrideWithValue(copiesRepo),
+          if (tagFilter != null)
+            selectedTagFilterProvider.overrideWith(
+              () => FixedTagFilter(tagFilter),
+            ),
         ],
         child: MaterialApp.router(
           localizationsDelegates: const [
@@ -1018,6 +1037,48 @@ void main() {
       expect(barButton('Move to trash'), findsNothing);
     });
 
+    testWidgets('a new note shows the filter\'s tag before anything is '
+        'written, and it can be taken off', (tester) async {
+      const work = Tag(id: 'tag-work', name: 'Work');
+      when(
+        () => tagsRepo.watchTags(),
+      ).thenAnswer((_) => Stream.value(const [work]));
+      await pumpScreen(tester, tagFilter: work.id);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Work'), findsOneWidget);
+      verifyNever(() => notesRepo.createNote(any()));
+
+      await tester.tap(find.bySemanticsLabel('Remove Work'));
+      await tester.pump();
+      expect(find.text('Work'), findsNothing);
+
+      await tester.enterText(titleField, 'Untagged');
+      await tester.pump(const Duration(seconds: 3));
+      final saved =
+          verify(() => notesRepo.createNote(captureAny())).captured.single
+              as Note;
+      expect(saved.tagIds, isEmpty);
+    });
+
+    testWidgets('a new note is created with the filter\'s tag it shows', (
+      tester,
+    ) async {
+      const work = Tag(id: 'tag-work', name: 'Work');
+      when(
+        () => tagsRepo.watchTags(),
+      ).thenAnswer((_) => Stream.value(const [work]));
+      await pumpScreen(tester, tagFilter: work.id);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.enterText(titleField, 'Tagged');
+      await tester.pump(const Duration(seconds: 3));
+      final saved =
+          verify(() => notesRepo.createNote(captureAny())).captured.single
+              as Note;
+      expect(saved.tagIds, [work.id]);
+    });
+
     testWidgets('a new note can be pinned, or archived, before writing', (
       tester,
     ) async {
@@ -1662,6 +1723,74 @@ void main() {
 
       expect(tool('Add a picture, recording or file'), findsOneWidget);
       expect(tester.getRect(tool('Checklist')), checklist);
+    });
+
+    testWidgets('a change from someone else keeps the caret and undo', (
+      tester,
+    ) async {
+      await startWriting(tester);
+      final controller = editorController(tester);
+      controller.replaceText(
+        2,
+        0,
+        'a',
+        const TextSelection.collapsed(offset: 3),
+      );
+      await settle(tester);
+      expect(controller.document.toPlainText(), 'hia\n');
+      final undoSteps = controller.document.history.stack.undo.length;
+
+      editor(tester).applyRemote(Delta()..insert('XY'));
+      await settle(tester);
+
+      expect(controller.document.toPlainText(), 'XYhia\n');
+      expect(controller.selection.baseOffset, 5);
+      expect(controller.document.history.stack.undo.length, undoSteps);
+
+      await tester.tap(tool('Undo'));
+      await settle(tester);
+      expect(controller.document.toPlainText(), 'XYhi\n');
+    });
+
+    testWidgets("others' carets paint, wherever they point", (tester) async {
+      await startWriting(tester);
+      final peers = editor(tester).widget.collabPeers!;
+      peers.value = const [
+        CollabPeer(
+          id: 'a',
+          name: 'Guest',
+          canEdit: true,
+          index: 1,
+          length: 0,
+          rev: 0,
+        ),
+        CollabPeer(
+          id: 'b',
+          name: 'Sam',
+          canEdit: true,
+          index: 0,
+          length: 2,
+          rev: 0,
+        ),
+        // Past the end, as a caret can be for a moment.
+        CollabPeer(
+          id: 'c',
+          name: 'Editor',
+          canEdit: true,
+          index: 99,
+          length: 5,
+          rev: 0,
+        ),
+      ];
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+      final painter = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((paint) => paint.foregroundPainter)
+          .whereType<RemoteCursorsPainter>();
+      expect(painter, hasLength(1));
+      // Names go after a while; the timers end with the screen.
+      await tester.pump(const Duration(seconds: 3));
     });
 
     testWidgets('typing that leaves the tools as they were keeps the bar, '

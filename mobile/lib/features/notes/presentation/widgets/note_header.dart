@@ -142,6 +142,7 @@ class NoteTagRow extends ConsumerWidget {
   const NoteTagRow({
     super.key,
     required this.note,
+    this.newTagIds = const [],
     required this.appearance,
     required this.readOnly,
     required this.onAdd,
@@ -150,6 +151,9 @@ class NoteTagRow extends ConsumerWidget {
   });
 
   final Note? note;
+
+  /// Shown while [note] is null: the tags a new note will be created with.
+  final List<String> newTagIds;
   final NoteAppearance appearance;
   final bool readOnly;
   final VoidCallback onAdd;
@@ -159,7 +163,7 @@ class NoteTagRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final all = ref.watch(tagsControllerProvider).value ?? const <Tag>[];
-    final tags = tagsByName(note?.tagIds ?? const <String>[], {
+    final tags = tagsByName(note?.tagIds ?? newTagIds, {
       for (final tag in all) tag.id: tag,
     });
     final reminder = note?.reminder;

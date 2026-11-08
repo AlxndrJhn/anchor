@@ -300,6 +300,23 @@ class NotesRepository {
     scheduleAppSync(trigger: 'NotesRepo.updateNote');
   }
 
+  /// Keeps the note as it stands while it's edited together. The session has
+  /// already told the server, so this asks for no sync and records no edit.
+  Future<void> writeLiveText(
+    String noteId, {
+    required String title,
+    required String content,
+    required String? background,
+  }) => _db.writeNote(
+    noteId,
+    NotesCompanion(
+      title: drift.Value(title),
+      content: drift.Value(content),
+      background: drift.Value(background),
+      updatedAt: drift.Value(DateTime.now().toUtc()),
+    ),
+  );
+
   /// Rewrites the note's stored content with [change], as an edit; nothing
   /// happens when [change] gives null.
   Future<void> changeContent(

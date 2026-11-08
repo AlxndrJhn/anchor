@@ -21,6 +21,7 @@ import '../../../../core/search/search_pattern.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../../l10n/l10n.dart';
+import '../../data/collab/collab_session.dart';
 import '../../domain/note_blocks.dart';
 import 'block_spacing.dart';
 import 'checklist_drag_controller.dart';
@@ -39,6 +40,7 @@ import 'line_kind.dart';
 import 'list_markers.dart';
 import 'markdown_shortcuts.dart';
 import 'plain_insert_rule.dart';
+import 'remote_cursors.dart';
 import 'slash_hint.dart';
 import 'text_formats.dart';
 
@@ -67,6 +69,8 @@ class RichTextEditor extends StatefulWidget {
     this.bottomInset = 80, // off-scale: room under the text when not given
     this.onReadOnlyTap,
     this.onSelectionChanged,
+    this.collabPeers,
+    this.onLocalChange,
     this.hasSlashHint = false,
     this.onBlankChanged,
     this.onBackspaceAtStart,
@@ -101,6 +105,12 @@ class RichTextEditor extends StatefulWidget {
   final VoidCallback? onReadOnlyTap;
 
   final ValueChanged<TextSelection>? onSelectionChanged;
+
+  /// Who else is editing, whose carets show.
+  final ValueNotifier<List<CollabPeer>>? collabPeers;
+
+  /// A change this person made in the text; others' don't come here.
+  final ValueChanged<Delta>? onLocalChange;
 
   final bool hasSlashHint;
 
@@ -146,6 +156,7 @@ class RichTextEditorState extends State<RichTextEditor>
   final GlobalKey<EditorState> _editorKey = GlobalKey<EditorState>();
   final GlobalKey _stackKey = GlobalKey();
   final ValueNotifier<int> _paintTick = ValueNotifier(0);
+  final RecentlyMovedPeers _recentPeers = RecentlyMovedPeers();
   final ValueNotifier<String?> _slashQuery = ValueNotifier(null);
 
   /// Null once the text is edited.
@@ -215,6 +226,7 @@ class RichTextEditorState extends State<RichTextEditor>
     )..dragged.addListener(_dragChanged);
     _refreshLists();
     _listen();
+    widget.collabPeers?.addListener(_peersChanged);
     widget.focusNode.addListener(_onFocusChanged);
     final search = SearchPattern(
       widget.searchTerm ?? '',
@@ -247,11 +259,45 @@ class RichTextEditorState extends State<RichTextEditor>
     );
   }
 
+  Delta get collabDoc => _controller.document.toDelta();
+
+  /// Someone else's change: the caret stays with the text it's beside, the
+  /// keyboard stays as it is, and it isn't for this person's undo.
+  void applyRemote(Delta change) {
+    final selection = _controller.selection;
+    final moved = selection.copyWith(
+      baseOffset: change.transformPosition(selection.baseOffset, force: false),
+      extentOffset: change.transformPosition(
+        selection.extentOffset,
+        force: false,
+      ),
+    );
+    // Undo takes back this person's edits, moved over the others' text.
+    final history = _controller.document.history;
+    _editWithoutFocus(() {
+      history.ignoreChange = true;
+      try {
+        _controller.compose(change, moved, ChangeSource.remote);
+      } finally {
+        history.ignoreChange = false;
+      }
+      history.transform(change);
+    });
+  }
+
+  void _peersChanged() {
+    final peers = widget.collabPeers?.value;
+    if (peers != null) _recentPeers.update(peers);
+  }
+
   /// `changes` belongs to the document: listen again after `document =`.
   void _listen() {
     _onChangedSub = _controller.changes.listen((change) {
       // Editing ends the search's marks.
-      if (change.source == ChangeSource.local) _search = null;
+      if (change.source == ChangeSource.local) {
+        _search = null;
+        widget.onLocalChange?.call(change.change);
+      }
       _followUndoable(change);
       // First: the lists read which lines wait to move.
       _sorter.handleChange(change);
@@ -502,6 +548,8 @@ class RichTextEditorState extends State<RichTextEditor>
     widget.focusNode.removeListener(_onFocusChanged);
     _controller.dispose();
     _slashHint?.dispose();
+    widget.collabPeers?.removeListener(_peersChanged);
+    _recentPeers.dispose();
     _paintTick.dispose();
     _slashQuery.dispose();
     super.dispose();
@@ -1166,6 +1214,29 @@ class RichTextEditorState extends State<RichTextEditor>
             ),
           ),
         ),
+        if (widget.collabPeers case final peers?)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  foregroundPainter: RemoteCursorsPainter(
+                    repaint: Listenable.merge([
+                      _paintTick,
+                      peers,
+                      _recentPeers,
+                      _controller,
+                    ]),
+                    peers: peers,
+                    recent: _recentPeers,
+                    controller: _controller,
+                    editor: () => _renderEditor,
+                    stack: () => _overlayBox,
+                    textDirection: Directionality.of(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
         if (widget.hasSlashHint && widget.canEdit)
           Positioned.fill(
             child: IgnorePointer(

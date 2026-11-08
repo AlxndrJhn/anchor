@@ -47,6 +47,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | **Notes and lists** | | |
 | Drag notes to arrange them, as in Google Keep: the others make room as you drag, and a moved note stays put until it is edited again (Android: hold a card, then drag) | ✓ | ✓ |
 | A Select button for choosing several notes; holding a card without moving still selects it | | ✓ |
+| Edit a note together, live: text merges as people type, and everyone's cursor shows, with their name (a public link's visitors see no names). Without a connection, edits sync as usual | ✓ | ✓ |
 | Make a copy of a note, with its pictures and attachments | ✓ | ✓ |
 | Freeze a note: nobody can change, trash or delete it until its owner unfreezes it (freezing needs a connection) | ✓ | ✓ |
 | Make a note invisible: it stays out of your lists and only a search finds it; filter by "Invisible" to list them | ✓ | ✓ |
@@ -226,6 +227,7 @@ The original keeps its notes, so you can go back any time (see
 - **Rich Text Editor** - Create and edit notes with powerful formatting (bold, italic, underline, headings, lists, checkboxes)
 - **Offline First** - All edits work offline with local database
 - **Note Sharing** - Share notes with other users (viewer or editor)
+- **Editing Together** - Everyone with a note open sees each other's text and cursors live, on the web and on Android. A reverse proxy in front of Anchor has to forward WebSockets for this (nginx: set the `Upgrade` and `Connection` headers; Caddy and Traefik do it by default); without them, notes sync as usual
 - **Note History** - Read earlier versions of a note and put one back
 - **Tags System** - Organize notes with custom tags and colors
 - **Attachments** - Attach images and audio to notes
