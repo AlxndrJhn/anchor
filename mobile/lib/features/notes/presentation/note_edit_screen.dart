@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show File;
 import 'dart:math' as math;
 
+import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,6 +42,7 @@ import '../../settings/presentation/editor_preferences_controller.dart';
 import '../../tags/domain/tag.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../../tags/presentation/widgets/tag_sheets.dart';
+import '../data/collab/collab_connection.dart';
 import '../data/live_host.dart';
 import '../data/live_signals.dart';
 import '../data/repository/note_attachments_repository.dart';
@@ -172,6 +174,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     onNoteDeleted: _handleNoteDeleted,
     note: widget.note,
     noteId: widget.noteId,
+    openCollab: collabOpenerOf(ref),
   );
 
   late final EditorOverlayController _editorOverlay = EditorOverlayController(
@@ -332,6 +335,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
   void _draftChanged() {
     if (!mounted) return;
     setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _draft.editorReady();
+    });
     if (widget.caret != null && !_caretPlaced && _draft.isLoaded) {
       _caretPlaced = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _placeCaret());
@@ -1560,7 +1566,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                     hasSlashHint: _openedAsNew,
                     onChanged: _onEditorChanged,
                     embedBuilders: _embedBuilders,
-                    onSelectionChanged: _editorOverlay.selectionMoved,
+                    onSelectionChanged: (selection) {
+                      _editorOverlay.selectionMoved(selection);
+                      _draft.cursorMoved(selection);
+                    },
+                    collabPeers: _draft.peers,
+                    onLocalChange: _draft.collabLocalChange,
                     onBlankChanged: _bodyBlankChanged,
                     onBackspaceAtStart: _isReadOnly ? null : _joinTitle,
                     onLinkTap: _editorOverlay.showLink,
@@ -1709,6 +1720,12 @@ class _EditorContent implements NoteEditorContent {
 
   @override
   bool? matches(String? content) => _key.currentState?.matchesContent(content);
+
+  @override
+  Delta? get collabDoc => _key.currentState?.collabDoc;
+
+  @override
+  void applyRemote(Delta change) => _key.currentState?.applyRemote(change);
 }
 
 class _AboveKeyboard extends StatelessWidget {

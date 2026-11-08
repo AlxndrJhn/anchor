@@ -23,9 +23,3 @@ export const NOTE_REVISION_CAP_PER_NOTE = 200;
 export const SYNC_EVENTS_PING_INTERVAL_MS = 25 * 1000;
 export const SYNC_EVENTS_MAX_STREAM_AGE_MS = 60 * 60 * 1000;
 export const MAX_SYNC_EVENT_STREAMS_PER_USER = 8;
-
-// Pages open on a share link (shared-note-socket.service.ts): pings keep
-// proxies from closing an idle socket and find dead ones, and the cap bounds
-// how many one link can hold open.
-export const SHARED_NOTE_SOCKET_PING_INTERVAL_MS = 25 * 1000;
-export const MAX_SHARED_NOTE_SOCKETS_PER_NOTE = 50;

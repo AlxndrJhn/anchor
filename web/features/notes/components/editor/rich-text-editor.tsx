@@ -20,6 +20,8 @@ import { DURATION } from "@/lib/design/tokens";
 import { watchHighlights } from "@/lib/highlight-paint";
 import { hasShortcutKey, isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
+import type { CollabSession } from "../../collab/session";
+import { useCollabEditor } from "../../collab/use-collab-editor";
 import { stampFor } from "../../date-stamp";
 import { useLiveImages } from "../../hooks/use-live-images";
 import { showInlineImages } from "../../inline-images";
@@ -180,6 +182,10 @@ interface RichTextEditorProps {
   /** Puts pictures in the text and edits them; without it they only show. */
   pictures?: InlinePictureHost;
   firstLine?: FirstLineHandlers;
+  /** Editing together: changes go through it instead of `value`. */
+  collab?: CollabSession | null;
+  /** The text after a change from someone else. */
+  onRemoteContent?: (nextStoredContent: string) => void;
 }
 
 export interface RichTextEditorHandle {
@@ -225,6 +231,8 @@ export const RichTextEditor = forwardRef<
       noteId,
       pictures,
       firstLine,
+      collab,
+      onRemoteContent,
     },
     ref,
   ) => {
@@ -352,6 +360,8 @@ export const RichTextEditor = forwardRef<
       onBeforeEdit: checklistSort.cancel,
       checkedLast: sortChecklistItems,
     });
+    const onRemoteContentRef = useRef(onRemoteContent);
+    onRemoteContentRef.current = onRemoteContent;
     const [appliedValue, setAppliedValue] = useState(value);
     const [incomingValue, setIncomingValue] = useState<string | null>(null);
     if (value !== appliedValue) {
@@ -362,6 +372,8 @@ export const RichTextEditor = forwardRef<
     useLayoutEffect(() => {
       if (incomingValue === null) return;
       setIncomingValue(null);
+      // The session decides the text now; it knows what's merged.
+      if (collab?.isTracking) return;
       const next = parseStoredContent(incomingValue);
       const quill = getQuill();
       if (!quill || quill.getLength() <= 1) {
@@ -378,7 +390,15 @@ export const RichTextEditor = forwardRef<
       );
       if (change.ops.length)
         quill.updateContents(change as unknown as QuillDelta, "api");
-    }, [incomingValue, getQuill]);
+    }, [incomingValue, getQuill, collab]);
+    const remoteChanged = useCallback(() => {
+      const quill = getQuill();
+      if (!quill) return;
+      const current = stringifyDelta(quill.getContents());
+      setAppliedValue(current);
+      onRemoteContentRef.current?.(current);
+    }, [getQuill]);
+    useCollabEditor(collab, getQuill, !longContent, remoteChanged);
     useEffect(() => {
       if (!longContent) return;
       let isCancelled = false;

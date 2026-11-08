@@ -11,6 +11,7 @@ import 'package:anchor/core/widgets/app_snackbar.dart';
 import 'package:anchor/core/widgets/destruction/destruction.dart';
 import 'package:anchor/core/widgets/grouped_list.dart';
 import 'package:anchor/core/widgets/revival.dart';
+import 'package:anchor/features/notes/data/collab/collab_session.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_copies_repository.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
@@ -24,6 +25,7 @@ import 'package:anchor/features/notes/presentation/editor/editor_tool_button.dar
 import 'package:anchor/features/notes/presentation/editor/editor_toolbar.dart';
 import 'package:anchor/features/notes/presentation/editor/line_kind.dart';
 import 'package:anchor/features/notes/presentation/editor/link_bubble.dart';
+import 'package:anchor/features/notes/presentation/editor/remote_cursors.dart';
 import 'package:anchor/features/notes/presentation/editor/rich_text_editor.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
 import 'package:anchor/features/notes/presentation/editor/slash_menu.dart';
@@ -1721,6 +1723,74 @@ void main() {
 
       expect(tool('Add a picture, recording or file'), findsOneWidget);
       expect(tester.getRect(tool('Checklist')), checklist);
+    });
+
+    testWidgets('a change from someone else keeps the caret and undo', (
+      tester,
+    ) async {
+      await startWriting(tester);
+      final controller = editorController(tester);
+      controller.replaceText(
+        2,
+        0,
+        'a',
+        const TextSelection.collapsed(offset: 3),
+      );
+      await settle(tester);
+      expect(controller.document.toPlainText(), 'hia\n');
+      final undoSteps = controller.document.history.stack.undo.length;
+
+      editor(tester).applyRemote(Delta()..insert('XY'));
+      await settle(tester);
+
+      expect(controller.document.toPlainText(), 'XYhia\n');
+      expect(controller.selection.baseOffset, 5);
+      expect(controller.document.history.stack.undo.length, undoSteps);
+
+      await tester.tap(tool('Undo'));
+      await settle(tester);
+      expect(controller.document.toPlainText(), 'XYhi\n');
+    });
+
+    testWidgets("others' carets paint, wherever they point", (tester) async {
+      await startWriting(tester);
+      final peers = editor(tester).widget.collabPeers!;
+      peers.value = const [
+        CollabPeer(
+          id: 'a',
+          name: 'Guest',
+          canEdit: true,
+          index: 1,
+          length: 0,
+          rev: 0,
+        ),
+        CollabPeer(
+          id: 'b',
+          name: 'Sam',
+          canEdit: true,
+          index: 0,
+          length: 2,
+          rev: 0,
+        ),
+        // Past the end, as a caret can be for a moment.
+        CollabPeer(
+          id: 'c',
+          name: 'Editor',
+          canEdit: true,
+          index: 99,
+          length: 5,
+          rev: 0,
+        ),
+      ];
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+      final painter = tester
+          .widgetList<CustomPaint>(find.byType(CustomPaint))
+          .map((paint) => paint.foregroundPainter)
+          .whereType<RemoteCursorsPainter>();
+      expect(painter, hasLength(1));
+      // Names go after a while; the timers end with the screen.
+      await tester.pump(const Duration(seconds: 3));
     });
 
     testWidgets('typing that leaves the tools as they were keeps the bar, '

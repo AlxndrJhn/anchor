@@ -153,18 +153,6 @@ export class NoteShareLinksService {
     );
   }
 
-  /** The note a working link opens, or null; for its live updates. */
-  async linkedNoteId(token: string): Promise<string | null> {
-    try {
-      return (await this.findLinkedNote(token)).link.noteId;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return null;
-      }
-      throw error;
-    }
-  }
-
   // Only an active note opens: in the trash, the link stops working until
   // the note is restored.
   private async findLinkedNote(token: string) {

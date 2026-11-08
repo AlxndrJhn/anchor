@@ -8,6 +8,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../notes/data/collab/collab_connection.dart';
 import '../../notes/data/local/note_rows.dart';
 import '../../notes/data/local/notes_table.dart' show unknownNoteLock;
 import '../../notes/data/repository/note_attachments_repository.dart';
@@ -166,6 +167,8 @@ class SyncService {
       _db.notes,
     )..where((tbl) => tbl.isSynced.equals(false))).get();
     for (final note in notes) {
+      // Its text is going up through the session, as it changes.
+      if (LiveNotes.contains(note.id)) continue;
       changes.add(await _noteChangeOf(note));
     }
 

@@ -1,5 +1,6 @@
 import 'package:anchor/core/database/app_database.dart';
 import 'package:anchor/features/auth/domain/user.dart';
+import 'package:anchor/features/notes/data/collab/collab_connection.dart';
 import 'package:anchor/features/notes/data/repository/note_attachments_repository.dart';
 import 'package:anchor/features/notes/data/repository/note_revisions_store.dart';
 import 'package:anchor/features/sync/data/sync_api.dart';
@@ -275,6 +276,25 @@ void main() {
       expect(row.isSynced, isTrue);
     },
   );
+
+  test("doesn't send a note's text while it's edited together", () async {
+    await insertNote(id: 'live', version: 1);
+    await insertNote(id: 'other', version: 1);
+    LiveNotes.add('live');
+    addTearDown(() => LiveNotes.remove('live'));
+    stub([
+      response(
+        results: [
+          {'type': 'note', 'id': 'other', 'status': 'applied', 'version': 2},
+        ],
+      ),
+    ]);
+
+    await service.run();
+
+    expect(changesOf(0).map((c) => c['id']), ['other']);
+    expect((await note('live'))!.isSynced, isFalse);
+  });
 
   group('note locks', () {
     Map<String, dynamic> applied(String id) => response(
