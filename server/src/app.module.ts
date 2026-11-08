@@ -11,6 +11,7 @@ import { SecondFactorInterceptor } from './auth/second-factor.interceptor';
 import { NotesModule } from './notes/notes.module';
 import { TagsModule } from './tags/tags.module';
 import { SyncApiModule } from './sync/sync-api.module';
+import { CollabModule } from './collab/collab.module';
 import { TasksModule } from './tasks/tasks.module';
 import { HealthModule } from './health/health.module';
 import { AdminModule } from './admin/admin.module';
@@ -33,6 +34,7 @@ import { LiveModule } from './live/live.module';
     NotesModule,
     TagsModule,
     SyncApiModule,
+    CollabModule,
     TasksModule,
     HealthModule,
     AdminModule,

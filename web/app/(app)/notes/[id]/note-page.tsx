@@ -723,6 +723,7 @@ function NoteEditor({
             }
             onTitleChange={editor.setTitle}
             onContentChange={editor.setContent}
+            collab={editor.collab}
             onTagsChange={editor.setSelectedTagIds}
             onCreateTag={(name) =>
               createTagMutation.mutateAsync(name).catch(() => undefined)

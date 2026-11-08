@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:anchor/features/notes/data/collab/collab_connection.dart';
+import 'package:anchor/features/notes/data/collab/collab_session.dart';
 import 'package:anchor/features/notes/data/repository/notes_repository.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/presentation/note_editor_controller.dart';
+import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -22,6 +26,15 @@ class FakeEditor implements NoteEditorContent {
 
   @override
   bool? matches(String? content) => content == this.content;
+
+  @override
+  Delta? get collabDoc => Delta()..insert('$text\n');
+
+  @override
+  void applyRemote(Delta change) {
+    final next = collabDoc!.compose(change);
+    text = (next.first.data as String).replaceFirst(RegExp(r'\n$'), '');
+  }
 }
 
 void main() {
@@ -60,20 +73,53 @@ void main() {
     content: '{"ops":[{"insert":"milk\\n"}]}',
   );
 
-  testWidgets('saves two seconds after the last change', (tester) async {
+  testWidgets('saves soon after the last change', (tester) async {
     final editor = FakeEditor('milk');
     final draft = open(editor, note: note);
 
     editor.text = 'milk and eggs';
     draft.contentChanged();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 700));
     verifyNever(() => repo.updateNote(any()));
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 100));
     final saved =
         verify(() => repo.updateNote(captureAny())).captured.single as Note;
     expect(saved.content, contains('milk and eggs'));
     expect(saved.title, 'Groceries');
+    draft.dispose();
+  });
+
+  testWidgets('typing without a pause still saves every two seconds', (
+    tester,
+  ) async {
+    final editor = FakeEditor('milk');
+    final draft = open(editor, note: note);
+
+    // A key every half second: the pause the save waits for never comes.
+    Future<void> typeFor(int keys) async {
+      for (var i = 0; i < keys; i++) {
+        editor.text = '${editor.text}.';
+        draft.contentChanged();
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+    }
+
+    await typeFor(3);
+    verifyNever(() => repo.updateNote(any()));
+
+    await typeFor(1);
+    final first =
+        verify(() => repo.updateNote(captureAny())).captured.single as Note;
+    expect(first.content, contains('milk....'));
+
+    // The next stretch gets its own two seconds.
+    await typeFor(3);
+    verifyNever(() => repo.updateNote(any()));
+    await typeFor(1);
+    verify(() => repo.updateNote(any())).called(1);
+
+    await tester.pump(const Duration(seconds: 1));
     draft.dispose();
   });
 
@@ -249,4 +295,182 @@ void main() {
     expect(closed, 1);
     draft.dispose();
   });
+
+  group('editing together', () {
+    late StreamController<String> server;
+    late List<Map<String, dynamic>> sent;
+    late FakeEditor editor;
+    late NoteEditorController draft;
+
+    Future<void> goLive(WidgetTester tester) async {
+      server = StreamController<String>.broadcast(sync: true);
+      sent = [];
+      editor = FakeEditor('milk');
+      when(
+        () => repo.writeLiveText(
+          any(),
+          title: any(named: 'title'),
+          content: any(named: 'content'),
+          background: any(named: 'background'),
+        ),
+      ).thenAnswer((_) async {});
+      draft = NoteEditorController(
+        notes: repo,
+        sharesOf: (_) async => const [],
+        editor: editor,
+        newNoteTagId: () => null,
+        onNoteDeleted: () {},
+        note: note,
+        openCollab: (noteId, collabEditor, base, given) {
+          return CollabSession(
+            connect: () async => _ChannelSocket(server, sent),
+            joinFields: () async => {'noteId': noteId},
+            editor: collabEditor,
+            getUnsavedBase: base,
+            events: given,
+          );
+        },
+      );
+      draft.editorReady();
+      await tester.pump();
+      server.add(
+        jsonEncode({
+          't': 'hello',
+          'epoch': 'e',
+          'rev': 0,
+          'doc': [
+            {'insert': 'milk\n'},
+          ],
+          'canEdit': true,
+          'title': 'Groceries',
+          'background': null,
+          'version': 3,
+          'peers': const <Object>[],
+        }),
+      );
+      await tester.pump();
+      addTearDown(() {
+        LiveNotes.remove('n1');
+        return server.close();
+      });
+    }
+
+    testWidgets("doesn't send the text through the sync while live", (
+      tester,
+    ) async {
+      await goLive(tester);
+      expect(LiveNotes.contains('n1'), isTrue);
+
+      editor.text = 'milk and eggs';
+      draft.contentChanged();
+      await tester.pump(const Duration(seconds: 3));
+
+      verifyNever(() => repo.updateNote(any()));
+      verify(
+        () => repo.writeLiveText(
+          'n1',
+          title: 'Groceries',
+          content: any(named: 'content', that: contains('milk and eggs')),
+          background: null,
+        ),
+      ).called(1);
+      draft.dispose();
+      await tester.pump();
+    });
+
+    testWidgets('a stored copy from the sync leaves the live text alone', (
+      tester,
+    ) async {
+      await goLive(tester);
+      final opened = draft.contentVersion;
+
+      stored.add(note.copyWith(content: '{"ops":[{"insert":"older\\n"}]}'));
+      await tester.pump();
+
+      expect(draft.contentVersion, opened);
+      draft.dispose();
+      await tester.pump();
+    });
+
+    testWidgets("someone's rename and color show", (tester) async {
+      await goLive(tester);
+
+      server.add(jsonEncode({'t': 'meta', 'title': 'Shopping'}));
+      server.add(jsonEncode({'t': 'meta', 'background': 'mint'}));
+      await tester.pump();
+
+      expect(draft.title.text, 'Shopping');
+      expect(draft.background, 'mint');
+      draft.dispose();
+      await tester.pump();
+    });
+
+    testWidgets('a rename here goes to the others', (tester) async {
+      await goLive(tester);
+
+      draft.title.text = 'Shopping';
+      await tester.pump();
+
+      expect(sent.where((m) => m['t'] == 'meta').single['title'], 'Shopping');
+      draft.dispose();
+      await tester.pump();
+    });
+
+    testWidgets('leaving with edits unconfirmed hands them to the sync', (
+      tester,
+    ) async {
+      await goLive(tester);
+
+      final change = Delta()..insert('x');
+      editor.text = 'xmilk';
+      draft.collabLocalChange(change);
+      expect(sent.where((m) => m['t'] == 'op'), hasLength(1));
+
+      draft.flushOnLeave();
+      await tester.pump();
+
+      final saved =
+          verify(() => repo.updateNote(captureAny())).captured.single as Note;
+      expect(saved.content, contains('xmilk'));
+      expect(saved.isSynced, isFalse);
+      draft.dispose();
+      await tester.pump(const Duration(seconds: 6));
+    });
+
+    testWidgets('losing the session goes back to saving as usual', (
+      tester,
+    ) async {
+      await goLive(tester);
+
+      server.addError(StateError('down'));
+      editor.text = 'milk and eggs';
+      draft.contentChanged();
+      await tester.pump(const Duration(seconds: 16));
+
+      expect(LiveNotes.contains('n1'), isFalse);
+      verify(() => repo.updateNote(any())).called(greaterThan(0));
+      draft.dispose();
+      await tester.pump(const Duration(minutes: 2));
+    });
+  });
+}
+
+class _ChannelSocket implements CollabSocket {
+  _ChannelSocket(this._server, this._sent);
+
+  final StreamController<String> _server;
+  final List<Map<String, dynamic>> _sent;
+
+  @override
+  Stream<dynamic> get messages => _server.stream;
+
+  @override
+  int? get closeCode => null;
+
+  @override
+  void send(String message) =>
+      _sent.add(jsonDecode(message) as Map<String, dynamic>);
+
+  @override
+  Future<void> close([int code = 1000]) async {}
 }

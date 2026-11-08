@@ -1,11 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
 import '../../../core/ids.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
+import '../../../core/network/sync_requester.dart';
+import '../data/collab/collab_connection.dart';
+import '../data/collab/collab_session.dart';
 import '../data/repository/notes_repository.dart';
 import '../domain/note.dart';
 import '../domain/note_blocks.dart';
@@ -13,7 +19,7 @@ import '../domain/note_share.dart';
 import '../domain/user_summary.dart';
 
 /// Each member is null while there is no editor.
-abstract interface class NoteEditorContent {
+abstract interface class NoteEditorContent implements CollabEditor {
   String? get content;
 
   String? get plainText;
@@ -21,6 +27,13 @@ abstract interface class NoteEditorContent {
   /// Whether the editor's text matches [content], however it was written.
   bool? matches(String? content);
 }
+
+/// Saves once typing pauses this long; every save also starts a sync, so others
+/// looking at the note see the change.
+const Duration _saveDelay = Duration(milliseconds: 800);
+
+/// Long enough typing without a pause still saves this often.
+const Duration _saveMaxWait = Duration(seconds: 2);
 
 class NoteEditorController extends ChangeNotifier {
   NoteEditorController({
@@ -31,9 +44,19 @@ class NoteEditorController extends ChangeNotifier {
     required this.onNoteDeleted,
     Note? note,
     String? noteId,
+    this.openCollab,
   }) : _notes = notes,
        _openedId = noteId {
     title.addListener(_titleChanged);
+    if (openCollab != null) {
+      _lifecycle = AppLifecycleListener(
+        onHide: _leaveCollab,
+        onShow: () {
+          _collabTriedFor = null;
+          editorReady();
+        },
+      );
+    }
     final watchedId = note?.id ?? noteId;
     if (watchedId != null) _watch(watchedId);
     if (note != null) {
@@ -58,6 +81,9 @@ class NoteEditorController extends ChangeNotifier {
   /// Called once the note is permanently deleted elsewhere, or a share to it
   /// is taken away.
   final VoidCallback onNoteDeleted;
+
+  /// Null when there's no server to edit together on.
+  final CollabOpener? openCollab;
 
   final String? _openedId;
 
@@ -90,8 +116,16 @@ class NoteEditorController extends ChangeNotifier {
   bool _isSaving = false;
   String _lastTitleText = '';
   Timer? _autoSaveTimer;
+  Timer? _saveDeadline;
   Timer? _wordsTimer;
   StreamSubscription<Note?>? _noteWatch;
+  AppLifecycleListener? _lifecycle;
+  CollabSession? _collab;
+  bool _isCollabLive = false;
+  String? _collabTriedFor;
+
+  /// The others editing this note right now.
+  final ValueNotifier<List<CollabPeer>> peers = ValueNotifier(const []);
 
   /// Null for a new note not saved yet.
   Note? get note => _note;
@@ -164,8 +198,11 @@ class NoteEditorController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _lifecycle?.dispose();
+    _leaveCollab();
     _isDisposed = true;
-    _autoSaveTimer?.cancel();
+    peers.dispose();
+    _cancelSaveTimers();
     _wordsTimer?.cancel();
     unawaited(_noteWatch?.cancel());
     title.removeListener(_titleChanged);
@@ -222,6 +259,19 @@ class NoteEditorController extends ChangeNotifier {
   void _storedNoteChanged(Note? note) {
     if (_isDisposed) return;
     if (note == null) return _handleNoteDeleted();
+    if (_isCollabLive) {
+      // Older than the session's text, which is on screen already.
+      final isSharedChanged = !setEquals(
+        {...?note.shareIds},
+        {...?_note?.shareIds},
+      );
+      _note = note;
+      _isLoaded = true;
+      if (isSharedChanged) unawaited(_loadSharedWith(note));
+      _notify();
+      return;
+    }
+    if (_collab == null && _collabKeyOf(note) != _collabTriedFor) editorReady();
     final shouldReplaceDraft =
         !_hasUnsavedChanges && !_isSaving && !_draftMatches(note);
     final isShareChanged = !setEquals(
@@ -273,26 +323,30 @@ class NoteEditorController extends ChangeNotifier {
   void _handleNoteDeleted() {
     if (_isNew || _isDeleted) return;
     _isDeleted = true;
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
     onNoteDeleted();
   }
 
   /// Stops saving; call once the note is trashed or deleted here.
   void markDeleted() {
     _isDeleted = true;
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
   }
 
   void _titleChanged() {
     if (title.text == _lastTitleText) return;
     _lastTitleText = title.text;
+    if (_isCollabLive) {
+      _collab?.setMeta({'title': storedTitleOf(title.text)});
+    }
     contentChanged();
   }
 
   void contentChanged() {
     _hasUnsavedChanges = true;
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
+    _autoSaveTimer = Timer(_saveDelay, _autoSave);
+    _saveDeadline ??= Timer(_saveMaxWait, _autoSave);
     _wordsTimer?.cancel();
     _wordsTimer = Timer(const Duration(milliseconds: 300), () {
       words.value = countWords(editor.plainText ?? '');
@@ -301,6 +355,7 @@ class NoteEditorController extends ChangeNotifier {
 
   void setBackground(String? id) {
     _background = id;
+    if (_isCollabLive) _collab?.setMeta({'background': id});
     _notify();
     contentChanged();
   }
@@ -311,7 +366,7 @@ class NoteEditorController extends ChangeNotifier {
   }
 
   Future<void> saveNow() {
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
     return _savePendingChanges();
   }
 
@@ -319,7 +374,14 @@ class NoteEditorController extends ChangeNotifier {
     if (_hasUnsavedChanges) unawaited(_autoSave());
   }
 
+  void _cancelSaveTimers() {
+    _autoSaveTimer?.cancel();
+    _saveDeadline?.cancel();
+    _saveDeadline = null;
+  }
+
   Future<void> _savePendingChanges() async {
+    _cancelSaveTimers();
     // Cleared before the await: edits made during it stay flagged.
     _hasUnsavedChanges = false;
     _isSaving = true;
@@ -334,7 +396,8 @@ class NoteEditorController extends ChangeNotifier {
   void flushOnLeave() {
     if (_hasFlushed) return;
     _hasFlushed = true;
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
+    _leaveCollab();
     if (_isDeleted || !_hasUnsavedChanges && !_isNew) return;
     unawaited(_savePendingChanges());
   }
@@ -390,7 +453,154 @@ class NoteEditorController extends ChangeNotifier {
     return note.id;
   }
 
+  /// The editor is there: joins whoever else has this note open.
+  void editorReady() {
+    final open = openCollab;
+    final note = _note;
+    if (open == null ||
+        _collab != null ||
+        _isNew ||
+        _isDeleted ||
+        _isDisposed ||
+        _hasFlushed ||
+        note == null ||
+        !note.isActive ||
+        editor.collabDoc == null ||
+        _collabKeyOf(note) == _collabTriedFor) {
+      return;
+    }
+    _collabTriedFor = _collabKeyOf(note);
+    final session = open(
+      note.id,
+      editor,
+      () => _hasUnsavedChanges ? _deltaOf(_savedContent) : null,
+      CollabEvents(
+        onLive: (isLive) => _collabLiveChanged(note.id, isLive),
+        onPeers: (next) {
+          if (!_isDisposed) peers.value = next;
+        },
+        onMeta: _collabMeta,
+        onSaved: _collabSaved,
+        onGone: () {
+          // Not on the server yet, or no longer shared: its changes will say.
+          _collab = null;
+        },
+      ),
+    );
+    _collab = session;
+    session.start();
+  }
+
+  /// Refused once, it's worth asking again when the note has changed: a new
+  /// note the server didn't have yet, say.
+  String _collabKeyOf(Note note) => '${note.isSynced}|${note.updatedAt}';
+
+  Delta _deltaOf(String? content) {
+    try {
+      return Document.fromJson(decodeNoteOps(content)).toDelta();
+    } catch (_) {
+      return Delta()..insert('\n');
+    }
+  }
+
+  void _collabLiveChanged(String noteId, bool isLive) {
+    if (isLive) {
+      LiveNotes.add(noteId);
+    } else {
+      LiveNotes.remove(noteId);
+      scheduleAppSync(trigger: 'NoteEdit.collabEnded');
+    }
+    _isCollabLive = isLive;
+    if (isLive || _isDisposed || _hasFlushed) return;
+    // Back to saving as usual, from what the server last had.
+    _note = _note?.copyWith(title: _savedTitle, content: _savedContent);
+    contentChanged();
+  }
+
+  void _collabMeta(Map<String, dynamic> meta) {
+    if (_isDisposed) return;
+    if (meta.containsKey('title')) {
+      final next = meta['title'] as String? ?? '';
+      _savedTitle = next;
+      _showTitle(next);
+    }
+    if (meta.containsKey('background')) {
+      final next = meta['background'] as String?;
+      _savedBackground = next;
+      _background = next;
+    }
+    _notify();
+  }
+
+  void _collabSaved(int version) {
+    final server = _collab?.serverDoc;
+    if (server != null) {
+      _savedContent = jsonEncode({'ops': server.toJson()});
+    }
+  }
+
+  /// What this person just changed in the text.
+  void collabLocalChange(Delta change) => _collab?.localChange(change);
+
+  void cursorMoved(TextSelection selection) {
+    if (!selection.isValid) return _collab?.setCursor(null, 0);
+    _collab?.setCursor(selection.start, selection.end - selection.start);
+  }
+
+  /// Everything typed reaches the server through the session; if some of it
+  /// hasn't yet, the usual sync takes the rest.
+  void _leaveCollab() {
+    final session = _collab;
+    if (session == null) return;
+    _collab = null;
+    final note = _note;
+    final content = editor.content;
+    if (_isCollabLive && note != null && content != null) {
+      final saved = note.copyWith(
+        title: storedTitleOf(title.text),
+        content: content,
+        background: _background,
+      );
+      if (session.hasPending) {
+        unawaited(_notes.updateNote(saved.copyWith(isSynced: false)));
+      } else {
+        unawaited(
+          _notes.writeLiveText(
+            note.id,
+            title: saved.title,
+            content: content,
+            background: _background,
+          ),
+        );
+      }
+      _hasUnsavedChanges = false;
+      _note = saved;
+    }
+    _collabTriedFor = null;
+    if (!_isDisposed) peers.value = const [];
+    unawaited(session.close());
+  }
+
+  Future<void> _saveLive() async {
+    final note = _note;
+    final content = editor.content;
+    if (note == null || content == null) return;
+    final savedTitle = storedTitleOf(title.text);
+    _note = note.copyWith(
+      title: savedTitle,
+      content: content,
+      background: _background,
+    );
+    await _notes.writeLiveText(
+      note.id,
+      title: savedTitle,
+      content: content,
+      background: _background,
+    );
+  }
+
   Future<void> _save() async {
+    if (_isCollabLive) return _saveLive();
     if (!isActive || !(_note?.canEdit ?? true)) return;
     if (_isNew) {
       if (!isBlankNew) await createNote();

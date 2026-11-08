@@ -66,6 +66,8 @@ export interface Person {
   profileImage?: string | null;
 }
 
+import type { CollabSession } from "../../collab/session";
+
 interface NoteEditorContentProps {
   noteId?: string;
   isNew: boolean;
@@ -93,6 +95,7 @@ interface NoteEditorContentProps {
   onEnsureNoteIdForAttachmentUpload?: () => Promise<string | null>;
   onTitleChange: (title: string) => void;
   onContentChange: (content: string) => void;
+  collab?: CollabSession | null;
   onTagsChange: (tagIds: string[]) => void;
   onCreateTag: (name: string) => Promise<Tag | undefined>;
   onReminder: (
@@ -439,6 +442,8 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
           ref={props.contentEditorRef}
           value={props.content}
           onChange={props.onContentChange}
+          collab={props.collab}
+          onRemoteContent={props.onContentChange}
           placeholder={props.isNew ? "Start writing" : "Write something"}
           readOnly={props.readOnly}
           onAddAttachment={

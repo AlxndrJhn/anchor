@@ -8,11 +8,15 @@ import {
 } from "@tanstack/react-query";
 import { HTTPError } from "ky";
 import { useSearchParams } from "next/navigation";
+import Delta, { type Op } from "quill-delta";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
+import { getAccessToken } from "@/features/auth";
+import { CollabSession } from "@/features/notes/collab/session";
 import { useSyncStatus } from "@/features/sync";
+import { refreshAccessToken } from "@/lib/api/client";
 import { newId } from "@/lib/id";
-import { basePath } from "@/lib/local-backend/mode";
+import { basePath, isServerless } from "@/lib/local-backend/mode";
 import {
   createNote,
   flushNoteUpdate,
@@ -22,7 +26,11 @@ import {
 } from "../api";
 import { outboxEntry } from "../outbox";
 import { cacheSavedNote } from "../queries";
-import { isStoredContentEmpty } from "../quill";
+import {
+  isStoredContentEmpty,
+  parseStoredContent,
+  stringifyDelta,
+} from "../quill";
 import {
   draftUpdate,
   flushUpdate,
@@ -47,6 +55,7 @@ import type {
   Note,
   NoteReminder,
   ReminderRecurrence,
+  UpdateNoteDto,
 } from "../types";
 import { useRefreshNotes } from "./use-refresh-notes";
 
@@ -97,6 +106,13 @@ const textChanged = (draft: NoteDraft, saved: NoteDraft) =>
 
 const sameTags = (a: string[], b: string[]) =>
   a.length === b.length && a.every((id, index) => id === b[index]);
+
+/** While a session is live, it's what changes the title, text and background. */
+function withoutSessionFields(update: UpdateNoteDto, isLive: boolean) {
+  if (!isLive) return update;
+  const { title: _title, content: _content, background: _bg, ...rest } = update;
+  return rest;
+}
 
 export function useNoteEditor({
   routeId,
@@ -219,8 +235,98 @@ export function useNoteEditor({
     };
   }, []);
 
+  // Editing together, the title, text and background go up through the
+  // session; whatever else changes here still goes the usual way.
+  const [collab, setCollab] = useState<CollabSession | null>(null);
+  const [isCollabLive, setIsCollabLive] = useState(false);
+  const collabLive = useRef(false);
+  const collabMeta = useRef<{ title?: string; background?: string | null }>({});
+  const lastSavedRef = useRef(lastSaved);
+  lastSavedRef.current = lastSaved;
+  const canCollab =
+    !isNew &&
+    !isServerless &&
+    !isOfflineCopy &&
+    !!note &&
+    note.state === "active";
+
+  useEffect(() => {
+    if (!canCollab) return;
+    const session = new CollabSession({
+      target: { noteId, getJwt: getAccessToken },
+      refreshJwt: refreshAccessToken,
+      getUnsavedBase: () => {
+        const saved = lastSavedRef.current;
+        return saved && saved.content !== latestDraft.current.content
+          ? new Delta(parseStoredContent(saved.content).ops as Op[])
+          : null;
+      },
+      onLive: (isLive) => {
+        collabLive.current = isLive;
+        setIsCollabLive(isLive);
+      },
+      onMeta: (meta) => {
+        collabMeta.current = { ...collabMeta.current, ...meta };
+        if (meta.title !== undefined) setTitle(meta.title);
+        if (meta.background !== undefined) setBackground(meta.background);
+      },
+      onSaved: (version) => {
+        noteVersionRef.current = version;
+        queue.setBaseVersion(version);
+        // Should the session end, saving goes on from what the server has.
+        const server = session.serverDoc;
+        if (server) {
+          setLastSaved((saved) =>
+            saved
+              ? {
+                  ...saved,
+                  content: stringifyDelta({ ops: server.ops }),
+                  title: collabMeta.current.title ?? saved.title,
+                  background:
+                    collabMeta.current.background !== undefined
+                      ? collabMeta.current.background
+                      : saved.background,
+                }
+              : saved,
+          );
+        }
+      },
+    });
+    setCollab(session);
+    return () => {
+      void session.close();
+      collabLive.current = false;
+      collabMeta.current = {};
+      setIsCollabLive(false);
+      setCollab(null);
+    };
+  }, [canCollab, noteId, queue]);
+
+  useEffect(() => {
+    if (!isCollabLive || !collab) return;
+    const known = collabMeta.current;
+    const update: { title?: string; background?: string | null } = {};
+    if (draft.title !== known.title) update.title = draft.title;
+    if (draft.background !== known.background) {
+      update.background = draft.background;
+    }
+    if (Object.keys(update).length === 0) return;
+    collabMeta.current = { ...known, ...update };
+    collab.setMeta(update);
+  }, [collab, isCollabLive, draft.title, draft.background]);
+
   const hasUnsavedChanges = lastSaved
-    ? !noteDraftsEqual(draft, lastSaved)
+    ? !noteDraftsEqual(
+        isCollabLive
+          ? {
+              ...draft,
+              title: lastSaved.title,
+              content: lastSaved.content,
+              background: lastSaved.background,
+            }
+          : draft,
+        lastSaved,
+      )
     : isNew && (draft.title !== "" || !isStoredContentEmpty(content));
 
   const applyServerNote = useCallback(
@@ -366,6 +472,13 @@ export function useNoteEditor({
 
     const base = noteVersionRef.current;
     if (base !== undefined && note.version <= base) return;
+
+    // Older than the session's text, which is on screen already.
+    if (collabLive.current) {
+      noteVersionRef.current = note.version;
+      queue.setBaseVersion(note.version);
+      return;
+    }
 
     if (hasUnsavedChanges) {
       const incoming = noteToDraft(note);
@@ -632,7 +745,10 @@ export function useNoteEditor({
     if (!canSaveDraft || !hasUnsavedChanges || !lastSaved) return;
 
     flushNoteUpdate(noteId, {
-      ...flushUpdate(draft, lastSaved, serverReminderRef.current, { isViewer }),
+      ...withoutSessionFields(
+        flushUpdate(draft, lastSaved, serverReminderRef.current, { isViewer }),
+        collabLive.current,
+      ),
       ...(replacesOtherEdit.current ? { replacesOtherEdit: true } : {}),
     });
   }, [
@@ -649,10 +765,13 @@ export function useNoteEditor({
   useEffect(() => {
     live.current = {
       buildUpdate: (draftToSend, baseVersion) => ({
-        ...draftUpdate(draftToSend, serverReminderRef.current, {
-          isViewer,
-          baseVersion,
-        }),
+        ...withoutSessionFields(
+          draftUpdate(draftToSend, serverReminderRef.current, {
+            isViewer,
+            baseVersion,
+          }),
+          collabLive.current,
+        ),
         ...(replacesOtherEdit.current ? { replacesOtherEdit: true } : {}),
       }),
       onSaved: handleSaved,
@@ -774,6 +893,7 @@ export function useNoteEditor({
   };
 
   return {
+    collab,
     noteId,
     isNew,
     /** The id a new note is made with. */
