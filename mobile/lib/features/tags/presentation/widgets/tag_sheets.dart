@@ -21,6 +21,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../notes/data/repository/notes_repository.dart';
 import '../../../notes/domain/note.dart';
 import '../../domain/tag.dart';
+import '../../domain/tag_order.dart';
 import '../tag_colors.dart';
 import '../tags_controller.dart';
 
@@ -147,7 +148,7 @@ class _TagPickerState extends ConsumerState<_TagPicker> {
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
-    final tags = sortTagsByName(
+    final tags = sortTagsByPlace(
       ref.watch(tagsControllerProvider).value ?? const <Tag>[],
     );
     final counts = ref.watch(tagNoteCountsProvider);
