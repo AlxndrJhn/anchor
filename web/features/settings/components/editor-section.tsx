@@ -96,9 +96,12 @@ export function EditorSection() {
         />
       </Row>
       <Row>
-        <RowText title="Date format" text="How an inserted date reads." />
+        <RowText
+          title="Inserted date format"
+          text="How a date typed into a note reads."
+        />
         <SegmentedControl<DateFormat>
-          aria-label="Date format"
+          aria-label="Inserted date format"
           size="sm"
           value={editor.dateFormat ?? DEFAULT_DATE_FORMAT}
           onValueChange={(format) => {

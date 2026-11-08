@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import {
   BellOff,
   Briefcase,
@@ -26,6 +27,13 @@ import {
 import { RollingText } from "@/components/ui/rolling-text";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
+import {
+  firstDayOfWeek,
+  formatShortDate,
+  formatTime,
+  formatWeekdayDate,
+  uses12HourClock,
+} from "@/features/preferences";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { cn } from "@/lib/utils";
 import {
@@ -66,14 +74,6 @@ const REPEAT_OPTIONS: { value: Repeating; label: string }[] = [
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
 ];
-const formatTime = (d: Date) =>
-  d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-const formatDay = (d: Date) =>
-  d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
 const withTime = (d: Date, hours: number, minutes: number) => {
   const result = new Date(d);
   result.setHours(hours, minutes, 0, 0);
@@ -213,8 +213,8 @@ function ReminderPicker({
                 {preset.key === "later" || preset.key === "tomorrow"
                   ? formatTime(date)
                   : preset.key === "monday" || preset.key === "month"
-                    ? formatDay(date).split(", ")[1]
-                    : `${formatDay(date).split(",")[0]}, ${formatTime(date)}`}
+                    ? formatShortDate(date)
+                    : `${format(date, "EEE")}, ${formatTime(date)}`}
               </span>
               <Tick checked={choice === preset.key} />
             </button>
@@ -243,7 +243,7 @@ function ReminderPicker({
                   setOpenField(openField === "date" ? null : "date")
                 }
               >
-                {formatDay(when)}
+                {formatWeekdayDate(when)}
               </PillButton>
               <PillButton
                 ref={timePillRef}
@@ -260,6 +260,7 @@ function ReminderPicker({
               <Calendar
                 value={when}
                 now={now}
+                weekStartsOn={firstDayOfWeek()}
                 onChange={(date) => {
                   setWhen(withTime(date, when.getHours(), when.getMinutes()));
                   setOpenField("time");
@@ -273,7 +274,7 @@ function ReminderPicker({
                   size="sm"
                   icon={<Clock aria-hidden />}
                   aria-label="Time"
-                  placeholder="Type a time, like 4 PM"
+                  placeholder={`Type a time, like ${uses12HourClock() ? "4 PM" : "16:00"}`}
                   value={typedTime}
                   onChange={(e) => setTypedTime(e.target.value)}
                   onKeyDown={(e) => {

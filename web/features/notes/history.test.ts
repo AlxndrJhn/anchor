@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   canRestoreRevisions,
   comparisonTargetId,
@@ -10,6 +10,9 @@ import {
   timelineEntries,
 } from "./history";
 import type { Note, NoteRevisionCause, NoteRevisionSummary } from "./types";
+
+// Labels follow the browser's language until a format is chosen.
+vi.stubGlobal("navigator", { language: "en-US" });
 
 const revision = (
   id: string,

@@ -6,6 +6,7 @@ import type {
   QuickActionSetup,
 } from "@/features/notes/quick-actions";
 import type { CustomTheme } from "@/lib/design/custom-theme";
+import type { DateDisplay, TimeDisplay, WeekStart } from "./date-time";
 
 export type ViewMode = "masonry" | "grid" | "list";
 export type SortBy = "updatedAt" | "createdAt" | "title";
@@ -23,6 +24,12 @@ interface UIPreferences {
   style?: AppStyle;
   /** Colours pasted as JSON in Settings, over the colour scheme. */
   customTheme?: CustomTheme;
+  /** How dates read across the app; unset follows the browser's language. */
+  dateDisplay?: DateDisplay;
+  /** 12 or 24 hours; unset follows the browser's language. */
+  timeDisplay?: TimeDisplay;
+  /** The day calendars start on; unset follows the browser's language. */
+  weekStart?: WeekStart;
 }
 
 interface NotesPreferences {

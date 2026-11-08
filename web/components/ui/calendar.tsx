@@ -14,11 +14,23 @@ const addDays = (d: Date, n: number) => {
 const endOfDay = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59);
 
+const WEEKDAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+
+/** How many days a date is past the start of its week. */
+export const daysIntoWeek = (d: Date, weekStartsOn: number) =>
+  (d.getDay() - weekStartsOn + 7) % 7;
+
+/** The weekday letters across the top, from the day the week starts on. */
+export const weekdayLetters = (weekStartsOn: number) =>
+  WEEKDAY_LETTERS.map((_, i) => WEEKDAY_LETTERS[(weekStartsOn + i) % 7]);
+
 interface CalendarProps {
   value: Date | null;
   onChange: (day: Date) => void;
   now?: Date;
   noPast?: boolean;
+  /** As Date.getDay() counts: 0 is Sunday, 1 is Monday. */
+  weekStartsOn?: number;
 }
 
 export function Calendar({
@@ -26,6 +38,7 @@ export function Calendar({
   onChange,
   now = new Date(),
   noPast = true,
+  weekStartsOn = 0,
 }: CalendarProps) {
   const [month, setMonth] = React.useState(
     () => new Date((value ?? now).getFullYear(), (value ?? now).getMonth(), 1),
@@ -37,7 +50,10 @@ export function Calendar({
     year: "numeric",
   });
   const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-  const gridStart = addDays(firstOfMonth, -firstOfMonth.getDay());
+  const gridStart = addDays(
+    firstOfMonth,
+    -daysIntoWeek(firstOfMonth, weekStartsOn),
+  );
   const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   const tabStopDay =
     value && days.some((d) => isSameDay(d, value)) ? value : now;
@@ -58,8 +74,10 @@ export function Calendar({
     else if (e.key === "PageUp" || e.key === "PageDown") {
       to = new Date(day);
       to.setMonth(day.getMonth() + (e.key === "PageUp" ? -1 : 1));
-    } else if (e.key === "Home") to = addDays(day, -day.getDay());
-    else if (e.key === "End") to = addDays(day, 6 - day.getDay());
+    } else if (e.key === "Home")
+      to = addDays(day, -daysIntoWeek(day, weekStartsOn));
+    else if (e.key === "End")
+      to = addDays(day, 6 - daysIntoWeek(day, weekStartsOn));
     if (!to) return;
     e.preventDefault();
     if (noPast && endOfDay(to) < now) return;
@@ -101,7 +119,7 @@ export function Calendar({
         aria-label={monthLabel}
         className="grid grid-cols-7 gap-0.5 text-center"
       >
-        {["S", "M", "T", "W", "T", "F", "S"].map((weekday, i) => (
+        {weekdayLetters(weekStartsOn).map((weekday, i) => (
           <span
             key={i}
             aria-hidden

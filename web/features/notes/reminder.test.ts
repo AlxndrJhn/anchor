@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   isReminderPast,
   nextOccurrence,
@@ -10,6 +10,9 @@ import {
   toWallClock,
 } from "./reminder";
 import type { NoteReminder } from "./types";
+
+// Labels follow the browser's language until a format is chosen.
+vi.stubGlobal("navigator", { language: "en-US" });
 
 const reminder = (overrides: Partial<NoteReminder> = {}): NoteReminder => ({
   remindAt: "2026-09-04T09:00",

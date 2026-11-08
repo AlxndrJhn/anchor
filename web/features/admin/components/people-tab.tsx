@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { format, formatDistanceToNowStrict, isYesterday } from "date-fns";
+import { formatDistanceToNowStrict, isYesterday } from "date-fns";
 import { HTTPError } from "ky";
 import {
   Check,
@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/features/auth";
+import { formatFullDate, formatShortDate } from "@/features/preferences";
 import { useLastShown } from "@/lib/hooks/use-last-shown";
 import { useRetry } from "@/lib/hooks/use-retry";
 import { cn, plural } from "@/lib/utils";
@@ -77,7 +78,7 @@ function requested(iso: string) {
   if (isYesterday(date)) return "Requested yesterday";
   if (Date.now() - date.getTime() < 24 * 3600 * 1000)
     return `Requested ${formatDistanceToNowStrict(date)} ago`;
-  return `Requested ${format(date, "MMM d")}`;
+  return `Requested ${formatShortDate(date)}`;
 }
 
 function Person({
@@ -321,7 +322,7 @@ export function PeopleTab({ hidden }: { hidden?: boolean }) {
                     <TableCell numeric>{user._count?.notes ?? 0}</TableCell>
                     <TableCell numeric>{user._count?.tags ?? 0}</TableCell>
                     <TableCell dim>
-                      {format(new Date(user.createdAt), "MMM d, yyyy")}
+                      {formatFullDate(new Date(user.createdAt))}
                     </TableCell>
                     <TableCell className="w-11 pr-2.5 text-right">
                       <DropdownMenu>
