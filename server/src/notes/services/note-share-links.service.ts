@@ -15,6 +15,7 @@ import {
   noteEmissions,
 } from '../../sync/sync-emitter.service';
 import { NoteRevisionsService } from '../../sync/note-revisions.service';
+import { SharedNoteEventsService } from '../../sync/shared-note-events.service';
 import { noteContentChanged } from '../utils/note-versioning.util';
 import { ERROR_MESSAGES } from '../constants/notes.constants';
 import { UpdateLinkedNoteDto } from '../dto/note-share-link.dto';
@@ -41,6 +42,7 @@ export class NoteShareLinksService {
     private noteAttachmentsService: NoteAttachmentsService,
     private syncEmitter: SyncEmitterService,
     private noteRevisions: NoteRevisionsService,
+    private sharedNoteEvents: SharedNoteEventsService,
   ) {}
 
   async getLink(ownerId: string, noteId: string) {
@@ -67,6 +69,8 @@ export class NoteShareLinksService {
       },
       update: { permission },
     });
+    // Open pages pick up what the link now lets them do.
+    this.sharedNoteEvents.changed(noteId);
     return { link: toLinkResponse(link) };
   }
 
@@ -74,6 +78,8 @@ export class NoteShareLinksService {
   async removeLink(ownerId: string, noteId: string) {
     await this.noteAccessService.verifyNoteOwnership(ownerId, noteId);
     await this.prisma.noteShareLink.deleteMany({ where: { noteId } });
+    // Open pages find the link gone.
+    this.sharedNoteEvents.gone(noteId);
     return { success: true };
   }
 
@@ -145,6 +151,18 @@ export class NoteShareLinksService {
       link.noteId,
       attachmentId,
     );
+  }
+
+  /** The note a working link opens, or null; for its live updates. */
+  async linkedNoteId(token: string): Promise<string | null> {
+    try {
+      return (await this.findLinkedNote(token)).link.noteId;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   // Only an active note opens: in the trash, the link stops working until
