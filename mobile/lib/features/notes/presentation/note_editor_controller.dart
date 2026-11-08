@@ -80,6 +80,8 @@ class NoteEditorController extends ChangeNotifier {
   // Pinned or archived before the new note was written: it's created so.
   bool _newPinned = false;
   bool _newArchived = false;
+  // The filter's tag taken off the new note before it was written.
+  bool _newTagRemoved = false;
   bool _isLoaded = false;
   bool _isDeleted = false;
   bool _isDisposed = false;
@@ -111,6 +113,18 @@ class NoteEditorController extends ChangeNotifier {
   /// Whether the new note, not created yet, will be pinned / archived.
   bool get newPinned => _newPinned;
   bool get newArchived => _newArchived;
+
+  /// The tags the new note, not created yet, will get: the tag the list is
+  /// filtered by, unless taken off. Empty once the note is created.
+  List<String> get newTagIds =>
+      _isNew && !_newTagRemoved ? [?newNoteTagId()] : const [];
+
+  /// Takes [tagId] off the new note before it is created.
+  void removeNewTag(String tagId) {
+    if (!_isNew || !newTagIds.contains(tagId)) return;
+    _newTagRemoved = true;
+    _notify();
+  }
 
   /// Pins (or unpins) a new note before anything is written in it; it is
   /// then created pinned.
@@ -353,7 +367,7 @@ class NoteEditorController extends ChangeNotifier {
       id: newId(),
       title: storedTitleOf(title.text),
       content: editor.content ?? '',
-      tagIds: [?newNoteTagId()],
+      tagIds: newTagIds,
       background: _background,
       isPinned: _newPinned,
       isArchived: _newArchived,

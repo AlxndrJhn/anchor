@@ -37,6 +37,7 @@ import 'package:anchor/features/reminders/domain/reminder_schedule.dart';
 import 'package:anchor/features/settings/presentation/editor_preferences_controller.dart';
 import 'package:anchor/features/tags/data/repository/tags_repository.dart';
 import 'package:anchor/features/tags/domain/tag.dart';
+import 'package:anchor/features/tags/presentation/tags_controller.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,16 @@ class MockCopiesRepository extends Mock implements NoteCopiesRepository {}
 class FakeActiveUserId extends ActiveUserId {
   @override
   String? build() => 'user-1';
+}
+
+/// The list's tag filter, held as the notes list would.
+class FixedTagFilter extends SelectedTagFilter {
+  FixedTagFilter(this.tagId);
+
+  final String tagId;
+
+  @override
+  String? build() => tagId;
 }
 
 /// The 2s auto-save timer is driven with tester.pump.
@@ -117,6 +128,8 @@ void main() {
     bool withCard = false,
     // A note opened again from the list is a real note page.
     bool reopens = false,
+    // The tag the list is filtered by.
+    String? tagFilter,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -132,6 +145,10 @@ void main() {
           activeUserIdProvider.overrideWith(FakeActiveUserId.new),
           notificationGatewayProvider.overrideWithValue(gateway),
           noteCopiesRepositoryProvider.overrideWithValue(copiesRepo),
+          if (tagFilter != null)
+            selectedTagFilterProvider.overrideWith(
+              () => FixedTagFilter(tagFilter),
+            ),
         ],
         child: MaterialApp.router(
           localizationsDelegates: const [
@@ -1016,6 +1033,48 @@ void main() {
 
       expect(barButton('Archive'), findsOneWidget);
       expect(barButton('Move to trash'), findsNothing);
+    });
+
+    testWidgets('a new note shows the filter\'s tag before anything is '
+        'written, and it can be taken off', (tester) async {
+      const work = Tag(id: 'tag-work', name: 'Work');
+      when(
+        () => tagsRepo.watchTags(),
+      ).thenAnswer((_) => Stream.value(const [work]));
+      await pumpScreen(tester, tagFilter: work.id);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Work'), findsOneWidget);
+      verifyNever(() => notesRepo.createNote(any()));
+
+      await tester.tap(find.bySemanticsLabel('Remove Work'));
+      await tester.pump();
+      expect(find.text('Work'), findsNothing);
+
+      await tester.enterText(titleField, 'Untagged');
+      await tester.pump(const Duration(seconds: 3));
+      final saved =
+          verify(() => notesRepo.createNote(captureAny())).captured.single
+              as Note;
+      expect(saved.tagIds, isEmpty);
+    });
+
+    testWidgets('a new note is created with the filter\'s tag it shows', (
+      tester,
+    ) async {
+      const work = Tag(id: 'tag-work', name: 'Work');
+      when(
+        () => tagsRepo.watchTags(),
+      ).thenAnswer((_) => Stream.value(const [work]));
+      await pumpScreen(tester, tagFilter: work.id);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.enterText(titleField, 'Tagged');
+      await tester.pump(const Duration(seconds: 3));
+      final saved =
+          verify(() => notesRepo.createNote(captureAny())).captured.single
+              as Note;
+      expect(saved.tagIds, [work.id]);
     });
 
     testWidgets('a new note can be pinned, or archived, before writing', (

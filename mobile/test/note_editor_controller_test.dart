@@ -100,6 +100,25 @@ void main() {
     titled.dispose();
   });
 
+  testWidgets('a new note shows the tag it will get before it is saved', (
+    tester,
+  ) async {
+    final editor = FakeEditor('');
+    final draft = open(editor, tagId: 't1');
+    expect(draft.newTagIds, ['t1']);
+
+    draft.removeNewTag('t1');
+    expect(draft.newTagIds, isEmpty);
+    draft.title.text = 'Ideas';
+    draft.flushOnLeave();
+    await tester.pump();
+    final created =
+        verify(() => repo.createNote(captureAny())).captured.single as Note;
+    expect(created.tagIds, isEmpty);
+    expect(draft.newTagIds, isEmpty);
+    draft.dispose();
+  });
+
   testWidgets('a change from elsewhere replaces the draft unless edited', (
     tester,
   ) async {
