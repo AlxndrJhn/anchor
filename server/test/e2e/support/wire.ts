@@ -22,6 +22,7 @@ export interface NoteOnWire {
   isFrozen: boolean;
   isInvisible?: boolean;
   shareIds?: string[];
+  publicLink?: 'viewer' | 'editor' | null;
   sharedBy?: {
     id: string;
     name: string;

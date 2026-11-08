@@ -12,6 +12,7 @@ import '../../domain/note.dart';
 import '../../domain/note_attachment.dart';
 import '../../domain/note_history.dart';
 import '../../domain/note_revision.dart';
+import '../../domain/note_share_permission.dart';
 import '../../domain/user_summary.dart';
 import '../local/note_rows.dart';
 import 'note_attachments_repository.dart';
@@ -704,6 +705,9 @@ Note noteFromRow(
     tagIds: tagIds,
     permission: NotePermission.fromString(row.permission),
     shareIds: decodeShareIds(row.shareIds),
+    publicLink: row.publicLink == null
+        ? null
+        : NoteSharePermission.fromString(row.publicLink!),
     sharedBy: row.sharedById != null
         ? UserSummary(
             id: row.sharedById!,

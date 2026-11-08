@@ -720,6 +720,7 @@ class SyncService {
     permission: Value(note.permission),
     isFrozen: note.hasFrozenField ? Value(note.isFrozen) : const Value.absent(),
     shareIds: Value(encodeShareIds(note.shareIds)),
+    publicLink: Value(note.publicLink),
     sharedById: Value(note.sharedBy?.id),
     sharedByName: Value(note.sharedBy?.name),
     sharedByEmail: Value(note.sharedBy?.email),

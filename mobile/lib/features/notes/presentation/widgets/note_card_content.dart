@@ -445,6 +445,15 @@ class _Footer extends StatelessWidget {
             ),
           ),
         ),
+      if (note.isPublic)
+        Tooltip(
+          message: publicLinkLabel(note.publicLink!, context.l10n),
+          child: Icon(
+            LucideIcons.globe,
+            size: 13, // off-scale: card footer
+            color: muted,
+          ),
+        ),
     ];
     final date =
         status ??

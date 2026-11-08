@@ -1366,6 +1366,32 @@ void main() {
     expect(row.shareIds, '["user-2"]');
   });
 
+  test('a public link lands, and goes, even with unsent edits', () async {
+    await insertNote(id: 'n1', title: 'Mine', version: 3);
+    Map<String, dynamic> pulled(String? publicLink) => response(
+      results: [
+        {'type': 'note', 'id': 'n1', 'status': 'failed'},
+      ],
+      entries: [
+        noteEntry({
+          ...serverNoteJson('n1', title: 'Theirs', version: 9),
+          'publicLink': publicLink,
+        }),
+      ],
+      nextCursor: 'cursor-1',
+    );
+
+    stub([pulled('editor')]);
+    await service.run();
+    final row = await note('n1');
+    expect(row!.publicLink, 'editor');
+    expect(row.title, 'Mine');
+
+    stub([pulled(null)]);
+    await service.run();
+    expect((await note('n1'))!.publicLink, isNull);
+  });
+
   test(
     'a remove entry deletes the note and everything hanging off it',
     () async {

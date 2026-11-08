@@ -81,6 +81,8 @@ export interface Note {
   tagIds?: string[];
   permission: NotePermission;
   shareIds?: string[];
+  /** What anyone with the note's link can do; null when no link opens it. */
+  publicLink?: NoteSharePermission | null;
   sharedBy?: {
     id: string;
     name: string;

@@ -132,6 +132,26 @@ class NoteMetaLine extends StatelessWidget {
               ],
             ),
           ],
+          if (note.isPublic) ...[
+            dot,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: AnchorTokens.space4,
+              children: [
+                Icon(
+                  LucideIcons.globe,
+                  size: AnchorTokens.sizeIconSmall,
+                  color: appearance.colors.muted,
+                ),
+                Flexible(
+                  child: Text(
+                    publicLinkLabel(note.publicLink!, context.l10n),
+                    style: style,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

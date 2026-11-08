@@ -19,6 +19,12 @@ String sharedCountLabel(
     ? l10n.shareSharedWith(count)
     : l10n.shareSharedWithOffline(count);
 
+String publicLinkLabel(NoteSharePermission access, AppLocalizations l10n) =>
+    switch (access) {
+      NoteSharePermission.viewer => l10n.notePublicCanView,
+      NoteSharePermission.editor => l10n.notePublicCanEdit,
+    };
+
 String namesLabel(List<String> names, AppLocalizations l10n) =>
     switch (names.length) {
       0 => '',

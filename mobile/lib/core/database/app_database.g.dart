@@ -349,6 +349,17 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _publicLinkMeta = const VerificationMeta(
+    'publicLink',
+  );
+  @override
+  late final GeneratedColumn<String> publicLink = GeneratedColumn<String>(
+    'public_link',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _sharedByIdMeta = const VerificationMeta(
     'sharedById',
   );
@@ -424,6 +435,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
     reminderSlot,
     permission,
     shareIds,
+    publicLink,
     sharedById,
     sharedByName,
     sharedByEmail,
@@ -649,6 +661,12 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
         shareIds.isAcceptableOrUnknown(data['share_ids']!, _shareIdsMeta),
       );
     }
+    if (data.containsKey('public_link')) {
+      context.handle(
+        _publicLinkMeta,
+        publicLink.isAcceptableOrUnknown(data['public_link']!, _publicLinkMeta),
+      );
+    }
     if (data.containsKey('shared_by_id')) {
       context.handle(
         _sharedByIdMeta,
@@ -810,6 +828,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
         DriftSqlType.string,
         data['${effectivePrefix}share_ids'],
       ),
+      publicLink: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}public_link'],
+      ),
       sharedById: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}shared_by_id'],
@@ -865,6 +887,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   final int? reminderSlot;
   final String permission;
   final String? shareIds;
+  final String? publicLink;
   final String? sharedById;
   final String? sharedByName;
   final String? sharedByEmail;
@@ -899,6 +922,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     this.reminderSlot,
     required this.permission,
     this.shareIds,
+    this.publicLink,
     this.sharedById,
     this.sharedByName,
     this.sharedByEmail,
@@ -971,6 +995,9 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     map['permission'] = Variable<String>(permission);
     if (!nullToAbsent || shareIds != null) {
       map['share_ids'] = Variable<String>(shareIds);
+    }
+    if (!nullToAbsent || publicLink != null) {
+      map['public_link'] = Variable<String>(publicLink);
     }
     if (!nullToAbsent || sharedById != null) {
       map['shared_by_id'] = Variable<String>(sharedById);
@@ -1052,6 +1079,9 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       shareIds: shareIds == null && nullToAbsent
           ? const Value.absent()
           : Value(shareIds),
+      publicLink: publicLink == null && nullToAbsent
+          ? const Value.absent()
+          : Value(publicLink),
       sharedById: sharedById == null && nullToAbsent
           ? const Value.absent()
           : Value(sharedById),
@@ -1104,6 +1134,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       reminderSlot: serializer.fromJson<int?>(json['reminderSlot']),
       permission: serializer.fromJson<String>(json['permission']),
       shareIds: serializer.fromJson<String?>(json['shareIds']),
+      publicLink: serializer.fromJson<String?>(json['publicLink']),
       sharedById: serializer.fromJson<String?>(json['sharedById']),
       sharedByName: serializer.fromJson<String?>(json['sharedByName']),
       sharedByEmail: serializer.fromJson<String?>(json['sharedByEmail']),
@@ -1145,6 +1176,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       'reminderSlot': serializer.toJson<int?>(reminderSlot),
       'permission': serializer.toJson<String>(permission),
       'shareIds': serializer.toJson<String?>(shareIds),
+      'publicLink': serializer.toJson<String?>(publicLink),
       'sharedById': serializer.toJson<String?>(sharedById),
       'sharedByName': serializer.toJson<String?>(sharedByName),
       'sharedByEmail': serializer.toJson<String?>(sharedByEmail),
@@ -1182,6 +1214,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     Value<int?> reminderSlot = const Value.absent(),
     String? permission,
     Value<String?> shareIds = const Value.absent(),
+    Value<String?> publicLink = const Value.absent(),
     Value<String?> sharedById = const Value.absent(),
     Value<String?> sharedByName = const Value.absent(),
     Value<String?> sharedByEmail = const Value.absent(),
@@ -1224,6 +1257,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     reminderSlot: reminderSlot.present ? reminderSlot.value : this.reminderSlot,
     permission: permission ?? this.permission,
     shareIds: shareIds.present ? shareIds.value : this.shareIds,
+    publicLink: publicLink.present ? publicLink.value : this.publicLink,
     sharedById: sharedById.present ? sharedById.value : this.sharedById,
     sharedByName: sharedByName.present ? sharedByName.value : this.sharedByName,
     sharedByEmail: sharedByEmail.present
@@ -1294,6 +1328,9 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
           ? data.permission.value
           : this.permission,
       shareIds: data.shareIds.present ? data.shareIds.value : this.shareIds,
+      publicLink: data.publicLink.present
+          ? data.publicLink.value
+          : this.publicLink,
       sharedById: data.sharedById.present
           ? data.sharedById.value
           : this.sharedById,
@@ -1341,6 +1378,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
           ..write('reminderSlot: $reminderSlot, ')
           ..write('permission: $permission, ')
           ..write('shareIds: $shareIds, ')
+          ..write('publicLink: $publicLink, ')
           ..write('sharedById: $sharedById, ')
           ..write('sharedByName: $sharedByName, ')
           ..write('sharedByEmail: $sharedByEmail, ')
@@ -1380,6 +1418,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     reminderSlot,
     permission,
     shareIds,
+    publicLink,
     sharedById,
     sharedByName,
     sharedByEmail,
@@ -1418,6 +1457,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
           other.reminderSlot == this.reminderSlot &&
           other.permission == this.permission &&
           other.shareIds == this.shareIds &&
+          other.publicLink == this.publicLink &&
           other.sharedById == this.sharedById &&
           other.sharedByName == this.sharedByName &&
           other.sharedByEmail == this.sharedByEmail &&
@@ -1454,6 +1494,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   final Value<int?> reminderSlot;
   final Value<String> permission;
   final Value<String?> shareIds;
+  final Value<String?> publicLink;
   final Value<String?> sharedById;
   final Value<String?> sharedByName;
   final Value<String?> sharedByEmail;
@@ -1489,6 +1530,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     this.reminderSlot = const Value.absent(),
     this.permission = const Value.absent(),
     this.shareIds = const Value.absent(),
+    this.publicLink = const Value.absent(),
     this.sharedById = const Value.absent(),
     this.sharedByName = const Value.absent(),
     this.sharedByEmail = const Value.absent(),
@@ -1525,6 +1567,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     this.reminderSlot = const Value.absent(),
     this.permission = const Value.absent(),
     this.shareIds = const Value.absent(),
+    this.publicLink = const Value.absent(),
     this.sharedById = const Value.absent(),
     this.sharedByName = const Value.absent(),
     this.sharedByEmail = const Value.absent(),
@@ -1562,6 +1605,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     Expression<int>? reminderSlot,
     Expression<String>? permission,
     Expression<String>? shareIds,
+    Expression<String>? publicLink,
     Expression<String>? sharedById,
     Expression<String>? sharedByName,
     Expression<String>? sharedByEmail,
@@ -1598,6 +1642,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
       if (reminderSlot != null) 'reminder_slot': reminderSlot,
       if (permission != null) 'permission': permission,
       if (shareIds != null) 'share_ids': shareIds,
+      if (publicLink != null) 'public_link': publicLink,
       if (sharedById != null) 'shared_by_id': sharedById,
       if (sharedByName != null) 'shared_by_name': sharedByName,
       if (sharedByEmail != null) 'shared_by_email': sharedByEmail,
@@ -1637,6 +1682,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     Value<int?>? reminderSlot,
     Value<String>? permission,
     Value<String?>? shareIds,
+    Value<String?>? publicLink,
     Value<String?>? sharedById,
     Value<String?>? sharedByName,
     Value<String?>? sharedByEmail,
@@ -1673,6 +1719,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
       reminderSlot: reminderSlot ?? this.reminderSlot,
       permission: permission ?? this.permission,
       shareIds: shareIds ?? this.shareIds,
+      publicLink: publicLink ?? this.publicLink,
       sharedById: sharedById ?? this.sharedById,
       sharedByName: sharedByName ?? this.sharedByName,
       sharedByEmail: sharedByEmail ?? this.sharedByEmail,
@@ -1771,6 +1818,9 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     if (shareIds.present) {
       map['share_ids'] = Variable<String>(shareIds.value);
     }
+    if (publicLink.present) {
+      map['public_link'] = Variable<String>(publicLink.value);
+    }
     if (sharedById.present) {
       map['shared_by_id'] = Variable<String>(sharedById.value);
     }
@@ -1823,6 +1873,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
           ..write('reminderSlot: $reminderSlot, ')
           ..write('permission: $permission, ')
           ..write('shareIds: $shareIds, ')
+          ..write('publicLink: $publicLink, ')
           ..write('sharedById: $sharedById, ')
           ..write('sharedByName: $sharedByName, ')
           ..write('sharedByEmail: $sharedByEmail, ')
@@ -4850,6 +4901,7 @@ typedef $$NotesTableCreateCompanionBuilder =
       Value<int?> reminderSlot,
       Value<String> permission,
       Value<String?> shareIds,
+      Value<String?> publicLink,
       Value<String?> sharedById,
       Value<String?> sharedByName,
       Value<String?> sharedByEmail,
@@ -4887,6 +4939,7 @@ typedef $$NotesTableUpdateCompanionBuilder =
       Value<int?> reminderSlot,
       Value<String> permission,
       Value<String?> shareIds,
+      Value<String?> publicLink,
       Value<String?> sharedById,
       Value<String?> sharedByName,
       Value<String?> sharedByEmail,
@@ -5044,6 +5097,11 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<String> get shareIds => $composableBuilder(
     column: $table.shareIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get publicLink => $composableBuilder(
+    column: $table.publicLink,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5222,6 +5280,11 @@ class $$NotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get publicLink => $composableBuilder(
+    column: $table.publicLink,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get sharedById => $composableBuilder(
     column: $table.sharedById,
     builder: (column) => ColumnOrderings(column),
@@ -5369,6 +5432,11 @@ class $$NotesTableAnnotationComposer
   GeneratedColumn<String> get shareIds =>
       $composableBuilder(column: $table.shareIds, builder: (column) => column);
 
+  GeneratedColumn<String> get publicLink => $composableBuilder(
+    column: $table.publicLink,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get sharedById => $composableBuilder(
     column: $table.sharedById,
     builder: (column) => column,
@@ -5447,6 +5515,7 @@ class $$NotesTableTableManager
                 Value<int?> reminderSlot = const Value.absent(),
                 Value<String> permission = const Value.absent(),
                 Value<String?> shareIds = const Value.absent(),
+                Value<String?> publicLink = const Value.absent(),
                 Value<String?> sharedById = const Value.absent(),
                 Value<String?> sharedByName = const Value.absent(),
                 Value<String?> sharedByEmail = const Value.absent(),
@@ -5482,6 +5551,7 @@ class $$NotesTableTableManager
                 reminderSlot: reminderSlot,
                 permission: permission,
                 shareIds: shareIds,
+                publicLink: publicLink,
                 sharedById: sharedById,
                 sharedByName: sharedByName,
                 sharedByEmail: sharedByEmail,
@@ -5519,6 +5589,7 @@ class $$NotesTableTableManager
                 Value<int?> reminderSlot = const Value.absent(),
                 Value<String> permission = const Value.absent(),
                 Value<String?> shareIds = const Value.absent(),
+                Value<String?> publicLink = const Value.absent(),
                 Value<String?> sharedById = const Value.absent(),
                 Value<String?> sharedByName = const Value.absent(),
                 Value<String?> sharedByEmail = const Value.absent(),
@@ -5554,6 +5625,7 @@ class $$NotesTableTableManager
                 reminderSlot: reminderSlot,
                 permission: permission,
                 shareIds: shareIds,
+                publicLink: publicLink,
                 sharedById: sharedById,
                 sharedByName: sharedByName,
                 sharedByEmail: sharedByEmail,

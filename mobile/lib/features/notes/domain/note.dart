@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'note_share_permission.dart';
 import 'user_summary.dart';
 
 part 'note.freezed.dart';
@@ -137,6 +138,9 @@ abstract class Note with _$Note {
     @Default([]) List<String> tagIds,
     @Default(NotePermission.owner) NotePermission permission,
     List<String>? shareIds,
+    // What anyone with its link can do; null when it has no link. The
+    // server's say; it is never sent up.
+    NoteSharePermission? publicLink,
     UserSummary? sharedBy,
     NoteReminder? reminder,
     // What this person locked the note with; null when it isn't locked.
@@ -169,6 +173,9 @@ abstract class Note with _$Note {
   bool get isOwnFrozen => isFrozen && isOwner;
   bool get isShared => sharedBy != null;
   bool get hasShares => shareIds != null && shareIds!.isNotEmpty;
+
+  /// Anyone with its link can open it; in the trash the link doesn't open.
+  bool get isPublic => publicLink != null && isActive;
   bool get hasReminder => reminder != null;
   bool get isLocked => lock != null;
 }

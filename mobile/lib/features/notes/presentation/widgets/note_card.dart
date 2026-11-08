@@ -131,6 +131,7 @@ class _NoteCardState extends ConsumerState<NoteCard>
       if (note.sharedBy != null) l10n.shareSharedBy(note.sharedBy!.name),
       if (note.isOwner && note.hasShares)
         l10n.shareSharedWithCount(note.shareIds!.length),
+      if (note.isPublic) publicLinkLabel(note.publicLink!, l10n),
       if (!note.isSynced && !ref.watch(isLocalOnlyProvider)) l10n.cardNotSynced,
       ?date,
     ].join('. ');

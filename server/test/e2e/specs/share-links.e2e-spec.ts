@@ -70,6 +70,53 @@ describe('share links', () => {
     expect((await owner.notes.read(note.id)).content).toBe('x');
   });
 
+  it('tells everyone with the note that it is public, without the token', async () => {
+    const note = await owner.notes.create({ title: 'Plan', content: 'x' });
+    await owner.http
+      .post(`/api/notes/${note.id}/shares`)
+      .send({ sharedWithUserId: other.id, permission: 'viewer' })
+      .expect(201);
+    expect((await owner.notes.read(note.id)).publicLink).toBeNull();
+    const ownerStart = await owner.sync.drain();
+    const otherStart = await other.sync.drain();
+
+    const link = await makeLink(note.id, 'editor');
+
+    for (const [actor, start] of [
+      [owner, ownerStart],
+      [other, otherStart],
+    ] as const) {
+      const pulled = await actor.sync.drain({ cursor: start.cursor });
+      const seen = entryFor(pulled.entries, 'note', note.id).note!;
+      expect(seen.publicLink).toBe('editor');
+      expect(JSON.stringify(seen)).not.toContain(link.token);
+    }
+
+    const beforeOff = await other.sync.drain({ cursor: otherStart.cursor });
+    await owner.http.delete(`/api/notes/${note.id}/link`).expect(200);
+    const off = await other.sync.drain({ cursor: beforeOff.cursor });
+    expect(entryFor(off.entries, 'note', note.id).note!.publicLink).toBeNull();
+  });
+
+  it('does not call a trashed note public: its link does not open', async () => {
+    const note = await owner.notes.create({ title: 'Plan', content: 'x' });
+    await makeLink(note.id, 'viewer');
+    expect((await owner.notes.read(note.id)).publicLink).toBe('viewer');
+    const { cursor } = await owner.sync.drain();
+
+    await owner.http.delete(`/api/notes/${note.id}`).expect(200);
+    const trashed = await owner.sync.drain({ cursor });
+    expect(
+      entryFor(trashed.entries, 'note', note.id).note!.publicLink,
+    ).toBeNull();
+
+    await owner.http.patch(`/api/notes/${note.id}/restore`).expect(200);
+    const restored = await owner.sync.drain({ cursor: trashed.cursor });
+    expect(entryFor(restored.entries, 'note', note.id).note!.publicLink).toBe(
+      'viewer',
+    );
+  });
+
   it('lets an editing link change the text, and syncs it to the owner', async () => {
     const note = await owner.notes.create({ title: 'Plan', content: 'x' });
     const link = await makeLink(note.id, 'editor');

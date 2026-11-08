@@ -4291,6 +4291,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Its owner froze it, so it can’t be changed.';
 
   @override
+  String get notePublicCanView => 'Public: anyone with the link can view';
+
+  @override
+  String get notePublicCanEdit => 'Public: anyone with the link can edit';
+
+  @override
   String get cardFrozen => 'Frozen';
 
   @override

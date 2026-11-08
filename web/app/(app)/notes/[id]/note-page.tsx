@@ -706,6 +706,7 @@ function NoteEditor({
             updatedAt={note?.updatedAt}
             sharedBy={note?.sharedBy ?? null}
             sharedWith={shares.map((sh) => sh.sharedWithUser)}
+            publicLink={note?.publicLink}
             tagIds={editor.selectedTagIds}
             allTags={allTags}
             tagsLoading={tagsLoading}
