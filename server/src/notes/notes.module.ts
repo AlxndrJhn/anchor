@@ -13,6 +13,7 @@ import { NoteRevisionsController } from './controllers/note-revisions.controller
 import { NoteLocksController } from './controllers/note-locks.controller';
 import { NoteLocksService } from './services/note-locks.service';
 import { NoteShareLinksService } from './services/note-share-links.service';
+import { SharedNoteSocketService } from './services/shared-note-socket.service';
 import {
   NoteShareLinksController,
   SharedNotesController,
@@ -48,6 +49,7 @@ import { PictureSearchModule } from '../picture-search/picture-search.module';
     PictureTextService,
     NoteLocksService,
     NoteShareLinksService,
+    SharedNoteSocketService,
   ],
   exports: [
     NotesService,

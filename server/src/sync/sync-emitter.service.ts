@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from 'src/generated/prisma/client';
 import { NoteState, SyncEntityType, SyncOp } from 'src/generated/prisma/enums';
 import { SyncEventsService } from './sync-events.service';
+import { SharedNoteEventsService } from './shared-note-events.service';
 import { CHANGELOG_UPSERT_CHUNK_SIZE } from './sync.constants';
 
 export interface SyncEmission {
@@ -13,7 +14,10 @@ export interface SyncEmission {
 
 @Injectable()
 export class SyncEmitterService {
-  constructor(private syncEvents: SyncEventsService) {}
+  constructor(
+    private syncEvents: SyncEventsService,
+    private sharedNoteEvents: SharedNoteEventsService,
+  ) {}
 
   // Must run inside the caller's mutation transaction: the seq block and the
   // ChangeLog rows commit with the entity write, and the SyncState row lock
@@ -61,6 +65,16 @@ export class SyncEmitterService {
     }
 
     this.syncEvents.schedulePoke(lastSeqByRecipient);
+    // A note's text and its files: what a page open on its link shows.
+    this.sharedNoteEvents.scheduleChanged(
+      [...deduped.values()]
+        .filter(
+          (e) =>
+            e.entityType === SyncEntityType.note ||
+            e.entityType === SyncEntityType.attachments,
+        )
+        .map((e) => e.entityId),
+    );
     await this.stopLiveImages(tx, [...deduped.values()]);
     return recipients;
   }

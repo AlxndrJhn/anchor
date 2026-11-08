@@ -3,11 +3,13 @@ import type { Prisma } from 'src/generated/prisma/client';
 import { SyncEntityType, SyncOp } from 'src/generated/prisma/enums';
 import {
   SyncEmitterService,
+  attachmentsEmissions,
   noteEmissions,
   pinEmission,
 } from './sync-emitter.service';
 import { CHANGELOG_UPSERT_CHUNK_SIZE } from './sync.constants';
 import { asSyncEvents, createMockSyncEvents } from '../../test/sync-mocks';
+import type { SharedNoteEventsService } from './shared-note-events.service';
 
 interface UpsertedRow {
   recipientUserId: string;
@@ -28,6 +30,7 @@ const VALUES_PER_ROW = 5;
 describe('SyncEmitterService', () => {
   let service: SyncEmitterService;
   let syncEvents: ReturnType<typeof createMockSyncEvents>;
+  const sharedNoteEvents = { scheduleChanged: vi.fn() };
   let seqByUser: Map<string, bigint>;
   let upserted: UpsertedRow[];
 
@@ -67,7 +70,10 @@ describe('SyncEmitterService', () => {
 
   beforeEach(() => {
     syncEvents = createMockSyncEvents();
-    service = new SyncEmitterService(asSyncEvents(syncEvents));
+    service = new SyncEmitterService(
+      asSyncEvents(syncEvents),
+      sharedNoteEvents as unknown as SharedNoteEventsService,
+    );
     seqByUser = new Map();
     upserted = [];
     vi.clearAllMocks();
@@ -83,6 +89,20 @@ describe('SyncEmitterService', () => {
     expect(recipients).toEqual(['user-a']);
     expect(queryRaw).toHaveBeenCalledTimes(1);
     expect(upserted.map((row) => row.seq)).toEqual([1n, 2n, 3n]);
+  });
+
+  it('tells pages open on a link which notes changed, text or files', async () => {
+    await service.emit(tx, [
+      ...noteEmissions(['user-a', 'user-b'], 'note-1'),
+      ...attachmentsEmissions(['user-a'], 'note-2'),
+      pinEmission('user-a', 'note-3', true),
+    ]);
+
+    expect(sharedNoteEvents.scheduleChanged).toHaveBeenCalledTimes(1);
+    const [noteIds] = sharedNoteEvents.scheduleChanged.mock.calls[0] as [
+      string[],
+    ];
+    expect(new Set(noteIds)).toEqual(new Set(['note-1', 'note-2']));
   });
 
   it('stops the live images of a note that left use, for all who see it', async () => {

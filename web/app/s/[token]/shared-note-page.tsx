@@ -28,12 +28,15 @@ import { RichTextEditor } from "@/features/notes/components/editor";
 import { EditorSkeleton } from "@/features/notes/components/note-editor/editor-states";
 import { useAttachmentBlob } from "@/features/notes/hooks/use-attachment-blob";
 import { inlineImageIds } from "@/features/notes/inline-images";
+import { connectSharedNoteEvents } from "@/features/notes/shared-note-events";
 import type { SharedNote } from "@/features/notes/types";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
+import { isServerless } from "@/lib/local-backend/mode";
 import { cn } from "@/lib/utils";
 
 const SAVE_DELAY_MS = 800;
-// Picks up what others changed while this page is open and has no edits.
+// Others' changes arrive over a WebSocket the moment they're saved; without
+// one (a proxy that doesn't pass it on, say), the page polls instead.
 const REFRESH_MS = 15_000;
 
 type SaveState = "saved" | "saving" | "unsaved" | "failed";
@@ -44,6 +47,8 @@ const statusOf = (error: unknown) =>
 /** A note opened by its share link: no account, no sidebar. */
 export default function SharedNotePage() {
   const { token } = useParams<{ token: string }>();
+  const queryClient = useQueryClient();
+  const [live, setLive] = useState(false);
 
   // The note's pictures and files come through the link too.
   useEffect(() => {
@@ -51,10 +56,22 @@ export default function SharedNotePage() {
     return () => setAttachmentLink(null);
   }, [token]);
 
+  useEffect(() => {
+    if (isServerless) return;
+    const events = connectSharedNoteEvents(token, {
+      onChange: () =>
+        void queryClient.invalidateQueries({
+          queryKey: ["shared-note", token],
+        }),
+      onConnectedChange: setLive,
+    });
+    return () => events.close();
+  }, [token, queryClient]);
+
   const query = useQuery({
     queryKey: ["shared-note", token],
     queryFn: () => getSharedNote(token),
-    refetchInterval: REFRESH_MS,
+    refetchInterval: live ? false : REFRESH_MS,
     refetchOnWindowFocus: true,
   });
   useDocumentTitle(
@@ -66,10 +83,10 @@ export default function SharedNotePage() {
   );
 
   if (query.isPending) return <EditorSkeleton />;
+  // Also once it was open: the link was turned off or the note trashed.
+  if (statusOf(query.error) === 404) return <LinkGone />;
   if (query.isError && !query.data) {
-    return statusOf(query.error) === 404 ? (
-      <LinkGone />
-    ) : (
+    return (
       <Screen>
         <ErrorScreen
           illustration="broken"
