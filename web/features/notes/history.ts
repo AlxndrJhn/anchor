@@ -1,4 +1,5 @@
 import { format, isSameDay } from "date-fns";
+import { formatLongDate, formatTime } from "@/features/preferences";
 import type {
   Note,
   NoteRevisionAuthor,
@@ -42,7 +43,7 @@ export function revisionAuthorName(
 }
 
 export function revisionTime(entry: { createdAt: string }): string {
-  return format(new Date(entry.createdAt), "h:mm a");
+  return formatTime(new Date(entry.createdAt));
 }
 
 export function revisionDayTime(
@@ -50,7 +51,7 @@ export function revisionDayTime(
   now: Date = new Date(),
 ): string {
   const date = new Date(entry.createdAt);
-  return `${dayLabel(date, now)} at ${format(date, "h:mm a")}`;
+  return `${dayLabel(date, now)} at ${formatTime(date)}`;
 }
 
 export function historyHasMultipleAuthors(
@@ -129,5 +130,5 @@ function dayLabel(date: Date, now: Date): string {
   yesterday.setDate(yesterday.getDate() - 1);
   if (isSameDay(date, yesterday)) return "Yesterday";
 
-  return format(date, "MMMM d, yyyy");
+  return formatLongDate(date);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CalendarClock,
   HardDriveDownload,
   Info,
   KeyRound,
@@ -23,6 +24,7 @@ import { onUserScroll } from "@/lib/user-scroll";
 const ALL_SECTIONS = [
   { id: "profile", label: "Profile", icon: UserRound },
   { id: "appearance", label: "Appearance", icon: SunMoon },
+  { id: "date-time", label: "Date and time", icon: CalendarClock },
   { id: "editor", label: "Editor", icon: PencilLine },
   { id: "quick-actions", label: "Quick actions", icon: LayoutPanelTop },
   { id: "search", label: "Search", icon: Search },

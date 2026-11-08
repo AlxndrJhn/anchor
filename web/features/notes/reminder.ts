@@ -1,3 +1,9 @@
+import {
+  formatFullDate,
+  formatShortDate,
+  formatTime,
+  formatWeekdayDate,
+} from "@/features/preferences";
 import type { NoteReminder, ReminderRecurrence } from "./types";
 
 /** One word, for the repeat toggles and the chip on a note card. */
@@ -135,7 +141,7 @@ export function reminderLabel(
   const sameYear = next.getFullYear() === now.getFullYear();
   const when =
     next.getTime() <= now.getTime() || !sameYear
-      ? `${next.toLocaleDateString("en-US", { month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) })}, ${next.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+      ? `${sameYear ? formatShortDate(next) : formatFullDate(next)}, ${formatTime(next)}`
       : reminderTimeLabel(next, now);
   const repeat =
     reminder.recurrence === "none"
@@ -241,8 +247,6 @@ const ordinal = (n: number) => {
       : (["th", "st", "nd", "rd"][n % 10] ?? "th");
   return `${n}${tail}`;
 };
-const timeOf = (d: Date) =>
-  d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
 /** “Today, 3:05 PM”, “Tomorrow, 9:00 AM” or “Wed, Sep 30, 9:00 AM”. */
 function reminderTimeLabel(at: Date, now = new Date()): string {
@@ -250,12 +254,8 @@ function reminderTimeLabel(at: Date, now = new Date()): string {
     ? "Today"
     : sameDay(at, addDays(now, 1))
       ? "Tomorrow"
-      : at.toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-        });
-  return `${day}, ${timeOf(at)}`;
+      : formatWeekdayDate(at);
+  return `${day}, ${formatTime(at)}`;
 }
 
 /** “In 20 minutes”, “In 3 hours”, “Tomorrow”, “In 5 days”. */
@@ -277,7 +277,7 @@ function recurrenceLabel(at: Date, recurrence: ReminderRecurrence): string {
   if (recurrence === "monthly")
     return `Repeats monthly on the ${ordinal(at.getDate())}`;
   if (recurrence === "yearly")
-    return `Repeats every year on ${at.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+    return `Repeats every year on ${formatShortDate(at)}`;
   return "";
 }
 

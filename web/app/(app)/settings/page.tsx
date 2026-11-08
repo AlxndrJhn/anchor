@@ -5,6 +5,7 @@ import { AppPage, PageTitle } from "@/components/layout/app-page";
 import {
   ApiTokenSection,
   AppearanceSection,
+  DateTimeSection,
   DevicesSection,
   EditorSection,
   ImportExportSection,
@@ -34,6 +35,7 @@ export default function SettingsPage() {
         <div className="grid min-w-0 gap-8">
           <ProfileSection />
           <AppearanceSection />
+          <DateTimeSection />
           <EditorSection />
           <QuickActionsSection />
           {!isServerless && <SearchSection />}

@@ -12,6 +12,7 @@ import {
 import * as React from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { formatShortDate } from "@/features/preferences";
 import { useRovingFocus } from "@/lib/hooks/use-roving-focus";
 import { cn } from "@/lib/utils";
 import type { Person } from "./note-editor-content";
@@ -61,11 +62,7 @@ export function ReadOnlyBar(props: ReadOnlyBarProps & { nudge?: number }) {
           {icon(<Trash2 />)}
           <span className="ro-msg">
             <b>In trash.</b> It will be deleted on{" "}
-            {props.deletesOn.toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-            })}
-            .
+            {formatShortDate(props.deletesOn).replace(/\.$/, "")}.
           </span>
           <span
             ref={actions.ref}

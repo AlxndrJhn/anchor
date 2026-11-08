@@ -5,6 +5,7 @@ import { LoadFailedRow } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/toast";
+import { formatLongDate } from "@/features/preferences";
 import {
   Row,
   RowText,
@@ -18,12 +19,7 @@ import { cardClass } from "./admin-parts";
 
 const SHOWN_PEOPLE = 8;
 
-const day = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+const day = (iso: string) => formatLongDate(new Date(iso));
 
 /** The rule that everyone signs in with more than a password. */
 export function SecondFactorPolicy() {

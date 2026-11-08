@@ -25,7 +25,11 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tip } from "@/components/ui/tooltip";
-import { usePreferencesStore } from "@/features/preferences";
+import {
+  formatFullDate,
+  formatShortDate,
+  usePreferencesStore,
+} from "@/features/preferences";
 import { MoreChip, TagChip } from "@/features/tags/components/tag-chip";
 import type { TagLabel } from "@/features/tags/types";
 import { sortTagsByName } from "@/features/tags/utils";
@@ -74,16 +78,6 @@ interface NoteCardProps {
 
 const ROW_LIMIT: Record<CardLayout, number> = { list: 2, grid: 4, masonry: 6 };
 
-const dayFormat = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-});
-const dayAndYearFormat = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
 /** “Today”, “Yesterday”, “Sep 22”, or “Sep 22, 2025” in another year. */
 export function formatCardDate(iso: string, now = new Date()): string {
   const date = new Date(iso);
@@ -92,9 +86,9 @@ export function formatCardDate(iso: string, now = new Date()): string {
   const daysAgo = Math.round((startOfDay(now) - startOfDay(date)) / 86400000);
   if (daysAgo === 0) return "Today";
   if (daysAgo === 1) return "Yesterday";
-  return (
-    date.getFullYear() === now.getFullYear() ? dayFormat : dayAndYearFormat
-  ).format(date);
+  return date.getFullYear() === now.getFullYear()
+    ? formatShortDate(date)
+    : formatFullDate(date);
 }
 
 const blocksByNote = new WeakMap<Note, NoteBlock[]>();
