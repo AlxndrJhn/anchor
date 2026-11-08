@@ -1,0 +1,3 @@
+# Prettier formats with LF (its default); check out LF on Windows too, so the
+# two agree there.
+* text=auto eol=lf

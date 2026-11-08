@@ -80,6 +80,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  OIDC_MOBILE_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
   DISABLE_INTERNAL_AUTH?: string;
 
   @IsOptional()

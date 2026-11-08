@@ -32,6 +32,10 @@ export class UpdateOidcSettingsDto {
   clearClientSecret?: boolean;
 
   @IsOptional()
+  @IsString()
+  mobileClientId?: string;
+
+  @IsOptional()
   @IsBoolean()
   disableInternalAuth?: boolean;
 }

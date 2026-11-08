@@ -149,6 +149,35 @@ describe('provider-only sign-in', () => {
     });
   });
 
+  it('gives the phone app its own client once an admin sets one', async () => {
+    await setOidc(providerOnly);
+    await ctx.prisma.user.update({
+      where: { id: user.id },
+      data: { isAdmin: true },
+    });
+    const phoneClient = async () =>
+      bodyOf<{ clientId: string }>(
+        await request(ctx.http).get('/api/auth/oidc/config').expect(200),
+      ).clientId;
+
+    expect(await phoneClient()).toBe('anchor');
+
+    const saved = await user.http
+      .patch('/api/admin/settings/oidc')
+      .send({ mobileClientId: 'anchor-phone' })
+      .expect(200);
+    expect(
+      bodyOf<{ clientId: string; mobileClientId: string }>(saved),
+    ).toMatchObject({ clientId: 'anchor', mobileClientId: 'anchor-phone' });
+    expect(await phoneClient()).toBe('anchor-phone');
+
+    await user.http
+      .patch('/api/admin/settings/oidc')
+      .send({ mobileClientId: '' })
+      .expect(200);
+    expect(await phoneClient()).toBe('anchor');
+  });
+
   it('keeps sessions that are already signed in', async () => {
     await setOidc(providerOnly);
 

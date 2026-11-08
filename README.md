@@ -398,6 +398,7 @@ The [desktop app](#desktop-app) installs with winget too.
    | `OIDC_ISSUER_URL` | When OIDC enabled | — | Base URL of your OIDC provider |
    | `OIDC_CLIENT_ID` | When OIDC enabled | — | OIDC client ID |
    | `OIDC_CLIENT_SECRET` | No | — | OIDC client secret. Omit for public client (PKCE) |
+   | `OIDC_MOBILE_CLIENT_ID` | No | `OIDC_CLIENT_ID` | A separate public client for the phone app |
    | `DISABLE_INTERNAL_AUTH` | No | `false` | Hide local login form when OIDC is enabled (OIDC-only mode) |
 
 3. **Start the container:**
@@ -846,6 +847,10 @@ If you want to use OIDC in the mobile app, configure Anchor as a **Public client
 anchor://oidc/callback
 ```
 
+The same public client can serve web sign-in too. To keep a confidential client with a secret for the web, add a second, public client for the phone app with only the redirect URI above, and put its ID in **Phone app client ID** in the admin settings or in `OIDC_MOBILE_CLIENT_ID`. Both clients must be on the same issuer and give a person the same subject, so they stay one account.
+
+With Logto, which gives each application one sign-in method, either use one **Native** application with both callback URLs and no secret, or a **Traditional Web** application for the web and a **Native** one for the phone. A Logto **SPA** application won't accept the phone's redirect URI.
+
 #### Required Callback URL (Web)
 
 When configuring your OIDC provider for web login, add this callback/redirect URL:
@@ -874,6 +879,7 @@ services:
       - OIDC_ISSUER_URL=https://pocketid.example.com
       - OIDC_CLIENT_ID=your-client-id
       - OIDC_CLIENT_SECRET=your-client-secret # Optional for public clients
+      - OIDC_MOBILE_CLIENT_ID=your-phone-client-id # Optional, a separate public client for the phone app
       - DISABLE_INTERNAL_AUTH=false
       - APP_URL=https://notes.example.com
 ```

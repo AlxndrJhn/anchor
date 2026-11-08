@@ -17,6 +17,8 @@ export interface OidcConfig {
   issuerUrl?: string;
   clientId?: string;
   clientSecret?: string;
+  /** A separate public client for the phone app, which can't keep a secret. */
+  mobileClientId?: string;
   disableInternalAuth: boolean;
 }
 
