@@ -60,20 +60,53 @@ void main() {
     content: '{"ops":[{"insert":"milk\\n"}]}',
   );
 
-  testWidgets('saves two seconds after the last change', (tester) async {
+  testWidgets('saves soon after the last change', (tester) async {
     final editor = FakeEditor('milk');
     final draft = open(editor, note: note);
 
     editor.text = 'milk and eggs';
     draft.contentChanged();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 700));
     verifyNever(() => repo.updateNote(any()));
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 100));
     final saved =
         verify(() => repo.updateNote(captureAny())).captured.single as Note;
     expect(saved.content, contains('milk and eggs'));
     expect(saved.title, 'Groceries');
+    draft.dispose();
+  });
+
+  testWidgets('typing without a pause still saves every two seconds', (
+    tester,
+  ) async {
+    final editor = FakeEditor('milk');
+    final draft = open(editor, note: note);
+
+    // A key every half second: the pause the save waits for never comes.
+    Future<void> typeFor(int keys) async {
+      for (var i = 0; i < keys; i++) {
+        editor.text = '${editor.text}.';
+        draft.contentChanged();
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+    }
+
+    await typeFor(3);
+    verifyNever(() => repo.updateNote(any()));
+
+    await typeFor(1);
+    final first =
+        verify(() => repo.updateNote(captureAny())).captured.single as Note;
+    expect(first.content, contains('milk....'));
+
+    // The next stretch gets its own two seconds.
+    await typeFor(3);
+    verifyNever(() => repo.updateNote(any()));
+    await typeFor(1);
+    verify(() => repo.updateNote(any())).called(1);
+
+    await tester.pump(const Duration(seconds: 1));
     draft.dispose();
   });
 

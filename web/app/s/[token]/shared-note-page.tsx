@@ -34,6 +34,9 @@ import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { isServerless } from "@/lib/local-backend/mode";
 import { cn } from "@/lib/utils";
 
+// Long enough typing without a pause still saves this often, for others to see.
+const SAVE_MAX_WAIT_MS = 2_000;
+
 const SAVE_DELAY_MS = 800;
 // Others' changes arrive over a WebSocket the moment they're saved; without
 // one (a proxy that doesn't pass it on, say), the page polls instead.
@@ -121,6 +124,7 @@ function SharedNoteEditor({
   const base = useRef(note);
   const draft = useRef({ title: note.title, content: note.content ?? "" });
   const timer = useRef<number>(undefined);
+  const deadline = useRef<number>(undefined);
   const inFlight = useRef(false);
   const queued = useRef(false);
 
@@ -139,11 +143,16 @@ function SharedNoteEditor({
       base.current = note;
       return;
     }
+    // A load that began before the last save ended must not undo that save.
+    if (note.version < base.current.version) return;
     if (saveState !== "saved" || inFlight.current) return;
     adopt(note);
   }, [note]);
 
   const save = async () => {
+    window.clearTimeout(timer.current);
+    window.clearTimeout(deadline.current);
+    deadline.current = undefined;
     if (inFlight.current) {
       queued.current = true;
       return;
@@ -211,6 +220,7 @@ function SharedNoteEditor({
     setSaveState("unsaved");
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => void save(), SAVE_DELAY_MS);
+    deadline.current ??= window.setTimeout(() => void save(), SAVE_MAX_WAIT_MS);
   };
 
   // Leaving with edits not yet saved asks first.
@@ -221,7 +231,13 @@ function SharedNoteEditor({
     return () => window.removeEventListener("beforeunload", warn);
   }, [saveState]);
 
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(timer.current);
+      window.clearTimeout(deadline.current);
+    },
+    [],
+  );
 
   const inText = useMemo(() => inlineImageIds(content), [content]);
   const files = note.attachments.filter((a) => !inText.has(a.id));

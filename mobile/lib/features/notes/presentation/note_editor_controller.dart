@@ -22,6 +22,13 @@ abstract interface class NoteEditorContent {
   bool? matches(String? content);
 }
 
+/// Saves once typing pauses this long; every save also starts a sync, so others
+/// looking at the note see the change.
+const Duration _saveDelay = Duration(milliseconds: 800);
+
+/// Long enough typing without a pause still saves this often.
+const Duration _saveMaxWait = Duration(seconds: 2);
+
 class NoteEditorController extends ChangeNotifier {
   NoteEditorController({
     required NotesRepository notes,
@@ -90,6 +97,7 @@ class NoteEditorController extends ChangeNotifier {
   bool _isSaving = false;
   String _lastTitleText = '';
   Timer? _autoSaveTimer;
+  Timer? _saveDeadline;
   Timer? _wordsTimer;
   StreamSubscription<Note?>? _noteWatch;
 
@@ -165,7 +173,7 @@ class NoteEditorController extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
     _wordsTimer?.cancel();
     unawaited(_noteWatch?.cancel());
     title.removeListener(_titleChanged);
@@ -273,14 +281,14 @@ class NoteEditorController extends ChangeNotifier {
   void _handleNoteDeleted() {
     if (_isNew || _isDeleted) return;
     _isDeleted = true;
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
     onNoteDeleted();
   }
 
   /// Stops saving; call once the note is trashed or deleted here.
   void markDeleted() {
     _isDeleted = true;
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
   }
 
   void _titleChanged() {
@@ -292,7 +300,8 @@ class NoteEditorController extends ChangeNotifier {
   void contentChanged() {
     _hasUnsavedChanges = true;
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
+    _autoSaveTimer = Timer(_saveDelay, _autoSave);
+    _saveDeadline ??= Timer(_saveMaxWait, _autoSave);
     _wordsTimer?.cancel();
     _wordsTimer = Timer(const Duration(milliseconds: 300), () {
       words.value = countWords(editor.plainText ?? '');
@@ -311,7 +320,7 @@ class NoteEditorController extends ChangeNotifier {
   }
 
   Future<void> saveNow() {
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
     return _savePendingChanges();
   }
 
@@ -319,7 +328,14 @@ class NoteEditorController extends ChangeNotifier {
     if (_hasUnsavedChanges) unawaited(_autoSave());
   }
 
+  void _cancelSaveTimers() {
+    _autoSaveTimer?.cancel();
+    _saveDeadline?.cancel();
+    _saveDeadline = null;
+  }
+
   Future<void> _savePendingChanges() async {
+    _cancelSaveTimers();
     // Cleared before the await: edits made during it stay flagged.
     _hasUnsavedChanges = false;
     _isSaving = true;
@@ -334,7 +350,7 @@ class NoteEditorController extends ChangeNotifier {
   void flushOnLeave() {
     if (_hasFlushed) return;
     _hasFlushed = true;
-    _autoSaveTimer?.cancel();
+    _cancelSaveTimers();
     if (_isDeleted || !_hasUnsavedChanges && !_isNew) return;
     unawaited(_savePendingChanges());
   }

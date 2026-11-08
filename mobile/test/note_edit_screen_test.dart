@@ -1726,12 +1726,19 @@ void main() {
     testWidgets('typing that leaves the tools as they were keeps the bar, '
         'and its tools still act', (tester) async {
       await startWriting(tester);
+      // Less than the wait for a save, whose rebuild isn't the typing's.
+      Future<void> beforeSave() async {
+        for (var frame = 0; frame < 7; frame++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
       editorController(tester).replaceText(2, 0, 'a', null);
-      await settle(tester);
+      await beforeSave();
       final before = tester.widget(bar());
 
       editorController(tester).replaceText(3, 0, 'b', null);
-      await settle(tester);
+      await beforeSave();
 
       expect(identical(tester.widget(bar()), before), isTrue);
       await tester.tap(tool('Undo'));
@@ -2383,6 +2390,8 @@ void main() {
         if (isMotionReduced) {
           await tester.pump();
         } else {
+          // The save a moment after typing lays the menu out once more.
+          await settle();
           await settle();
         }
 
