@@ -64,6 +64,7 @@ export interface OidcSettings {
   issuerUrl?: string;
   clientId?: string;
   hasClientSecret: boolean;
+  mobileClientId?: string;
   callbackUrl: string;
   disableInternalAuth: boolean;
   isLocked: boolean;
@@ -81,6 +82,7 @@ export interface UpdateOidcSettingsDto {
   clientId?: string;
   clientSecret?: string;
   clearClientSecret?: boolean;
+  mobileClientId?: string;
   disableInternalAuth?: boolean;
 }
 

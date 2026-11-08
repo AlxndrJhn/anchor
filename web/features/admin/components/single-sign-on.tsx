@@ -78,6 +78,7 @@ type OidcForm = Required<
     | "providerName"
     | "issuerUrl"
     | "clientId"
+    | "mobileClientId"
     | "disableInternalAuth"
   >
 > & {
@@ -101,6 +102,7 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
             providerName: settings.providerName ?? "",
             issuerUrl: settings.issuerUrl ?? "",
             clientId: settings.clientId ?? "",
+            mobileClientId: settings.mobileClientId ?? "",
             disableInternalAuth: settings.disableInternalAuth,
             clientSecret: "",
             clearSecret: false,
@@ -189,6 +191,7 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
       providerName: form.providerName.trim(),
       issuerUrl: form.issuerUrl.trim(),
       clientId: form.clientId.trim(),
+      mobileClientId: form.mobileClientId.trim(),
       disableInternalAuth: form.disableInternalAuth,
     };
     if (form.clientSecret.trim()) dto.clientSecret = form.clientSecret.trim();
@@ -348,17 +351,40 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
                   <Field
                     label="Client secret"
                     aside="Optional"
-                    help="The Anchor+ phone app needs a public client, so leave this empty if people sign in from their phones."
+                    help={
+                      form.mobileClientId.trim()
+                        ? "Only used for web sign-in. The phone app has its own client below."
+                        : "The Anchor+ phone app needs a public client, so leave this empty if people sign in from their phones, or give the phone app its own client below."
+                    }
                   >
                     <PasswordInput
                       value={form.clientSecret}
-                      placeholder="Leave empty for the phone app"
+                      placeholder={
+                        form.mobileClientId.trim()
+                          ? undefined
+                          : "Leave empty for the phone app"
+                      }
                       onChange={(e) =>
                         updateForm({ clientSecret: e.target.value })
                       }
                     />
                   </Field>
                 )}
+              </div>
+              <div className="grid grid-cols-2 items-start gap-3.5 max-md:grid-cols-1">
+                <Field
+                  label="Phone app client ID"
+                  aside="Optional"
+                  help="For providers that give each client one sign-in method, like Logto: a public client just for the phone app, with its callback URL. Leave empty to use the client ID above."
+                >
+                  <Input
+                    value={form.mobileClientId}
+                    readOnly={locked}
+                    onChange={(e) =>
+                      updateForm({ mobileClientId: e.target.value })
+                    }
+                  />
+                </Field>
               </div>
             </Row>
             <Row>
@@ -391,8 +417,10 @@ export function SingleSignOn({ isHidden = false }: { isHidden?: boolean }) {
                   value={PHONE_CALLBACK_URL}
                 />
                 <FieldDescription>
-                  Add both as callback URLs in {providerName}. The first is
-                  based on{" "}
+                  {form.mobileClientId.trim()
+                    ? `In ${providerName}, add the first to the main client and the second to the phone app’s.`
+                    : `Add both as callback URLs in ${providerName}.`}{" "}
+                  The first is based on{" "}
                   <code className="rounded-[5px] bg-foreground/7 px-1.25 py-px font-mono text-foreground text-small">
                     APP_URL
                   </code>

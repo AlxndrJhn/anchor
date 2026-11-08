@@ -49,6 +49,9 @@ export class OidcConfigService {
     const issuerUrl = this.configService.get<string>('OIDC_ISSUER_URL')!;
     const clientId = this.configService.get<string>('OIDC_CLIENT_ID')!;
     const clientSecret = this.configService.get<string>('OIDC_CLIENT_SECRET');
+    const mobileClientId = this.configService.get<string>(
+      'OIDC_MOBILE_CLIENT_ID',
+    );
     const providerName =
       this.configService.get<string>('OIDC_PROVIDER_NAME') || 'OIDC Provider';
     const disableInternalAuth =
@@ -60,6 +63,7 @@ export class OidcConfigService {
       issuerUrl,
       clientId,
       clientSecret,
+      mobileClientId,
       disableInternalAuth,
     };
   }
@@ -71,6 +75,7 @@ export class OidcConfigService {
       'oidc_issuer_url',
       'oidc_client_id',
       'oidc_client_secret',
+      'oidc_mobile_client_id',
       'oidc_disable_internal_auth',
     ]);
 
@@ -97,6 +102,7 @@ export class OidcConfigService {
     const providerName =
       dbSettings.get('oidc_provider_name') || 'OIDC Provider';
     const clientSecret = dbSettings.get('oidc_client_secret');
+    const mobileClientId = dbSettings.get('oidc_mobile_client_id');
     const disableInternalAuth =
       dbSettings.get('oidc_disable_internal_auth')?.toLowerCase() === 'true' ||
       false;
@@ -107,6 +113,7 @@ export class OidcConfigService {
       issuerUrl,
       clientId,
       clientSecret,
+      mobileClientId,
       disableInternalAuth,
     };
   }
@@ -135,7 +142,9 @@ export class OidcConfigService {
   }
 
   /**
-   * Get public OIDC config
+   * Get public OIDC config. Only the phone app reads clientId here, since web
+   * sign-in runs on the server, so this is the phone app's client when it has
+   * its own.
    */
   async getPublicConfig(): Promise<{
     enabled: boolean;
@@ -150,7 +159,7 @@ export class OidcConfigService {
       enabled,
       providerName: config.providerName,
       issuerUrl: config.issuerUrl,
-      clientId: config.clientId,
+      clientId: config.mobileClientId || config.clientId,
       disableInternalAuth: enabled && config.disableInternalAuth,
     };
   }
@@ -164,6 +173,7 @@ export class OidcConfigService {
     issuerUrl?: string;
     clientId?: string;
     hasClientSecret: boolean;
+    mobileClientId?: string;
     callbackUrl: string;
     disableInternalAuth: boolean;
     isLocked: boolean;
@@ -178,6 +188,7 @@ export class OidcConfigService {
       issuerUrl: config.issuerUrl,
       clientId: config.clientId,
       hasClientSecret: !!config.clientSecret,
+      mobileClientId: config.mobileClientId,
       callbackUrl: this.getOidcCallbackUrl(),
       disableInternalAuth: config.disableInternalAuth,
       isLocked: locked,
@@ -194,6 +205,7 @@ export class OidcConfigService {
     issuerUrl?: string;
     clientId?: string;
     clientSecret?: string;
+    mobileClientId?: string;
     disableInternalAuth?: boolean;
   }): Promise<void> {
     if (this.isLockedByEnv()) {
@@ -217,6 +229,9 @@ export class OidcConfigService {
     }
     if (settings.clientSecret !== undefined) {
       await this.setDbSetting('oidc_client_secret', settings.clientSecret);
+    }
+    if (settings.mobileClientId !== undefined) {
+      await this.setDbSetting('oidc_mobile_client_id', settings.mobileClientId);
     }
     if (settings.disableInternalAuth !== undefined) {
       await this.setDbSetting(

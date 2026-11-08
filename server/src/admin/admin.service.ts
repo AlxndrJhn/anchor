@@ -368,6 +368,7 @@ export class AdminService {
     clientId?: string;
     clientSecret?: string;
     clearClientSecret?: boolean;
+    mobileClientId?: string;
     disableInternalAuth?: boolean;
   }) {
     const { clearClientSecret, ...rest } = settings;
