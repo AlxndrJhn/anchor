@@ -57,6 +57,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
+  // Anchor's own backgrounds until useThemeColor sees what's actually shown.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f0f4f8" },
+    { media: "(prefers-color-scheme: dark)", color: "#111214" },
+  ],
 };
 
 export default function RootLayout({

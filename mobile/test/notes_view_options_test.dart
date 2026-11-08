@@ -12,12 +12,14 @@ void main() {
     String id, {
     String title = 'note',
     DateTime? updatedAt,
+    DateTime? createdAt,
     bool isPinned = false,
   }) => Note(
     id: id,
     title: title,
     isPinned: isPinned,
     updatedAt: updatedAt ?? DateTime.utc(2026, 7, 1),
+    createdAt: createdAt,
   );
 
   List<String> order(List<Note> notes, NotesViewOptions options) =>
@@ -112,6 +114,62 @@ void main() {
       addTearDown(next.dispose);
       final options = await next.read(notesViewOptionsProvider.future);
       expect(options.showPictures, isFalse);
+    });
+  });
+
+  group('date created', () {
+    final notes = [
+      note(
+        'older-but-edited',
+        createdAt: DateTime.utc(2026, 1, 1),
+        updatedAt: DateTime.utc(2026, 7, 3),
+      ),
+      note(
+        'newer',
+        createdAt: DateTime.utc(2026, 5, 1),
+        updatedAt: DateTime.utc(2026, 7, 2),
+      ),
+      note('no date, edited in between', updatedAt: DateTime.utc(2026, 3, 1)),
+    ];
+
+    test('orders by when notes were made, whatever was edited since', () {
+      expect(
+        order(
+          notes,
+          const NotesViewOptions(sortOption: SortOption.dateCreated),
+        ),
+        ['newer', 'no date, edited in between', 'older-but-edited'],
+      );
+      expect(
+        order(
+          notes,
+          const NotesViewOptions(
+            sortOption: SortOption.dateCreated,
+            isAscending: true,
+          ),
+        ),
+        ['older-but-edited', 'no date, edited in between', 'newer'],
+      );
+    });
+
+    test('keeps pinned notes on top', () {
+      expect(
+        order([
+          ...notes,
+          note('pinned', createdAt: DateTime.utc(2020), isPinned: true),
+        ], const NotesViewOptions(sortOption: SortOption.dateCreated)).first,
+        'pinned',
+      );
+    });
+
+    test('is read back after being saved', () async {
+      FlutterSecureStorage.setMockInitialValues({
+        'notes_sort_option': 'dateCreated',
+      });
+      final options = await readNotesViewOptions(
+        PreferencesRepository(const FlutterSecureStorage()),
+      );
+      expect(options.sortOption, SortOption.dateCreated);
     });
   });
 

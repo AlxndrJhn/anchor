@@ -115,6 +115,59 @@ abstract class _$DisplayDensityController extends $Notifier<DisplayDensity> {
   }
 }
 
+@ProviderFor(MotionSpeedController)
+final motionSpeedControllerProvider = MotionSpeedControllerProvider._();
+
+final class MotionSpeedControllerProvider
+    extends $NotifierProvider<MotionSpeedController, MotionSpeed> {
+  MotionSpeedControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'motionSpeedControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$motionSpeedControllerHash();
+
+  @$internal
+  @override
+  MotionSpeedController create() => MotionSpeedController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MotionSpeed value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MotionSpeed>(value),
+    );
+  }
+}
+
+String _$motionSpeedControllerHash() =>
+    r'fe9da66480895fcc7bd5f6fc1db8b64c3c134145';
+
+abstract class _$MotionSpeedController extends $Notifier<MotionSpeed> {
+  MotionSpeed build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<MotionSpeed, MotionSpeed>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<MotionSpeed, MotionSpeed>,
+              MotionSpeed,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// A colour scheme id: [anchorSchemeId] or one of `appSchemes`.
 
 @ProviderFor(ColorSchemeController)

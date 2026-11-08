@@ -18,6 +18,7 @@ import {
 } from "@/features/admin";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
 import { useRetry } from "@/lib/hooks/use-retry";
+import { useServerVersion } from "@/lib/hooks/use-server-version";
 
 export default function AdminPage() {
   useDocumentTitle("Admin");
@@ -40,6 +41,7 @@ function AdminPageContent() {
   });
   const statsRetry = useRetry(stats.refetch);
   const waitingCount = pending.data?.length ?? 0;
+  const serverVersion = useServerVersion();
 
   return (
     <AppPage title={<PageTitle>Admin</PageTitle>} scrollKey="admin">
@@ -76,6 +78,10 @@ function AdminPageContent() {
             isRetrying={statsRetry.isRetrying}
           />
         )}
+        <p className="text-meta text-muted-foreground">
+          Anchor+ {process.env.NEXT_PUBLIC_APP_VERSION}
+          {serverVersion && ` · Server ${serverVersion}`}
+        </p>
         <Tabs
           aria-label="Admin"
           panelId="admin-panel"

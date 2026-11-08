@@ -23,7 +23,8 @@ class _ViewOptionsSheet extends ConsumerWidget {
     final options =
         ref.watch(notesViewOptionsProvider).value ?? const NotesViewOptions();
     final notifier = ref.read(notesViewOptionsProvider.notifier);
-    final byTitle = options.sortOption == SortOption.title;
+    final sort = options.sortOption;
+    final byTitle = sort == SortOption.title;
     final l10n = context.l10n;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -69,11 +70,23 @@ class _ViewOptionsSheet extends ConsumerWidget {
                     GroupedListTile(
                       icon: LucideIcons.pencilLine,
                       label: l10n.viewDateEdited,
-                      checked: !byTitle,
+                      checked: sort == SortOption.dateModified,
                       onTap: () {
-                        if (!byTitle) return;
+                        if (sort == SortOption.dateModified) return;
                         notifier.setSort(
                           SortOption.dateModified,
+                          isAscending: false,
+                        );
+                      },
+                    ),
+                    GroupedListTile(
+                      icon: LucideIcons.calendarPlus,
+                      label: l10n.viewDateCreated,
+                      checked: sort == SortOption.dateCreated,
+                      onTap: () {
+                        if (sort == SortOption.dateCreated) return;
+                        notifier.setSort(
+                          SortOption.dateCreated,
                           isAscending: false,
                         );
                       },

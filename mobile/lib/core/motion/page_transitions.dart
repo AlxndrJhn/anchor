@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'motion_speed.dart';
 import 'springs.dart';
 
 class AnchorPageTransitionsBuilder extends PageTransitionsBuilder {
@@ -14,8 +15,9 @@ class AnchorPageTransitionsBuilder extends PageTransitionsBuilder {
       isSystemMotionReduced ? Duration.zero : Spring.smooth.duration;
 
   @override
-  Duration get reverseTransitionDuration =>
-      isSystemMotionReduced ? Duration.zero : const Duration(milliseconds: 420);
+  Duration get reverseTransitionDuration => isSystemMotionReduced
+      ? Duration.zero
+      : motionSpeed.of(const Duration(milliseconds: 420));
 
   @override
   Widget buildTransitions<T>(

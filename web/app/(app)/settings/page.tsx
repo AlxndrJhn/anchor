@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { AnchorLogo } from "@/components/layout/anchor-logo";
 import { AppPage, PageTitle } from "@/components/layout/app-page";
 import {
@@ -20,18 +19,14 @@ import {
   SecuritySection,
   SettingsNav,
 } from "@/features/settings";
-import { api } from "@/lib/api/client";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
+import { useServerVersion } from "@/lib/hooks/use-server-version";
 import { appMode, basePath, isServerless } from "@/lib/local-backend/mode";
 
 export default function SettingsPage() {
   useDocumentTitle("Settings");
   // As in the Android app's About.
-  const { data: server } = useQuery({
-    queryKey: ["server-health"],
-    queryFn: () => api.get("api/health").json<{ version?: string }>(),
-    staleTime: 5 * 60 * 1000,
-  });
+  const serverVersion = useServerVersion();
   return (
     <AppPage title={<PageTitle>Settings</PageTitle>} scrollKey="settings">
       <div className="grid grid-cols-[176px_minmax(0,640px)] items-start gap-10 pt-1 max-md:grid-cols-[minmax(0,1fr)] max-md:gap-5">
@@ -72,9 +67,9 @@ export default function SettingsPage() {
                       </a>
                     </span>
                   )}
-                  {!isServerless && server?.version && (
+                  {!isServerless && serverVersion && (
                     <span className="text-meta text-muted-foreground">
-                      Server {server.version}
+                      Server {serverVersion}
                     </span>
                   )}
                 </div>

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../app/app_bootstrap.dart';
+import '../../../core/motion/motion_speed.dart';
 import '../../../core/storage/preferences_repository.dart';
 import '../../../core/theme/custom_theme.dart';
 import '../../../core/theme/display_density.dart';
@@ -30,6 +31,19 @@ class DisplayDensityController extends _$DisplayDensityController {
     state = density;
     final repository = ref.read(preferencesRepositoryProvider);
     await repository.setDisplayDensity(density.name);
+  }
+}
+
+@Riverpod(keepAlive: true)
+class MotionSpeedController extends _$MotionSpeedController {
+  @override
+  MotionSpeed build() => ref.watch(appBootstrapProvider).motionSpeed;
+
+  Future<void> setSpeed(MotionSpeed speed) async {
+    state = speed;
+    motionSpeed = speed;
+    final repository = ref.read(preferencesRepositoryProvider);
+    await repository.setMotionSpeed(speed.name);
   }
 }
 

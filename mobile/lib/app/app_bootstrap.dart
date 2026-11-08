@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../core/motion/motion_speed.dart';
 import '../core/theme/custom_theme.dart';
 import '../core/theme/display_density.dart';
 import '../core/theme/tokens/app_style.dart';
@@ -15,6 +16,7 @@ class AppBootstrap {
   const AppBootstrap({
     this.themeMode = ThemeMode.system,
     this.displayDensity = DisplayDensity.standard,
+    this.motionSpeed = MotionSpeed.normal,
     this.colorScheme = anchorSchemeId,
     this.appStyle = AppStyle.standard,
     this.customTheme,
@@ -29,6 +31,7 @@ class AppBootstrap {
 
   final ThemeMode themeMode;
   final DisplayDensity displayDensity;
+  final MotionSpeed motionSpeed;
 
   /// A colour scheme id: [anchorSchemeId] or one of `appSchemes`.
   final String colorScheme;

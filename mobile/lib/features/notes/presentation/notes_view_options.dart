@@ -11,7 +11,7 @@ import '../domain/note.dart';
 /// Saved as 'grid' (masonry) and 'uniform' (grid); stored options use these.
 enum ViewType { masonry, grid, list }
 
-enum SortOption { dateModified, title }
+enum SortOption { dateModified, dateCreated, title }
 
 class NotesViewOptions {
   final ViewType viewType;
@@ -73,6 +73,10 @@ double positionBetween(Note? above, Note? below) {
   return DateTime.now().millisecondsSinceEpoch.toDouble();
 }
 
+/// When [note] was made; a note without that date sorts by its last edit.
+DateTime _createdOf(Note note) =>
+    note.createdAt ?? note.updatedAt ?? DateTime(0);
+
 /// Pinned notes stay on top, then the chosen sort, then the id.
 int Function(Note, Note) noteComparator(NotesViewOptions options) {
   return (a, b) {
@@ -87,6 +91,7 @@ int Function(Note, Note) noteComparator(NotesViewOptions options) {
         options.isAscending
             ? (a.updatedAt ?? DateTime(0)).compareTo(b.updatedAt ?? DateTime(0))
             : noteSortKey(a).compareTo(noteSortKey(b)),
+      SortOption.dateCreated => _createdOf(a).compareTo(_createdOf(b)),
       SortOption.title => a.title.trim().toLowerCase().compareTo(
         b.title.trim().toLowerCase(),
       ),
@@ -113,9 +118,10 @@ Future<NotesViewOptions> readNotesViewOptions(
       _ => ViewType.masonry,
     };
 
-    final sortOption = sortOptionStr == 'title'
-        ? SortOption.title
-        : SortOption.dateModified;
+    final sortOption = SortOption.values.firstWhere(
+      (option) => option.name == sortOptionStr,
+      orElse: () => SortOption.dateModified,
+    );
 
     return NotesViewOptions(
       viewType: viewType,
@@ -151,9 +157,7 @@ class NotesViewOptionsNotifier extends AsyncNotifier<NotesViewOptions> {
         ViewType.grid => 'uniform',
         ViewType.masonry => 'grid',
       });
-      await preferences.setNotesSortOption(
-        options.sortOption == SortOption.title ? 'title' : 'dateModified',
-      );
+      await preferences.setNotesSortOption(options.sortOption.name);
       await preferences.setNotesSortAscending(options.isAscending);
       await preferences.setNotesShowPictures(options.showPictures);
     } catch (error) {

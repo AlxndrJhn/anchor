@@ -10,6 +10,7 @@ class StorageKeys {
   static const userData = 'user_data';
   static const themeMode = 'theme_mode';
   static const displayDensity = 'display_density';
+  static const motionSpeed = 'motion_speed';
   static const colorScheme = 'color_scheme';
   static const appStyle = 'app_style';
   static const customTheme = 'custom_theme';
@@ -48,6 +49,7 @@ class StorageKeys {
     userData,
     themeMode,
     displayDensity,
+    motionSpeed,
     colorScheme,
     appStyle,
     customTheme,
