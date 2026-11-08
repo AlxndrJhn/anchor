@@ -59,6 +59,8 @@ class Notes extends Table {
 
   TextColumn get permission => text().withDefault(const Constant('owner'))();
   TextColumn get shareIds => text().nullable()(); // JSON array of user IDs
+  // What anyone with the note's link can do; null when no link opens it.
+  TextColumn get publicLink => text().nullable()();
   TextColumn get sharedById => text().nullable()();
   TextColumn get sharedByName => text().nullable()();
   TextColumn get sharedByEmail => text().nullable()();

@@ -48,6 +48,7 @@ Anchor+ does too; these are the differences. "Web" and "Android" say where each 
 | Drag notes to arrange them, as in Google Keep: the others make room as you drag, and a moved note stays put until it is edited again (Android: hold a card, then drag) | ✓ | ✓ |
 | A Select button for choosing several notes; holding a card without moving still selects it | | ✓ |
 | Edit a note together, live: text merges as people type, and everyone's cursor shows, with their name (a public link's visitors see no names). Without a connection, edits sync as usual | ✓ | ✓ |
+| A note with a public link says so: a globe on its card, and in the open note whether anyone with the link can view or edit it | ✓ | ✓ |
 | Make a copy of a note, with its pictures and attachments | ✓ | ✓ |
 | Freeze a note: nobody can change, trash or delete it until its owner unfreezes it (freezing needs a connection) | ✓ | ✓ |
 | Make a note invisible: it stays out of your lists and only a search finds it; filter by "Invisible" to list them | ✓ | ✓ |

@@ -6358,6 +6358,18 @@ abstract class AppLocalizations {
   /// **'Its owner froze it, so it can’t be changed.'**
   String get readOnlyFrozenByOwner;
 
+  /// On a note with a link that lets anyone read it: beside the globe in the open note, the tooltip of the globe on its card, and read out with the card.
+  ///
+  /// In en, this message translates to:
+  /// **'Public: anyone with the link can view'**
+  String get notePublicCanView;
+
+  /// On a note with a link that lets anyone change it: beside the globe in the open note, the tooltip of the globe on its card, and read out with the card.
+  ///
+  /// In en, this message translates to:
+  /// **'Public: anyone with the link can edit'**
+  String get notePublicCanEdit;
+
   /// Tooltip of the snowflake on a frozen note’s card, read out with the card, and the label of the snowflake on the bar of a note its owner froze.
   ///
   /// In en, this message translates to:

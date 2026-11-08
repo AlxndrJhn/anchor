@@ -1,6 +1,7 @@
 import 'package:anchor/core/theme/app_theme.dart';
 import 'package:anchor/core/widgets/person_avatar.dart';
 import 'package:anchor/features/notes/domain/note.dart';
+import 'package:anchor/features/notes/domain/note_share_permission.dart';
 import 'package:anchor/features/notes/domain/user_summary.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_header.dart';
 import 'package:anchor/features/notes/presentation/widgets/note_surface.dart';
@@ -16,6 +17,7 @@ void main() {
 
   Future<void> pumpLine(
     WidgetTester tester, {
+    Note? shown,
     required List<UserSummary>? sharedWith,
   }) async {
     final words = ValueNotifier(12);
@@ -27,7 +29,7 @@ void main() {
           home: Scaffold(
             body: Builder(
               builder: (context) => NoteMetaLine(
-                note: note,
+                note: shown ?? note,
                 appearance: NoteAppearance.of(context, null),
                 words: words,
                 sharedWith: sharedWith,
@@ -52,5 +54,41 @@ void main() {
     expect(find.byType(PersonAvatar), findsNothing);
     expect(find.byIcon(LucideIcons.users), findsOneWidget);
     expect(find.text('Shared with 2 people'), findsOneWidget);
+  });
+
+  testWidgets('says who a public link lets in, and what they can do', (
+    tester,
+  ) async {
+    await pumpLine(tester, sharedWith: null);
+    expect(find.byIcon(LucideIcons.globe), findsNothing);
+
+    await pumpLine(
+      tester,
+      shown: note.copyWith(publicLink: NoteSharePermission.viewer),
+      sharedWith: null,
+    );
+    expect(find.byIcon(LucideIcons.globe), findsOneWidget);
+    expect(find.text('Public: anyone with the link can view'), findsOneWidget);
+
+    await pumpLine(
+      tester,
+      shown: note.copyWith(publicLink: NoteSharePermission.editor),
+      sharedWith: null,
+    );
+    expect(find.text('Public: anyone with the link can edit'), findsOneWidget);
+  });
+
+  testWidgets('a trashed note is not public: its link does not open', (
+    tester,
+  ) async {
+    await pumpLine(
+      tester,
+      shown: note.copyWith(
+        publicLink: NoteSharePermission.viewer,
+        state: NoteState.trashed,
+      ),
+      sharedWith: null,
+    );
+    expect(find.byIcon(LucideIcons.globe), findsNothing);
   });
 }

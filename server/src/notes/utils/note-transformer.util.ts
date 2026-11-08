@@ -39,6 +39,9 @@ export interface TransformedNote {
   permission: NotePermission;
   shareIds?: string[];
   sharedBy?: SharedByUser;
+  // What anyone with the note's link can do; null when no link opens it.
+  // Absent means "not loaded".
+  publicLink?: NoteSharePermission | null;
   stateChangedAt?: string;
   attachmentCount?: number;
   imagePreviewIds?: string[];
@@ -89,6 +92,7 @@ interface NoteWithIncludes {
     permission: NoteSharePermission;
     sharedByUser: SharedByUser;
   }>;
+  shareLink?: { permission: NoteSharePermission } | null;
   _count?: { attachments?: number; files?: number };
   attachments?: Array<{ id: string; text?: string | null }>;
 }
@@ -107,6 +111,7 @@ export function transformNote(
   const {
     tags,
     sharedWith,
+    shareLink,
     _count,
     attachments,
     pins,
@@ -190,6 +195,13 @@ export function transformNote(
 
   if (reminders) {
     transformed.reminder = reminders[0] ?? null;
+  }
+
+  // Everyone with the note sees this, so nobody writes in it unaware. In the
+  // trash the link doesn't open, so it isn't public until it's restored.
+  if (shareLink !== undefined) {
+    transformed.publicLink =
+      note.state === 'active' ? (shareLink?.permission ?? null) : null;
   }
 
   return transformed;

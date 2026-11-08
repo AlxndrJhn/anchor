@@ -5,6 +5,7 @@ import {
   Bell,
   BellRing,
   ChevronDown,
+  Globe,
   ImagePlus,
   List,
   ListChecks,
@@ -38,11 +39,13 @@ import {
 import { MAX_ATTACHMENT_SIZE } from "../../constants";
 import { stampFor } from "../../date-stamp";
 import { inlineImageIds, primeInlineImage } from "../../inline-images";
+import { publicLinkLabel } from "../../public-link";
 import { deltaToFullPlainText, isContentBlank } from "../../quill";
 import { isReminderPast, reminderLabel } from "../../reminder";
 import type {
   NoteAttachment,
   NoteReminder,
+  NoteSharePermission,
   ReminderRecurrence,
 } from "../../types";
 import {
@@ -80,6 +83,8 @@ interface NoteEditorContentProps {
   updatedAt?: string;
   sharedBy?: Person | null;
   sharedWith: Person[];
+  /** What anyone with the note's link can do; absent when no link opens it. */
+  publicLink?: NoteSharePermission | null;
   tagIds: string[];
   allTags: Tag[];
   tagsLoading: boolean;
@@ -374,6 +379,15 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
                   ))}
                 </span>
                 Shared with {sharedLine(people)}
+              </span>
+            </>
+          )}
+          {props.publicLink && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="who">
+                <Globe aria-hidden className="size-3.5" />
+                {publicLinkLabel(props.publicLink)}
               </span>
             </>
           )}

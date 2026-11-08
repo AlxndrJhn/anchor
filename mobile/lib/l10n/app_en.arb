@@ -5618,6 +5618,14 @@
   "@readOnlyFrozenByOwner": {
     "description": "Toast when the snowflake of a note shared with this person, that its owner froze, is tapped."
   },
+  "notePublicCanView": "Public: anyone with the link can view",
+  "@notePublicCanView": {
+    "description": "On a note with a link that lets anyone read it: beside the globe in the open note, the tooltip of the globe on its card, and read out with the card."
+  },
+  "notePublicCanEdit": "Public: anyone with the link can edit",
+  "@notePublicCanEdit": {
+    "description": "On a note with a link that lets anyone change it: beside the globe in the open note, the tooltip of the globe on its card, and read out with the card."
+  },
   "cardFrozen": "Frozen",
   "@cardFrozen": {
     "description": "Tooltip of the snowflake on a frozen note’s card, read out with the card, and the label of the snowflake on the bar of a note its owner froze."

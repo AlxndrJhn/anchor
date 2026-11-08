@@ -60,14 +60,20 @@ export class NoteShareLinksService {
     permission: NoteSharePermission,
   ) {
     await this.noteAccessService.verifyNoteOwnership(ownerId, noteId);
-    const link = await this.prisma.noteShareLink.upsert({
-      where: { noteId },
-      create: {
-        noteId,
-        permission,
-        token: randomBytes(TOKEN_BYTES).toString('base64url'),
-      },
-      update: { permission },
+    const link = await this.prisma.$transaction(async (tx) => {
+      const saved = await tx.noteShareLink.upsert({
+        where: { noteId },
+        create: {
+          noteId,
+          permission,
+          token: randomBytes(TOKEN_BYTES).toString('base64url'),
+        },
+        update: { permission },
+      });
+      // Everyone with the note learns that it's public.
+      const recipients = await this.syncEmitter.noteRecipients(tx, noteId);
+      await this.syncEmitter.emit(tx, noteEmissions(recipients, noteId));
+      return saved;
     });
     // Open pages pick up what the link now lets them do.
     this.sharedNoteEvents.changed(noteId);
@@ -77,7 +83,14 @@ export class NoteShareLinksService {
   /** The link stops working; a new one gets a new token. */
   async removeLink(ownerId: string, noteId: string) {
     await this.noteAccessService.verifyNoteOwnership(ownerId, noteId);
-    await this.prisma.noteShareLink.deleteMany({ where: { noteId } });
+    await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.noteShareLink.deleteMany({
+        where: { noteId },
+      });
+      if (count === 0) return;
+      const recipients = await this.syncEmitter.noteRecipients(tx, noteId);
+      await this.syncEmitter.emit(tx, noteEmissions(recipients, noteId));
+    });
     // Open pages find the link gone.
     this.sharedNoteEvents.gone(noteId);
     return { success: true };

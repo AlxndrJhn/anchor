@@ -5,6 +5,7 @@ import {
   Check,
   CloudOff,
   EyeOff,
+  Globe,
   ImageOff,
   Lock,
   LockOpen,
@@ -49,6 +50,7 @@ import {
 import { useUnlockedIds } from "../hooks/use-note-lock";
 import { deltaToBlocks, type NoteBlock } from "../note-blocks";
 import { isLockHidden } from "../note-lock";
+import { publicLinkLabel } from "../public-link";
 import { hasTitle } from "../title";
 import type { Note } from "../types";
 import { Viewer } from "./attachments/attachment-viewer";
@@ -158,6 +160,7 @@ export const NoteCard = React.memo(function NoteCard({
   const shareCount =
     note.permission === "owner" ? (note.shareIds?.length ?? 0) : 0;
   const sharedWithLabel = `Shared with ${shareCount} ${shareCount === 1 ? "person" : "people"}`;
+  const publicLabel = note.publicLink && publicLinkLabel(note.publicLink);
   const footer = (
     <div className="nc-foot">
       {note.reminder && (
@@ -197,6 +200,28 @@ export const NoteCard = React.memo(function NoteCard({
           <span className="nc-count" title={sharedWithLabel}>
             <Users aria-hidden />
             {shareCount}
+          </span>
+        ))}
+      {publicLabel &&
+        (onShare && note.permission === "owner" ? (
+          <Tip label={publicLabel}>
+            <button
+              type="button"
+              className="nc-count relative z-5 -mx-1 min-h-6 min-w-6 cursor-pointer justify-center rounded-xs bg-transparent px-1 py-0 text-inherit hover:text-foreground"
+              aria-label={`${publicLabel}. Open Share`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onShare(note);
+              }}
+            >
+              <Globe aria-hidden />
+            </button>
+          </Tip>
+        ) : (
+          <span className="nc-count" title={publicLabel}>
+            <Globe aria-hidden />
+            <span className="sr-only">{publicLabel}</span>
           </span>
         ))}
       {note.isInvisible && (

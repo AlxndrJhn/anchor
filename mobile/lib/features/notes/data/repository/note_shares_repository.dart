@@ -93,14 +93,23 @@ class NoteSharesRepository {
       '/api/notes/$noteId/link',
       data: {'permission': permission.name},
     );
-    return NoteShareLink.fromJson(
+    final link = NoteShareLink.fromJson(
       (response.data as Map<String, dynamic>)['link'] as Map<String, dynamic>,
     );
+    await _db.writeNote(
+      noteId,
+      NotesCompanion(publicLink: drift.Value(permission.name)),
+    );
+    return link;
   }
 
   /// The link stops working; a new one gets a new address.
   Future<void> removeLink(String noteId) async {
     await _dio.delete('/api/notes/$noteId/link');
+    await _db.writeNote(
+      noteId,
+      const NotesCompanion(publicLink: drift.Value(null)),
+    );
   }
 
   Future<void> _updateLocalShareIds(String noteId) async {

@@ -127,6 +127,7 @@ class SyncServerNote {
     this.isFrozen = false,
     this.hasInvisibleField = false,
     this.isInvisible = false,
+    this.publicLink,
   });
 
   factory SyncServerNote.fromJson(Map<String, dynamic> json) {
@@ -160,6 +161,7 @@ class SyncServerNote {
       tagIds: (json['tagIds'] as List?)?.cast<String>() ?? const [],
       permission: json['permission'] as String? ?? NotePermission.owner.name,
       shareIds: (json['shareIds'] as List?)?.cast<String>() ?? const [],
+      publicLink: json['publicLink'] as String?,
       sharedBy: sharedBy != null ? UserSummary.fromJson(sharedBy) : null,
       // An absent key means "not loaded"; an explicit null means "no reminder".
       hasReminderField: json.containsKey('reminder'),
@@ -199,6 +201,9 @@ class SyncServerNote {
   final List<String> tagIds;
   final String permission;
   final List<String> shareIds;
+
+  /// What anyone with the note's link can do; null when no link opens it.
+  final String? publicLink;
   final UserSummary? sharedBy;
   final bool hasReminderField;
   final SyncServerReminder? reminder;

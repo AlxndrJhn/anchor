@@ -125,6 +125,10 @@ export const NOTE_INCLUDE_SHARES = {
       },
     },
   },
+  // What the note's link allows, never its token: that stays with the owner.
+  shareLink: {
+    select: { permission: true },
+  },
 } as const;
 
 export const NOTE_LIST_ORDER = [

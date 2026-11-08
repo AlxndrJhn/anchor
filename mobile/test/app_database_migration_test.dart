@@ -321,6 +321,27 @@ void main() {
     });
   });
 
+  test('a database from before public links gains the column and '
+      're-downloads the feed', () async {
+    await withDatabase((db) async {
+      await db
+          .into(db.syncState)
+          .insert(const SyncStateCompanion(cursor: Value('cursor-18')));
+      await db
+          .into(db.notes)
+          .insert(NotesCompanion.insert(id: 'n1', title: 'Kept'));
+      await dropColumns(db, ['public_link']);
+      await db.customStatement('PRAGMA user_version = 18');
+    });
+
+    await withDatabase((db) async {
+      final row = await db.select(db.notes).getSingle();
+      expect(row.publicLink, isNull);
+      final state = await db.select(db.syncState).getSingle();
+      expect(state.cursor, isNull);
+    });
+  });
+
   test(
     'a database from the first reminders release re-downloads the feed',
     () async {

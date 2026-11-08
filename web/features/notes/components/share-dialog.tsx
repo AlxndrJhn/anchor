@@ -167,6 +167,8 @@ export function ShareDialog({
     },
     onSuccess: (next, access) => {
       queryClient.setQueryData<NoteShareLink | null>(linkKey, next);
+      // The note's card and page say whether it's public.
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
       if (!next) toast.success("Link turned off; it no longer opens the note");
       else if (!link)
         copyText(shareLinkUrl(next.token)).then(

@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -196,6 +196,18 @@ class AppDatabase extends _$AppDatabase {
           // Null, not known, until the feed resends the notes.
           await migrator.addColumn(notes, notes.isInvisible);
         }
+        await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
+          const SyncStateCompanion(cursor: Value(null)),
+        );
+      }
+      if (from < 19) {
+        final existing = await customSelect(
+          'PRAGMA table_info(notes)',
+        ).map((row) => row.read<String>('name')).get();
+        if (!existing.contains('public_link')) {
+          await migrator.addColumn(notes, notes.publicLink);
+        }
+        // Known once the feed resends the notes.
         await (update(syncState)..where((tbl) => tbl.cursor.isNotNull())).write(
           const SyncStateCompanion(cursor: Value(null)),
         );
