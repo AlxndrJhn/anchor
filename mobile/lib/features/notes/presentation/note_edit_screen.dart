@@ -999,7 +999,12 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
 
   Future<void> _removeTag(Tag tag) async {
     final note = _draft.note;
-    if (note == null) return;
+    if (note == null) {
+      if (!_draft.newTagIds.contains(tag.id)) return;
+      Haptics.selection();
+      _draft.removeNewTag(tag.id);
+      return;
+    }
     Haptics.selection();
     await ref.read(notesRepositoryProvider).removeTags([note.id], [tag.id]);
   }
@@ -1437,6 +1442,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
           ),
           child: NoteTagRow(
             note: note,
+            newTagIds: _draft.newTagIds,
             appearance: appearance,
             readOnly: isTrashed,
             onAdd: _addTags,
