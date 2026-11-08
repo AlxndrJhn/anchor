@@ -16,6 +16,7 @@ import '../../../core/links/link_utils.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/motion/haptics.dart';
+import '../../../core/motion/motion_speed.dart';
 import '../../../core/motion/springs.dart';
 import '../../../core/network/connectivity_provider.dart';
 import '../../../core/network/server_address.dart';
@@ -217,6 +218,7 @@ class _AppearanceSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final density = ref.watch(displayDensityControllerProvider);
+    final speed = ref.watch(motionSpeedControllerProvider);
     final scheme = ref.watch(colorSchemeControllerProvider);
     final style = ref.watch(appStyleControllerProvider);
     final customTheme = ref.watch(customThemeControllerProvider);
@@ -270,6 +272,21 @@ class _AppearanceSection extends ConsumerWidget {
               onChanged: (option) => ref
                   .read(displayDensityControllerProvider.notifier)
                   .setDensity(option),
+            ),
+          ),
+          StackedListTile(
+            label: l10n.settingsAnimations,
+            subtitle: l10n.settingsAnimationsHelp,
+            child: SegmentedControl<MotionSpeed>(
+              semanticLabel: l10n.settingsAnimations,
+              value: speed,
+              segments: [
+                for (final option in MotionSpeed.values)
+                  Segment(value: option, label: option.labelIn(l10n)),
+              ],
+              onChanged: (option) => ref
+                  .read(motionSpeedControllerProvider.notifier)
+                  .setSpeed(option),
             ),
           ),
         ],

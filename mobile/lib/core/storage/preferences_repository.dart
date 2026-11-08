@@ -206,6 +206,12 @@ class PreferencesRepository {
     await _storage.write(key: StorageKeys.displayDensity, value: density);
   }
 
+  Future<String?> getMotionSpeed() => _read(StorageKeys.motionSpeed);
+
+  Future<void> setMotionSpeed(String speed) async {
+    await _storage.write(key: StorageKeys.motionSpeed, value: speed);
+  }
+
   Future<String?> getColorScheme() => _read(StorageKeys.colorScheme);
 
   Future<void> setColorScheme(String scheme) async {

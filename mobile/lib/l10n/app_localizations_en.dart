@@ -579,6 +579,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDensityHelp => 'Compact fits more notes on the screen.';
 
   @override
+  String get settingsAnimations => 'Animations';
+
+  @override
+  String get settingsAnimationsHelp =>
+      'Fast opens and closes notes, sheets and menus in half the time.';
+
+  @override
+  String get animationsNormal => 'Normal';
+
+  @override
+  String get animationsFast => 'Fast';
+
+  @override
   String get settingsColorScheme => 'Color scheme';
 
   @override
@@ -3429,6 +3442,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewDateEdited => 'Date edited';
+
+  @override
+  String get viewDateCreated => 'Date created';
 
   @override
   String get viewTitle => 'Title';

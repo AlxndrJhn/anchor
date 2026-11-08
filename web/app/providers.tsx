@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { DemoPlayer } from "@/components/demo/demo-player";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAppearance } from "@/lib/appearance";
+import { useThemeColor } from "@/lib/hooks/use-theme-color";
 import { trackInputModality } from "@/lib/input-modality";
 import { installLocalBackend } from "@/lib/local-backend/install";
 import { isDemo } from "@/lib/local-backend/mode";
@@ -37,6 +38,7 @@ export function Providers({ children }: ProvidersProps) {
   );
   useEffect(trackInputModality, []);
   useAppearance();
+  useThemeColor();
 
   return (
     <QueryClientProvider client={queryClient}>

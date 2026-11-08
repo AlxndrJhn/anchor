@@ -3,6 +3,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 
 import '../theme/tokens/anchor_tokens.dart';
+import 'motion_speed.dart';
 
 enum Spring {
   smooth(
@@ -22,10 +23,13 @@ enum Spring {
     AnchorTokens.motionSpringKeyboardBounce,
   );
 
-  const Spring(this.duration, this._bounce);
+  const Spring(this._duration, this._bounce);
 
-  final Duration duration;
+  final Duration _duration;
   final double _bounce;
+
+  /// How long it takes at the chosen [motionSpeed].
+  Duration get duration => motionSpeed.of(_duration);
 
   Curve get curve => _curves[index];
 
@@ -38,7 +42,7 @@ enum Spring {
     double precision = 0.0005,
   }) => _SettlingSpring(
     SpringSimulation(
-      _descriptions[index],
+      _descriptions[motionSpeed]![index],
       from,
       to,
       velocity,
@@ -47,13 +51,16 @@ enum Spring {
     to,
   );
 
-  static final List<SpringDescription> _descriptions = [
-    for (final spring in values)
-      SpringDescription.withDurationAndBounce(
-        duration: spring.duration,
-        bounce: spring._bounce,
-      ),
-  ];
+  static final Map<MotionSpeed, List<SpringDescription>> _descriptions = {
+    for (final speed in MotionSpeed.values)
+      speed: [
+        for (final spring in values)
+          SpringDescription.withDurationAndBounce(
+            duration: speed.of(spring._duration),
+            bounce: spring._bounce,
+          ),
+      ],
+  };
 
   static final List<Curve> _curves = [
     for (final spring in values) _SpringCurve(spring.simulation(0, 1)),

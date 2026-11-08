@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../core/logging/app_logger.dart';
 import '../core/logging/log_tags.dart';
+import '../core/motion/motion_speed.dart';
 import '../core/session/active_user_id_provider.dart';
 import '../core/storage/clear_storage_on_new_install.dart';
 import '../core/storage/preferences_repository.dart';
@@ -102,6 +103,14 @@ Future<AppBootstrap> initializeApp({
     orElse: () => DisplayDensity.standard,
   );
 
+  final savedSpeed = await preferences.getMotionSpeed();
+  final speed = MotionSpeed.values.firstWhere(
+    (speed) => speed.name == savedSpeed,
+    orElse: () => MotionSpeed.normal,
+  );
+  // Before the first frame, so the first route already runs at this speed.
+  motionSpeed = speed;
+
   final savedScheme = await preferences.getColorScheme();
   final colorScheme = schemeById(savedScheme) == null
       ? anchorSchemeId
@@ -176,6 +185,7 @@ Future<AppBootstrap> initializeApp({
   return AppBootstrap(
     themeMode: themeMode,
     displayDensity: displayDensity,
+    motionSpeed: speed,
     colorScheme: colorScheme,
     appStyle: appStyle,
     customTheme: customTheme,

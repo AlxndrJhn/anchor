@@ -1054,6 +1054,30 @@ abstract class AppLocalizations {
   /// **'Compact fits more notes on the screen.'**
   String get settingsDensityHelp;
 
+  /// Setting for how quickly notes, sheets and menus open and close.
+  ///
+  /// In en, this message translates to:
+  /// **'Animations'**
+  String get settingsAnimations;
+
+  /// Under the Animations setting; Fast is the name of one of its options.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast opens and closes notes, sheets and menus in half the time.'**
+  String get settingsAnimationsHelp;
+
+  /// Animations setting option: the app's usual speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get animationsNormal;
+
+  /// Animations setting option: twice the usual speed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast'**
+  String get animationsFast;
+
   /// Label of the Appearance setting that picks the app's colors (Anchor, Nord, Dracula and so on).
   ///
   /// In en, this message translates to:
@@ -5277,6 +5301,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Date edited'**
   String get viewDateEdited;
+
+  /// Sort option: orders notes by when they were made.
+  ///
+  /// In en, this message translates to:
+  /// **'Date created'**
+  String get viewDateCreated;
 
   /// Sort option: orders notes alphabetically by their title.
   ///
