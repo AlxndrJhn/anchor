@@ -13,6 +13,7 @@ import '../../notes/data/repository/notes_repository.dart';
 import '../../settings/presentation/theme_preferences_controller.dart';
 import '../../tags/data/repository/tags_repository.dart';
 import '../../tags/domain/tag.dart';
+import '../../tags/domain/tag_order.dart';
 import '../../tags/presentation/tags_controller.dart';
 import '../domain/share_context.dart';
 import 'share_importer.dart';
@@ -88,7 +89,7 @@ class ShareContextSync extends _$ShareContextSync {
       colorScheme: ref.watch(colorSchemeControllerProvider),
       style: ref.watch(appStyleControllerProvider),
       customTheme: ref.watch(customThemeControllerProvider),
-      tags: sortTagsByName(tags.where((tag) => !tag.isDeleted)),
+      tags: sortTagsByPlace(tags.where((tag) => !tag.isDeleted)),
     );
     _throttle?.cancel();
     _throttle = Timer(const Duration(milliseconds: 300), () => _write(context));

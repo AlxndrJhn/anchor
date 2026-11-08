@@ -10,12 +10,7 @@ import { SkeletonRows } from "@/components/ui/skeleton";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
 import { cn } from "@/lib/utils";
 import type { Tag } from "../types";
-import {
-  compareTagNames,
-  nextTagColor,
-  sortTagsByName,
-  tagColorStyle,
-} from "../utils";
+import { nextTagColor, orderTags, tagColorStyle } from "../utils";
 
 export type TagCheckState = boolean | "mixed";
 
@@ -50,7 +45,7 @@ export function TagPicker({
   const listId = React.useId();
   const term = query.trim();
   const lowerTerm = term.toLowerCase();
-  const sorted = React.useMemo(() => sortTagsByName(tags), [tags]);
+  const sorted = React.useMemo(() => orderTags(tags), [tags]);
   const matches = sorted.filter((t) =>
     t.name.toLowerCase().includes(lowerTerm),
   );
@@ -70,10 +65,11 @@ export function TagPicker({
     setCreating(false);
     setQuery("");
     if (created) {
-      const at = sorted.findIndex(
-        (t) => compareTagNames(t.name, created.name) >= 0,
-      );
-      setActive(at < 0 ? sorted.length : at);
+      const withCreated = orderTags([
+        ...tags.filter((t) => t.id !== created.id),
+        created,
+      ]);
+      setActive(withCreated.findIndex((t) => t.id === created.id));
     }
   };
 
