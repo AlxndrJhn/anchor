@@ -8,7 +8,7 @@ plugins {
 }
 
 // Fork builds (ORG_GRADLE_PROJECT_anchorFork=true) are named Anchor+. Every
-// build is com.alxndrjhn.anchorplus, so none clashes with the official app.
+// build is com.alxndrjhn.anchorplus.
 val isForkBuild = (project.findProperty("anchorFork") as String?) == "true"
 
 val keystoreProperties = Properties()

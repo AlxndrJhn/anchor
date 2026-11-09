@@ -29,8 +29,7 @@
 #   DOMAIN       serve https://DOMAIN, with Caddy on ports 80 and 443. sslip.io or nip.io:
 #                a free hostname for the server's IP (<ip>.sslip.io), found
 #                again on every run, so it follows a new IP
-#   PORT         without DOMAIN, the port Anchor listens on (default 3001, so the
-#                original Anchor can keep 3000)
+#   PORT         without DOMAIN, the port Anchor listens on (default 3001)
 #   ANCHOR_TAG   the image tag, e.g. fork-preview or fork-0.17.2.36
 #                (default fork-latest)
 #   ANCHOR_DIR   where it lives (default /opt/anchor)
@@ -468,7 +467,7 @@ OLD_VOLUME=
 move_to_own_name() {
   local compose="$ANCHOR_DIR/docker-compose.yml" new=anchor-plus_anchor_plus_data
   [ -f "$compose" ] && grep -qx 'name: anchor' "$compose" || return 0
-  log "Moving Anchor+ to its own names (anchor-plus), so it can run next to the original Anchor..."
+  log "Moving Anchor+ to its own names (anchor-plus)..."
   (cd "$ANCHOR_DIR" && docker compose down)
   OLD_VOLUME=$(docker volume ls -q \
     --filter label=com.docker.compose.project=anchor \

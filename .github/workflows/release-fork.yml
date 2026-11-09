@@ -174,7 +174,7 @@ jobs:
       run:
         working-directory: mobile
     env:
-      # Installs as "Anchor+" next to the official app.
+      # Installs as "Anchor+".
       ORG_GRADLE_PROJECT_anchorFork: "true"
     steps:
       - name: Checkout repository
@@ -409,7 +409,7 @@ jobs:
             echo "## Android"
             echo
             if ls anchor-fork*.apk >/dev/null 2>&1; then
-              echo 'Install `anchor-fork.apk`. It installs as "Anchor+", next to the official app, and updates the previous fork build.'
+              echo 'Install `anchor-fork.apk`. It installs as "Anchor+" and updates the previous build.'
               echo
               echo 'It is for 64-bit ARM, which nearly every phone since 2017 is. For an older 32-bit phone take `anchor-fork-armeabi-v7a.apk`; for an emulator or x86 tablet, `anchor-fork-x86_64.apk`.'
             else

@@ -10,7 +10,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/AlxndrJhn/anchor-plus/pkgs/container/anchor)
 
-Anchor focuses on speed, privacy, simplicity, and reliability across mobile and web. Notes are stored locally, editable offline, and synced across devices when online.
+Anchor+ focuses on speed, privacy, simplicity, and reliability across mobile and web. Notes are stored locally, editable offline, and synced across devices when online.
 
 </div>
 
@@ -33,12 +33,9 @@ Actions"; the workflow is `.github/workflows/pages.yml`, and
 `BASE_PATH=/anchor-plus pnpm build:pages` (in `web/`) builds the same site into
 `web/out`.
 
-## Anchor+ vs Anchor
+## Feature Details
 
-Anchor+ began as a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor)
-and has been developed separately since November 2026, so it no longer follows
-that project's changes or promises to work with its servers. These are the
-differences as of then. "Web" and "Android" say where each one is available.
+"Web" and "Android" say where each one is available.
 
 | | Web | Android |
 |---|:---:|:---:|
@@ -52,15 +49,15 @@ differences as of then. "Web" and "Android" say where each one is available.
 | Make a note invisible: it stays out of your lists and only a search finds it; filter by "Invisible" to list them | ✓ | ✓ |
 | Send a note to other apps as text (checklists as ☐/☑) | ✓ | ✓ |
 | Change the colour of many selected notes at once | ✓ | ✓ |
-| Tick checklist items straight from the notes list ([#70](https://github.com/ZhFahim/anchor/issues/70)) | ✓ | ✓ |
+| Tick checklist items straight from the notes list | ✓ | ✓ |
 | Show checkboxes / Hide checkboxes, Untick all, Delete ticked items | ✓ | ✓ |
 | A new note opens with the cursor in its text | ✓ | ✓ |
-| Delete without a confirmation, with Undo instead | (upstream) | ✓ |
+| Delete without a confirmation, with Undo instead | ✓ | ✓ |
 | Archive a note without a confirmation: the archive button gets a dot, as the pin does, and archiving unpins | | ✓ |
 | A new note can be pinned or archived before anything is written in it | | ✓ |
-| Pinned and Others headings in the notes list | (upstream) | ✓ |
-| Option to hide pictures on note cards ([#177](https://github.com/ZhFahim/anchor/issues/177)) | ✓ | ✓ |
-| Empty the trash in one go | (upstream) | ✓ |
+| Pinned and Others headings in the notes list | ✓ | ✓ |
+| Option to hide pictures on note cards | ✓ | ✓ |
+| Empty the trash in one go | ✓ | ✓ |
 | Merge selected notes into the first one picked (Select notes › More), with Undo | | ✓ |
 | Cards say Today and Yesterday, and add the year to dates from other years | | ✓ |
 | Larger checkboxes on cards; ticking one no longer jolts the list | | ✓ |
@@ -70,10 +67,10 @@ differences as of then. "Web" and "Android" say where each one is available.
 | Search finds the text in pictures (screenshots, receipts), read on the server | ✓ | ✓ |
 | Opt-in: find notes by what their pictures show ("Katzen", "receipt"), in most languages, on your server | ✓ | ✓ |
 | With that on, an opened picture can show what it depicts as tags (English or German); a tag searches for it | ✓ | ✓ |
-| Search also finds archived notes; Archive and Trash can be searched ([#190](https://github.com/ZhFahim/anchor/issues/190)) | ✓ | ✓ |
-| The searched words are marked in the note you open ([#134](https://github.com/ZhFahim/anchor/issues/134)) | ✓ | ✓ |
-| The search is kept when you come back from a note ([#206](https://github.com/ZhFahim/anchor/issues/206)) | ✓ | ✓ |
-| Tag counts include archived notes, and a tag lists them ([#114](https://github.com/ZhFahim/anchor/issues/114)) | ✓ | ✓ |
+| Search also finds archived notes; Archive and Trash can be searched | ✓ | ✓ |
+| The searched words are marked in the note you open | ✓ | ✓ |
+| The search is kept when you come back from a note | ✓ | ✓ |
+| Tag counts include archived notes, and a tag lists them | ✓ | ✓ |
 | Tags can be put in any order by dragging their handle; the order syncs | ✓ | ✓ |
 | A tag's colour can be changed from its menu | ✓ | ✓ |
 | Text colour, font (serif, monospace, Comic Sans, handwriting, typewriter, rounded, slab, marker) and highlights in any colour, picked or preset | ✓ | ✓ |
@@ -90,13 +87,13 @@ differences as of then. "Web" and "Android" say where each one is available.
 | Add image, Take picture and Take several (one picture after another, without going back to the note) in an opened note's menu | | ✓ |
 | Camera and pictures buttons left of the text styles put pictures in the text at the caret; drag a picture's corner to resize it, hold it to retake, crop, mirror, caption or delete it (web: a picture button, a corner that shows on hover, and right-click to replace, crop, mirror, caption or delete) | ✓ | ✓ |
 | Live images: put a camera or a screen of this computer in a note (toolbar, or `/live`), or the phone's camera (Add › Live camera), with or without the microphone, and every device that opens the note shows it live, straight from that one while Anchor is open there. Resize and crop it on the web; mute the microphone while it's live; viewers turn the sound on themselves and see how many watch. A tap spins the red dot into an anchor; a double tap keeps a still in the note's attachments, named for the moment it was taken. Trashing the note stops them at once, and a restored note's live images stay off until turned on again | ✓ | ✓ (camera) |
-| Download pictures and recordings ([#164](https://github.com/ZhFahim/anchor/issues/164)) | | ✓ |
-| Share to Anchor from other apps: text, links, pictures, files ([#52](https://github.com/ZhFahim/anchor/issues/52)) | | ✓ |
+| Download pictures and recordings | | ✓ |
+| Share to Anchor from other apps: text, links, pictures, files | | ✓ |
 | **History** | | |
 | Each version shows its added (+) and removed (−) lines | ✓ | ✓ |
 | **Offline** | | |
 | Works without a server from the first start: notes stay on the device, and Settings › Connect to a server adds one later, moving them into the account at sign in (desktop: File › Connect to a server…) | | ✓ |
-| Open, edit and create notes without a connection, even after a reload; changes sync when back online ([#202](https://github.com/ZhFahim/anchor/issues/202)) | ✓ | (upstream) |
+| Open, edit and create notes without a connection, even after a reload; changes sync when back online | ✓ | ✓ |
 | Back up every note, tag, picture and recording to a .zip file, and restore one: missing notes come back and sync up, notes already there are left alone (Settings › Backup) | | ✓ |
 | **Reminders** | | |
 | Done button on the reminder notification | | ✓ |
@@ -107,7 +104,7 @@ differences as of then. "Web" and "Android" say where each one is available.
 | Styles: Skeuomorphism, Neo-Brutalism and Lo-fi | ✓ | ✓ |
 | A skeuomorphic app icon everywhere: Android (adaptive and themed), iOS, the splash screens, the in-app logo, the web app and its home-screen icons | ✓ | ✓ |
 | **Getting around** | | |
-| Google Keep keyboard shortcuts ([#201](https://github.com/ZhFahim/anchor/issues/201)) | ✓ | |
+| Google Keep keyboard shortcuts | ✓ | |
 | Tab (web) or Next (Android) in the title goes to the note text | ✓ | ✓ |
 | Insert today's date ("Oct 28th 2026"): type /date (then Enter on the web, a space or Enter on Android); on the web also Ctrl+; (or a shortcut of your own), Ctrl+Shift+; for the date and time, and a choice of "2026-10-28" instead (Settings › Editor) | ✓ | ✓ |
 | Long-press the app icon: New note, New checklist | | ✓ |
@@ -116,10 +113,10 @@ differences as of then. "Web" and "Android" say where each one is available.
 | Sign in on your phone without a password: the web's Settings › Sign in on your phone shows a QR code to scan from the app's first screen, or copies a magic link that opens the app and signs in (each works once, within 10 minutes) | ✓ | ✓ |
 | Sign in with a passkey (fingerprint, face, screen lock or security key), and turn password sign-in off once you have one (Settings › Sign-in security; needs https) | ✓ | |
 | Two-step sign-in with an authenticator app (Aegis, Google Authenticator, 1Password…), with ten one-time recovery codes; the Android app asks for the code too | ✓ | ✓ |
-| Updates itself from this fork's GitHub releases (Settings › Updates) | | ✓ |
+| Updates itself from its GitHub releases (Settings › Updates) | | ✓ |
 | Install and update it with F-Droid, from releases or also release candidates ([F-Droid](#f-droid)) | | ✓ |
 | A new note gets the tag the list is filtered by | | ✓ |
-| Back no longer closes the app by accident ([#136](https://github.com/ZhFahim/anchor/issues/136)); with a tag or filter on, it first shows all notes again | | ✓ |
+| Back doesn't close the app by accident; with a tag or filter on, it first shows all notes again | | ✓ |
 | A chevron back to the top, two screens down the notes list | | ✓ |
 | Starts faster: settings are read in one go while the splash shows | | ✓ |
 | Debug mode: hold two fingers still for 3 s to film the app and its state, mark problems on a timeline and file them as a GitHub issue (see [mobile/README.md](mobile/README.md#debug-reports)) | | ✓ |
@@ -127,12 +124,7 @@ differences as of then. "Web" and "Android" say where each one is available.
 | Back up the whole server with one command and restore it with another, onto a fresh or newer server (see [Backing Up the Server](#backing-up-the-server)), and every day with borgmatic ([how](#backing-up-with-borgmatic)) | ✓ | |
 | Install the server with one command on a small Linux server, such as a free tier one, with HTTPS for your domain or a free hostname (see [One-Line Install on a Small Server](#one-line-install-on-a-small-server)) | ✓ | |
 | Claude, and other apps that speak MCP, can search, read and write your notes through your server (see [Claude (MCP)](#claude-mcp)) | ✓ | |
-| **Fixes** | | |
-| Copying and saving the logs on Android ([#187](https://github.com/ZhFahim/anchor/issues/187), [#188](https://github.com/ZhFahim/anchor/issues/188)) | | ✓ |
-| The notes list can scroll to the end with pinned notes and pictures | | ✓ |
-| Next.js upgraded to 16.4.3 for security fixes | ✓ | |
 | **Releases** | | |
-| Running the "Release (fork)" workflow on `main` makes a release with the APK and a multi-arch Docker image (see [This Fork's Image](#this-forks-image)); the APK installs as "Anchor+" next to the official app | ✓ | ✓ |
 | A desktop app for Windows and macOS: your server's web client in its own window, in every release, that updates itself (see [Desktop App](#desktop-app)) | ✓ | |
 
 ### Custom themes
@@ -200,25 +192,6 @@ colour, is refused with a message naming the key and what is wrong with it
 changes until the JSON is fixed. The keys are the fields of the built-in
 schemes in `design/schemes/schemes.json`; the parsers are
 `web/lib/design/custom-theme.ts` and `mobile/lib/core/theme/custom_theme.dart`.
-
-## Switching from Anchor
-
-Anchor+ runs next to the original, from its own folder; your notes move over
-in a backup.
-
-1. **Back up.** Open the Anchor Android app once online so it syncs, then in
-   Anchor's web app download Settings › Import and export › Export ›
-   **Anchor backup (.zip)**. Each account exports its own notes.
-2. **Start Anchor+** in its own folder with
-   [`docker-compose.yml`](docker-compose.yml) or the
-   [one-line install](#one-line-install-on-a-small-server). It uses its own
-   container, volume and port 3001, so both servers run side by side.
-3. **Import** the zip in Anchor+'s web app under Settings › Import and
-   export › Import. Shared notes arrive as your own copies.
-4. **Android:** install Anchor+ next to the official app and sign in to the
-   Anchor+ server. App settings and widgets don't come along.
-
-The original keeps its notes, but notes changed in Anchor+ don't go back to it.
 
 ## Features
 
@@ -420,8 +393,7 @@ The [desktop app](#desktop-app) installs with winget too.
    `docker compose down -v` deletes the volume.
 
    The container and the volume are named `anchor-plus` and
-   `anchor_plus_data`, not `anchor` and `anchor_data` like the original
-   Anchor's, so both can run on one server (on different ports). A
+   `anchor_plus_data`. A
    `docker-compose.yml` from before that still names them `anchor`; to move
    to the new names, back up with the old file, change it, and restore:
 
@@ -443,7 +415,7 @@ The image moved from `ghcr.io/alxndrjhn/anchor` to `ghcr.io/alxndrjhn/anchor-plu
 in November 2026, when the repository was renamed. The old name gets no more
 releases, so set `image:` in your `docker-compose.yml` to the new one.
 
-Every release of this fork is named `fork-<version>.<build>` and publishes a
+Every release is named `fork-<version>.<build>` and publishes a
 multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 
 | Tag | What it is |
@@ -452,9 +424,6 @@ multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 | `ghcr.io/alxndrjhn/anchor-plus:fork-<version>.<build>` | One release, e.g. `fork-0.17.2.36`, to stay on it |
 | `ghcr.io/alxndrjhn/anchor-plus:fork-<commit>` | The build of one commit |
 | `ghcr.io/alxndrjhn/anchor-plus:fork-preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
-
-To move your notes from the original project's image to Anchor+, see
-[Switching from Anchor](#switching-from-anchor).
 
 ### Option 2: Building from Source
 
@@ -474,7 +443,7 @@ If you want to build from source or customize the image:
    ```
 
    `--build` builds the image from your checkout; without it, the
-   `docker-compose.yml` file pulls this fork's released image.
+   `docker-compose.yml` file pulls the released image.
 
 ### Resetting a Password
 
@@ -638,7 +607,7 @@ Added one before November 2026? The address changed when the repository was
 renamed, so remove the old repository in F-Droid and add the new one. The key
 is the same, and F-Droid updates the installed app as before.
 
-This fork has two F-Droid repositories, on its GitHub Pages site. Open
+Anchor+ has two F-Droid repositories, on its GitHub Pages site. Open
 **[alxndrjhn.github.io/anchor-plus/fdroid](https://alxndrjhn.github.io/anchor-plus/fdroid/)**
 on your phone and tap the one you want, or add its address in F-Droid under
 Settings › Repositories › +:
@@ -681,7 +650,7 @@ which keeps the notes on this computer, as
    ```
 
    It installs for you alone; add `--scope machine` to install it for every
-   user of the PC. Or download it from this fork's
+   user of the PC. Or download it from its
    [releases page](https://github.com/AlxndrJhn/anchor-plus/releases):
    - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
