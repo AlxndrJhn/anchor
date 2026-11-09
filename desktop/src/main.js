@@ -640,14 +640,14 @@ function changeServer() {
   showSetup({ canRetry: true });
 }
 
-// Release candidates: only when asked for, and the server runs the fork's
-// preview image (ghcr.io/<owner>/anchor-plus:fork-preview).
+// Release candidates: only when asked for, and the server runs the preview
+// image (ghcr.io/<owner>/anchor-plus:preview).
 async function wantsCandidates() {
   if (!settings.previewReleases || !settings.serverUrl) return false;
   const server = await checkServer(settings.serverUrl, {
     headers: headersFor(savedHeaders, settings.serverUrl),
   });
-  return server.ok && Boolean(server.image?.endsWith(":fork-preview"));
+  return server.ok && Boolean(server.image?.endsWith(":preview"));
 }
 
 function setPreviewReleases(on) {

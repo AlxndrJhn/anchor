@@ -1,9 +1,9 @@
 import 'dart:ffi' show Abi;
 
-/// This build's number in the fork's releases (the CI run that built it), and
-/// the GitHub repository it updates from. Set by the release workflow; a
-/// build without them (local, upstream) doesn't update itself.
-const installedBuild = int.fromEnvironment('FORK_BUILD');
+/// This build's number in the releases (the CI run that built it), and the
+/// GitHub repository it updates from. Set by the release workflow; a build
+/// without them (local, F-Droid) doesn't update itself.
+const installedBuild = int.fromEnvironment('RELEASE_BUILD');
 const updateRepository = String.fromEnvironment('UPDATE_REPO');
 
 /// The APK in a release for this phone's processor.
@@ -11,13 +11,13 @@ String apkAssetForThisPhone() => apkAssetFor(Abi.current());
 
 /// The APK in a release for a processor.
 String apkAssetFor(Abi abi) => switch (abi) {
-  Abi.androidArm => 'anchor-fork-armeabi-v7a.apk',
-  Abi.androidX64 => 'anchor-fork-x86_64.apk',
-  _ => 'anchor-fork.apk',
+  Abi.androidArm => 'anchor-plus-armeabi-v7a.apk',
+  Abi.androidX64 => 'anchor-plus-x86_64.apk',
+  _ => 'anchor-plus.apk',
 };
 
 /// F-Droid and the F-Droid clients, which keep an Anchor+ installed from the
-/// fork's F-Droid repositories up to date themselves.
+/// project's F-Droid repositories up to date themselves.
 const fdroidClients = {
   'org.fdroid.fdroid',
   'org.fdroid.basic',
@@ -29,15 +29,15 @@ const fdroidClients = {
 /// Whether the app that installed this one is an F-Droid client.
 bool isFdroidClient(String? installer) => fdroidClients.contains(installer);
 
-/// Whether a server's image is the fork's preview one, whose users may get
-/// release candidates.
+/// Whether a server's image is the preview one, whose users may get release
+/// candidates.
 bool isPreviewImage(String? image) =>
-    image != null && image.endsWith(':fork-preview');
+    image != null && image.endsWith(':preview');
 
-/// The build number in a release tag: `fork-0.17.2.22` is build 22.
+/// The build number in a release tag: `v0.18.0.81` is build 81.
 int? buildOfTag(String tag) {
-  if (!tag.startsWith('fork-')) return null;
-  return int.tryParse(tag.substring(tag.lastIndexOf('.') + 1));
+  final match = RegExp(r'^v\d+\.\d+\.\d+\.(\d+)$').firstMatch(tag);
+  return match == null ? null : int.parse(match.group(1)!);
 }
 
 /// A newer release than the installed build, with what changed since it.

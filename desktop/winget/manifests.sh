@@ -4,7 +4,7 @@
 # microsoft/winget-pkgs (wingetcreate submit); `winget validate` checks them.
 #
 #   desktop/winget/manifests.sh <version> <tag> <repository> <installer> <out dir>
-#   desktop/winget/manifests.sh 0.18.0.71 fork-0.18.0.71 AlxndrJhn/anchor-plus \
+#   desktop/winget/manifests.sh 0.18.0.81 v0.18.0.81 AlxndrJhn/anchor-plus \
 #     Anchor-Setup-0.18.0.exe manifests
 #
 # <version> is the build's: the installer names it in Apps & features

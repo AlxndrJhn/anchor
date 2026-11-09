@@ -4,7 +4,7 @@ const REPOSITORY = "https://github.com/AlxndrJhn/anchor-plus";
 
 /** A release, e.g. 0.18.0.80, has a tag; any other build points at main. */
 const refOf = (version?: string) =>
-  version && /^\d+\.\d+\.\d+\.\d+$/.test(version) ? `fork-${version}` : "main";
+  version && /^\d+\.\d+\.\d+\.\d+$/.test(version) ? `v${version}` : "main";
 
 export const sourceCodeUrl = (version?: string) =>
   `${REPOSITORY}/tree/${refOf(version)}`;

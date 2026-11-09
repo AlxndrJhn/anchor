@@ -7,7 +7,7 @@ name: GitHub Pages
 #           it), and a demo of each feature, e.g. /demo/freeze
 #   /fdroid/ the Android app's F-Droid repositories, one with the releases
 #           and one with release candidates too (.github/fdroid/build-repos.sh)
-# Run by each release and release candidate (release-fork.yml), or by hand.
+# Run by each release and release candidate (release.yml), or by hand.
 # Needs Settings › Pages › Source set to "GitHub Actions", and for F-Droid the
 # FDROID_KEYSTORE_BASE64 and FDROID_KEYSTORE_PASSWORD secrets: a PKCS12
 # keystore with the key "fdroid", which signs the repositories' index. Keep

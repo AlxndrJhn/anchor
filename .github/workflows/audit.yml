@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:fork-latest" >> "$GITHUB_ENV"
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> "$GITHUB_ENV"
 
       # Same settings as the build's scan in docker-build.yml.
       - name: Scan published image

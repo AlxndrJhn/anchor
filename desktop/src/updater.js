@@ -1,11 +1,11 @@
-// Updates the desktop app from this fork's GitHub releases, as the Android
-// app does: every release is tagged fork-<version>.<build>, and a build newer
+// Updates the desktop app from the GitHub releases, as the Android app does:
+// every release is tagged v<version>.<build>, and a build newer
 // than this one is downloaded in the background. Once it is ready, onReady
 // fires; install() quits, installs it and starts the new version.
 //
 // Release candidates (GitHub prereleases) are only taken when
 // wantsCandidates() says so: "Receive Preview Releases" is on and the server
-// runs the fork's :fork-preview image.
+// runs the :preview image.
 //
 // The release workflow writes the build number and repository into
 // package.json (anchorBuild, anchorUpdateRepo); a build without them (local,
@@ -27,11 +27,10 @@ const CHECK_EVERY_MS = 4 * 60 * 60 * 1000;
 const installedBuild = Number.parseInt(pkg.anchorBuild, 10) || 0;
 const repository = typeof pkg.anchorUpdateRepo === "string" ? pkg.anchorUpdateRepo : "";
 
-/** The build number in a release tag: `fork-0.17.2.22` is build 22. */
+/** The build number in a release tag: `v0.18.0.81` is build 81. */
 function buildOfTag(tag) {
-  if (typeof tag !== "string" || !tag.startsWith("fork-")) return null;
-  const build = Number.parseInt(tag.slice(tag.lastIndexOf(".") + 1), 10);
-  return Number.isFinite(build) ? build : null;
+  const match = typeof tag === "string" ? /^v\d+\.\d+\.\d+\.(\d+)$/.exec(tag) : null;
+  return match ? Number.parseInt(match[1], 10) : null;
 }
 
 /** This platform's installer among a release's assets. */
@@ -145,7 +144,7 @@ function startUpdater({ onReady, openExternal, wantsCandidates = async () => fal
   }
 
   function current() {
-    return ready ? { version: ready.tag.replace(/^fork-/, "") } : null;
+    return ready ? { version: ready.tag.replace(/^v/, "") } : null;
   }
 
   function install() {

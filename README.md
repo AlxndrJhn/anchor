@@ -8,7 +8,7 @@
 
 [![Version](https://img.shields.io/github/v/release/AlxndrJhn/anchor-plus?label=version&style=for-the-badge)](https://github.com/AlxndrJhn/anchor-plus/releases)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/AlxndrJhn/anchor-plus/pkgs/container/anchor)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/AlxndrJhn/anchor-plus/pkgs/container/anchor-plus)
 
 Anchor+ focuses on speed, privacy, simplicity, and reliability across mobile and web. Notes are stored locally, editable offline, and synced across devices when online.
 
@@ -287,7 +287,7 @@ App installer can then give Anchor+ its own window and launcher.
 Running the same command again updates Anchor and keeps the notes and the
 domain. `PORT` is the port Anchor listens on without a domain, e.g.
 `PORT=8080`; `DOMAIN=` (empty) goes back to plain HTTP;
-`ANCHOR_TAG=fork-preview` follows the release candidates.
+`ANCHOR_TAG=preview` follows the release candidates.
 Anchor's own settings (see the table below) go in `/opt/anchor/anchor.env`,
 followed by `docker compose up -d` in `/opt/anchor`.
 
@@ -329,7 +329,7 @@ The [desktop app](#desktop-app) installs with winget too.
    ```yaml
    services:
      anchor-plus:
-       image: ghcr.io/alxndrjhn/anchor-plus:fork-latest
+       image: ghcr.io/alxndrjhn/anchor-plus:latest
        container_name: anchor-plus
        restart: unless-stopped
        ports:
@@ -415,15 +415,20 @@ The image moved from `ghcr.io/alxndrjhn/anchor` to `ghcr.io/alxndrjhn/anchor-plu
 in November 2026, when the repository was renamed. The old name gets no more
 releases, so set `image:` in your `docker-compose.yml` to the new one.
 
-Every release is named `fork-<version>.<build>` and publishes a
+Every release is named `v<version>.<build>` and publishes a
 multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 
 | Tag | What it is |
 |-----|------------|
-| `ghcr.io/alxndrjhn/anchor-plus:fork-latest` | The newest release |
-| `ghcr.io/alxndrjhn/anchor-plus:fork-<version>.<build>` | One release, e.g. `fork-0.17.2.36`, to stay on it |
-| `ghcr.io/alxndrjhn/anchor-plus:fork-<commit>` | The build of one commit |
-| `ghcr.io/alxndrjhn/anchor-plus:fork-preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
+| `ghcr.io/alxndrjhn/anchor-plus:latest` | The newest release |
+| `ghcr.io/alxndrjhn/anchor-plus:v<version>.<build>` | One release, e.g. `v0.18.0.81`, to stay on it |
+| `ghcr.io/alxndrjhn/anchor-plus:sha-<commit>` | The build of one commit |
+| `ghcr.io/alxndrjhn/anchor-plus:preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
+
+Releases up to `fork-0.18.0.80` were named `fork-<version>.<build>`, with the
+images `:fork-latest`, `:fork-preview` and `:fork-<commit>`. `:fork-latest`
+and `:fork-preview` still follow `:latest` and `:preview` for now, but will
+stop, so move `image:` to the new tags.
 
 ### Option 2: Building from Source
 
@@ -588,9 +593,9 @@ Download the Android mobile app.
 
 2. **Download the latest release:**
    Each release has one APK per kind of phone:
-   - **`anchor-fork.apk`** - 64-bit ARM, for nearly every phone
-   - **`anchor-fork-armeabi-v7a.apk`** - older 32-bit ARM phones
-   - **`anchor-fork-x86_64.apk`** - emulators and x86 devices
+   - **`anchor-plus.apk`** - 64-bit ARM, for nearly every phone
+   - **`anchor-plus-armeabi-v7a.apk`** - older 32-bit ARM phones
+   - **`anchor-plus-x86_64.apk`** - emulators and x86 devices
 
    Once installed, the app finds and installs new releases itself
    (Settings › Updates).
@@ -811,7 +816,7 @@ Configure OIDC via environment variables in your `docker-compose.yml`. Pocket ID
 ```yaml
 services:
   anchor-plus:
-    image: ghcr.io/alxndrjhn/anchor-plus:fork-latest
+    image: ghcr.io/alxndrjhn/anchor-plus:latest
     environment:
       - OIDC_ENABLED=true
       - OIDC_PROVIDER_NAME=Pocket ID

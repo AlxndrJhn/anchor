@@ -82,7 +82,7 @@ class _AnchorAppState extends ConsumerState<AnchorApp>
     ref.watch(homeWidgetSyncProvider);
     ref.watch(homeWidgetLaunchHandlerProvider);
     ref.watch(magicLinkHandlerProvider);
-    // Look for a newer release of the fork when the app starts.
+    // Look for a newer release when the app starts.
     ref.watch(updateControllerProvider);
     ref.watch(reminderSchedulerProvider);
     // Picks up reminders set elsewhere while the app is closed.

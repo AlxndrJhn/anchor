@@ -4,7 +4,7 @@ import { licenseUrl, sourceCodeUrl } from "./source-code";
 describe("sourceCodeUrl", () => {
   it("points a release at its tag", () => {
     expect(sourceCodeUrl("0.18.0.80")).toBe(
-      "https://github.com/AlxndrJhn/anchor-plus/tree/fork-0.18.0.80",
+      "https://github.com/AlxndrJhn/anchor-plus/tree/v0.18.0.80",
     );
   });
 
@@ -20,7 +20,7 @@ describe("sourceCodeUrl", () => {
 describe("licenseUrl", () => {
   it("follows the same version", () => {
     expect(licenseUrl("0.18.0.80")).toBe(
-      "https://github.com/AlxndrJhn/anchor-plus/blob/fork-0.18.0.80/LICENSE",
+      "https://github.com/AlxndrJhn/anchor-plus/blob/v0.18.0.80/LICENSE",
     );
   });
 });

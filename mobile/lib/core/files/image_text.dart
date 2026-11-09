@@ -10,7 +10,7 @@ import '../logging/app_logger.dart';
 import 'image_text_reader.dart';
 
 /// Whether "Grab image text" can run here: ML Kit reads on the phone, and
-/// the fork ships it on Android, but not in the F-Droid build.
+/// Anchor+ ships it on Android, but not in the F-Droid build.
 bool get canReadImageText =>
     hasImageTextReader && defaultTargetPlatform == TargetPlatform.android;
 

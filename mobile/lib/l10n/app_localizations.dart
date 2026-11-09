@@ -1546,7 +1546,7 @@ abstract class AppLocalizations {
   /// **'Couldn’t sign out your other devices'**
   String get settingsSignOutOthersFailed;
 
-  /// Section label in Settings for this fork's updates from its GitHub releases (Android release builds only).
+  /// Section label in Settings for the app's updates from its GitHub releases (Android release builds only).
   ///
   /// In en, this message translates to:
   /// **'Updates'**
@@ -1588,10 +1588,10 @@ abstract class AppLocalizations {
   /// **'Receive preview releases'**
   String get settingsPreviewReleases;
 
-  /// Help under the Receive preview releases switch: candidates are only offered when the server runs the fork's preview Docker image (ghcr.io/…/anchor:fork-preview).
+  /// Help under the Receive preview releases switch: candidates are only offered when the server runs the preview Docker image (ghcr.io/…/anchor-plus:preview).
   ///
   /// In en, this message translates to:
-  /// **'Release candidates, when your server runs the :fork-preview image'**
+  /// **'Release candidates, when your server runs the :preview image'**
   String get settingsPreviewReleasesHelp;
 
   /// Section label in Settings for search options. Shown only when the server offers picture search.

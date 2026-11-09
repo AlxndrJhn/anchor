@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the fork's two F-Droid repositories from the APKs attached to its
+# Builds the two Anchor+ F-Droid repositories from the APKs attached to its
 # GitHub releases, into $1 (the Pages site):
 #   fdroid/repo          releases
 #   fdroid/preview/repo  releases and release candidates, whichever is newer
@@ -20,8 +20,11 @@ WORK=$(mktemp -d)
 KEEP=2
 
 echo "$FDROID_KEYSTORE_BASE64" | base64 -d > "$WORK/keystore.p12"
+# Releases from before the rename have their APKs as anchor-fork*.apk. The
+# bridge copies, which repeat a release under its old tag, are left out.
 RELEASES=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=50" \
-  --jq '[.[] | select((.draft | not) and any(.assets[]; .name == "anchor-fork.apk"))]')
+  --jq '[.[] | select((.draft | not) and (.name // "" | endswith("(bridge)") | not) and
+    any(.assets[]; .name == "anchor-plus.apk" or .name == "anchor-fork.apk"))]')
 
 # $1: the repository's directory under the site, $2: its name, $3: whether it
 # has release candidates.
@@ -35,7 +38,7 @@ build() {
 repo_url: $SITE_URL/$path/repo
 repo_name: $name
 repo_description: >-
-  Anchor+, a fork of the Anchor notes app, from
+  Anchor+, an offline first notes app, from
   https://github.com/$GITHUB_REPOSITORY. The APKs are the ones attached to its
   GitHub releases.
 archive_older: 0
@@ -55,13 +58,14 @@ EOF
     # Releases are in both repositories: download each once.
     if [ -z "$(ls -A "$WORK/apks/$tag")" ]; then
       gh release download "$tag" --repo "$GITHUB_REPOSITORY" \
-        --pattern 'anchor-fork*.apk' --dir "$WORK/apks/$tag"
+        --pattern 'anchor-plus*.apk' --pattern 'anchor-fork*.apk' --dir "$WORK/apks/$tag"
     fi
     local apk
     for apk in "$WORK/apks/$tag"/*.apk; do
-      # One name per file in the repository: anchor-fork-0.18.0.67-x86_64.apk
+      # One name per file in the repository: anchor-v0.18.0.81-x86_64.apk
       local abi
       abi=$(basename "$apk" .apk)
+      abi=${abi#anchor-plus}
       abi=${abi#anchor-fork}
       cp "$apk" "$dir/repo/anchor-$tag${abi:--arm64-v8a}.apk"
     done

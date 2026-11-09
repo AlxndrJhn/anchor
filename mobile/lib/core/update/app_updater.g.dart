@@ -50,17 +50,17 @@ final class UpdateSourceProvider
 
 String _$updateSourceHash() => r'85c799a70f86ac0d2f12a30a1711297c2f7e8fcf';
 
-/// This build's number in the fork's releases.
+/// This build's number in the releases.
 
 @ProviderFor(installedBuildNumber)
 final installedBuildNumberProvider = InstalledBuildNumberProvider._();
 
-/// This build's number in the fork's releases.
+/// This build's number in the releases.
 
 final class InstalledBuildNumberProvider
     extends $FunctionalProvider<int, int, int>
     with $Provider<int> {
-  /// This build's number in the fork's releases.
+  /// This build's number in the releases.
   InstalledBuildNumberProvider._()
     : super(
         from: null,
@@ -97,19 +97,19 @@ final class InstalledBuildNumberProvider
 String _$installedBuildNumberHash() =>
     r'79a915a614372430471f40ce5a9823647e32d03e';
 
-/// Whether the server runs the fork's preview image, so release candidates
+/// Whether the server runs the preview image, so release candidates
 /// may be offered.
 
 @ProviderFor(onPreviewServer)
 final onPreviewServerProvider = OnPreviewServerProvider._();
 
-/// Whether the server runs the fork's preview image, so release candidates
+/// Whether the server runs the preview image, so release candidates
 /// may be offered.
 
 final class OnPreviewServerProvider
     extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
     with $FutureModifier<bool>, $FutureProvider<bool> {
-  /// Whether the server runs the fork's preview image, so release candidates
+  /// Whether the server runs the preview image, so release candidates
   /// may be offered.
   OnPreviewServerProvider._()
     : super(
@@ -138,15 +138,15 @@ final class OnPreviewServerProvider
 
 String _$onPreviewServerHash() => r'c0c6473e6f7940859aa49954768cf2bf7dc72a06';
 
-/// Finds, downloads and installs newer releases of the fork from GitHub.
+/// Finds, downloads and installs newer releases from GitHub.
 
 @ProviderFor(UpdateController)
 final updateControllerProvider = UpdateControllerProvider._();
 
-/// Finds, downloads and installs newer releases of the fork from GitHub.
+/// Finds, downloads and installs newer releases from GitHub.
 final class UpdateControllerProvider
     extends $NotifierProvider<UpdateController, UpdateState> {
-  /// Finds, downloads and installs newer releases of the fork from GitHub.
+  /// Finds, downloads and installs newer releases from GitHub.
   UpdateControllerProvider._()
     : super(
         from: null,
@@ -176,7 +176,7 @@ final class UpdateControllerProvider
 
 String _$updateControllerHash() => r'3b670a07d20b0c3e656146c2b2699ea86a75c0b0';
 
-/// Finds, downloads and installs newer releases of the fork from GitHub.
+/// Finds, downloads and installs newer releases from GitHub.
 
 abstract class _$UpdateController extends $Notifier<UpdateState> {
   UpdateState build();

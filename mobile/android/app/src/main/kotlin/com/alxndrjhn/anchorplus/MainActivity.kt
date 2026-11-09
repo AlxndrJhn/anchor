@@ -45,8 +45,8 @@ class MainActivity : FlutterFragmentActivity() {
 
     /**
      * The launcher's long-press menu: New note and New checklist. They are
-     * dynamic so they target whichever package this is (the fork's id
-     * differs), and launch like the widget's buttons, which home_widget
+     * dynamic so they target whichever package this is (it has changed
+     * before), and launch like the widget's buttons, which home_widget
      * hands to the Flutter side on both cold and warm starts.
      */
     private fun publishShortcuts() {

@@ -10,7 +10,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 /**
- * Opens Android's installer with an update of the fork downloaded from its
+ * Opens Android's installer with an update of Anchor+ downloaded from its
  * releases. Android asks the user to confirm, and the first time to let
  * Anchor install apps. Also tells which app installed Anchor+ (F-Droid
  * updates it itself).

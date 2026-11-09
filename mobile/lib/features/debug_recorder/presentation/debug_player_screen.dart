@@ -33,7 +33,7 @@ import '../data/debug_report.dart';
 import '../data/debug_video_encoder.dart';
 import '../data/mp4_muxer.dart';
 
-/// Where debug reports are filed: the fork this build updates from.
+/// Where debug reports are filed: the repository this build updates from.
 String get debugReportRepository =>
     updateRepository.isEmpty ? 'AlxndrJhn/anchor-plus' : updateRepository;
 
@@ -150,7 +150,7 @@ class _DebugPlayerScreenState extends State<DebugPlayerScreen>
       'package': info.packageName,
       'version': info.version,
       'build': info.buildNumber,
-      'fork_build': installedBuild,
+      'release_build': installedBuild,
       'repository': debugReportRepository,
     };
     final device = <String, Object?>{
@@ -224,7 +224,7 @@ class _DebugPlayerScreenState extends State<DebugPlayerScreen>
         filename: name,
         appVersion:
             '${info.version}+${info.buildNumber}'
-            '${installedBuild > 0 ? ' (fork build $installedBuild)' : ''}',
+            '${installedBuild > 0 ? ' (build $installedBuild)' : ''}',
       );
       final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
       if (!mounted) return;

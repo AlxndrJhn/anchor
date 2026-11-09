@@ -94,7 +94,7 @@ class PreferencesRepository {
   Future<void> _writeIds(String key, List<String> ids) =>
       _storage.write(key: key, value: jsonEncode(ids));
 
-  /// Whether the app looks for a newer release of the fork when it starts.
+  /// Whether the app looks for a newer release when it starts.
   Future<bool> getCheckForUpdates() async {
     final value = await _read(StorageKeys.checkForUpdates);
     return value != 'false';
