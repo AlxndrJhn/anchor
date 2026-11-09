@@ -7,7 +7,7 @@
 appId: io.github.alxndrjhn.anchor
 productName: Anchor+
 executableName: Anchor+
-copyright: Anchor contributors, AGPL-3.0
+copyright: The Anchor and Anchor+ contributors, AGPL-3.0
 directories:
   output: dist
 files:

@@ -1386,7 +1386,7 @@
   },
   "settingsHelp": "Help",
   "@settingsHelp": {
-    "description": "Section label in Settings for logs and supporting the developer."
+    "description": "Section label in Settings for logs, the source code and the license."
   },
   "settingsLogs": "Logs",
   "@settingsLogs": {
@@ -1396,13 +1396,21 @@
   "@settingsLogsHelp": {
     "description": "Under the Logs row in Settings."
   },
-  "settingsSupport": "Donate to the original creator",
-  "@settingsSupport": {
-    "description": "Row in Settings that opens a web page to donate to the original author of Anchor (this app, Anchor+, is a fork of it)."
+  "settingsSourceCode": "Source code",
+  "@settingsSourceCode": {
+    "description": "Row in Settings that opens the source code of this version of the app on GitHub."
   },
-  "settingsSupportHelp": "Buy Anchor’s author a coffee; Anchor+ builds on their work",
-  "@settingsSupportHelp": {
-    "description": "Under the Donate to the original creator row: a small donation to the author of Anchor, which Anchor+ builds on."
+  "settingsSourceCodeHelp": "Free software under the GNU AGPL v3, with no warranty",
+  "@settingsSourceCodeHelp": {
+    "description": "Under the Source code row: the legal notice the app's license asks for."
+  },
+  "settingsLicense": "License",
+  "@settingsLicense": {
+    "description": "Row in Settings that opens the text of the app's license."
+  },
+  "settingsLicenseHelp": "© The Anchor and Anchor+ contributors",
+  "@settingsLicenseHelp": {
+    "description": "Under the License row: the copyright notice."
   },
   "settingsOffline": "Offline. Changes are saved on this phone.",
   "@settingsOffline": {

@@ -13,6 +13,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../app/router/app_routes.dart';
 import '../../../core/files/save_to_device.dart';
 import '../../../core/links/link_utils.dart';
+import '../../../core/links/source_code.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/log_tags.dart';
 import '../../../core/motion/haptics.dart';
@@ -137,7 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _AccountSection(user: user),
               gap,
               if (canSelfUpdate) ...[const _UpdatesSection(), gap],
-              const _HelpSection(),
+              _HelpSection(version: _version),
               _About(version: _version),
             ],
           ),
@@ -1207,12 +1208,19 @@ class _BackupSectionState extends ConsumerState<_BackupSection> {
 }
 
 class _HelpSection extends StatelessWidget {
-  const _HelpSection();
+  const _HelpSection({required this.version});
+
+  final String version;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final l10n = context.l10n;
+    final opensOutside = Icon(
+      LucideIcons.arrowUpRight,
+      size: AnchorTokens.sizeIconSmall,
+      color: colors.appMuted.withValues(alpha: 0.7),
+    );
     return Section(
       label: l10n.settingsHelp,
       child: GroupedList(
@@ -1225,16 +1233,18 @@ class _HelpSection extends StatelessWidget {
             onTap: () => context.push(AppRoutes.logs),
           ),
           GroupedListTile(
-            icon: LucideIcons.coffee,
-            label: l10n.settingsSupport,
-            subtitle: l10n.settingsSupportHelp,
-            trailing: Icon(
-              LucideIcons.arrowUpRight,
-              size: AnchorTokens.sizeIconSmall,
-              color: colors.appMuted.withValues(alpha: 0.7),
-            ),
-            onTap: () =>
-                launchExternal(context, 'https://www.buymeacoffee.com/zahid'),
+            icon: LucideIcons.code,
+            label: l10n.settingsSourceCode,
+            subtitle: l10n.settingsSourceCodeHelp,
+            trailing: opensOutside,
+            onTap: () => launchExternal(context, sourceCodeUrl(version)),
+          ),
+          GroupedListTile(
+            icon: LucideIcons.scale,
+            label: l10n.settingsLicense,
+            subtitle: l10n.settingsLicenseHelp,
+            trailing: opensOutside,
+            onTap: () => launchExternal(context, licenseUrl(version)),
           ),
         ],
       ),

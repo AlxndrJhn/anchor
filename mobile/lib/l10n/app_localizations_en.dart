@@ -991,11 +991,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogsHelp => 'Activity details for troubleshooting';
 
   @override
-  String get settingsSupport => 'Donate to the original creator';
+  String get settingsSourceCode => 'Source code';
 
   @override
-  String get settingsSupportHelp =>
-      'Buy Anchor’s author a coffee; Anchor+ builds on their work';
+  String get settingsSourceCodeHelp =>
+      'Free software under the GNU AGPL v3, with no warranty';
+
+  @override
+  String get settingsLicense => 'License';
+
+  @override
+  String get settingsLicenseHelp => '© The Anchor and Anchor+ contributors';
 
   @override
   String get settingsOffline => 'Offline. Changes are saved on this phone.';

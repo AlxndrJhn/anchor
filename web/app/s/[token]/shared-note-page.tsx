@@ -17,6 +17,7 @@ import Delta, { type Op } from "quill-delta";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Brand } from "@/components/layout/brand";
 import { ErrorScreen } from "@/components/layout/error-screen";
+import { LegalNotice } from "@/components/layout/legal-notice";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import {
@@ -367,6 +368,7 @@ function SharedNoteEditor({
                 onRemoteContent={remoteContent}
               />
             </div>
+            <LegalNotice className="mt-8 pb-4 text-note-muted" />
           </div>
         </div>
       </article>
@@ -519,6 +521,9 @@ function Screen({ children }: { children: React.ReactNode }) {
       <main className="flex flex-1 items-center justify-center">
         {children}
       </main>
+      <footer className="p-4 text-center">
+        <LegalNotice />
+      </footer>
     </div>
   );
 }

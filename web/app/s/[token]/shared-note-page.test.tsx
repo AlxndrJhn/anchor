@@ -174,3 +174,14 @@ describe("saving on a share link page", () => {
     expect(body()?.value).toBe("milk and eggs");
   });
 });
+
+describe("the notices on a share link page", () => {
+  it("says where the source is, for visitors without an account", async () => {
+    await open();
+    const source = [...document.querySelectorAll("a")].find(
+      (a) => a.textContent === "Source code",
+    );
+    expect(source?.href).toContain("github.com/AlxndrJhn/anchor-plus/tree/");
+    expect(document.body.textContent).toContain("GNU AGPL");
+  });
+});

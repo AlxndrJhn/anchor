@@ -2,6 +2,7 @@
 
 import { AnchorLogo } from "@/components/layout/anchor-logo";
 import { AppPage, PageTitle } from "@/components/layout/app-page";
+import { LegalNotice } from "@/components/layout/legal-notice";
 import {
   ApiTokenSection,
   AppearanceSection,
@@ -76,6 +77,9 @@ export default function SettingsPage() {
                   )}
                 </div>
               </div>
+            </Row>
+            <Row>
+              <LegalNotice />
             </Row>
           </Section>
         </div>

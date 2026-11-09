@@ -23,6 +23,8 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { headersError, headersFor, isToServer } = require("./headers");
 const { startUpdater } = require("./updater");
+const { REPOSITORY, sourceCodeUrl, licenseUrl } = require("./legal");
+const { anchorBuild } = require("../package.json");
 const { allowScreenSharing } = require("./screen-picker");
 
 // The name the window, menu and About panel show, and the settings folder's.
@@ -738,6 +740,19 @@ function buildMenu() {
       ],
     },
     { role: "windowMenu" },
+    {
+      role: "help",
+      submenu: [
+        {
+          label: "Source Code",
+          click: () => openExternal(sourceCodeUrl(app.getVersion(), anchorBuild)),
+        },
+        {
+          label: "License (GNU AGPL v3, No Warranty)",
+          click: () => openExternal(licenseUrl(app.getVersion(), anchorBuild)),
+        },
+      ],
+    },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
@@ -760,7 +775,12 @@ if (!app.requestSingleInstanceLock()) {
     sendHeaders(session.defaultSession);
     // For live images: a screen or window shown in a note.
     allowScreenSharing(session.defaultSession, () => mainWindow);
-    app.setAboutPanelOptions({ applicationName: APP_NAME, applicationVersion: app.getVersion() });
+    app.setAboutPanelOptions({
+      applicationName: APP_NAME,
+      applicationVersion: app.getVersion(),
+      copyright: "© The Anchor and Anchor+ contributors. GNU AGPL v3, no warranty.",
+      website: REPOSITORY,
+    });
     buildMenu();
     createWindow();
     start();

@@ -3,6 +3,7 @@
 import { Paperclip, Users } from "lucide-react";
 import * as React from "react";
 import { Brand } from "@/components/layout/brand";
+import { LegalNotice } from "@/components/layout/legal-notice";
 import { NoteBody } from "@/features/notes/components/note-body";
 import { ReminderChip } from "@/features/notes/components/reminder-chip";
 import type { NoteBlock } from "@/features/notes/note-blocks";
@@ -343,6 +344,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <div className="grid w-[min(360px,100%)] gap-5">
           <Brand className="justify-self-start" isBurstOnShow />
           {children}
+          <LegalNotice />
         </div>
       </main>
       <div

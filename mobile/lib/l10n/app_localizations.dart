@@ -1708,7 +1708,7 @@ abstract class AppLocalizations {
   /// **'Anchor is up to date'**
   String get updateUpToDate;
 
-  /// Section label in Settings for logs and supporting the developer.
+  /// Section label in Settings for logs, the source code and the license.
   ///
   /// In en, this message translates to:
   /// **'Help'**
@@ -1726,17 +1726,29 @@ abstract class AppLocalizations {
   /// **'Activity details for troubleshooting'**
   String get settingsLogsHelp;
 
-  /// Row in Settings that opens a web page to donate to the original author of Anchor (this app, Anchor+, is a fork of it).
+  /// Row in Settings that opens the source code of this version of the app on GitHub.
   ///
   /// In en, this message translates to:
-  /// **'Donate to the original creator'**
-  String get settingsSupport;
+  /// **'Source code'**
+  String get settingsSourceCode;
 
-  /// Under the Donate to the original creator row: a small donation to the author of Anchor, which Anchor+ builds on.
+  /// Under the Source code row: the legal notice the app's license asks for.
   ///
   /// In en, this message translates to:
-  /// **'Buy Anchor’s author a coffee; Anchor+ builds on their work'**
-  String get settingsSupportHelp;
+  /// **'Free software under the GNU AGPL v3, with no warranty'**
+  String get settingsSourceCodeHelp;
+
+  /// Row in Settings that opens the text of the app's license.
+  ///
+  /// In en, this message translates to:
+  /// **'License'**
+  String get settingsLicense;
+
+  /// Under the License row: the copyright notice.
+  ///
+  /// In en, this message translates to:
+  /// **'© The Anchor and Anchor+ contributors'**
+  String get settingsLicenseHelp;
 
   /// Small line at the bottom of Settings while the phone is offline.
   ///
