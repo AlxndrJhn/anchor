@@ -5,7 +5,7 @@
   "description": "Anchor+ for Windows and macOS: your own Anchor server's web client in a window",
   "license": "AGPL-3.0",
   "author": "Anchor+",
-  "homepage": "https://github.com/AlxndrJhn/anchor",
+  "homepage": "https://github.com/AlxndrJhn/anchor-plus",
   "private": true,
   "main": "src/main.js",
   "packageManager": "pnpm@12.16.1",

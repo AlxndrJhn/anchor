@@ -3,7 +3,7 @@
 # `backup` makes them. For borgmatic 2.0 or later. Put it on the server, as
 # root (see "Backing Up with borgmatic" in the README):
 #
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/borgmatic.yaml -o /etc/borgmatic.d/anchor.yaml
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/borgmatic.yaml -o /etc/borgmatic.d/anchor.yaml
 #
 # then set the repository and the passphrase below.
 

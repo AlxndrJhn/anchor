@@ -10,7 +10,7 @@ candidate. The user asking is the go-ahead; don't ask again.
 
 A candidate is a GitHub prerelease tagged `fork-<version>.<run>`, with the
 APKs and desktop installers that changed, and the Docker image pushed as
-`ghcr.io/alxndrjhn/anchor:fork-preview` (not `:fork-latest`). The apps only
+`ghcr.io/alxndrjhn/anchor-plus:fork-preview` (not `:fork-latest`). The apps only
 offer it when "Receive preview releases" is on in their settings (Android:
 Settings › Updates; desktop: File / Anchor+ menu › Receive Preview Releases)
 and their server runs the `:fork-preview` image, which says so in
@@ -22,17 +22,17 @@ and their server runs the `:fork-preview` image, which says so in
 2. Start it:
 
    ```bash
-   gh workflow run release-fork.yml --repo AlxndrJhn/anchor --ref main -f candidate=true
+   gh workflow run release-fork.yml --repo AlxndrJhn/anchor-plus --ref main -f candidate=true
    ```
 
 3. Find the run and give the user its link:
 
    ```bash
-   gh run list --repo AlxndrJhn/anchor --workflow release-fork.yml --limit 1 --json url,status,createdAt
+   gh run list --repo AlxndrJhn/anchor-plus --workflow release-fork.yml --limit 1 --json url,status,createdAt
    ```
 
 Don't wait for or poll the run; it takes about 30–45 minutes. If the user
-asks later, `gh run view <id> --repo AlxndrJhn/anchor` shows how it went, and
+asks later, `gh run view <id> --repo AlxndrJhn/anchor-plus` shows how it went, and
 the release appears under Releases marked "Pre-release", titled
 "Anchor+ fork-… (release candidate)".
 

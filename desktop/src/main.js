@@ -639,7 +639,7 @@ function changeServer() {
 }
 
 // Release candidates: only when asked for, and the server runs the fork's
-// preview image (ghcr.io/<owner>/anchor:fork-preview).
+// preview image (ghcr.io/<owner>/anchor-plus:fork-preview).
 async function wantsCandidates() {
   if (!settings.previewReleases || !settings.serverUrl) return false;
   const server = await checkServer(settings.serverUrl, {

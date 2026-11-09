@@ -14,7 +14,7 @@ class ServerInfo {
   final List<int> protocols;
 
   /// The Docker image the server runs from, when it says
-  /// (`ghcr.io/<owner>/anchor:fork-preview` for the fork's preview servers).
+  /// (`ghcr.io/<owner>/anchor-plus:fork-preview` for the fork's preview servers).
   final String? image;
 
   ServerInfo({

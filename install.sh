@@ -8,17 +8,17 @@
 # Rocky/Alma/RHEL, Fedora, Amazon Linux or Arch server (amd64 or arm64), or
 # on a Linux desktop such as Omarchy, with the port Anchor listens on:
 #
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3001 bash
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo PORT=3001 bash
 #
 # With a domain whose DNS already points at the server, Anchor gets HTTPS
 # (a Let's Encrypt certificate, through Caddy) on ports 80 and 443:
 #
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=notes.example.com bash
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo DOMAIN=notes.example.com bash
 #
 # Without a domain of your own, DOMAIN=sslip.io takes a free hostname that
 # maps to the server's IP, e.g. 203-0-113-7.sslip.io, and gets HTTPS for it:
 #
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=sslip.io bash
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo DOMAIN=sslip.io bash
 #
 # It installs Docker if it's missing, adds swap when the server has less than
 # 2 GB of memory, opens the port in the server's own firewall, and runs
@@ -41,7 +41,7 @@
 # its notes, its images, ANCHOR_DIR, its firewall rules, its swap and the
 # borgmatic configuration from the README (Docker stays):
 #
-#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo UNINSTALL=1 bash
+#   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo UNINSTALL=1 bash
 #
 #   BACKUP_FILE  where the backup goes (default ~/anchor-backup-<date>.tar)
 #   BACKUP=no    no backup
@@ -331,7 +331,7 @@ name: anchor-plus
 
 services:
   anchor-plus:
-    image: ghcr.io/alxndrjhn/anchor:\${ANCHOR_TAG}
+    image: ghcr.io/alxndrjhn/anchor-plus:\${ANCHOR_TAG}
     container_name: anchor-plus
     restart: unless-stopped
     # Time to shut Postgres down cleanly
@@ -480,12 +480,12 @@ move_to_own_name() {
     --label com.docker.compose.volume=anchor_plus_data \
     "$new" >/dev/null
   docker run --rm -v "$OLD_VOLUME:/from:ro" -v "$new:/to" --entrypoint cp \
-    "ghcr.io/alxndrjhn/anchor:$ANCHOR_TAG" -a /from/. /to/
+    "ghcr.io/alxndrjhn/anchor-plus:$ANCHOR_TAG" -a /from/. /to/
 }
 
 start_anchor() {
   cd "$ANCHOR_DIR"
-  log "Downloading Anchor (ghcr.io/alxndrjhn/anchor:$ANCHOR_TAG)..."
+  log "Downloading Anchor (ghcr.io/alxndrjhn/anchor-plus:$ANCHOR_TAG)..."
   docker compose pull -q
   log "Starting Anchor..."
   docker compose up -d --remove-orphans
@@ -551,7 +551,7 @@ report() {
   echo "  Update later:  run the same command again"
   echo "  Settings:      $ENV_FILE, then: cd $ANCHOR_DIR && docker compose up -d"
   echo "  Backup:        cd $ANCHOR_DIR && docker compose exec -T anchor-plus backup > anchor-backup-\$(date +%F).tar"
-  echo "  Daily backups: with borgmatic, see https://github.com/AlxndrJhn/anchor#backing-up-with-borgmatic"
+  echo "  Daily backups: with borgmatic, see https://github.com/AlxndrJhn/anchor-plus#backing-up-with-borgmatic"
   echo
   if [ -n "$OLD_VOLUME" ]; then
     echo "  The notes were copied to a new volume. Once you've checked that"
@@ -655,7 +655,8 @@ uninstall() {
   docker compose down --volumes --remove-orphans
   # Its images, and earlier releases' ones; one something else uses stays
   # shellcheck disable=SC2046
-  for image in $images $(docker image ls -q ghcr.io/alxndrjhn/anchor); do
+  for image in $images $(docker image ls -q ghcr.io/alxndrjhn/anchor-plus) \
+    $(docker image ls -q ghcr.io/alxndrjhn/anchor); do
     docker image rm "$image" >/dev/null 2>&1 || true
   done
 

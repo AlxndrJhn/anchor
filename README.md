@@ -1,17 +1,14 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor/main/web/public/icons/anchor_icon.png" alt="Anchor+" width="120" height="120">
+<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/web/public/icons/anchor_icon.png" alt="Anchor+" width="120" height="120">
 
 # Anchor+
 
 **An offline first, self hostable note taking application**
 
-[![Version](https://img.shields.io/github/v/release/AlxndrJhn/anchor?label=version&style=for-the-badge)](https://github.com/AlxndrJhn/anchor/releases)
+[![Version](https://img.shields.io/github/v/release/AlxndrJhn/anchor-plus?label=version&style=for-the-badge)](https://github.com/AlxndrJhn/anchor-plus/releases)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/AlxndrJhn/anchor/pkgs/container/anchor)
-[![Discord](https://img.shields.io/discord/1487830114795257906?label=Discord&style=for-the-badge)](https://discord.gg/sAfqjy8EYK)
-
-<a href="https://trendshift.io/repositories/18646" target="_blank"><img src="https://trendshift.io/api/badge/repositories/18646" alt="ZhFahim%2Fanchor | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/AlxndrJhn/anchor-plus/pkgs/container/anchor)
 
 Anchor focuses on speed, privacy, simplicity, and reliability across mobile and web. Notes are stored locally, editable offline, and synced across devices when online.
 
@@ -21,26 +18,27 @@ Anchor focuses on speed, privacy, simplicity, and reliability across mobile and 
 
 Each release also publishes the web app on GitHub Pages, without a server:
 
-- **[alxndrjhn.github.io/anchor](https://alxndrjhn.github.io/anchor/)**: the
+- **[alxndrjhn.github.io/anchor-plus](https://alxndrjhn.github.io/anchor-plus/)**: the
   app itself. Your notes, tags and pictures stay in this browser (IndexedDB)
   and never leave it; Settings › Import and export backs them up.
-- **[alxndrjhn.github.io/anchor/demo](https://alxndrjhn.github.io/anchor/demo/)**:
+- **[alxndrjhn.github.io/anchor-plus/demo](https://alxndrjhn.github.io/anchor-plus/demo/)**:
   a playground with sample notes, kept in memory only: a reload starts it
   over. Feature demos, in the sidebar, plays a short demo of each feature, after
   which it's yours to try; each has its own address, such as
-  [/demo/freeze](https://alxndrjhn.github.io/anchor/demo/freeze).
+  [/demo/freeze](https://alxndrjhn.github.io/anchor-plus/demo/freeze).
 
 Without a server there is no syncing, sharing, sign-in, API token or picture
 search. To publish your own copy, set Settings › Pages › Source to "GitHub
 Actions"; the workflow is `.github/workflows/pages.yml`, and
-`BASE_PATH=/anchor pnpm build:pages` (in `web/`) builds the same site into
+`BASE_PATH=/anchor-plus pnpm build:pages` (in `web/`) builds the same site into
 `web/out`.
 
 ## Anchor+ vs Anchor
 
-Anchor+ is a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor), kept up
-to date with it, and works with any Anchor server. Everything upstream does,
-Anchor+ does too; these are the differences. "Web" and "Android" say where each one is available.
+Anchor+ began as a fork of [ZhFahim/anchor](https://github.com/ZhFahim/anchor)
+and has been developed separately since November 2026, so it no longer follows
+that project's changes or promises to work with its servers. These are the
+differences as of then. "Web" and "Android" say where each one is available.
 
 | | Web | Android |
 |---|:---:|:---:|
@@ -220,8 +218,7 @@ in a backup.
 4. **Android:** install Anchor+ next to the official app and sign in to the
    Anchor+ server. App settings and widgets don't come along.
 
-The original keeps its notes, so you can go back any time (see
-[Switching Back to Anchor](#switching-back-to-anchor)).
+The original keeps its notes, but notes changed in Anchor+ don't go back to it.
 
 ## Features
 
@@ -249,15 +246,15 @@ The original keeps its notes, so you can go back any time (see
 ### Web App
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-web-light.png" alt="Web Light Mode" width="45%">
-  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-web-dark.png" alt="Web Dark Mode" width="45%">
+  <img src=".github/assets/screenshot-web-light.png" alt="Web Light Mode" width="45%">
+  <img src=".github/assets/screenshot-web-dark.png" alt="Web Dark Mode" width="45%">
 </div>
 
 ### Mobile App
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-mobile-light.png" alt="Mobile Light Mode" width="20%">
-  <img src="https://raw.githubusercontent.com/zhfahim/anchor/main/.github/assets/screenshot-mobile-dark.png" alt="Mobile Dark Mode" width="20%">
+  <img src=".github/assets/screenshot-mobile-light.png" alt="Mobile Light Mode" width="20%">
+  <img src=".github/assets/screenshot-mobile-dark.png" alt="Mobile Dark Mode" width="20%">
 </div>
 
 ## Self Hosting With Docker
@@ -269,14 +266,14 @@ E2.1.Micro and Ampere A1, AWS t2/t3/t4g.micro, Google Cloud's e2-micro, a 1 GB
 VPS), one command, run over SSH, sets up everything:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo PORT=3001 bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo PORT=3001 bash
 ```
 
 With a domain whose DNS points at the server, Anchor gets HTTPS (a Let's
 Encrypt certificate, through Caddy) on ports 80 and 443:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=notes.example.com bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo DOMAIN=notes.example.com bash
 ```
 
 Without a domain of your own, `DOMAIN=sslip.io` takes a free hostname that
@@ -284,7 +281,7 @@ maps to the server's IP, such as `203-0-113-7.sslip.io` for `203.0.113.7`
 (from [sslip.io](https://sslip.io)), and gets HTTPS for it the same way:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo DOMAIN=sslip.io bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo DOMAIN=sslip.io bash
 ```
 
 The script finds the IP again on every run, so if the server gets a new one,
@@ -324,7 +321,7 @@ followed by `docker compose up -d` in `/opt/anchor`.
 To uninstall, run the same line with `UNINSTALL=1`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/install.sh | sudo UNINSTALL=1 bash
+curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/install.sh | sudo UNINSTALL=1 bash
 ```
 
 It lists what it will take away and offers a backup first, to
@@ -359,7 +356,7 @@ The [desktop app](#desktop-app) installs with winget too.
    ```yaml
    services:
      anchor-plus:
-       image: ghcr.io/alxndrjhn/anchor:fork-latest
+       image: ghcr.io/alxndrjhn/anchor-plus:fork-latest
        container_name: anchor-plus
        restart: unless-stopped
        ports:
@@ -442,21 +439,22 @@ The [desktop app](#desktop-app) installs with winget too.
 
 ### Image Tags
 
+The image moved from `ghcr.io/alxndrjhn/anchor` to `ghcr.io/alxndrjhn/anchor-plus`
+in November 2026, when the repository was renamed. The old name gets no more
+releases, so set `image:` in your `docker-compose.yml` to the new one.
+
 Every release of this fork is named `fork-<version>.<build>` and publishes a
 multi-arch image (amd64 and arm64, so it runs on a Raspberry Pi 5):
 
 | Tag | What it is |
 |-----|------------|
-| `ghcr.io/alxndrjhn/anchor:fork-latest` | The newest release |
-| `ghcr.io/alxndrjhn/anchor:fork-<version>.<build>` | One release, e.g. `fork-0.17.2.36`, to stay on it |
-| `ghcr.io/alxndrjhn/anchor:fork-<commit>` | The build of one commit |
-| `ghcr.io/alxndrjhn/anchor:fork-preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
+| `ghcr.io/alxndrjhn/anchor-plus:fork-latest` | The newest release |
+| `ghcr.io/alxndrjhn/anchor-plus:fork-<version>.<build>` | One release, e.g. `fork-0.17.2.36`, to stay on it |
+| `ghcr.io/alxndrjhn/anchor-plus:fork-<commit>` | The build of one commit |
+| `ghcr.io/alxndrjhn/anchor-plus:fork-preview` | The newest release candidate, or release if newer. With it, apps that have *Receive preview releases* on in their settings also update to release candidates |
 
-The original project's image is `ghcr.io/zhfahim/anchor:latest`; it has none
-of this fork's changes. To move your notes from it to Anchor+, see
-[Switching from Anchor](#switching-from-anchor). A server can also go back
-to it and return later, keeping every note (see
-[Switching Back to Anchor](#switching-back-to-anchor)).
+To move your notes from the original project's image to Anchor+, see
+[Switching from Anchor](#switching-from-anchor).
 
 ### Option 2: Building from Source
 
@@ -465,7 +463,7 @@ If you want to build from source or customize the image:
 1. **Clone the project:**
 
    ```bash
-   git clone https://github.com/AlxndrJhn/anchor.git
+   git clone https://github.com/AlxndrJhn/anchor-plus.git
    cd anchor
    ```
 
@@ -543,7 +541,7 @@ it needs (borgmatic 2.0 or later). As root on the server:
 
    ```bash
    mkdir -p /etc/borgmatic.d
-   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor/main/borgmatic.yaml -o /etc/borgmatic.d/anchor.yaml
+   curl -fsSL https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/borgmatic.yaml -o /etc/borgmatic.d/anchor.yaml
    chmod 600 /etc/borgmatic.d/anchor.yaml
    nano /etc/borgmatic.d/anchor.yaml
    ```
@@ -574,38 +572,6 @@ borgmatic extract --archive latest --path var/backups/anchor/anchor-backup.tar -
 docker exec -i anchor-plus restore < /tmp/anchor-restore/var/backups/anchor/anchor-backup.tar
 rm -rf /tmp/anchor-restore
 ```
-
-### Switching Back to Anchor
-
-A server can go back to the original Anchor image and come back to Anchor+
-later without losing a note. What only Anchor+ has stays in the database,
-unused by the original, and works again on switching back; changes made in
-between come along. Each change of this fork's is tested this way, and the
-original's newest image is tried every week.
-
-First see what works differently until you return (files attached, locked,
-invisible and frozen notes, share links, formatting the original can't
-show):
-
-```bash
-docker compose exec anchor-plus switch-check
-```
-
-Then:
-
-1. Let every app sync: changes a device hasn't sent yet stay on it.
-2. Back up: `docker compose exec -T anchor-plus backup > anchor-backup-$(date +%F).tar`
-3. Set `image:` in `docker-compose.yml` to `ghcr.io/zhfahim/anchor:latest`,
-   then `docker compose up -d`.
-4. On Android, install the original app; it installs next to Anchor+. Sign
-   in, check your notes are there, then uninstall Anchor+.
-5. In each browser, clear the site's data once its notes have synced, so
-   Anchor+'s offline copy of the web app makes way for the original.
-
-To return, set the image back to `ghcr.io/alxndrjhn/anchor:fork-latest`.
-Editing a note in the original removes what it can't show (text colours,
-fonts, custom highlights, pictures placed in the text), and that stays
-removed.
 
 ### Monitoring the Server
 
@@ -647,7 +613,7 @@ the same way.
 Download the Android mobile app.
 
 1. **Visit the releases page:**
-   Go to [GitHub Releases](https://github.com/AlxndrJhn/anchor/releases).
+   Go to [GitHub Releases](https://github.com/AlxndrJhn/anchor-plus/releases).
    A release that changed nothing for Android has no APK; its notes link to
    the release with the current one.
 
@@ -668,15 +634,19 @@ never synced stay only in it.
 
 ### F-Droid
 
+Added one before November 2026? The address changed when the repository was
+renamed, so remove the old repository in F-Droid and add the new one. The key
+is the same, and F-Droid updates the installed app as before.
+
 This fork has two F-Droid repositories, on its GitHub Pages site. Open
-**[alxndrjhn.github.io/anchor/fdroid](https://alxndrjhn.github.io/anchor/fdroid/)**
+**[alxndrjhn.github.io/anchor-plus/fdroid](https://alxndrjhn.github.io/anchor-plus/fdroid/)**
 on your phone and tap the one you want, or add its address in F-Droid under
 Settings › Repositories › +:
 
 | Repository | Has |
 |---|---|
-| **Anchor+** (`…/anchor/fdroid/repo`) | The releases |
-| **Anchor+ preview** (`…/anchor/fdroid/preview/repo`) | The releases and release candidates, whichever is newer |
+| **Anchor+** (`…/anchor-plus/fdroid/repo`) | The releases |
+| **Anchor+ preview** (`…/anchor-plus/fdroid/preview/repo`) | The releases and release candidates, whichever is newer |
 
 Both are signed with the key whose SHA-256 fingerprint is
 `fa9401f1622731a89771e284c7b9df7676e55eab79fb5c6c009e3f2c9f873f24`; the links
@@ -712,7 +682,7 @@ which keeps the notes on this computer, as
 
    It installs for you alone; add `--scope machine` to install it for every
    user of the PC. Or download it from this fork's
-   [releases page](https://github.com/AlxndrJhn/anchor/releases):
+   [releases page](https://github.com/AlxndrJhn/anchor-plus/releases):
    - **Windows:** `Anchor-Setup-<version>.exe` (64-bit)
    - **macOS:** `Anchor-<version>-universal.dmg` (Apple silicon and Intel);
      open it and drag Anchor+ to Applications
@@ -872,7 +842,7 @@ Configure OIDC via environment variables in your `docker-compose.yml`. Pocket ID
 ```yaml
 services:
   anchor-plus:
-    image: ghcr.io/alxndrjhn/anchor:fork-latest
+    image: ghcr.io/alxndrjhn/anchor-plus:fork-latest
     environment:
       - OIDC_ENABLED=true
       - OIDC_PROVIDER_NAME=Pocket ID
@@ -1001,16 +971,6 @@ git config core.hooksPath .githooks
 
 Before committing, fix issues with `pnpm check:fix` in the relevant project.
 
-### Database migrations
-
-A server has to be able to [switch back to Anchor](#switching-back-to-anchor),
-so this fork's migrations make tables of their own and only add optional (or
-defaulted) columns to the original's tables: no new values in its enums, no
-renamed or dropped columns. CI checks it with
-`cd server && node scripts/check-migrations.mjs upstream/main` (after
-`git fetch upstream`), and `sh docker/test-switch-back.sh <image>` tries a
-real switch and back.
-
 ### Design tokens
 
 The web app's colors, text sizes, spacing, corners, shadows and motion live in
@@ -1026,12 +986,10 @@ node design/build/build.mjs
 
 CI runs it with `--check` and fails if the built files are out of date.
 
-## Support
-
-If you find Anchor useful, consider supporting its development:
-
-[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="60">](https://www.buymeacoffee.com/zahid)
-
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL v3) - see the [LICENSE](LICENSE) file for details.
+
+Anchor+ is a modified version of [Anchor](https://github.com/ZhFahim/anchor) by
+ZhFahim and its contributors, also AGPL v3, and has been developed separately
+from it since November 2026.

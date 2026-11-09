@@ -23,7 +23,7 @@ void main() {
 
   test('fills in a new issue with the problems', () {
     final url = debugIssueUrl(
-      repo: 'AlxndrJhn/anchor',
+      repo: 'AlxndrJhn/anchor-plus',
       startedAt: startedAt,
       problems: const [
         DebugProblem(7100, 'Saved'),
@@ -33,7 +33,7 @@ void main() {
       appVersion: '0.17.2+22',
     );
     expect(url.host, 'github.com');
-    expect(url.path, '/AlxndrJhn/anchor/issues/new');
+    expect(url.path, '/AlxndrJhn/anchor-plus/issues/new');
     expect(url.queryParameters['title'], 'Debug report 2026-10-28T14:03:22Z');
     final body = url.queryParameters['body']!;
     expect(

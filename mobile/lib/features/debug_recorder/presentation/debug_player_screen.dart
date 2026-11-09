@@ -35,7 +35,7 @@ import '../data/mp4_muxer.dart';
 
 /// Where debug reports are filed: the fork this build updates from.
 String get debugReportRepository =>
-    updateRepository.isEmpty ? 'AlxndrJhn/anchor' : updateRepository;
+    updateRepository.isEmpty ? 'AlxndrJhn/anchor-plus' : updateRepository;
 
 const _tag = 'DebugRecorder';
 

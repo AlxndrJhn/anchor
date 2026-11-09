@@ -1,5 +1,5 @@
 // The feature demos of the demo build: each opens at /<slug> (on GitHub
-// Pages, /anchor/demo/<slug>), loads its own notes and plays its steps.
+// Pages, /anchor-plus/demo/<slug>), loads its own notes and plays its steps.
 
 import {
   caretToEnd,

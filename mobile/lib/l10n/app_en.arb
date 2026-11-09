@@ -1248,7 +1248,7 @@
       },
       "repository": {
         "type": "String",
-        "example": "AlxndrJhn/anchor"
+        "example": "AlxndrJhn/anchor-plus"
       }
     }
   },

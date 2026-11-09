@@ -75,7 +75,7 @@ export const features: Feature[] = [
     needs: "Needs the desktop app",
     link: {
       label: "Download the latest release",
-      href: "https://github.com/AlxndrJhn/anchor/releases/latest",
+      href: "https://github.com/AlxndrJhn/anchor-plus/releases/latest",
     },
   },
 ];

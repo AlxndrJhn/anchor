@@ -3,10 +3,10 @@ Categories:
   - Writing
 License: AGPL-3.0-only
 AuthorName: AlxndrJhn
-WebSite: https://github.com/AlxndrJhn/anchor
-SourceCode: https://github.com/AlxndrJhn/anchor
-IssueTracker: https://github.com/AlxndrJhn/anchor/issues
-Changelog: https://github.com/AlxndrJhn/anchor/releases
+WebSite: https://github.com/AlxndrJhn/anchor-plus
+SourceCode: https://github.com/AlxndrJhn/anchor-plus
+IssueTracker: https://github.com/AlxndrJhn/anchor-plus/issues
+Changelog: https://github.com/AlxndrJhn/anchor-plus/releases
 
 Name: Anchor+
 Summary: Offline first notes, synced with your own Anchor server
@@ -22,7 +22,7 @@ Description: |-
   Google's ML Kit.
 
 RepoType: git
-Repo: https://github.com/AlxndrJhn/anchor.git
+Repo: https://github.com/AlxndrJhn/anchor-plus.git
 
 Builds:
   - versionName: 0.18.0-fork.c275a4e

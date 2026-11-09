@@ -1,5 +1,5 @@
 /** Where the Anchor+ Android app is released, with its APK for most phones. */
-export const RELEASES_REPO = "AlxndrJhn/anchor";
+export const RELEASES_REPO = "AlxndrJhn/anchor-plus";
 export const APK_ASSET = "anchor-fork.apk";
 
 /** Works without asking GitHub: the newest stable release's APK. */

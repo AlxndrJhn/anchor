@@ -96,13 +96,11 @@ COPY docker/reset-password /usr/local/bin/reset-password
 # `docker compose exec -T anchor-plus backup > anchor-backup.tar`, and `restore <`
 COPY docker/backup /usr/local/bin/backup
 COPY docker/restore /usr/local/bin/restore
-# `docker compose exec anchor-plus switch-check`, before going back to upstream
-COPY docker/switch-check /usr/local/bin/switch-check
 RUN chmod +x /app/docker-entrypoint.sh /usr/local/bin/reset-password \
-  /usr/local/bin/backup /usr/local/bin/restore /usr/local/bin/switch-check
+  /usr/local/bin/backup /usr/local/bin/restore
 
 # The image's own name, for /api/health: the apps offer release candidates
-# only to servers running ghcr.io/<owner>/anchor:fork-preview. Last, so a
+# only to servers running ghcr.io/<owner>/anchor-plus:fork-preview. Last, so a
 # preview image shares every other layer with the release's.
 ARG ANCHOR_IMAGE=
 ENV ANCHOR_IMAGE=$ANCHOR_IMAGE
