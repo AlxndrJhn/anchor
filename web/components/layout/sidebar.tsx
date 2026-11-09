@@ -85,7 +85,8 @@ interface SidebarProps {
 
 /** The demo build's list of feature demos, above the account button. */
 const DEMOS_HREF = "/demos";
-const RELEASES_HREF = "https://github.com/AlxndrJhn/anchor-plus/releases/latest";
+const RELEASES_HREF =
+  "https://github.com/AlxndrJhn/anchor-plus/releases/latest";
 
 const PAGES = [
   { href: "/notes", label: "Notes", icon: NotebookPen },
