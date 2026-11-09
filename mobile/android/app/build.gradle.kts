@@ -7,9 +7,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Fork builds (ORG_GRADLE_PROJECT_anchorFork=true) are named Anchor+. Every
-// build is com.alxndrjhn.anchorplus.
-val isForkBuild = (project.findProperty("anchorFork") as String?) == "true"
+// Released builds (ORG_GRADLE_PROJECT_anchorPlus=true) are named Anchor+,
+// others Anchor Notes. Every build is com.alxndrjhn.anchorplus.
+val isPlusBuild = (project.findProperty("anchorPlus") as String?) == "true"
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -39,7 +39,7 @@ android {
         versionName = flutter.versionName
         manifestPlaceholders["appAuthRedirectScheme"] = "anchor"
         manifestPlaceholders["appLabel"] = when {
-            isForkBuild -> "Anchor+"
+            isPlusBuild -> "Anchor+"
             else -> "Anchor Notes"
         }
     }

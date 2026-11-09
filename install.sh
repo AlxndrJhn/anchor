@@ -30,8 +30,8 @@
 #                a free hostname for the server's IP (<ip>.sslip.io), found
 #                again on every run, so it follows a new IP
 #   PORT         without DOMAIN, the port Anchor listens on (default 3001)
-#   ANCHOR_TAG   the image tag, e.g. fork-preview or fork-0.17.2.36
-#                (default fork-latest)
+#   ANCHOR_TAG   the image tag, e.g. preview or v0.18.0.81
+#                (default latest)
 #   ANCHOR_DIR   where it lives (default /opt/anchor)
 #   SWAP_SIZE    swap to add on a small server, in MB (default 2048; 0 adds none)
 #
@@ -223,7 +223,12 @@ load_settings() {
   PORT=${PORT:-$(get_env "$CONF" PORT)}
   PORT=${PORT:-3001}
   ANCHOR_TAG=${ANCHOR_TAG:-$(get_env "$CONF" ANCHOR_TAG)}
-  ANCHOR_TAG=${ANCHOR_TAG:-fork-latest}
+  ANCHOR_TAG=${ANCHOR_TAG:-latest}
+  # The tags' names before the releases were renamed
+  case $ANCHOR_TAG in
+    fork-latest) ANCHOR_TAG=latest ;;
+    fork-preview) ANCHOR_TAG=preview ;;
+  esac
   DOMAIN=${DOMAIN#http://}
   DOMAIN=${DOMAIN#https://}
   DOMAIN=${DOMAIN%%/*}

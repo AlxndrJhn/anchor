@@ -14,7 +14,7 @@ part 'app_updater.g.dart';
 
 const _logTag = 'Update';
 
-/// The fork's releases on GitHub, and Android's installer.
+/// The releases on GitHub, and Android's installer.
 class UpdateSource {
   UpdateSource({Dio? dio})
     : _dio =
@@ -120,25 +120,25 @@ class UpdateState {
   );
 }
 
-/// Whether this build can update itself: an Android build from the fork's
-/// release workflow.
+/// Whether this build can update itself: an Android build from the release
+/// workflow.
 bool get canSelfUpdate =>
     Platform.isAndroid && installedBuild > 0 && updateRepository.isNotEmpty;
 
 @Riverpod(keepAlive: true)
 UpdateSource updateSource(Ref ref) => UpdateSource();
 
-/// This build's number in the fork's releases.
+/// This build's number in the releases.
 @Riverpod(keepAlive: true)
 int installedBuildNumber(Ref ref) => installedBuild;
 
-/// Whether the server runs the fork's preview image, so release candidates
+/// Whether the server runs the preview image, so release candidates
 /// may be offered.
 @riverpod
 Future<bool> onPreviewServer(Ref ref) async =>
     isPreviewImage((await ref.watch(serverInfoProvider.future))?.image);
 
-/// Finds, downloads and installs newer releases of the fork from GitHub.
+/// Finds, downloads and installs newer releases from GitHub.
 @Riverpod(keepAlive: true)
 class UpdateController extends _$UpdateController {
   @override

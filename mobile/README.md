@@ -96,7 +96,7 @@ query strings, and routes hide their query values
 
 In the player that opens afterwards, move to where it
 went wrong, tap **Problem here** and say what you expected. **Create issue**
-saves `anchor-debug-<ISO time>.mp4` and opens a new GitHub issue on the fork,
+saves `anchor-debug-<ISO time>.mp4` and opens a new GitHub issue on the project,
 to attach it to.
 
 The file is one MP4: a Motion-JPEG video track, a timed metadata track

@@ -895,7 +895,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPreviewReleasesHelp =>
-      'Release candidates, when your server runs the :fork-preview image';
+      'Release candidates, when your server runs the :preview image';
 
   @override
   String get settingsSearch => 'Search';

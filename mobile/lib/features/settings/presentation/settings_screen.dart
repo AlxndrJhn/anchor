@@ -810,7 +810,7 @@ class _ServerSection extends StatelessWidget {
   }
 }
 
-/// This fork's updates from its GitHub releases (release builds on Android).
+/// The app's updates from its GitHub releases (release builds on Android).
 class _UpdatesSection extends ConsumerStatefulWidget {
   const _UpdatesSection();
 

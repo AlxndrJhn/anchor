@@ -11,7 +11,7 @@ Categories:
 Name: Anchor+
 Summary: Offline first notes, synced with your own Anchor server
 Description: |-
-  Anchor+ is a fork of Anchor, an offline first, self hostable note taking app.
+  Anchor+ is an offline first, self hostable note taking app, built on Anchor.
   Notes are stored on your phone, editable offline, and synced with your Anchor
   server when online.
 

@@ -5,9 +5,9 @@ void main() {
   const repository = 'https://github.com/AlxndrJhn/anchor-plus';
 
   test('a release points at its commit', () {
-    expect(sourceCodeUrl('0.18.0-fork.09c6c01'), '$repository/tree/09c6c01');
+    expect(sourceCodeUrl('0.18.0-g09c6c01'), '$repository/tree/09c6c01');
     expect(
-      licenseUrl('0.18.0-fork.09c6c01'),
+      licenseUrl('0.18.0-g09c6c01'),
       '$repository/blob/09c6c01/LICENSE',
     );
   });

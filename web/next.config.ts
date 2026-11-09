@@ -6,8 +6,8 @@ import packageJson from "./package.json";
 const mode = process.env.ANCHOR_MODE;
 const isStatic = mode === "local" || mode === "demo";
 const basePath = process.env.BASE_PATH ?? "";
-// The Anchor+ release, e.g. 0.17.2.62 for fork-0.17.2.62, set by
-// release-fork.yml; a build outside a release shows the app version.
+// The Anchor+ release, e.g. 0.17.2.62 for v0.17.2.62, set by
+// release.yml; a build outside a release shows the app version.
 const appVersion = process.env.ANCHOR_VERSION || packageJson.version;
 
 const nextConfig: NextConfig = {

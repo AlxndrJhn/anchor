@@ -1228,7 +1228,7 @@
   },
   "settingsUpdates": "Updates",
   "@settingsUpdates": {
-    "description": "Section label in Settings for this fork's updates from its GitHub releases (Android release builds only)."
+    "description": "Section label in Settings for the app's updates from its GitHub releases (Android release builds only)."
   },
   "settingsCheckForUpdates": "Check for updates",
   "@settingsCheckForUpdates": {
@@ -1264,9 +1264,9 @@
   "@settingsPreviewReleases": {
     "description": "Switch in Settings › Updates: also offer release candidates, before they are released to everyone."
   },
-  "settingsPreviewReleasesHelp": "Release candidates, when your server runs the :fork-preview image",
+  "settingsPreviewReleasesHelp": "Release candidates, when your server runs the :preview image",
   "@settingsPreviewReleasesHelp": {
-    "description": "Help under the Receive preview releases switch: candidates are only offered when the server runs the fork's preview Docker image (ghcr.io/…/anchor:fork-preview)."
+    "description": "Help under the Receive preview releases switch: candidates are only offered when the server runs the preview Docker image (ghcr.io/…/anchor-plus:preview)."
   },
   "settingsSearch": "Search",
   "@settingsSearch": {

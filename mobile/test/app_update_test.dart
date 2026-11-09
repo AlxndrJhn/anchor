@@ -16,12 +16,12 @@ class MockPreferences extends Mock implements PreferencesRepository {}
 Map<String, Object?> _release(
   int build, {
   List<String> changes = const [],
-  List<String> assets = const ['anchor-fork.apk', 'anchor-fork-x86_64.apk'],
+  List<String> assets = const ['anchor-plus.apk', 'anchor-plus-x86_64.apk'],
   bool draft = false,
   bool candidate = false,
 }) => {
-  'tag_name': 'fork-0.17.2.$build',
-  'html_url': 'https://github.com/o/r/releases/tag/fork-0.17.2.$build',
+  'tag_name': 'v0.17.2.$build',
+  'html_url': 'https://github.com/o/r/releases/tag/v0.17.2.$build',
   'draft': draft,
   'prerelease': candidate,
   'body':
@@ -68,9 +68,11 @@ class FakeSource extends UpdateSource {
 void main() {
   group('release names', () {
     test('a tag ends in its build number', () {
-      expect(buildOfTag('fork-0.17.2.22'), 22);
-      expect(buildOfTag('fork-1.0.0.140'), 140);
+      expect(buildOfTag('v0.17.2.22'), 22);
+      expect(buildOfTag('v1.0.0.140'), 140);
       expect(buildOfTag('v0.17.2'), isNull);
+      // The bridge copies under the old names are for builds from before them.
+      expect(buildOfTag('fork-0.18.0.80'), isNull);
       expect(buildOfTag('android-latest'), isNull);
     });
 
@@ -82,9 +84,9 @@ void main() {
     });
 
     test('each phone gets the APK for its processor', () {
-      expect(apkAssetFor(Abi.androidArm64), 'anchor-fork.apk');
-      expect(apkAssetFor(Abi.androidArm), 'anchor-fork-armeabi-v7a.apk');
-      expect(apkAssetFor(Abi.androidX64), 'anchor-fork-x86_64.apk');
+      expect(apkAssetFor(Abi.androidArm64), 'anchor-plus.apk');
+      expect(apkAssetFor(Abi.androidArm), 'anchor-plus-armeabi-v7a.apk');
+      expect(apkAssetFor(Abi.androidX64), 'anchor-plus-x86_64.apk');
     });
 
     test('the changes come from the notes, without commit hashes', () {
@@ -115,12 +117,12 @@ void main() {
           _release(21, changes: ['a']),
         ],
         installed: 21,
-        asset: 'anchor-fork.apk',
+        asset: 'anchor-plus.apk',
       );
 
-      expect(release?.tag, 'fork-0.17.2.23');
+      expect(release?.tag, 'v0.17.2.23');
       expect(release?.build, 23);
-      expect(release?.apkUrl, 'https://github.com/o/r/23/anchor-fork.apk');
+      expect(release?.apkUrl, 'https://github.com/o/r/23/anchor-plus.apk');
       expect(release?.apkSize, 44168880);
       // Everything since the installed build, newest first.
       expect(release?.changes, ['c', 'b']);
@@ -131,7 +133,7 @@ void main() {
         newestRelease(
           [_release(21), _release(20)],
           installed: 21,
-          asset: 'anchor-fork.apk',
+          asset: 'anchor-plus.apk',
         ),
         isNull,
       );
@@ -141,11 +143,11 @@ void main() {
       final release = newestRelease(
         [
           _release(25, draft: true),
-          _release(24, assets: ['anchor-fork-x86_64.apk']),
+          _release(24, assets: ['anchor-plus-x86_64.apk']),
           _release(23),
         ],
         installed: 20,
-        asset: 'anchor-fork.apk',
+        asset: 'anchor-plus.apk',
       );
 
       expect(release?.build, 23);
@@ -158,13 +160,13 @@ void main() {
       ];
 
       expect(
-        newestRelease(releases, installed: 22, asset: 'anchor-fork.apk')?.build,
+        newestRelease(releases, installed: 22, asset: 'anchor-plus.apk')?.build,
         23,
       );
       final candidate = newestRelease(
         releases,
         installed: 22,
-        asset: 'anchor-fork.apk',
+        asset: 'anchor-plus.apk',
         candidates: true,
       );
       expect(candidate?.build, 24);
@@ -172,8 +174,8 @@ void main() {
     });
 
     test('candidates are for servers on the preview image', () {
-      expect(isPreviewImage('ghcr.io/o/anchor:fork-preview'), isTrue);
-      expect(isPreviewImage('ghcr.io/o/anchor:fork-latest'), isFalse);
+      expect(isPreviewImage('ghcr.io/o/anchor-plus:preview'), isTrue);
+      expect(isPreviewImage('ghcr.io/o/anchor-plus:latest'), isFalse);
       expect(isPreviewImage(null), isFalse);
     });
   });
@@ -212,7 +214,7 @@ void main() {
 
       final release = await c.read(updateControllerProvider.notifier).check();
 
-      expect(release?.tag, 'fork-0.17.2.23');
+      expect(release?.tag, 'v0.17.2.23');
       final state = c.read(updateControllerProvider);
       expect(state.status, UpdateStatus.available);
       expect(state.showBanner, isTrue);
@@ -268,7 +270,7 @@ void main() {
 
       await controller.install();
 
-      expect(source.installed, ['/cache/updates/fork-0.17.2.23.apk']);
+      expect(source.installed, ['/cache/updates/v0.17.2.23.apk']);
       expect(c.read(updateControllerProvider).progress, 1);
     });
 
@@ -312,7 +314,7 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Download and install (42 MB)'));
       await tester.pumpAndSettle();
 
-      expect(source.installed, ['/cache/updates/fork-0.17.2.23.apk']);
+      expect(source.installed, ['/cache/updates/v0.17.2.23.apk']);
     });
 
     testWidgets('the banner opens the update, and Later hides it', (
@@ -331,7 +333,7 @@ void main() {
       );
 
       final banner = find.textContaining(
-        'Update available fork-0.17.2.23',
+        'Update available v0.17.2.23',
         findRichText: true,
       );
       expect(banner, findsOneWidget);

@@ -33,8 +33,8 @@ describe('HealthController', () => {
     try {
       delete process.env.ANCHOR_IMAGE;
       expect(controller().check().image).toBeUndefined();
-      process.env.ANCHOR_IMAGE = 'ghcr.io/o/anchor:fork-preview';
-      expect(controller().check().image).toBe('ghcr.io/o/anchor:fork-preview');
+      process.env.ANCHOR_IMAGE = 'ghcr.io/o/anchor-plus:preview';
+      expect(controller().check().image).toBe('ghcr.io/o/anchor-plus:preview');
     } finally {
       if (before === undefined) delete process.env.ANCHOR_IMAGE;
       else process.env.ANCHOR_IMAGE = before;
