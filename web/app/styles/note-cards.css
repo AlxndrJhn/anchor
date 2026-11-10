@@ -210,12 +210,13 @@ html.note-dragging * {
   margin-left: auto;
   white-space: nowrap;
 }
-/* Pin from the card, as in Google Keep; shown on hover */
+/* Pin from the card, as in Google Keep; shown on hover. Above a picture's
+   .nc-zoom, which would otherwise take its clicks. */
 .nc-pin {
   position: absolute;
   top: 7px;
   right: 7px;
-  z-index: 4;
+  z-index: 6;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -262,7 +263,7 @@ html.note-dragging * {
   position: absolute;
   top: 9px;
   right: 9px;
-  z-index: 4;
+  z-index: 6;
   width: 24px;
   height: 24px;
   border-radius: 50%;
