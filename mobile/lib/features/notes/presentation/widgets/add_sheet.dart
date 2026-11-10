@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -77,6 +78,22 @@ const _waveformBarCount = 36;
 
 const _recordingLimit = maxAttachmentBytes - 2 * 1024 * 1024;
 
+/// Android's "Recording audio" notification: its foreground service keeps
+/// the microphone on while the phone is locked, so the recording doesn't
+/// come out broken (recording/VoiceRecordingService). iOS keeps it on with
+/// the audio background mode.
+const _recordingService = MethodChannel('anchor/recording');
+
+bool get _hasRecordingService =>
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+Future<void> _keepMicOn(bool on) async {
+  if (!_hasRecordingService) return;
+  try {
+    await _recordingService.invokeMethod<void>(on ? 'start' : 'stop');
+  } catch (_) {}
+}
+
 class _AddSheet extends StatefulWidget {
   const _AddSheet({this.onTakeSeveral, this.onLiveCamera});
 
@@ -115,7 +132,7 @@ class _AddSheetState extends State<_AddSheet> {
     _playing?.cancel();
     final unattached = _file;
     final stopped = _stage == _Stage.recording
-        ? _recorder.stop()
+        ? _recorder.stop().whenComplete(() => _keepMicOn(false))
         : Future<void>.value();
     if (unattached != null) {
       stopped.whenComplete(() => File(unattached).delete()).ignore();
@@ -228,19 +245,30 @@ class _AddSheetState extends State<_AddSheet> {
       dir.path,
       '$recordingFilePrefix${DateTime.now().millisecondsSinceEpoch}.m4a',
     );
-    await _recorder.start(
-      const RecordConfig(
-        encoder: AudioEncoder.aacLc,
-        bitRate: 96000,
-        sampleRate: 44100,
-        numChannels: 1,
-        echoCancel: true,
-        autoGain: true,
-        noiseSuppress: true,
-      ),
-      path: file,
-    );
-    if (!mounted) return;
+    // Started while the app is open: Android doesn't let it start later.
+    await _keepMicOn(true);
+    try {
+      await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 96000,
+          sampleRate: 44100,
+          numChannels: 1,
+          echoCancel: true,
+          autoGain: true,
+          noiseSuppress: true,
+        ),
+        path: file,
+      );
+    } catch (_) {
+      await _keepMicOn(false);
+      rethrow;
+    }
+    if (!mounted) {
+      // Closed while starting: dispose has stopped the recorder already.
+      unawaited(_keepMicOn(false));
+      return;
+    }
     Haptics.medium();
     _amplitudes.clear();
     _startedAt = DateTime.now();
@@ -273,6 +301,7 @@ class _AddSheetState extends State<_AddSheet> {
     _clock?.cancel();
     await _levels?.cancel();
     final file = await _recorder.stop();
+    await _keepMicOn(false);
     if (!mounted) return;
     if (file == null) {
       setState(() => _stage = _Stage.pick);
@@ -328,6 +357,7 @@ class _AddSheetState extends State<_AddSheet> {
     _clock?.cancel();
     await _levels?.cancel();
     await _recorder.stop();
+    await _keepMicOn(false);
     await _discardRecording();
     if (mounted) Navigator.of(context).pop();
   }
