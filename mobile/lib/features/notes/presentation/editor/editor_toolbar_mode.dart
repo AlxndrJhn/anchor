@@ -29,6 +29,7 @@ enum EditorTool {
   checklist(LucideIcons.listChecks),
   bullet(LucideIcons.list),
   add(LucideIcons.imagePlus),
+  camera(LucideIcons.camera),
   picture(LucideIcons.images),
   outdent(LucideIcons.indentDecrease),
   indent(LucideIcons.indentIncrease),
@@ -62,7 +63,8 @@ enum EditorTool {
     EditorTool.checklist => l10n.lineChecklist,
     EditorTool.bullet => l10n.lineBullet,
     EditorTool.add => l10n.attachmentAddLabel,
-    EditorTool.picture => l10n.toolPictureInText,
+    EditorTool.camera => l10n.pictureInTextCamera,
+    EditorTool.picture => l10n.pictureInTextChoose,
     EditorTool.outdent => l10n.toolOutdent,
     EditorTool.indent => l10n.toolIndent,
     EditorTool.bold => l10n.toolBold,
@@ -131,12 +133,14 @@ EditorToolbarMode toolbarModeOf({
   bool hasWords = false,
 }) {
   final start = switch (mode) {
-    // Picture puts pictures in the text at the caret.
+    // Camera and Picture put pictures in the text at the caret, each in
+    // one tap.
     EditorToolbarMode.typing => const [
       EditorTool.styles,
       EditorTool.checklist,
       EditorTool.bullet,
       EditorTool.add,
+      EditorTool.camera,
       EditorTool.picture,
     ],
     EditorToolbarMode.list => const [
@@ -235,7 +239,11 @@ class EditorToolbarModel {
         ],
       },
       disabledTools: {
-        if (isInTitle) ...[EditorTool.styles, EditorTool.picture],
+        if (isInTitle) ...[
+          EditorTool.styles,
+          EditorTool.camera,
+          EditorTool.picture,
+        ],
         if (!canUndo) EditorTool.undo,
         if (!canRedo) EditorTool.redo,
       },

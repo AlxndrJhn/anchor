@@ -43,6 +43,7 @@ class _EditorToolbarState extends State<EditorToolbar> {
       case EditorTool.undo || EditorTool.redo:
         Haptics.light();
       case EditorTool.add ||
+          EditorTool.camera ||
           EditorTool.picture ||
           EditorTool.link ||
           EditorTool.textStyle ||
@@ -80,8 +81,9 @@ class _EditorToolbarState extends State<EditorToolbar> {
           ),
           child: LayoutBuilder(
             builder: (context, box) {
-              // Eight tools fill the bar; a ninth narrows them to fit.
-              final count = math.max(8, model.start.length + model.end.length);
+              // Nine tools fill the bar, the most a mode has, so a tool
+              // that stays across modes keeps its place.
+              final count = math.max(9, model.start.length + model.end.length);
               final fit = box.maxWidth / count;
               final slot = fit.clamp(
                 math.min<double>(AnchorTokens.sizeTargetPhone, fit),

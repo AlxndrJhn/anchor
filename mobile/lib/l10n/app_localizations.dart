@@ -6076,19 +6076,13 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 attachment added. It will upload when you’re back online.} other{{count} attachments added. They will upload when you’re back online.}}'**
   String attachmentsAddedOffline(int count);
 
-  /// Toolbar button over the keyboard, and the title of the menu it opens: puts a picture taken with the camera, or pictures from the phone, in the note’s text where the cursor is.
-  ///
-  /// In en, this message translates to:
-  /// **'Picture in the text'**
-  String get toolPictureInText;
-
-  /// Option of the Picture in the text menu: takes a picture with the camera.
+  /// Toolbar button over the keyboard: takes a picture with the camera and puts it in the note’s text where the cursor is.
   ///
   /// In en, this message translates to:
   /// **'Take a picture'**
   String get pictureInTextCamera;
 
-  /// Option of the Picture in the text menu: picks pictures from the phone’s photo library.
+  /// Toolbar button over the keyboard: picks pictures from the phone’s photo library and puts them in the note’s text where the cursor is.
   ///
   /// In en, this message translates to:
   /// **'Choose pictures'**
