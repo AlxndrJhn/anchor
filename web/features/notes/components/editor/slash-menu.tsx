@@ -179,7 +179,6 @@ export function SlashMenu({
 }: SlashMenuProps) {
   const [slash, setSlash] = React.useState<Slash | null>(null);
   const [place, setPlace] = React.useState<Place | null>(null);
-  const [hint, setHint] = React.useState<Place | null>(null);
   const [searchHint, setSearchHint] = React.useState<Place | null>(null);
   const [active, setActive] = React.useState(0);
   const [keyboard, setKeyboard] = React.useState(false);
@@ -233,7 +232,6 @@ export function SlashMenu({
       const selection = quill.getSelection();
       if (!selection || selection.length) {
         updateSlash(null);
-        setHint(null);
         setSearchHint(null);
         return;
       }
@@ -269,15 +267,6 @@ export function SlashMenu({
         slashRef.current && !slashRef.current.query && isAtLineEnd
           ? placeAt(quill, selection.index)
           : null,
-      );
-      const plain =
-        !format.list &&
-        !format.header &&
-        !format.blockquote &&
-        !format["code-block"];
-      const empty = line.length() === 1 && plain && quill.getLength() > 1;
-      setHint(
-        empty && !slashRef.current ? placeAt(quill, selection.index) : null,
       );
     };
 
@@ -432,20 +421,6 @@ export function SlashMenu({
 
   return (
     <>
-      {hint && !slash && (
-        <span
-          aria-hidden
-          className="slash-hint"
-          style={{
-            top: hint.top,
-            left: hint.left,
-            height: hint.height,
-            lineHeight: `${hint.height}px`,
-          }}
-        >
-          Type / to add a block
-        </span>
-      )}
       {searchHint && slash && (
         <span
           aria-hidden
