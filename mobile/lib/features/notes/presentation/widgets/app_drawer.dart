@@ -211,7 +211,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                           onTap: () => _openFolder(NoteFolder.trash),
                         ),
                         const _TagsHeading(),
-                        // Dragged by the grip on the right; holding the
+                        // Dragged by the grip on the left; holding the
                         // name still opens the tag's options.
                         ReorderableList(
                           shrinkWrap: true,
@@ -239,6 +239,35 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                               child: Row(
                                 key: _key(t.id),
                                 children: [
+                                  ReorderableDragStartListener(
+                                    index: index,
+                                    child: MinTapTarget(
+                                      child: Semantics(
+                                        label: context.l10n.tagMove(t.name),
+                                        customSemanticsActions:
+                                            indexMoveActions(
+                                              context,
+                                              index: index,
+                                              count: tags.length,
+                                              onMove: (to) =>
+                                                  moveTag(index, to),
+                                            ),
+                                        child: SizedBox(
+                                          width: 24,
+                                          height:
+                                              AnchorTokens.sizeControlMedium,
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Icon(
+                                              LucideIcons.gripVertical,
+                                              size: AnchorTokens.sizeIconSmall,
+                                              color: context.anchor.appMuted,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                   Expanded(
                                     child: _Item(
                                       leading: SizedBox(
@@ -270,35 +299,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                                         ): () =>
                                             showTagMenu(context, t),
                                       },
-                                    ),
-                                  ),
-                                  ReorderableDragStartListener(
-                                    index: index,
-                                    child: MinTapTarget(
-                                      child: Semantics(
-                                        label: context.l10n.tagMove(t.name),
-                                        customSemanticsActions:
-                                            indexMoveActions(
-                                              context,
-                                              index: index,
-                                              count: tags.length,
-                                              onMove: (to) =>
-                                                  moveTag(index, to),
-                                            ),
-                                        child: SizedBox(
-                                          width: 32,
-                                          height:
-                                              AnchorTokens.sizeControlMedium,
-                                          child: Align(
-                                            alignment: Alignment.centerRight,
-                                            child: Icon(
-                                              LucideIcons.gripVertical,
-                                              size: AnchorTokens.sizeIconSmall,
-                                              color: context.anchor.appMuted,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                     ),
                                   ),
                                 ],
