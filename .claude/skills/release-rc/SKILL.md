@@ -36,6 +36,11 @@ asks later, `gh run view <id> --repo AlxndrJhn/anchor-plus` shows how it went, a
 the release appears under Releases marked "Pre-release", titled
 "Anchor+ v… (release candidate)".
 
+With the `PLAY_UPLOADS` / `APP_STORE_UPLOADS` repository variables on, a
+candidate whose app changed is also uploaded to Play's internal track and
+TestFlight (the `stores` job, `.github/workflows/stores.yml`; see
+`store/README.md`).
+
 A normal release is the same command without `-f candidate=true` (or
 `-f candidate=false`); it also refreshes `:preview`, so preview servers
 never run something older than the release.

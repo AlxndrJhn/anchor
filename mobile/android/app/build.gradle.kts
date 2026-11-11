@@ -11,6 +11,11 @@ plugins {
 // others Anchor Notes. Every build is com.alxndrjhn.anchorplus.
 val isPlusBuild = (project.findProperty("anchorPlus") as String?) == "true"
 
+// Builds for Google Play (ORG_GRADLE_PROJECT_storeBuild=true, stores.yml)
+// leave out what Play doesn't allow: installing the app's own updates from
+// GitHub (REQUEST_INSTALL_PACKAGES). Play updates the app itself.
+val isStoreBuild = (project.findProperty("storeBuild") as String?) == "true"
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -41,6 +46,12 @@ android {
         manifestPlaceholders["appLabel"] = when {
             isPlusBuild -> "Anchor+"
             else -> "Anchor Notes"
+        }
+    }
+
+    if (isStoreBuild) {
+        sourceSets.getByName("release") {
+            manifest.srcFile("src/store/AndroidManifest.xml")
         }
     }
 

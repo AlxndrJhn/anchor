@@ -606,6 +606,10 @@ the new one installs next to the old one instead of updating it. Sign in to
 your server in the new one and your notes come from there; notes the old one
 never synced stay only in it.
 
+The release workflow can also put the app on Google Play's and the App
+Store's testing tracks; how to set that up, the listings and the privacy
+policy are in [store/README.md](store/README.md).
+
 ### F-Droid
 
 Added one before November 2026? The address changed when the repository was

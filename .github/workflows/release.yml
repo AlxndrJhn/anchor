@@ -8,7 +8,10 @@ name: Release
 # whose Android app, server or desktop app didn't change has no APKs, new
 # image or installers, and the apps only update to releases that have theirs.
 # The APKs also go to the F-Droid repositories on Pages (pages.yml), and a
-# new Windows installer to winget (the winget job).
+# new Windows installer to winget (the winget job). When the app changed and
+# the PLAY_UPLOADS / APP_STORE_UPLOADS repository variables are "true", the
+# app is also built for Google Play and the App Store and uploaded to their
+# testing tracks (stores.yml, store/README.md).
 #
 # With "candidate" ticked (`gh workflow run release.yml --ref main -f
 # candidate=true`) it is a release candidate instead: a GitHub prerelease,
@@ -66,6 +69,7 @@ jobs:
       docker_tag: ${{ steps.changes.outputs.docker_tag }}
       desktop: ${{ steps.changes.outputs.desktop }}
       desktop_tag: ${{ steps.changes.outputs.desktop_tag }}
+      ios: ${{ steps.changes.outputs.ios }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -142,7 +146,17 @@ jobs:
             "$(last_with 'select(any(.assets[]; .name | test("^Anchor-.*\\.(exe|dmg)$"))) | .tag_name')" \
             desktop web
           # The changes in the notes start from here.
-          echo "previous=$(last_with '.tag_name')" >> "$GITHUB_OUTPUT"
+          PREVIOUS=$(last_with '.tag_name')
+          echo "previous=$PREVIOUS" >> "$GITHUB_OUTPUT"
+          # The iOS app isn't attached to releases, only uploaded to the App
+          # Store (stores.yml): along with the Android app's changes, those
+          # to its own project count since the last release.
+          if [ -n "$PREVIOUS" ] && git rev-parse -q --verify "refs/tags/$PREVIOUS" >/dev/null &&
+            git diff --quiet "$PREVIOUS" HEAD -- mobile/ios; then
+            echo "ios=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ios=true" >> "$GITHUB_OUTPUT"
+          fi
 
   docker:
     needs: version
@@ -602,6 +616,30 @@ jobs:
           curl -fsSL -o wingetcreate.exe https://aka.ms/wingetcreate/latest
           ./wingetcreate.exe submit --token "$WINGET_TOKEN" \
             --prtitle "New version: AlxndrJhn.AnchorPlus version $VERSION" manifests
+
+  # The app for Google Play and the App Store, uploaded to their testing
+  # tracks (Play's internal track, TestFlight) after the release went out,
+  # candidates too. Turned on by the PLAY_UPLOADS and APP_STORE_UPLOADS
+  # repository variables; promoting a build is done in the stores' consoles.
+  # The build number is this run's, as in the release tag.
+  stores:
+    needs: [version, release]
+    if: >-
+      github.ref == 'refs/heads/main' && !cancelled() &&
+      needs.release.result == 'success' &&
+      (vars.PLAY_UPLOADS == 'true' && needs.version.outputs.apk == 'true' ||
+        vars.APP_STORE_UPLOADS == 'true' &&
+          (needs.version.outputs.apk == 'true' || needs.version.outputs.ios == 'true'))
+    uses: ./.github/workflows/stores.yml
+    secrets: inherit
+    with:
+      version: ${{ needs.version.outputs.version }}
+      build: ${{ github.run_number }}
+      previous: ${{ needs.version.outputs.previous }}
+      play: ${{ vars.PLAY_UPLOADS == 'true' && needs.version.outputs.apk == 'true' }}
+      app_store: >-
+        ${{ vars.APP_STORE_UPLOADS == 'true' &&
+          (needs.version.outputs.apk == 'true' || needs.version.outputs.ios == 'true') }}
 
   # A candidate republishes Pages for the preview F-Droid repository, with
   # the last release's web app. It follows any release that went out, also

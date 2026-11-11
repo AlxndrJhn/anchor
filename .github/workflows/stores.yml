@@ -1,0 +1,339 @@
+name: App stores
+
+# Builds the mobile app for Google Play and the Apple App Store and uploads
+# it to their testing tracks: Play's internal track (PLAY_TRACK) and App
+# Store Connect, where it shows up in TestFlight. Promoting a build to
+# production, with its listing, screenshots and review, is done in the Play
+# Console and App Store Connect (see store/README.md).
+#
+# The release workflow runs this after a release or release candidate whose
+# app changed, when the repository variables PLAY_UPLOADS and/or
+# APP_STORE_UPLOADS are "true" (Settings › Secrets and variables › Actions ›
+# Variables). It can also be run by hand (Actions › App stores › Run
+# workflow); give it a build number higher than the last one uploaded, such
+# as the run number of the release it goes with.
+#
+# The store builds don't update themselves from GitHub as the released APKs
+# do (no UPDATE_REPO; the Play build also has no REQUEST_INSTALL_PACKAGES):
+# the stores update them.
+#
+# Secrets (Settings › Secrets and variables › Actions › Secrets):
+#   Google Play
+#     ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD,
+#     ANDROID_KEY_ALIAS     the APK's key, used as Play's upload key
+#     PLAY_SERVICE_ACCOUNT_JSON
+#                           a Google Cloud service account's JSON key with
+#                           release rights in the Play Console. Without it
+#                           the bundle is built and kept as an artifact only,
+#                           for the first upload, which Play takes by hand.
+#   App Store
+#     ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64
+#                           an App Store Connect API key (Admin role, so
+#                           Xcode can sign with a cloud-managed distribution
+#                           certificate), its issuer, and the .p8 in base64
+#     IOS_DEV_CERT_P12_BASE64, IOS_DEV_CERT_PASSWORD
+#                           an "Apple Development" certificate with its
+#                           private key, exported from Keychain Access as
+#                           .p12, which signs the archive before export
+# Variables (optional): PLAY_TRACK (default internal), PLAY_RELEASE_STATUS
+# (default draft; "completed" once the app is past its first review).
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: App version (x.y.z); empty takes mobile/pubspec.yaml's
+        type: string
+        default: ""
+      build:
+        description: Build number, higher than the last one uploaded
+        type: number
+        required: true
+      previous:
+        description: The release tag the "What's new" changes start after
+        type: string
+        default: ""
+      play:
+        description: Build for Google Play and upload it
+        type: boolean
+        default: true
+      app_store:
+        description: Build for the App Store and upload it to TestFlight
+        type: boolean
+        default: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: App version (x.y.z); empty takes mobile/pubspec.yaml's
+        type: string
+        default: ""
+      build:
+        description: Build number, higher than the last one uploaded (e.g. the release's run number)
+        type: number
+        required: true
+      previous:
+        description: The release tag the "What's new" changes start after (empty for the last 20 changes)
+        type: string
+        default: ""
+      play:
+        description: Build for Google Play and upload it
+        type: boolean
+        default: true
+      app_store:
+        description: Build for the App Store and upload it to TestFlight
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.9
+  PACKAGE_NAME: com.alxndrjhn.anchorplus
+
+jobs:
+  play:
+    if: inputs.play
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      # Installs as "Anchor+", without the GitHub updater (build.gradle.kts).
+      ORG_GRADLE_PROJECT_anchorPlus: "true"
+      ORG_GRADLE_PROJECT_storeBuild: "true"
+      HAS_PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Name the build
+        id: version
+        env:
+          VERSION: ${{ inputs.version }}
+          BUILD: ${{ inputs.build }}
+        run: |
+          VERSION=${VERSION:-$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # Above every APK's (2000 + run, plus 1000 × the processor type's
+          # number), so a phone that had the APK takes the Play build as an
+          # update when Play App Signing uses the same key.
+          echo "code=$((10000 + BUILD))" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # The APK's key, which Play takes as the upload key (or, with Play App
+      # Signing set to "use my own key", also signs with).
+      - name: Set up signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] ||
+            [ -z "$KEY_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::Set the ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD and ANDROID_KEY_ALIAS secrets to sign the bundle."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=./upload-keystore.jks
+          EOF
+
+      - name: Build the app bundle
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CODE: ${{ steps.version.outputs.code }}
+        run: |
+          flutter build appbundle --release \
+            --build-name="$VERSION" --build-number="$CODE"
+          mv build/app/outputs/bundle/release/app-release.aab \
+            "build/app/outputs/bundle/release/anchor-plus-$VERSION-$CODE.aab"
+
+      - name: Keep the bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: anchor-plus-play-aab
+          path: mobile/build/app/outputs/bundle/release/anchor-plus-*.aab
+          if-no-files-found: error
+          retention-days: 30
+
+      # Play's "What's new", at most 500 characters: the Android changes
+      # since the previous release, as the release notes list them.
+      - name: Write "What's new"
+        env:
+          PREVIOUS: ${{ inputs.previous }}
+        run: |
+          if [ -n "$PREVIOUS" ] && git rev-parse -q --verify "refs/tags/$PREVIOUS" >/dev/null; then
+            RANGE=("$PREVIOUS..HEAD")
+          else
+            RANGE=(-20)
+          fi
+          mkdir -p whatsnew
+          git log --no-merges --format='• %s' "${RANGE[@]}" -- lib android assets pubspec.lock |
+            python3 -c '
+          import sys
+          out = ""
+          for line in sys.stdin.read().splitlines():
+              if len(out) + len(line) + 1 > 500:
+                  break
+              out += line + "\n"
+          sys.stdout.write(out.strip() or "Bug fixes and improvements.")
+          ' > whatsnew/whatsnew-en-US
+          cat whatsnew/whatsnew-en-US
+
+      - name: Upload to Google Play
+        if: env.HAS_PLAY_KEY == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          releaseFiles: mobile/build/app/outputs/bundle/release/anchor-plus-*.aab
+          releaseName: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.code }})
+          track: ${{ vars.PLAY_TRACK || 'internal' }}
+          status: ${{ vars.PLAY_RELEASE_STATUS || 'draft' }}
+          whatsNewDirectory: mobile/whatsnew
+
+      - name: Without a Play key
+        if: env.HAS_PLAY_KEY != 'true'
+        run: echo "::notice::No PLAY_SERVICE_ACCOUNT_JSON secret, so the bundle wasn't uploaded. Download it from this run's artifacts (anchor-plus-play-aab) to upload it in the Play Console."
+
+  app-store:
+    if: inputs.app_store
+    runs-on: macos-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check the secrets
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          IOS_DEV_CERT_P12_BASE64: ${{ secrets.IOS_DEV_CERT_P12_BASE64 }}
+          IOS_DEV_CERT_PASSWORD: ${{ secrets.IOS_DEV_CERT_PASSWORD }}
+        run: |
+          missing=()
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64 IOS_DEV_CERT_P12_BASE64 IOS_DEV_CERT_PASSWORD; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Set the ${missing[*]} secret(s) to sign and upload the iOS app (see store/README.md)."
+            exit 1
+          fi
+
+      - name: Name the build
+        id: version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          VERSION=${VERSION:-$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # Writes the version and build number into the Xcode project's
+      # settings; xcodebuild then builds, signs and uploads.
+      - name: Configure the iOS build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ inputs.build }}
+        run: |
+          flutter build ios --release --config-only \
+            --build-name="$VERSION" --build-number="$BUILD"
+          # Released builds are named Anchor+, as on Android.
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Anchor+" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Anchor+" ios/ShareExtension/Info.plist
+
+      - name: Set up signing
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          P12_BASE64: ${{ secrets.IOS_DEV_CERT_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_DEV_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/dev.p12"
+          security import "$RUNNER_TEMP/dev.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          rm "$RUNNER_TEMP/dev.p12"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychain -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          KEY_PATH="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          echo "ASC_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      # Automatic signing: with the API key, Xcode fetches or makes the
+      # provisioning profiles for the app and its share extension (with
+      # their app group), and signs the upload with a cloud-managed
+      # distribution certificate.
+      - name: Archive
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Upload to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist ../.github/ios/ExportOptions.plist \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "::notice::Uploaded ${{ steps.version.outputs.version }} (${{ inputs.build }}) to App Store Connect. It shows up in TestFlight once Apple has processed it."
+
+      - name: Clean up signing
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP"/AuthKey_*.p8

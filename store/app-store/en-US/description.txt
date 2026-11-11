@@ -1,0 +1,46 @@
+Anchor+ is a fast, private note-taking app that works offline first. Your notes live on your phone, open instantly, and can be edited anywhere, with or without a connection. When you want them on every device, connect Anchor+ to your own self-hosted Anchor+ server and they sync in the background.
+
+No ads. No tracking. No account with us. Open source under the AGPL.
+
+WORKS WITHOUT A SERVER
+• Start writing straight away: notes stay on the device
+• Connect a server later and your notes move into your account when you sign in
+• Back up every note, tag, picture and recording to a .zip file, and restore it
+
+NOTES AND CHECKLISTS
+• Notes and checklists with colours, tags, pinning and archiving
+• Drag notes to arrange them; tick checklist items right from the list
+• Rich text: headings, highlights in any colour and fonts from serif to handwriting
+• Merge, copy, freeze or hide notes; delete with Undo instead of a confirmation
+• Version history that shows what was added and removed
+
+PICTURES, FILES AND RECORDINGS
+• Take pictures, or several in a row, and place them right in the text
+• Crop, mirror, caption and resize pictures
+• Record voice notes, also while the phone is locked
+• Attach any file, or a whole folder zipped
+• Grab the text in a picture and copy it or insert it in a note
+• Share text, links, pictures and files to Anchor+ from other apps
+
+SEARCH
+• Filter by colour, tag, pictures, checklists and reminders
+• Regular expressions, case matching and a filter for notes that contain secrets
+• With a server: search the text in your pictures (screenshots, receipts)
+
+TOGETHER, WITH YOUR SERVER
+• Sync across phones, the web and desktop
+• Edit a note together, live, and see everyone's cursor
+• Share a note with a public link
+• Live images: put the phone's camera in a note for everyone who opens it
+
+PRIVATE BY DESIGN
+• Lock notes with Face ID or Touch ID
+• Two-step sign-in with an authenticator app
+• Your notes only ever go to the server you choose
+
+MAKE IT YOURS
+• Colour schemes such as Nord, Dracula, Solarized, Gruvbox, Catppuccin and Tokyo Night, an OLED black theme and custom themes
+• Skeuomorphic, Neo-Brutalist and Lo-fi styles
+• Reminders, a home screen widget and quick actions
+
+Run your own server with Docker in a few minutes, on a home server, a Raspberry Pi or a small cloud machine. Instructions and source code: github.com/AlxndrJhn/anchor-plus

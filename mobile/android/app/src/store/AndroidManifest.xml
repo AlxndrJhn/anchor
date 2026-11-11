@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Merged over src/main/AndroidManifest.xml in builds for Google Play
+     (storeBuild, see build.gradle.kts). Play keeps the app up to date, and
+     doesn't allow an app to install its own updates; that build has no
+     UPDATE_REPO, so its updater is off as well (core/update/app_updater.dart). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission
+        android:name="android.permission.REQUEST_INSTALL_PACKAGES"
+        tools:node="remove"/>
+</manifest>
