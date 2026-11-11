@@ -35,6 +35,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var pendingMagicLink: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (savedInstanceState != null) forgetHandledLaunch()
         attachWidgetNoteUri(intent)
         // Not again when Android brings back the screen it was opened with.
         if (savedInstanceState == null) pendingMagicLink = magicLinkOf(intent)
@@ -83,6 +84,22 @@ class MainActivity : FlutterFragmentActivity() {
             pendingMagicLink = it
             magicLinkChannel?.invokeMethod("link", null)
         }
+    }
+
+    /**
+     * When Android brings the app back after killing it in the background, it
+     * recreates this activity with the intent it last had: the reminder or
+     * widget tap that already opened its note (flutter_local_notifications
+     * keeps the latest tap as the activity's intent). The plugins would read
+     * that as a fresh tap and open the note again, even one deleted since.
+     * Open as a plain launch instead.
+     */
+    private fun forgetHandledLaunch() {
+        val action = intent?.action ?: return
+        if (action !in REPLAYED_LAUNCH_ACTIONS) return
+        intent = Intent(this, MainActivity::class.java)
+            .setAction(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_LAUNCHER)
     }
 
     private fun magicLinkOf(intent: Intent?): String? {
@@ -164,6 +181,14 @@ class MainActivity : FlutterFragmentActivity() {
 private const val MAGIC_LINK_CHANNEL = "anchor/magic_link"
 private const val MAGIC_LINK_SCHEME = "anchorplus"
 private const val MAGIC_LINK_HOST = "magic-login"
+
+/** Launches that open a note, which must not open it again on a restore. */
+private val REPLAYED_LAUNCH_ACTIONS = setOf(
+    // flutter_local_notifications: a tapped reminder, and one of its actions.
+    "SELECT_NOTIFICATION",
+    "SELECT_FOREGROUND_NOTIFICATION",
+    HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION,
+)
 
 /** SystemNavigator.pop moves the app to the background instead of closing it. */
 class BackgroundingFlutterFragment : FlutterFragment() {
