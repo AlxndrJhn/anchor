@@ -87,6 +87,10 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
   Rect? _from;
   Rect? _to;
 
+  /// Whether the flying shot is decoded, so it flies as the picture and
+  /// not as an empty frame.
+  bool _isFlightReady = false;
+
   @override
   void initState() {
     super.initState();
@@ -277,6 +281,7 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
     setState(() {
       _shots.add(path);
       _flying = path;
+      _isFlightReady = false;
       _from = from;
       _to = to;
     });
@@ -285,7 +290,27 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
       setState(() => _flying = null);
       return;
     }
-    _flight.forward(from: 0);
+    // Reading and decoding a fresh photo takes longer than the flight, so
+    // it waits for the picture, for the pile's too, so that lands drawn.
+    unawaited(
+      _decode(path).then((_) {
+        if (!mounted || _flying != path) return;
+        setState(() => _isFlightReady = true);
+        _flight.forward(from: 0);
+      }),
+    );
+  }
+
+  Future<void> _decode(String path) async {
+    final file = File(path);
+    try {
+      await Future.wait([
+        precacheImage(_FlyingShot.imageOf(file), context),
+        precacheImage(_Pile.imageOf(file), context),
+      ]).timeout(const Duration(seconds: 2));
+    } on TimeoutException catch (_) {
+      AppLogger.instance.warn(_tag, 'A picture took long to decode');
+    }
   }
 
   Rect? _rectOf(GlobalKey key) {
@@ -378,7 +403,10 @@ class _MultiShotCameraScreenState extends State<MultiShotCameraScreen>
                     : const SizedBox.shrink(),
               ),
             ),
-            if (_flying != null && _from != null && _to != null)
+            if (_flying != null &&
+                _isFlightReady &&
+                _from != null &&
+                _to != null)
               _FlyingShot(
                 path: _flying!,
                 from: _from!,
@@ -530,6 +558,9 @@ class _Pile extends StatelessWidget {
   final int count;
   final Animation<double> bump;
 
+  static ImageProvider imageOf(File file) =>
+      ResizeImage(FileImage(file), width: 192); // off-scale: decode pixels
+
   @override
   Widget build(BuildContext context) {
     final colors = context.anchor;
@@ -563,10 +594,9 @@ class _Pile extends StatelessWidget {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: radius,
-                child: Image.file(
-                  File(last!),
+                child: Image(
+                  image: imageOf(File(last!)),
                   fit: BoxFit.cover,
-                  cacheWidth: 192,
                   gaplessPlayback: true,
                 ),
               ),
@@ -616,6 +646,9 @@ class _FlyingShot extends StatelessWidget {
   final Rect to;
   final Animation<double> animation;
 
+  static ImageProvider imageOf(File file) =>
+      ResizeImage(FileImage(file), width: 720); // off-scale: decode pixels
+
   @override
   Widget build(BuildContext context) {
     final radius = context.appStyle.corners(AnchorTokens.radiusTile);
@@ -643,7 +676,7 @@ class _FlyingShot extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: radius,
-            child: Image.file(File(path), fit: BoxFit.cover, cacheWidth: 720),
+            child: Image(image: imageOf(File(path)), fit: BoxFit.cover),
           ),
         ),
       ),

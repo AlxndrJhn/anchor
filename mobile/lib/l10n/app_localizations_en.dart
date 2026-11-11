@@ -4099,9 +4099,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get toolPictureInText => 'Picture in the text';
-
-  @override
   String get pictureInTextCamera => 'Take a picture';
 
   @override

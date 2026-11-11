@@ -1664,7 +1664,8 @@ void main() {
         'Checklist',
         'Bullet list',
         'Add a picture, recording or file',
-        'Picture in the text',
+        'Take a picture',
+        'Choose pictures',
         'Undo',
         'Redo',
         'Hide keyboard',
@@ -3327,8 +3328,8 @@ void main() {
       }
     });
 
-    testWidgets('Picture in the text offers the camera or the phone’s '
-        'pictures', (tester) async {
+    testWidgets('the camera and the phone’s pictures are a tap each, with no '
+        'menu between', (tester) async {
       tester.view
         ..physicalSize = const Size(1170, 2532)
         ..devicePixelRatio = 3;
@@ -3340,17 +3341,12 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
-      await tester.tap(
-        find.byWidgetPredicate(
-          (w) => w is EditorToolButton && w.label == 'Picture in the text',
-        ),
+      Finder button(String label) => find.byWidgetPredicate(
+        (w) => w is EditorToolButton && w.label == label,
       );
-      for (var i = 0; i < 8; i++) {
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-
-      expect(find.text('Take a picture'), findsOneWidget);
-      expect(find.text('Choose pictures'), findsOneWidget);
+      expect(button('Take a picture'), findsOneWidget);
+      expect(button('Choose pictures'), findsOneWidget);
+      expect(find.text('Picture in the text'), findsNothing);
     });
 
     testWidgets('a pasted picture goes into the text where the caret was', (

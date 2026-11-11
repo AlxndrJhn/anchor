@@ -105,6 +105,7 @@ void main() {
         'checklist',
         'bullet',
         'add',
+        'camera',
         'picture',
         'space',
         'undo',
@@ -303,28 +304,38 @@ void main() {
       (widget) => widget is EditorToolButton && widget.label == label,
     );
 
-    testWidgets('is 52 tall, with 44 places, named by its mode', (
+    testWidgets('is 52 tall, with nine places, named by its mode', (
       tester,
     ) async {
       await pumpBar(tester, modelOf());
 
       expect(tester.getSize(find.byType(EditorToolbar)), const Size(390, 52));
-      expect(tester.getSize(tool('Text styles')), const Size(44, 44));
+      expect(tester.getSize(tool('Text styles')).width, closeTo(374 / 9, 0.01));
+      expect(tester.getSize(tool('Text styles')).height, 44);
       expect(tester.getTopLeft(tool('Text styles')), const Offset(8, 796));
       expect(tester.getTopRight(tool('Hide keyboard')), const Offset(382, 796));
       expect(find.bySemanticsLabel('Formatting'), findsOneWidget);
     });
 
-    testWidgets('on a narrow phone the places shrink evenly, to 40', (
-      tester,
-    ) async {
+    testWidgets('on a narrow phone the places shrink evenly', (tester) async {
       await pumpBar(tester, modelOf(), width: 336);
 
-      expect(tester.getSize(tool('Text styles')).width, 40);
-      expect(tester.getTopRight(tool('Hide keyboard')).dx, 328);
+      expect(tester.getSize(tool('Text styles')).width, closeTo(320 / 9, 0.01));
+      expect(tester.getTopRight(tool('Hide keyboard')).dx, closeTo(328, 0.01));
     });
 
-    testWidgets('nine tools shrink below 40 to fit a narrow phone', (
+    testWidgets('typing and selected words draw their tools the same width', (
+      tester,
+    ) async {
+      await pumpBar(tester, modelOf());
+      final typing = tester.getRect(tool('Text styles'));
+
+      await pumpBar(tester, modelOf(hasWords: true));
+
+      expect(tester.getRect(tool('Text styles')), typing);
+    });
+
+    testWidgets('selected words shrink the same to fit a narrow phone', (
       tester,
     ) async {
       await pumpBar(tester, modelOf(hasWords: true), width: 336);
@@ -419,7 +430,9 @@ void main() {
               (widget.decoration as BoxDecoration?)?.shape == BoxShape.circle,
         ),
       );
-      expect(tester.getSize(chip), const Size(40, 40));
+      // A circle as wide as the place, less 2 a side.
+      expect(tester.getSize(chip).width, closeTo(374 / 9 - 4, 0.01));
+      expect(tester.getSize(chip).height, 40);
     });
 
     testWidgets('the colors are swatches, the current one on a chip', (

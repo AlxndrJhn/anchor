@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -30,7 +29,6 @@ import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/bottom_bar_frame.dart';
-import '../../../core/widgets/choice_sheet.dart';
 import '../../../core/widgets/destruction/destruction.dart';
 import '../../../core/widgets/page_bar.dart';
 import '../../../core/widgets/revival.dart';
@@ -1184,33 +1182,6 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
     );
   }
 
-  /// The toolbar's Picture: a picture taken with the camera, or pictures
-  /// from the phone, attached and placed in the text where the caret was.
-  Future<void> _pictureInText() async {
-    final editor = _editor;
-    if (editor == null || _isReadOnly) return;
-    final at = editor.caretOffset;
-    final l10n = context.l10n;
-    final fromCamera = await showChoiceSheet<bool>(
-      context,
-      title: l10n.toolPictureInText,
-      choices: [
-        SheetChoice(
-          value: true,
-          icon: LucideIcons.camera,
-          label: l10n.pictureInTextCamera,
-        ),
-        SheetChoice(
-          value: false,
-          icon: LucideIcons.images,
-          label: l10n.pictureInTextChoose,
-        ),
-      ],
-    );
-    if (fromCamera == null || !mounted) return;
-    await _picturesIntoText(fromCamera: fromCamera, at: at);
-  }
-
   /// Pictures from the camera or the phone, attached and placed in the text
   /// at [at] (the caret when null).
   Future<void> _picturesIntoText({required bool fromCamera, int? at}) async {
@@ -1668,7 +1639,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 isTitleFocused: _titleFocus.hasFocus,
                 titleHistory: _titleHistory,
                 onAddAttachment: _showAdd,
-                onPictureInText: _pictureInText,
+                onTakePictureInText: () => _picturesIntoText(fromCamera: true),
+                onChoosePicturesInText: () =>
+                    _picturesIntoText(fromCamera: false),
               ),
             ),
             if (hasReadOnlyBar)

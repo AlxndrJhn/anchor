@@ -5382,17 +5382,13 @@
       }
     }
   },
-  "toolPictureInText": "Picture in the text",
-  "@toolPictureInText": {
-    "description": "Toolbar button over the keyboard, and the title of the menu it opens: puts a picture taken with the camera, or pictures from the phone, in the note’s text where the cursor is."
-  },
   "pictureInTextCamera": "Take a picture",
   "@pictureInTextCamera": {
-    "description": "Option of the Picture in the text menu: takes a picture with the camera."
+    "description": "Toolbar button over the keyboard: takes a picture with the camera and puts it in the note’s text where the cursor is."
   },
   "pictureInTextChoose": "Choose pictures",
   "@pictureInTextChoose": {
-    "description": "Option of the Picture in the text menu: picks pictures from the phone’s photo library."
+    "description": "Toolbar button over the keyboard: picks pictures from the phone’s photo library and puts them in the note’s text where the cursor is."
   },
   "pictureCrop": "Crop",
   "@pictureCrop": {
