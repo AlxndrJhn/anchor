@@ -13,4 +13,7 @@
     <string name="live_transmitting">Transmitting</string>
     <string name="live_transmitting_text">A note shows your camera live.</string>
     <string name="live_stop_transmission">Stop transmission</string>
+    <string name="recording_channel_name">Voice recordings</string>
+    <string name="recording_title">Recording audio</string>
+    <string name="recording_text">Open Anchor to stop the recording.</string>
 </resources>
