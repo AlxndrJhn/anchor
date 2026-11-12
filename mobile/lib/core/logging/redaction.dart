@@ -101,13 +101,22 @@ String redactQuery(Uri uri) {
   return parts.join('&');
 }
 
+/// Request headers whose values are logged. Any other header's value, such
+/// as an access proxy's client secret, is logged as `***`.
+const _headersSafeToLog = <String>{
+  'accept',
+  'content-length',
+  'content-type',
+  'x-anchor-protocol',
+};
+
 Map<String, dynamic> redactHeaders(Map<String, dynamic> headers) {
   final out = <String, dynamic>{};
   headers.forEach((key, value) {
     final lower = key.toLowerCase();
     if (lower == 'authorization') {
       out[key] = 'Bearer ***';
-    } else if (_isSensitive(lower)) {
+    } else if (!_headersSafeToLog.contains(lower)) {
       out[key] = _redacted;
     } else if (value is String) {
       out[key] = _truncate(value);
