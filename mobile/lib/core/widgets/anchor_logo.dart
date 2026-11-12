@@ -37,31 +37,23 @@ class AnchorLogo extends StatelessWidget {
 
 class _LogoColors {
   const _LogoColors({
-    required this.paper,
-    required this.top,
-    required this.lines,
+    required this.sea,
     required this.anchor,
     required this.plus,
   });
 
   static const light = _LogoColors(
-    paper: [Color(0xFFFFFFFF), Color(0xFFE9EEF4)],
-    top: [Color(0xFFF59A6C), Color(0xFFEC7743)],
-    lines: Color(0xFFD5DBE4),
-    anchor: Color(0xFF2D3142),
-    plus: Color(0xFFEC7743),
+    sea: [Color(0xFF13687A), Color(0xFF0B3B4A)],
+    anchor: Color(0xFFF4F1E8),
+    plus: Color(0xFFF2B544),
   );
   static const dark = _LogoColors(
-    paper: [Color(0xFF30343F), Color(0xFF1B1D23)],
-    top: [Color(0xFFEA8558), Color(0xFFD66A3A)],
-    lines: Color(0xFF4A5164),
-    anchor: Color(0xFFF1F4F8),
-    plus: Color(0xFFEA8558),
+    sea: [Color(0xFF0F4F5E), Color(0xFF06222B)],
+    anchor: Color(0xFFE9ECE8),
+    plus: Color(0xFFF2B544),
   );
 
-  final List<Color> paper;
-  final List<Color> top;
-  final Color lines;
+  final List<Color> sea;
   final Color anchor;
   final Color plus;
 }
@@ -72,91 +64,54 @@ class _LogoPainter extends CustomPainter {
 
   final _LogoColors colors;
 
-  static const _topHeight = 276.0;
-  static const _lines = [(392.0, 688.0), (540.0, 300.0), (688.0, 230.0)];
-  static const _anchorCenter = Offset(684, 706);
-  static const _anchorScale = 3.8;
-  // The + of Anchor+, right of the anchor's ring.
-  static const _plusCenter = Offset(850, 560);
-  static const _plusArm = 38.0;
+  static const _stroke = 72.0;
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint fade(List<Color> pair, double bottom) =>
-        Paint()
-          ..shader = ui.Gradient.linear(Offset.zero, Offset(0, bottom), pair);
+    Paint pen(Color color) => Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
     canvas
       ..save()
       ..scale(size.width / 1024)
       ..clipRRect(RRect.fromLTRBR(0, 0, 1024, 1024, const Radius.circular(256)))
       ..drawRect(
         const Rect.fromLTWH(0, 0, 1024, 1024),
-        fade(colors.paper, 1024),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset.zero,
+            const Offset(1024, 1024),
+            colors.sea,
+          ),
       )
-      ..drawRect(
-        const Rect.fromLTWH(0, 0, 1024, _topHeight),
-        fade(colors.top, _topHeight),
-      );
-    final lines = Paint()..color = colors.lines;
-    for (final (top, width) in _lines) {
-      canvas.drawRRect(
-        RRect.fromLTRBR(
-          168,
-          top,
-          168 + width,
-          top + 64,
-          const Radius.circular(32),
-        ),
-        lines,
-      );
-    }
-    final pen = Paint()
-      ..color = colors.anchor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 13
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas
-      ..translate(
-        _anchorCenter.dx - 50 * _anchorScale,
-        _anchorCenter.dy - 50 * _anchorScale,
-      )
-      ..scale(_anchorScale)
-      ..drawCircle(const Offset(50, 18), 9, pen)
+      // The shank, the arms around its foot and their flukes.
       ..drawPath(
         Path()
-          ..moveTo(50, 27)
-          ..lineTo(50, 94)
-          ..moveTo(10, 54)
+          ..moveTo(512, 428)
+          ..lineTo(512, 788)
+          ..moveTo(272, 548)
           ..arcToPoint(
-            const Offset(90, 54),
-            radius: const Radius.circular(40),
+            const Offset(752, 548),
+            radius: const Radius.circular(240),
             clockwise: false,
           )
-          ..moveTo(10, 54)
-          ..lineTo(22, 54)
-          ..moveTo(90, 54)
-          ..lineTo(78, 54),
-        pen,
+          ..moveTo(272, 548)
+          ..lineTo(344, 548)
+          ..moveTo(752, 548)
+          ..lineTo(680, 548),
+        pen(colors.anchor),
       )
-      ..restore();
-    final plus = Paint()
-      ..color = colors.plus
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 13 * _anchorScale
-      ..strokeCap = StrokeCap.round;
-    canvas
-      ..save()
-      ..scale(size.width / 1024)
-      ..drawLine(
-        _plusCenter.translate(0, -_plusArm),
-        _plusCenter.translate(0, _plusArm),
-        plus,
-      )
-      ..drawLine(
-        _plusCenter.translate(-_plusArm, 0),
-        _plusCenter.translate(_plusArm, 0),
-        plus,
+      // The + of Anchor+, the anchor's ring.
+      ..drawPath(
+        Path()
+          ..moveTo(512, 236)
+          ..lineTo(512, 404)
+          ..moveTo(428, 320)
+          ..lineTo(596, 320),
+        pen(colors.plus),
       )
       ..restore();
   }

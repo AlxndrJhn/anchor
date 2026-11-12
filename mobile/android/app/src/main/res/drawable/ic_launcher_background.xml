@@ -5,28 +5,17 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- tool/launcher_icon/icon.js's sea, from its top left to bottom right. -->
     <path android:pathData="M0,0H108V108H0Z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
-                android:startX="0"
+                android:startX="18"
                 android:startY="18"
-                android:endX="0"
+                android:endX="90"
                 android:endY="90"
-                android:startColor="#FFFFFFFF"
-                android:endColor="#FFE9EEF4" />
-        </aapt:attr>
-    </path>
-    <path android:pathData="M0,0H108V37.406H0Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="0"
-                android:startY="18"
-                android:endX="0"
-                android:endY="37.406"
-                android:startColor="#FFF59A6C"
-                android:endColor="#FFEC7743" />
+                android:startColor="#FF13687A"
+                android:endColor="#FF0B3B4A" />
         </aapt:attr>
     </path>
 </vector>

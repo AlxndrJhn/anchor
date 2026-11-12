@@ -45,29 +45,27 @@ void main() {
   int green(Color color) => (color.g * 255).round();
   int blue(Color color) => (color.b * 255).round();
 
-  testWidgets('the logo is the app icon: an orange top, the page and the '
-      'anchor on it, with the + of Anchor+', (tester) async {
+  testWidgets('the logo is the app icon: a light anchor on deep teal, its '
+      'ring the brass + of Anchor+', (tester) async {
     final at = await drawLogo(tester, AppTheme.light());
 
-    final top = at(16, 4);
-    expect(red(top), greaterThan(230), reason: 'orange');
-    expect(blue(top), lessThan(120), reason: 'orange');
-    expect(red(at(6, 30)), greaterThan(225), reason: 'the light page');
-    expect(at(21, 22), const Color(0xFF2D3142), reason: 'the dark anchor');
+    final sea = at(4, 16);
+    expect(blue(sea), greaterThan(red(sea) + 60), reason: 'teal');
+    expect(green(sea), greaterThan(red(sea) + 40), reason: 'teal');
+    expect(at(16, 20), const Color(0xFFF4F1E8), reason: 'the light anchor');
+    expect(at(14, 9), const Color(0xFFF2B544), reason: 'the brass +');
     expect(at(0, 0).a, 0, reason: 'round corners');
-    final plus = at(26, 17);
-    expect(red(plus), greaterThan(220), reason: 'an orange +');
-    expect(blue(plus), lessThan(110), reason: 'an orange +');
   });
 
-  testWidgets('in dark mode the page is dark and the anchor light', (
+  testWidgets('in dark mode the sea is darker and the + still brass', (
     tester,
   ) async {
     final at = await drawLogo(tester, AppTheme.dark());
 
-    expect(red(at(6, 30)), lessThan(60), reason: 'the dark page');
-    expect(green(at(21, 22)), greaterThan(230), reason: 'the light anchor');
-    expect(red(at(16, 4)), greaterThan(200), reason: 'still orange');
-    expect(blue(at(26, 17)), lessThan(130), reason: 'an orange +');
+    final sea = at(4, 16);
+    expect(red(sea), lessThan(30), reason: 'the dark sea');
+    expect(blue(sea), greaterThan(red(sea) + 40), reason: 'still teal');
+    expect(at(16, 20), const Color(0xFFE9ECE8), reason: 'the light anchor');
+    expect(at(14, 9), const Color(0xFFF2B544), reason: 'the brass +');
   });
 }
