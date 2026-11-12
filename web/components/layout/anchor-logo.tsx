@@ -6,8 +6,7 @@ import { cn } from "@/lib/utils";
 /** The app icon, in its 1024 by 1024 units: mobile/tool/launcher_icon/icon.js's. */
 export function AnchorLogo({ className }: { className?: string }) {
   const id = useId();
-  const paper = `${id}paper`;
-  const top = `${id}top`;
+  const sea = `${id}sea`;
   const page = `${id}page`;
   return (
     <svg
@@ -17,31 +16,17 @@ export function AnchorLogo({ className }: { className?: string }) {
     >
       <defs>
         <linearGradient
-          id={paper}
+          id={sea}
           gradientUnits="userSpaceOnUse"
           x1="0"
           y1="0"
-          x2="0"
+          x2="1024"
           y2="1024"
         >
-          <stop className="[stop-color:#ffffff] dark:[stop-color:#30343f]" />
+          <stop className="[stop-color:#13687a] dark:[stop-color:#0f4f5e]" />
           <stop
             offset="1"
-            className="[stop-color:#e9eef4] dark:[stop-color:#1b1d23]"
-          />
-        </linearGradient>
-        <linearGradient
-          id={top}
-          gradientUnits="userSpaceOnUse"
-          x1="0"
-          y1="0"
-          x2="0"
-          y2="276"
-        >
-          <stop className="[stop-color:#f59a6c] dark:[stop-color:#ea8558]" />
-          <stop
-            offset="1"
-            className="[stop-color:#ec7743] dark:[stop-color:#d66a3a]"
+            className="[stop-color:#0b3b4a] dark:[stop-color:#06222b]"
           />
         </linearGradient>
         <clipPath id={page}>
@@ -49,32 +34,20 @@ export function AnchorLogo({ className }: { className?: string }) {
         </clipPath>
       </defs>
       <g clipPath={`url(#${page})`}>
-        <rect width="1024" height="1024" fill={`url(#${paper})`} />
-        <rect width="1024" height="276" fill={`url(#${top})`} />
-        <g className="fill-[#d5dbe4] dark:fill-[#4a5164]">
-          <rect x="168" y="392" width="688" height="64" rx="32" />
-          <rect x="168" y="540" width="300" height="64" rx="32" />
-          <rect x="168" y="688" width="230" height="64" rx="32" />
-        </g>
+        <rect width="1024" height="1024" fill={`url(#${sea})`} />
         <g
-          transform="translate(494 516) scale(3.8)"
           fill="none"
-          strokeWidth="13"
+          strokeWidth="72"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="stroke-[#2d3142] dark:stroke-[#f1f4f8]"
         >
-          <circle cx="50" cy="18" r="9" />
-          <path d="M50 27V94M10 54A40 40 0 0 0 90 54M10 54H22M90 54H78" />
+          <path
+            d="M512 428V788M272 548A240 240 0 0 0 752 548M272 548H344M752 548H680"
+            className="stroke-[#f4f1e8] dark:stroke-[#e9ece8]"
+          />
+          {/* The + of Anchor+, the anchor's ring. */}
+          <path d="M512 236V404M428 320H596" stroke="#f2b544" />
         </g>
-        {/* The + of Anchor+, right of the anchor's ring. */}
-        <path
-          d="M850 522V598M812 560H888"
-          fill="none"
-          strokeWidth="49.4"
-          strokeLinecap="round"
-          className="stroke-[#ec7743] dark:stroke-[#ea8558]"
-        />
       </g>
     </svg>
   );
