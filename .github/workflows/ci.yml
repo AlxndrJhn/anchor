@@ -7,10 +7,10 @@ on:
       - "v*"
     paths-ignore:
       - "**.md"
+  # No paths-ignore here: main's ruleset requires these jobs, so a pull request
+  # that skipped them (say, one that only changes Markdown) could never merge.
   pull_request:
     branches: [main, next]
-    paths-ignore:
-      - "**.md"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
