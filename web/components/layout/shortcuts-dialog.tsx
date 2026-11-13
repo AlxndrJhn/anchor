@@ -45,6 +45,7 @@ const sections = (mod: string): [string, Row[]][] => [
       ["Select the note", [["X"], ["Space"]]],
       ["Select up to it", [["Shift", "X"]]],
       ["New note, or new list, with no note focused", [["C"], ["L"]]],
+      ["Leave a tag for all notes", [["Esc"]]],
     ],
   ],
   [

@@ -409,6 +409,9 @@ function NotesView({ tagId }: { tagId: string | null }) {
     c: () => router.push(newNote),
     l: () => router.push(newNoteHref("/notes", tagId, { list: true })),
   });
+  // Esc leaves a tag for all notes, once there's no selection to drop.
+  const leaveTag = () => router.push("/notes");
+  useShortcuts({ Escape: leaveTag }, !!tagId && !list.picking);
   const noNotes =
     !isLoading &&
     !loadFailed &&
