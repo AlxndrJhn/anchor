@@ -1,5 +1,4 @@
 import 'package:anchor/core/search/search_pattern.dart';
-import 'package:anchor/features/note_locks/presentation/note_lock_session.dart';
 import 'package:anchor/features/notes/domain/note.dart';
 import 'package:anchor/features/notes/domain/note_filters.dart';
 import 'package:anchor/features/notes/presentation/note_folder.dart';
@@ -390,29 +389,22 @@ void main() {
     });
   });
 
-  test('a locked note not opened since the phone was locked is found by '
-      'its title only', () async {
+  test('a locked note is found by its text too, without opening it', () async {
     final locked = [
       for (final n in notes) n.id == 'n2' ? n.copyWith(lock: NoteLock.pin) : n,
     ];
     final container = containerWith(active: locked);
     container.read(searchQueryProvider.notifier).set('lisbon');
     var shown = await visibleIn(container);
-    expect(shown.notes, isEmpty);
-
-    container.read(searchQueryProvider.notifier).set('trip');
-    shown = container.read(visibleNotesProvider);
     expect(shown.notes.map((n) => n.id), ['n2']);
 
-    // Opened, its text is searched again.
-    container.read(noteLockSessionProvider.notifier).unlock('n2');
-    container.read(searchQueryProvider.notifier).set('lisbon');
+    container.read(searchQueryProvider.notifier).set('trip');
     shown = container.read(visibleNotesProvider);
     expect(shown.notes.map((n) => n.id), ['n2']);
   });
 
   test(
-    'filters on what is in a note leave out locked notes not opened',
+    'filters on what is in a note find locked notes too',
     () async {
       final locked = [
         Note(
@@ -436,7 +428,7 @@ void main() {
           .read(noteFiltersControllerProvider.notifier)
           .set(const NoteFilters(checklist: true));
       final shown = await visibleIn(container);
-      expect(shown.notes.map((n) => n.id), ['o1']);
+      expect(shown.notes.map((n) => n.id).toSet(), {'l1', 'o1'});
     },
   );
 
@@ -465,8 +457,8 @@ void main() {
     expect(shown.notes.map((n) => n.id), ['n2']);
   });
 
-  test('the Secrets filter finds notes holding keys or passwords, not '
-      'locked ones not opened', () async {
+  test('the Secrets filter finds notes holding keys or passwords, locked '
+      'ones too', () async {
     final container = containerWith(
       active: [
         ...notes,
@@ -482,11 +474,7 @@ void main() {
     container
         .read(noteFiltersControllerProvider.notifier)
         .set(const NoteFilters(secret: true));
-    var shown = await visibleIn(container);
-    expect(shown.notes.map((n) => n.id), ['s1']);
-
-    container.read(noteLockSessionProvider.notifier).unlock('s2');
-    shown = container.read(visibleNotesProvider);
+    final shown = await visibleIn(container);
     expect(shown.notes.map((n) => n.id).toSet(), {'s1', 's2'});
   });
 

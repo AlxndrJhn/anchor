@@ -24,7 +24,6 @@ import { matchesSearch } from "../search";
 import { compareNotes } from "../sort";
 import type { Note } from "../types";
 import { QUERY_PARAM } from "../url-with-query";
-import { useUnlockedIds } from "./use-note-lock";
 
 export { matchesSearch };
 
@@ -46,22 +45,19 @@ interface Finding {
   term: string;
   filters: NoteFilters;
   activeFilters: number;
-  unlocked: ReadonlySet<string>;
   withInvisible: boolean;
 }
 
 function findAndSort(
   notes: Note[],
-  { term, filters, activeFilters, unlocked, withInvisible }: Finding,
+  { term, filters, activeFilters, withInvisible }: Finding,
   sortBy: SortBy,
   sortOrder: SortOrder,
 ) {
   const found =
     term || activeFilters
       ? notes.filter(
-          (note) =>
-            matchesSearch(note, term, unlocked) &&
-            matchesFilters(note, filters),
+          (note) => matchesSearch(note, term) && matchesFilters(note, filters),
         )
       : withInvisible
         ? notes
@@ -129,10 +125,9 @@ export function useNoteList(
   const [picked, setPicked] = React.useState<Set<string>>(new Set());
   const lastPick = React.useRef<string | null>(null);
 
-  const unlocked = useUnlockedIds();
   const finding = React.useMemo(
-    () => ({ term, filters, activeFilters, unlocked, withInvisible }),
-    [term, filters, activeFilters, unlocked, withInvisible],
+    () => ({ term, filters, activeFilters, withInvisible }),
+    [term, filters, activeFilters, withInvisible],
   );
   const visible = React.useMemo(
     () => findAndSort(notes, finding, sortBy, sortOrder),
