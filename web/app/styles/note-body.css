@@ -45,6 +45,8 @@
   font-weight: var(--text-body--font-weight);
   line-height: 1.7;
   color: var(--foreground);
+  /* Each block reads its own direction (dir="auto"), so RTL lines align right. */
+  text-align: start;
 }
 .doc p {
   margin: 0 0 0.6em;
@@ -109,7 +111,8 @@
 }
 .doc .lst li {
   position: relative;
-  padding: 0.1em 0 0.1em calc(var(--lvl) * var(--indent) + --spacing(7));
+  padding-block: 0.1em;
+  padding-inline: calc(var(--lvl) * var(--indent) + --spacing(7)) 0;
   background:
     repeating-linear-gradient(
       90deg,
@@ -118,10 +121,19 @@
     )
     11px 0 / calc(var(--lvl) * var(--indent)) 100% no-repeat;
 }
+.doc .lst li:dir(rtl) {
+  background:
+    repeating-linear-gradient(
+      270deg,
+      var(--guide) 0 1px,
+      transparent 1px var(--indent)
+    )
+    right 11px top 0 / calc(var(--lvl) * var(--indent)) 100% no-repeat;
+}
 .doc .mk {
   position: absolute;
   top: 0.1em;
-  left: calc(var(--lvl) * var(--indent));
+  inset-inline-start: calc(var(--lvl) * var(--indent));
   width: 22px;
   height: 1.7em;
   display: grid;
@@ -146,17 +158,17 @@
 }
 .doc .num .mk {
   place-items: center end;
-  padding-right: 3px;
+  padding-inline-end: 3px;
   font-size: 0.9em;
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 .doc .ck li {
-  padding-left: calc(var(--lvl) * var(--indent) + --spacing(8));
+  padding-inline-start: calc(var(--lvl) * var(--indent) + --spacing(8));
 }
 .doc .ck .box {
   position: absolute;
-  left: calc(var(--lvl) * var(--indent) + 2px);
+  inset-inline-start: calc(var(--lvl) * var(--indent) + 2px);
   top: calc(0.1em + 0.85em - var(--box) / 2);
   width: var(--box);
   height: var(--box);
@@ -189,9 +201,12 @@
 }
 .doc blockquote {
   margin: 0.9em 0 1em;
-  padding: 0.6em 1.1em 0.65em 1.15em;
-  border-left: 3px solid var(--q-bar);
-  border-radius: 3px var(--radius-xl) var(--radius-xl) 3px;
+  padding-block: 0.6em 0.65em;
+  padding-inline: 1.15em 1.1em;
+  border-inline-start: 3px solid var(--q-bar);
+  border-radius: var(--radius-xl);
+  border-start-start-radius: 3px;
+  border-end-start-radius: 3px;
   background: color-mix(in srgb, var(--note-surface) 70%, transparent);
 }
 .doc:not(.is-card) blockquote:has(+ blockquote) {
@@ -303,7 +318,8 @@
   gap: 3px;
 }
 .doc.is-card .lst li {
-  padding: 0 0 0 calc(var(--lvl) * var(--indent) + 21px);
+  padding: 0;
+  padding-inline-start: calc(var(--lvl) * var(--indent) + 21px);
   background: none;
 }
 .doc.is-card .lst .tx {
@@ -332,7 +348,7 @@
   font-size: var(--text-footnote);
 }
 .doc.is-card .ck .box {
-  left: calc(var(--lvl) * var(--indent));
+  inset-inline-start: calc(var(--lvl) * var(--indent));
   top: calc(0.75em - var(--box) / 2);
   border-radius: 4.5px;
   pointer-events: none;
@@ -342,10 +358,11 @@
   margin-top: -1px;
 }
 .doc.is-card blockquote {
-  padding: 0 0 0 --spacing(2.5);
+  padding: 0;
+  padding-inline-start: --spacing(2.5);
   border-radius: 0;
   background: none;
-  border-left-width: 2px;
+  border-inline-start-width: 2px;
   color: var(--note-muted);
   display: -webkit-box;
   -webkit-line-clamp: 3;

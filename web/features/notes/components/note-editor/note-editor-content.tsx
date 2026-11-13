@@ -638,6 +638,7 @@ function TitleField({
     <textarea
       ref={ref}
       className="n-title"
+      dir="auto"
       rows={1}
       value={value}
       aria-label="Title"

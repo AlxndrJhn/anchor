@@ -400,7 +400,11 @@ export const NoteCard = React.memo(function NoteCard({
         </div>
       )}
       <div className="nc-in">
-        {title && <div className="nc-title">{title}</div>}
+        {title && (
+          <div className="nc-title" dir="auto">
+            {title}
+          </div>
+        )}
         {lockHidden ? (
           <div className="nc-locked">
             <Lock aria-hidden />
