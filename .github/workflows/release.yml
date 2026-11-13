@@ -53,6 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      build: ${{ steps.version.outputs.build }}
       tag: ${{ steps.version.outputs.tag }}
       anchor_version: ${{ steps.version.outputs.anchor_version }}
       candidate: ${{ steps.version.outputs.candidate }}
@@ -76,9 +77,15 @@ jobs:
         id: version
         run: |
           VERSION=$(sed -n 's/^version: *\([^+]*\).*/\1/p' mobile/pubspec.yaml)
+          # The build number ends the tag, and the apps update to a release
+          # whose number is higher than their own. GitHub's run counter
+          # started again at 1 when the repository was detached, below the
+          # 81 builds released before, so it continues from 100.
+          BUILD=$((GITHUB_RUN_NUMBER + 100))
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "anchor_version=$VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION.$BUILD" >> "$GITHUB_OUTPUT"
+          echo "anchor_version=$VERSION.$BUILD" >> "$GITHUB_OUTPUT"
           echo "candidate=${{ inputs.candidate == true }}" >> "$GITHUB_OUTPUT"
           IMAGE="ghcr.io/$GITHUB_REPOSITORY"
           echo "preview_image=${IMAGE,,}:preview" >> "$GITHUB_OUTPUT"
@@ -242,6 +249,7 @@ jobs:
       - name: Build APK
         env:
           VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build }}
         # One APK per processor type: a phone only uses one, and an APK with
         # all three is about three times the size. Build numbers continue past
         # the old "Android APK" workflow's (1000 + run), and Flutter adds
@@ -252,8 +260,8 @@ jobs:
         run: |
           flutter build apk --release --split-per-abi \
             --build-name="$VERSION-g${GITHUB_SHA::7}" \
-            --build-number=$((2000 + GITHUB_RUN_NUMBER)) \
-            --dart-define=RELEASE_BUILD="$GITHUB_RUN_NUMBER" \
+            --build-number=$((2000 + BUILD)) \
+            --dart-define=RELEASE_BUILD="$BUILD" \
             --dart-define=UPDATE_REPO="$GITHUB_REPOSITORY"
           cd build/app/outputs/flutter-apk
           mv app-arm64-v8a-release.apk anchor-plus.apk
@@ -331,12 +339,13 @@ jobs:
       - name: Build installer
         env:
           VERSION: ${{ needs.version.outputs.version }}
+          BUILD: ${{ needs.version.outputs.build }}
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: |
           pnpm exec electron-builder ${{ matrix.targets }} --publish never \
-            -c.buildNumber="$GITHUB_RUN_NUMBER" \
+            -c.buildNumber="$BUILD" \
             -c.extraMetadata.version="$VERSION" \
-            -c.extraMetadata.anchorBuild="$GITHUB_RUN_NUMBER" \
+            -c.extraMetadata.anchorBuild="$BUILD" \
             -c.extraMetadata.anchorUpdateRepo="$GITHUB_REPOSITORY"
           ls -l dist
 
