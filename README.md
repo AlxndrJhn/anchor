@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/web/public/icons/anchor_icon.png" alt="Anchor+" width="120" height="120">
+<img src="https://raw.githubusercontent.com/AlxndrJhn/anchor-plus/main/web/public/icons/anchor_icon.png" alt="Anchor+" width="120">
 
 # Anchor+
 
