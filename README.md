@@ -673,7 +673,8 @@ which keeps the notes on this computer, as
    an Anchor+ server; with another one, move them with Settings › Import and
    export.)
 
-The builds are not signed, so the system warns the first time:
+The builds are not signed yet (see [Code signing policy](#code-signing-policy)),
+so the system warns the first time:
 
 - **macOS:** right-click Anchor in Applications and choose **Open**, then
   **Open** again; or try to open it once, then allow it under **System
@@ -695,6 +696,30 @@ Microsoft's checks have passed, usually within a day.
 Links to other websites open in your browser. To build it yourself:
 `cd web && pnpm install && pnpm build:local`, then
 `cd desktop && pnpm install && pnpm run dist:win` (or `dist:mac`).
+
+### Code signing policy
+
+The Windows installer is to be signed through SignPath Foundation's program
+for open-source projects; until it is, it ships unsigned as described above.
+Free code signing provided by [SignPath.io](https://about.signpath.io),
+certificate by [SignPath Foundation](https://signpath.org).
+
+Only installers built by this repository's
+[release workflow](.github/workflows/release.yml) on GitHub Actions, from the
+source in this repository, are signed, and each release is approved by hand
+before it is signed.
+
+- Committers and reviewers: [AlxndrJhn](https://github.com/AlxndrJhn)
+- Approvers: [AlxndrJhn](https://github.com/AlxndrJhn)
+
+**Privacy policy.** This program will not transfer any information to other
+networked systems unless specifically requested by the user or the person
+installing or operating it. It talks to the Anchor server you set, and nothing
+else, except to update itself: it asks GitHub
+(`api.github.com`) for this repository's releases now and then and downloads a
+newer installer from GitHub. That request carries no notes, account or
+personal data, though GitHub sees your IP address, as described in the
+[GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
 
 ## Claude (MCP)
 

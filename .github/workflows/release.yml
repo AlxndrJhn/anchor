@@ -349,8 +349,64 @@ jobs:
             desktop/dist/Anchor-*.dmg
           if-no-files-found: error
 
+  # Signs the Windows installer through SignPath Foundation (see Code signing
+  # policy in the README): SignPath fetches the anchor-desktop-windows
+  # artifact from this run, waits for the release to be approved in SignPath,
+  # signs the installer as .signpath/artifact-configuration.xml says, and the
+  # signed installer then replaces the unsigned one in that artifact, so the
+  # release and winget get it. Off until the SIGNPATH_ORGANIZATION_ID
+  # variable and SIGNPATH_API_TOKEN secret are set. When signing fails or
+  # isn't approved within the hour, the release goes out with the unsigned
+  # installer, as before.
+  sign-windows:
+    needs: [version, build-desktop]
+    if: >-
+      !cancelled() && needs.version.outputs.desktop == 'true' &&
+      vars.SIGNPATH_ORGANIZATION_ID != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Find the Windows installer
+        id: artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=anchor-desktop-windows" \
+            --jq '.artifacts[0].id // empty')
+          if [ -z "$ID" ]; then
+            echo "::warning::The Windows installer didn't build, so there is nothing to sign."
+          fi
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Sign with SignPath
+        if: steps.artifact.outputs.id != ''
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: anchor-plus
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: windows-installer
+          github-artifact-id: ${{ steps.artifact.outputs.id }}
+          parameters: |
+            version: "${{ needs.version.outputs.anchor_version }}"
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed
+
+      - name: Replace the unsigned installer
+        if: steps.artifact.outputs.id != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: anchor-desktop-windows
+          path: signed/Anchor-Setup-*.exe
+          if-no-files-found: error
+          overwrite: true
+
   release:
-    needs: [version, build-apk, build-desktop, docker, docker-preview]
+    needs: [version, build-apk, build-desktop, sign-windows, docker, docker-preview]
     # The desktop installers are welcome but optional: a release still goes
     # out with the APKs and the image when they fail to build. A build whose
     # files didn't change is skipped, and with nothing changed there is no
@@ -394,7 +450,8 @@ jobs:
 
       # Signs a record that each file was built by this workflow from this
       # commit, so anyone can check a download with `gh attestation verify`.
-      # The installers stay unsigned for Windows and macOS themselves.
+      # Apart from that, the macOS app stays unsigned, and the Windows
+      # installer is signed only when the sign-windows job signed it.
       - name: Attest the release files
         if: hashFiles('anchor-plus*.apk', 'Anchor-*.exe', 'Anchor-*.dmg') != ''
         uses: actions/attest@v4
@@ -414,6 +471,7 @@ jobs:
           PREVIOUS: ${{ needs.version.outputs.previous }}
           CANDIDATE: ${{ needs.version.outputs.candidate }}
           PREVIEW_IMAGE: ${{ needs.version.outputs.preview_image }}
+          WINDOWS_SIGNED: ${{ needs.sign-windows.result == 'success' }}
           IMAGE: ghcr.io/${{ github.repository }}
         run: |
           IMAGE=${IMAGE,,}
@@ -456,7 +514,11 @@ jobs:
               echo
               echo "On first launch it asks for your Anchor server's address."
               echo
-              echo 'The installers are not signed. On Windows, if SmartScreen stops it, choose More info › Run anyway. On macOS, right-click the app and choose Open the first time, or allow it under System Settings › Privacy & Security.'
+              if [ "$WINDOWS_SIGNED" = true ] && [ -n "$EXE" ]; then
+                echo "The Windows installer is signed ([Code signing policy](https://github.com/$GITHUB_REPOSITORY#code-signing-policy)); SmartScreen may still warn while it is new: choose More info › Run anyway. The macOS app is not signed: right-click it and choose Open the first time, or allow it under System Settings › Privacy & Security."
+              else
+                echo "The installers are not signed ([Code signing policy](https://github.com/$GITHUB_REPOSITORY#code-signing-policy)). On Windows, if SmartScreen stops it, choose More info › Run anyway. On macOS, right-click the app and choose Open the first time, or allow it under System Settings › Privacy & Security."
+              fi
               echo
             elif [ -n "$DESKTOP_TAG" ]; then
               echo "## Desktop (Windows, macOS)"
