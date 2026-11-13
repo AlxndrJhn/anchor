@@ -85,6 +85,7 @@ export function NoteBody({
               {segment.items.map(({ key, block }) => (
                 <li
                   key={key}
+                  dir="auto"
                   data-lvl={block.level}
                   style={{ "--lvl": block.level } as React.CSSProperties}
                   className={block.done ? "done" : undefined}
@@ -112,7 +113,9 @@ export function NoteBody({
                   )}
                   <span className="tx">
                     {block.type === "check" && (
-                      <span className="sr-only">
+                      // Its own dir keeps this English label out of the
+                      // li's dir="auto", which reads the item's text.
+                      <span className="sr-only" dir="ltr">
                         {block.done ? "Checked: " : "Not checked: "}
                       </span>
                     )}
@@ -143,11 +146,20 @@ function Block({ row, card }: { row: Row; card: boolean }) {
   const text = <TextRuns runs={block.runs} card={card} />;
   if (block.type === "h1" || block.type === "h2" || block.type === "h3") {
     const headingClass = `x-${block.type}`;
-    if (card) return <p className={headingClass}>{text}</p>;
+    if (card)
+      return (
+        <p className={headingClass} dir="auto">
+          {text}
+        </p>
+      );
     const Tag = ({ h1: "h2", h2: "h3", h3: "h4" } as const)[block.type];
-    return <Tag className={headingClass}>{text}</Tag>;
+    return (
+      <Tag className={headingClass} dir="auto">
+        {text}
+      </Tag>
+    );
   }
-  if (block.type === "quote") return <blockquote>{text}</blockquote>;
+  if (block.type === "quote") return <blockquote dir="auto">{text}</blockquote>;
   if (block.type === "code") {
     const code = block.runs.map((r) => r.text).join("");
     const preview = card ? cardCodeLines(code, CARD_CODE_LINES) : null;
@@ -159,7 +171,7 @@ function Block({ row, card }: { row: Row; card: boolean }) {
       </div>
     );
   }
-  return <p>{text}</p>;
+  return <p dir="auto">{text}</p>;
 }
 
 export function TextRuns({ runs, card }: { runs: InlineRun[]; card: boolean }) {

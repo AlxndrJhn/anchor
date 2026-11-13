@@ -398,6 +398,20 @@ export function registerNoteFormats(Quill: QuillStatic) {
     PROTOCOL_WHITELIST: string[];
   };
   Link.PROTOCOL_WHITELIST = LINK_PROTOCOLS;
+
+  // Every line takes its direction from its own first letter, so a Hebrew or
+  // Arabic line lays out right to left beside English ones. Paragraphs,
+  // headings, quotes and list items all inherit Block.create; code stays LTR.
+  // Splitting a line clones its node, so the new line keeps the attribute.
+  const Block = Quill.import("blots/block") as {
+    create(this: { blotName?: string }, value?: unknown): HTMLElement;
+  };
+  const createBlock = Block.create;
+  Block.create = function (value) {
+    const node = createBlock.call(this, value);
+    if (this.blotName !== "code-block") node.setAttribute("dir", "auto");
+    return node;
+  };
 }
 
 function typedFormats(quill: QuillInstance, range: Range): Formats {

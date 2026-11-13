@@ -38,6 +38,8 @@
   color: var(--foreground);
   overflow-y: visible;
   counter-reset: none;
+  /* Each line reads its own direction (dir="auto"), so RTL lines align right. */
+  text-align: start;
 }
 .anchor-quill .slash-hint {
   position: absolute;
@@ -118,9 +120,15 @@
 /* Quotes */
 .anchor-quill .ql-editor blockquote {
   margin: 0.9em 0 1em;
-  padding: 0.6em 1.1em 0.65em 1.15em;
-  border-left: 3px solid color-mix(in srgb, var(--accent) 75%, transparent);
-  border-radius: 3px var(--radius-xl) var(--radius-xl) 3px;
+  padding-block: 0.6em 0.65em;
+  padding-inline: 1.15em 1.1em;
+  /* snow.css draws a left bar; ours sits on the line's start side. */
+  border: 0;
+  border-inline-start: 3px solid
+    color-mix(in srgb, var(--accent) 75%, transparent);
+  border-radius: var(--radius-xl);
+  border-start-start-radius: 3px;
+  border-end-start-radius: 3px;
   background: color-mix(in srgb, var(--note-surface) 70%, transparent);
   color: inherit;
   font-style: normal;
@@ -173,13 +181,15 @@
   --lvl: 0;
   --lead: --spacing(7);
   position: relative;
-  margin-left: calc(var(--lvl) * var(--indent));
-  padding: 0.1em 0 0.1em var(--lead);
+  margin-inline-start: calc(var(--lvl) * var(--indent));
+  padding-block: 0.1em;
+  padding-inline: var(--lead) 0;
   list-style: none;
 }
 /* snow.css indents with padding; ours is the margin above. */
 .anchor-quill .ql-editor li[class*="ql-indent-"]:not(.ql-direction-rtl) {
-  padding-left: var(--lead);
+  padding-left: 0;
+  padding-inline-start: var(--lead);
 }
 .anchor-quill .ql-editor li.ql-indent-1 {
   --lvl: 1;
@@ -195,7 +205,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc(var(--lvl) * var(--indent) * -1);
+  inset-inline-start: calc(var(--lvl) * var(--indent) * -1);
   width: calc(var(--lvl) * var(--indent));
   background:
     repeating-linear-gradient(
@@ -206,10 +216,13 @@
     11px 0 / 100% 100% no-repeat;
   pointer-events: none;
 }
+.anchor-quill .ql-editor li[class*="ql-indent-"]:dir(rtl)::before {
+  transform: scaleX(-1);
+}
 .anchor-quill .ql-editor li > .ql-ui {
   position: absolute;
   top: 0.1em;
-  left: 0;
+  inset-inline-start: 0;
   display: grid;
   place-items: center;
   width: 22px;
@@ -243,12 +256,12 @@
 
 /* Numbers */
 .anchor-quill .ql-editor li[data-list="ordered"] > .ql-ui {
-  left: auto;
-  right: calc(100% - 22px);
+  inset-inline-start: auto;
+  inset-inline-end: calc(100% - 22px);
   width: max-content;
   min-width: 22px;
   place-items: center end;
-  padding-right: 3px;
+  padding-inline-end: 3px;
   font-size: 0.9em;
   /* The same box as the text line, in this smaller font's units. */
   top: calc(0.1em / 0.9);
@@ -265,7 +278,7 @@
 .anchor-quill .ql-editor li[data-list="checked"] > .ql-ui,
 .anchor-quill .ql-editor li[data-list="unchecked"] > .ql-ui {
   top: calc(0.1em + 0.85em - var(--box) / 2);
-  left: var(--box-left);
+  inset-inline-start: var(--box-left);
   width: var(--box);
   height: var(--box);
   box-sizing: border-box;
