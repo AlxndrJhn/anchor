@@ -60,10 +60,8 @@ import {
 } from "@/features/notes/hooks/use-note-freeze";
 import { useApplyInvisible } from "@/features/notes/hooks/use-note-invisible";
 import { useNoteList } from "@/features/notes/hooks/use-note-list";
-import { useUnlockedIds } from "@/features/notes/hooks/use-note-lock";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { matchesFilters } from "@/features/notes/note-filters";
-import { isLockHidden } from "@/features/notes/note-lock";
 import { positionBetween } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
@@ -133,7 +131,6 @@ function NotesView({ tagId }: { tagId: string | null }) {
   );
   const [sharingNote, setSharingNote] = React.useState<Note | null>(null);
   const [locking, setLocking] = React.useState(false);
-  const unlocked = useUnlockedIds();
   const [confirmRemove, setConfirmRemove] = React.useState<{
     ids: string[];
     sharedCount: number;
@@ -163,14 +160,13 @@ function NotesView({ tagId }: { tagId: string | null }) {
   }, [list.activeFilters, loadArchived]);
 
   // Notes whose pictures look like the search, for those who turned
-  // picture search on: after the notes that match by their words. A locked
-  // note's pictures stay out of it until it is unlocked.
+  // picture search on: after the notes that match by their words.
   const pictureCandidates = React.useMemo(
     () =>
-      [...notes, ...(list.hasArchived ? archived.tagged : [])].filter(
-        (n) => matchesFilters(n, list.filters) && !isLockHidden(n, unlocked),
+      [...notes, ...(list.hasArchived ? archived.tagged : [])].filter((n) =>
+        matchesFilters(n, list.filters),
       ),
-    [notes, list.hasArchived, archived.tagged, list.filters, unlocked],
+    [notes, list.hasArchived, archived.tagged, list.filters],
   );
   const shownNotes = React.useMemo(
     () => [...visible, ...list.archived],

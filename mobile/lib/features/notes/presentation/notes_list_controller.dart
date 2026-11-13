@@ -7,7 +7,6 @@ import '../../../core/motion/haptics.dart';
 import '../../../core/search/search_pattern.dart';
 import '../../../core/storage/preferences_repository.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../note_locks/presentation/note_lock_session.dart';
 import '../../picture_search/picture_search.dart';
 import '../../reminders/data/reminder_permissions.dart';
 import '../../tags/presentation/tags_controller.dart';
@@ -101,9 +100,6 @@ VisibleNotes visibleNotes(Ref ref) {
   final pattern = SearchPattern(query, options: searchOptions);
   final searchText = ref.watch(noteSearchTextProvider);
   final filters = ref.watch(noteFiltersControllerProvider);
-  // A locked note not opened since the phone was last locked is found by its
-  // title alone, so a match gives nothing of its text away.
-  final unlocked = ref.watch(noteLockSessionProvider);
   // Filters search too: they bring in matching archived notes, open.
   final isSearching = words.isNotEmpty || !filters.isEmpty;
   // Invisible notes stay out of the lists until a search or a filter brings
@@ -111,21 +107,17 @@ VisibleNotes visibleNotes(Ref ref) {
   final searching = isSearching || folder == NoteFolder.trash;
   bool matches(Note note) {
     if (!showsInList(note, searching: searching)) return false;
-    final isHidden = isNoteHidden(note, unlocked);
-    // Nor do filters on what's in it (pictures, a checklist, a secret)
-    // find it.
-    if (isHidden && (filters.picture || filters.checklist || filters.secret)) {
-      return false;
-    }
+    // Locked notes too, by what's in them: a lock only keeps a note's text
+    // off the screen until it's opened, it isn't a secret store.
     if (!filters.matches(note)) return false;
     if (words.isEmpty) return true;
     // Plain words in any case: the quick way, on lower case text.
     if (searchOptions.isDefault) {
       return note.title.toLowerCase().contains(words) ||
-          (!isHidden && searchText.of(note).contains(words));
+          searchText.of(note).contains(words);
     }
     return pattern.hasMatch(note.title) ||
-        (!isHidden && pattern.hasMatch(searchText.asWritten(note)));
+        pattern.hasMatch(searchText.asWritten(note));
   }
 
   final comparator = noteComparator(options);
@@ -165,7 +157,7 @@ VisibleNotes visibleNotes(Ref ref) {
             for (final note in archivedSource.value ?? const <Note>[])
               if (tagId == null || note.tagIds.contains(tagId)) note,
           ].where(
-            (note) => filters.matches(note) && !isNoteHidden(note, unlocked),
+            filters.matches,
           ),
           [...visible, ...archived],
         );

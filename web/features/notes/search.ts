@@ -1,5 +1,4 @@
 import { hasSearchTerm } from "@/lib/search-pattern";
-import { isLockHidden } from "./note-lock";
 import { deltaToFullPlainText } from "./quill";
 import type { Note } from "./types";
 
@@ -15,20 +14,12 @@ function searchTextOf(note: Note) {
   return text;
 }
 
-const NONE_UNLOCKED: ReadonlySet<string> = new Set();
-
 /**
  * Whether a note's title, text or pictures have the (trimmed) term, in any
- * case and with or without accents. A note locked and not opened this
- * session (see `unlocked`) is found by its title only, so a search can't
- * tell what it says.
+ * case and with or without accents. Locked notes too: a lock only keeps a
+ * note's text off the screen until it's opened, it isn't a secret store.
  */
-export function matchesSearch(
-  note: Note,
-  term: string,
-  unlocked: ReadonlySet<string> = NONE_UNLOCKED,
-) {
+export function matchesSearch(note: Note, term: string) {
   if (!term) return true;
-  if (isLockHidden(note, unlocked)) return hasSearchTerm(note.title, term);
   return hasSearchTerm(searchTextOf(note), term);
 }

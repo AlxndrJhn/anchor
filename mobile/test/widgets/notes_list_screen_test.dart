@@ -772,7 +772,7 @@ void main() {
 
   group('note locks', () {
     testWidgets('a locked card shows its title, not its text, and a search '
-        'finds it by its title only', (tester) async {
+        'finds it by its text without showing it', (tester) async {
       await pumpList(tester, [
         Note(
           id: 'l',
@@ -792,12 +792,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(EditableText).first, 'secret');
       await tester.pumpAndSettle();
-      expect(find.text('Diary'), findsNothing);
+      expect(find.text('Diary'), findsOneWidget);
+      expect(find.textContaining('secret text'), findsNothing);
 
       await tester.enterText(find.byType(EditableText).first, 'diary');
       await tester.pumpAndSettle();
       expect(find.text('Diary'), findsOneWidget);
-      expect(find.textContaining('secret'), findsNothing);
+      expect(find.textContaining('secret text'), findsNothing);
     });
 
     testWidgets('Lock in the selection bar locks the picked notes', (
