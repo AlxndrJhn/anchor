@@ -192,8 +192,9 @@ class RenderListLineLeading extends RenderBox
             ? BoxConstraints.tight(size)
             : BoxConstraints.tight(rect.size),
       );
-      (marker.parentData! as _LeadingParentData).offset =
-          rect?.topLeft ?? Offset.zero;
+      (marker.parentData! as _LeadingParentData).offset = rect == null
+          ? Offset.zero
+          : Offset(_isRtl ? size.width - rect.right : rect.left, rect.top);
     }
     final row = _row;
     if (row != null) {
@@ -205,8 +206,19 @@ class RenderListLineLeading extends RenderBox
           maxHeight: _rowHeight,
         ),
       );
-      (row.parentData! as _LeadingParentData).offset = Offset(0, -_rowAbove);
+      // From the line's left edge, wherever the leading sits on it.
+      (row.parentData! as _LeadingParentData).offset = Offset(
+        _isRtl ? size.width - row.size.width : 0,
+        -_rowAbove,
+      );
     }
+  }
+
+  /// A right to left line has its leading at its right edge, mirrored.
+  bool get _isRtl {
+    final line = parent;
+    return line is RenderEditableTextLine &&
+        line.textDirection == TextDirection.rtl;
   }
 
   @override
@@ -229,9 +241,10 @@ class RenderListLineLeading extends RenderBox
     if (_guides > 0 && _guideColor.a > 0) {
       final paint = Paint()..color = _guideColor;
       for (var level = 0; level < _guides; level++) {
+        final x = _guideLeft + level * AnchorTokens.sizeListIndent;
         context.canvas.drawRect(
           Rect.fromLTWH(
-            offset.dx + _guideLeft + level * AnchorTokens.sizeListIndent,
+            offset.dx + (_isRtl ? size.width - x - 1 : x),
             offset.dy - _guideReach,
             1,
             size.height + 2 * _guideReach,

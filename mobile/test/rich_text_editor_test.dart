@@ -13,9 +13,13 @@ import 'package:anchor/features/notes/presentation/editor/slash_hint.dart';
 import 'package:anchor/features/notes/presentation/editor/text_formats.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-// Quill doesn't export its line's render object.
+// Quill doesn't export its line's or block's render object.
+// ignore: implementation_imports
+import 'package:flutter_quill/src/editor/widgets/text/text_block.dart'
+    show RenderEditableTextBlock;
 // ignore: implementation_imports
 import 'package:flutter_quill/src/editor/widgets/text/text_line.dart'
     show RenderEditableTextLine;
@@ -1926,6 +1930,80 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(underlay(tester), isNot(paints..path()));
+    });
+  });
+
+  group('right to left lines', () {
+    const mixed =
+        '{"ops":[{"insert":"שלום, עולם!\\nHello there\\n"},'
+        '{"insert":"חלב"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"Milk"},{"insert":"\\n","attributes":{"list":"unchecked"}},'
+        '{"insert":"ציטוט"},{"insert":"\\n","attributes":{"blockquote":true}}]}';
+
+    RenderEditableTextLine lineOf(WidgetTester tester, String words) {
+      RenderObject? box = tester.renderObject(
+        find.text(words, findRichText: true),
+      );
+      while (box is! RenderEditableTextLine) {
+        box = box!.parent;
+      }
+      return box;
+    }
+
+    testWidgets('each line reads in its own direction', (tester) async {
+      await pumpEditor(tester, content: mixed);
+      final editor = tester.getRect(find.byType(QuillEditor));
+
+      expect(lineOf(tester, 'שלום, עולם!').textDirection, TextDirection.rtl);
+      expect(lineOf(tester, 'Hello there').textDirection, TextDirection.ltr);
+      // The Hebrew line starts at the right edge, the English one at the left.
+      final hebrew = tester.getRect(
+        find.text('שלום, עולם!', findRichText: true),
+      );
+      final hebrewText = tester.renderObject<RenderParagraph>(
+        find.text('שלום, עולם!', findRichText: true),
+      );
+      expect(hebrewText.textDirection, TextDirection.rtl);
+      expect(hebrew.right, moreOrLessEquals(editor.right, epsilon: 1));
+      expect(
+        tester.getRect(find.text('Hello there', findRichText: true)).left,
+        moreOrLessEquals(editor.left, epsilon: 1),
+      );
+    });
+
+    testWidgets('a Hebrew item has its box on the right, and it ticks', (
+      tester,
+    ) async {
+      final (state, _) = await pumpEditor(
+        tester,
+        content: mixed,
+        sortChecklistItems: false,
+      );
+      final editor = tester.getRect(find.byType(QuillEditor));
+      final hebrewBox = tester.getCenter(checkboxSlot(0));
+      final englishBox = tester.getCenter(checkboxSlot(1));
+      expect(hebrewBox.dx, greaterThan(editor.center.dx));
+      expect(englishBox.dx, lessThan(editor.center.dx));
+
+      await tester.tapAt(hebrewBox);
+      await tester.pump();
+      expect(
+        state.getContent(),
+        contains('חלב"},{"insert":"\\n","attributes":{"list":"checked"}'),
+      );
+    });
+
+    testWidgets('a Hebrew quote has its bar on the right', (tester) async {
+      await pumpEditor(tester, content: mixed);
+      RenderObject? box = tester.renderObject(
+        find.text('ציטוט', findRichText: true),
+      );
+      while (box is! RenderEditableTextBlock) {
+        box = box!.parent;
+      }
+      expect(box.textDirection, TextDirection.rtl);
+      final padding = box.resolvedPadding!;
+      expect(padding.right, greaterThan(padding.left));
     });
   });
 }

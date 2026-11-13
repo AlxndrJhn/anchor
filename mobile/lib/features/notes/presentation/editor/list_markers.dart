@@ -15,6 +15,7 @@ import 'checklist_drag_controller.dart';
 import 'checklist_fold.dart';
 import 'document_lines.dart';
 import 'editor_palette.dart';
+import 'line_direction.dart';
 import 'list_line.dart';
 
 extension ListSpacing on NoteTypography {
@@ -66,6 +67,9 @@ Widget? buildListMarker(
     return const SizedBox.shrink();
   }
   final level = config.attrs.indentLevel;
+  // A right to left line has its marker at its right edge, mirrored; see
+  // LineDirections.
+  final direction = lineDirectionOf(line, Directionality.of(context));
   final typography = context.noteTypography;
   final listLinePadding = typography.listLinePadding;
   final fontSize = MediaQuery.textScalerOf(context).scale(typography.bodySize);
@@ -159,6 +163,7 @@ Widget? buildListMarker(
           tick,
           isDragged,
           moves,
+          direction,
         ),
         () => _CheckboxTarget(
           // Quill matches its lines by position, so a box would take over
@@ -171,16 +176,22 @@ Widget? buildListMarker(
           moves: moves,
           drag: drag,
           line: line,
-          child: Padding(
-            padding: EdgeInsets.only(left: boxLeft - targetLeft, top: boxTop),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: NoteCheckBox(
-                checked: checked,
-                isJustChecked: isJustChecked,
-                border: muted,
-                opacity: isDragged ? _draggedOpacity : 1,
-                tick: tick,
+          child: Directionality(
+            textDirection: direction,
+            child: Padding(
+              padding: EdgeInsetsDirectional.only(
+                start: boxLeft - targetLeft,
+                top: boxTop,
+              ),
+              child: Align(
+                alignment: AlignmentDirectional.topStart,
+                child: NoteCheckBox(
+                  checked: checked,
+                  isJustChecked: isJustChecked,
+                  border: muted,
+                  opacity: isDragged ? _draggedOpacity : 1,
+                  tick: tick,
+                ),
               ),
             ),
           ),
@@ -194,21 +205,25 @@ Widget? buildListMarker(
   if (config.attribute == Attribute.ol) {
     final number = '${config.getIndexNumberByIndent ?? config.index ?? 1}.';
     final style = typography.listNumber.copyWith(color: muted);
-    key = (number, left, lineHeight, style);
+    key = (number, left, lineHeight, style, direction);
     marker = () => Padding(
-      padding: EdgeInsets.only(left: left),
+      padding: EdgeInsetsDirectional.only(start: left),
       child: SizedBox(
         width: 22, // off-scale: list marker column
         height: lineHeight,
         child: Align(
-          alignment: Alignment.topRight,
+          alignment: AlignmentDirectional.topEnd,
           child: Padding(
-            padding: const EdgeInsets.only(right: 3), // off-scale: list number
+            padding: const EdgeInsetsDirectional.only(
+              end: 3, // off-scale: list number
+            ),
             child: Text(
               number,
               maxLines: 1,
               softWrap: false,
               overflow: TextOverflow.visible,
+              // "1." reads the same on either side, as on the web.
+              textDirection: TextDirection.ltr,
               style: style,
             ),
           ),
@@ -216,9 +231,9 @@ Widget? buildListMarker(
       ),
     );
   } else if (config.attribute == Attribute.ul) {
-    key = (level, left, lineHeight, muted);
+    key = (level, left, lineHeight, muted, direction);
     marker = () => Padding(
-      padding: EdgeInsets.only(left: left),
+      padding: EdgeInsetsDirectional.only(start: left),
       child: SizedBox(
         width: 22, // off-scale: list marker column
         height: lineHeight,
@@ -240,7 +255,10 @@ Widget? buildListMarker(
       cache._markers,
       line,
       key,
-      () => Align(alignment: Alignment.topLeft, child: marker()),
+      () => Directionality(
+        textDirection: direction,
+        child: Align(alignment: AlignmentDirectional.topStart, child: marker()),
+      ),
     ),
   );
 }

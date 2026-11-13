@@ -14,6 +14,7 @@ import 'package:flutter_quill/src/editor/widgets/text/text_line.dart'
 
 import '../../../../core/theme/note_typography.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
+import 'line_direction.dart';
 
 const double quoteBarWidth = 3; // off-scale: quote block
 
@@ -151,7 +152,22 @@ class RenderCollapsedBlockSpacing extends RenderProxyBox {
         final attributes = child.container.style.attributes;
         if (attributes.containsKey(Attribute.blockQuote.key)) {
           margins = _spacing.quote;
-          child.contentPadding = _spacing.quoteInset;
+          final inset = _spacing.quoteInset;
+          // A right to left quote has its bar on the right.
+          final isRtl =
+              blockDirectionOf(
+                child.container as Block,
+                editor.textDirection,
+              ) ==
+              TextDirection.rtl;
+          child.contentPadding = isRtl
+              ? EdgeInsets.fromLTRB(
+                  inset.right,
+                  inset.top,
+                  inset.left,
+                  inset.bottom,
+                )
+              : inset;
         } else if (attributes.containsKey(Attribute.codeBlock.key)) {
           margins = _spacing.code;
           child.contentPadding = NoteBlockSpacing.codeInset;

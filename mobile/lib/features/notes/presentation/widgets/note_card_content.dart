@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/motion/springs.dart';
+import '../../../../core/text/text_direction.dart';
 import '../../../../core/theme/anchor_appearance.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
@@ -98,13 +99,17 @@ class NoteCardContent extends StatelessWidget {
           if (note.hasTitle)
             Padding(
               padding: EdgeInsets.only(right: checkInset),
-              child: Text(
+              child: inTextDirection(
+                context,
                 note.title,
-                maxLines: list ? 1 : 2,
-                overflow: TextOverflow.ellipsis,
-                style: context.noteTypography.cardTitle
-                    .withSize(AnchorTokens.typeUi.fontSize!)
-                    .copyWith(color: colors.appText, height: 1.3),
+                Text(
+                  note.title,
+                  maxLines: list ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.noteTypography.cardTitle
+                      .withSize(AnchorTokens.typeUi.fontSize!)
+                      .copyWith(color: colors.appText, height: 1.3),
+                ),
               ),
             ),
           if (isHidden)

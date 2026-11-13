@@ -25,6 +25,7 @@ import '../../../core/network/connectivity_provider.dart';
 import '../../../core/network/sync_requester.dart';
 import '../../../core/search/search_pattern.dart';
 import '../../../core/session/active_user_id_provider.dart';
+import '../../../core/text/text_direction.dart';
 import '../../../core/theme/context_extensions.dart';
 import '../../../core/theme/tokens/anchor_tokens.dart';
 import '../../../core/widgets/app_snackbar.dart';
@@ -1367,31 +1368,42 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                   onTap: _shakeReadOnly,
                   child: Padding(
                     padding: EdgeInsets.only(bottom: density.space8),
-                    child: Text(
-                      displayTitleOf(note?.title ?? '', context.l10n),
-                      style: titleStyle.copyWith(color: colors.appText),
+                    child: inTextDirection(
+                      context,
+                      note?.title ?? '',
+                      Text(
+                        displayTitleOf(note?.title ?? '', context.l10n),
+                        style: titleStyle.copyWith(color: colors.appText),
+                      ),
                     ),
                   ),
                 )
-              : TextField(
-                  controller: _draft.title,
-                  focusNode: _titleFocus,
-                  showCursor: _isOpen,
-                  undoController: _titleHistory,
-                  maxLines: null,
-                  keyboardType: TextInputType.text,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.sentences,
-                  inputFormatters: [TitleInputFormatter(onEnter: _splitTitle)],
-                  onEditingComplete: _splitTitle,
-                  style: titleStyle.copyWith(color: colors.appText),
-                  cursorColor: colors.accentStrong,
-                  decoration: InputDecoration(
-                    hintText: context.l10n.noteTitleHint,
-                    hintStyle: titleStyle.copyWith(
-                      color: appearance.colors.muted,
+              // A Hebrew or Arabic title reads from the right as it's typed.
+              : ValueListenableBuilder(
+                  valueListenable: _draft.title,
+                  builder: (context, title, _) => TextField(
+                    controller: _draft.title,
+                    focusNode: _titleFocus,
+                    showCursor: _isOpen,
+                    undoController: _titleHistory,
+                    maxLines: null,
+                    textDirection: firstStrongDirection(title.text),
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.sentences,
+                    inputFormatters: [
+                      TitleInputFormatter(onEnter: _splitTitle),
+                    ],
+                    onEditingComplete: _splitTitle,
+                    style: titleStyle.copyWith(color: colors.appText),
+                    cursorColor: colors.accentStrong,
+                    decoration: InputDecoration(
+                      hintText: context.l10n.noteTitleHint,
+                      hintStyle: titleStyle.copyWith(
+                        color: appearance.colors.muted,
+                      ),
+                      contentPadding: EdgeInsets.only(bottom: density.space8),
                     ),
-                    contentPadding: EdgeInsets.only(bottom: density.space8),
                   ),
                 ),
         ),
