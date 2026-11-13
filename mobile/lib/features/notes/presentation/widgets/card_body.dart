@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../core/text/text_direction.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/context_extensions.dart';
 import '../../../../core/theme/tokens/anchor_tokens.dart';
@@ -72,17 +73,22 @@ class CardBody extends StatelessWidget {
       }
       final block = line.block!;
       final onToggle = onToggleItem;
+      // Each line in its own direction; code always reads left to right.
       rows.add(
-        _CardLine(
-          block: block,
-          onToggle: onToggle == null || block.type != BlockType.check
-              ? null
-              : () => onToggle(lineOf[block]!, block.text),
-          marker: numbers[i],
-          base: base,
-          appearance: appearance,
-          isFirst: i == 0,
-          isSingleLine: layout == CardLayout.list,
+        inTextDirection(
+          context,
+          block.type == BlockType.code ? '' : block.text,
+          _CardLine(
+            block: block,
+            onToggle: onToggle == null || block.type != BlockType.check
+                ? null
+                : () => onToggle(lineOf[block]!, block.text),
+            marker: numbers[i],
+            base: base,
+            appearance: appearance,
+            isFirst: i == 0,
+            isSingleLine: layout == CardLayout.list,
+          ),
         ),
       );
     }
@@ -214,10 +220,12 @@ class _CardLine extends StatelessWidget {
           appearance: appearance,
         );
         return Container(
-          padding: const EdgeInsets.only(left: 10), // off-scale: card quote
+          padding: const EdgeInsetsDirectional.only(
+            start: 10, // off-scale: card quote
+          ),
           decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(
+            border: BorderDirectional(
+              start: BorderSide(
                 color: AnchorTokens.colorAccentFill.withValues(alpha: 0.75),
                 width: 2,
               ),
@@ -275,7 +283,7 @@ class _CardLine extends StatelessWidget {
         final scaler = MediaQuery.textScalerOf(context);
         final boxWidth = scaler.scale(21); // off-scale: card checkbox
         final line = Padding(
-          padding: EdgeInsets.only(left: indent),
+          padding: EdgeInsetsDirectional.only(start: indent),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -283,7 +291,7 @@ class _CardLine extends StatelessWidget {
                 width: boxWidth,
                 height: scaler.scale(13) * 1.5, // off-scale: card checkbox
                 child: Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: AlignmentDirectional.centerStart,
                   child: _ListMarker(
                     block: block,
                     marker: marker,
@@ -312,8 +320,8 @@ class _CardLine extends StatelessWidget {
           child: Stack(
             children: [
               line,
-              Positioned(
-                left: indent,
+              PositionedDirectional(
+                start: indent,
                 top: 0,
                 bottom: 0,
                 width: boxWidth + _checkboxReach,
@@ -358,7 +366,9 @@ class _ListMarker extends StatelessWidget {
       return SizedBox(
         width: 15, // off-scale: card bullets
         child: Padding(
-          padding: const EdgeInsets.only(right: 3), // off-scale: card numbers
+          padding: const EdgeInsetsDirectional.only(
+            end: 3, // off-scale: card numbers
+          ),
           child: OverflowBox(
             minWidth: 0,
             maxWidth: double.infinity,

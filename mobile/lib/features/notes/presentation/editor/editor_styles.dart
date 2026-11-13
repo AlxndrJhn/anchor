@@ -111,15 +111,16 @@ DefaultStyles noteEditorStyles(
 
 BoxDecoration quoteBlockDecoration(Color surface) => BoxDecoration(
   color: surface.withValues(alpha: 0.7),
-  border: Border(
-    left: BorderSide(
+  // On the quote's start side, so a right to left quote has it on the right.
+  border: BorderDirectional(
+    start: BorderSide(
       color: AnchorTokens.colorAccentFill.withValues(alpha: 0.75),
       width: quoteBarWidth,
     ),
   ),
-  borderRadius: const BorderRadius.horizontal(
-    left: Radius.circular(3), // off-scale: quote block
-    right: Radius.circular(AnchorTokens.radiusXl), // off-scale: as above
+  borderRadius: const BorderRadiusDirectional.horizontal(
+    start: Radius.circular(3), // off-scale: quote block
+    end: Radius.circular(AnchorTokens.radiusXl), // off-scale: as above
   ),
 );
 

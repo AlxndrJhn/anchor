@@ -36,6 +36,7 @@ import 'editor_link.dart';
 import 'editor_palette.dart';
 import 'editor_styles.dart';
 import 'highlight_underlay.dart';
+import 'line_direction.dart';
 import 'line_kind.dart';
 import 'list_markers.dart';
 import 'markdown_shortcuts.dart';
@@ -1253,41 +1254,48 @@ class RichTextEditorState extends State<RichTextEditor>
           spacing: spacing,
           editor: () => _renderEditor,
           changes: _controller,
-          child: QuillEditor.basic(
-            controller: _controller,
-            focusNode: widget.focusNode,
-            scrollController: widget.scrollController,
-            config: QuillEditorConfig(
-              contentInsertionConfiguration:
-                  widget.onImageInserted == null || !widget.canEdit
-                  ? null
-                  : ContentInsertionConfiguration(
-                      allowedMimeTypes: insertableImageTypes,
-                      onContentInserted: _onContentInserted,
-                    ),
-              contextMenuBuilder: _contextMenu,
-              placeholder: widget.canEdit && !_isEditing && _isBlank
-                  ? context.l10n.editorPlaceholder
-                  : null,
-              padding: EdgeInsets.zero,
-              autoFocus: false,
-              expands: false,
-              scrollable: false,
-              scrollBottomInset: math.max(0, widget.bottomInset - _caretMargin),
-              showCursor: _isEditing && widget.canEdit,
-              enableInteractiveSelection: true,
-              customStyles: styles,
-              customStyleBuilder: (attribute) => _customStyle(attribute),
-              textSpanBuilder: _buildSpan,
-              // ignore: experimental_member_use
-              customLeadingBlockBuilder: _buildLeading,
-              // ignore: experimental_member_use
-              onKeyPressed: _onKeyPressed,
-              editorKey: _editorKey,
-              onTapUp: _onEditorTapUp,
-              customRecognizerBuilder: _buildLinkRecognizer,
-              embedBuilders: widget.embedBuilders,
-              unknownEmbedBuilder: _UnknownEmbedBuilder(widget.palette),
+          child: LineDirections(
+            editor: () => _renderEditor,
+            changes: _controller,
+            child: QuillEditor.basic(
+              controller: _controller,
+              focusNode: widget.focusNode,
+              scrollController: widget.scrollController,
+              config: QuillEditorConfig(
+                contentInsertionConfiguration:
+                    widget.onImageInserted == null || !widget.canEdit
+                    ? null
+                    : ContentInsertionConfiguration(
+                        allowedMimeTypes: insertableImageTypes,
+                        onContentInserted: _onContentInserted,
+                      ),
+                contextMenuBuilder: _contextMenu,
+                placeholder: widget.canEdit && !_isEditing && _isBlank
+                    ? context.l10n.editorPlaceholder
+                    : null,
+                padding: EdgeInsets.zero,
+                autoFocus: false,
+                expands: false,
+                scrollable: false,
+                scrollBottomInset: math.max(
+                  0,
+                  widget.bottomInset - _caretMargin,
+                ),
+                showCursor: _isEditing && widget.canEdit,
+                enableInteractiveSelection: true,
+                customStyles: styles,
+                customStyleBuilder: (attribute) => _customStyle(attribute),
+                textSpanBuilder: _buildSpan,
+                // ignore: experimental_member_use
+                customLeadingBlockBuilder: _buildLeading,
+                // ignore: experimental_member_use
+                onKeyPressed: _onKeyPressed,
+                editorKey: _editorKey,
+                onTapUp: _onEditorTapUp,
+                customRecognizerBuilder: _buildLinkRecognizer,
+                embedBuilders: widget.embedBuilders,
+                unknownEmbedBuilder: _UnknownEmbedBuilder(widget.palette),
+              ),
             ),
           ),
         ),
