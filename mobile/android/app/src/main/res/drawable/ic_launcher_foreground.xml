@@ -4,17 +4,34 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- tool/launcher_icon/icon.js's anchor, its 1024 units in the middle 72dp. -->
-    <path
-        android:strokeColor="#FFF4F1E8"
-        android:strokeWidth="5.063"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M54,48.094L54,73.406M37.125,56.531A16.875,16.875 0 0 0 70.875,56.531M37.125,56.531L42.188,56.531M70.875,56.531L65.813,56.531" />
-    <!-- The + of Anchor+, the anchor's ring. -->
-    <path
-        android:strokeColor="#FFF2B544"
-        android:strokeWidth="5.063"
-        android:strokeLineCap="round"
-        android:pathData="M54,34.594L54,46.406M48.094,40.5L59.906,40.5" />
+    <!-- tool/launcher_icon/icon.js's note card, its 1024 units in the middle 72dp. -->
+    <group
+        android:scaleX="0.0703125"
+        android:scaleY="0.0703125"
+        android:translateX="18"
+        android:translateY="18">
+        <group
+            android:pivotX="512"
+            android:pivotY="520"
+            android:rotation="-6">
+            <path
+                android:fillColor="#FFF4F1E8"
+                android:pathData="M276,150H748A80,80 0 0 1 828,230V810A80,80 0 0 1 748,890H276A80,80 0 0 1 196,810V230A80,80 0 0 1 276,150Z" />
+            <path
+                android:fillColor="#FFCFD8D6"
+                android:pathData="M312,236H568A22,22 0 0 1 568,280H312A22,22 0 0 1 312,236Z" />
+            <path
+                android:strokeColor="#FF0B3B4A"
+                android:strokeWidth="47.5"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:pathData="M512,534.6V772.2M353.6,613.8A158.4,158.4 0 0 0 670.4,613.8M353.6,613.8H401.1M670.4,613.8H622.9" />
+            <!-- The + of Anchor+, the anchor's ring. -->
+            <path
+                android:strokeColor="#FFD9961C"
+                android:strokeWidth="47.5"
+                android:strokeLineCap="round"
+                android:pathData="M512,407.8V518.7M456.6,463.3H567.4" />
+        </group>
+    </group>
 </vector>
