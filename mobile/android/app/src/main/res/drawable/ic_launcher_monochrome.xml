@@ -4,11 +4,29 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- ic_launcher_foreground's anchor and +, for themed icons. -->
-    <path
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="5.063"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M54,48.094L54,73.406M37.125,56.531A16.875,16.875 0 0 0 70.875,56.531M37.125,56.531L42.188,56.531M70.875,56.531L65.813,56.531M54,34.594L54,46.406M48.094,40.5L59.906,40.5" />
+    <!-- ic_launcher_foreground's card as an outline, with its line, anchor and +. -->
+    <group
+        android:scaleX="0.0703125"
+        android:scaleY="0.0703125"
+        android:translateX="18"
+        android:translateY="18">
+        <group
+            android:pivotX="512"
+            android:pivotY="520"
+            android:rotation="-6">
+            <path
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="44"
+                android:pathData="M276,172H748A58,58 0 0 1 806,230V810A58,58 0 0 1 748,868H276A58,58 0 0 1 218,810V230A58,58 0 0 1 276,172Z" />
+            <path
+                android:fillColor="#FFFFFFFF"
+                android:pathData="M312,236H568A22,22 0 0 1 568,280H312A22,22 0 0 1 312,236Z" />
+            <path
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="47.5"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:pathData="M512,534.6V772.2M353.6,613.8A158.4,158.4 0 0 0 670.4,613.8M353.6,613.8H401.1M670.4,613.8H622.9M512,407.8V518.7M456.6,463.3H567.4" />
+        </group>
+    </group>
 </vector>

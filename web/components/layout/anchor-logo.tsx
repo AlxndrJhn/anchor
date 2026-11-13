@@ -35,18 +35,37 @@ export function AnchorLogo({ className }: { className?: string }) {
       </defs>
       <g clipPath={`url(#${page})`}>
         <rect width="1024" height="1024" fill={`url(#${sea})`} />
-        <g
-          fill="none"
-          strokeWidth="72"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path
-            d="M512 428V788M272 548A240 240 0 0 0 752 548M272 548H344M752 548H680"
-            className="stroke-[#f4f1e8] dark:stroke-[#e9ece8]"
+        {/* A note card, tilted, with a title line and the anchor. */}
+        <g transform="rotate(-6 512 520)">
+          <rect
+            x="196"
+            y="150"
+            width="632"
+            height="740"
+            rx="80"
+            className="fill-[#f4f1e8] dark:fill-[#dfe3df]"
           />
-          {/* The + of Anchor+, the anchor's ring. */}
-          <path d="M512 236V404M428 320H596" stroke="#f2b544" />
+          <rect
+            x="290"
+            y="236"
+            width="300"
+            height="44"
+            rx="22"
+            className="fill-[#cfd8d6] dark:fill-[#bcc6c4]"
+          />
+          <g
+            fill="none"
+            strokeWidth="47.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path
+              d="M512 534.6V772.2M353.6 613.8A158.4 158.4 0 0 0 670.4 613.8M353.6 613.8H401.1M670.4 613.8H622.9"
+              stroke="#0b3b4a"
+            />
+            {/* The + of Anchor+, the anchor's ring. */}
+            <path d="M512 407.8V518.7M456.6 463.3H567.4" stroke="#d9961c" />
+          </g>
         </g>
       </g>
     </svg>

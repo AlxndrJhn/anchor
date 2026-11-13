@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
@@ -38,22 +39,30 @@ class AnchorLogo extends StatelessWidget {
 class _LogoColors {
   const _LogoColors({
     required this.sea,
+    required this.card,
+    required this.line,
     required this.anchor,
     required this.plus,
   });
 
   static const light = _LogoColors(
     sea: [Color(0xFF13687A), Color(0xFF0B3B4A)],
-    anchor: Color(0xFFF4F1E8),
-    plus: Color(0xFFF2B544),
+    card: Color(0xFFF4F1E8),
+    line: Color(0xFFCFD8D6),
+    anchor: Color(0xFF0B3B4A),
+    plus: Color(0xFFD9961C),
   );
   static const dark = _LogoColors(
     sea: [Color(0xFF0F4F5E), Color(0xFF06222B)],
-    anchor: Color(0xFFE9ECE8),
-    plus: Color(0xFFF2B544),
+    card: Color(0xFFDFE3DF),
+    line: Color(0xFFBCC6C4),
+    anchor: Color(0xFF0B3B4A),
+    plus: Color(0xFFD9961C),
   );
 
   final List<Color> sea;
+  final Color card;
+  final Color line;
   final Color anchor;
   final Color plus;
 }
@@ -64,7 +73,10 @@ class _LogoPainter extends CustomPainter {
 
   final _LogoColors colors;
 
-  static const _stroke = 72.0;
+  // The card and everything on it turn 6 degrees left around this point.
+  static const _tiltCenter = Offset(512, 520);
+  static const _tilt = -6 * math.pi / 180;
+  static const _stroke = 47.5;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -87,30 +99,42 @@ class _LogoPainter extends CustomPainter {
             colors.sea,
           ),
       )
+      ..translate(_tiltCenter.dx, _tiltCenter.dy)
+      ..rotate(_tilt)
+      ..translate(-_tiltCenter.dx, -_tiltCenter.dy)
+      ..drawRRect(
+        RRect.fromLTRBR(196, 150, 828, 890, const Radius.circular(80)),
+        Paint()..color = colors.card,
+      )
+      // The card's title line.
+      ..drawRRect(
+        RRect.fromLTRBR(290, 236, 590, 280, const Radius.circular(22)),
+        Paint()..color = colors.line,
+      )
       // The shank, the arms around its foot and their flukes.
       ..drawPath(
         Path()
-          ..moveTo(512, 428)
-          ..lineTo(512, 788)
-          ..moveTo(272, 548)
+          ..moveTo(512, 534.6)
+          ..lineTo(512, 772.2)
+          ..moveTo(353.6, 613.8)
           ..arcToPoint(
-            const Offset(752, 548),
-            radius: const Radius.circular(240),
+            const Offset(670.4, 613.8),
+            radius: const Radius.circular(158.4),
             clockwise: false,
           )
-          ..moveTo(272, 548)
-          ..lineTo(344, 548)
-          ..moveTo(752, 548)
-          ..lineTo(680, 548),
+          ..moveTo(353.6, 613.8)
+          ..lineTo(401.1, 613.8)
+          ..moveTo(670.4, 613.8)
+          ..lineTo(622.9, 613.8),
         pen(colors.anchor),
       )
       // The + of Anchor+, the anchor's ring.
       ..drawPath(
         Path()
-          ..moveTo(512, 236)
-          ..lineTo(512, 404)
-          ..moveTo(428, 320)
-          ..lineTo(596, 320),
+          ..moveTo(512, 407.8)
+          ..lineTo(512, 518.7)
+          ..moveTo(456.6, 463.3)
+          ..lineTo(567.4, 463.3),
         pen(colors.plus),
       )
       ..restore();
