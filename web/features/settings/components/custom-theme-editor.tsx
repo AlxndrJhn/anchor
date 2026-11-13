@@ -82,7 +82,7 @@ export function CustomThemeEditor() {
         spellCheck={false}
         rows={8}
         placeholder={
-          '{\n  "name": "My theme",\n  "dark": { "background": "#000000", "accent": "#ef8354" }\n}'
+          '{\n  "name": "My theme",\n  "dark": { "background": "#000000", "accent": "#3fb0c3" }\n}'
         }
         className="min-h-40 w-full resize-y rounded-field bg-card p-3 font-mono text-foreground text-meta shadow-[inset_0_0_0_1px_var(--input)] outline-none placeholder:text-muted-foreground focus-visible:shadow-[inset_0_0_0_2px_var(--ring)] aria-invalid:shadow-[inset_0_0_0_2px_var(--destructive)]"
       />

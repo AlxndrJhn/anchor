@@ -30,10 +30,12 @@ abstract final class AnchorTokens {
   static const Color colorBrandOffWhite = Color(0xFFEAEAEA);
   /// White
   static const Color colorBrandWhite = Color(0xFFFFFFFF);
-  /// Burnt orange, the accent
-  static const Color colorBrandOrange = Color(0xFFEF8354);
+  /// Sea teal, the accent and the app icon's colour
+  static const Color colorBrandTeal = Color(0xFF1F8FA3);
+  /// Brass: the + of the app icon and the harbor's sun
+  static const Color colorBrandBrass = Color(0xFFF2B544);
   /// Large fills and tints only: text selection and the drop area
-  static const Color colorAccentFill = Color(0xFFEF8354);
+  static const Color colorAccentFill = Color(0xFF1F8FA3);
   /// The round knob of a switch
   static const Color colorControlKnob = Color(0xFFFFFFFF);
   static const Color colorAvatarRust = Color(0xFFA4522A);
@@ -568,9 +570,9 @@ class AnchorColors extends ThemeExtension<AnchorColors> {
     required this.tags,
   });
 
-  /// Anything thin in orange: ticked boxes, rings, focus, the current marker, progress, drop lines
+  /// Anything thin in teal: ticked boxes, rings, focus, the current marker, progress, drop lines
   final Color accentStrong;
-  /// Orange text, such as links
+  /// Teal text, such as links
   final Color accentInk;
   /// Page background
   final Color appPage;
@@ -669,8 +671,8 @@ class AnchorColors extends ThemeExtension<AnchorColors> {
   AnchorHighlight highlightOn(String note, String color) => notes[note]?.highlights[color] ?? highlights[color]!;
 
   static const light = AnchorColors(
-    accentStrong: Color(0xFFCC5F2D),
-    accentInk: Color(0xFFA44004),
+    accentStrong: Color(0xFF13687A),
+    accentInk: Color(0xFF0F5866),
     appPage: Color(0xFFF0F4F8),
     appSurface: Color(0xFFFFFFFF),
     appText: Color(0xFF12141A),
@@ -756,8 +758,8 @@ class AnchorColors extends ThemeExtension<AnchorColors> {
   );
 
   static const dark = AnchorColors(
-    accentStrong: Color(0xFFEF8354),
-    accentInk: Color(0xFFFE976C),
+    accentStrong: Color(0xFF3FB0C3),
+    accentInk: Color(0xFF6CC9D8),
     appPage: Color(0xFF111214),
     appSurface: Color(0xFF1C1D21),
     appText: Color(0xFFF7F7F7),

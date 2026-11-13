@@ -127,7 +127,7 @@ class LocalNotificationGateway implements NotificationGateway {
         priority: Priority.high,
         // Must be a flat vector: Android masks the icon to alpha.
         icon: 'ic_stat_reminder',
-        color: AnchorTokens.colorBrandOrange,
+        color: AnchorTokens.colorBrandTeal,
         actions: [reminderDoneAction(l10n)],
       ),
       iOS: const DarwinNotificationDetails(),

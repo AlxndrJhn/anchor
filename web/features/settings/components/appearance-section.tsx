@@ -35,13 +35,13 @@ const ANCHOR_SCHEME = {
     background: "#F0F4F8",
     card: "#FFFFFF",
     foreground: "#2D3142",
-    accent: "#EF8354",
+    accent: "#1F8FA3",
   },
   dark: {
     background: "#1C1E26",
     card: "#262A36",
     foreground: "#EAEAEA",
-    accent: "#EF8354",
+    accent: "#1F8FA3",
   },
 };
 
