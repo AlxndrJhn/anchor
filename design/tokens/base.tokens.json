@@ -341,22 +341,34 @@
         },
         "$description": "White"
       },
-      "orange": {
+      "teal": {
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.9373,
-            0.5137,
-            0.3294
+            0.1216,
+            0.5608,
+            0.6392
           ],
-          "hex": "#ef8354"
+          "hex": "#1f8fa3"
         },
-        "$description": "Burnt orange, the accent"
+        "$description": "Sea teal, the accent and the app icon's colour"
+      },
+      "brass": {
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [
+            0.949,
+            0.7098,
+            0.2667
+          ],
+          "hex": "#f2b544"
+        },
+        "$description": "Brass: the + of the app icon and the harbor's sun"
       }
     },
     "accent": {
       "fill": {
-        "$value": "{color.brand.orange}",
+        "$value": "{color.brand.teal}",
         "$description": "Large fills and tints only: text selection and the drop area"
       }
     },

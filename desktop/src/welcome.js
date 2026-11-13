@@ -19,7 +19,7 @@
   const rgba = ([r, g, b], a = 1) => `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`;
   const lerp = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
 
-  const BRAND_ORANGE = rgbOf("#ef8354");
+  const BRAND_BRASS = rgbOf("#f2b544");
   const WHITE = [255, 255, 255];
 
   function harborPalette() {
@@ -48,9 +48,9 @@
     }
     return {
       ...base,
-      skyTop: lerp(page, BRAND_ORANGE, 0.24),
-      skyMid: lerp(page, BRAND_ORANGE, 0.07),
-      sun: lerp(WHITE, BRAND_ORANGE, 0.62),
+      skyTop: lerp(page, BRAND_BRASS, 0.24),
+      skyMid: lerp(page, BRAND_BRASS, 0.07),
+      sun: lerp(WHITE, BRAND_BRASS, 0.62),
       lamp: rgbOf("#ffd8a6"),
       beam: 0.32,
       sea1: lerp(page, rgbOf("#6f86a8"), 0.22),
@@ -230,7 +230,7 @@
     ctx.moveTo(222, 208);
     ctx.lineTo(244, 208);
     ctx.stroke();
-    ctx.fillStyle = rgba(BRAND_ORANGE);
+    ctx.fillStyle = rgba(BRAND_BRASS);
     ctx.fill(new Path2D("M222 171L230 173.5L222 176Z"));
     ctx.fillStyle = outline;
     ctx.fill(new Path2D("M191 210L247 210L243.5 219.6Q242.6 222 240 222L205 222Q196 219.5 191 210Z"));
@@ -246,7 +246,7 @@
     ctx.strokeStyle = rgba(c.border);
     ctx.lineWidth = 1;
     ctx.stroke(tower);
-    ctx.fillStyle = rgba(BRAND_ORANGE);
+    ctx.fillStyle = rgba(BRAND_BRASS);
     ctx.fill(new Path2D("M326.3 184L343.7 184L344.6 194L325.4 194ZM327.6 170L342.4 170L343 176L327 176Z"));
     ctx.fillStyle = rgba(c.lamp);
     roundRect(ctx, 327, 153, 16, 11, 2);

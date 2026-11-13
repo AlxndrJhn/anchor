@@ -91,7 +91,7 @@ class _HarborPainter extends CustomPainter {
   static const _bottom = 252.0;
   static const _maxScale = 1.25;
   static const staticFrameTime = 3.0;
-  static const _accent = AnchorTokens.colorBrandOrange;
+  static const _accent = AnchorTokens.colorBrandBrass;
   static const _lamp = Offset(335, 158.5);
   static const _stars = [
     (40.0, 70.0, 1.2),

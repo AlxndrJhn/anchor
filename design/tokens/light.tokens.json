@@ -154,25 +154,25 @@
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.8,
-            0.3725,
-            0.1765
+            0.0745,
+            0.4078,
+            0.4784
           ],
-          "hex": "#cc5f2d"
+          "hex": "#13687a"
         },
-        "$description": "Anything thin in orange: ticked boxes, rings, focus, the current marker, progress, drop lines"
+        "$description": "Anything thin in teal: ticked boxes, rings, focus, the current marker, progress, drop lines"
       },
       "ink": {
         "$value": {
           "colorSpace": "srgb",
           "components": [
-            0.6431,
-            0.251,
-            0.0157
+            0.0588,
+            0.3451,
+            0.4
           ],
-          "hex": "#a44004"
+          "hex": "#0f5866"
         },
-        "$description": "Orange text, such as links"
+        "$description": "Teal text, such as links"
       }
     },
     "check": {

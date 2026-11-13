@@ -64,8 +64,8 @@
     {
       "id": "oled",
       "name": "OLED",
-      "light": { "background": "#F0F4F8", "card": "#FFFFFF", "sidebar": "#E9EEF3", "muted": "#E8ECF1", "foreground": "#2D3142", "mutedForeground": "#4F5D75", "accent": "#EF8354", "accentStrong": "#CC5F2D", "accentInk": "#A44004", "border": "#D8DEE6", "divider": "#E6EBF1", "input": "#788497", "destructive": "#C0392B" },
-      "dark": { "background": "#000000", "card": "#0E0E0E", "sidebar": "#000000", "muted": "#1A1A1A", "foreground": "#FFFFFF", "mutedForeground": "#B3B3B3", "accent": "#EF8354", "accentStrong": "#EF8354", "accentInk": "#FE976C", "border": "#2E2E2E", "divider": "#1C1C1C", "input": "#6B6B6B", "destructive": "#FF8A80" }
+      "light": { "background": "#F0F4F8", "card": "#FFFFFF", "sidebar": "#E9EEF3", "muted": "#E8ECF1", "foreground": "#2D3142", "mutedForeground": "#4F5D75", "accent": "#1F8FA3", "accentStrong": "#13687A", "accentInk": "#0F5866", "border": "#D8DEE6", "divider": "#E6EBF1", "input": "#788497", "destructive": "#C0392B" },
+      "dark": { "background": "#000000", "card": "#0E0E0E", "sidebar": "#000000", "muted": "#1A1A1A", "foreground": "#FFFFFF", "mutedForeground": "#B3B3B3", "accent": "#1F8FA3", "accentStrong": "#3FB0C3", "accentInk": "#6CC9D8", "border": "#2E2E2E", "divider": "#1C1C1C", "input": "#6B6B6B", "destructive": "#FF8A80" }
     }
   ],
   "lofi": {

@@ -24,10 +24,12 @@ enum AnchorTokens {
     static let colorBrandOffWhite: Color = Color(.sRGB, red: 0.9176, green: 0.9176, blue: 0.9176, opacity: 1)
     /// White
     static let colorBrandWhite: Color = Color(.sRGB, red: 1, green: 1, blue: 1, opacity: 1)
-    /// Burnt orange, the accent
-    static let colorBrandOrange: Color = Color(.sRGB, red: 0.9373, green: 0.5137, blue: 0.3294, opacity: 1)
+    /// Sea teal, the accent and the app icon's colour
+    static let colorBrandTeal: Color = Color(.sRGB, red: 0.1216, green: 0.5608, blue: 0.6392, opacity: 1)
+    /// Brass: the + of the app icon and the harbor's sun
+    static let colorBrandBrass: Color = Color(.sRGB, red: 0.949, green: 0.7098, blue: 0.2667, opacity: 1)
     /// Large fills and tints only: text selection and the drop area
-    static let colorAccentFill: Color = Color(.sRGB, red: 0.9373, green: 0.5137, blue: 0.3294, opacity: 1)
+    static let colorAccentFill: Color = Color(.sRGB, red: 0.1216, green: 0.5608, blue: 0.6392, opacity: 1)
     /// The round knob of a switch
     static let colorControlKnob: Color = Color(.sRGB, red: 1, green: 1, blue: 1, opacity: 1)
     static let colorAvatarRust: Color = Color(.sRGB, red: 0.6431, green: 0.3216, blue: 0.1647, opacity: 1)
@@ -429,9 +431,9 @@ struct AnchorTagColors {
 }
 
 struct AnchorColors {
-    /// Anything thin in orange: ticked boxes, rings, focus, the current marker, progress, drop lines
+    /// Anything thin in teal: ticked boxes, rings, focus, the current marker, progress, drop lines
     let accentStrong: Color
-    /// Orange text, such as links
+    /// Teal text, such as links
     let accentInk: Color
     /// Page background
     let appPage: Color
@@ -523,8 +525,8 @@ struct AnchorColors {
     let tags: [String: AnchorTagColors]
 
     static let light = AnchorColors(
-        accentStrong: Color(.sRGB, red: 0.8, green: 0.3725, blue: 0.1765, opacity: 1),
-        accentInk: Color(.sRGB, red: 0.6431, green: 0.251, blue: 0.0157, opacity: 1),
+        accentStrong: Color(.sRGB, red: 0.0745, green: 0.4078, blue: 0.4784, opacity: 1),
+        accentInk: Color(.sRGB, red: 0.0588, green: 0.3451, blue: 0.4, opacity: 1),
         appPage: Color(.sRGB, red: 0.9412, green: 0.9569, blue: 0.9725, opacity: 1),
         appSurface: Color(.sRGB, red: 1, green: 1, blue: 1, opacity: 1),
         appText: Color(.sRGB, red: 0.0706, green: 0.0784, blue: 0.102, opacity: 1),
@@ -603,8 +605,8 @@ struct AnchorColors {
     )
 
     static let dark = AnchorColors(
-        accentStrong: Color(.sRGB, red: 0.9373, green: 0.5137, blue: 0.3294, opacity: 1),
-        accentInk: Color(.sRGB, red: 0.9961, green: 0.5922, blue: 0.4235, opacity: 1),
+        accentStrong: Color(.sRGB, red: 0.2471, green: 0.6902, blue: 0.7647, opacity: 1),
+        accentInk: Color(.sRGB, red: 0.4235, green: 0.7882, blue: 0.8471, opacity: 1),
         appPage: Color(.sRGB, red: 0.0667, green: 0.0706, blue: 0.0784, opacity: 1),
         appSurface: Color(.sRGB, red: 0.1098, green: 0.1137, blue: 0.1294, opacity: 1),
         appText: Color(.sRGB, red: 0.9686, green: 0.9686, blue: 0.9686, opacity: 1),
