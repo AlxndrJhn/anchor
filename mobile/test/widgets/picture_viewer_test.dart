@@ -39,10 +39,15 @@ class FakePictureSearch extends PictureSearchRepository {
 
   final List<PictureLabel> found;
   final asked = <String>[];
+  final languages = <String?>[];
 
   @override
-  Future<List<PictureLabel>> labels(String attachmentId) async {
+  Future<List<PictureLabel>> labels(
+    String attachmentId, {
+    String? language,
+  }) async {
     asked.add(attachmentId);
+    languages.add(language);
     return found;
   }
 }
@@ -343,12 +348,12 @@ void main() {
     testWidgets('show what the picture depicts; a tag searches the notes', (
       tester,
     ) async {
-      tester.platformDispatcher.localeTestValue = const Locale('de');
+      tester.platformDispatcher.localeTestValue = const Locale('fr', 'CA');
       addTearDown(tester.platformDispatcher.clearLocaleTestValue);
       download(() async => '/nowhere/harbor.jpg');
       final fake = FakePictureSearch(const [
-        PictureLabel(en: 'harbor', de: 'Hafen'),
-        PictureLabel(en: 'boat', de: 'Boot'),
+        PictureLabel(en: 'harbor', de: 'Hafen', text: 'port'),
+        PictureLabel(en: 'boat', de: 'Boot', text: 'bateau'),
       ]);
       final searched = <String>[];
       await openViewer(
@@ -360,21 +365,22 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Show detected tags'));
       await tester.pumpAndSettle();
       expect(fake.asked, ['a1']);
+      expect(fake.languages, ['fr-CA']);
       // In the phone's language.
-      expect(find.text('Hafen'), findsOneWidget);
-      expect(find.text('Boot'), findsOneWidget);
+      expect(find.text('port'), findsOneWidget);
+      expect(find.text('bateau'), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel('Hide detected tags'));
       await tester.pumpAndSettle();
-      expect(find.text('Hafen'), findsNothing);
+      expect(find.text('port'), findsNothing);
       await tester.tap(find.bySemanticsLabel('Show detected tags'));
       await tester.pumpAndSettle();
       // Asked once per picture.
       expect(fake.asked, ['a1']);
 
-      await tester.tap(find.text('Boot'));
+      await tester.tap(find.text('bateau'));
       await tester.pumpAndSettle();
-      expect(searched, ['Boot']);
+      expect(searched, ['bateau']);
       expect(find.byType(PageView), findsNothing);
     });
 

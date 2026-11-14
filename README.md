@@ -66,7 +66,7 @@ Actions"; the workflow is `.github/workflows/pages.yml`, and
 | Search with a regular expression, or matching case; a filter for notes that contain a secret (ids, keys and tokens, passwords) | | ✓ |
 | Search finds the text in pictures (screenshots, receipts), read on the server | ✓ | ✓ |
 | Opt-in: find notes by what their pictures show ("Katzen", "receipt"), in most languages, on your server | ✓ | ✓ |
-| With that on, an opened picture can show what it depicts as tags (English or German); a tag searches for it | ✓ | ✓ |
+| With that on, an opened picture can show what it depicts as tags, in your language (over 70 of them); a tag searches for it | ✓ | ✓ |
 | Search also finds archived notes; Archive and Trash can be searched | ✓ | ✓ |
 | The searched words are marked in the note you open | ✓ | ✓ |
 | The search is kept when you come back from a note | ✓ | ✓ |

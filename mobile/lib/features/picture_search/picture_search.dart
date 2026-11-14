@@ -81,20 +81,32 @@ String? pictureSearchProgressText(
 
 /// A word for what a picture shows, in English and German.
 class PictureLabel {
-  const PictureLabel({required this.en, required this.de, this.score = 0});
+  const PictureLabel({
+    required this.en,
+    this.de = '',
+    this.text,
+    this.score = 0,
+  });
 
   factory PictureLabel.fromJson(Map<String, dynamic> json) => PictureLabel(
     en: json['en'] as String? ?? '',
     de: json['de'] as String? ?? '',
+    text: json['text'] as String?,
     score: (json['score'] as num?)?.toDouble() ?? 0,
   );
 
   final String en;
   final String de;
+
+  /// In the language the tags were asked for; servers from before it send
+  /// only English and German.
+  final String? text;
   final double score;
 
-  /// In the reader's language: German for German, else English.
-  String textFor(String languageCode) => languageCode == 'de' ? de : en;
+  /// In the reader's language, which the server picked from the many the
+  /// words come in; an older server's German for German, else English.
+  String textFor(String languageCode) =>
+      text ?? (languageCode == 'de' && de.isNotEmpty ? de : en);
 }
 
 @riverpod
@@ -120,9 +132,15 @@ class PictureSearchRepository {
   }
 
   /// What a picture shows, best first ("Show detected tags").
-  Future<List<PictureLabel>> labels(String attachmentId) async {
+  /// What a picture shows, best first, in [language] (a tag such as "fr"
+  /// or "pt-BR") when the words come in it, else English.
+  Future<List<PictureLabel>> labels(
+    String attachmentId, {
+    String? language,
+  }) async {
     final response = await _dio.get(
       '/api/picture-search/attachments/$attachmentId/labels',
+      queryParameters: {'lang': ?language},
     );
     final labels = (response.data as Map<String, dynamic>)['labels'] as List;
     return [

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
   Put,
@@ -30,13 +31,24 @@ export class PictureSearchController {
     return this.pictureSearch.status(userId);
   }
 
-  /** The words that best describe a picture ("Show detected tags"). */
+  /**
+   * The words that best describe a picture ("Show detected tags"), in the
+   * reader's language: `lang`, such as "fr" or "pt-BR", else the browser's.
+   */
   @Get('attachments/:id/labels')
   async labels(
     @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
+    @Query('lang') lang?: string,
+    @Headers('accept-language') acceptLanguage?: string,
   ) {
-    return { labels: await this.pictureSearch.labels(userId, id) };
+    return {
+      labels: await this.pictureSearch.labels(
+        userId,
+        id,
+        lang || acceptLanguage,
+      ),
+    };
   }
 
   @Put('settings')

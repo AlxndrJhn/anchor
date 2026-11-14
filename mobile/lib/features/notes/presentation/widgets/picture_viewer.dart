@@ -453,7 +453,9 @@ class _ViewerState extends ConsumerState<_Viewer>
     setState(() => _isFindingTags = true);
     final List<PictureLabel> labels;
     try {
-      labels = await ref.read(pictureSearchRepositoryProvider).labels(id);
+      labels = await ref
+          .read(pictureSearchRepositoryProvider)
+          .labels(id, language: _locale.toLanguageTag());
     } catch (error, stack) {
       AppLogger.instance.warn(
         LogTags.notes,
@@ -488,9 +490,10 @@ class _ViewerState extends ConsumerState<_Viewer>
     });
   }
 
-  /// A tag in the phone's language: the words come in German and English.
-  String _tagText(PictureLabel label) =>
-      label.textFor(View.of(context).platformDispatcher.locale.languageCode);
+  Locale get _locale => View.of(context).platformDispatcher.locale;
+
+  /// A tag in the phone's language, which the server picks the words in.
+  String _tagText(PictureLabel label) => label.textFor(_locale.languageCode);
 
   void _searchFor(String word) {
     Haptics.light();

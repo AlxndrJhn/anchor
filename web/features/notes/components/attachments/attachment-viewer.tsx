@@ -22,7 +22,6 @@ import { toast, toastHostRef } from "@/components/ui/toast";
 import {
   getPictureLabels,
   getPictureSearchStatus,
-  labelText,
   type PictureLabel,
   pictureSearchStatusKey,
 } from "@/features/picture-search/api";
@@ -126,7 +125,7 @@ export function Viewer({
     if (!picture) return;
     setFindingTags(true);
     try {
-      const labels = await getPictureLabels(picture.id);
+      const labels = await getPictureLabels(picture.id, navigator.language);
       if (!labels.length) {
         toast.error("This picture hasn’t been looked at yet. Try again soon.");
         return;
@@ -369,7 +368,7 @@ export function Viewer({
                 {tags ? (
                   <ul className="vw-tags" aria-label="Detected tags">
                     {tags.labels.map((label) => {
-                      const word = labelText(label, navigator.language);
+                      const word = label.text ?? label.en;
                       return (
                         <li key={label.en}>
                           <Link
