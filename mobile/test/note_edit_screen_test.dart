@@ -248,6 +248,9 @@ void main() {
   Future<void> pickFromMore(WidgetTester tester, String action) async {
     await tester.tap(barButton('More'));
     await tester.pumpAndSettle();
+    // More can run past the screen's foot.
+    await tester.ensureVisible(find.text(action));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(action));
     await tester.pumpAndSettle();
   }
@@ -3138,6 +3141,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Change lock'), findsOneWidget);
       expect(find.text('Pattern'), findsOneWidget);
+      await tester.ensureVisible(find.text('Remove lock'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Remove lock'));
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));

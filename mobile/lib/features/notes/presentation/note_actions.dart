@@ -31,6 +31,7 @@ import 'note_freeze_actions.dart';
 import 'note_invisible_actions.dart';
 import 'notes_controller.dart';
 import 'notes_view_options.dart';
+import 'print_notes.dart';
 import 'widgets/background_sheet.dart';
 import 'widgets/card_registry.dart';
 
@@ -41,6 +42,7 @@ enum NoteAction {
   share,
   history,
   send,
+  print,
   copy,
   lock,
   removeLock,
@@ -86,6 +88,7 @@ enum NoteAction {
     ),
     NoteAction.share => (icon: LucideIcons.userPlus, label: l10n.actionShare),
     NoteAction.send => (icon: LucideIcons.send, label: l10n.actionSend),
+    NoteAction.print => (icon: LucideIcons.printer, label: l10n.actionPrint),
     NoteAction.copy => (icon: LucideIcons.copy, label: l10n.actionMakeCopy),
     NoteAction.lock when notes.isNotEmpty && notes.every((n) => n.isLocked) => (
       icon: LucideIcons.lock,
@@ -272,6 +275,11 @@ class NoteActions {
         await setNotesFrozen(context, ref, ids, isFrozen: isFreezing);
       case NoteAction.merge:
         await merge(notes, beforeChange: beforeChange);
+      case NoteAction.print:
+        await printNotes(context, ref, [
+          for (final note in notes)
+            (note: note, title: storedTitleOf(note.title), content: null),
+        ]);
       case NoteAction.archive:
         await archive(notes, beforeChange: beforeChange);
       case NoteAction.unarchive:

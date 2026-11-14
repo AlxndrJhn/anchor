@@ -3178,6 +3178,30 @@ abstract class AppLocalizations {
   /// **'Make a copy'**
   String get actionMakeCopy;
 
+  /// Note menu and selection bar action: opens the system print dialog with the note, or the selected notes one after another, which can also save them as a PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get actionPrint;
+
+  /// Toast when Print is chosen on a new note with no title and no text.
+  ///
+  /// In en, this message translates to:
+  /// **'There’s nothing to print yet'**
+  String get notePrintEmpty;
+
+  /// Printed in place of a locked note's text, when the note hasn't been opened since the phone was last locked.
+  ///
+  /// In en, this message translates to:
+  /// **'This note is locked.'**
+  String get notePrintLocked;
+
+  /// Toast when the print dialog couldn't be opened or the note couldn't be laid out for printing.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t print'**
+  String get notePrintFailed;
+
   /// Toast when Send is chosen on a note with no title and no text.
   ///
   /// In en, this message translates to:

@@ -12,6 +12,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  Printer,
   Snowflake,
   Tag as TagIcon,
   Trash2,
@@ -62,6 +63,7 @@ import { useApplyInvisible } from "@/features/notes/hooks/use-note-invisible";
 import { useNoteList } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
 import { matchesFilters } from "@/features/notes/note-filters";
+import { printNoteList } from "@/features/notes/print";
 import { positionBetween } from "@/features/notes/sort";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
@@ -684,6 +686,12 @@ function NotesView({ tagId }: { tagId: string | null }) {
                 },
               ]
             : []),
+          {
+            key: "print",
+            label: "Print",
+            icon: <Printer aria-hidden />,
+            onClick: () => printNoteList(chosen),
+          },
           {
             key: "invisible",
             label: allInvisible ? "Make visible" : "Make invisible",

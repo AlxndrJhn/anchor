@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArchiveRestore, Lock, Trash2 } from "lucide-react";
+import { ArchiveRestore, Lock, Printer, Trash2 } from "lucide-react";
 import * as React from "react";
 import { AppPage, PageTitle } from "@/components/layout/app-page";
 import { IconButton } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { ShareDialog } from "@/features/notes/components/share-dialog";
 import { isOwnFrozen } from "@/features/notes/hooks/use-note-freeze";
 import { useNoteList } from "@/features/notes/hooks/use-note-list";
 import { useRefreshNotes } from "@/features/notes/hooks/use-refresh-notes";
+import { printNoteList } from "@/features/notes/print";
 import { archivedNotesQuery } from "@/features/notes/queries";
 import { deletedNotesText, deleteNotesWarning } from "@/features/notes/trash";
 import type { Note } from "@/features/notes/types";
@@ -237,6 +238,12 @@ export default function ArchivePage() {
             label: "Lock…",
             icon: <Lock aria-hidden />,
             onClick: () => setLocking(true),
+          },
+          {
+            key: "print",
+            label: "Print",
+            icon: <Printer aria-hidden />,
+            onClick: () => printNoteList(list.chosen),
           },
           {
             key: "delete",

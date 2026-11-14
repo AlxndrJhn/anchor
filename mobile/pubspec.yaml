@@ -101,6 +101,8 @@ dependencies:
   workmanager: ^0.10.10
   zxing2: ^0.2.4
   flutter_webrtc: ^1.6.3
+  # Print: the note as HTML, made a PDF by the system and sent to its print dialog
+  printing: ^5.15.1
 
 dev_dependencies:
   flutter_test:
@@ -139,6 +141,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # How Print lays notes out on paper.
+  assets:
+    - assets/print/notes.css
 
   # Licenses sit next to the files (SIL OFL 1.1; the note fonts' are listed in
   # assets/fonts/README.md).

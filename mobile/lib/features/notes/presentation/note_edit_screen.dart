@@ -53,6 +53,7 @@ import '../domain/inline_image.dart';
 import '../domain/live_image.dart';
 import '../domain/note.dart';
 import '../domain/note_attachment.dart';
+import '../domain/note_blocks.dart';
 import '../domain/note_history.dart';
 import '../domain/note_text.dart';
 import '../domain/quick_action.dart';
@@ -76,6 +77,7 @@ import 'note_invisible_actions.dart';
 import 'note_labels.dart';
 import 'note_morph_route.dart';
 import 'notes_controller.dart';
+import 'print_notes.dart';
 import 'quick_action_labels.dart';
 import 'widgets/add_sheet.dart';
 import 'widgets/background_sheet.dart';
@@ -680,6 +682,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       case NoteAction.send:
         await _send();
         return;
+      case NoteAction.print:
+        await _print();
+        return;
       // A picture saves the note as it goes in.
       case NoteAction.addImage:
         await _addImages();
@@ -896,6 +901,20 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
             : box.localToGlobal(Offset.zero) & box.size,
       ),
     );
+  }
+
+  /// What is on screen, saved or not; pictures come from the note's own.
+  Future<void> _print() async {
+    final note = _draft.note;
+    final title = storedTitleOf(_draft.title.text);
+    final content = _editorKey.currentState?.getContent() ?? note?.content;
+    if (note == null && title.isEmpty && plainTextOf(content).isEmpty) {
+      AppSnackbar.show(context, context.l10n.notePrintEmpty);
+      return;
+    }
+    await printNotes(context, ref, [
+      (note: note, title: title, content: content),
+    ]);
   }
 
   /// The server makes the copy (attachments too), so what is on screen goes
