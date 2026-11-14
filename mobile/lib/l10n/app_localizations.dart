@@ -6933,6 +6933,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Opens the flowchart to edit it'**
   String get flowchartOpenHint;
+
+  /// Title of the page where the user fits a frame to a sheet of paper in a photo, so it can be straightened like a scan; also the Add sheet option that takes such a photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan page'**
+  String get pageScanTitle;
+
+  /// Main button on the Scan page screen: flattens the framed page into a rectangle, as if photographed from straight above.
+  ///
+  /// In en, this message translates to:
+  /// **'Straighten'**
+  String get pageScanStraighten;
+
+  /// Button on the Scan page screen that puts the frame's corners on the picture's own corners.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole picture'**
+  String get pageScanWhole;
+
+  /// Hint on the Scan page screen while the phone looks for the sheet of paper in the photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding the page…'**
+  String get pageScanFinding;
+
+  /// Hint on the Scan page screen once the page's corners were found.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag a corner to fit it to the page.'**
+  String get pageScanFound;
+
+  /// Hint on the Scan page screen when no sheet of paper was found in the photo.
+  ///
+  /// In en, this message translates to:
+  /// **'No page found. Drag the corners onto the page’s corners.'**
+  String get pageScanNotFound;
+
+  /// Screen reader label for one of the four round handles on the Scan page screen that are dragged onto the page's corners.
+  ///
+  /// In en, this message translates to:
+  /// **'Page corner'**
+  String get pageScanCorner;
+
+  /// Option in a picture's hold menu that opens the Scan page screen, to flatten a photographed sheet of paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Straighten page'**
+  String get inlinePictureStraighten;
 }
 
 class _AppLocalizationsDelegate

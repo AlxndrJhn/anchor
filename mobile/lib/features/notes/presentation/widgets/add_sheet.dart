@@ -14,6 +14,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 import '../../../../core/files/device_files.dart';
+import '../../../../core/files/picture_edits.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/logging/log_tags.dart';
 import '../../../../core/motion/animated_resize.dart';
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
@@ -31,6 +34,7 @@ import '../../data/photo_files.dart';
 import '../../domain/note_attachment.dart';
 import '../../domain/note_dates.dart';
 import 'audio_playback.dart';
+import 'page_scan_screen.dart';
 
 typedef AddedFile = ({String path, String mime, String name});
 
@@ -170,6 +174,42 @@ class _AddSheetState extends State<_AddSheet> {
     if (image == null || !mounted) return;
     final files = await _uploadable([image]);
     if (files != null && files.isNotEmpty) _done(files);
+  }
+
+  /// A photo of a sheet of paper, framed and straightened like a scan.
+  Future<void> _scanPage() async {
+    final shot = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 92,
+    );
+    if (shot == null || !mounted) return;
+    final corners = await PageScanScreen.open(context, shot.path);
+    if (corners == null || !mounted) return;
+    final String scanned;
+    try {
+      scanned = await editPicture(shot.path, StraightenPage(corners));
+    } catch (e) {
+      AppLogger.instance.warn(
+        LogTags.attachments,
+        'Scanning a page failed: $e',
+      );
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          context.l10n.inlinePictureChangeFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    _done([
+      (
+        path: scanned,
+        mime: 'image/jpeg',
+        name: 'Scan ${DateTime.now().millisecondsSinceEpoch}.jpg',
+      ),
+    ]);
   }
 
   void _liveCamera() {
@@ -436,6 +476,11 @@ class _AddSheetState extends State<_AddSheet> {
                       icon: LucideIcons.camera,
                       label: l10n.addTakePhoto,
                       onTap: _takePhoto,
+                    ),
+                    _Option(
+                      icon: LucideIcons.scanLine,
+                      label: l10n.pageScanTitle,
+                      onTap: _scanPage,
                     ),
                     if (widget.onTakeSeveral != null)
                       _Option(

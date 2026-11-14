@@ -4633,4 +4633,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get flowchartOpenHint => 'Opens the flowchart to edit it';
+
+  @override
+  String get pageScanTitle => 'Scan page';
+
+  @override
+  String get pageScanStraighten => 'Straighten';
+
+  @override
+  String get pageScanWhole => 'Whole picture';
+
+  @override
+  String get pageScanFinding => 'Finding the page…';
+
+  @override
+  String get pageScanFound => 'Drag a corner to fit it to the page.';
+
+  @override
+  String get pageScanNotFound =>
+      'No page found. Drag the corners onto the page’s corners.';
+
+  @override
+  String get pageScanCorner => 'Page corner';
+
+  @override
+  String get inlinePictureStraighten => 'Straighten page';
 }

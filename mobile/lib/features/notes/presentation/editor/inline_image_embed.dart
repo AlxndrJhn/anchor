@@ -29,6 +29,7 @@ import '../../data/repository/note_attachments_repository.dart';
 import '../../domain/inline_image.dart';
 import '../../domain/note_attachment.dart';
 import '../widgets/image_crop_screen.dart';
+import '../widgets/page_scan_screen.dart';
 
 /// Draws the pictures placed in a note's text ([InlineImage]).
 class InlineImageEmbedBuilder extends EmbedBuilder {
@@ -170,12 +171,17 @@ class InlineImages {
           icon: LucideIcons.camera,
           label: l10n.inlinePictureRetake,
         ),
-        // Crop and mirror need the picture on the phone.
+        // Crop, straighten and mirror need the picture on the phone.
         if (path != null) ...[
           SheetChoice(
             value: _Action.crop,
             icon: LucideIcons.crop,
             label: l10n.pictureCrop,
+          ),
+          SheetChoice(
+            value: _Action.straighten,
+            icon: LucideIcons.scanLine,
+            label: l10n.inlinePictureStraighten,
           ),
           SheetChoice(
             value: _Action.mirrorHorizontally,
@@ -220,6 +226,10 @@ class InlineImages {
         final area = await ImageCropScreen.open(context, path!);
         if (area == null || !context.mounted) return;
         await _edit(context, place, image, path, CropTo(area));
+      case _Action.straighten:
+        final corners = await PageScanScreen.open(context, path!);
+        if (corners == null || !context.mounted) return;
+        await _edit(context, place, image, path, StraightenPage(corners));
       case _Action.mirrorHorizontally:
         await _edit(context, place, image, path!, const MirrorHorizontally());
       case _Action.mirrorVertically:
@@ -723,6 +733,7 @@ class _ResizeHandle extends StatelessWidget {
 enum _Action {
   retake,
   crop,
+  straighten,
   mirrorHorizontally,
   mirrorVertically,
   caption,

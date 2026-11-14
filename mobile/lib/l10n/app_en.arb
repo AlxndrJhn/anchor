@@ -6067,5 +6067,37 @@
   "flowchartOpenHint": "Opens the flowchart to edit it",
   "@flowchartOpenHint": {
     "description": "Screen reader hint on a flowchart in a note that can be changed."
+  },
+  "pageScanTitle": "Scan page",
+  "@pageScanTitle": {
+    "description": "Title of the page where the user fits a frame to a sheet of paper in a photo, so it can be straightened like a scan; also the Add sheet option that takes such a photo."
+  },
+  "pageScanStraighten": "Straighten",
+  "@pageScanStraighten": {
+    "description": "Main button on the Scan page screen: flattens the framed page into a rectangle, as if photographed from straight above."
+  },
+  "pageScanWhole": "Whole picture",
+  "@pageScanWhole": {
+    "description": "Button on the Scan page screen that puts the frame's corners on the picture's own corners."
+  },
+  "pageScanFinding": "Finding the page…",
+  "@pageScanFinding": {
+    "description": "Hint on the Scan page screen while the phone looks for the sheet of paper in the photo."
+  },
+  "pageScanFound": "Drag a corner to fit it to the page.",
+  "@pageScanFound": {
+    "description": "Hint on the Scan page screen once the page's corners were found."
+  },
+  "pageScanNotFound": "No page found. Drag the corners onto the page’s corners.",
+  "@pageScanNotFound": {
+    "description": "Hint on the Scan page screen when no sheet of paper was found in the photo."
+  },
+  "pageScanCorner": "Page corner",
+  "@pageScanCorner": {
+    "description": "Screen reader label for one of the four round handles on the Scan page screen that are dragged onto the page's corners."
+  },
+  "inlinePictureStraighten": "Straighten page",
+  "@inlinePictureStraighten": {
+    "description": "Option in a picture's hold menu that opens the Scan page screen, to flatten a photographed sheet of paper."
   }
 }
