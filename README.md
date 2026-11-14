@@ -9,6 +9,7 @@
 [![Version](https://img.shields.io/github/v/release/AlxndrJhn/anchor-plus?label=version&style=for-the-badge)](https://github.com/AlxndrJhn/anchor-plus/releases)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=for-the-badge&logo=docker)](https://github.com/AlxndrJhn/anchor-plus/pkgs/container/anchor-plus)
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/AlxndrJhn/anchor-plus?label=openssf%20scorecard&style=for-the-badge)](https://scorecard.dev/viewer/?uri=github.com/AlxndrJhn/anchor-plus)
 
 Anchor+ is an offline first, self hostable note taking app focused on speed, privacy, simplicity, and reliability across mobile and web. Notes are stored locally, editable offline, and synced across devices when online.
 
@@ -941,6 +942,11 @@ Future planned features:
 - **Backend**: Nest.js, PostgreSQL, Prisma
 - **Mobile**: Flutter
 - **Web**: Next.js, TypeScript
+
+## Security
+
+Found a vulnerability? Please report it privately, not in a public issue:
+see [SECURITY.md](SECURITY.md).
 
 ## Contributing
 

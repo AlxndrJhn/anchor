@@ -1,0 +1,67 @@
+name: CodeQL
+
+# Static analysis for security bugs (injection, XSS, path traversal, unsafe
+# workflow patterns and the like) in the TypeScript of the server, web and
+# desktop apps, and in these workflows. Findings show under the repository's
+# Security tab and as annotations on pull requests. CodeQL doesn't support
+# Dart, so the Flutter app isn't covered here. Runs weekly too, since CodeQL's
+# queries improve without any change here.
+
+on:
+  push:
+    branches: [main, next]
+    tags-ignore:
+      - "v*"
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches: [main, next]
+    paths-ignore:
+      - "**.md"
+  schedule:
+    - cron: "29 4 * * 2"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # Analyses the source as it is; nothing needs to be built or installed.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+          config: |
+            paths-ignore:
+              - "**/node_modules"
+              - "**/build"
+              - "**/dist"
+              - "**/.next"
+              - "**/test"
+              - "**/*.test.ts"
+              - "**/*.test.tsx"
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
