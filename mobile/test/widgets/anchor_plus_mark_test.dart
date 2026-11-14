@@ -62,7 +62,8 @@ void main() {
 
   testWidgets('a tap just beside the small + still reaches it', (tester) async {
     await pumpHeading(tester);
-    await tester.pumpAndSettle();
+    // Past the burst it plays on its own.
+    await tester.pump(const Duration(milliseconds: 2500));
     final center = tester.getCenter(find.byType(AnchorPlusMark));
 
     // 24 wide, with room to 48 on Android: 20 off its centre is outside
@@ -72,21 +73,19 @@ void main() {
       await tester.tapAt(center + miss);
       await tester.pump(const Duration(milliseconds: 100));
       expect(featureIcons(), findsNWidgets(AnchorPlusMark.features.length));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1500));
     }
   });
 
-  testWidgets('it hovers for a while, then rests until tapped', (tester) async {
+  testWidgets('it keeps hovering for as long as it shows', (tester) async {
     await pumpHeading(tester);
     expect(tester.hasRunningAnimations, isTrue);
 
-    await tester.pumpAndSettle();
-    expect(tester.hasRunningAnimations, isFalse);
-
-    await tester.tap(find.byType(AnchorPlusMark));
-    await tester.pump();
+    // Well past the twenty seconds it used to stop after.
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
     expect(tester.hasRunningAnimations, isTrue);
-    await tester.pumpAndSettle();
   });
 
   testWidgets('with reduced motion the + sits still', (tester) async {
