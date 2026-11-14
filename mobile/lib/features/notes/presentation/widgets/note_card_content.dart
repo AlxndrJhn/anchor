@@ -133,7 +133,7 @@ class NoteCardContent extends StatelessWidget {
             ExcludeSemantics(
               child: FlowchartView(
                 chart: chart,
-                maxHeight: 150,
+                maxHeight: 150, // off-scale: the card's chart
                 colors: FlowchartColors(
                   ink: colors.appText,
                   fill: appearance.colors.surface,
