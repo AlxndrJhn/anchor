@@ -12,6 +12,7 @@ import {
   ListChecks,
   ListOrdered,
   Mic,
+  PencilLine,
   Quote,
   Radio,
   Type,
@@ -40,6 +41,7 @@ type Kind =
   | "date"
   | "attachment"
   | "record"
+  | "draw"
   | "live";
 
 const ITEMS: {
@@ -139,6 +141,12 @@ const ITEMS: {
     keywords: "voice memo microphone mic recording sound",
   },
   {
+    kind: "draw",
+    label: "Drawing",
+    icon: <PencilLine />,
+    keywords: "draw sketch doodle pen hand drawn handwriting scribble paint",
+  },
+  {
     kind: "live",
     label: "Live image",
     icon: <Radio />,
@@ -163,6 +171,7 @@ interface SlashMenuProps {
   onAddAttachment?: () => void;
   onRecordAudio?: () => void;
   onAddLink: () => void;
+  onDraw?: () => void;
   onAddLiveImage?: () => void;
 }
 
@@ -175,6 +184,7 @@ export function SlashMenu({
   onAddAttachment,
   onRecordAudio,
   onAddLink,
+  onDraw,
   onAddLiveImage,
 }: SlashMenuProps) {
   const [slash, setSlash] = React.useState<Slash | null>(null);
@@ -194,11 +204,12 @@ export function SlashMenu({
           (item) =>
             (item.kind !== "attachment" || onAddAttachment) &&
             (item.kind !== "record" || onRecordAudio) &&
+            (item.kind !== "draw" || onDraw) &&
             (item.kind !== "live" || onAddLiveImage),
         ),
         slash?.query ?? "",
       ),
-    [slash?.query, onAddAttachment, onRecordAudio, onAddLiveImage],
+    [slash?.query, onAddAttachment, onRecordAudio, onDraw, onAddLiveImage],
   );
   const activeIndex = Math.min(active, Math.max(0, items.length - 1));
 
@@ -338,6 +349,7 @@ export function SlashMenu({
         quill.setSelection(from, 0, "silent");
         if (kind === "attachment") onAddAttachment?.();
         else if (kind === "record") onRecordAudio?.();
+        else if (kind === "draw") onDraw?.();
         else if (kind === "live") onAddLiveImage?.();
         else if (kind === "link") onAddLink();
         return;
@@ -360,6 +372,7 @@ export function SlashMenu({
       onAddAttachment,
       onRecordAudio,
       onAddLink,
+      onDraw,
       onAddLiveImage,
       updateSlash,
     ],

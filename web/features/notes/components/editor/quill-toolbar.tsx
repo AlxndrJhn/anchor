@@ -16,6 +16,7 @@ import {
   ListChecks,
   ListOrdered,
   Mic,
+  PencilLine,
   Quote,
   Radio,
   Redo2,
@@ -102,6 +103,8 @@ interface QuillToolbarProps {
   onRecordAudio?: () => void;
   /** Puts pictures in the text at the caret. */
   onPictureInText?: () => void;
+  /** Opens a pad to draw a picture, put in the text at the caret. */
+  onDraw?: () => void;
   /** Puts a live camera or screen in the text at the caret. */
   onLiveImage?: () => void;
   onUndoRedo: (action: UndoRedoAction) => void;
@@ -115,6 +118,7 @@ export function QuillToolbar({
   onAddAttachment,
   onRecordAudio,
   onPictureInText,
+  onDraw,
   onLiveImage,
   onUndoRedo,
 }: QuillToolbarProps) {
@@ -258,7 +262,7 @@ export function QuillToolbar({
       )}
       {divider}
       {/* Left of the text styles, as on Android. */}
-      {(onPictureInText || onLiveImage) && (
+      {(onPictureInText || onDraw || onLiveImage) && (
         <>
           {onPictureInText &&
             toolButton(
@@ -266,6 +270,7 @@ export function QuillToolbar({
               <ImageIcon />,
               onPictureInText,
             )}
+          {onDraw && toolButton("Draw a picture", <PencilLine />, onDraw)}
           {onLiveImage &&
             toolButton(
               "Add a live image: a camera or screen",
