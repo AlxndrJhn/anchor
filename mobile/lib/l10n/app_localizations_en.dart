@@ -1985,6 +1985,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionMakeCopy => 'Make a copy';
 
   @override
+  String get actionPrint => 'Print';
+
+  @override
+  String get notePrintEmpty => 'There’s nothing to print yet';
+
+  @override
+  String get notePrintLocked => 'This note is locked.';
+
+  @override
+  String get notePrintFailed => 'Couldn’t print';
+
+  @override
   String get noteSendEmpty => 'There’s nothing to send yet';
 
   @override

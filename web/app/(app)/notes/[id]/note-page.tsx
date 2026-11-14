@@ -57,9 +57,11 @@ import {
 } from "@/features/notes/note-caret";
 import { isLockHidden, useUnlockedNotes } from "@/features/notes/note-lock";
 import { sendNote } from "@/features/notes/note-text";
+import { printNotes } from "@/features/notes/print";
 import { parseStoredContent } from "@/features/notes/quill";
 import { checkboxesAction } from "@/features/notes/quill-checklist";
 import { hasTitle } from "@/features/notes/title";
+import type { NoteAttachment } from "@/features/notes/types";
 import { createTag, nextTagColor, type Tag, useTags } from "@/features/tags";
 import { useDelayedFlag } from "@/lib/hooks/use-delayed-flag";
 import { useDocumentTitle } from "@/lib/hooks/use-document-title";
@@ -649,6 +651,26 @@ function NoteEditor({
               } catch {
                 toast.error("Couldn’t send the note");
               }
+            }}
+            onPrint={() => {
+              const files = queryClient.getQueryData<NoteAttachment[]>([
+                "attachments",
+                noteId,
+              ]);
+              printNotes([
+                {
+                  id: noteId,
+                  title: editor.title,
+                  content: editor.content,
+                  pictureIds: files
+                    ?.filter((a) => a.type === "image")
+                    .sort((a, b) => a.position - b.position)
+                    .map((a) => a.id),
+                  imagePreviewIds: note?.imagePreviewIds,
+                  attachmentCount: isNew ? 0 : note?.attachmentCount,
+                  locked: lockedOut,
+                },
+              ]).catch(() => toast.error("Couldn’t print the note"));
             }}
             onCopy={
               isNew || trashed

@@ -29,6 +29,7 @@ import {
   Palette,
   Pin,
   PinOff,
+  Printer,
   Send,
   Settings2,
   Snowflake,
@@ -113,6 +114,8 @@ interface NoteEditorHeaderProps {
   onToggleInvisible?: () => void;
   /** Hands the note to another app (or copies it as text). */
   onSend: () => void;
+  /** Opens the print dialog with the note. */
+  onPrint: () => void;
   /** Makes a copy of the note; absent for a note not yet saved. */
   onCopy?: () => void;
   onArchive: () => void;
@@ -293,6 +296,13 @@ export function NoteEditorHeader(props: NoteEditorHeaderProps) {
               needsSave: true,
             }
           : null;
+      case "print":
+        return {
+          label: "Print",
+          icon: <Printer />,
+          run: props.onPrint,
+          afterMenu: true,
+        };
       case "copy":
         return props.onCopy && props.saved
           ? {

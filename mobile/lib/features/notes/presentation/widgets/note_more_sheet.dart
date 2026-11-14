@@ -91,6 +91,7 @@ Future<NoteAction?> showNoteMoreSheet(
         showChevron: true,
       ),
     plain(NoteAction.send),
+    plain(NoteAction.print),
     if (canCopy) plain(NoteAction.copy),
     null,
     if (canSeeHistory)

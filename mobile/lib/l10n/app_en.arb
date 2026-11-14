@@ -2778,6 +2778,22 @@
   "@actionMakeCopy": {
     "description": "Note menu action: makes a new note of your own with the same title, text, color, tags and attachments, then opens it."
   },
+  "actionPrint": "Print",
+  "@actionPrint": {
+    "description": "Note menu and selection bar action: opens the system print dialog with the note, or the selected notes one after another, which can also save them as a PDF."
+  },
+  "notePrintEmpty": "There’s nothing to print yet",
+  "@notePrintEmpty": {
+    "description": "Toast when Print is chosen on a new note with no title and no text."
+  },
+  "notePrintLocked": "This note is locked.",
+  "@notePrintLocked": {
+    "description": "Printed in place of a locked note's text, when the note hasn't been opened since the phone was last locked."
+  },
+  "notePrintFailed": "Couldn’t print",
+  "@notePrintFailed": {
+    "description": "Toast when the print dialog couldn't be opened or the note couldn't be laid out for printing."
+  },
   "noteSendEmpty": "There’s nothing to send yet",
   "@noteSendEmpty": {
     "description": "Toast when Send is chosen on a note with no title and no text."

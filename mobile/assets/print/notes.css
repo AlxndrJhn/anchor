@@ -1,0 +1,28 @@
+/* How Print lays notes out on paper (lib/features/notes/domain/note_print_html.dart),
+   matching the web app's web/app/styles/print.css. */
+@page { margin: 16mm; }
+body { font-family: sans-serif; font-size: 12pt; line-height: 1.6; color: #000;
+  margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+article { break-inside: avoid; }
+article + article { margin-top: 10mm; padding-top: 8mm; border-top: 1px solid #ccc; }
+h1.title { font-size: 20pt; margin: 0 0 0.6em; line-height: 1.3; }
+h2 { font-size: 16pt; margin: 1em 0 0.4em; }
+h3 { font-size: 14pt; margin: 1em 0 0.4em; }
+h4 { font-size: 12pt; margin: 1em 0 0.4em; }
+p { margin: 0 0 0.5em; }
+blockquote { margin: 0 0 0.5em; padding-left: 0.8em; border-left: 3px solid #bbb; color: #333; }
+pre { white-space: pre-wrap; font-family: monospace; font-size: 10.5pt; background: #f2f2f2;
+  padding: 0.6em 0.8em; border-radius: 4px; margin: 0 0 0.5em; }
+code { font-family: monospace; background: #f2f2f2; padding: 0 0.2em; border-radius: 3px; }
+mark { color: inherit; padding: 0 0.1em; border-radius: 2px; }
+a { color: inherit; }
+.li { display: flex; gap: 0.5em; align-items: baseline; margin: 0 0 0.25em;
+  padding-inline-start: calc(var(--lvl) * 1.5em); break-inside: avoid; }
+.li .mk { min-width: 1.2em; text-align: end; }
+.box { flex: none; display: inline-block; width: 0.85em; height: 0.85em; border: 1.5px solid #333;
+  border-radius: 3px; font-size: 0.75em; line-height: 0.85em; text-align: center; position: relative; top: 0.1em; }
+.box.done { background: #333; color: #fff; }
+.li.done > span:last-child { text-decoration: line-through; color: #666; }
+.locked { font-style: italic; color: #555; margin: 0; }
+.pictures { display: flex; flex-wrap: wrap; gap: 4mm; margin-top: 4mm; }
+.pictures img { max-width: 100%; max-height: 120mm; object-fit: contain; break-inside: avoid; }

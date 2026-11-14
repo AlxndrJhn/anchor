@@ -32,6 +32,7 @@ extension QuickActionLabels on QuickAction {
     QuickAction.share => const [NoteAction.share],
     QuickAction.history => const [NoteAction.history],
     QuickAction.send => const [NoteAction.send],
+    QuickAction.print => const [NoteAction.print],
     QuickAction.copy => const [NoteAction.copy],
     QuickAction.lock => const [NoteAction.lock, NoteAction.removeLock],
     QuickAction.freeze => const [NoteAction.freeze],

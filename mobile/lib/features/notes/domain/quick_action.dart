@@ -12,6 +12,7 @@ enum QuickAction {
   sortByName,
   share,
   send,
+  print,
   copy,
   history,
   background,
