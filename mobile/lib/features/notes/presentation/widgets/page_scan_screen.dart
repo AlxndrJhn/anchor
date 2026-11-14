@@ -195,7 +195,7 @@ class _PageScanScreenState extends State<PageScanScreen> {
                     ),
                   )
                 : Padding(
-                    padding: const EdgeInsets.all(28),
+                    padding: const EdgeInsets.all(32),
                     child: LayoutBuilder(
                       builder: (context, constraints) =>
                           _editor(context, _pictureIn(constraints.biggest)),
@@ -212,7 +212,7 @@ class _PageScanScreenState extends State<PageScanScreen> {
               children: [
                 if (_finding == _Finding.looking)
                   const SizedBox.square(
-                    dimension: 14,
+                    dimension: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: AnchorTokens.colorMediaMuted,
@@ -304,10 +304,10 @@ class _PageScanScreenState extends State<PageScanScreen> {
           ),
           for (var i = 0; i < 4; i++)
             Positioned(
-              left: points[i].dx - 22,
-              top: points[i].dy - 22,
-              width: 44,
-              height: 44,
+              left: points[i].dx - 24,
+              top: points[i].dy - 24,
+              width: 48,
+              height: 48,
               child: IgnorePointer(
                 child: Semantics(
                   label: context.l10n.pageScanCorner,
@@ -370,8 +370,12 @@ class _Loupe extends StatelessWidget {
             children: [
               const Positioned.fill(child: ColoredBox(color: Colors.black)),
               Positioned(
-                left: size / 2 - at.dx * zoom,
-                top: size / 2 - at.dy * zoom,
+                left:
+                    size / 2 -
+                    at.dx * zoom, // off-scale: centers the zoomed spot
+                top:
+                    size / 2 -
+                    at.dy * zoom, // off-scale: centers the zoomed spot
                 width: pictureSize.width * zoom,
                 height: pictureSize.height * zoom,
                 child: picture,
