@@ -1,4 +1,10 @@
 import { HIGHLIGHTS } from "@/lib/design/tokens";
+import {
+  FLOWCHART_EMBED,
+  flowchartLabel,
+  flowchartSvg,
+  parseFlowchart,
+} from "./flowcharts";
 import { INLINE_IMAGE_EMBED, parseInlineImage } from "./inline-images";
 import { LINK_PROTOCOLS } from "./link-utils";
 import { LIVE_IMAGE_EMBED, parseLiveImage } from "./live-images";
@@ -144,6 +150,30 @@ export function registerNoteFormats(Quill: QuillStatic) {
     }
   }
   Quill.register(LiveImageEmbed, true);
+
+  // A flowchart, drawn from its stored value; flowchart-tools.tsx opens it
+  // to edit. Kept as it came, so the value survives a round trip.
+  class FlowchartEmbed extends Embed {
+    static blotName = FLOWCHART_EMBED;
+    static tagName = "SPAN";
+    static className = "flowchart";
+    static create(value: unknown) {
+      // biome-ignore lint/complexity/noThisInStatic: Parchment's create reads this.tagName
+      const node = super.create(value);
+      node.setAttribute("data-value", typeof value === "string" ? value : "");
+      const chart = parseFlowchart(value);
+      if (!chart) return node;
+      const frame = document.createElement("span");
+      frame.className = "flowchart-frame";
+      frame.innerHTML = flowchartSvg(chart, flowchartLabel(chart));
+      node.appendChild(frame);
+      return node;
+    }
+    static value(node: HTMLElement) {
+      return node.getAttribute("data-value") ?? "";
+    }
+  }
+  Quill.register(FlowchartEmbed, true);
 
   // A font for the selected text, written as its font-family.
   const FontStyle = Quill.import("attributors/style/font") as {

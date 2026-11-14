@@ -41,12 +41,16 @@ Future<List<AddedFile>?> showAddSheet(
   BuildContext context, {
   VoidCallback? onTakeSeveral,
   VoidCallback? onLiveCamera,
+  VoidCallback? onFlowchart,
 }) {
   return showAnchorSheet<List<AddedFile>>(
     context,
     semanticLabel: context.l10n.addToNote,
-    builder: (_) =>
-        _AddSheet(onTakeSeveral: onTakeSeveral, onLiveCamera: onLiveCamera),
+    builder: (_) => _AddSheet(
+      onTakeSeveral: onTakeSeveral,
+      onLiveCamera: onLiveCamera,
+      onFlowchart: onFlowchart,
+    ),
   );
 }
 
@@ -95,12 +99,15 @@ Future<void> _keepMicOn(bool on) async {
 }
 
 class _AddSheet extends StatefulWidget {
-  const _AddSheet({this.onTakeSeveral, this.onLiveCamera});
+  const _AddSheet({this.onTakeSeveral, this.onLiveCamera, this.onFlowchart});
 
   final VoidCallback? onTakeSeveral;
 
   /// Closes the sheet to put a live camera in the text; null leaves it out.
   final VoidCallback? onLiveCamera;
+
+  /// Closes the sheet to draw a flowchart for the text; null leaves it out.
+  final VoidCallback? onFlowchart;
 
   @override
   State<_AddSheet> createState() => _AddSheetState();
@@ -169,6 +176,12 @@ class _AddSheetState extends State<_AddSheet> {
     final onLiveCamera = widget.onLiveCamera!;
     Navigator.of(context).pop();
     onLiveCamera();
+  }
+
+  void _flowchart() {
+    final onFlowchart = widget.onFlowchart!;
+    Navigator.of(context).pop();
+    onFlowchart();
   }
 
   void _takeSeveral() {
@@ -451,6 +464,12 @@ class _AddSheetState extends State<_AddSheet> {
                       label: l10n.addFiles,
                       onTap: _chooseFiles,
                     ),
+                    if (widget.onFlowchart != null)
+                      _Option(
+                        icon: LucideIcons.workflow,
+                        label: l10n.flowchart,
+                        onTap: _flowchart,
+                      ),
                     if (canPickFolder)
                       _Option(
                         icon: LucideIcons.folderArchive,

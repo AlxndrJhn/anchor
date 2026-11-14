@@ -66,7 +66,7 @@ Actions"; the workflow is `.github/workflows/pages.yml`, and
 | Search with a regular expression, or matching case; a filter for notes that contain a secret (ids, keys and tokens, passwords) | | ✓ |
 | Search finds the text in pictures (screenshots, receipts), read on the server | ✓ | ✓ |
 | Opt-in: find notes by what their pictures show ("Katzen", "receipt"), in most languages, on your server | ✓ | ✓ |
-| With that on, an opened picture can show what it depicts as tags (English or German); a tag searches for it | ✓ | ✓ |
+| With that on, an opened picture can show what it depicts as tags, in your language (over 70 of them); a tag searches for it | ✓ | ✓ |
 | Search also finds archived notes; Archive and Trash can be searched | ✓ | ✓ |
 | The searched words are marked in the note you open | ✓ | ✓ |
 | The search is kept when you come back from a note | ✓ | ✓ |
@@ -88,6 +88,7 @@ Actions"; the workflow is `.github/workflows/pages.yml`, and
 | Camera and pictures buttons left of the text styles put pictures in the text at the caret; drag a picture's corner to resize it, hold it to retake, crop, mirror, caption or delete it (web: a picture button, a corner that shows on hover, and right-click to replace, crop, mirror, caption or delete) | ✓ | ✓ |
 | Draw a picture by hand (mouse, finger or pen, with pressure): pen, marker and eraser in six colours and three sizes, plus text and emojis put where you click (every emoji, picked as in WhatsApp: categories, search, recently used, skin tones), with undo. It goes into the text at the caret (toolbar's pen button, or `/draw`); right-click a picture › Draw on it… to draw over it | ✓ | |
 | Live images: put a camera or a screen of this computer in a note (toolbar, or `/live`), or the phone's camera (Add › Live camera), with or without the microphone, and every device that opens the note shows it live, straight from that one while Anchor is open there. Resize and crop it on the web; mute the microphone while it's live; viewers turn the sound on themselves and see how many watch. A tap spins the red dot into an anchor; a double tap keeps a still in the note's attachments, named for the moment it was taken. Trashing the note stops them at once, and a restored note's live images stay off until turned on again | ✓ | ✓ (camera) |
+| Flowcharts: draw one in a note (toolbar, `/flowchart`, or Add › Flowchart on the phone) with steps, decisions and start/end boxes joined by labelled arrows; drag boxes, drag a dot to join two, and tap or click the chart in the note to change it. Search finds the words in it, the card shows it small, and Markdown export and the AI connector write it as Mermaid | ✓ | ✓ |
 | Download pictures and recordings | | ✓ |
 | Share to Anchor from other apps: text, links, pictures, files | | ✓ |
 | **History** | | |

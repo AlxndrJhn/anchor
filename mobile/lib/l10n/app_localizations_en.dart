@@ -4542,4 +4542,83 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveCameraNoCamera => 'No camera could be turned on.';
+
+  @override
+  String get flowchart => 'Flowchart';
+
+  @override
+  String get slashWordsFlowchart =>
+      'diagram chart flow process boxes arrows decision';
+
+  @override
+  String get flowchartNew => 'New flowchart';
+
+  @override
+  String get flowchartEdit => 'Edit flowchart';
+
+  @override
+  String get flowchartAdd => 'Add';
+
+  @override
+  String get flowchartStep => 'Step';
+
+  @override
+  String get flowchartDecision => 'Decision';
+
+  @override
+  String get flowchartEnd => 'End';
+
+  @override
+  String get flowchartStartOrEnd => 'Start or end';
+
+  @override
+  String get flowchartWrite => 'Write';
+
+  @override
+  String get flowchartNextStep => 'Next step';
+
+  @override
+  String get flowchartFit => 'Show all';
+
+  @override
+  String get flowchartRemove => 'Remove chart';
+
+  @override
+  String get flowchartBoxText => 'Text in the box';
+
+  @override
+  String get flowchartArrowText => 'Text on the arrow';
+
+  @override
+  String get flowchartArrowHint => 'Label, e.g. yes';
+
+  @override
+  String get flowchartDiscardTitle => 'Discard changes?';
+
+  @override
+  String get flowchartDiscardMessage =>
+      'The changes to this flowchart haven’t been saved.';
+
+  @override
+  String get flowchartDiscard => 'Discard';
+
+  @override
+  String get flowchartRemoveTitle => 'Remove flowchart?';
+
+  @override
+  String get flowchartRemoveMessage =>
+      'The chart is taken out of the note. Undo in the note brings it back.';
+
+  @override
+  String flowchartCanvas(int boxes, int arrows) {
+    return 'Flowchart with $boxes boxes and $arrows arrows. Tap a box to pick it, tap it again to write.';
+  }
+
+  @override
+  String flowchartLabel(String name) {
+    return 'Flowchart: $name';
+  }
+
+  @override
+  String get flowchartOpenHint => 'Opens the flowchart to edit it';
 }

@@ -12,6 +12,8 @@ import {
   labelPrompt,
 } from './picture-search.service';
 import { LABELS } from './labels';
+import { LABEL_WORDS } from './label-words';
+import { labelLanguage } from './label-words/words';
 import { imagePixels, tokenIds, type PictureModel } from './picture-model';
 import type { PrismaService } from '../prisma/prisma.service';
 
@@ -42,21 +44,123 @@ describe('bestMatches', () => {
 
 describe('bestLabels', () => {
   it('names the closest words, best first, only near the best', () => {
-    const at = (word: string) => LABELS.findIndex(([en]) => en === word);
+    const at = (word: string) => LABELS.findIndex((en) => en === word);
     const labels = LABELS.map(() => Float32Array.of(0, 0));
     labels[at('tiger')] = Float32Array.of(0.14, 0);
     labels[at('zoo')] = Float32Array.of(0.125, 0);
     labels[at('cat')] = Float32Array.of(0.08, 0);
 
     expect(bestLabels(Float32Array.of(1, 0), labels)).toEqual([
-      { en: 'tiger', de: 'Tiger', score: 0.14 },
-      { en: 'zoo', de: 'Zoo', score: 0.125 },
+      { en: 'tiger', de: 'Tiger', text: 'tiger', score: 0.14 },
+      { en: 'zoo', de: 'Zoo', text: 'zoo', score: 0.125 },
+    ]);
+  });
+
+  it('names them in the language asked for', () => {
+    const labels = LABELS.map(() => Float32Array.of(0, 0));
+    labels[LABELS.indexOf('cat')] = Float32Array.of(0.14, 0);
+
+    const [cat] = bestLabels(Float32Array.of(1, 0), labels, 'fr');
+
+    expect(cat).toMatchObject({ en: 'cat', de: 'Katze' });
+    expect(cat.text).toBe(LABEL_WORDS.fr.cat);
+    expect(cat.text).not.toBe('cat');
+  });
+
+  it('names a word once where a language has one for two', () => {
+    const labels = LABELS.map(() => Float32Array.of(0, 0));
+    labels[LABELS.indexOf('boat')] = Float32Array.of(0.14, 0);
+    labels[LABELS.indexOf('ship')] = Float32Array.of(0.135, 0);
+
+    const words = bestLabels(Float32Array.of(1, 0), labels, 'hr');
+
+    expect(words.map((w) => w.en)).toEqual(['boat']);
+    expect(bestLabels(Float32Array.of(1, 0), labels).map((w) => w.en)).toEqual([
+      'boat',
+      'ship',
     ]);
   });
 
   it('puts words to the model in a short sentence', () => {
     expect(labelPrompt('cat')).toBe('a photo of a cat');
     expect(labelPrompt('elephant')).toBe('a photo of an elephant');
+  });
+});
+
+/** Scripts a tag word may be in; Chinese, Japanese and Korean count as one. */
+const SCRIPTS = (
+  [
+    ['Latin', /\p{Script=Latin}/u],
+    ['Cyrillic', /\p{Script=Cyrillic}/u],
+    ['Greek', /\p{Script=Greek}/u],
+    ['Arabic', /\p{Script=Arabic}/u],
+    ['Hebrew', /\p{Script=Hebrew}/u],
+    ['Armenian', /\p{Script=Armenian}/u],
+    ['Georgian', /\p{Script=Georgian}/u],
+    ['Ethiopic', /\p{Script=Ethiopic}/u],
+    ['Devanagari', /\p{Script=Devanagari}/u],
+    ['Bengali', /\p{Script=Bengali}/u],
+    ['Gurmukhi', /\p{Script=Gurmukhi}/u],
+    ['Gujarati', /\p{Script=Gujarati}/u],
+    ['Tamil', /\p{Script=Tamil}/u],
+    ['Telugu', /\p{Script=Telugu}/u],
+    ['Kannada', /\p{Script=Kannada}/u],
+    ['Malayalam', /\p{Script=Malayalam}/u],
+    ['Sinhala', /\p{Script=Sinhala}/u],
+    ['Thai', /\p{Script=Thai}/u],
+    ['Khmer', /\p{Script=Khmer}/u],
+    ['Myanmar', /\p{Script=Myanmar}/u],
+    ['Mongolian', /\p{Script=Mongolian}/u],
+    [
+      'CJK',
+      /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u,
+    ],
+  ] as const
+).map(([name, pattern]) => [name, pattern] as [string, RegExp]);
+
+describe('label words', () => {
+  const languages = new Set(Object.keys(LABEL_WORDS));
+
+  it('come in many languages, every word in each', () => {
+    expect(languages.size).toBeGreaterThanOrEqual(70);
+    for (const [language, words] of Object.entries(LABEL_WORDS)) {
+      expect(Object.keys(words), language).toEqual([...LABELS]);
+      for (const en of LABELS)
+        expect(words[en].trim(), `${language} ${en}`).not.toBe('');
+    }
+  });
+
+  it('write each language in one script, beside Latin loanwords', () => {
+    const scriptOf = (letter: string) =>
+      SCRIPTS.find(([, pattern]) => pattern.test(letter))?.[0];
+    for (const [language, words] of Object.entries(LABEL_WORDS)) {
+      const scripts = new Set(
+        Object.values(words).flatMap((word) =>
+          [...word].map(scriptOf).filter((s) => s && s !== 'Latin'),
+        ),
+      );
+      expect(
+        scripts.size,
+        `${language}: ${[...scripts].join(', ')}`,
+      ).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('picks the language from a tag or Accept-Language header', () => {
+    expect(labelLanguage('fr', languages)).toBe('fr');
+    expect(labelLanguage('pt-BR', languages)).toBe('pt');
+    expect(labelLanguage('nb_NO', languages)).toBe('nb');
+    expect(labelLanguage('no', languages)).toBe('nb');
+    expect(labelLanguage('iw-IL', languages)).toBe('he');
+    expect(labelLanguage('fil-PH', languages)).toBe('tl');
+    expect(labelLanguage('zh-CN', languages)).toBe('zh-Hans');
+    expect(labelLanguage('zh-TW', languages)).toBe('zh-Hant');
+    expect(labelLanguage('zh-Hant-HK', languages)).toBe('zh-Hant');
+    expect(labelLanguage('zh-Hans-HK', languages)).toBe('zh-Hans');
+    expect(labelLanguage('xx-YY,ja;q=0.8,en;q=0.5', languages)).toBe('ja');
+    expect(labelLanguage('en-GB,de;q=0.9', languages)).toBe('en');
+    expect(labelLanguage('xx', languages)).toBe('en');
+    expect(labelLanguage(undefined, languages)).toBe('en');
   });
 });
 

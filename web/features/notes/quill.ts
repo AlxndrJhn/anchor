@@ -1,4 +1,5 @@
 import Delta from "quill-delta";
+import { FLOWCHART_EMBED, flowchartText, parseFlowchart } from "./flowcharts";
 import { buildChecklistStepMove } from "./quill-checklist";
 import {
   buildListIndentDelta,
@@ -128,6 +129,7 @@ export const QUILL_FORMATS = [
   "font",
   "note-image",
   "live-image",
+  "flowchart",
 ] as const;
 
 /**
@@ -1053,7 +1055,16 @@ export function deltaToFullPlainText(
 ): string {
   const delta = parseStoredContent(content);
   return delta.ops
-    .map((op) => (typeof op.insert === "string" ? op.insert : ""))
+    .map((op) => {
+      if (typeof op.insert === "string") return op.insert;
+      const chart =
+        op.insert && typeof op.insert === "object"
+          ? parseFlowchart(
+              (op.insert as Record<string, unknown>)[FLOWCHART_EMBED],
+            )
+          : null;
+      return chart ? ` ${flowchartText(chart)} ` : "";
+    })
     .join("")
     .replace(/\s+/g, " ")
     .trim();

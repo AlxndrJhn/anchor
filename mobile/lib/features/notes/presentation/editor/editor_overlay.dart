@@ -41,6 +41,7 @@ class EditorOverlay extends StatelessWidget {
     required this.onAddAttachment,
     this.onTakePictureInText,
     this.onChoosePicturesInText,
+    this.onAddFlowchart,
   });
 
   final EditorOverlayController controller;
@@ -64,6 +65,9 @@ class EditorOverlay extends StatelessWidget {
   /// The toolbar's Picture: pictures from the phone, into the text at the
   /// caret.
   final VoidCallback? onChoosePicturesInText;
+
+  /// A new flowchart, into the text at the caret.
+  final VoidCallback? onAddFlowchart;
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +220,8 @@ class EditorOverlay extends StatelessWidget {
       onAddAttachment();
     } else if (item.action == SlashAction.date) {
       editor.insertDate();
+    } else if (item.action == SlashAction.flowchart) {
+      onAddFlowchart?.call();
     }
   }
 

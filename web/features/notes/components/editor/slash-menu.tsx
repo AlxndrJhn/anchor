@@ -16,6 +16,7 @@ import {
   Quote,
   Radio,
   Type,
+  Workflow,
 } from "lucide-react";
 import * as React from "react";
 import { menuItem, menuSurface } from "@/components/ui/dropdown-menu";
@@ -42,7 +43,8 @@ type Kind =
   | "attachment"
   | "record"
   | "draw"
-  | "live";
+  | "live"
+  | "flowchart";
 
 const ITEMS: {
   kind: Kind;
@@ -152,6 +154,12 @@ const ITEMS: {
     icon: <Radio />,
     keywords: "camera webcam screen share window stream video live",
   },
+  {
+    kind: "flowchart",
+    label: "Flowchart",
+    icon: <Workflow />,
+    keywords: "diagram chart flow process boxes arrows decision",
+  },
 ];
 
 interface Slash {
@@ -173,6 +181,7 @@ interface SlashMenuProps {
   onAddLink: () => void;
   onDraw?: () => void;
   onAddLiveImage?: () => void;
+  onAddFlowchart?: () => void;
 }
 
 export const isSlashMenuOpen = (root: HTMLElement) =>
@@ -186,6 +195,7 @@ export function SlashMenu({
   onAddLink,
   onDraw,
   onAddLiveImage,
+  onAddFlowchart,
 }: SlashMenuProps) {
   const [slash, setSlash] = React.useState<Slash | null>(null);
   const [place, setPlace] = React.useState<Place | null>(null);
@@ -205,11 +215,19 @@ export function SlashMenu({
             (item.kind !== "attachment" || onAddAttachment) &&
             (item.kind !== "record" || onRecordAudio) &&
             (item.kind !== "draw" || onDraw) &&
-            (item.kind !== "live" || onAddLiveImage),
+            (item.kind !== "live" || onAddLiveImage) &&
+            (item.kind !== "flowchart" || onAddFlowchart),
         ),
         slash?.query ?? "",
       ),
-    [slash?.query, onAddAttachment, onRecordAudio, onDraw, onAddLiveImage],
+    [
+      slash?.query,
+      onAddAttachment,
+      onRecordAudio,
+      onDraw,
+      onAddLiveImage,
+      onAddFlowchart,
+    ],
   );
   const activeIndex = Math.min(active, Math.max(0, items.length - 1));
 
@@ -351,6 +369,7 @@ export function SlashMenu({
         else if (kind === "record") onRecordAudio?.();
         else if (kind === "draw") onDraw?.();
         else if (kind === "live") onAddLiveImage?.();
+        else if (kind === "flowchart") onAddFlowchart?.();
         else if (kind === "link") onAddLink();
         return;
       }
@@ -374,6 +393,7 @@ export function SlashMenu({
       onAddLink,
       onDraw,
       onAddLiveImage,
+      onAddFlowchart,
       updateSlash,
     ],
   );
