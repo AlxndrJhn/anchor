@@ -6099,5 +6099,204 @@
   "inlinePictureStraighten": "Straighten page",
   "@inlinePictureStraighten": {
     "description": "Option in a picture's hold menu that opens the Scan page screen, to flatten a photographed sheet of paper."
+  },
+  "scanTitle": "Scan",
+  "@scanTitle": {
+    "description": "Title of the screen with a scan's pages, and the PDF's name when the scan has none."
+  },
+  "scanNew": "New scan",
+  "@scanNew": {
+    "description": "Title of the scan screen for pages just photographed, before they're in the note."
+  },
+  "scanAdd": "Add",
+  "@scanAdd": {
+    "description": "Button on a new scan's screen that puts the scan into the note."
+  },
+  "scanDocument": "Scan document",
+  "@scanDocument": {
+    "description": "Option in the Add sheet: photograph one or more pages to keep as a scan, with a PDF."
+  },
+  "scanPage": "Page",
+  "@scanPage": {
+    "description": "Title of the screen that changes the only page of a scan."
+  },
+  "scanPageNumber": "Page {number} of {count}",
+  "@scanPageNumber": {
+    "description": "Title of the screen that changes one page of a scan with several pages.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanPageNumberShort": "Page {number}",
+  "@scanPageNumberShort": {
+    "description": "A page's name in the list of a scan's pages.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "scanPages": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@scanPages": {
+    "description": "How many pages a scan has, on its card in the note.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanBrightness": "Brightness",
+  "@scanBrightness": {
+    "description": "Slider that makes a scanned page lighter or darker."
+  },
+  "scanContrast": "Contrast",
+  "@scanContrast": {
+    "description": "Slider for a scanned page's contrast."
+  },
+  "scanCleanup": "Even out",
+  "@scanCleanup": {
+    "description": "Slider for how strongly the paper's shading is lifted to white on a scanned page."
+  },
+  "scanThreshold": "Ink",
+  "@scanThreshold": {
+    "description": "Slider for black and white pages: how much of the page turns black."
+  },
+  "scanCorners": "Corners",
+  "@scanCorners": {
+    "description": "Button that opens the screen to drag a scanned page's corners onto the paper's corners."
+  },
+  "scanTurnLeft": "Turn left",
+  "@scanTurnLeft": {
+    "description": "Button that turns a scanned page a quarter to the left."
+  },
+  "scanTurnRight": "Turn right",
+  "@scanTurnRight": {
+    "description": "Button that turns a scanned page a quarter to the right."
+  },
+  "scanProfileBw": "B/W",
+  "@scanProfileBw": {
+    "description": "Colour profile for a scanned page: black and white only."
+  },
+  "scanProfileWhiteboard": "Whiteboard",
+  "@scanProfileWhiteboard": {
+    "description": "Colour profile for a scanned page: a whiteboard's ground made white and the marker colours stronger."
+  },
+  "scanProfileText": "Color text",
+  "@scanProfileText": {
+    "description": "Colour profile for a scanned page: the paper evened out to white, text and its colours kept."
+  },
+  "scanProfileColor": "Full color",
+  "@scanProfileColor": {
+    "description": "Colour profile for a scanned page: the photo's colours as they are."
+  },
+  "scanLookForAll": "Use for all pages",
+  "@scanLookForAll": {
+    "description": "Toggle on a scanned page's screen: give every page of the scan this page's profile and sliders."
+  },
+  "scanMovePage": "Move page",
+  "@scanMovePage": {
+    "description": "Screen reader label of the grip that drags a page to another place in a scan."
+  },
+  "scanDeletePage": "Delete page",
+  "@scanDeletePage": {
+    "description": "Button that takes a page out of a scan."
+  },
+  "scanNameHint": "Name, for the PDF",
+  "@scanNameHint": {
+    "description": "Hint in the field for a scan's name, which the PDF is named after."
+  },
+  "scanPhotoMissing": "Some photos aren’t on this phone yet. Try again in a moment.",
+  "@scanPhotoMissing": {
+    "description": "Shown when a scan's photo is still being fetched or couldn't be."
+  },
+  "scanPdfFailed": "The PDF couldn’t be made.",
+  "@scanPdfFailed": {
+    "description": "Shown when making a scan's PDF failed."
+  },
+  "scanSharePdf": "Share PDF",
+  "@scanSharePdf": {
+    "description": "Button that makes a scan's PDF and opens the phone's share sheet with it."
+  },
+  "scanSavePdf": "Save PDF",
+  "@scanSavePdf": {
+    "description": "Button that makes a scan's PDF and saves it where the person picks."
+  },
+  "scanMakingPdf": "Making PDF…",
+  "@scanMakingPdf": {
+    "description": "Shown on the Share PDF button while the PDF is made."
+  },
+  "scanPdfSaved": "PDF saved",
+  "@scanPdfSaved": {
+    "description": "Shown once a scan's PDF was saved."
+  },
+  "scanNoPages": "No pages yet. Take or choose photos of the pages.",
+  "@scanNoPages": {
+    "description": "Shown on a scan's screen when it has no pages."
+  },
+  "scanTakePhotos": "Take photos",
+  "@scanTakePhotos": {
+    "description": "Button on a scan's screen that photographs more pages with the camera."
+  },
+  "scanPdfPaper": "Paper",
+  "@scanPdfPaper": {
+    "description": "Heading of the choice of paper size for a scan's PDF."
+  },
+  "scanPaperLetter": "Letter",
+  "@scanPaperLetter": {
+    "description": "US Letter paper size for a scan's PDF."
+  },
+  "scanPaperFit": "Picture size",
+  "@scanPaperFit": {
+    "description": "Paper choice for a scan's PDF: each page as big as its picture."
+  },
+  "scanPdfMargin": "Margin",
+  "@scanPdfMargin": {
+    "description": "Heading of the choice of the white margin around each page in a scan's PDF."
+  },
+  "scanMarginNone": "None",
+  "@scanMarginNone": {
+    "description": "No margin around the pages in a scan's PDF."
+  },
+  "scanMarginMm": "{mm} mm",
+  "@scanMarginMm": {
+    "description": "A margin in millimetres around the pages in a scan's PDF.",
+    "placeholders": {
+      "mm": {
+        "type": "int"
+      }
+    }
+  },
+  "scanPdfQuality": "Quality",
+  "@scanPdfQuality": {
+    "description": "Heading of the choice of how sharp (and big) a scan's PDF is."
+  },
+  "scanQualitySmall": "Small",
+  "@scanQualitySmall": {
+    "description": "PDF quality: smallest file, less sharp."
+  },
+  "scanQualityStandard": "Standard",
+  "@scanQualityStandard": {
+    "description": "PDF quality: the usual."
+  },
+  "scanQualityHigh": "High",
+  "@scanQualityHigh": {
+    "description": "PDF quality: sharpest, biggest file."
+  },
+  "scanRemove": "Remove scan",
+  "@scanRemove": {
+    "description": "Button that takes the whole scan out of the note."
+  },
+  "scanOpenHint": "Opens the scan to change it",
+  "@scanOpenHint": {
+    "description": "Screen reader hint on a scan in a note that can be changed."
+  },
+  "scanFromGallery": "From gallery",
+  "@scanFromGallery": {
+    "description": "Button on a scan's screen that adds pages from photos already on the phone."
   }
 }

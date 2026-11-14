@@ -26,20 +26,32 @@ import 'media_pill.dart';
 /// corners as shares (0 to 1) of the picture's width and height, top left
 /// first and on clockwise, or null when cancelled.
 class PageScanScreen extends StatefulWidget {
-  const PageScanScreen({super.key, required this.path, this.findCorners});
+  const PageScanScreen({
+    super.key,
+    required this.path,
+    this.corners,
+    this.findCorners,
+  });
 
   final String path;
+
+  /// Where the corners start, as set before; the page is looked for when
+  /// null.
+  final PageCorners? corners;
 
   /// Looks for the page; the phone's own way when null. For tests.
   final Future<PageCorners?> Function(String path)? findCorners;
 
-  static Future<PageCorners?> open(BuildContext context, String path) =>
-      Navigator.of(context, rootNavigator: true).push<PageCorners>(
-        MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => PageScanScreen(path: path),
-        ),
-      );
+  static Future<PageCorners?> open(
+    BuildContext context,
+    String path, {
+    PageCorners? corners,
+  }) => Navigator.of(context, rootNavigator: true).push<PageCorners>(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => PageScanScreen(path: path, corners: corners),
+    ),
+  );
 
   @override
   State<PageScanScreen> createState() => _PageScanScreenState();
@@ -65,7 +77,13 @@ class _PageScanScreenState extends State<PageScanScreen> {
   void initState() {
     super.initState();
     _measure();
-    unawaited(_find());
+    if (widget.corners case final corners?) {
+      _corners = corners;
+      _start = corners;
+      _finding = _Finding.found;
+    } else {
+      unawaited(_find());
+    }
   }
 
   void _measure() {

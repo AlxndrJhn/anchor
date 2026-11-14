@@ -20,6 +20,7 @@ import { DURATION } from "@/lib/design/tokens";
 import { watchHighlights } from "@/lib/highlight-paint";
 import { hasShortcutKey, isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
+import { fetchAttachmentBlob } from "../../api";
 import type { CollabSession } from "../../collab/session";
 import { useCollabEditor } from "../../collab/use-collab-editor";
 import { stampFor } from "../../date-stamp";
@@ -54,6 +55,7 @@ import {
   createShowCheckboxesDelta,
 } from "../../quill-checklist";
 import { registerNoteFormats } from "../../quill-formats";
+import { showScans } from "../../scan-render";
 import {
   targetHandlesOwnUndo,
   type UndoRedoAction,
@@ -72,6 +74,7 @@ import { LinkBubble } from "./link-bubble";
 import { LinkPopover } from "./link-popover";
 import { LiveImageTools, type LiveImageToolsHandle } from "./live-image-tools";
 import { QuillToolbar } from "./quill-toolbar";
+import { ScanTools, type ScanToolsHandle } from "./scan-tools";
 import { SlashMenu } from "./slash-menu";
 import type { UndoableEdit } from "./undoable-edit";
 import { useCheckedFolds } from "./use-checked-folds";
@@ -242,6 +245,7 @@ export const RichTextEditor = forwardRef<
     const canPlacePictures = !readOnly && !!pictures;
     const liveTools = useRef<LiveImageToolsHandle>(null);
     const flowchartTools = useRef<FlowchartToolsHandle>(null);
+    const scanTools = useRef<ScanToolsHandle>(null);
     const canAddLive = !readOnly && !!noteId && canWatchLive();
     const rootRef = useRef<HTMLDivElement>(null);
     const [editorContainerEl, setEditorContainerEl] =
@@ -332,7 +336,10 @@ export const RichTextEditor = forwardRef<
       if (!host || !noteId) return;
       const show = () => {
         const root = host.querySelector<HTMLElement>(".ql-editor");
-        if (root) showInlineImages(root, noteId);
+        if (root) {
+          showInlineImages(root, noteId);
+          showScans(root, noteId);
+        }
       };
       show();
       const observer = new MutationObserver(show);
@@ -1052,6 +1059,9 @@ export const RichTextEditor = forwardRef<
               canAddLive ? () => liveTools.current?.add() : undefined
             }
             onFlowchart={() => flowchartTools.current?.add()}
+            onScan={
+              canPlacePictures ? () => scanTools.current?.add() : undefined
+            }
           />
         )}
         <div
@@ -1182,6 +1192,16 @@ export const RichTextEditor = forwardRef<
               container={editorContainerEl}
             />
           )}
+          {noteId && (
+            <ScanTools
+              ref={scanTools}
+              getQuill={getQuill}
+              container={editorContainerEl}
+              host={canPlacePictures ? pictures : undefined}
+              load={(id) => fetchAttachmentBlob(noteId, id)}
+              readOnly={readOnly}
+            />
+          )}
           {!readOnly && (
             <SelectionToolbar
               getQuill={getQuill}
@@ -1204,6 +1224,9 @@ export const RichTextEditor = forwardRef<
                 canAddLive ? () => liveTools.current?.add() : undefined
               }
               onAddFlowchart={() => flowchartTools.current?.add()}
+              onAddScan={
+                canPlacePictures ? () => scanTools.current?.add() : undefined
+              }
             />
           )}
           {!linkDialogState.open && (

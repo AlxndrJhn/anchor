@@ -130,6 +130,7 @@ export const QUILL_FORMATS = [
   "note-image",
   "live-image",
   "flowchart",
+  "scan",
 ] as const;
 
 /**

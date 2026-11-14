@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'inline_image.dart';
 import 'note.dart';
+import 'scan_document.dart';
 
 /// [notes] made into one: the first keeps its place and gets the others'
 /// text after its own, each under its title in bold, and all their tags.
@@ -57,8 +58,10 @@ List<Map<String, dynamic>> _ops(String? content, {bool dropPictures = false}) {
   if (dropPictures) {
     ops = [
       for (final op in ops)
+        // Scans go too: their photos are the other note's.
         if (!(op['insert'] is Map &&
-            (op['insert'] as Map).containsKey(InlineImage.embedType)))
+            ((op['insert'] as Map).containsKey(InlineImage.embedType) ||
+                (op['insert'] as Map).containsKey(ScanDocument.embedType))))
           op,
     ];
   }

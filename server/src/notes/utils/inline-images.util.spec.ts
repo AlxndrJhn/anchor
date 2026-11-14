@@ -25,4 +25,21 @@ describe('replaceAttachmentIds', () => {
     expect(replaceAttachmentIds(content, new Map([['a', 'b']]))).toBe(content);
     expect(replaceAttachmentIds('plain', new Map([['a', 'b']]))).toBe('plain');
   });
+
+  it('points the pages of a scan at their copied photos', () => {
+    const scan = {
+      title: 'Receipts',
+      pages: [{ id: 'a', profile: 'bw' }, { id: 'keep' }],
+    };
+    const content = JSON.stringify({
+      ops: [{ insert: { scan: JSON.stringify(scan) } }, { insert: '\n' }],
+    });
+    const out = JSON.parse(
+      replaceAttachmentIds(content, new Map([['a', 'b']])),
+    ) as { ops: { insert: Record<string, string> }[] };
+    expect(JSON.parse(out.ops[0].insert.scan)).toEqual({
+      title: 'Receipts',
+      pages: [{ id: 'b', profile: 'bw' }, { id: 'keep' }],
+    });
+  });
 });

@@ -544,3 +544,229 @@ div.fce {
     display: none;
   }
 }
+
+/* The scan editor (scan-editor.tsx): pages, the picked page, its look. */
+.scan-editor {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr) 17rem;
+  gap: 1rem;
+  height: 100%;
+  min-height: 0;
+}
+@media (max-width: 767px) {
+  .scan-editor {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(16rem, 1fr) auto;
+    overflow-y: auto;
+  }
+  .scan-list {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .scan-list > li {
+    flex: none;
+    width: 6.5rem;
+  }
+}
+.scan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.25rem;
+  overflow-y: auto;
+  list-style: none;
+}
+.scan-list-item {
+  border-radius: var(--radius-tile, 8px);
+}
+.scan-list-item.is-target {
+  outline: 1.5px dashed var(--note-muted);
+}
+.scan-list-pick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: 0.4rem;
+  border: 0;
+  border-radius: var(--radius-tile, 8px);
+  background: transparent;
+  cursor: grab;
+}
+.scan-list-pick:hover {
+  background: var(--note-surface);
+}
+.scan-list-pick[aria-current="true"] {
+  background: var(--note-surface);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.scan-list-thumb {
+  display: block;
+  width: 100%;
+  height: 7.5rem;
+  object-fit: contain;
+  border-radius: var(--radius-xs, 3px);
+}
+.scan-loading {
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+.scan-grip {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.1rem;
+  width: 0.9rem;
+  color: var(--note-muted);
+  opacity: 0;
+}
+.scan-list-pick:hover .scan-grip {
+  opacity: 1;
+}
+.scan-list-number {
+  position: absolute;
+  right: 0.4rem;
+  bottom: 0.35rem;
+  min-width: 1.3rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--sh-xs);
+  font-size: var(--text-meta, 12px);
+  font-weight: 600;
+}
+.scan-center {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  min-height: 0;
+}
+.scan-center-bar,
+.scan-center-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.scan-center-foot {
+  justify-content: center;
+}
+.scan-center-tools {
+  display: flex;
+  gap: 0.25rem;
+}
+.scan-stage {
+  display: grid;
+  /* One track the stage's size, so the page's max-height: 100% fits it. */
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  min-height: 0;
+  padding: 1rem;
+  overflow: hidden;
+  border-radius: var(--radius-tile, 8px);
+  background: color-mix(in srgb, var(--foreground) 82%, var(--card));
+}
+.scan-result {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+}
+.scan-result.scan-loading {
+  width: 60%;
+  height: 80%;
+}
+.scan-photo {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  touch-action: none;
+}
+.scan-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: calc(100dvh - 22rem);
+  object-fit: contain;
+}
+.scan-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.scan-shade {
+  fill: rgb(0 0 0 / 0.45);
+}
+.scan-outline {
+  fill: color-mix(in srgb, var(--accent) 14%, transparent);
+  stroke: var(--accent);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+.scan-handle {
+  position: absolute;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: -0.75rem 0 0 -0.75rem;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.45);
+  cursor: grab;
+  touch-action: none;
+}
+.scan-handle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.scan-side {
+  display: grid;
+  align-content: start;
+  gap: 1.25rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+.scan-side section {
+  display: grid;
+  gap: 0.75rem;
+}
+.scan-side h3 {
+  margin: 0;
+  color: var(--note-muted);
+  font-size: var(--text-meta, 12px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.scan-slider {
+  display: grid;
+  gap: 0.25rem;
+}
+.scan-slider label,
+.scan-field {
+  display: grid;
+  gap: 0.3rem;
+  font-size: var(--text-control, 14px);
+}
+.scan-slider label {
+  display: flex;
+  justify-content: space-between;
+}
+.scan-slider output {
+  color: var(--note-muted);
+  font-variant-numeric: tabular-nums;
+}
+.scan-slider input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.scan-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+  height: 100%;
+}

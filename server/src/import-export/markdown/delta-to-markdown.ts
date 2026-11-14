@@ -6,6 +6,7 @@ import {
   indentOf,
 } from './delta-lines';
 import { flowchartOf, flowchartToMermaid } from './flowchart-mermaid';
+import { scanOf, scanToMarkdown } from './scan-markdown';
 
 /** One nesting level of a list, wide enough to nest under "- " and "1. ". */
 const INDENT_UNIT = '    ';
@@ -249,6 +250,15 @@ export function deltaToMarkdown(ops: QuillOp[]): string {
     if (chart !== undefined) {
       const mermaid = flowchartToMermaid(chart);
       if (mermaid.length) out.push('```mermaid', ...mermaid, '```');
+      counters.clear();
+      i++;
+      continue;
+    }
+
+    const scan = lines[i].contentOps.map(scanOf).find((v) => v !== null);
+    if (scan !== undefined) {
+      const line = scanToMarkdown(scan);
+      if (line) out.push(line);
       counters.clear();
       i++;
       continue;

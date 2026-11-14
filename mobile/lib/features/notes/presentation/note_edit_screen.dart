@@ -57,6 +57,7 @@ import '../domain/note_blocks.dart';
 import '../domain/note_history.dart';
 import '../domain/note_text.dart';
 import '../domain/quick_action.dart';
+import '../domain/scan_document.dart';
 import 'checked_folds_controller.dart';
 import 'editor/editor_overlay.dart';
 import 'editor/editor_overlay_controller.dart';
@@ -68,6 +69,7 @@ import 'editor/line_kind.dart';
 import 'editor/live_image_embed.dart';
 import 'editor/note_zoom.dart';
 import 'editor/rich_text_editor.dart';
+import 'editor/scan_embed.dart';
 import 'editor/text_formats.dart';
 import 'multi_shot_camera_screen.dart';
 import 'note_actions.dart';
@@ -90,6 +92,7 @@ import 'widgets/note_more_sheet.dart';
 import 'widgets/note_surface.dart';
 import 'widgets/picture_viewer.dart';
 import 'widgets/read_only_bottom_bar.dart';
+import 'widgets/scan_document_screen.dart';
 import 'widgets/share_sheet.dart';
 import 'widgets/title_input_formatter.dart';
 
@@ -209,7 +212,30 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       keepStill: _keepLiveStill,
     ),
     FlowchartEmbedBuilder(palette: () => _palette!),
+    ScanEmbedBuilder(_scans),
   ];
+
+  /// The scans in the text: their photos, PDFs and changes.
+  late final Scans _scans;
+
+  /// Photographs pages, then puts them in the text at the caret as a scan.
+  Future<void> _addScan() async {
+    if (_isReadOnly) return;
+    final at = _editor?.caretOffset;
+    final result = await ScanDocumentScreen.open(
+      context,
+      scan: const ScanDocument(pages: []),
+      findPhoto: _scans.findPhoto,
+      isNew: true,
+    );
+    if (result is! ScanSaved || !mounted) return;
+    final scan = await _scans.attachNew(result.scan);
+    if (scan == null || !mounted) return;
+    Haptics.success();
+    _editor?.insertBlockEmbeds([
+      BlockEmbed(ScanDocument.embedType, scan.encode()),
+    ], offset: at);
+  }
 
   /// The note's colours as last drawn, for the flowcharts in its text.
   EditorPalette? _palette;
@@ -286,6 +312,15 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       repo: ref.read(noteAttachmentsRepositoryProvider),
       noteId: () => _draft.noteId,
       onView: _viewInlinePicture,
+    );
+    _scans = Scans(
+      repo: ref.read(noteAttachmentsRepositoryProvider),
+      noteId: () => _draft.noteId,
+      attach: (path) => _attach((
+        path: path,
+        mime: 'image/jpeg',
+        name: 'Scan ${DateTime.now().millisecondsSinceEpoch}.jpg',
+      )),
     );
     _draft.addListener(_draftChanged);
     _editorOverlay.addListener(_editorOverlayChanged);
@@ -391,7 +426,10 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       _shownInlineOf = of;
       _shownInline = null;
     }
-    return _shownInline ??= inlineImageIds(_draft.initialContent);
+    return _shownInline ??= {
+      ...inlineImageIds(_draft.initialContent),
+      ...scanAttachmentIds(_draft.initialContent),
+    };
   }
 
   void _onEditorChanged() {
@@ -400,6 +438,9 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       for (final data
           in _editor?.embedsOf(InlineImage.embedType) ?? const <Object?>[])
         ?InlineImage.tryParse(data)?.id,
+      for (final data
+          in _editor?.embedsOf(ScanDocument.embedType) ?? const <Object?>[])
+        ...?ScanDocument.tryParse(data)?.pages.map((p) => p.id),
     };
     if (!setEquals(shown, _inlineIds)) setState(() => _shownInline = shown);
   }
@@ -1063,6 +1104,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       onTakeSeveral: _takeSeveralPictures,
       onLiveCamera: _addLiveCamera,
       onFlowchart: _addFlowchart,
+      onScanDocument: _addScan,
     );
     if (files == null || files.isEmpty || !mounted) return;
     await _addFiles(files);

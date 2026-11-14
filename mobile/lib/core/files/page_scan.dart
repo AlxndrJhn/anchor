@@ -329,13 +329,17 @@ bool isPageShape(PageCorners corners) {
 
 /// [picture] with the page whose [corners] (as shares) are given stretched
 /// back into a flat rectangle, as if photographed straight from above.
-img.Image straightenPage(img.Image picture, PageCorners corners) {
+img.Image straightenPage(
+  img.Image picture,
+  PageCorners corners, {
+  int maxSide = 4000,
+}) {
   final sw = picture.width, sh = picture.height;
   final points = [
     for (final c in corners)
       Offset(c.dx.clamp(0.0, 1.0) * sw, c.dy.clamp(0.0, 1.0) * sh),
   ];
-  final (:width, :height) = straightenedSize(points);
+  final (:width, :height) = straightenedSize(points, maxSide: maxSide);
   final map = _SquareToQuad(points);
   final source = picture.convert(format: img.Format.uint8, numChannels: 3);
   final src = source.getBytes(order: img.ChannelOrder.rgb);

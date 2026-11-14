@@ -4,6 +4,12 @@
  */
 export const INLINE_IMAGE_EMBED = 'note-image';
 
+/**
+ * Pages scanned with a phone: `{"insert": {"scan": "{\"pages\":[{\"id\":…}]}"}}`,
+ * each page naming the attachment holding its photo.
+ */
+export const SCAN_EMBED = 'scan';
+
 type Op = { insert?: unknown; attributes?: unknown };
 
 /**
@@ -18,6 +24,7 @@ export function replaceAttachmentIds(
   if (!parsed) return content;
   let changed = false;
   for (const op of parsed.ops) {
+    if (replaceScanPhotos(op, ids)) changed = true;
     const embed = embedOf(op);
     const next = typeof embed?.id === 'string' ? ids.get(embed.id) : undefined;
     if (!embed || !next) continue;
@@ -59,4 +66,34 @@ function embedOf(op: Op): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+/** Points a scan's pages at their copied photos; true when one moved. */
+function replaceScanPhotos(op: Op, ids: ReadonlyMap<string, string>): boolean {
+  const insert = op.insert;
+  if (!insert || typeof insert !== 'object') return false;
+  const raw = (insert as Record<string, unknown>)[SCAN_EMBED];
+  if (typeof raw !== 'string') return false;
+  let scan: unknown;
+  try {
+    scan = JSON.parse(raw);
+  } catch {
+    return false;
+  }
+  const pages = (scan as { pages?: unknown } | null)?.pages;
+  if (!Array.isArray(pages)) return false;
+  let changed = false;
+  const moved = pages.map((page: unknown) => {
+    const id = (page as { id?: unknown } | null)?.id;
+    const next = typeof id === 'string' ? ids.get(id) : undefined;
+    if (!next) return page;
+    changed = true;
+    return { ...(page as object), id: next };
+  });
+  if (!changed) return false;
+  (insert as Record<string, unknown>)[SCAN_EMBED] = JSON.stringify({
+    ...(scan as object),
+    pages: moved,
+  });
+  return true;
 }

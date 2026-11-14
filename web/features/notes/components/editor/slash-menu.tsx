@@ -15,6 +15,7 @@ import {
   PencilLine,
   Quote,
   Radio,
+  ScanLine,
   Type,
   Workflow,
 } from "lucide-react";
@@ -44,7 +45,8 @@ type Kind =
   | "record"
   | "draw"
   | "live"
-  | "flowchart";
+  | "flowchart"
+  | "scan";
 
 const ITEMS: {
   kind: Kind;
@@ -160,6 +162,12 @@ const ITEMS: {
     icon: <Workflow />,
     keywords: "diagram chart flow process boxes arrows decision",
   },
+  {
+    kind: "scan",
+    label: "Scan",
+    icon: <ScanLine />,
+    keywords: "document page paper pdf scanner photo receipt",
+  },
 ];
 
 interface Slash {
@@ -182,6 +190,7 @@ interface SlashMenuProps {
   onDraw?: () => void;
   onAddLiveImage?: () => void;
   onAddFlowchart?: () => void;
+  onAddScan?: () => void;
 }
 
 export const isSlashMenuOpen = (root: HTMLElement) =>
@@ -196,6 +205,7 @@ export function SlashMenu({
   onDraw,
   onAddLiveImage,
   onAddFlowchart,
+  onAddScan,
 }: SlashMenuProps) {
   const [slash, setSlash] = React.useState<Slash | null>(null);
   const [place, setPlace] = React.useState<Place | null>(null);
@@ -216,7 +226,8 @@ export function SlashMenu({
             (item.kind !== "record" || onRecordAudio) &&
             (item.kind !== "draw" || onDraw) &&
             (item.kind !== "live" || onAddLiveImage) &&
-            (item.kind !== "flowchart" || onAddFlowchart),
+            (item.kind !== "flowchart" || onAddFlowchart) &&
+            (item.kind !== "scan" || onAddScan),
         ),
         slash?.query ?? "",
       ),
@@ -227,6 +238,7 @@ export function SlashMenu({
       onDraw,
       onAddLiveImage,
       onAddFlowchart,
+      onAddScan,
     ],
   );
   const activeIndex = Math.min(active, Math.max(0, items.length - 1));
@@ -370,6 +382,7 @@ export function SlashMenu({
         else if (kind === "draw") onDraw?.();
         else if (kind === "live") onAddLiveImage?.();
         else if (kind === "flowchart") onAddFlowchart?.();
+        else if (kind === "scan") onAddScan?.();
         else if (kind === "link") onAddLink();
         return;
       }
@@ -394,6 +407,7 @@ export function SlashMenu({
       onDraw,
       onAddLiveImage,
       onAddFlowchart,
+      onAddScan,
       updateSlash,
     ],
   );

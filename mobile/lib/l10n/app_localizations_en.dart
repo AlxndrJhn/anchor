@@ -4658,4 +4658,151 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inlinePictureStraighten => 'Straighten page';
+
+  @override
+  String get scanTitle => 'Scan';
+
+  @override
+  String get scanNew => 'New scan';
+
+  @override
+  String get scanAdd => 'Add';
+
+  @override
+  String get scanDocument => 'Scan document';
+
+  @override
+  String get scanPage => 'Page';
+
+  @override
+  String scanPageNumber(int number, int count) {
+    return 'Page $number of $count';
+  }
+
+  @override
+  String scanPageNumberShort(int number) {
+    return 'Page $number';
+  }
+
+  @override
+  String scanPages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages',
+      one: '1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get scanBrightness => 'Brightness';
+
+  @override
+  String get scanContrast => 'Contrast';
+
+  @override
+  String get scanCleanup => 'Even out';
+
+  @override
+  String get scanThreshold => 'Ink';
+
+  @override
+  String get scanCorners => 'Corners';
+
+  @override
+  String get scanTurnLeft => 'Turn left';
+
+  @override
+  String get scanTurnRight => 'Turn right';
+
+  @override
+  String get scanProfileBw => 'B/W';
+
+  @override
+  String get scanProfileWhiteboard => 'Whiteboard';
+
+  @override
+  String get scanProfileText => 'Color text';
+
+  @override
+  String get scanProfileColor => 'Full color';
+
+  @override
+  String get scanLookForAll => 'Use for all pages';
+
+  @override
+  String get scanMovePage => 'Move page';
+
+  @override
+  String get scanDeletePage => 'Delete page';
+
+  @override
+  String get scanNameHint => 'Name, for the PDF';
+
+  @override
+  String get scanPhotoMissing =>
+      'Some photos aren’t on this phone yet. Try again in a moment.';
+
+  @override
+  String get scanPdfFailed => 'The PDF couldn’t be made.';
+
+  @override
+  String get scanSharePdf => 'Share PDF';
+
+  @override
+  String get scanSavePdf => 'Save PDF';
+
+  @override
+  String get scanMakingPdf => 'Making PDF…';
+
+  @override
+  String get scanPdfSaved => 'PDF saved';
+
+  @override
+  String get scanNoPages => 'No pages yet. Take or choose photos of the pages.';
+
+  @override
+  String get scanTakePhotos => 'Take photos';
+
+  @override
+  String get scanPdfPaper => 'Paper';
+
+  @override
+  String get scanPaperLetter => 'Letter';
+
+  @override
+  String get scanPaperFit => 'Picture size';
+
+  @override
+  String get scanPdfMargin => 'Margin';
+
+  @override
+  String get scanMarginNone => 'None';
+
+  @override
+  String scanMarginMm(int mm) {
+    return '$mm mm';
+  }
+
+  @override
+  String get scanPdfQuality => 'Quality';
+
+  @override
+  String get scanQualitySmall => 'Small';
+
+  @override
+  String get scanQualityStandard => 'Standard';
+
+  @override
+  String get scanQualityHigh => 'High';
+
+  @override
+  String get scanRemove => 'Remove scan';
+
+  @override
+  String get scanOpenHint => 'Opens the scan to change it';
+
+  @override
+  String get scanFromGallery => 'From gallery';
 }
