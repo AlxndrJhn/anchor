@@ -44,24 +44,26 @@ export async function searchPictures(q: string): Promise<PictureMatch[]> {
   return results;
 }
 
-/** A word for what a picture shows, in English and German. */
+/** A word for what a picture shows. */
 export interface PictureLabel {
   en: string;
-  de: string;
+  /** In the language asked for, else English; missing from older servers. */
+  text?: string;
   score: number;
 }
 
-/** What a picture shows, best first ("Show detected tags"). */
+/**
+ * What a picture shows, best first ("Show detected tags"), in `language`
+ * (a tag such as "fr" or "pt-BR") when the words come in it, else English.
+ */
 export async function getPictureLabels(
   attachmentId: string,
+  language: string,
 ): Promise<PictureLabel[]> {
   const { labels } = await api
-    .get(`api/picture-search/attachments/${attachmentId}/labels`)
+    .get(`api/picture-search/attachments/${attachmentId}/labels`, {
+      searchParams: { lang: language },
+    })
     .json<{ labels: PictureLabel[] }>();
   return labels;
-}
-
-/** A label in the reader's language: German for German, else English. */
-export function labelText(label: PictureLabel, language: string): string {
-  return language.toLowerCase().startsWith("de") ? label.de : label.en;
 }

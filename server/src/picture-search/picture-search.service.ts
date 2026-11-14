@@ -17,6 +17,10 @@ import { PictureSearchConfig, StorageConfig } from '../config/configuration';
 import { noteAccessibleBy } from '../notes/constants/notes.constants';
 import { MODEL_ID, PictureModel, type ModelState } from './picture-model';
 import { LABELS } from './labels';
+import { LABEL_WORDS } from './label-words';
+import { labelLanguage } from './label-words/words';
+
+const LANGUAGES = new Set(Object.keys(LABEL_WORDS));
 
 /** Pictures done per round; the next round picks up the rest. */
 const BATCH = 20;
@@ -39,7 +43,10 @@ export const labelPrompt = (word: string) =>
 
 export interface PictureLabel {
   en: string;
+  /** For phone builds from before `text`, which pick German or English. */
   de: string;
+  /** In the language asked for, else English. */
+  text: string;
   score: number;
 }
 
@@ -260,7 +267,15 @@ export class PictureSearchService implements OnApplicationBootstrap {
    * detected tags"); none while picture search is off for them or the
    * picture isn't indexed yet.
    */
-  async labels(userId: string, attachmentId: string): Promise<PictureLabel[]> {
+  /**
+   * The words that best describe a picture, in `language` (a language tag
+   * or Accept-Language header) when the words come in it, else English.
+   */
+  async labels(
+    userId: string,
+    attachmentId: string,
+    language?: string,
+  ): Promise<PictureLabel[]> {
     if (!this.config.enabled) return [];
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -279,7 +294,11 @@ export class PictureSearchService implements OnApplicationBootstrap {
     await this.loadVectors([picture.id]);
     const vector = this.vectors.get(picture.id);
     if (!vector?.length) return [];
-    return bestLabels(vector, await this.loadLabelVectors());
+    return bestLabels(
+      vector,
+      await this.loadLabelVectors(),
+      labelLanguage(language, LANGUAGES),
+    );
   }
 
   /**
@@ -296,7 +315,7 @@ export class PictureSearchService implements OnApplicationBootstrap {
 
   private loadLabelVectors(): Promise<Float32Array[]> {
     this.labelVectors ??= (async () => {
-      const words = LABELS.map(([en]) => labelPrompt(en));
+      const words = LABELS.map((en) => labelPrompt(en));
       const key = createHash('sha256').update(words.join('\n')).digest('hex');
       const file = path.join(this.modelDir, `labels-${key.slice(0, 16)}.f32`);
       if (fs.existsSync(file)) {
@@ -351,15 +370,21 @@ export function bestMatches(scored: PictureMatch[]): PictureMatch[] {
 export function bestLabels(
   picture: Float32Array,
   labels: Float32Array[],
+  language = 'en',
 ): PictureLabel[] {
-  const scored = LABELS.map(([en, de], i) => ({
+  const words = LABEL_WORDS[language];
+  const scored = LABELS.map((en, i) => ({
     en,
-    de,
+    de: LABEL_WORDS.de[en],
+    text: words?.[en] ?? en,
     score: dot(labels[i], picture),
   })).sort((a, b) => b.score - a.score);
   const best = scored[0]?.score ?? -1;
+  // Some languages have one word for two of them ("brod", boat and ship).
+  const seen = new Set<string>();
   return scored
     .filter((l) => l.score >= best - LABEL_WINDOW)
+    .filter((l) => !seen.has(l.text) && !!seen.add(l.text))
     .slice(0, MAX_LABELS)
     .map((l) => ({ ...l, score: Math.round(l.score * 1e4) / 1e4 }));
 }
