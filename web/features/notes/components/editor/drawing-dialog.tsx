@@ -494,7 +494,6 @@ export function DrawingDialog({
             />
             {typing && (
               <input
-                // biome-ignore lint/a11y/noAutofocus: it opens where the pad was just clicked
                 autoFocus
                 aria-label="Text to put on the drawing"
                 value={typing.text}
