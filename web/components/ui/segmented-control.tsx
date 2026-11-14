@@ -21,6 +21,8 @@ interface SegmentedControlProps<T extends string> {
   "aria-label": string;
   size?: "default" | "sm";
   variant?: "segments" | "tiles";
+  /** Tiles only: how many to a row; all in one row when unset. */
+  columns?: number;
   full?: boolean;
   className?: string;
 }
@@ -94,6 +96,7 @@ function SegmentedControl<T extends string>({
   options,
   size = "default",
   variant = "segments",
+  columns,
   full,
   className,
   ...props
@@ -104,6 +107,11 @@ function SegmentedControl<T extends string>({
 
   const sizeClass = isTiles ? "" : size === "sm" ? "h-7 px-2" : "h-7.5";
   const shapeClass = isTiles ? tileClass : segmentClass;
+  // The fill below lays its own copy of the tiles out the same way.
+  const tileGrid =
+    isTiles && columns
+      ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }
+      : undefined;
   return (
     <ToggleGroupPrimitive.Root
       ref={root}
@@ -120,6 +128,7 @@ function SegmentedControl<T extends string>({
         full && !isTiles && "flex",
         className,
       )}
+      style={tileGrid}
     >
       {options.map((option) => (
         <ToggleGroupPrimitive.Item
@@ -151,7 +160,7 @@ function SegmentedControl<T extends string>({
               ? "grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1.5"
               : "flex gap-0.5 bg-primary p-0.75",
           )}
-          style={{ clipPath: fill.clip }}
+          style={{ ...tileGrid, clipPath: fill.clip }}
         >
           {options.map((option) => (
             <span

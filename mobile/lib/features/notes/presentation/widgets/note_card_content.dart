@@ -22,12 +22,14 @@ import '../../data/repository/attachment_file_provider.dart';
 import '../../domain/flowchart.dart';
 import '../../domain/live_image.dart';
 import '../../domain/note.dart';
+import '../../domain/scan_document.dart';
 import '../editor/flowchart_painter.dart';
 import '../editor/live_image_embed.dart';
 import '../note_labels.dart';
 import 'card_body.dart';
 import 'note_chips.dart';
 import 'note_surface.dart';
+import 'scan_document_screen.dart';
 
 class NoteCardContent extends StatelessWidget {
   const NoteCardContent({
@@ -76,8 +78,16 @@ class NoteCardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.anchor;
     final list = layout == CardLayout.list;
+    // A scan shows its pages as they come out, not its photos.
+    final scan = showPictures && !isHidden && !list
+        ? scansOf(note.content).firstOrNull
+        : null;
+    final scanPhotos = scanAttachmentIds(note.content);
     final previews = showPictures && !isHidden
-        ? note.imagePreviewData
+        ? [
+            for (final p in note.imagePreviewData)
+              if (!scanPhotos.contains(p.attachmentId)) p,
+          ]
         : const <NoteImagePreview>[];
     // A live image shows in the pictures' place, live.
     final live = showPictures && !isHidden
@@ -141,6 +151,10 @@ class NoteCardContent extends StatelessWidget {
                   accent: colors.accentStrong,
                 ),
               ),
+            ),
+          if (scan != null && scan.pages.isNotEmpty)
+            ExcludeSemantics(
+              child: _ScanPages(scan: scan, note: note),
             ),
           if (list)
             _Footer(
@@ -659,6 +673,42 @@ class _Thumbnail extends ConsumerWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () => onOpen!(preview.attachmentId),
       child: picture,
+    );
+  }
+}
+
+/// A scan's first pages, small, on its note's card.
+class _ScanPages extends StatelessWidget {
+  const _ScanPages({required this.scan, required this.note});
+
+  final ScanDocument scan;
+  final Note note;
+
+  @override
+  Widget build(BuildContext context) {
+    final paths = {
+      for (final p in note.imagePreviewData) p.attachmentId: ?p.localPath,
+    };
+    final pages = [
+      for (final page in scan.pages.take(3))
+        if (paths[page.id] case final path?) (page, path),
+    ];
+    if (pages.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 120, // off-scale: the card's scan pages
+      child: Row(
+        spacing: 8,
+        children: [
+          // Narrower on a narrow card, so they always fit.
+          for (final (page, path) in pages)
+            Flexible(
+              child: AspectRatio(
+                aspectRatio: 3 / 4,
+                child: ScanPageThumbnail(photo: Future.value(path), page: page),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

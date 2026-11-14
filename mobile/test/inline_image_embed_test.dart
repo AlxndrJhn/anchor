@@ -129,6 +129,7 @@ void main() {
     for (final label in [
       'Retake',
       'Crop',
+      'Straighten page',
       'Mirror horizontally',
       'Mirror vertically',
       'Add caption',

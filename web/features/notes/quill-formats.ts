@@ -10,6 +10,7 @@ import { LINK_PROTOCOLS } from "./link-utils";
 import { LIVE_IMAGE_EMBED, parseLiveImage } from "./live-images";
 import { deleteWholeLines, isWholeLines, type QuillInstance } from "./quill";
 import { MAX_LIST_INDENT } from "./quill-lines";
+import { pagesLabel, parseScan, SCAN_EMBED, scanTitle } from "./scans";
 import { FONTS, inkFor, isHexColor } from "./text-style";
 
 type QuillStatic = {
@@ -174,6 +175,60 @@ export function registerNoteFormats(Quill: QuillStatic) {
     }
   }
   Quill.register(FlowchartEmbed, true);
+
+  // A scanned document: its title, page count and pages drawn small
+  // (scan-render.ts showScans fills them in); scan-tools.tsx opens it.
+  class ScanEmbed extends Embed {
+    static blotName = SCAN_EMBED;
+    static tagName = "SPAN";
+    static className = "scan";
+    static create(value: unknown) {
+      // biome-ignore lint/complexity/noThisInStatic: Parchment's create reads this.tagName
+      const node = super.create(value);
+      node.setAttribute("data-value", typeof value === "string" ? value : "");
+      const scan = parseScan(value);
+      if (!scan) return node;
+      const card = document.createElement("span");
+      card.className = "scan-card";
+      const head = document.createElement("span");
+      head.className = "scan-head";
+      const title = document.createElement("span");
+      title.className = "scan-title";
+      title.textContent = scanTitle(scan);
+      const count = document.createElement("span");
+      count.className = "scan-count";
+      count.textContent = pagesLabel(scan.pages.length);
+      const pdf = document.createElement("button");
+      pdf.type = "button";
+      pdf.className = "scan-pdf";
+      pdf.textContent = "PDF";
+      pdf.title = "Download PDF";
+      pdf.setAttribute("aria-label", "Download PDF");
+      pdf.contentEditable = "false";
+      head.append(title, count, pdf);
+      const pages = document.createElement("span");
+      pages.className = "scan-pages";
+      for (const _ of scan.pages.slice(0, 6)) {
+        const img = document.createElement("img");
+        img.alt = "";
+        img.draggable = false;
+        pages.appendChild(img);
+      }
+      if (scan.pages.length > 6) {
+        const more = document.createElement("span");
+        more.className = "scan-more";
+        more.textContent = `+${scan.pages.length - 6}`;
+        pages.appendChild(more);
+      }
+      card.append(head, pages);
+      node.appendChild(card);
+      return node;
+    }
+    static value(node: HTMLElement) {
+      return node.getAttribute("data-value") ?? "";
+    }
+  }
+  Quill.register(ScanEmbed, true);
 
   // A font for the selected text, written as its font-family.
   const FontStyle = Quill.import("attributors/style/font") as {

@@ -6933,6 +6933,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Opens the flowchart to edit it'**
   String get flowchartOpenHint;
+
+  /// Title of the page where the user fits a frame to a sheet of paper in a photo, so it can be straightened like a scan; also the Add sheet option that takes such a photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan page'**
+  String get pageScanTitle;
+
+  /// Main button on the Scan page screen: flattens the framed page into a rectangle, as if photographed from straight above.
+  ///
+  /// In en, this message translates to:
+  /// **'Straighten'**
+  String get pageScanStraighten;
+
+  /// Button on the Scan page screen that puts the frame's corners on the picture's own corners.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole picture'**
+  String get pageScanWhole;
+
+  /// Hint on the Scan page screen while the phone looks for the sheet of paper in the photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding the page…'**
+  String get pageScanFinding;
+
+  /// Hint on the Scan page screen once the page's corners were found.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag a corner to fit it to the page.'**
+  String get pageScanFound;
+
+  /// Hint on the Scan page screen when no sheet of paper was found in the photo.
+  ///
+  /// In en, this message translates to:
+  /// **'No page found. Drag the corners onto the page’s corners.'**
+  String get pageScanNotFound;
+
+  /// Screen reader label for one of the four round handles on the Scan page screen that are dragged onto the page's corners.
+  ///
+  /// In en, this message translates to:
+  /// **'Page corner'**
+  String get pageScanCorner;
+
+  /// Option in a picture's hold menu that opens the Scan page screen, to flatten a photographed sheet of paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Straighten page'**
+  String get inlinePictureStraighten;
+
+  /// Title of the screen with a scan's pages, and the PDF's name when the scan has none.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get scanTitle;
+
+  /// Title of the scan screen for pages just photographed, before they're in the note.
+  ///
+  /// In en, this message translates to:
+  /// **'New scan'**
+  String get scanNew;
+
+  /// Button on a new scan's screen that puts the scan into the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get scanAdd;
+
+  /// Option in the Add sheet: photograph one or more pages to keep as a scan, with a PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan document'**
+  String get scanDocument;
+
+  /// Title of the screen that changes the only page of a scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get scanPage;
+
+  /// Title of the screen that changes one page of a scan with several pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {number} of {count}'**
+  String scanPageNumber(int number, int count);
+
+  /// A page's name in the list of a scan's pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {number}'**
+  String scanPageNumberShort(int number);
+
+  /// How many pages a scan has, on its card in the note.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page} other{{count} pages}}'**
+  String scanPages(int count);
+
+  /// Slider that makes a scanned page lighter or darker.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness'**
+  String get scanBrightness;
+
+  /// Slider for a scanned page's contrast.
+  ///
+  /// In en, this message translates to:
+  /// **'Contrast'**
+  String get scanContrast;
+
+  /// Slider for how strongly the paper's shading is lifted to white on a scanned page.
+  ///
+  /// In en, this message translates to:
+  /// **'Even out'**
+  String get scanCleanup;
+
+  /// Slider for black and white pages: how much of the page turns black.
+  ///
+  /// In en, this message translates to:
+  /// **'Ink'**
+  String get scanThreshold;
+
+  /// Button that opens the screen to drag a scanned page's corners onto the paper's corners.
+  ///
+  /// In en, this message translates to:
+  /// **'Corners'**
+  String get scanCorners;
+
+  /// Button that turns a scanned page a quarter to the left.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn left'**
+  String get scanTurnLeft;
+
+  /// Button that turns a scanned page a quarter to the right.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn right'**
+  String get scanTurnRight;
+
+  /// Colour profile for a scanned page: black and white only.
+  ///
+  /// In en, this message translates to:
+  /// **'B/W'**
+  String get scanProfileBw;
+
+  /// Colour profile for a scanned page: a whiteboard's ground made white and the marker colours stronger.
+  ///
+  /// In en, this message translates to:
+  /// **'Whiteboard'**
+  String get scanProfileWhiteboard;
+
+  /// Colour profile for a scanned page: the paper evened out to white, text and its colours kept.
+  ///
+  /// In en, this message translates to:
+  /// **'Color text'**
+  String get scanProfileText;
+
+  /// Colour profile for a scanned page: the photo's colours as they are.
+  ///
+  /// In en, this message translates to:
+  /// **'Full color'**
+  String get scanProfileColor;
+
+  /// Toggle on a scanned page's screen: give every page of the scan this page's profile and sliders.
+  ///
+  /// In en, this message translates to:
+  /// **'Use for all pages'**
+  String get scanLookForAll;
+
+  /// Screen reader label of the grip that drags a page to another place in a scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Move page'**
+  String get scanMovePage;
+
+  /// Button that takes a page out of a scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete page'**
+  String get scanDeletePage;
+
+  /// Hint in the field for a scan's name, which the PDF is named after.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, for the PDF'**
+  String get scanNameHint;
+
+  /// Shown when a scan's photo is still being fetched or couldn't be.
+  ///
+  /// In en, this message translates to:
+  /// **'Some photos aren’t on this phone yet. Try again in a moment.'**
+  String get scanPhotoMissing;
+
+  /// Shown when making a scan's PDF failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The PDF couldn’t be made.'**
+  String get scanPdfFailed;
+
+  /// Button that makes a scan's PDF and opens the phone's share sheet with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Share PDF'**
+  String get scanSharePdf;
+
+  /// Button that makes a scan's PDF and saves it where the person picks.
+  ///
+  /// In en, this message translates to:
+  /// **'Save PDF'**
+  String get scanSavePdf;
+
+  /// Shown on the Share PDF button while the PDF is made.
+  ///
+  /// In en, this message translates to:
+  /// **'Making PDF…'**
+  String get scanMakingPdf;
+
+  /// Shown once a scan's PDF was saved.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF saved'**
+  String get scanPdfSaved;
+
+  /// Shown on a scan's screen when it has no pages.
+  ///
+  /// In en, this message translates to:
+  /// **'No pages yet. Take or choose photos of the pages.'**
+  String get scanNoPages;
+
+  /// Button on a scan's screen that photographs more pages with the camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photos'**
+  String get scanTakePhotos;
+
+  /// Heading of the choice of paper size for a scan's PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper'**
+  String get scanPdfPaper;
+
+  /// US Letter paper size for a scan's PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Letter'**
+  String get scanPaperLetter;
+
+  /// Paper choice for a scan's PDF: each page as big as its picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture size'**
+  String get scanPaperFit;
+
+  /// Heading of the choice of the white margin around each page in a scan's PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin'**
+  String get scanPdfMargin;
+
+  /// No margin around the pages in a scan's PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get scanMarginNone;
+
+  /// A margin in millimetres around the pages in a scan's PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'{mm} mm'**
+  String scanMarginMm(int mm);
+
+  /// Heading of the choice of how sharp (and big) a scan's PDF is.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality'**
+  String get scanPdfQuality;
+
+  /// PDF quality: smallest file, less sharp.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get scanQualitySmall;
+
+  /// PDF quality: the usual.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get scanQualityStandard;
+
+  /// PDF quality: sharpest, biggest file.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get scanQualityHigh;
+
+  /// Button that takes the whole scan out of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove scan'**
+  String get scanRemove;
+
+  /// Screen reader hint on a scan in a note that can be changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the scan to change it'**
+  String get scanOpenHint;
+
+  /// Button on a scan's screen that adds pages from photos already on the phone.
+  ///
+  /// In en, this message translates to:
+  /// **'From gallery'**
+  String get scanFromGallery;
 }
 
 class _AppLocalizationsDelegate

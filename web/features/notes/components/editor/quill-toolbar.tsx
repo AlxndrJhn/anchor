@@ -20,6 +20,7 @@ import {
   Quote,
   Radio,
   Redo2,
+  ScanLine,
   Strikethrough,
   Underline,
   Undo2,
@@ -110,6 +111,8 @@ interface QuillToolbarProps {
   onLiveImage?: () => void;
   /** Opens a new flowchart to put in the text at the caret. */
   onFlowchart?: () => void;
+  /** Takes photos for a new scanned document. */
+  onScan?: () => void;
   onUndoRedo: (action: UndoRedoAction) => void;
 }
 
@@ -124,6 +127,7 @@ export function QuillToolbar({
   onDraw,
   onLiveImage,
   onFlowchart,
+  onScan,
   onUndoRedo,
 }: QuillToolbarProps) {
   const [format, setFormat] = useState<Record<string, unknown>>({});
@@ -266,7 +270,7 @@ export function QuillToolbar({
       )}
       {divider}
       {/* Left of the text styles, as on Android. */}
-      {(onPictureInText || onDraw || onLiveImage || onFlowchart) && (
+      {(onPictureInText || onDraw || onLiveImage || onFlowchart || onScan) && (
         <>
           {onPictureInText &&
             toolButton(
@@ -283,6 +287,7 @@ export function QuillToolbar({
             )}
           {onFlowchart &&
             toolButton("Add a flowchart", <Workflow />, onFlowchart)}
+          {onScan && toolButton("Scan a document", <ScanLine />, onScan)}
           {divider}
         </>
       )}

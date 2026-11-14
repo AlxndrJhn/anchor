@@ -14,6 +14,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 import '../../../../core/files/device_files.dart';
+import '../../../../core/files/picture_edits.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/logging/log_tags.dart';
 import '../../../../core/motion/animated_resize.dart';
 import '../../../../core/motion/haptics.dart';
 import '../../../../core/motion/springs.dart';
@@ -31,6 +34,7 @@ import '../../data/photo_files.dart';
 import '../../domain/note_attachment.dart';
 import '../../domain/note_dates.dart';
 import 'audio_playback.dart';
+import 'page_scan_screen.dart';
 
 typedef AddedFile = ({String path, String mime, String name});
 
@@ -42,6 +46,7 @@ Future<List<AddedFile>?> showAddSheet(
   VoidCallback? onTakeSeveral,
   VoidCallback? onLiveCamera,
   VoidCallback? onFlowchart,
+  VoidCallback? onScanDocument,
 }) {
   return showAnchorSheet<List<AddedFile>>(
     context,
@@ -50,6 +55,7 @@ Future<List<AddedFile>?> showAddSheet(
       onTakeSeveral: onTakeSeveral,
       onLiveCamera: onLiveCamera,
       onFlowchart: onFlowchart,
+      onScanDocument: onScanDocument,
     ),
   );
 }
@@ -99,7 +105,12 @@ Future<void> _keepMicOn(bool on) async {
 }
 
 class _AddSheet extends StatefulWidget {
-  const _AddSheet({this.onTakeSeveral, this.onLiveCamera, this.onFlowchart});
+  const _AddSheet({
+    this.onTakeSeveral,
+    this.onLiveCamera,
+    this.onFlowchart,
+    this.onScanDocument,
+  });
 
   final VoidCallback? onTakeSeveral;
 
@@ -108,6 +119,10 @@ class _AddSheet extends StatefulWidget {
 
   /// Closes the sheet to draw a flowchart for the text; null leaves it out.
   final VoidCallback? onFlowchart;
+
+  /// Closes the sheet to scan pages into the text; null offers a single
+  /// straightened page instead.
+  final VoidCallback? onScanDocument;
 
   @override
   State<_AddSheet> createState() => _AddSheetState();
@@ -172,10 +187,52 @@ class _AddSheetState extends State<_AddSheet> {
     if (files != null && files.isNotEmpty) _done(files);
   }
 
+  /// A photo of a sheet of paper, framed and straightened like a scan.
+  Future<void> _scanPage() async {
+    final shot = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 92,
+    );
+    if (shot == null || !mounted) return;
+    final corners = await PageScanScreen.open(context, shot.path);
+    if (corners == null || !mounted) return;
+    final String scanned;
+    try {
+      scanned = await editPicture(shot.path, StraightenPage(corners));
+    } catch (e) {
+      AppLogger.instance.warn(
+        LogTags.attachments,
+        'Scanning a page failed: $e',
+      );
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          context.l10n.inlinePictureChangeFailed,
+          kind: SnackbarKind.error,
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
+    _done([
+      (
+        path: scanned,
+        mime: 'image/jpeg',
+        name: 'Scan ${DateTime.now().millisecondsSinceEpoch}.jpg',
+      ),
+    ]);
+  }
+
   void _liveCamera() {
     final onLiveCamera = widget.onLiveCamera!;
     Navigator.of(context).pop();
     onLiveCamera();
+  }
+
+  void _scanDocument() {
+    final onScanDocument = widget.onScanDocument!;
+    Navigator.of(context).pop();
+    onScanDocument();
   }
 
   void _flowchart() {
@@ -428,55 +485,71 @@ class _AddSheetState extends State<_AddSheet> {
           children: [
             SheetHeader(title: title, subtitle: subtitle),
             if (_stage == _Stage.pick) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _OptionGrid(
-                  options: [
-                    _Option(
-                      icon: LucideIcons.camera,
-                      label: l10n.addTakePhoto,
-                      onTap: _takePhoto,
-                    ),
-                    if (widget.onTakeSeveral != null)
+              // Scrolls when the options don't all fit, on short phones or
+              // with large text.
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _OptionGrid(
+                    options: [
                       _Option(
-                        icon: LucideIcons.aperture,
-                        label: l10n.addTakeSeveral,
-                        onTap: _takeSeveral,
+                        icon: LucideIcons.camera,
+                        label: l10n.addTakePhoto,
+                        onTap: _takePhoto,
                       ),
-                    _Option(
-                      icon: LucideIcons.images,
-                      label: l10n.addChoosePhoto,
-                      onTap: _choosePhotos,
-                    ),
-                    if (widget.onLiveCamera != null)
+                      if (widget.onScanDocument != null)
+                        _Option(
+                          icon: LucideIcons.scanLine,
+                          label: l10n.scanDocument,
+                          onTap: _scanDocument,
+                        )
+                      else
+                        _Option(
+                          icon: LucideIcons.scanLine,
+                          label: l10n.pageScanTitle,
+                          onTap: _scanPage,
+                        ),
+                      if (widget.onTakeSeveral != null)
+                        _Option(
+                          icon: LucideIcons.aperture,
+                          label: l10n.addTakeSeveral,
+                          onTap: _takeSeveral,
+                        ),
                       _Option(
-                        icon: LucideIcons.radio,
-                        label: l10n.addLiveCamera,
-                        onTap: _liveCamera,
+                        icon: LucideIcons.images,
+                        label: l10n.addChoosePhoto,
+                        onTap: _choosePhotos,
                       ),
-                    _Option(
-                      icon: LucideIcons.mic,
-                      label: l10n.addRecordAudio,
-                      onTap: _record,
-                    ),
-                    _Option(
-                      icon: LucideIcons.file,
-                      label: l10n.addFiles,
-                      onTap: _chooseFiles,
-                    ),
-                    if (widget.onFlowchart != null)
+                      if (widget.onLiveCamera != null)
+                        _Option(
+                          icon: LucideIcons.radio,
+                          label: l10n.addLiveCamera,
+                          onTap: _liveCamera,
+                        ),
                       _Option(
-                        icon: LucideIcons.workflow,
-                        label: l10n.flowchart,
-                        onTap: _flowchart,
+                        icon: LucideIcons.mic,
+                        label: l10n.addRecordAudio,
+                        onTap: _record,
                       ),
-                    if (canPickFolder)
                       _Option(
-                        icon: LucideIcons.folderArchive,
-                        label: l10n.addFolder,
-                        onTap: _chooseFolder,
+                        icon: LucideIcons.file,
+                        label: l10n.addFiles,
+                        onTap: _chooseFiles,
                       ),
-                  ],
+                      if (widget.onFlowchart != null)
+                        _Option(
+                          icon: LucideIcons.workflow,
+                          label: l10n.flowchart,
+                          onTap: _flowchart,
+                        ),
+                      if (canPickFolder)
+                        _Option(
+                          icon: LucideIcons.folderArchive,
+                          label: l10n.addFolder,
+                          onTap: _chooseFolder,
+                        ),
+                    ],
+                  ),
                 ),
               ),
               const SheetBottomSpace(),

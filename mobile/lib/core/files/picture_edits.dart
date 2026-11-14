@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:ui' show Rect;
+import 'dart:ui' show Offset, Rect;
 
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
+import 'page_scan.dart';
 
 /// A change made to a picture: it's written anew as a JPEG.
 sealed class PictureEdit {
@@ -27,6 +29,13 @@ class CropTo extends PictureEdit {
   const CropTo(this.area);
 }
 
+/// The page whose [corners] are given (as shares, top left first and on
+/// clockwise) stretched flat, as a scanner would.
+class StraightenPage extends PictureEdit {
+  final List<Offset> corners;
+  const StraightenPage(this.corners);
+}
+
 /// Writes the picture at [path] with [edit] made to it into a new file in
 /// the app's cache, and returns its path. The work happens off the UI
 /// thread; a big photo takes a moment.
@@ -39,10 +48,11 @@ Future<String> editPicture(String path, PictureEdit edit) async {
   );
   // Only plain values cross into the isolate.
   final area = edit is CropTo ? edit.area : null;
+  final corners = edit is StraightenPage ? edit.corners : null;
   final mirror = switch (edit) {
     MirrorHorizontally() => img.FlipDirection.horizontal,
     MirrorVertically() => img.FlipDirection.vertical,
-    CropTo() => null,
+    CropTo() || StraightenPage() => null,
   };
   await Isolate.run(() {
     final decoded = img.decodeImage(File(path).readAsBytesSync());
@@ -53,6 +63,8 @@ Future<String> editPicture(String path, PictureEdit edit) async {
       picture = img.flip(picture, direction: mirror);
     } else if (area != null) {
       picture = cropShare(picture, area);
+    } else if (corners != null) {
+      picture = straightenPage(picture, corners);
     }
     File(out).writeAsBytesSync(img.encodeJpg(picture, quality: 92));
   });

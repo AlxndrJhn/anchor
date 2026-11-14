@@ -42,6 +42,7 @@ import { inlineImageIds, primeInlineImage } from "../../inline-images";
 import { publicLinkLabel } from "../../public-link";
 import { deltaToFullPlainText, isContentBlank } from "../../quill";
 import { isReminderPast, reminderLabel } from "../../reminder";
+import { scanAttachmentIds } from "../../scans";
 import type {
   NoteAttachment,
   NoteReminder,
@@ -168,7 +169,12 @@ export function NoteEditorContent(props: NoteEditorContentProps) {
     props.onTitleChange,
   );
   const inTextIds = React.useMemo(
-    () => inlineImageIds(props.content),
+    // Pictures in the text and the photos of scans stay out of the strip.
+    () =>
+      new Set([
+        ...inlineImageIds(props.content),
+        ...scanAttachmentIds(props.content),
+      ]),
     [props.content],
   );
   const pictures = useInlinePictures(
