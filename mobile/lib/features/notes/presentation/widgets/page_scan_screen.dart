@@ -358,6 +358,8 @@ class _Loupe extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final size = constraints.biggest.shortestSide;
+      // Where the picture goes so the spot under the finger is in the middle.
+      final corner = Offset(size, size) * 0.5 - at * zoom;
       return DecoratedBox(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -370,12 +372,8 @@ class _Loupe extends StatelessWidget {
             children: [
               const Positioned.fill(child: ColoredBox(color: Colors.black)),
               Positioned(
-                left:
-                    size / 2 -
-                    at.dx * zoom, // off-scale: centers the zoomed spot
-                top:
-                    size / 2 -
-                    at.dy * zoom, // off-scale: centers the zoomed spot
+                left: corner.dx,
+                top: corner.dy,
                 width: pictureSize.width * zoom,
                 height: pictureSize.height * zoom,
                 child: picture,
