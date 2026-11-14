@@ -26,9 +26,9 @@ import { isMac } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import {
   addPoint,
+  DEFAULT_EMOJI,
   DRAW_ASPECT,
   DRAW_COLORS,
-  DRAW_EMOJIS,
   DRAW_SIZES,
   type DrawPoint,
   type DrawTool,
@@ -42,6 +42,12 @@ import {
   type Stroke,
   type TextMark,
 } from "../../drawing";
+import {
+  addRecent,
+  loadRecentEmojis,
+  saveRecentEmojis,
+} from "../../emoji-data";
+import { EmojiPicker } from "./emoji-picker";
 
 const TOOLS: { tool: DrawTool; label: string; icon: React.ReactNode }[] = [
   { tool: "pen", label: "Pen", icon: <Pen /> },
@@ -79,7 +85,8 @@ export function DrawingDialog({
   const [aspect, setAspect] = React.useState(DRAW_ASPECT);
   const [pad, setPad] = React.useState<HTMLDivElement | null>(null);
   const [padWidth, setPadWidth] = React.useState(0);
-  const [emoji, setEmoji] = React.useState<string>(DRAW_EMOJIS[0]);
+  const [emoji, setEmoji] = React.useState<string>(DEFAULT_EMOJI);
+  const [recentEmojis, setRecentEmojis] = React.useState<string[]>([]);
   /** Words being typed where the pad was clicked, not yet on it. */
   const [typing, setTyping] = React.useState<TextMark | null>(null);
   const typingRef = React.useRef(typing);
@@ -97,6 +104,9 @@ export function DrawingDialog({
     setTool("pen");
     setTyping(null);
     setSaving(false);
+    const recent = loadRecentEmojis();
+    setRecentEmojis(recent);
+    if (recent[0]) setEmoji(recent[0]);
     live.current = null;
   }, [open]);
 
@@ -202,6 +212,9 @@ export function DrawingDialog({
       return;
     }
     if (tool === "emoji") {
+      const recent = addRecent(recentEmojis, emoji);
+      setRecentEmojis(recent);
+      saveRecentEmojis(recent);
       addMark({
         tool: "emoji",
         text: emoji,
@@ -303,6 +316,9 @@ export function DrawingDialog({
   const modKey = isMac() ? "⌘" : "Ctrl+";
   const canSave = hasInk(strokes) || !!typing?.text.trim();
   const showsColor = tool !== "eraser" && tool !== "emoji";
+  // The emoji picker takes room above the pad, so the pad shrinks to fit.
+  const padMaxHeight =
+    tool === "emoji" ? "max(28vh, calc(60vh - 300px))" : "60vh";
   const typingPx = typing ? fontSize(typing) * padWidth : 0;
 
   return (
@@ -431,24 +447,11 @@ export function DrawingDialog({
             </div>
           </div>
           {tool === "emoji" && (
-            <div className="flex flex-wrap gap-0.5" data-testid="emoji-choices">
-              {DRAW_EMOJIS.map((each) => (
-                <button
-                  key={each}
-                  type="button"
-                  aria-label={each}
-                  aria-pressed={emoji === each}
-                  onClick={() => setEmoji(each)}
-                  className={cn(
-                    "grid size-8 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 text-xl leading-none hover:bg-foreground/8",
-                    emoji === each &&
-                      "bg-foreground/8 shadow-[inset_0_0_0_1.5px_var(--note-muted)]",
-                  )}
-                >
-                  {each}
-                </button>
-              ))}
-            </div>
+            <EmojiPicker
+              value={emoji}
+              recent={recentEmojis}
+              onPick={setEmoji}
+            />
           )}
           <div
             ref={setPad}
@@ -473,9 +476,9 @@ export function DrawingDialog({
             )}
             style={{
               aspectRatio: `1 / ${aspect}`,
-              maxHeight: "60vh",
+              maxHeight: padMaxHeight,
               // Keeps the shape when the height is capped.
-              maxWidth: `calc(60vh / ${aspect})`,
+              maxWidth: `calc(${padMaxHeight} / ${aspect})`,
               marginInline: "auto",
             }}
             onPointerDown={start}

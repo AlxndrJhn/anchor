@@ -56,49 +56,8 @@ export type Mark = Stroke | TextMark;
 export const isTextMark = (mark: Mark): mark is TextMark =>
   mark.tool === "text" || mark.tool === "emoji";
 
-/** Emojis offered by the emoji tool. */
-export const DRAW_EMOJIS = [
-  "😀",
-  "😂",
-  "😍",
-  "😎",
-  "🤔",
-  "😢",
-  "😡",
-  "👍",
-  "👎",
-  "👏",
-  "🙏",
-  "💪",
-  "❤️",
-  "⭐",
-  "🔥",
-  "✨",
-  "🎉",
-  "✅",
-  "❌",
-  "⚠️",
-  "❓",
-  "💡",
-  "📌",
-  "➡️",
-  "⬅️",
-  "⬆️",
-  "⬇️",
-  "🏠",
-  "🌳",
-  "🌸",
-  "☀️",
-  "🌙",
-  "🐶",
-  "🐱",
-  "🍕",
-  "☕",
-  "🚗",
-  "✈️",
-  "📅",
-  "💰",
-];
+/** The emoji the emoji tool starts with. */
+export const DEFAULT_EMOJI = "😀";
 
 /** Text is this many times a pen's width high; an emoji, twice that. */
 const TEXT_SCALE = 5;
