@@ -12,6 +12,7 @@ import {
   ListChecks,
   ListOrdered,
   Mic,
+  PencilLine,
   Quote,
   Radio,
   Type,
@@ -41,6 +42,7 @@ type Kind =
   | "date"
   | "attachment"
   | "record"
+  | "draw"
   | "live"
   | "flowchart";
 
@@ -141,6 +143,12 @@ const ITEMS: {
     keywords: "voice memo microphone mic recording sound",
   },
   {
+    kind: "draw",
+    label: "Drawing",
+    icon: <PencilLine />,
+    keywords: "draw sketch doodle pen hand drawn handwriting scribble paint",
+  },
+  {
     kind: "live",
     label: "Live image",
     icon: <Radio />,
@@ -171,6 +179,7 @@ interface SlashMenuProps {
   onAddAttachment?: () => void;
   onRecordAudio?: () => void;
   onAddLink: () => void;
+  onDraw?: () => void;
   onAddLiveImage?: () => void;
   onAddFlowchart?: () => void;
 }
@@ -184,6 +193,7 @@ export function SlashMenu({
   onAddAttachment,
   onRecordAudio,
   onAddLink,
+  onDraw,
   onAddLiveImage,
   onAddFlowchart,
 }: SlashMenuProps) {
@@ -204,6 +214,7 @@ export function SlashMenu({
           (item) =>
             (item.kind !== "attachment" || onAddAttachment) &&
             (item.kind !== "record" || onRecordAudio) &&
+            (item.kind !== "draw" || onDraw) &&
             (item.kind !== "live" || onAddLiveImage) &&
             (item.kind !== "flowchart" || onAddFlowchart),
         ),
@@ -213,6 +224,7 @@ export function SlashMenu({
       slash?.query,
       onAddAttachment,
       onRecordAudio,
+      onDraw,
       onAddLiveImage,
       onAddFlowchart,
     ],
@@ -355,6 +367,7 @@ export function SlashMenu({
         quill.setSelection(from, 0, "silent");
         if (kind === "attachment") onAddAttachment?.();
         else if (kind === "record") onRecordAudio?.();
+        else if (kind === "draw") onDraw?.();
         else if (kind === "live") onAddLiveImage?.();
         else if (kind === "flowchart") onAddFlowchart?.();
         else if (kind === "link") onAddLink();
@@ -378,6 +391,7 @@ export function SlashMenu({
       onAddAttachment,
       onRecordAudio,
       onAddLink,
+      onDraw,
       onAddLiveImage,
       onAddFlowchart,
       updateSlash,

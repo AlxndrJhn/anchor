@@ -1045,6 +1045,9 @@ export const RichTextEditor = forwardRef<
             onPictureInText={
               canPlacePictures ? () => pictureTools.current?.pick() : undefined
             }
+            onDraw={
+              canPlacePictures ? () => pictureTools.current?.draw() : undefined
+            }
             onLiveImage={
               canAddLive ? () => liveTools.current?.add() : undefined
             }
@@ -1192,6 +1195,11 @@ export const RichTextEditor = forwardRef<
               onAddAttachment={onAddAttachment}
               onRecordAudio={onRecordAudio}
               onAddLink={openLinkDialog}
+              onDraw={
+                canPlacePictures
+                  ? () => pictureTools.current?.draw()
+                  : undefined
+              }
               onAddLiveImage={
                 canAddLive ? () => liveTools.current?.add() : undefined
               }

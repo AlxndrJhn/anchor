@@ -8,6 +8,7 @@ import {
   FlipVertical2,
   ImageUp,
   Maximize2,
+  PencilLine,
   Trash2,
 } from "lucide-react";
 import Delta from "quill-delta";
@@ -30,6 +31,7 @@ import {
 } from "../../inline-images";
 import { editPicture, type PictureEdit } from "../../picture-edits";
 import type { QuillDelta, QuillInstance } from "../../quill";
+import { DrawingDialog } from "./drawing-dialog";
 import { CaptionDialog, CropDialog } from "./inline-image-dialogs";
 
 /** What the note gives the editor to keep pictures in its text. */
@@ -51,6 +53,8 @@ export interface InlineImageToolsHandle {
   pick: () => void;
   /** Puts pasted pictures in the text at the caret. */
   insert: (files: File[]) => void;
+  /** Opens a pad to draw a picture, put in the text at the caret. */
+  draw: () => void;
 }
 
 type BlotLookup = {
@@ -194,6 +198,10 @@ export const InlineImageTools = React.forwardRef<
     menu: Menu;
     picture: Blob;
   } | null>(null);
+  /** A new drawing ("new"), or drawing on the menu's picture. */
+  const [drawing, setDrawing] = React.useState<
+    "new" | { menu: Menu; picture: Blob } | null
+  >(null);
   const resizing = React.useRef(false);
   const insertInput = React.useRef<HTMLInputElement>(null);
   const replaceInput = React.useRef<HTMLInputElement>(null);
@@ -419,6 +427,10 @@ export const InlineImageTools = React.forwardRef<
       keepCaret();
       void insertChosen(files);
     },
+    draw: () => {
+      keepCaret();
+      setDrawing("new");
+    },
   }));
 
   const insertChosen = async (files: File[]) => {
@@ -516,6 +528,17 @@ export const InlineImageTools = React.forwardRef<
               Crop…
             </DropdownMenuItem>
             <DropdownMenuItem
+              onSelect={() => {
+                void host.load(shown.image.id).then(
+                  (picture) => setDrawing({ menu: shown, picture }),
+                  () => toast.error("Couldn’t open the picture"),
+                );
+              }}
+            >
+              <PencilLine />
+              Draw on it…
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onSelect={() => void edit(shown, { mirror: "horizontally" })}
             >
               <FlipHorizontal2 />
@@ -564,6 +587,17 @@ export const InlineImageTools = React.forwardRef<
           const from = cropping;
           setCropping(null);
           if (from) void edit(from.menu, { crop: area }, from.picture);
+        }}
+      />
+      <DrawingDialog
+        open={!!drawing}
+        background={drawing && drawing !== "new" ? drawing.picture : null}
+        onClose={() => setDrawing(null)}
+        onSave={(file) => {
+          const from = drawing;
+          setDrawing(null);
+          if (from === "new") void insertChosen([file]);
+          else if (from) void swap(from.menu, file);
         }}
       />
     </>
