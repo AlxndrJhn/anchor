@@ -5939,5 +5939,117 @@
   "liveCameraNoCamera": "No camera could be turned on.",
   "@liveCameraNoCamera": {
     "description": "In the live camera sheet's preview when the camera couldn't be turned on."
+  },
+  "flowchart": "Flowchart",
+  "@flowchart": {
+    "description": "Name of a flowchart placed in a note, in the add sheet and the slash menu."
+  },
+  "slashWordsFlowchart": "diagram chart flow process boxes arrows decision",
+  "@slashWordsFlowchart": {
+    "description": "Extra words that find the Flowchart item in the slash menu."
+  },
+  "flowchartNew": "New flowchart",
+  "@flowchartNew": {
+    "description": "Title of the flowchart editor for a chart not in the note yet."
+  },
+  "flowchartEdit": "Edit flowchart",
+  "@flowchartEdit": {
+    "description": "Title of the flowchart editor for a chart already in the note."
+  },
+  "flowchartAdd": "Add",
+  "@flowchartAdd": {
+    "description": "Button in the flowchart editor's bar that puts a new chart into the note."
+  },
+  "flowchartStep": "Step",
+  "@flowchartStep": {
+    "description": "A rectangular box in a flowchart, and the text a new one starts with."
+  },
+  "flowchartDecision": "Decision",
+  "@flowchartDecision": {
+    "description": "A diamond-shaped box in a flowchart, and the text a new one starts with."
+  },
+  "flowchartEnd": "End",
+  "@flowchartEnd": {
+    "description": "The text a new rounded (start or end) box in a flowchart starts with."
+  },
+  "flowchartStartOrEnd": "Start or end",
+  "@flowchartStartOrEnd": {
+    "description": "A rounded box in a flowchart, where a process starts or ends."
+  },
+  "flowchartWrite": "Write",
+  "@flowchartWrite": {
+    "description": "Button that opens a field to write the text of the picked box or arrow."
+  },
+  "flowchartNextStep": "Next step",
+  "@flowchartNextStep": {
+    "description": "Button that adds a step joined under the picked box."
+  },
+  "flowchartFit": "Show all",
+  "@flowchartFit": {
+    "description": "Button that zooms and moves the view to show the whole flowchart."
+  },
+  "flowchartRemove": "Remove chart",
+  "@flowchartRemove": {
+    "description": "Button in the flowchart editor that takes the whole chart out of the note."
+  },
+  "flowchartBoxText": "Text in the box",
+  "@flowchartBoxText": {
+    "description": "Title of the sheet to write the text of a flowchart box."
+  },
+  "flowchartArrowText": "Text on the arrow",
+  "@flowchartArrowText": {
+    "description": "Title of the sheet to write the label of a flowchart arrow."
+  },
+  "flowchartArrowHint": "Label, e.g. yes",
+  "@flowchartArrowHint": {
+    "description": "Hint in the field for an arrow's label."
+  },
+  "flowchartDiscardTitle": "Discard changes?",
+  "@flowchartDiscardTitle": {
+    "description": "Title of the dialog when closing the flowchart editor with unsaved changes."
+  },
+  "flowchartDiscardMessage": "The changes to this flowchart haven’t been saved.",
+  "@flowchartDiscardMessage": {
+    "description": "Message of the dialog when closing the flowchart editor with unsaved changes."
+  },
+  "flowchartDiscard": "Discard",
+  "@flowchartDiscard": {
+    "description": "Button that closes the flowchart editor without saving."
+  },
+  "flowchartRemoveTitle": "Remove flowchart?",
+  "@flowchartRemoveTitle": {
+    "description": "Title of the dialog before taking a flowchart out of the note."
+  },
+  "flowchartRemoveMessage": "The chart is taken out of the note. Undo in the note brings it back.",
+  "@flowchartRemoveMessage": {
+    "description": "Message of the dialog before taking a flowchart out of the note."
+  },
+  "flowchartCanvas": "Flowchart with {boxes} boxes and {arrows} arrows. Tap a box to pick it, tap it again to write.",
+  "@flowchartCanvas": {
+    "description": "Screen reader label of the flowchart editor's drawing area.",
+    "placeholders": {
+      "boxes": {
+        "type": "int",
+        "example": "4"
+      },
+      "arrows": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "flowchartLabel": "Flowchart: {name}",
+  "@flowchartLabel": {
+    "description": "Screen reader label of a flowchart in a note, named by its first box.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Start"
+      }
+    }
+  },
+  "flowchartOpenHint": "Opens the flowchart to edit it",
+  "@flowchartOpenHint": {
+    "description": "Screen reader hint on a flowchart in a note that can be changed."
   }
 }

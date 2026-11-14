@@ -818,3 +818,71 @@
   text-align: center;
   color: var(--note-muted, inherit);
 }
+
+/* A flowchart in the text (flowcharts.ts); a click opens it to edit
+   (flowchart-tools.tsx). It draws at its own size, shrunk to fit. */
+.ql-editor .flowchart {
+  display: block;
+  margin: 0.5em 0;
+  user-select: none;
+}
+.ql-editor .flowchart-frame {
+  display: block;
+  overflow-x: auto;
+  border-radius: var(--radius-tile, 12px);
+}
+.ql-editor:not(.ql-disabled) .flowchart-frame {
+  cursor: pointer;
+  transition: box-shadow var(--duration-hover) var(--ease-standard);
+}
+.ql-editor:not(.ql-disabled) .flowchart-frame:hover {
+  box-shadow: inset 0 0 0 1.5px var(--note-border);
+}
+.ql-editor .flowchart svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.flowchart,
+.fce {
+  --fc-ink: currentColor;
+  --fc-line: color-mix(in srgb, currentColor 62%, transparent);
+  --fc-fill: var(
+    --note-surface,
+    color-mix(in srgb, currentColor 6%, transparent)
+  );
+  --fc-ground: var(--note, var(--card));
+}
+.fc-node {
+  fill: var(--fc-fill);
+  stroke: var(--fc-line);
+  stroke-width: 1.5;
+}
+.fc-node[data-shape="diamond"] {
+  fill: color-mix(in srgb, var(--accent) 12%, var(--fc-ground));
+}
+.fc-node[data-shape="round"] {
+  fill: color-mix(in srgb, var(--accent) 22%, var(--fc-ground));
+}
+.fc-text,
+.fc-label {
+  fill: var(--fc-ink);
+  font: 500 14px / 1 var(--font-sans, system-ui, sans-serif);
+  text-anchor: middle;
+}
+.fc-label {
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.fc-label-bg {
+  fill: var(--fc-ground);
+}
+.fc-edge {
+  stroke: var(--fc-line);
+  stroke-width: 1.5;
+  fill: none;
+}
+.fc-arrow {
+  fill: var(--fc-line);
+}

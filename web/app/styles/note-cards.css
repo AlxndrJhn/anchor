@@ -503,3 +503,18 @@ html.note-dragging * {
   background: transparent;
   cursor: zoom-in;
 }
+
+/* A note's first flowchart, small (flowcharts.ts draws it). */
+.nc-chart {
+  display: flex;
+  justify-content: center;
+  margin-block: 6px 2px;
+  pointer-events: none;
+}
+.nc-chart svg {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  width: auto;
+  height: auto;
+}

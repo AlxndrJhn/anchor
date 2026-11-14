@@ -12,7 +12,7 @@ import '../../../../core/widgets/anchor_menu.dart';
 import '../../../../l10n/l10n.dart';
 import 'line_kind.dart';
 
-enum SlashAction { link, picture, date }
+enum SlashAction { link, picture, date, flowchart }
 
 class SlashItem {
   const SlashItem.line(LineKind this.kind, {this.isCommon = false})
@@ -33,6 +33,7 @@ class SlashItem {
         SlashAction.link => LucideIcons.link,
         SlashAction.picture => LucideIcons.imagePlus,
         SlashAction.date => LucideIcons.calendarDays,
+        SlashAction.flowchart => LucideIcons.workflow,
       };
 
   String labelIn(AppLocalizations l10n) =>
@@ -41,6 +42,7 @@ class SlashItem {
         SlashAction.link => l10n.editorLink,
         SlashAction.picture => l10n.starterAttachment,
         SlashAction.date => l10n.slashDate,
+        SlashAction.flowchart => l10n.flowchart,
       };
 
   /// More words that find this item, besides its label.
@@ -57,6 +59,7 @@ class SlashItem {
     (_, SlashAction.link) => l10n.slashWordsLink,
     (_, SlashAction.picture) => l10n.slashWordsAttachment,
     (_, SlashAction.date) => l10n.slashWordsDate,
+    (_, SlashAction.flowchart) => l10n.slashWordsFlowchart,
     _ => '',
   };
 }
@@ -74,6 +77,7 @@ const List<SlashItem> slashItems = [
   SlashItem.action(SlashAction.link),
   SlashItem.action(SlashAction.picture, isCommon: true),
   SlashItem.action(SlashAction.date),
+  SlashItem.action(SlashAction.flowchart),
 ];
 
 /// Labels starting with the query first, then labels whose words start with

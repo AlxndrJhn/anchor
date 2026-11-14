@@ -19,8 +19,10 @@ import '../../../tags/domain/tag.dart';
 import '../../data/live_host.dart';
 import '../../data/live_signals.dart';
 import '../../data/repository/attachment_file_provider.dart';
+import '../../domain/flowchart.dart';
 import '../../domain/live_image.dart';
 import '../../domain/note.dart';
+import '../editor/flowchart_painter.dart';
 import '../editor/live_image_embed.dart';
 import '../note_labels.dart';
 import 'card_body.dart';
@@ -82,6 +84,8 @@ class NoteCardContent extends StatelessWidget {
         ? liveImagesOf(note.content).firstOrNull
         : null;
     final hasMedia = live != null || previews.isNotEmpty;
+    // A note's first flowchart, small, under its text.
+    final chart = !isHidden && !list ? firstFlowchartOf(note.content) : null;
     final radius = context.appStyle.corners(AnchorTokens.radiusCard);
     final density = context.density;
     // The first line keeps clear of the selection check over it.
@@ -124,6 +128,19 @@ class NoteCardContent extends StatelessWidget {
               layout: layout,
               firstLineEndInset: note.hasTitle ? 0 : checkInset,
               onToggleItem: onToggleItem,
+            ),
+          if (chart != null)
+            ExcludeSemantics(
+              child: FlowchartView(
+                chart: chart,
+                maxHeight: 150, // off-scale: the card's chart
+                colors: FlowchartColors(
+                  ink: colors.appText,
+                  fill: appearance.colors.surface,
+                  ground: appearance.colors.bg,
+                  accent: colors.accentStrong,
+                ),
+              ),
             ),
           if (list)
             _Footer(
