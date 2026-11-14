@@ -134,7 +134,11 @@ void main() {
         probe.container.read(selectionModeProvider.notifier).setEnabled(false);
         await tester.pumpAndSettle();
         await tester.tap(find.bySemanticsLabel('Notes, open menu').first);
-        await tester.pumpAndSettle();
+        // The + of Anchor+ in the drawer hovers for as long as it shows, so
+        // pumpAndSettle would never return; the drawer is open well before.
+        for (var i = 0; i < 20; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
         probe.drawer();
 
         probe.expectAligned();
