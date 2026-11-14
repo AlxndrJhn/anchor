@@ -58,7 +58,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
   }
 
   List<Tag> named(List<String> names) => [
@@ -84,7 +84,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     verify(() => repo.reorderTags(['gamma', 'alpha', 'beta'])).called(1);
     // Shown in the new order before the stored one catches up.
@@ -114,7 +114,7 @@ void main() {
     expect(scaled.width, greaterThan(restingWidth));
 
     await gesture.up();
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('#gamma'), findsNothing);
     verify(() => repo.reorderTags(['gamma', 'alpha', 'beta'])).called(1);
@@ -169,7 +169,7 @@ void main() {
       find.bySemanticsLabel('beta, 0'),
       'Tag options',
     );
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('#beta'), findsOneWidget);
   });
@@ -186,7 +186,7 @@ void main() {
     await pumpDrawer(tester, named(['alpha', 'beta']));
 
     await tester.longPress(find.text('beta'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('#beta'), findsOneWidget);
     verifyNever(() => repo.reorderTags(any()));
@@ -197,10 +197,10 @@ void main() {
   ) async {
     await pumpDrawer(tester, named(['alpha', 'beta']));
     await tester.longPress(find.text('beta'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     await tester.tap(find.bySemanticsLabel('Teal'));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     final saved = verify(() => repo.updateTag(captureAny())).captured.single;
     expect((saved as Tag).id, 'beta');
@@ -208,4 +208,12 @@ void main() {
     // The sheet stays open.
     expect(find.text('#beta'), findsOneWidget);
   });
+}
+
+/// Lets the drawer's animations finish. The + of Anchor+ hovers for as long as
+/// it shows, so pumpAndSettle would never return.
+Future<void> settle(WidgetTester tester) async {
+  for (var i = 0; i < 20; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }

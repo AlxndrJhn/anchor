@@ -9,7 +9,7 @@ import '../motion/springs.dart';
 import '../theme/context_extensions.dart';
 import 'expanded_hit_area.dart';
 
-/// The "+" of Anchor+, set after a title: it hovers for a while, glows, and
+/// The "+" of Anchor+, set after a title: it hovers, glows, and
 /// has a few sparks circling it, for everything the + adds. A tap sends the features
 /// out around it, as they do once when it first shows. Sits still with
 /// reduced motion.
@@ -56,8 +56,7 @@ class _AnchorPlusMarkState extends State<AnchorPlusMark>
     vsync: this,
     duration: const Duration(milliseconds: 3200),
   );
-  // About twenty seconds of hovering, then it rests until tapped.
-  static const _hoverCycles = 6;
+  // It hovers for as long as it shows.
 
   late final AnimationController _burst = AnimationController(
     vsync: this,
@@ -73,7 +72,7 @@ class _AnchorPlusMarkState extends State<AnchorPlusMark>
       _hover.stop();
       _firstBurst?.cancel();
     } else if (!_hover.isAnimating && _hover.value == 0) {
-      _hover.repeat(count: _hoverCycles);
+      _hover.repeat();
       // Shows once what the + stands for, after the page has settled.
       if (widget.isBurstOnShow) {
         _firstBurst ??= Timer(
@@ -98,7 +97,7 @@ class _AnchorPlusMarkState extends State<AnchorPlusMark>
     }
     Haptics.light();
     _burst.forward(from: 0);
-    if (!_hover.isAnimating) _hover.repeat(count: _hoverCycles);
+    if (!_hover.isAnimating) _hover.repeat();
   }
 
   @override

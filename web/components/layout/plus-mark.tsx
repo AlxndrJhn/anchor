@@ -26,10 +26,9 @@ export const FEATURES = [
   Images,
 ];
 
-// One hover cycle; the sparks go round once in two.
+// One hover cycle; the sparks go round once in two. It hovers for as long as
+// it shows.
 const HOVER_MS = 3200;
-// About twenty seconds of hovering, then it rests until clicked.
-const HOVER_CYCLES = 6;
 const BURST_MS = 1400;
 // The sparks and the burst reach past the cross, so the canvas is wider than
 // the box the wordmark leaves for it.
@@ -38,7 +37,7 @@ const CANVAS_SCALE = 3;
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
 /**
- * The "+" of Anchor+, set after the name: it hovers for a while, glows, and
+ * The "+" of Anchor+, set after the name: it hovers, glows, and
  * has a few sparks circling it, for everything the + adds. A click sends the
  * features out around it, as they do once when it first shows. Sits still
  * with reduced motion.
@@ -114,13 +113,8 @@ export function PlusMark({
     let isRunning = false;
     if (hoverStart.current !== null) {
       const elapsed = now - hoverStart.current;
-      if (elapsed >= HOVER_MS * HOVER_CYCLES) {
-        hoverStart.current = null;
-        phase.current = 0;
-      } else {
-        phase.current = (elapsed % HOVER_MS) / HOVER_MS;
-        isRunning = true;
-      }
+      phase.current = (elapsed % HOVER_MS) / HOVER_MS;
+      isRunning = true;
     }
     if (burstStart.current !== null) {
       const value = (now - burstStart.current) / BURST_MS;
@@ -177,7 +171,7 @@ export function PlusMark({
     e.stopPropagation();
     if (prefersReducedMotion()) return;
     burstStart.current = performance.now();
-    if (hoverStart.current === null) hoverStart.current = performance.now();
+    hoverStart.current ??= performance.now();
     run();
   };
 
