@@ -10,6 +10,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../picture_search/picture_search.dart';
 import '../../reminders/data/reminder_permissions.dart';
 import '../../tags/presentation/tags_controller.dart';
+import '../domain/flowchart.dart';
 import '../domain/note.dart';
 import '../domain/note_blocks.dart';
 import '../domain/note_filters.dart';
@@ -156,9 +157,7 @@ VisibleNotes visibleNotes(Ref ref) {
             ...notes,
             for (final note in archivedSource.value ?? const <Note>[])
               if (tagId == null || note.tagIds.contains(tagId)) note,
-          ].where(
-            filters.matches,
-          ),
+          ].where(filters.matches),
           [...visible, ...archived],
         );
   final isOpen =
@@ -213,8 +212,8 @@ List<NoteGroup> _pinnedFirst(List<Note> notes) {
   ];
 }
 
-/// Lower-cased note text for search, cached per content: the note's text
-/// and the text read from its pictures.
+/// Lower-cased note text for search, cached per content: the note's text,
+/// the words in its flowcharts and the text read from its pictures.
 class NoteSearchText {
   final Map<
     String,
@@ -238,8 +237,10 @@ class NoteSearchText {
         known.pictureText == note.pictureText) {
       return known;
     }
+    final charts = flowchartWordsOf(note.content);
     final text = [
       plainTextOf(note.content),
+      if (charts.isNotEmpty) charts,
       if (note.pictureText.isNotEmpty) note.pictureText,
     ].join('\n');
     return _cache[note.id] = (

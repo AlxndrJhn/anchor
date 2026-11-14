@@ -6765,6 +6765,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No camera could be turned on.'**
   String get liveCameraNoCamera;
+
+  /// Name of a flowchart placed in a note, in the add sheet and the slash menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Flowchart'**
+  String get flowchart;
+
+  /// Extra words that find the Flowchart item in the slash menu.
+  ///
+  /// In en, this message translates to:
+  /// **'diagram chart flow process boxes arrows decision'**
+  String get slashWordsFlowchart;
+
+  /// Title of the flowchart editor for a chart not in the note yet.
+  ///
+  /// In en, this message translates to:
+  /// **'New flowchart'**
+  String get flowchartNew;
+
+  /// Title of the flowchart editor for a chart already in the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit flowchart'**
+  String get flowchartEdit;
+
+  /// Button in the flowchart editor's bar that puts a new chart into the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get flowchartAdd;
+
+  /// A rectangular box in a flowchart, and the text a new one starts with.
+  ///
+  /// In en, this message translates to:
+  /// **'Step'**
+  String get flowchartStep;
+
+  /// A diamond-shaped box in a flowchart, and the text a new one starts with.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision'**
+  String get flowchartDecision;
+
+  /// The text a new rounded (start or end) box in a flowchart starts with.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get flowchartEnd;
+
+  /// A rounded box in a flowchart, where a process starts or ends.
+  ///
+  /// In en, this message translates to:
+  /// **'Start or end'**
+  String get flowchartStartOrEnd;
+
+  /// Button that opens a field to write the text of the picked box or arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Write'**
+  String get flowchartWrite;
+
+  /// Button that adds a step joined under the picked box.
+  ///
+  /// In en, this message translates to:
+  /// **'Next step'**
+  String get flowchartNextStep;
+
+  /// Button that zooms and moves the view to show the whole flowchart.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get flowchartFit;
+
+  /// Button in the flowchart editor that takes the whole chart out of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove chart'**
+  String get flowchartRemove;
+
+  /// Title of the sheet to write the text of a flowchart box.
+  ///
+  /// In en, this message translates to:
+  /// **'Text in the box'**
+  String get flowchartBoxText;
+
+  /// Title of the sheet to write the label of a flowchart arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Text on the arrow'**
+  String get flowchartArrowText;
+
+  /// Hint in the field for an arrow's label.
+  ///
+  /// In en, this message translates to:
+  /// **'Label, e.g. yes'**
+  String get flowchartArrowHint;
+
+  /// Title of the dialog when closing the flowchart editor with unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get flowchartDiscardTitle;
+
+  /// Message of the dialog when closing the flowchart editor with unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'The changes to this flowchart haven’t been saved.'**
+  String get flowchartDiscardMessage;
+
+  /// Button that closes the flowchart editor without saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get flowchartDiscard;
+
+  /// Title of the dialog before taking a flowchart out of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove flowchart?'**
+  String get flowchartRemoveTitle;
+
+  /// Message of the dialog before taking a flowchart out of the note.
+  ///
+  /// In en, this message translates to:
+  /// **'The chart is taken out of the note. Undo in the note brings it back.'**
+  String get flowchartRemoveMessage;
+
+  /// Screen reader label of the flowchart editor's drawing area.
+  ///
+  /// In en, this message translates to:
+  /// **'Flowchart with {boxes} boxes and {arrows} arrows. Tap a box to pick it, tap it again to write.'**
+  String flowchartCanvas(int boxes, int arrows);
+
+  /// Screen reader label of a flowchart in a note, named by its first box.
+  ///
+  /// In en, this message translates to:
+  /// **'Flowchart: {name}'**
+  String flowchartLabel(String name);
+
+  /// Screen reader hint on a flowchart in a note that can be changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the flowchart to edit it'**
+  String get flowchartOpenHint;
 }
 
 class _AppLocalizationsDelegate

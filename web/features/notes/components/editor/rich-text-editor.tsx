@@ -61,6 +61,7 @@ import {
 } from "../../undo-shortcuts";
 import { checkedItemsLabel } from "./checked-folds";
 import { CodeCopyButtons } from "./code-copy-buttons";
+import { FlowchartTools, type FlowchartToolsHandle } from "./flowchart-tools";
 import { SelectionToolbar } from "./highlight-tools";
 import {
   InlineImageTools,
@@ -240,6 +241,7 @@ export const RichTextEditor = forwardRef<
     const pictureTools = useRef<InlineImageToolsHandle>(null);
     const canPlacePictures = !readOnly && !!pictures;
     const liveTools = useRef<LiveImageToolsHandle>(null);
+    const flowchartTools = useRef<FlowchartToolsHandle>(null);
     const canAddLive = !readOnly && !!noteId && canWatchLive();
     const rootRef = useRef<HTMLDivElement>(null);
     const [editorContainerEl, setEditorContainerEl] =
@@ -1046,6 +1048,7 @@ export const RichTextEditor = forwardRef<
             onLiveImage={
               canAddLive ? () => liveTools.current?.add() : undefined
             }
+            onFlowchart={() => flowchartTools.current?.add()}
           />
         )}
         <div
@@ -1170,6 +1173,13 @@ export const RichTextEditor = forwardRef<
             />
           )}
           {!readOnly && (
+            <FlowchartTools
+              ref={flowchartTools}
+              getQuill={getQuill}
+              container={editorContainerEl}
+            />
+          )}
+          {!readOnly && (
             <SelectionToolbar
               getQuill={getQuill}
               container={editorContainerEl}
@@ -1185,6 +1195,7 @@ export const RichTextEditor = forwardRef<
               onAddLiveImage={
                 canAddLive ? () => liveTools.current?.add() : undefined
               }
+              onAddFlowchart={() => flowchartTools.current?.add()}
             />
           )}
           {!linkDialogState.open && (

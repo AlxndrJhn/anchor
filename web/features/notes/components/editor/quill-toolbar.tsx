@@ -22,6 +22,7 @@ import {
   Strikethrough,
   Underline,
   Undo2,
+  Workflow,
 } from "lucide-react";
 import type * as React from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -104,6 +105,8 @@ interface QuillToolbarProps {
   onPictureInText?: () => void;
   /** Puts a live camera or screen in the text at the caret. */
   onLiveImage?: () => void;
+  /** Opens a new flowchart to put in the text at the caret. */
+  onFlowchart?: () => void;
   onUndoRedo: (action: UndoRedoAction) => void;
 }
 
@@ -116,6 +119,7 @@ export function QuillToolbar({
   onRecordAudio,
   onPictureInText,
   onLiveImage,
+  onFlowchart,
   onUndoRedo,
 }: QuillToolbarProps) {
   const [format, setFormat] = useState<Record<string, unknown>>({});
@@ -258,7 +262,7 @@ export function QuillToolbar({
       )}
       {divider}
       {/* Left of the text styles, as on Android. */}
-      {(onPictureInText || onLiveImage) && (
+      {(onPictureInText || onLiveImage || onFlowchart) && (
         <>
           {onPictureInText &&
             toolButton(
@@ -272,6 +276,8 @@ export function QuillToolbar({
               <Radio />,
               onLiveImage,
             )}
+          {onFlowchart &&
+            toolButton("Add a flowchart", <Workflow />, onFlowchart)}
           {divider}
         </>
       )}

@@ -41,6 +41,12 @@ import { rememberCard } from "@/lib/morph";
 import { cn } from "@/lib/utils";
 import { getNoteAttachments } from "../api";
 import { noteOpenedByKey } from "../card-focus";
+import {
+  type Flowchart,
+  flowchartLabel,
+  flowchartSvg,
+  flowchartsIn,
+} from "../flowcharts";
 import { useAttachmentBlob } from "../hooks/use-attachment-blob";
 import {
   canTickFromCard,
@@ -94,6 +100,24 @@ export function formatCardDate(iso: string, now = new Date()): string {
 }
 
 const blocksByNote = new WeakMap<Note, NoteBlock[]>();
+const chartByNote = new WeakMap<
+  Note,
+  { chart: Flowchart | null; svg: string }
+>();
+
+/** The note's first flowchart, drawn small on its card. */
+function cardChart(note: Note) {
+  let shown = chartByNote.get(note);
+  if (!shown) {
+    const chart = flowchartsIn(note.content)[0] ?? null;
+    shown = {
+      chart,
+      svg: chart ? flowchartSvg(chart, flowchartLabel(chart)) : "",
+    };
+    chartByNote.set(note, shown);
+  }
+  return shown;
+}
 const NO_BLOCKS: NoteBlock[] = [];
 
 function cardBlocks(note: Note) {
@@ -421,6 +445,13 @@ export const NoteCard = React.memo(function NoteCard({
                 ? (line) => void tickItem(note, line)
                 : undefined
             }
+          />
+        )}
+        {!lockHidden && !isList && cardChart(note).chart && (
+          <div
+            className="nc-chart flowchart"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: flowchartSvg escapes every text it draws
+            dangerouslySetInnerHTML={{ __html: cardChart(note).svg }}
           />
         )}
         {isList ? (

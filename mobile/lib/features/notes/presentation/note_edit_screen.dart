@@ -48,6 +48,7 @@ import '../data/repository/note_attachments_repository.dart';
 import '../data/repository/note_copies_repository.dart';
 import '../data/repository/note_shares_repository.dart';
 import '../data/repository/notes_repository.dart';
+import '../domain/flowchart.dart';
 import '../domain/inline_image.dart';
 import '../domain/live_image.dart';
 import '../domain/note.dart';
@@ -59,6 +60,8 @@ import 'checked_folds_controller.dart';
 import 'editor/editor_overlay.dart';
 import 'editor/editor_overlay_controller.dart';
 import 'editor/editor_palette.dart';
+import 'editor/flowchart_editor_screen.dart';
+import 'editor/flowchart_embed.dart';
 import 'editor/inline_image_embed.dart';
 import 'editor/line_kind.dart';
 import 'editor/live_image_embed.dart';
@@ -203,7 +206,27 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       noteId: () => _draft.noteId,
       keepStill: _keepLiveStill,
     ),
+    FlowchartEmbedBuilder(palette: () => _palette!),
   ];
+
+  /// The note's colours as last drawn, for the flowcharts in its text.
+  EditorPalette? _palette;
+
+  /// Draws a new flowchart, then puts it in the text at the caret.
+  Future<void> _addFlowchart() async {
+    final palette = _palette;
+    if (_isReadOnly || palette == null) return;
+    final result = await FlowchartEditorScreen.open(
+      context,
+      chart: Flowchart.starter(),
+      colors: flowchartColorsOf(context, palette),
+      isNew: true,
+    );
+    if (result is! FlowchartSaved || !mounted) return;
+    _editor?.insertBlockEmbeds([
+      BlockEmbed(Flowchart.embedType, result.chart.encode()),
+    ]);
+  }
 
   /// The attachments the text shows as pictures, kept out of the strip;
   /// null until the text changes, then read from the editor.
@@ -1020,6 +1043,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
       context,
       onTakeSeveral: _takeSeveralPictures,
       onLiveCamera: _addLiveCamera,
+      onFlowchart: _addFlowchart,
     );
     if (files == null || files.isEmpty || !mounted) return;
     await _addFiles(files);
@@ -1314,6 +1338,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
               ? appearance.highlight(context, name)
               : colors.accentStrong),
     );
+    _palette = palette;
     final bar = NoteBar(
       appearance: appearance,
       scrollOffset: _scrollOffset,
@@ -1654,6 +1679,7 @@ class _NoteEditScreenState extends ConsumerState<NoteEditScreen>
                 onTakePictureInText: () => _picturesIntoText(fromCamera: true),
                 onChoosePicturesInText: () =>
                     _picturesIntoText(fromCamera: false),
+                onAddFlowchart: _addFlowchart,
               ),
             ),
             if (hasReadOnlyBar)
