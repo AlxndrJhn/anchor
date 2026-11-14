@@ -1,7 +1,10 @@
 // Hand-drawn pictures for the text: strokes kept as data, so undo and redo
 // are just a list, and drawn at any size (the pad's, or the saved file's).
 
-export type DrawTool = "pen" | "marker" | "eraser";
+export type DrawTool = "pen" | "marker" | "eraser" | "text" | "emoji";
+
+/** The tools that draw lines with the pointer. */
+export type LineTool = "pen" | "marker" | "eraser";
 
 /** A point as shares of the pad's width (x and y), so the pad can resize. */
 export interface DrawPoint {
@@ -12,7 +15,7 @@ export interface DrawPoint {
 }
 
 export interface Stroke {
-  tool: DrawTool;
+  tool: LineTool;
   color: string;
   /** As a share of the pad's width. */
   size: number;
@@ -34,6 +37,81 @@ export const DRAW_SIZES = [
   { name: "Medium", value: 0.009 },
   { name: "Thick", value: 0.02 },
 ] as const;
+
+/** Words or an emoji put on the pad, as shares of its width. */
+export interface TextMark {
+  tool: "text" | "emoji";
+  text: string;
+  color: string;
+  /** The size picked, as for a pen; see fontSize. */
+  size: number;
+  /** Text starts here, left-aligned; an emoji is centred on it. */
+  x: number;
+  y: number;
+}
+
+/** Anything on the pad, in the order it was added. */
+export type Mark = Stroke | TextMark;
+
+export const isTextMark = (mark: Mark): mark is TextMark =>
+  mark.tool === "text" || mark.tool === "emoji";
+
+/** Emojis offered by the emoji tool. */
+export const DRAW_EMOJIS = [
+  "😀",
+  "😂",
+  "😍",
+  "😎",
+  "🤔",
+  "😢",
+  "😡",
+  "👍",
+  "👎",
+  "👏",
+  "🙏",
+  "💪",
+  "❤️",
+  "⭐",
+  "🔥",
+  "✨",
+  "🎉",
+  "✅",
+  "❌",
+  "⚠️",
+  "❓",
+  "💡",
+  "📌",
+  "➡️",
+  "⬅️",
+  "⬆️",
+  "⬇️",
+  "🏠",
+  "🌳",
+  "🌸",
+  "☀️",
+  "🌙",
+  "🐶",
+  "🐱",
+  "🍕",
+  "☕",
+  "🚗",
+  "✈️",
+  "📅",
+  "💰",
+];
+
+/** Text is this many times a pen's width high; an emoji, twice that. */
+const TEXT_SCALE = 5;
+const EMOJI_SCALE = 10;
+
+/** A text mark's font size, as a share of the pad's width. */
+export function fontSize(mark: Pick<TextMark, "tool" | "size">) {
+  return mark.size * (mark.tool === "emoji" ? EMOJI_SCALE : TEXT_SCALE);
+}
+
+/** The font text is drawn in, at `px` pixels. */
+export const drawFont = (px: number) =>
+  `500 ${px}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
 
 /** The pad's height, as a share of its width. */
 export const DRAW_ASPECT = 3 / 4;
@@ -64,10 +142,31 @@ export function strokeWidth(stroke: Stroke, pressure: number) {
  */
 export function drawStrokes(
   context: CanvasRenderingContext2D,
-  strokes: readonly Stroke[],
+  marks: readonly Mark[],
   width: number,
 ) {
-  for (const stroke of strokes) drawStroke(context, stroke, width);
+  for (const mark of marks)
+    if (isTextMark(mark)) drawText(context, mark, width);
+    else drawStroke(context, mark, width);
+}
+
+/** Draws words or an emoji; each line of words under the last. */
+export function drawText(
+  context: CanvasRenderingContext2D,
+  mark: TextMark,
+  width: number,
+) {
+  if (!mark.text) return;
+  const px = fontSize(mark) * width;
+  context.save();
+  context.font = drawFont(px);
+  context.fillStyle = mark.color;
+  context.textBaseline = "middle";
+  context.textAlign = mark.tool === "emoji" ? "center" : "left";
+  mark.text.split("\n").forEach((line, i) => {
+    context.fillText(line, mark.x * width, mark.y * width + i * px * 1.2);
+  });
+  context.restore();
 }
 
 export function drawStroke(
@@ -135,9 +234,13 @@ export function drawStroke(
   context.restore();
 }
 
-/** Whether the strokes leave any ink, i.e. aren't all erasing. */
-export function hasInk(strokes: readonly Stroke[]) {
-  return strokes.some((s) => s.tool !== "eraser" && s.points.length > 0);
+/** Whether anything leaves ink, i.e. isn't all erasing. */
+export function hasInk(marks: readonly Mark[]) {
+  return marks.some((m) =>
+    isTextMark(m)
+      ? m.text.trim().length > 0
+      : m.tool !== "eraser" && m.points.length > 0,
+  );
 }
 
 /** Drops a point too close to the last to change the line, in shares. */
@@ -154,7 +257,7 @@ export function addPoint(points: DrawPoint[], point: DrawPoint, min = 0.0015) {
  * the ink over it. Always a PNG, so lines stay sharp.
  */
 export async function renderDrawing(
-  strokes: readonly Stroke[],
+  strokes: readonly Mark[],
   background?: Blob | null,
 ): Promise<File> {
   const bitmap = background ? await createImageBitmap(background) : null;

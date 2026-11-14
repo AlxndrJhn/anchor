@@ -3,6 +3,7 @@ import {
   addPoint,
   type DrawPoint,
   drawingName,
+  fontSize,
   hasInk,
   type Stroke,
   strokeWidth,
@@ -30,6 +31,18 @@ describe("drawing", () => {
       false,
     );
     expect(hasInk([stroke("pen", [{ x: 0, y: 0, pressure: 0.5 }])])).toBe(true);
+  });
+
+  it("counts words and emojis as ink, but not blank text", () => {
+    const text = { color: "#000", size: 0.01, x: 0.1, y: 0.1 };
+    expect(hasInk([{ ...text, tool: "text", text: "  " }])).toBe(false);
+    expect(hasInk([{ ...text, tool: "text", text: "Hi" }])).toBe(true);
+    expect(hasInk([{ ...text, tool: "emoji", text: "🌳" }])).toBe(true);
+  });
+
+  it("makes an emoji twice as big as text of the same size", () => {
+    expect(fontSize({ tool: "text", size: 0.01 })).toBeCloseTo(0.05);
+    expect(fontSize({ tool: "emoji", size: 0.01 })).toBeCloseTo(0.1);
   });
 
   it("widens a pen with pressure, and a marker always", () => {

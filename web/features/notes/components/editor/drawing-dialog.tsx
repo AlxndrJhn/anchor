@@ -1,6 +1,15 @@
 "use client";
 
-import { Eraser, Highlighter, Pen, Redo2, Trash2, Undo2 } from "lucide-react";
+import {
+  Eraser,
+  Highlighter,
+  Pen,
+  Redo2,
+  Smile,
+  Trash2,
+  Type,
+  Undo2,
+} from "lucide-react";
 import * as React from "react";
 import { Button, IconButton } from "@/components/ui/button";
 import {
@@ -19,26 +28,34 @@ import {
   addPoint,
   DRAW_ASPECT,
   DRAW_COLORS,
+  DRAW_EMOJIS,
   DRAW_SIZES,
   type DrawPoint,
   type DrawTool,
+  drawFont,
   drawStroke,
   drawStrokes,
+  fontSize,
   hasInk,
+  type Mark,
   renderDrawing,
   type Stroke,
+  type TextMark,
 } from "../../drawing";
 
 const TOOLS: { tool: DrawTool; label: string; icon: React.ReactNode }[] = [
   { tool: "pen", label: "Pen", icon: <Pen /> },
   { tool: "marker", label: "Marker", icon: <Highlighter /> },
   { tool: "eraser", label: "Eraser", icon: <Eraser /> },
+  { tool: "text", label: "Text", icon: <Type /> },
+  { tool: "emoji", label: "Emoji", icon: <Smile /> },
 ];
 
 /**
  * A pad to draw on with a mouse, finger or stylus (its pressure changes the
- * pen's width). With `background`, draws on that picture; the eraser only
- * takes away ink. Saving makes a PNG.
+ * pen's width), and to put words or emojis on: click where they go. With
+ * `background`, draws on that picture; the eraser only takes away ink.
+ * Saving makes a PNG.
  */
 export function DrawingDialog({
   open,
@@ -52,8 +69,8 @@ export function DrawingDialog({
   onClose: () => void;
   onSave: (file: File) => void;
 }) {
-  const [strokes, setStrokes] = React.useState<Stroke[]>([]);
-  const [undone, setUndone] = React.useState<Stroke[]>([]);
+  const [strokes, setStrokes] = React.useState<Mark[]>([]);
+  const [undone, setUndone] = React.useState<Mark[]>([]);
   const [tool, setTool] = React.useState<DrawTool>("pen");
   const [color, setColor] = React.useState<string>(DRAW_COLORS[0].value);
   const [size, setSize] = React.useState<number>(DRAW_SIZES[1].value);
@@ -61,6 +78,12 @@ export function DrawingDialog({
   const [backgroundUrl, setBackgroundUrl] = React.useState<string | null>(null);
   const [aspect, setAspect] = React.useState(DRAW_ASPECT);
   const [pad, setPad] = React.useState<HTMLDivElement | null>(null);
+  const [padWidth, setPadWidth] = React.useState(0);
+  const [emoji, setEmoji] = React.useState<string>(DRAW_EMOJIS[0]);
+  /** Words being typed where the pad was clicked, not yet on it. */
+  const [typing, setTyping] = React.useState<TextMark | null>(null);
+  const typingRef = React.useRef(typing);
+  typingRef.current = typing;
   const canvas = React.useRef<HTMLCanvasElement>(null);
   const live = React.useRef<Stroke | null>(null);
   const strokesRef = React.useRef(strokes);
@@ -72,6 +95,7 @@ export function DrawingDialog({
     setStrokes([]);
     setUndone([]);
     setTool("pen");
+    setTyping(null);
     setSaving(false);
     live.current = null;
   }, [open]);
@@ -116,6 +140,7 @@ export function DrawingDialog({
       const ratio = window.devicePixelRatio || 1;
       const width = Math.round(pad.clientWidth * ratio);
       const height = Math.round(pad.clientHeight * ratio);
+      setPadWidth(pad.clientWidth);
       if (el.width === width && el.height === height) return;
       el.width = width;
       el.height = height;
@@ -141,11 +166,52 @@ export function DrawingDialog({
     };
   };
 
+  const addMark = (mark: Mark) => {
+    setStrokes((current) => [...current, mark]);
+    setUndone([]);
+  };
+
+  /** Puts the typed words on the pad, if there are any. */
+  const finishTyping = () => {
+    const words = typingRef.current;
+    typingRef.current = null;
+    setTyping(null);
+    if (words?.text.trim()) addMark({ ...words, text: words.text.trimEnd() });
+  };
+
   const start = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 || live.current) return;
+    if ((e.target as Element).closest("input")) return;
     const point = pointAt(e);
     if (!point) return;
     e.preventDefault();
+    if (typingRef.current) {
+      // A click away from the words finishes them.
+      finishTyping();
+      if (tool === "text") return;
+    }
+    if (tool === "text") {
+      setTyping({
+        tool: "text",
+        text: "",
+        color,
+        size,
+        x: point.x,
+        y: point.y,
+      });
+      return;
+    }
+    if (tool === "emoji") {
+      addMark({
+        tool: "emoji",
+        text: emoji,
+        color,
+        size,
+        x: point.x,
+        y: point.y,
+      });
+      return;
+    }
     const target = e.currentTarget;
     try {
       target.setPointerCapture(e.pointerId);
@@ -173,8 +239,7 @@ export function DrawingDialog({
       target.removeEventListener("pointerup", end);
       target.removeEventListener("pointercancel", end);
       live.current = null;
-      setStrokes((current) => [...current, stroke]);
-      setUndone([]);
+      addMark(stroke);
     };
     target.addEventListener("pointermove", move);
     target.addEventListener("pointerup", end);
@@ -205,9 +270,15 @@ export function DrawingDialog({
   };
 
   const save = async () => {
+    const words = typingRef.current;
+    const marks =
+      words?.text.trim() && !strokesRef.current.includes(words)
+        ? [...strokesRef.current, words]
+        : strokesRef.current;
+    finishTyping();
     setSaving(true);
     try {
-      onSave(await renderDrawing(strokes, background));
+      onSave(await renderDrawing(marks, background));
     } catch {
       toast.error("Couldn’t save the drawing");
       setSaving(false);
@@ -215,6 +286,8 @@ export function DrawingDialog({
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // Typing has its own undo.
+    if ((e.target as Element).closest("input")) return;
     const mod = isMac() ? e.metaKey : e.ctrlKey;
     if (!mod || e.altKey) return;
     const key = e.key.toLowerCase();
@@ -228,17 +301,26 @@ export function DrawingDialog({
   };
 
   const modKey = isMac() ? "⌘" : "Ctrl+";
-  const canSave = hasInk(strokes);
-  const showsColor = tool !== "eraser";
+  const canSave = hasInk(strokes) || !!typing?.text.trim();
+  const showsColor = tool !== "eraser" && tool !== "emoji";
+  const typingPx = typing ? fontSize(typing) * padWidth : 0;
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent
         size="lg"
         onKeyDown={onKeyDown}
+        // Escape while typing drops the words, not the drawing.
+        onEscapeKeyDown={(e) => {
+          if (!typingRef.current) return;
+          e.preventDefault();
+          typingRef.current = null;
+          setTyping(null);
+        }}
         // A stray click beside the pad mustn't throw the drawing away.
         onInteractOutside={(e) => {
-          if (strokesRef.current.length) e.preventDefault();
+          if (strokesRef.current.length || typingRef.current)
+            e.preventDefault();
         }}
       >
         <DialogHeader>
@@ -259,7 +341,10 @@ export function DrawingDialog({
                     size="sm"
                     label={each.label}
                     aria-pressed={tool === each.tool}
-                    onClick={() => setTool(each.tool)}
+                    onClick={() => {
+                      finishTyping();
+                      setTool(each.tool);
+                    }}
                   >
                     {each.icon}
                   </IconButton>
@@ -345,14 +430,46 @@ export function DrawingDialog({
               </Tip>
             </div>
           </div>
+          {tool === "emoji" && (
+            <div className="flex flex-wrap gap-0.5" data-testid="emoji-choices">
+              {DRAW_EMOJIS.map((each) => (
+                <button
+                  key={each}
+                  type="button"
+                  aria-label={each}
+                  aria-pressed={emoji === each}
+                  onClick={() => setEmoji(each)}
+                  className={cn(
+                    "grid size-8 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 text-xl leading-none hover:bg-foreground/8",
+                    emoji === each &&
+                      "bg-foreground/8 shadow-[inset_0_0_0_1.5px_var(--note-muted)]",
+                  )}
+                >
+                  {each}
+                </button>
+              ))}
+            </div>
+          )}
           <div
             ref={setPad}
             role="img"
-            aria-label="Drawing pad: draw with the mouse, a finger or a pen"
+            aria-label={
+              tool === "text"
+                ? "Drawing pad: click where the text goes"
+                : tool === "emoji"
+                  ? "Drawing pad: click where the emoji goes"
+                  : "Drawing pad: draw with the mouse, a finger or a pen"
+            }
             data-testid="drawing-pad"
             className={cn(
               "relative w-full touch-none select-none overflow-hidden rounded-md bg-white shadow-[inset_0_0_0_1px_rgb(0_0_0/.12)]",
-              tool === "eraser" ? "cursor-cell" : "cursor-crosshair",
+              tool === "eraser"
+                ? "cursor-cell"
+                : tool === "text"
+                  ? "cursor-text"
+                  : tool === "emoji"
+                    ? "cursor-copy"
+                    : "cursor-crosshair",
             )}
             style={{
               aspectRatio: `1 / ${aspect}`,
@@ -375,6 +492,37 @@ export function DrawingDialog({
               ref={canvas}
               className="pointer-events-none absolute inset-0 size-full"
             />
+            {typing && (
+              <input
+                // biome-ignore lint/a11y/noAutofocus: it opens where the pad was just clicked
+                autoFocus
+                aria-label="Text to put on the drawing"
+                value={typing.text}
+                size={Math.max(4, typing.text.length + 1)}
+                onChange={(e) => setTyping({ ...typing, text: e.target.value })}
+                onBlur={finishTyping}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    finishTyping();
+                  } else if (e.key === "Escape") {
+                    // Drops the words, not the drawing.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    typingRef.current = null;
+                    setTyping(null);
+                  }
+                }}
+                className="absolute m-0 max-w-full -translate-y-1/2 border-0 bg-transparent p-0 outline-1 outline-current outline-dashed outline-offset-2"
+                style={{
+                  left: typing.x * padWidth,
+                  top: typing.y * padWidth,
+                  font: drawFont(typingPx),
+                  lineHeight: 1.2,
+                  color: typing.color,
+                }}
+              />
+            )}
           </div>
         </DialogBody>
         <DialogFooter>
